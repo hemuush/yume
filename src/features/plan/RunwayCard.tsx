@@ -25,6 +25,8 @@ export function RunwayCard({
   hasAccounts,
   days,
   onAddAccount,
+  compact = false,
+  onViewPayments,
 }: {
   dueSoon: DueSoon;
   runway: Runway;
@@ -33,6 +35,8 @@ export function RunwayCard({
   /** The window the runway covers. */
   days: number;
   onAddAccount?: () => void;
+  compact?: boolean;
+  onViewPayments?: () => void;
 }) {
   const [details, setDetails] = useState(false);
   const outgoingMinor = hasAccounts
@@ -58,6 +62,83 @@ export function RunwayCard({
     figure = formatMoney(runway.startMinor);
     note = `${formatMoney(outgoingMinor)} going out · ${payments}. Ends at ${formatMoney(runway.endMinor)}, lowest ${formatMoney(runway.lowMinor)} on ${dayMonth(runway.lowDate)}${comingIn}`;
   }
+
+  if (compact)
+    return (
+      <>
+        <Glass radius={24} style={[styles.card, styles.cardFirst, cardSurface.summary]}>
+          <View style={styles.forecastHeading}>
+            <View style={styles.forecastFigure}>
+              <Text style={styles.forecastFact}>Spending-account outlook</Text>
+              <Text style={styles.forecastValue}>{formatMoney(outgoingMinor)}</Text>
+              <Text style={styles.forecastFact}>Scheduled outgoing · next {days} days</Text>
+            </View>
+            {hasAccounts && (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`Forecast details. ${note}`}
+                onPress={() => setDetails(true)}
+                style={withPressed({
+                  width: 44,
+                  minHeight: 44,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                })}
+              >
+                <Feather name="info" size={18} color={theme.colors.link} />
+              </Pressable>
+            )}
+          </View>
+          {hasAccounts ? (
+            <View style={[styles.forecastAttention, runway.short && styles.forecastWarning]}>
+              <Feather
+                name={runway.short ? 'alert-circle' : 'check-circle'}
+                size={19}
+                color={runway.short ? theme.colors.expenseText : theme.colors.incomeText}
+              />
+              <View style={styles.forecastAttentionCopy}>
+                <Text style={styles.forecastStatusTitle}>
+                  {none
+                    ? 'Nothing due'
+                    : runway.short
+                      ? `${formatMoney(runway.short.minor)} more needed`
+                      : 'Covered'}
+                </Text>
+                <Text style={styles.forecastFact}>
+                  {runway.short
+                    ? `First shortfall · ${dayMonth(runway.short.date)}`
+                    : 'Based on scheduled cash flow'}
+                </Text>
+              </View>
+            </View>
+          ) : (
+            <>
+              <Text style={styles.bigNote}>{note}</Text>
+              <PrimaryButton title="Add account" variant="secondary" compact onPress={onAddAccount} />
+            </>
+          )}
+          {onViewPayments && (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="View payments"
+              onPress={onViewPayments}
+              style={withPressed({
+                minHeight: 44,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              })}
+            >
+              <Text style={{ fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.link }}>
+                View payments
+              </Text>
+              <Feather name="arrow-right" size={16} color={theme.colors.link} />
+            </Pressable>
+          )}
+        </Glass>
+        {details && hasAccounts && <ForecastDetails runway={runway} onClose={() => setDetails(false)} />}
+      </>
+    );
 
   return (
     <>

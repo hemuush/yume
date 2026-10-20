@@ -30,7 +30,7 @@ import { theme } from '@/constants/theme';
 import { useTabScrollPad } from '@/lib/uiScale';
 import { addDaysToIsoDate, toLocalIsoDate } from '@/lib/date';
 import { SkyHeader, HeaderSummary } from '@/features/home/SkyHeader';
-import ReanimatedAnimated from 'react-native-reanimated';
+import ReanimatedAnimated, { FadeIn, ReduceMotion } from 'react-native-reanimated';
 import { useCollapsingHeader } from '@/lib/useCollapsingHeader';
 import { formatMoney } from '@/lib/money';
 import { useAccent } from '@/theme/AccentContext';
@@ -59,6 +59,7 @@ import {
 } from '@/features/plan/planOverview';
 import { PayInstallmentSheet } from '@/features/loans/PayInstallmentSheet';
 import { PeopleTile, HabitTile, PlanPerson, PEOPLE_SHOWN } from '@/features/plan/PlanTiles';
+import { PlanOverviewPanels } from '@/features/plan/PlanOverviewPanels';
 import { UpcomingDates } from '@/features/plan/UpcomingDates';
 import { RunwayCard } from '@/features/plan/RunwayCard';
 import { BudgetJars } from '@/features/plan/BudgetJars';
@@ -95,6 +96,7 @@ interface PlanData {
   dueSoon: DueSoon;
   dueGroups: DueGroup[];
   runway: Runway;
+  schedule: Runway;
   /** Whether a bank, cash or wallet account holds the balance the runway starts from. */
   hasAccounts: boolean;
   /** Payment-sheet balances, by account id. */
@@ -111,8 +113,6 @@ interface PlanData {
 }
 
 /** Overview shows one row of budget and goal tiles and this many payments; the tabs hold the rest. */
-const PREVIEW_PAYMENTS = 3;
-const PREVIEW_TILES = 3;
 
 /** Plan previews open item sheets directly; collection links keep the full-screen routes. */
 export default function PlanScreen() {
@@ -269,6 +269,7 @@ export default function PlanScreen() {
       loans: loansSummary,
       dueSoon: buildDueSoon(dueItems, today, PLAN_DAYS),
       dueGroups: groupDueItems(dueItems, today, PLAN_DAYS),
+      schedule: buildRunway(0, dueItems, today, PLAN_DAYS),
       runway: buildRunway(runwayStartMinor(accounts, currency), runwayItems, today, PLAN_DAYS),
       hasAccounts: accounts.some((a) => isRunwayAccount(a, currency)),
       // A savings balance stays hidden in privacy mode, so the pay sheet doesn't show it either.
@@ -369,21 +370,6 @@ export default function PlanScreen() {
       setDetail(null);
   }, [detail, scoped, selectedGoal, selectedRule]);
 
-  // With no loan yet the Debt card is the "Track an EMI" prompt: it goes straight to Loans, not to a tab of it.
-  const openDebt = () => (scoped && scoped.loans.rows.length > 0 ? selectTab('debt') : open('/loans'));
-  const upcoming = (limit?: number) =>
-    scoped && (
-      <ComingUpSection
-        groups={scoped.dueGroups}
-        today={scoped.today}
-        limit={limit}
-        onOpen={open}
-        onPay={(id) => void payEmi(id)}
-        onLoan={(id) => openDetail('loan', id)}
-        onRule={(id) => openDetail('rule', id)}
-      />
-    );
-
   return (
     <View style={styles.container}>
       <HomeWallpaper accent={accent} secondary={secondary} />
@@ -417,181 +403,195 @@ export default function PlanScreen() {
             <View style={[styles.tabs, tab === 'money' && { marginBottom: 4 }]}>
               <PlanNavigation value={tab} onChange={selectTab} stacked={stackTiles} />
             </View>
-            {(tab === 'overview' || tab === 'upcoming') && (
-              <RunwayCard
-                dueSoon={data.dueSoon}
-                runway={data.runway}
-                hasAccounts={data.hasAccounts}
-                days={PLAN_DAYS}
-                onAddAccount={() => openDetail('new-account', '')}
-              />
-            )}
-            {tab === 'overview' && (
-              <>
-                <Section compact title="Budgets" onSeeAll={() => selectTab('money')}>
-                  <BudgetJars
-                    summary={data.budgets}
-                    onOpen={() => open('/budgets')}
-                    onBudget={(id) => openDetail('budget', id)}
-                    onAdd={() => openDetail('new-budget', '')}
-                    limit={PREVIEW_TILES}
-                  />
-                </Section>
-
-                {data.dueGroups.length > 0 && (
-                  <Section
-                    compact
-                    title="Upcoming payments"
-                    badge={data.dueSoon.count}
-                    onSeeAll={() => selectTab('upcoming')}
-                  >
-                    {upcoming(PREVIEW_PAYMENTS)}
-                  </Section>
-                )}
-                <Section compact title="Debt" onSeeAll={openDebt}>
-                  <DebtPath loans={data.loans} today={data.today} onOpen={openDebt} />
-                </Section>
-                <Section compact title="Goals" onSeeAll={() => selectTab('money')}>
-                  <GoalsStrip
+            <ReanimatedAnimated.View
+              key={tab}
+              entering={FadeIn.duration(140).reduceMotion(ReduceMotion.System)}
+            >
+              {tab === 'overview' && (
+                <RunwayCard
+                  compact
+                  onViewPayments={() => selectTab('upcoming')}
+                  dueSoon={data.dueSoon}
+                  runway={data.runway}
+                  hasAccounts={data.hasAccounts}
+                  days={PLAN_DAYS}
+                  onAddAccount={() => openDetail('new-account', '')}
+                />
+              )}
+              {tab === 'overview' && (
+                <>
+                  <PlanOverviewPanels
+                    budgets={data.budgets}
+                    groups={data.dueGroups}
+                    loans={data.loans}
                     goals={data.goals}
-                    savingsAccounts={data.savingsAccounts}
-                    onOpen={() => open('/savings-goals')}
-                    onGoal={(id) => openDetail('goal', id)}
-                    onAdd={() => openDetail('new-goal', '')}
-                    limit={PREVIEW_TILES}
+                    today={data.today}
+                    hideAmounts={hideAmounts}
+                    onTab={selectTab}
+                    onBudget={(id) => openDetail('budget', id)}
                   />
-                </Section>
-                <View style={{ marginHorizontal: 16 }}>
-                  <PendingRefunds
-                    refreshToken={data}
-                    onOpen={(tx) => {
-                      paymentRequest.current++;
-                      openingPayment.current = false;
-                      setPaying(null);
-                      setDetail(null);
-                      setRefundTx(tx);
-                    }}
-                  />
-                </View>
-                <Section compact title="People & habit">
-                  <View style={[planStyles.row, stackTiles && planStyles.rowStack]}>
-                    <PeopleTile
-                      state={data.people}
-                      people={data.topPeople}
-                      onOpen={() => open('/people')}
-                      onPerson={(id) => openDetail('person', id)}
-                    />
-                    <HabitTile
-                      habit={data.habit}
-                      goalMinor={data.dailyGoalMinor}
-                      today={data.today}
-                      onOpen={() => open('/garden')}
+                  <View style={{ marginHorizontal: 16 }}>
+                    <PendingRefunds
+                      summaryOnly
+                      refreshToken={data}
+                      onOpen={(tx) => {
+                        paymentRequest.current++;
+                        openingPayment.current = false;
+                        setPaying(null);
+                        setDetail(null);
+                        setRefundTx(tx);
+                      }}
                     />
                   </View>
-                </Section>
-              </>
-            )}
-            {tab === 'upcoming' && (
-              <Section
-                compact
-                title="Upcoming payments"
-                right={
+                  <Section compact title="People & habit">
+                    <View style={[planStyles.row, stackTiles && planStyles.rowStack]}>
+                      <PeopleTile
+                        state={data.people}
+                        people={data.topPeople}
+                        onOpen={() => open('/people')}
+                        onPerson={(id) => openDetail('person', id)}
+                      />
+                      <HabitTile
+                        habit={data.habit}
+                        goalMinor={data.dailyGoalMinor}
+                        today={data.today}
+                        onOpen={() => open('/garden')}
+                      />
+                    </View>
+                  </Section>
+                </>
+              )}
+              {tab === 'upcoming' && (
+                <Section compact title="Upcoming payments">
+                  <Text
+                    style={{
+                      marginHorizontal: 16,
+                      marginBottom: 10,
+                      fontFamily: theme.font.body,
+                      fontSize: 12,
+                      color: theme.colors.textSecondary,
+                    }}
+                  >
+                    Bills, EMIs and income · next {PLAN_DAYS} days
+                  </Text>
+                  <UpcomingDates
+                    runway={data.schedule}
+                    renderDay={(day, mode) => (
+                      <ComingUpSection
+                        groups={[
+                          {
+                            date: day.date,
+                            outMinor: 0,
+                            items: day.items.filter((item) =>
+                              mode === 'income'
+                                ? item.kind === 'income'
+                                : item.kind === 'emi' || item.kind === 'bill'
+                            ),
+                          },
+                        ]}
+                        today={data.today}
+                        onOpen={open}
+                        onPay={(id) => void payEmi(id)}
+                        onLoan={(id) => openDetail('loan', id)}
+                        onRule={(id) => openDetail('rule', id)}
+                      />
+                    )}
+                  />
                   <Pressable
                     accessibilityRole="button"
-                    accessibilityLabel="Add recurring"
-                    onPress={() => openDetail('new-rule', '')}
-                    style={withPressed(styles.headLink)}
+                    accessibilityLabel="Recurring"
+                    onPress={() => open('/recurring')}
+                    style={withPressed(styles.manageRecurring)}
                   >
-                    <Feather name="plus" size={14} color={theme.colors.link} />
-                    <Text style={styles.headLinkText}>Add recurring</Text>
+                    <Text style={styles.headLinkText}>Manage recurring</Text>
+                    <Feather name="arrow-right" size={14} color={theme.colors.link} />
                   </Pressable>
-                }
-              >
-                <UpcomingDates
-                  runway={data.runway}
-                  renderDay={(day) => (
-                    <ComingUpSection
-                      groups={[
-                        {
-                          date: day.date,
-                          outMinor: day.outMinor,
-                          items: day.items.filter((item) => item.kind === 'emi' || item.kind === 'bill'),
-                        },
-                      ]}
-                      today={data.today}
-                      onOpen={open}
-                      onPay={(id) => void payEmi(id)}
-                      onLoan={(id) => openDetail('loan', id)}
-                      onRule={(id) => openDetail('rule', id)}
+                </Section>
+              )}
+              {tab === 'money' && (
+                <>
+                  <Section
+                    compact
+                    first
+                    title="Budgets"
+                    actionLabel="Manage budgets"
+                    onSeeAll={() => open('/budgets')}
+                  >
+                    <BudgetJars
+                      hideAdd
+                      summary={data.budgets}
+                      onOpen={() => open('/budgets')}
+                      onBudget={(id) => openDetail('budget', id)}
+                      onAdd={() => openDetail('new-budget', '')}
+                      limit={data.budgets.rows.length + 1}
                     />
-                  )}
-                />
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel="Recurring"
-                  onPress={() => open('/recurring')}
-                  style={withPressed(styles.manageRecurring)}
-                >
-                  <Text style={styles.headLinkText}>Manage recurring</Text>
-                  <Feather name="arrow-right" size={14} color={theme.colors.link} />
-                </Pressable>
-              </Section>
-            )}
-            {tab === 'money' && (
-              <>
-                <Section compact first title="Budgets" onSeeAll={() => open('/budgets')}>
-                  <BudgetJars
-                    showAdd
-                    summary={data.budgets}
-                    onOpen={() => open('/budgets')}
-                    onBudget={(id) => openDetail('budget', id)}
-                    onAdd={() => openDetail('new-budget', '')}
-                    limit={data.budgets.rows.length + 1}
-                  />
-                </Section>
-                <Section compact title="Goals" onSeeAll={() => open('/savings-goals')}>
-                  <GoalsStrip
-                    showAdd
-                    goals={data.goals}
-                    savingsAccounts={data.savingsAccounts}
-                    onOpen={() => open('/savings-goals')}
-                    onGoal={(id) => openDetail('goal', id)}
-                    onAdd={() => openDetail('new-goal', '')}
-                    limit={data.goals.length + 1}
-                  />
-                </Section>
-                <Section compact title="Ideas">
-                  <WhatIfCard
-                    whatIf={data.whatIf}
-                    onOpen={(cut) =>
-                      data.whatIf
-                        ? router.push({
-                            pathname: '/whatif',
-                            params: { category: data.whatIf.categoryId, cut: String(cut) },
-                          })
-                        : open('/whatif')
-                    }
-                  />
-                </Section>
-              </>
-            )}
-            {tab === 'debt' && (
-              <>
-                <Section compact title="Debt">
-                  <DebtPath
-                    loans={data.loans}
-                    today={data.today}
-                    onOpen={() => open('/loans')}
-                    onAdd={() => openDetail('new-loan', '')}
-                  />
-                </Section>
-                {data.loans.rows.length > 0 && (
-                  <Section compact title="Loans" onSeeAll={() => open('/loans')}>
-                    <DebtLoans loans={data.loans} onLoan={(id) => openDetail('loan', id)} />
                   </Section>
-                )}
-              </>
-            )}
+                  <Section
+                    compact
+                    title="Goals"
+                    actionLabel="Manage goals"
+                    onSeeAll={() => open('/savings-goals')}
+                  >
+                    <GoalsStrip
+                      hideAdd
+                      goals={data.goals}
+                      savingsAccounts={data.savingsAccounts}
+                      onOpen={() => open('/savings-goals')}
+                      onGoal={(id) => openDetail('goal', id)}
+                      onAdd={() => openDetail('new-goal', '')}
+                      limit={data.goals.length + 1}
+                    />
+                  </Section>
+                  <Section compact title="Ideas">
+                    <WhatIfCard
+                      whatIf={data.whatIf}
+                      onOpen={(cut) =>
+                        data.whatIf
+                          ? router.push({
+                              pathname: '/whatif',
+                              params: { category: data.whatIf.categoryId, cut: String(cut) },
+                            })
+                          : open('/whatif')
+                      }
+                    />
+                  </Section>
+                </>
+              )}
+              {tab === 'debt' && (
+                <>
+                  <Section compact title="Debt">
+                    <DebtPath
+                      loans={data.loans}
+                      today={data.today}
+                      onOpen={() => open('/loans')}
+                      onAdd={data.loans.rows.length === 0 ? () => openDetail('new-loan', '') : undefined}
+                    />
+                  </Section>
+                  {data.loans.rows.some((loan) => loan.direction === 'borrowed') && (
+                    <Section compact title="Loans" onSeeAll={() => open('/loans')}>
+                      <DebtLoans
+                        loans={{
+                          ...data.loans,
+                          rows: data.loans.rows.filter((loan) => loan.direction === 'borrowed'),
+                        }}
+                        onLoan={(id) => openDetail('loan', id)}
+                      />
+                    </Section>
+                  )}
+                  {data.loans.rows.some((loan) => loan.direction === 'lent') && (
+                    <Section compact title="Money lent" onSeeAll={() => open('/loans')}>
+                      <DebtLoans
+                        loans={{
+                          ...data.loans,
+                          rows: data.loans.rows.filter((loan) => loan.direction === 'lent'),
+                        }}
+                        onLoan={(id) => openDetail('loan', id)}
+                      />
+                    </Section>
+                  )}
+                </>
+              )}
+            </ReanimatedAnimated.View>
           </>
         )}
       </ReanimatedAnimated.ScrollView>

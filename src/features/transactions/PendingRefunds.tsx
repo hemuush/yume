@@ -15,8 +15,10 @@ import { toLocalIsoDate } from '@/lib/date';
 export function PendingRefunds({
   refreshToken,
   onOpen,
+  summaryOnly = false,
 }: {
   refreshToken: unknown;
+  summaryOnly?: boolean;
   onOpen: (tx: Transaction) => void;
 }) {
   const [items, setItems] = useState<ExpectedRefund[]>([]),
@@ -77,35 +79,42 @@ export function PendingRefunds({
         </>
       ) : (
         <>
-          {ordered.slice(0, expanded ? ordered.length : 3).map((r) => (
-            <InsightRow
-              key={r.id}
-              label={r.label}
-              value={formatMaskableMoney(r.remainingMinor, {
-                currency: r.currency,
-                masked: hideAmounts && !!r.isSensitive,
-              })}
-              detail={
-                r.dueDate
-                  ? `${r.dueDate < today ? 'Overdue' : r.dueDate === today ? 'Due today' : 'Expected'} · ${dayMonthYear(r.dueDate)}`
-                  : 'No expected date'
-              }
-              onPress={async () => {
-                try {
-                  const tx = await getTransactionById(r.transactionId);
-                  if (tx) onOpen(tx);
-                  else setFailed(true);
-                } catch {
-                  setFailed(true);
+          {(expanded || !summaryOnly) &&
+            ordered.slice(0, expanded ? ordered.length : 3).map((r) => (
+              <InsightRow
+                key={r.id}
+                label={r.label}
+                value={formatMaskableMoney(r.remainingMinor, {
+                  currency: r.currency,
+                  masked: hideAmounts && !!r.isSensitive,
+                })}
+                detail={
+                  r.dueDate
+                    ? `${r.dueDate < today ? 'Overdue' : r.dueDate === today ? 'Due today' : 'Expected'} · ${dayMonthYear(r.dueDate)}`
+                    : 'No expected date'
                 }
-              }}
-            />
-          ))}
-          {items.length > 3 && (
+                onPress={async () => {
+                  try {
+                    const tx = await getTransactionById(r.transactionId);
+                    if (tx) onOpen(tx);
+                    else setFailed(true);
+                  } catch {
+                    setFailed(true);
+                  }
+                }}
+              />
+            ))}
+          {(summaryOnly || items.length > 3) && (
             <PrimaryButton
               compact
               variant="secondary"
-              title={expanded ? 'Show fewer refunds' : `View all ${items.length} refunds`}
+              title={
+                expanded
+                  ? 'Show fewer refunds'
+                  : summaryOnly
+                    ? `View ${items.length} pending refund${items.length === 1 ? '' : 's'}`
+                    : `View all ${items.length} refunds`
+              }
               onPress={() => setExpanded(!expanded)}
             />
           )}

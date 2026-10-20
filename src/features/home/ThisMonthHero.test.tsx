@@ -84,7 +84,9 @@ describe('month card', () => {
       ])
     );
     // The money-bar legend stays scoped to this month.
-    expect(all).toEqual(expect.arrayContaining(['Spent', 'Saved', '₹95,762', '₹99,500']));
+    expect(all).toEqual(
+      expect.arrayContaining(['Spent this month', 'Saved this month', '₹95,762', '₹99,500'])
+    );
     expect(all).not.toContain('Bills left');
     expect(all).toContain('₹2,955 left today');
     expect(byLabel(r, 'How this adds up')).toBeDefined();
@@ -223,7 +225,7 @@ describe('month card with savings hidden', () => {
 
   it('keeps the free headline, and never says what was saved', () => {
     const all = texts(render(hidden));
-    expect(all).toEqual(expect.arrayContaining(['Free to use', '₹30,000', 'Spent']));
+    expect(all).toEqual(expect.arrayContaining(['Free to use', '₹30,000', 'Spent this month']));
     expect(all).not.toContain('Saved');
   });
 

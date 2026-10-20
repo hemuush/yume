@@ -56,12 +56,13 @@ function Bar({
   embedded?: boolean;
 }) {
   const reduce = useReduceMotion();
-  // Square-root scaled: one big payment would otherwise flatten every ordinary day to a sliver.
-  const target =
-    bar.totalMinor > 0 && maxMinor > 0
-      ? Math.round(
-          MIN_H + Math.sqrt(bar.totalMinor / maxMinor) * ((embedded ? 36 : compact ? 64 : MAX_H) - MIN_H)
-        )
+  // The hero uses a proportional zero baseline; legacy standalone charts keep their disclosed compression.
+  const target = embedded
+    ? maxMinor > 0
+      ? (Math.max(0, bar.totalMinor) / maxMinor) * 52
+      : 0
+    : bar.totalMinor > 0 && maxMinor > 0
+      ? Math.round(MIN_H + Math.sqrt(bar.totalMinor / maxMinor) * ((compact ? 64 : MAX_H) - MIN_H))
       : EMPTY_H;
   const growth = useSharedValue(reduce || !animateEntry ? 1 : 0);
   useEffect(() => {
@@ -93,6 +94,7 @@ function Bar({
       <Animated.View
         style={[
           styles.bar,
+          embedded && styles.slimBar,
           { height: target, transformOrigin: 'bottom', backgroundColor: tint },
           bar.totalMinor === 0 && !selected && styles.barEmpty,
           style,
@@ -100,13 +102,15 @@ function Bar({
       >
         <Animated.View
           pointerEvents="none"
-          style={[StyleSheet.absoluteFill, { backgroundColor: ink, borderRadius: 10 }, selectedStyle]}
+          style={[
+            StyleSheet.absoluteFill,
+            { backgroundColor: ink, borderRadius: embedded ? 4 : 10 },
+            selectedStyle,
+          ]}
         />
       </Animated.View>
-      <View style={[styles.dayLabel, embedded && selected && { backgroundColor: ink }]}>
-        <Text style={[styles.label, selected && styles.labelOn, embedded && selected && styles.selectedDay]}>
-          {bar.label}
-        </Text>
+      <View style={styles.dayLabel}>
+        <Text style={[styles.label, selected && styles.labelOn]}>{bar.label}</Text>
       </View>
     </Pressable>
   );
@@ -156,15 +160,21 @@ export function SpendBars({
           accessibilityLabel={`Spending ${range === 'week' ? 'in the last 7 days' : 'in the selected month'}, ${formatMoney(total)}`}
         >
           <Text style={styles.title}>
-            {range === 'week' ? 'Last 7 days' : embedded ? 'Weekly spending' : 'This month'}
-            {(!compact || embedded) && (
+            {embedded
+              ? range === 'week'
+                ? 'Spent · last 7 days'
+                : 'Spent · by week'
+              : range === 'week'
+                ? 'Last 7 days'
+                : 'This month'}
+            {!compact && (
               <>
                 {' '}
                 <Text style={styles.total}>{formatMoney(total)}</Text>
               </>
             )}
           </Text>
-          {compact && !embedded && (
+          {compact && (
             <Text style={[styles.snapshotTotal, embedded && styles.embeddedTotal]}>{formatMoney(total)}</Text>
           )}
         </View>
@@ -212,7 +222,7 @@ export function SpendBars({
           styles.bars,
           compact && styles.barsCompact,
           embedded && styles.barsEmbedded,
-          embedded && { height: 68 + 24 * Math.max(0, fontScale - 1) },
+          embedded && { height: 88 + 24 * Math.max(0, fontScale - 1) },
         ]}
         onContentSizeChange={() => chart.current?.scrollToEnd({ animated: false })}
       >
@@ -258,11 +268,9 @@ export function SpendBars({
           </Text>
         </View>
       )}
-      <Text style={styles.scaleHint}>
-        {embedded
-          ? 'Compressed scale · tap a day to explore'
-          : 'Bar heights are compressed. Tap a bar for its exact amount.'}
-      </Text>
+      {!embedded && (
+        <Text style={styles.scaleHint}>Bar heights are compressed. Tap a bar for its exact amount.</Text>
+      )}
     </View>
   );
 }
@@ -307,19 +315,12 @@ const styles = StyleSheet.create({
     marginTop: 3,
   },
   barsCompact: { height: 112 },
-  barsEmbedded: { height: 68 },
+  barsEmbedded: { height: 88 },
   insights: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 3, paddingLeft: 8 },
   insightsText: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.link },
   dayLabel: { minHeight: 24, justifyContent: 'center', paddingHorizontal: 4, borderRadius: 8 },
-  selectedDay: { color: theme.colors.surface, fontFamily: theme.font.bodyBold },
   embeddedTotal: { fontFamily: theme.font.bodyMedium, fontSize: 15, lineHeight: 20, marginTop: 0 },
-  footerEmbedded: {
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-    borderTopWidth: 0,
-    borderRadius: 10,
-    backgroundColor: theme.colors.surfaceAlt,
-  },
+  footerEmbedded: { paddingTop: 2, borderTopWidth: 0 },
   chartFooter: {
     paddingTop: 10,
     borderTopWidth: StyleSheet.hairlineWidth,
@@ -341,6 +342,7 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   bar: { width: '100%', maxWidth: 34, borderRadius: 10 },
+  slimBar: { maxWidth: 16, borderRadius: 4 },
   barEmpty: { opacity: 0.6, borderRadius: 2 },
   value: { fontFamily: theme.font.bodyBold, fontSize: 11, color: theme.colors.textPrimary },
   label: { fontFamily: theme.font.bodyMedium, fontSize: 11, color: theme.colors.textMuted },

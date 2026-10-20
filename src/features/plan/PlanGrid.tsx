@@ -59,7 +59,9 @@ export function TileGrid({
   accessibilityLabel,
   onAdd,
   limit = GRID_SHOWN,
+  showAdd = true,
 }: {
+  showAdd?: boolean;
   tiles: React.ReactNode[];
   label: string;
   accessibilityLabel: string;
@@ -83,7 +85,7 @@ export function TileGrid({
       onPress={onAdd}
     />
   );
-  const hasAdd = shown.length < limit;
+  const hasAdd = showAdd && shown.length < limit;
   // A full last row sends the add button to a row of its own; it then fills that row (the slim button).
   const slimRow = hasAdd && shown.length % columns === 0;
   if (hasAdd) {

@@ -36,6 +36,7 @@ export function GoalsStrip({
   limit,
   compact = false,
   showAdd = false,
+  hideAdd = false,
 }: {
   goals: SavingsGoal[];
   /** Savings accounts a new goal could follow, with their balances. */
@@ -48,6 +49,7 @@ export function GoalsStrip({
   /** Flat goal rows; privacy hides both progress and saved amount. */
   compact?: boolean;
   showAdd?: boolean;
+  hideAdd?: boolean;
 }) {
   const { hideAmounts } = usePrivacy();
   const active = goals.filter((g) => !g.archived);
@@ -110,6 +112,7 @@ export function GoalsStrip({
   }
   return (
     <TileGrid
+      showAdd={!hideAdd}
       tiles={active.map((g) => (
         <GoalCard
           key={g.id}

@@ -158,7 +158,17 @@ const s = StyleSheet.create({
     textAlign: 'center',
   },
   tabOn: { fontFamily: theme.font.roundedBold, color: theme.colors.surface },
-  filters: { flexDirection: 'row', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 14 },
+  filters: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+    flexWrap: 'wrap',
+    marginBottom: 12,
+    padding: 6,
+    borderRadius: 22,
+    backgroundColor: theme.colors.surface,
+  },
   flow: { flexDirection: 'row', backgroundColor: theme.colors.inkWash, borderRadius: 12, padding: 3 },
   flowButton: {
     minHeight: 48,
