@@ -1,4 +1,3 @@
-import { paymentMethodLabel } from '@/lib/paymentMode';
 import { useSaveOnce } from '@/lib/useSaveOnce';
 import { useEffect, useMemo, useState } from 'react';
 import { View, Pressable } from 'react-native';
@@ -284,13 +283,14 @@ export function TransactionDetailModal({
           : 'Same amount, account and note',
       onPress: logAgainToday,
     },
-    canRepeat && {
-      icon: 'repeat' as const,
-      short: 'Recurring',
-      label: 'Make it recurring',
-      sub: 'Yume logs it for you on a schedule',
-      onPress: () => setRuleOpen(true),
-    },
+    canRepeat &&
+      !tx.isRefund && {
+        icon: 'repeat' as const,
+        short: 'Recurring',
+        label: 'Make it recurring',
+        sub: 'Yume logs it for you on a schedule',
+        onPress: () => setRuleOpen(true),
+      },
     (canEdit || link?.kind === 'refund-expected') &&
       tx.type === 'expense' &&
       !tx.isRefund && {
@@ -448,7 +448,6 @@ export function TransactionDetailModal({
           }
         />
 
-        <StatusBadge label={`Method: ${paymentMethodLabel(tx.paymentMode)}`} />
         {(tx.splitId ||
           link?.kind === 'loan' ||
           link?.kind === 'person' ||

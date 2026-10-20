@@ -1,3 +1,7 @@
+jest.mock('@/db/entryDraft', () => ({
+  readEntryDraft: jest.fn(async () => null),
+  writeEntryDraft: jest.fn(async () => {}),
+}));
 /**
  * The Add screen's save paths with the data layer mocked: save/edit, validation errors, staged batches,
  * friend entries, number-pad sums, repeat-check warning, account-follows-category, "Your usual" and search.
@@ -831,9 +835,9 @@ describe('Add screen — leaving with an unsaved entry', () => {
     const action = { type: 'GO_BACK' };
     act(() => mockGuard.onBlocked({ data: { action } }));
     const alert = jest.mocked(showAlert);
-    expect(alert).toHaveBeenCalledWith('Discard this entry?', expect.any(String), expect.any(Array));
+    expect(alert).toHaveBeenCalledWith('Leave this entry?', expect.any(String), expect.any(Array));
     const buttons = alert.mock.calls[0][2]!;
-    expect(buttons.map((b) => b.text)).toEqual(['Keep editing', 'Discard']);
+    expect(buttons.map((b) => b.text)).toEqual(['Keep editing', 'Keep draft', 'Discard']);
 
     await act(async () => buttons.find((b) => b.text === 'Keep editing')!.onPress?.());
     expect(mockDispatch).not.toHaveBeenCalled();
@@ -972,4 +976,151 @@ it('keeps invalid actions visibly disabled and preserves pad hide/show and valid
   await typeAmount(tree, '120');
   expect(saveButton().props.disabled).toBe(false);
   expect(pressable(tree, 'Add more').props.disabled).toBe(false);
+});
+
+it('resumes an unfinished entry only after a tap and clears its draft after saving', async () => {
+  const { readEntryDraft, writeEntryDraft } = require('@/db/entryDraft');
+  readEntryDraft.mockResolvedValueOnce({
+    type: 'expense',
+    expr: '270',
+    accountId: 'cash',
+    toAccountId: 'unused-transfer-account',
+    categoryId: 'food',
+    note: 'Recovered lunch',
+    paymentMode: 'upi',
+    date: '2026-10-19',
+    personId: 'unused-person',
+    friendSign: 1,
+    friendAccountId: 'unused-friend-account',
+    refund: false,
+    rows: [],
+    splitParts: null,
+  });
+  const tree = await render();
+  try {
+    expect(texts(tree)).toContain('Continue your unfinished entry?');
+    expect(createTransaction).not.toHaveBeenCalled();
+    await press(tree, 'Resume draft');
+    await save(tree);
+    expect(createTransaction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        amountMinor: 27000,
+        accountId: 'cash',
+        categoryId: 'food',
+        date: '2026-10-19',
+        paymentMode: 'upi',
+        note: 'Recovered lunch',
+      })
+    );
+    expect(writeEntryDraft).toHaveBeenCalledWith(null);
+  } finally {
+    act(() => tree.unmount());
+  }
+});
+
+it('keeps account selection without showing payment-method controls', async () => {
+  const tree = await render();
+  try {
+    expect(JSON.stringify(tree.toJSON())).not.toContain('Payment method');
+    expect(JSON.stringify(tree.toJSON())).not.toContain('Not recorded');
+    expect(JSON.stringify(tree.toJSON())).toContain('Bank');
+  } finally {
+    act(() => tree.unmount());
+  }
+});
+
+it('confirms a far-future staged entry even when the current form date was changed back', async () => {
+  const { AddSheets } = require('./AddSheets');
+  const { toLocalIsoDate, addDaysToIsoDate } = require('@/lib/date');
+  const today = toLocalIsoDate(new Date());
+  const future = addDaysToIsoDate(today, 8);
+  const tree = await render();
+  try {
+    await press(tree, 'Food');
+    await typeAmount(tree, '100');
+    act(() => tree.root.findByType(AddSheets).props.calendar.onPick(future));
+    await press(tree, 'Add more');
+    act(() => tree.root.findByType(AddSheets).props.calendar.onPick(today));
+    await save(tree, 'Save 1 entry');
+    expect(createTransaction).not.toHaveBeenCalled();
+    expect(jest.mocked(showAlert).mock.calls.some(([title]) => title.startsWith('Save it for'))).toBe(true);
+  } finally {
+    act(() => tree.unmount());
+  }
+});
+
+it('treats a split as saved even if its optional highlight lookup fails', async () => {
+  mockParams.current = { amount: '10000' };
+  openSplitSession({ totalMinor: 10000, currency: 'INR', meta: '', categories: [], parts: [] });
+  finishSplitSession([
+    { key: 'a', categoryId: 'food', amountText: '' },
+    { key: 'b', categoryId: 'travel', amountText: '40' },
+  ]);
+  const tree = await render();
+  try {
+    jest
+      .mocked(require('@/db/splits').getSplitParts)
+      .mockRejectedValueOnce(new Error('read failed after commit'));
+    await save(tree, 'Save split');
+    expect(saveSplit).toHaveBeenCalledTimes(1);
+    expect(router.back).toHaveBeenCalled();
+    expect(texts(tree)).not.toContain('read failed after commit');
+  } finally {
+    act(() => tree.unmount());
+  }
+});
+
+it('keeps the form and writes no money if save preparation fails, then permits a safe retry', async () => {
+  const { writeEntryDraft } = require('@/db/entryDraft');
+  const previous = writeEntryDraft.getMockImplementation();
+  let fail = true;
+  writeEntryDraft.mockImplementation(async (value: unknown) => {
+    if (value === null && fail) {
+      fail = false;
+      throw new Error('draft storage unavailable');
+    }
+  });
+  mockParams.current = { amount: '10000', categoryId: 'food' };
+  const tree = await render();
+  try {
+    await save(tree);
+    expect(createTransaction).not.toHaveBeenCalled();
+    expect(texts(tree).join(' ')).toContain('Couldn’t prepare this save');
+    await save(tree);
+    expect(createTransaction).toHaveBeenCalledTimes(1);
+  } finally {
+    act(() => tree.unmount());
+    writeEntryDraft.mockImplementation(previous);
+  }
+});
+
+it('does not navigate back again when a save completes after leaving Add', async () => {
+  const changed = jest.spyOn(require('@/lib/dataEvents'), 'emitTransactionsChanged');
+  let finish!: (value: unknown) => void;
+  jest.mocked(createTransaction).mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        finish = resolve as typeof finish;
+      })
+  );
+  mockParams.current = { amount: '10000', categoryId: 'food' };
+  const tree = await render();
+  let pending!: Promise<void>;
+  await act(async () => {
+    const saveButton = tree.root.find(
+      (n) => isSaveTitle(n.props.title) && typeof n.props.onPress === 'function'
+    );
+    pending = saveButton.props.onPress();
+    await settle();
+  });
+  act(() => tree.unmount());
+  await act(async () => {
+    finish({ id: 'saved-after-leave' });
+    await pending;
+    await new Promise((resolve) => setTimeout(resolve, 400));
+  });
+  expect(createTransaction).toHaveBeenCalledTimes(1);
+  expect(router.back).not.toHaveBeenCalled();
+  expect(changed).toHaveBeenCalledTimes(1);
+  changed.mockRestore();
 });

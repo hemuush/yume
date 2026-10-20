@@ -143,3 +143,16 @@ it("keeps this phone's widget privacy when restoring an older or less-private ba
     { value: '1' }
   );
 });
+
+it('excludes unfinished drafts from export and discards imported drafts during restore', async () => {
+  await mockTestDb.runAsync(
+    "INSERT OR REPLACE INTO settings (key, value) VALUES ('entry_draft_v1', 'private unfinished draft')"
+  );
+  const snapshot = await buildBackupSnapshot();
+  expect(snapshot.tables.settings.some((row) => row.key === 'entry_draft_v1')).toBe(false);
+  snapshot.tables.settings.push({ key: 'entry_draft_v1', value: 'stale imported draft' });
+  await restoreFromSnapshot(snapshot);
+  expect(
+    await mockTestDb.getFirstAsync("SELECT value FROM settings WHERE key = 'entry_draft_v1'")
+  ).toBeNull();
+});

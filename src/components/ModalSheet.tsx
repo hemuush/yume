@@ -1,4 +1,4 @@
-import { View, Modal, Pressable, Animated, StyleSheet, useWindowDimensions } from 'react-native';
+import { Keyboard, View, Modal, Pressable, Animated, StyleSheet, useWindowDimensions } from 'react-native';
 import { Text } from '@/components/Text';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAccent } from '@/theme/AccentContext';
@@ -47,7 +47,10 @@ interface Props {
 export function ModalSheet(props: Props) {
   const { visible, onClose, dismissible = true } = props;
   const close = () => {
-    if (dismissible) onClose();
+    if (dismissible) {
+      Keyboard.dismiss();
+      onClose();
+    }
   };
   const reduceMotion = useReduceMotion();
   return (

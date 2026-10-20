@@ -502,19 +502,21 @@ export interface DailyExpensePoint {
 /**
  * Total expense for each day with spending within `range`, in one grouped query. With `categoryId`, only that
  * category's spending, subcategories rolled in (same grouping as Reports' category rows).
+ * Net reports deduct refunds; outgoing daily trackers count purchases without refilling the daily allowance.
  */
 export async function getDailyExpenseTotals(
   range: DateRange,
   excludeSensitive = false,
-  categoryId?: string
+  categoryId?: string,
+  basis: 'net' | 'outgoing' = 'net'
 ): Promise<DailyExpensePoint[]> {
   const db = await getDb();
   const currency = await getDefaultCurrency();
   const rows = await db.getAllAsync<{ date: string; total: number }>(
-    `SELECT t.date as date, SUM(${SPEND_AMOUNT}) as total
+    `SELECT t.date as date, SUM(${basis === 'outgoing' ? 't.amount_minor' : SPEND_AMOUNT}) as total
      FROM transactions t
      JOIN accounts a ON a.id = t.account_id
-     WHERE ${SPEND_ROWS} AND a.currency = ? AND t.date >= ? AND t.date <= ?${excludeSensitive ? ` AND ${NOT_SENSITIVE}` : ''}${
+     WHERE ${basis === 'outgoing' ? "t.type = 'expense'" : SPEND_ROWS} AND a.currency = ? AND t.date >= ? AND t.date <= ?${excludeSensitive ? ` AND ${NOT_SENSITIVE}` : ''}${
        categoryId
          ? ` AND (t.category_id = ? OR t.category_id IN (SELECT id FROM categories WHERE parent_id = ?))`
          : ''
@@ -524,7 +526,7 @@ export async function getDailyExpenseTotals(
       ? [currency, range.start, range.end, categoryId, categoryId]
       : [currency, range.start, range.end]
   );
-  // A refund lowers its day's spending, but a day never goes below zero.
+  // Net refunds can exceed purchases; never plot negative spending.
   return rows
     .map((r) => ({ date: r.date, totalMinor: Math.max(0, r.total) }))
     .filter((r) => r.totalMinor > 0);
@@ -532,13 +534,18 @@ export async function getDailyExpenseTotals(
 
 /**
  * Today's total spend, scoped like every other spend figure (expense-type, default-currency accounts) but for
- * one day. Powers Home's "Today" strip; reuses getDailyExpenseTotals's query shape.
+ * one day. Refunds do not refill the daily allowance. Powers Home and Garden daily progress.
  */
 export async function getTodaySpend(
   today: string = toIso(new Date()),
   excludeSensitive = false
 ): Promise<number> {
-  const totals = await getDailyExpenseTotals({ start: today, end: today }, excludeSensitive);
+  const totals = await getDailyExpenseTotals(
+    { start: today, end: today },
+    excludeSensitive,
+    undefined,
+    'outgoing'
+  );
   return totals[0]?.totalMinor ?? 0;
 }
 
@@ -693,7 +700,7 @@ export async function getDailyGoalStreakSeries(
   const computedStart = addDaysToIsoDate(today, -(lookbackDays - 1));
   const start = computedStart > earliestTxDate ? computedStart : earliestTxDate;
 
-  const totals = await getDailyExpenseTotals({ start, end: today });
+  const totals = await getDailyExpenseTotals({ start, end: today }, false, undefined, 'outgoing');
   const totalByDate = new Map(totals.map((t) => [t.date, t.totalMinor]));
   const historyDates = isoDatesInRange(start, today);
   const underGoal = historyDates.map((d) => (totalByDate.get(d) ?? 0) <= goalMinor);

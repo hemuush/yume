@@ -1,5 +1,6 @@
+import { useLocalDayRefresh } from '@/lib/useLocalDayRefresh';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AppState, View, StyleSheet, RefreshControl } from 'react-native';
+import { View, StyleSheet, RefreshControl } from 'react-native';
 import { Text } from '@/components/Text';
 import Animated, { useSharedValue, useAnimatedScrollHandler } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -224,7 +225,9 @@ export default function DashboardScreen() {
                 start: c.offset === 0 ? spendBarsStart(today) : range.start,
                 end: c.offset === 0 ? today : range.end,
               },
-              hideAmounts
+              hideAmounts,
+              undefined,
+              'outgoing'
             )
           : Promise.resolve([]);
       return Promise.all([
@@ -363,6 +366,9 @@ export default function DashboardScreen() {
   // Coming back to Home with nothing changed (no write, same day, same settings) shows what's already here
   // instead of re-running every query.
   const freshness = useFreshness();
+  useLocalDayRefresh(() => {
+    void load(cursorRef.current);
+  }, true);
   // Whether Home is on screen: a save made elsewhere is picked up when Home is next focused (the write marks
   // it stale), so the change event only reloads in place while Home is showing.
   const focused = useRef(false);
@@ -394,13 +400,6 @@ export default function DashboardScreen() {
       }),
     [load]
   );
-  // Returning from the background does not refocus a navigator tab. Refresh live daily figures explicitly.
-  useEffect(() => {
-    const subscription = AppState.addEventListener('change', (state) => {
-      if (state === 'active' && focused.current) void load(cursorRef.current);
-    });
-    return () => subscription.remove();
-  }, [load]);
   // A new month or year: just that period's figures.
   useEffect(() => {
     if (fetchedCursor.current !== cursor) void loadPeriod(cursor);

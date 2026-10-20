@@ -73,6 +73,7 @@ export const styles = StyleSheet.create({
   // Names the (often tiny) free part of the money bar.
 
   dailyFooter: {
+    minHeight: 44,
     flexDirection: 'row',
     flexWrap: 'wrap',
     alignItems: 'center',

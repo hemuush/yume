@@ -214,6 +214,7 @@ export function AccountDetailModal({
         <View style={f.footerCol}>
           {error && <Text style={styles.errorText}>{error}</Text>}
           <PrimaryButton
+            loading={saving}
             title={saving ? 'Saving…' : 'Save changes'}
             onPress={submit}
             disabled={saving || busy}

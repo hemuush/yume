@@ -267,6 +267,7 @@ export function PrepayModal({
         <View style={f.footerCol}>
           {error && <Text style={styles.errorText}>{error}</Text>}
           <PrimaryButton
+            loading={saving}
             title={saving ? 'Saving…' : lent ? 'Record prepayment' : 'Apply prepayment'}
             onPress={submit}
             disabled={saving}

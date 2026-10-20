@@ -129,6 +129,7 @@ export function AddBudgetModal({
         <View style={f.footerCol}>
           {error && <Text style={styles.errorText}>{error}</Text>}
           <PrimaryButton
+            loading={saving}
             title={saving ? 'Saving…' : editing ? 'Save changes' : 'Create budget'}
             onPress={submit}
             disabled={saving}

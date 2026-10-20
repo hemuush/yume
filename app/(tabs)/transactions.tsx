@@ -1,4 +1,4 @@
-import type { PaymentMode } from '@/types';
+import { useLocalDayRefresh } from '@/lib/useLocalDayRefresh';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { onTransactionsChanged } from '@/lib/dataEvents';
 import { useFreshness } from '@/lib/useFreshness';
@@ -93,7 +93,6 @@ export default function TransactionsScreen() {
   const [filterVisible, setFilterVisible] = useState(false);
   const [filterType, setFilterType] = useState<TransactionType | 'all'>('all');
   const [filterCategoryIds, setFilterCategoryIds] = useState<string[]>([]);
-  const [filterPayment, setFilterPayment] = useState<PaymentMode | 'unspecified' | undefined>();
   const [filterLabel, setFilterLabel] = useState<string | undefined>();
   const [filterAccountIds, setFilterAccountIds] = useState<string[]>([]);
   // Search is its own mode, not a filter: it queries the whole ledger, so the period nav/chart/Filter
@@ -264,11 +263,10 @@ export default function TransactionsScreen() {
           categoryIds: filterCategoryIds,
           accountIds: filterAccountIds,
           expenseLabel: filterLabel,
-          paymentMode: filterPayment,
         },
         categories
       ),
-    [transactions, filterType, filterCategoryIds, filterAccountIds, filterLabel, filterPayment, categories]
+    [transactions, filterType, filterCategoryIds, filterAccountIds, filterLabel, categories]
   );
 
   // Chart/headline show the real unfiltered period (only the rows follow Filter; hidden savings &
@@ -378,6 +376,12 @@ export default function TransactionsScreen() {
   const { fromDate: rangeFromDate, toDate: rangeToDate } = visibleRange;
   useEffect(() => setSelectedBar(null), [rangeFromDate, rangeToDate, viewScope]);
   const freshness = useFreshness();
+  useLocalDayRefresh(() => {
+    const now = new Date();
+    if ((viewScope === 'week' && isCurrentWeek) || (viewScope === 'month' && isCurrentMonth)) setAnchor(now);
+    setTodayDate(now);
+    void load({ fromDate: rangeFromDate, toDate: rangeToDate }, viewScope);
+  });
   const focused = useRef(false);
   useFocusEffect(
     useCallback(() => {
@@ -498,11 +502,7 @@ export default function TransactionsScreen() {
   // Days can be arranged by hand, but only on the plain list: a search or filter shows
   // part of a day, and its order would be saved over the whole day.
   const noFilter =
-    !filterPayment &&
-    !filterLabel &&
-    filterType === 'all' &&
-    filterCategoryIds.length === 0 &&
-    filterAccountIds.length === 0;
+    !filterLabel && filterType === 'all' && filterCategoryIds.length === 0 && filterAccountIds.length === 0;
   const canReorder = !searching && noFilter;
   const [dragging, setDragging] = useState(false);
   const reorderDay = useCallback(
@@ -590,8 +590,7 @@ export default function TransactionsScreen() {
       ? headline.current.expenseMinor - headline.previous.expenseMinor
       : null;
   // Categories and accounts picked in the filter sheet (the type has its own chips).
-  const filterCount =
-    filterCategoryIds.length + filterAccountIds.length + (filterLabel ? 1 : 0) + (filterPayment ? 1 : 0);
+  const filterCount = filterCategoryIds.length + filterAccountIds.length + (filterLabel ? 1 : 0);
 
   // Before the first successful load only (`loadError` set falls through to the inline error banner), the
   // list area shows the skeleton so "Nothing logged this month" doesn't flash before the data arrives. The
@@ -665,7 +664,6 @@ export default function TransactionsScreen() {
           categoryIds: filterCategoryIds,
           accountIds: filterAccountIds,
           expenseLabel: filterLabel,
-          paymentMode: filterPayment,
         }}
         onClose={() => setFilterVisible(false)}
         countFor={(next) => filterActivity(transactions, next, categories).length}
@@ -674,7 +672,6 @@ export default function TransactionsScreen() {
           setFilterCategoryIds(next.categoryIds);
           setFilterAccountIds(next.accountIds);
           setFilterLabel(next.expenseLabel);
-          setFilterPayment(next.paymentMode);
           setFilterVisible(false);
         }}
       />
@@ -777,8 +774,6 @@ export default function TransactionsScreen() {
                     </Pressable>
                   )}
                   <ActivityFilterChips
-                    paymentMode={filterPayment}
-                    onRemovePayment={() => setFilterPayment(undefined)}
                     onOpenFilters={() => setFilterVisible(true)}
                     filterCount={filterCount}
                     filterType={filterType}
@@ -800,7 +795,6 @@ export default function TransactionsScreen() {
                     onRemoveAccount={(id) => setFilterAccountIds((ids) => ids.filter((x) => x !== id))}
                     onClearAll={() => {
                       setFilterType('all');
-                      setFilterPayment(undefined);
                       setFilterLabel(undefined);
                       setFilterCategoryIds([]);
                       setFilterAccountIds([]);

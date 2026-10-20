@@ -874,7 +874,7 @@ describe('Plan links open the selected existing flow', () => {
   });
 });
 
-it('updates Home daily remaining after a transaction save, edit, refund and deletion', async () => {
+it('updates Home daily remaining after save/edit/deletion without a refund refilling the allowance', async () => {
   await freshDb();
   mockHide = false;
   mockParams = {};
@@ -929,7 +929,7 @@ it('updates Home daily remaining after a transaction save, edit, refund and dele
       emitTransactionsChanged();
       await settle();
     });
-    expect(textOf(tree)).toContain('₹420 left today');
+    expect(textOf(tree)).toContain('₹400 left today');
     await act(async () => {
       await deleteTransaction(expense.id);
       emitTransactionsChanged();

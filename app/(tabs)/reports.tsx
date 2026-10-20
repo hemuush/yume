@@ -1,4 +1,4 @@
-import { PaymentMethodsReport } from '@/features/reports/PaymentMethodsReport';
+import { useLocalDayRefresh } from '@/lib/useLocalDayRefresh';
 import { ExpenseLabelsReport } from '@/features/reports/ExpenseLabelsReport';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, Pressable, ActivityIndicator, ScrollView } from 'react-native';
@@ -184,7 +184,6 @@ export default function ReportsScreen() {
   const [selectedCat, setSelectedCat] = useState<string | null>(null);
   const [split, setSplit] = useState<{ id: string; items: CategoryBreakdownItem[] } | null>(null);
   // Categories grouped by category (the default) or by account, with the account row opened.
-  const [methodsOpen, setMethodsOpen] = useState(false);
   const [labelsOpen, setLabelsOpen] = useState(false);
   useEffect(() => setLabelsOpen(false), [tab, cursor, flow]);
   const [group, setGroup] = useState<CategoryGroup>('category');
@@ -274,6 +273,9 @@ export default function ReportsScreen() {
   );
   // Coming back with nothing written since this period loaded (same day): what's shown is current.
   const freshness = useFreshness();
+  useLocalDayRefresh(() => {
+    void load(cursor);
+  });
   useFocusEffect(
     useCallback(() => {
       if (freshness.isFresh([load, cursor])) return;
@@ -780,17 +782,6 @@ export default function ReportsScreen() {
                 partial={range.end >= todayIso}
               />
             )}
-            {!income && (
-              <View style={{ marginHorizontal: 16, marginVertical: 8 }}>
-                <PrimaryButton
-                  compact
-                  variant="secondary"
-                  title="Explore payment methods"
-                  onPress={() => setMethodsOpen(true)}
-                />
-              </View>
-            )}
-            <PaymentMethodsReport visible={methodsOpen} range={range} onClose={() => setMethodsOpen(false)} />
             <ExpenseLabelsReport visible={labelsOpen} range={range} onClose={() => setLabelsOpen(false)} />
             {byAccount ? (
               detailErrors.accounts ? null : accountItems === null ? (

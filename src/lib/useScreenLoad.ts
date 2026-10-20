@@ -1,3 +1,4 @@
+import { useLocalDayRefresh } from './useLocalDayRefresh';
 import { useCallback, useRef, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
 import { errorMessage } from '@/lib/errorMessage';
@@ -45,6 +46,10 @@ export function useScreenLoad(loadFn: () => Promise<void>, opts: { skipWhenUncha
   const reload = useCallback(async () => {
     await run();
   }, [run]);
+
+  useLocalDayRefresh(() => {
+    void run();
+  });
 
   useFocusEffect(
     useCallback(() => {

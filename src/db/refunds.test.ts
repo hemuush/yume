@@ -20,6 +20,8 @@ import {
   getRepeatEntries,
 } from '@/db/ledger';
 import {
+  getTodaySpend,
+  getDailyGoalStreakSeries,
   getPeriodSummary,
   getDailyExpenseTotals,
   getCategoryOverview,
@@ -73,6 +75,28 @@ const refund = (amountMinor: number, date = '2026-09-20') =>
   });
 
 describe('refunds', () => {
+  it('counts purchases for daily goals even when a larger refund arrives that day', async () => {
+    const today = '2026-10-20'; // Regression fixture only; app callers use the local device date.
+    for (const amountMinor of [7000, 20000]) {
+      await createTransaction({
+        type: 'expense',
+        accountId: bank,
+        categoryId: shopping,
+        amountMinor,
+        date: today,
+      });
+    }
+    await refund(199900, today);
+    const range = { start: today, end: today };
+    expect(await getDailyExpenseTotals(range)).toEqual([]);
+    expect(await getDailyExpenseTotals(range, false, undefined, 'outgoing')).toEqual([
+      { date: today, totalMinor: 27000 },
+    ]);
+    expect(await getTodaySpend(today)).toBe(27000);
+    expect(50000 - (await getTodaySpend(today))).toBe(23000);
+    expect((await getDailyGoalStreakSeries(25000, 1, today))[0].streakDays).toBe(0);
+  });
+
   it("lower the category's and the month's spending, and never count as income", async () => {
     await refund(249_900);
     const summary = await getPeriodSummary(SEPT);

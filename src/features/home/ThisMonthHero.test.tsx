@@ -70,6 +70,17 @@ function render(over: Partial<React.ComponentProps<typeof ThisMonthHero>> = {}) 
 }
 
 describe('month card', () => {
+  it('explains the daily limit without refilling it from refunds', () => {
+    const r = render({ today: { spentMinor: 27000, goalMinor: 50000 } });
+    const action = byLabel(r, 'How today’s allowance');
+    expect(action.props.accessibilityState.expanded).toBe(false);
+    act(() => action.props.onPress());
+    expect(texts(r)).toContain('Daily limit');
+    expect(texts(r)).toContain('Expenses today');
+    expect(texts(r)).toContain('Refunds and income do not refill your daily limit. Transfers are excluded.');
+    expect(texts(r)).toContain('₹230 left today');
+  });
+
   it('leads with what is free to use, what it is out of, and what is left today as a chip', () => {
     const r = render();
     const all = texts(r);

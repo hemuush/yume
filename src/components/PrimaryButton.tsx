@@ -1,6 +1,14 @@
 import Feather from '@expo/vector-icons/Feather';
 import { useEffect } from 'react';
-import { Animated, Pressable, StyleSheet, PressableProps, StyleProp, ViewStyle } from 'react-native';
+import {
+  ActivityIndicator,
+  Animated,
+  Pressable,
+  StyleSheet,
+  PressableProps,
+  StyleProp,
+  ViewStyle,
+} from 'react-native';
 import { MAX_FONT_SCALE } from '@/components/Text';
 import ReanimatedAnimated, { FadeIn } from 'react-native-reanimated';
 import { theme } from '@/constants/theme';
@@ -27,6 +35,8 @@ interface Props extends Omit<PressableProps, 'style'> {
    * The caller owns timing: flip it true after the action succeeds, hold ~300-400ms, then close/navigate.
    */
   done?: boolean;
+  /** Keeps the label readable, announces progress and blocks repeated taps. */
+  loading?: boolean;
   doneLabel?: string;
   /** A smaller pill for a button that sits inside a row (a Restore beside a backup). */
   compact?: boolean;
@@ -43,6 +53,7 @@ export function PrimaryButton({
   variant = 'primary',
   style,
   disabled,
+  loading = false,
   done,
   doneLabel = 'Done',
   compact,
@@ -60,12 +71,13 @@ export function PrimaryButton({
   useEffect(() => {
     if (done) haptics.confirm();
   }, [done]);
+  const unavailable = !!disabled || loading || !!done;
   const secondary = variant === 'secondary';
   const variantStyle = styles[variant];
   const textStyle = secondary ? styles.textSecondary : styles.textPrimary;
   return (
     <AnimatedPressable
-      disabled={disabled}
+      disabled={unavailable}
       onPressIn={onPressIn}
       onPressOut={onPressOut}
       style={[
@@ -76,19 +88,26 @@ export function PrimaryButton({
         variantStyle,
         variant === 'primary' && { backgroundColor: colors.ink },
         secondary && { borderColor: colors.edge },
-        icon && !done && styles.withIcon,
-        disabled && styles.disabled,
+        (icon || loading) && !done && styles.withIcon,
+        unavailable && !loading && !done && styles.disabled,
         animatedStyle,
         style,
       ]}
       accessibilityRole="button"
-      accessibilityState={{ ...accessibilityState, disabled: !!disabled }}
+      accessibilityState={{
+        ...accessibilityState,
+        ...(loading ? { busy: true } : {}),
+        disabled: unavailable,
+      }}
       // Both variants have a 48dp minimum height; slop gives tightly spaced controls extra reach.
       hitSlop={compact ? HIT_SLOP_COMPACT : HIT_SLOP}
       {...rest}
     >
       {/* Only success feedback fades in. Ordinary labels and busy states stay static. */}
-      {icon && !done && (
+      {loading && !done && (
+        <ActivityIndicator size="small" color={secondary ? theme.colors.textPrimary : theme.colors.surface} />
+      )}
+      {icon && !done && !loading && (
         <Feather
           name={icon}
           size={compact ? 14 : 17}

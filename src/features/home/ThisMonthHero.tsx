@@ -119,6 +119,7 @@ export function ThisMonthHero({
   });
   // The sum behind "Free after bills", opened from the "still to pay" chip.
   const [showWorking, setShowWorking] = useState(false);
+  const [showDailyWorking, setShowDailyWorking] = useState(false);
   const prevPeriodKey = useRef(periodKey);
   const tx = useSharedValue(0);
   const dragX = useSharedValue(0);
@@ -330,11 +331,10 @@ export function ThisMonthHero({
               }}
             >
               {slices.hasIncome ? (
-                // Rolls up from zero when Home opens or the period turns, and to its new value after a save.
+                // Show the real amount immediately, then interpolate later changes.
                 <CountUpAmount
                   key={displayed.periodKey}
                   minor={headMinor}
-                  countFromZero
                   duration={DURATIONS.rollUp}
                   style={[styles.headValue, headNeg && styles.headValueNeg]}
                   symbolStyle={styles.headSymbol}
@@ -483,7 +483,13 @@ export function ThisMonthHero({
             )}
           </View>
           {shownToday && (
-            <View style={styles.dailyFooter}>
+            <Pressable
+              onPress={() => setShowDailyWorking((open) => !open)}
+              accessibilityRole="button"
+              accessibilityLabel="How today’s allowance is calculated"
+              accessibilityState={{ expanded: showDailyWorking }}
+              style={styles.dailyFooter}
+            >
               <View style={[styles.chip, styles.chipClip, todayOverMinor > 0 && styles.chipOver]}>
                 <Feather
                   name="clock"
@@ -501,15 +507,40 @@ export function ThisMonthHero({
                     style={[
                       styles.chipMeter,
                       {
-                        // Refunds can make today's net spend negative: the meter just stays empty.
+                        // Outgoing expenses consume the saved limit; refunds never refill it.
                         width: `${Math.max(0, Math.min(100, (shownToday.spentMinor / shownToday.goalMinor) * 100))}%`,
                       },
                     ]}
                   />
                 )}
               </View>
-              {todayOverMinor <= 0 && (
-                <Text style={styles.chipText}>{formatMoney(shownToday.spentMinor)} spent today</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                {todayOverMinor <= 0 && (
+                  <Text style={styles.chipText}>{formatMoney(shownToday.spentMinor)} spent today</Text>
+                )}
+                <Feather
+                  name={showDailyWorking ? 'chevron-up' : 'chevron-down'}
+                  size={14}
+                  color={theme.colors.textSecondary}
+                />
+              </View>
+            </Pressable>
+          )}
+          {shownToday && showDailyWorking && (
+            <View style={styles.working}>
+              <WorkingRow label="Daily limit" value={formatMoney(shownToday.goalMinor)} />
+              <WorkingRow label="Expenses today" value={formatMoney(shownToday.spentMinor)} />
+              <Text style={styles.chipText}>
+                Refunds and income do not refill your daily limit. Transfers are excluded.
+              </Text>
+              {onSeeInsights && (
+                <Pressable
+                  onPress={() => onSeeInsights(displayed.periodKey)}
+                  accessibilityRole="button"
+                  style={{ minHeight: 44, justifyContent: 'center' }}
+                >
+                  <Text style={{ color: theme.colors.link }}>View spending details →</Text>
+                </Pressable>
               )}
             </View>
           )}
@@ -562,11 +593,10 @@ function Stat({
         <View style={[styles.statDot, { backgroundColor: color }]} />
         <Text style={styles.statLabel}>{label}</Text>
       </View>
-      {/* Rolls up from zero when Home opens or the period turns, and to its new value after a save. */}
+      {/* Show real figures immediately; later changes use the same short interpolation. */}
       <CountUpAmount
         key={periodKey}
         minor={minor}
-        countFromZero
         duration={DURATIONS.rollUp}
         style={styles.statValue}
         numberOfLines={1}

@@ -104,7 +104,12 @@ export function AddGoalModal({
       footer={
         <View style={f.footerCol}>
           {error && <Text style={styles.errorText}>{error}</Text>}
-          <PrimaryButton title={saving ? 'Saving…' : 'Create goal'} onPress={submitOnce} disabled={saving} />
+          <PrimaryButton
+            loading={saving}
+            title={saving ? 'Saving…' : 'Create goal'}
+            onPress={submitOnce}
+            disabled={saving}
+          />
         </View>
       }
     >

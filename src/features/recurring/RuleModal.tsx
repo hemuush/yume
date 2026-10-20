@@ -356,6 +356,7 @@ export function RuleModal({
             <PrimaryButton
               title={saving ? 'Saving…' : editing ? 'Save changes' : 'Create'}
               onPress={submitOnce}
+              loading={saving}
               disabled={saving}
             />
           </View>

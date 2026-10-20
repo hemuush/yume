@@ -300,3 +300,9 @@ it('routes an expected refund to its receipt tracker instead of an unlinked refu
     alert.mockRestore();
   }
 });
+
+it('does not offer recurring income for a refund with an expense category', async () => {
+  const tree = await render({ ...lunch, type: 'income', isRefund: true });
+  expect(rows(tree, 'Make it recurring')).toHaveLength(0);
+  expect(rows(tree, 'Log again today').length).toBeGreaterThan(0);
+});

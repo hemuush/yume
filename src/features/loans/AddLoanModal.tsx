@@ -369,6 +369,7 @@ export function AddLoanModal({
                   disabled={saving}
                 />
                 <PrimaryButton
+                  loading={saving}
                   title={saving ? 'Saving…' : 'Create loan'}
                   onPress={submitOnce}
                   disabled={saving}
