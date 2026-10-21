@@ -40,7 +40,7 @@ CI now runs `npm run test:perf` after the main tests as a report-only step (`con
 - **Secrets.** No keystore, key or env file is tracked, and no secret-like string was found in source.
 - **Generated manifest** (`expo prebuild` in a scratch copy, release profile): blocked storage, overlay and image permissions and `INTERNET` are `tools:node="remove"`; widget receivers are `exported="false"`; the only exported provider is the caller-checked widget image provider; `MainActivity` handles the `yume` scheme. Library-merged permissions (notifications, alarms) were not inspected because no Gradle build ran.
 - **Advisories.** `npm audit` reports 14 high findings, all via `braces` or `node-forge` in build tooling and covered by the gate's reasoned allow-list.
-- **Dependencies.** Patch updates exist for `expo` (57.0.31), `expo-router` (57.0.29) and `expo-sharing` (57.0.24); SDK 58 is available. None was applied.
+- **Dependencies.** Superseded: the app moved to Expo SDK 58 later the same day; see the [SDK 58 upgrade](SDK_58_UPGRADE_2026_10_21.md).
 - **Bundle.** `MaterialCommunityIcons` (a 1.3MB font plus a 217KB glyph map imported by the widget code) is used in 21 files, so it stays.
 
 ## Needs a decision or a phone (circular imports) and a recorded decision (theme)
@@ -49,5 +49,7 @@ CI now runs `npm run test:perf` after the main tests as a report-only step (`con
 - **Light-only theme on Android.** Decided 21 October: the app stays light-only and no dark theme or `expo-system-ui` dependency is added. `app.json` sets `userInterfaceStyle: "light"`, which prebuild says needs `expo-system-ui` to take effect on Android, so on a phone in dark mode some native pieces (system dialogs, keyboard, date pickers) may still follow the system. Not verified on a device; revisit only if that shows up.
 
 ## Open
+
+The circular-import cycles described above are unchanged by the SDK 58 upgrade.
 
 Phone profiling (React Profiler, frame timing, startup, memory), signed-build smoke tests and the deep-link allow-list decision remain open.
