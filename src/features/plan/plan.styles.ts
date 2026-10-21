@@ -226,7 +226,6 @@ export const styles = StyleSheet.create({
   personName: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
   sproutDay: { alignItems: 'center', gap: 3 },
   dayLabel: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted },
-  personAmt: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textSecondary },
   sprouts: { flexDirection: 'row', alignItems: 'flex-end', gap: 6, minHeight: 32 },
 
   /* ---------- Coming up ---------- */

@@ -101,14 +101,6 @@ export function HomeRefunds({
 }
 const styles = StyleSheet.create({
   compactRow: { borderTopWidth: 0, paddingBottom: 6 },
-  compactHint: {
-    fontFamily: theme.font.body,
-    fontSize: 11,
-    lineHeight: 16,
-    color: theme.colors.textMuted,
-    paddingHorizontal: 14,
-    paddingBottom: 12,
-  },
   body: { padding: 14, gap: 4 },
   row: {
     flexDirection: 'row',

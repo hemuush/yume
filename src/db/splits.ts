@@ -19,8 +19,6 @@ import type { Transaction, PaymentMode } from '@/types';
  * entry in its category (budgets, Reports, Wrap count it) and shares a `split_id` so Activity groups them.
  */
 
-export { MIN_SPLIT_PARTS, MAX_SPLIT_PARTS };
-
 export interface SplitPart {
   categoryId: string;
   amountMinor: number;

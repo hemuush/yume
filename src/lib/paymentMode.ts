@@ -1,6 +1,6 @@
 import type { PaymentMode } from '@/types';
 
-export const PAYMENT_METHODS: { value: PaymentMode; label: string }[] = [
+const PAYMENT_METHODS: { value: PaymentMode; label: string }[] = [
   { value: 'upi', label: 'UPI' },
   { value: 'cash', label: 'Cash' },
   { value: 'debit', label: 'Debit card' },
@@ -10,5 +10,3 @@ export const PAYMENT_METHODS: { value: PaymentMode; label: string }[] = [
 ];
 export const isPaymentMode = (value: unknown): value is PaymentMode =>
   PAYMENT_METHODS.some((method) => method.value === value);
-export const paymentMethodLabel = (value: PaymentMode | null | undefined) =>
-  PAYMENT_METHODS.find((method) => method.value === value)?.label ?? 'Not recorded';

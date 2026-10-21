@@ -213,7 +213,7 @@ export function buildDueItems(
 }
 
 /** How far ahead "Due in the next 2 weeks" looks. */
-export const DUE_SOON_DAYS = 14;
+const DUE_SOON_DAYS = 14;
 /** The window the Plan tab looks ahead: a bill a fortnight and a day away still counts. */
 export const PLAN_DAYS = 30;
 
