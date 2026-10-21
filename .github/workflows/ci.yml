@@ -35,6 +35,10 @@ jobs:
       - run: npm run format:check
       - run: npm test
       - run: npm run test:security
+      # Database load timings on a 20,000-entry fixture plus output parity. Report only: shared runners
+      # are too noisy for a time limit, so a failure here is read, not blocking.
+      - run: npm run test:perf
+        continue-on-error: true
       # Expo SDK / native-module version mismatches and config problems.
       - run: npx expo-doctor
       # A high or critical advisory fails the build unless scripts/auditGate.js
