@@ -1,16 +1,17 @@
 import { useEffect } from 'react';
 import { act, create, ReactTestRenderer } from 'react-test-renderer';
 import { PrivacyProvider, usePrivacy } from './PrivacyContext';
-import { getHideSensitiveAmounts, setHideSensitiveAmounts } from '@/db/settings';
+import { getHideSensitiveAmounts } from '@/db/settings';
+import { saveHideSensitiveAmounts } from '@/db/afterCommit';
 import { authenticate } from '@/lib/appLock';
 import { emitSettingsRestored } from '@/lib/dataEvents';
 import { showAlert } from '@/components/AppDialog';
 
 jest.mock('@/db/settings', () => ({
   getHideSensitiveAmounts: jest.fn(),
-  setHideSensitiveAmounts: jest.fn(async () => {}),
   getCachedHideSensitiveAmounts: () => false,
 }));
+jest.mock('@/db/afterCommit', () => ({ saveHideSensitiveAmounts: jest.fn(async () => true) }));
 let mockLocked = false;
 jest.mock('@/lib/AppLockContext', () => ({ useAppLock: () => ({ lockEnabled: mockLocked }) }));
 jest.mock('@/lib/appLock', () => ({ authenticate: jest.fn() }));
@@ -58,7 +59,7 @@ it('does not let a pending startup read reveal amounts after the user hides them
     pending.resolve(false);
   });
   expect(value.hideAmounts).toBe(true);
-  expect(setHideSensitiveAmounts).toHaveBeenCalledWith(true);
+  expect(saveHideSensitiveAmounts).toHaveBeenCalledWith(true);
 });
 
 it('keeps the newest restored preference when older reads finish later', async () => {
@@ -99,7 +100,7 @@ it('opens one unlock prompt and ignores its result if a restore overtakes it', a
     await toggle;
   });
   expect(value.hideAmounts).toBe(true);
-  expect(setHideSensitiveAmounts).not.toHaveBeenCalled();
+  expect(saveHideSensitiveAmounts).not.toHaveBeenCalled();
 });
 
 it('keeps amounts hidden after an unsuccessful unlock', async () => {
@@ -111,12 +112,12 @@ it('keeps amounts hidden after an unsuccessful unlock', async () => {
     await value.toggleHideAmounts();
   });
   expect(value.hideAmounts).toBe(true);
-  expect(setHideSensitiveAmounts).not.toHaveBeenCalled();
+  expect(saveHideSensitiveAmounts).not.toHaveBeenCalled();
 });
 
 it('warns when the preference is saved but private reminders cannot be refreshed', async () => {
   jest.mocked(getHideSensitiveAmounts).mockResolvedValue(false);
-  jest.mocked(setHideSensitiveAmounts).mockResolvedValueOnce(false);
+  jest.mocked(saveHideSensitiveAmounts).mockResolvedValueOnce(false);
   await mount();
   await act(async () => {
     await value.toggleHideAmounts();
@@ -130,7 +131,7 @@ it('warns when the preference is saved but private reminders cannot be refreshed
 
 it('keeps the session switch and warns when its preference cannot be saved', async () => {
   jest.mocked(getHideSensitiveAmounts).mockResolvedValue(false);
-  jest.mocked(setHideSensitiveAmounts).mockRejectedValueOnce(new Error('Disk full'));
+  jest.mocked(saveHideSensitiveAmounts).mockRejectedValueOnce(new Error('Disk full'));
   await mount();
   await act(async () => {
     await value.toggleHideAmounts();

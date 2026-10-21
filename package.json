@@ -69,6 +69,7 @@
     "test": "node scripts/test.cjs",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
+    "check:cycles": "node scripts/checkCycles.cjs",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test:security": "node --test scripts/uriDecoder.test.cjs scripts/widgetPrivacy.test.cjs",

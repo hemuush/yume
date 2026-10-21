@@ -1,4 +1,4 @@
-import type { AppDb } from './client';
+import type { AppDb } from './dbTypes';
 
 /** Repair only receipts this app created with the exact old generated label. Linked/manual labels stay intact. */
 export async function repairTrackedRefundLabels(db: AppDb): Promise<void> {

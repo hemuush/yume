@@ -202,7 +202,7 @@ describe('entry detail', () => {
     expect(next > toLocalIsoDate(new Date())).toBe(true);
     expect(next.slice(8)).toBe('15');
     expect(mockRule.current?.prefill?.amountMinor).toBe(11000);
-    act(() => mockRule.current?.onClose());
+    await act(async () => mockRule.current?.onClose());
     expect(mockRule.current?.visible).toBe(false);
     expect(rows(tree, 'Log again today').length).toBeGreaterThan(0);
   });

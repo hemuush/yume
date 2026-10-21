@@ -68,7 +68,11 @@ it('never resurrects a draft on background or unmount after successful Save/Disc
   await setup();
   await act(async () => {
     await current.clear();
+  });
+  await act(async () => {
     jest.advanceTimersByTime(1000);
+  });
+  await act(async () => {
     state('background');
   });
   act(() => tree.unmount());

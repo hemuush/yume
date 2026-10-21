@@ -214,6 +214,10 @@ async function render() {
 const openTab = (tree: ReactTestRenderer, tab: 'overview' | 'upcoming' | 'money' | 'debt') =>
   act(() => tree.root.findByType(require('./PlanNavigation').PlanNavigation).props.onChange(tab));
 
+/** Same, but lets the sections it mounts finish loading before the test moves on. */
+const openTabAndSettle = (tree: ReactTestRenderer, tab: 'overview' | 'upcoming' | 'money' | 'debt') =>
+  act(async () => tree.root.findByType(require('./PlanNavigation').PlanNavigation).props.onChange(tab));
+
 const payRow = (tree: ReactTestRenderer) => {
   openTab(tree, 'upcoming');
   const dates = tree.root.findAll((n) => n.props.testID?.startsWith('outgoing-day-') && n.props.onPress);
@@ -442,16 +446,16 @@ describe('Plan tab', () => {
       'Debt',
     ]);
     expect(texts(tree)).toContain('People & habit');
-    openTab(tree, 'upcoming');
+    await openTabAndSettle(tree, 'upcoming');
     expect(texts(tree)).not.toContain('People & habit');
     expect(tree.root.findAll((n) => n.props.testID === 'runway').length).toBeGreaterThan(0);
-    openTab(tree, 'money');
+    await openTabAndSettle(tree, 'money');
     expect(texts(tree)).not.toContain('Spending accounts');
     expect(texts(tree)).toContain('Budgets');
-    openTab(tree, 'debt');
+    await openTabAndSettle(tree, 'debt');
     expect(texts(tree)).not.toContain('Spending accounts');
     expect(texts(tree)).toContain('Loans');
-    openTab(tree, 'overview');
+    await openTabAndSettle(tree, 'overview');
     expect(texts(tree)).toContain('People & habit');
   });
 
