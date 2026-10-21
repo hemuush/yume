@@ -1,4 +1,6 @@
 import { Animated, Text } from 'react-native';
+
+type EndCallback = (result: { finished: boolean }) => void;
 import { act, create, ReactTestRenderer } from 'react-test-renderer';
 
 let mockReduce = false;
@@ -63,16 +65,16 @@ it('shows settled money immediately when opening a screen by default', () => {
 });
 
 it('continues a changed amount from the visible value and ignores an obsolete completion', () => {
-  const runs: { value: Animated.Value; finish?: Animated.EndCallback; stop: jest.Mock }[] = [];
+  const runs: { value: Animated.Value; finish?: EndCallback; stop: jest.Mock }[] = [];
   jest.spyOn(Animated, 'timing').mockImplementation((value) => {
     const run = {
       value: value as Animated.Value,
       stop: jest.fn(),
-      finish: undefined as Animated.EndCallback | undefined,
+      finish: undefined as EndCallback | undefined,
     };
     runs.push(run);
     return {
-      start: (finish?: Animated.EndCallback) => {
+      start: (finish?: EndCallback) => {
         run.finish = finish;
       },
       stop: run.stop,

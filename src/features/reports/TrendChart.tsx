@@ -1,6 +1,6 @@
 import { themeInk } from '@/theme/interactionColors';
 import { useRef, useState } from 'react';
-import { Animated, View, Pressable, ScrollView } from 'react-native';
+import { Animated, View, Pressable, ScrollView, ScrollViewInstance } from 'react-native';
 import Svg, { Circle, Line, Polyline, Text as SvgText } from 'react-native-svg';
 import { Text } from '@/components/Text';
 import type { NetWorthPoint, TrendPoint } from '@/db/reports';
@@ -82,7 +82,7 @@ export function TrendChart({
   const [kind, setKind] = useState<Kind>(hasSpend ? 'spend' : 'netWorth');
   const [width, setWidth] = useState(0);
   const [sel, setSel] = useState<number | null>(null);
-  const monthScroll = useRef<ScrollView>(null);
+  const monthScroll = useRef<ScrollViewInstance>(null);
   const { accent } = useAccent();
   if (!hasSpend && !hasNw) return null;
   const chosen = fixedKind ?? kind;

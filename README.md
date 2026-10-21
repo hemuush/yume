@@ -5,7 +5,7 @@
   <p>A calm, local-first money tracker for Android.<br />Track today, plan ahead, and see where your money goes.</p>
   <p>
     <img src="https://img.shields.io/badge/Android-12130F?style=flat-square&amp;logo=android&amp;logoColor=8FE8C8" alt="Android" />
-    <img src="https://img.shields.io/badge/Expo-SDK%2057-8FCBFF?style=flat-square&amp;labelColor=12130F" alt="Expo SDK 57" />
+    <img src="https://img.shields.io/badge/Expo-SDK%2058-8FCBFF?style=flat-square&amp;labelColor=12130F" alt="Expo SDK 58" />
     <img src="https://img.shields.io/badge/TypeScript-C9B8FF?style=flat-square&amp;labelColor=12130F" alt="TypeScript" />
     <img src="https://img.shields.io/badge/Data-local%20first-8FE8C8?style=flat-square&amp;labelColor=12130F" alt="Local-first data" />
   </p>
@@ -83,7 +83,7 @@ app data. See [Backup & restore](BACKUP.md) for folder selection, restore valida
 
 ### Requirements
 
-- **Node.js 22.13 or newer**; `.nvmrc` selects Node 22. See the [Expo SDK 57 reference](https://docs.expo.dev/versions/v57.0.0/).
+- **Node.js 22.13 or newer**; `.nvmrc` selects Node 22. See the [Expo SDK 58 reference](https://docs.expo.dev/versions/v58.0.0/).
 - npm and the dependencies in the committed lockfile.
 - An Android development environment and an emulator or connected Android phone for local native builds.
 
@@ -186,7 +186,7 @@ Start with the [documentation index](docs/INDEX.md) and [architecture and logic 
 | [Backup & restore](BACKUP.md)                          | Local-folder backups, choosing existing data, restore safety and recovery. |
 | [Build guide](BUILD.md)                                | APK/AAB builds and device verification.                                    |
 | [Audit record](docs/archive/AUDIT.md)                  | Recorded fixes, validation and remaining device checks.                    |
-| [Expo SDK 57](https://docs.expo.dev/versions/v57.0.0/) | The versioned Expo reference used by this project.                         |
+| [Expo SDK 58](https://docs.expo.dev/versions/v58.0.0/) | The versioned Expo reference used by this project.                         |
 
 ---
 

@@ -37,6 +37,10 @@ module.exports = defineConfig([
       'react-hooks/refs': 'warn',
       'react-hooks/immutability': 'warn',
       'react-hooks/set-state-in-effect': 'off',
+      // expo-notifications 58 re-exports its Android enums in a form this rule cannot follow, so it reports
+      // existing members (AndroidImportance) as missing. The TypeScript compiler already rejects a namespace
+      // member that does not exist, which makes this rule redundant here.
+      'import/namespace': 'off',
     },
   },
   {

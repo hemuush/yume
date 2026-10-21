@@ -1,5 +1,5 @@
 import { useCallback, useRef } from 'react';
-import type { View } from 'react-native';
+import type { ViewInstance } from 'react-native';
 
 export interface GrowRect {
   x: number;
@@ -44,7 +44,7 @@ const MEASURE_FALLBACK_MS = 120;
  * test renderer) or a zero-size rect it just calls `go`.
  */
 export function useCardGrow() {
-  const ref = useRef<View>(null);
+  const ref = useRef<ViewInstance>(null);
   const growFrom = useCallback((go: () => void) => {
     const node = ref.current;
     if (!node || typeof node.measureInWindow !== 'function') {

@@ -1,5 +1,5 @@
 import { create, act } from 'react-test-renderer';
-import { View } from 'react-native';
+import { View, type ViewInstance } from 'react-native';
 import { growHref, isGrowRoute, subscribeCardGrow, useCardGrow } from './cardGrow';
 
 describe('growHref and isGrowRoute', () => {
@@ -25,7 +25,7 @@ describe('useCardGrow', () => {
       <View
         ref={(node) => {
           if (node && measure) node.measureInWindow = measure;
-          (ref as { current: View | null }).current = node;
+          (ref as { current: ViewInstance | null }).current = node;
         }}
         testID="card"
         onTouchEnd={() => growFrom(go)}

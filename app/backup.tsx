@@ -101,7 +101,7 @@ async function shareTempFile(
   const file = new File(Paths.cache, name);
   try {
     file.create();
-    file.write(content);
+    await file.write(content);
     if (!(await Sharing.isAvailableAsync())) throw new Error("Sharing isn't available on this phone.");
     await withoutRelock(() => Sharing.shareAsync(file.uri, options));
   } finally {

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { View, Animated, Easing, StyleProp, TextStyle, Pressable } from 'react-native';
+import { View, Animated, Easing, StyleProp, TextStyle, Pressable, ViewInstance } from 'react-native';
 import { captureRef } from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
 import { File } from 'expo-file-system';
@@ -23,8 +23,6 @@ import { styles } from './wrap.styles';
 import { Rise, Kicker } from './WrapBeatPrimitives';
 import { BarsBeat, DaysBeat, WeekDaysBeat } from './WrapCharts';
 import { withPressed } from '@/lib/pressed';
-
-export { BarsBeat, DaysBeat, WeekDaysBeat } from './WrapCharts';
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 const EASE = Easing.out(Easing.cubic);
@@ -334,7 +332,7 @@ function FinalBeat({
   onOpenReport: () => void;
   onReplay?: () => void;
 }) {
-  const card = useRef<View>(null);
+  const card = useRef<ViewInstance>(null);
   const { accent, secondary } = useAccent();
   const hook = wrap.beats.find((b): b is BeatOf<'hook'> => b.kind === 'hook');
   const top = wrap.beats.find((b): b is BeatOf<'bars'> => b.kind === 'bars')?.items.slice(0, 3) ?? [];

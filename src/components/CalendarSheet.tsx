@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { View, Pressable, Animated, StyleSheet, ScrollView } from 'react-native';
+import { View, Pressable, Animated, StyleSheet, ScrollView, ScrollViewInstance } from 'react-native';
 import { Text } from '@/components/Text';
 import Feather from '@expo/vector-icons/Feather';
 import { ModalSheet } from '@/components/ModalSheet';
@@ -65,7 +65,7 @@ export function CalendarSheet({
   // The month currently on screen — starts on the selected date's month.
   const [viewMonth, setViewMonth] = useState(() => value.slice(0, 7));
   const [pickingMonth, setPickingMonth] = useState(false);
-  const yearStripRef = useRef<ScrollView>(null);
+  const yearStripRef = useRef<ScrollViewInstance>(null);
 
   // Re-seed the view when the sheet is reopened for a different value.
   const [seededFor, setSeededFor] = useState(value);

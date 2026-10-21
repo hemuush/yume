@@ -94,7 +94,8 @@ function Tab({
 export function PillTabBar({
   state,
   descriptors,
-  navigation,
+  emitter,
+  navigateToTab,
   insets,
   onAdd,
   onAddLongPress,
@@ -144,19 +145,19 @@ export function PillTabBar({
               size={inner}
               logAgain={isHome}
               onPress={() => {
-                const event = navigation.emit({
+                const event = emitter.emit({
                   type: 'tabPress',
                   target: route.key,
                   canPreventDefault: true,
                 });
                 if (!focused && !event.defaultPrevented) {
                   haptics.tap();
-                  navigation.navigate(route.name, route.params);
+                  navigateToTab(route.key);
                 }
               }}
               onLongPress={() => {
                 if (isHome && focused) onAddLongPress();
-                else navigation.emit({ type: 'tabLongPress', target: route.key });
+                else emitter.emit({ type: 'tabLongPress', target: route.key });
               }}
             />
           );

@@ -2,7 +2,7 @@
 
 Start with the [README](../README.md), [architecture and logic](ARCHITECTURE.md), [data model](../DATA_MODEL.md), [backup and restore](../BACKUP.md) and [build/release guide](../BUILD.md).
 
-The [21 October related-sheet navigation fix](SHEET_FLOW_REVIEW_2026_10_21.md) replaces detached child popups with one persistent native sheet for loan, goal, budget, valuation, transaction-to-recurring and next-occurrence tasks. Native phone acceptance remains separate from automated checks.
+The [21 October Expo SDK 58 upgrade](SDK_58_UPGRADE_2026_10_21.md) records the version moves, the code the upgrade required, packages held back, test-tooling workarounds and validation limits. The [21 October performance, database, motion and link audit](AUDIT_PLAN_REVIEW_2026_10_21.md) records fresh query plans, fixture timings and the items deliberately left unchanged, plus the report-only CI performance step. The [21 October related-sheet navigation fix](SHEET_FLOW_REVIEW_2026_10_21.md) replaces detached child popups with one persistent native sheet for loan, goal, budget, valuation, transaction-to-recurring and next-occurrence tasks. Native phone acceptance remains separate from automated checks.
 
 The latest targeted review is the [21 October goals and budgets review](GOALS_BUDGETS_FLOW_REVIEW_2026_10_21.md), covering overview/edit navigation, contribution and reservation safety, privacy, nested totals and shared code structure. The [Add transaction flow review](ADD_TRANSACTION_FLOW_REVIEW_2026_10_21.md) covers edit protection, duplicate submission, deletion coordination, loading recovery and split navigation. The [loan-flow review](LOAN_FLOW_REVIEW_2026_10_21.md) covers entry points, payment/receipt confirmation, schedule completeness and loan sheets. The [pending-flow recheck](PENDING_FLOW_RECHECK_2026_10_21.md) covers shared confirmation callbacks, recurring mutation locks and account-currency initialization. The earlier [cleanup recheck](CLEANUP_RECHECK_2026_10_21.md) covers follow-up removals, date-refresh correction, all-theme coverage and outstanding phone checks. The [initial cleanup report](CODE_REFINEMENT_2026_10_21.md) retains its original removal decisions and validation. Dated reports below describe their recorded revisions; they are not current test runs.
 
@@ -44,7 +44,6 @@ Reports retain previous evidence in an expandable historical section. Their date
 | [TRANSACTION_FIX_REPORT.md](archive/TRANSACTION_FIX_REPORT.md)                    | Historical implementation and validation record      |
 | [UI_REFINEMENT_REPORT.md](archive/UI_REFINEMENT_REPORT.md)                        | Historical implementation and validation record      |
 | [UI_UX_REFINEMENT_REPORT.md](archive/UI_UX_REFINEMENT_REPORT.md)                  | Historical implementation and validation record      |
-| [vendor/decode-uri-component/README.md](../vendor/decode-uri-component/README.md) | Compatibility package maintenance                    |
 
 See the [11 October cleanup record](CLEANUP.md) for that revision's removal decisions and validation.
 

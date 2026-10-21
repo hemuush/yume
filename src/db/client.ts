@@ -29,7 +29,7 @@ export async function migrateDbFilename(): Promise<void> {
       const target = new File(sqliteDir, `${DB_NAME}${suffix}`);
       if (target.exists) target.delete();
       copied.push(target);
-      source.copy(target);
+      await source.copy(target);
     }
   } catch (error) {
     for (const file of copied.reverse()) {

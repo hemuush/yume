@@ -1,12 +1,11 @@
-import { Component, useCallback, useMemo, useState } from 'react';
-import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
+import { type Component, useCallback, useMemo, useState } from 'react';
+import type { HostInstance, NativeScrollEvent, NativeSyntheticEvent, ScrollViewInstance } from 'react-native';
 import {
   useAnimatedRef,
   useAnimatedScrollHandler,
   useSharedValue,
   SharedValue,
 } from 'react-native-reanimated';
-import type Animated from 'react-native-reanimated';
 
 /** What SkyHeader needs to follow the list: pass it as `collapse`. */
 export interface CollapsingHeader {
@@ -24,10 +23,10 @@ export interface CollapsingHeader {
  * `collapse` to SkyHeader. `collapsedHeight` is how much of the page the shrunk header covers, for jumps.
  * The header follows the scroll offset without issuing a second scroll after the finger lifts.
  */
-export function useCollapsingHeader<T extends Component = Animated.ScrollView>() {
+export function useCollapsingHeader<T extends HostInstance | Component = ScrollViewInstance>() {
   const scrollY = useSharedValue(0);
   const distance = useSharedValue(0);
-  // A ScrollView's by default; a FlatList screen names its own list type.
+  // A ScrollView's by default; a FlatList screen names its own list instance type.
   const scrollRef = useAnimatedRef<T>();
   const [headerHeight, setHeaderHeight] = useState(0);
   const [collapsedHeight, setCollapsedHeight] = useState(0);
