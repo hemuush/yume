@@ -18,7 +18,8 @@ import {
   type NativeScrollEvent,
   type NativeSyntheticEvent,
   type TextInputProps,
-  type TextInput as RNTextInput,
+  type TextInputInstance,
+  ViewInstance,
 } from 'react-native';
 import type { KeyboardAwareScrollViewRef } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -38,7 +39,7 @@ interface AmountSlot {
 }
 
 interface PadHost {
-  open: (id: string, slot: MutableRefObject<AmountSlot>, node: RefObject<View | null>) => void;
+  open: (id: string, slot: MutableRefObject<AmountSlot>, node: RefObject<ViewInstance | null>) => void;
   close: (id: string) => void;
 }
 
@@ -69,13 +70,13 @@ export function useAmountPadHost() {
   );
 
   const host = useMemo<PadHost>(() => {
-    const scrollIntoView = (node: View) => {
+    const scrollIntoView = (node: ViewInstance) => {
       if (scrollTimer.current) clearTimeout(scrollTimer.current);
       // Wait a beat so the scroll view has resized for the pad before measuring.
       scrollTimer.current = setTimeout(() => {
         const scroll = scrollRef.current;
         if (!scroll) return;
-        (scroll as unknown as View).measureInWindow((_sx, sy, _sw, sh) => {
+        (scroll as unknown as ViewInstance).measureInWindow((_sx, sy, _sw, sh) => {
           node.measureInWindow((_fx, fy, _fw, fh) => {
             const margin = 16;
             if (fy < sy + margin) {
@@ -164,13 +165,13 @@ interface Props extends Omit<TextInputProps, 'keyboardType' | 'inputMode' | 'sho
  * A number field (money, rates, months, days) that never opens the phone keyboard: focus docks Yume's pad
  * (see `useAmountPadHost`) so Save stays in view. Outside a host it falls back to a plain numeric input.
  */
-export const AmountField = forwardRef<RNTextInput, Props>(function AmountField(
+export const AmountField = forwardRef<TextInputInstance, Props>(function AmountField(
   { label, decimal = true, value, onChangeText, onFocus, onBlur, style, ...rest },
   ref
 ) {
   const host = useContext(PadHostContext);
   const id = useId();
-  const wrapRef = useRef<View>(null);
+  const wrapRef = useRef<ViewInstance>(null);
   const slot = useRef<AmountSlot>({ value: '', onChangeText: () => {}, decimal, maxLength: rest.maxLength });
   useEffect(() => {
     slot.current = {

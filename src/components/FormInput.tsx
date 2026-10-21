@@ -1,5 +1,5 @@
 import { forwardRef, useState } from 'react';
-import { View, StyleSheet, TextInputProps, type TextInput as RNTextInput } from 'react-native';
+import { View, StyleSheet, TextInputProps, type TextInputInstance } from 'react-native';
 import { Text, TextInput } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { useSheetSurface } from './SheetSurface';
@@ -12,7 +12,7 @@ interface Props extends TextInputProps {
   label: string;
 }
 
-export const FormInput = forwardRef<RNTextInput, Props>(function FormInput(
+export const FormInput = forwardRef<TextInputInstance, Props>(function FormInput(
   { label, style, onFocus, onBlur, ...rest },
   ref
 ) {
