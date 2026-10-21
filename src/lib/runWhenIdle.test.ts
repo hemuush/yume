@@ -2,7 +2,11 @@ import { runWhenIdle } from './runWhenIdle';
 
 const original = globalThis.requestIdleCallback;
 afterEach(() => {
-  globalThis.requestIdleCallback = original;
+  Object.defineProperty(globalThis, 'requestIdleCallback', {
+    configurable: true,
+    writable: true,
+    value: original,
+  });
   jest.useRealTimers();
 });
 
@@ -24,6 +28,31 @@ it('falls back to a zero-delay timer where requestIdleCallback is missing', () =
   const task = jest.fn();
   runWhenIdle(task);
   expect(task).not.toHaveBeenCalled();
+  jest.runAllTimers();
+  expect(task).toHaveBeenCalledTimes(1);
+});
+
+it('falls back to a timer instead of throwing when reading requestIdleCallback fails', () => {
+  jest.useFakeTimers();
+  Object.defineProperty(globalThis, 'requestIdleCallback', {
+    configurable: true,
+    get() {
+      throw new Error("TurboModuleRegistry.getEnforcing(...): 'NativeIdleCallbacksCxx' could not be found.");
+    },
+  });
+  const task = jest.fn();
+  expect(() => runWhenIdle(task)).not.toThrow();
+  jest.runAllTimers();
+  expect(task).toHaveBeenCalledTimes(1);
+});
+
+it('falls back to a timer when scheduling the idle callback itself throws', () => {
+  jest.useFakeTimers();
+  globalThis.requestIdleCallback = () => {
+    throw new Error('scheduling failed');
+  };
+  const task = jest.fn();
+  expect(() => runWhenIdle(task)).not.toThrow();
   jest.runAllTimers();
   expect(task).toHaveBeenCalledTimes(1);
 });
