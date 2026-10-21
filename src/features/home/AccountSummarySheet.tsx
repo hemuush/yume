@@ -7,6 +7,7 @@ import { getAccountFlow, listTransactions, AccountFlow } from '@/db/ledger';
 import { Account, Category, Transaction } from '@/types';
 import { theme } from '@/constants/theme';
 import { ModalSheet } from '@/components/ModalSheet';
+import { SheetFlow } from '@/components/SheetFlow';
 import { AccountReservations } from '@/features/goals/AccountReservations';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { SheetCard } from '@/components/SheetCard';
@@ -193,8 +194,9 @@ export function AccountSummarySheet({
           : `${money(-net)} more went out than came in.`;
 
   return (
-    <>
+    <SheetFlow key={account.id}>
       <ModalSheet
+        flowPage
         size="expanded"
         title="Account details"
         visible={!(valueSheet && inv)}
@@ -411,7 +413,7 @@ export function AccountSummarySheet({
           }}
         />
       )}
-    </>
+    </SheetFlow>
   );
 }
 

@@ -4,6 +4,20 @@ Use the new candidate containing notification delivery diagnostics and lifecycle
 
 Record: APK/build ___; phone/model ___; Android ___; launcher ___; date ___; tester ___ .
 
+## Related sheet navigation — 21 October 2026
+
+Use a candidate containing the [persistent sheet flow](SHEET_FLOW_REVIEW_2026_10_21.md). The earlier APK `7c761af` does not contain this correction.
+
+| Area                    | Action                                                                       | Expected result                                                                                                            | Actual/status |
+| ----------------------- | ---------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- | ------------- |
+| Loan subtask            | Plan → Debt → loan → EMI account; choose/cancel, reopen and save             | One bottom-sheet window stays open at the same position; Back returns to that loan; only Save changes the account          | Not run       |
+| Other loan tasks        | Open asset, rate, prepayment and EMI recording                               | Same sheet frame and theme; correct parent returns; saving blocks Back                                                     | Not run       |
+| Goal and budget         | Open overview → edit; goal editor → reservation; budget → Edit limit         | Parent draft and scroll position survive Back; child actions stay inside the same sheet                                    | Not run       |
+| Account and recurring   | Account → update value; entry → make recurring; recurring → next occurrence  | No detached centered popup or page flash; the labelled Back action returns to the expected parent                          | Not run       |
+| Input and accessibility | Repeat with keyboard, amount pad, enlarged text, TalkBack and reduced motion | Actions stay above navigation/keyboard; hidden parent cannot receive touch or focus; no duplicate native opening animation | Not run       |
+
+## General release checks
+
 | Area                        | Action                                                                                               | Expected result                                                                                                                                                                 | Actual/status |
 | --------------------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
 | Upgrade                     | Install over the current app, open Home/Activity/Plan/Reports                                        | Existing balances, entries, loans, goals and settings remain; no unwanted onboarding                                                                                            | Not run       |

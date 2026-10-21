@@ -1,3 +1,5 @@
+import { useCallback, useContext, useId, useLayoutEffect, useState } from 'react';
+import { SheetFlowContext } from './SheetFlow';
 import { Keyboard, View, Modal, Pressable, Animated, StyleSheet, useWindowDimensions } from 'react-native';
 import { Text } from '@/components/Text';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -26,6 +28,8 @@ interface Props {
   size?: 'compact' | 'standard' | 'expanded';
   dismissible?: boolean;
   backLabel?: string;
+  /** A root page in a SheetFlow; child tasks with backLabel join the flow automatically. */
+  flowPage?: boolean;
   /** Set false for short dialogs whose content should not scroll. */
   scrollable?: boolean;
   /** The ✕ that closes it, top-right. On by default — it's what replaced every Cancel button. */
@@ -45,6 +49,46 @@ interface Props {
  * share the main screens' palette.
  */
 export function ModalSheet(props: Props) {
+  const flow = useContext(SheetFlowContext);
+  return flow && (props.flowPage || props.backLabel) ? (
+    <FlowPage {...props} />
+  ) : (
+    <StandaloneSheet {...props} />
+  );
+}
+
+function FlowPage(props: Props) {
+  const flow = useContext(SheetFlowContext)!;
+  const { register } = flow;
+  const id = useId();
+  const { visible, dismissible = true, onClose } = props;
+  const [visited, setVisited] = useState(visible);
+  const close = useCallback(() => {
+    if (dismissible) {
+      Keyboard.dismiss();
+      onClose();
+    }
+  }, [dismissible, onClose]);
+  useLayoutEffect(() => {
+    if (visible) {
+      setVisited(true);
+      return register(id, close);
+    }
+  }, [visible, id, register, close]);
+  if (!visible && !visited) return null;
+  return (
+    <View
+      style={[StyleSheet.absoluteFill, !visible && { display: 'none' }]}
+      accessibilityElementsHidden={!visible}
+      importantForAccessibility={visible ? 'auto' : 'no-hide-descendants'}
+      pointerEvents={visible ? 'auto' : 'none'}
+    >
+      <ModalSheetBody {...props} variant="sheet" size="expanded" onClose={close} />
+    </View>
+  );
+}
+
+function StandaloneSheet(props: Props) {
   const { visible, onClose, dismissible = true } = props;
   const close = () => {
     if (dismissible) {
@@ -220,12 +264,25 @@ function ModalSheetBody({
   size = 'standard',
   dismissible = true,
   backLabel,
+  flowPage,
+  visible,
 }: Props) {
+  const flow = useContext(SheetFlowContext);
+  const inFlow = !!flow && (!!backLabel || flowPage);
   const insets = useSafeAreaInsets();
   const { height, fontScale } = useWindowDimensions();
   const maxHeight =
     height < 640 || fontScale > 1.2 || size === 'expanded' ? '94%' : size === 'compact' ? '78%' : '90%';
   const isSheet = variant === 'sheet';
+  const viewportHeight = flow?.viewportHeight ? Math.min(height, flow.viewportHeight) : height;
+  const flowFrame = inFlow
+    ? {
+        minHeight: Math.min(
+          flow.minimumHeight,
+          Math.max(0, ((viewportHeight - insets.top - 8) * parseFloat(maxHeight)) / 100)
+        ),
+      }
+    : undefined;
   const stripView = !isSheet && strip ? <View style={[styles.strip, { backgroundColor: strip }]} /> : null;
 
   // The pad an AmountField docks under the sheet, in place of the phone keyboard.
@@ -308,12 +365,18 @@ function ModalSheetBody({
             style={[styles.flex, styles.alignBottom, { paddingTop: insets.top + 8 }]}
             pointerEvents="box-none"
           >
-            <View testID="sheet-surface" style={[styles.framedSheet, { maxHeight }]}>
+            <View
+              testID="sheet-surface"
+              onLayout={
+                inFlow && visible ? (event) => flow.measure(event.nativeEvent.layout.height) : undefined
+              }
+              style={[styles.framedSheet, { maxHeight }, flowFrame]}
+            >
               <SheetWash />
               <View style={styles.framedPad}>{header}</View>
               <KeyboardAwareScrollView
                 {...scrollTracking}
-                style={styles.framedBody}
+                style={[styles.framedBody, inFlow && styles.flowBody]}
                 contentContainerStyle={styles.framedSheetContent}
                 bottomOffset={24}
                 keyboardShouldPersistTaps="handled"
@@ -423,6 +486,7 @@ const styles = StyleSheet.create({
   // --- pinned-footer layouts ---
   framedPad: { paddingHorizontal: 20, paddingTop: 20 },
   framedBody: { flexGrow: 0, flexShrink: 1 },
+  flowBody: { flexGrow: 1 },
   framedSheet: {
     backgroundColor: theme.colors.surface,
     overflow: 'hidden',

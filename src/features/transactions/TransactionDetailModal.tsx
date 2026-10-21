@@ -1,4 +1,5 @@
 import { useSaveOnce } from '@/lib/useSaveOnce';
+import { SheetFlow } from '@/components/SheetFlow';
 import { useEffect, useMemo, useState } from 'react';
 import { View, Pressable } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
@@ -335,8 +336,9 @@ export function TransactionDetailModal({
   const route = transfer ? `${accountName(tx.accountId)} → ${accountName(tx.toAccountId!)}` : null;
 
   return (
-    <>
+    <SheetFlow key={tx.id}>
       <ModalSheet
+        flowPage
         visible={!ruleOpen}
         title="Entry details"
         dismissible={!busy}
@@ -607,6 +609,7 @@ export function TransactionDetailModal({
         </>
       </ModalSheet>
       <RuleModal
+        backLabel="Back to entry"
         visible={ruleOpen}
         editing={null}
         accounts={accounts}
@@ -619,6 +622,6 @@ export function TransactionDetailModal({
         }}
         onDeleted={() => setRuleOpen(false)}
       />
-    </>
+    </SheetFlow>
   );
 }

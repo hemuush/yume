@@ -14,6 +14,13 @@ jest.mock('expo-screen-capture', () => ({
 // keyboard module tests don't have; screens' tests assert on the call itself.
 jest.mock('@/components/AppDialog', () => ({ showAlert: jest.fn(), AppDialogHost: () => null }));
 
+// Feature suites already replace native sheet shells. Exercise the real persistent window in
+// ModalSheet.test.tsx; other suites keep their existing form/financial-flow harnesses.
+jest.mock('@/components/SheetFlow', () => ({
+  SheetFlow: ({ children }: { children: unknown }) => children,
+  SheetFlowContext: require('react').createContext(null),
+}));
+
 // Wrap's share card is captured as a picture by a native module tests don't have.
 jest.mock('react-native-view-shot', () => ({ captureRef: jest.fn(async () => 'file:///wrap.png') }));
 
