@@ -1,3 +1,33 @@
+// jest-expo 58 stubs the asset registry at 'react-native/asset-registry', but expo-asset (font loading by
+// every @expo/vector-icons icon) reads AssetRegistry from 'react-native', which React Native 0.88 serves
+// from src/private/assets/AssetRegistry. That one stays empty under jest-expo's font/image stub (module id 1),
+// so each icon mount rejected with 'Module "1" is missing from the asset registry'. Stub the module that is
+// really read, with jest-expo's own shape. Remove once jest-expo covers it.
+jest.mock(
+  require('node:path').join(
+    require('node:path').dirname(require.resolve('react-native/package.json')),
+    'src/private/assets/AssetRegistry'
+  ),
+  () => ({
+    AssetRegistry: {
+      registerAsset: jest.fn(() => 1),
+      getAssetByID: jest.fn(() => ({
+        fileSystemLocation: '/full/path/to/directory',
+        httpServerLocation: '/assets/full/path/to/directory',
+        scales: [1],
+        fileHashes: ['md5'],
+        name: 'name',
+        exists: true,
+        type: 'type',
+        hash: 'md5',
+        uri: 'uri',
+        width: 1,
+        height: 1,
+      })),
+    },
+  })
+);
+
 // expo-notifications registers a device-push-token listener at import time
 // (DevicePushTokenAutoRegistration). In the Node test environment that leaves
 // an open handle behind, which is why Jest reported "a worker process has

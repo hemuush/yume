@@ -1,10 +1,10 @@
 # Build and release guide
 
-Yume uses Expo SDK 57 and EAS Build. Read the [exact SDK 57 documentation](https://docs.expo.dev/versions/v57.0.0/) before changing native configuration or Expo APIs.
+Yume uses Expo SDK 58 and EAS Build. Read the [exact SDK 58 documentation](https://docs.expo.dev/versions/v58.0.0/) before changing native configuration or Expo APIs.
 
 ## Environment
 
-Use Node 22.13 or newer and install the lockfile dependencies with `npm ci`. The SDK 57 reference lists React Native 0.86, React 19.2.3, Android 7 or newer, and Android compile/target API 36. These platform floors do not guarantee compatibility with every device or future Android version.
+Use Node 22.13 or newer and install the lockfile dependencies with `npm ci`. SDK 58 pins React Native 0.88 and React 19.3.0; React Native 0.88's Gradle defaults are Android 7 or newer (minSdk 24), target API 36 and compile API 37, built with Gradle 9.4.1 and Android Gradle Plugin 9, which need a current JDK for local builds. These platform floors do not guarantee compatibility with every device or future Android version.
 
 The project owner is `hemant.shrma.3004`, configured in [app.json](app.json), linked to EAS project `e649762d-57b0-4a9a-bcd6-0185188a9294`: [project dashboard](https://expo.dev/accounts/hemant.shrma.3004/projects/yume). On 21 October 2026, `eas whoami` confirmed this account, but `eas project:info` rejected the previously configured ID `cc28c8d3-765f-46b2-accc-4cd89f084075` as nonexistent. Removing that stale ID and running `eas project:init --account hemant.shrma.3004 --non-interactive --json --no-icon` linked the existing `yume` project; no new remote project was created. A subsequent `eas project:info` confirmed the new ID. Log into an account with access to that project. Run `eas init` only when intentionally relinking a project or fork.
 

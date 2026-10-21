@@ -2,7 +2,7 @@ import { useLocalDayRefresh } from '@/lib/useLocalDayRefresh';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { onTransactionsChanged } from '@/lib/dataEvents';
 import { useFreshness } from '@/lib/useFreshness';
-import { View, FlatList, Pressable, Animated, useWindowDimensions } from 'react-native';
+import { View, Pressable, Animated, useWindowDimensions, type FlatListInstance } from 'react-native';
 import { Text, TextInput } from '@/components/Text';
 import ReanimatedAnimated, { FadeIn, ReduceMotion } from 'react-native-reanimated';
 import { PrimaryButton } from '@/components/PrimaryButton';
@@ -136,7 +136,7 @@ export default function TransactionsScreen() {
   const [loadError, setLoadError] = useState<string | null>(null);
   // The header sits over the list and shrinks as it scrolls.
   const { collapse, headerHeight, collapsedHeight, scrollHandler, scrollRef } =
-    useCollapsingHeader<FlatList<{ date: string; items: Transaction[] }>>();
+    useCollapsingHeader<FlatListInstance>();
   useTabScrollToTop(scrollRef);
   // Which stacked lines ("Food & Dining ×5") are open lives here, not in TimelineDay: FlatList unmounts
   // off-screen rows, and local state there would silently close a stack the user opened.

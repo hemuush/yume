@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Animated, View, Pressable, ScrollView, useWindowDimensions } from 'react-native';
+import { Animated, View, Pressable, ScrollView, useWindowDimensions, ScrollViewInstance } from 'react-native';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import type { CashFlowPoint } from '@/db/reports';
@@ -65,7 +65,7 @@ export function CashFlowCard({
   monthLink?: (index: number, count: number) => { name: string; open: () => void } | null;
 }) {
   const [sel, setSel] = useState<number | null>(null);
-  const chartScroll = useRef<ScrollView>(null);
+  const chartScroll = useRef<ScrollViewInstance>(null);
   const { width, fontScale } = useWindowDimensions();
   const { accent } = useAccent();
   if (points.length < MIN_TREND_POINTS || !points.some((p) => p.recorded !== false && p.incomeMinor > 0))

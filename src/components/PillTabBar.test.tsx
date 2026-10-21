@@ -12,7 +12,8 @@ jest.mock('./icons/TabIcons', () => ({
   ReportsIcon: () => null,
 }));
 function render(index: number) {
-  const navigation = { emit: jest.fn(() => ({ defaultPrevented: false })), navigate: jest.fn() };
+  const emitter = { emit: jest.fn((_event: unknown) => ({ defaultPrevented: false })) };
+  const navigateToTab = jest.fn();
   const add = jest.fn(),
     repeat = jest.fn();
   const routes = ['index', 'transactions', 'add', 'plan', 'reports'].map((name) => ({ key: name, name }));
@@ -34,7 +35,8 @@ function render(index: number) {
       <PillTabBar
         {...({
           state: { index, routes },
-          navigation,
+          emitter,
+          navigateToTab,
           descriptors,
           insets: { top: 0, bottom: 0, left: 0, right: 0 },
           onAdd: add,
@@ -43,10 +45,10 @@ function render(index: number) {
       />
     );
   });
-  return { tree, navigation, add, repeat };
+  return { tree, emitter, navigateToTab, add, repeat };
 }
 it('shows Home Add and preserves repeat entry on long press', () => {
-  const { tree, repeat, navigation, add } = render(0);
+  const { tree, repeat, emitter, navigateToTab, add } = render(0);
   const addButton = tree.root.findAll(
     (n) => n.props.accessibilityLabel === 'Add a transaction' && n.props.onPress
   )[0];
@@ -58,7 +60,26 @@ it('shows Home Add and preserves repeat entry on long press', () => {
   expect(repeat).toHaveBeenCalledTimes(1);
   const plan = tree.root.findAll((n) => n.props.accessibilityLabel === 'Plan' && n.props.onPress)[0];
   act(() => plan.props.onPress());
-  expect(navigation.navigate).toHaveBeenCalledWith('plan', undefined);
+  expect(emitter.emit).toHaveBeenCalledWith({ type: 'tabPress', target: 'plan', canPreventDefault: true });
+  expect(navigateToTab).toHaveBeenCalledWith('plan');
+  act(() => tree.unmount());
+});
+it('does not navigate when a tab press is prevented or the tab is already focused', () => {
+  const { tree, emitter, navigateToTab } = render(0);
+  emitter.emit.mockReturnValueOnce({ defaultPrevented: true });
+  const pressOf = (label: string) =>
+    tree.root.findAll((n) => n.props.accessibilityLabel === label && n.props.onPress)[0];
+  act(() => pressOf('Plan').props.onPress());
+  expect(navigateToTab).not.toHaveBeenCalled();
+  act(() => pressOf('Home').props.onPress());
+  expect(navigateToTab).not.toHaveBeenCalled();
+  act(() => tree.unmount());
+});
+it('forwards a long press on another tab to the navigator', () => {
+  const { tree, emitter } = render(0);
+  const plan = tree.root.findAll((n) => n.props.accessibilityLabel === 'Plan' && n.props.onLongPress)[0];
+  act(() => plan.props.onLongPress());
+  expect(emitter.emit).toHaveBeenCalledWith({ type: 'tabLongPress', target: 'plan' });
   act(() => tree.unmount());
 });
 it('retains Add on other screens', () => {

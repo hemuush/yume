@@ -10,6 +10,7 @@ import {
   LayoutChangeEvent,
   ScrollView,
   AppState,
+  ScrollViewInstance,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
@@ -74,8 +75,8 @@ export function WrapPlayer({
     AppState.currentState !== 'background' && AppState.currentState !== 'inactive'
   );
   const [headerHeight, setHeaderHeight] = useState(180);
-  const chapterScroll = useRef<ScrollView>(null);
-  const storyScroll = useRef<ScrollView>(null);
+  const chapterScroll = useRef<ScrollViewInstance>(null);
+  const storyScroll = useRef<ScrollViewInstance>(null);
   const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const held = useRef(false);
   const chapterPositions = useRef<number[]>([]);
