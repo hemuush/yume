@@ -8,11 +8,8 @@ import {
   useRef,
   ReactNode,
 } from 'react';
-import {
-  getHideSensitiveAmounts,
-  setHideSensitiveAmounts,
-  getCachedHideSensitiveAmounts,
-} from '@/db/settings';
+import { getHideSensitiveAmounts, getCachedHideSensitiveAmounts } from '@/db/settings';
+import { saveHideSensitiveAmounts } from '@/db/afterCommit';
 import { onSettingsRestored } from '@/lib/dataEvents';
 import { useAppLock } from '@/lib/AppLockContext';
 import { authenticate } from '@/lib/appLock';
@@ -86,7 +83,7 @@ export function PrivacyProvider({ children }: { children: ReactNode }) {
     }
     apply(next);
     try {
-      if ((await setHideSensitiveAmounts(next)) === false) showPrivacyReminderWarning();
+      if ((await saveHideSensitiveAmounts(next)) === false) showPrivacyReminderWarning();
     } catch {
       // Keep the switch usable this session, but don't imply persisted preferences or queued alerts changed.
       showAlert(

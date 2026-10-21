@@ -1,11 +1,16 @@
 import { clampSlotMinutes } from '../lib/notificationTimes';
-import type { QueuedAlert } from '../lib/notificationPlan';
+import type { QueuedAlert } from '../lib/queuedAlert';
 import { getDb } from './client';
-import { refreshPrivacyNotificationsAfterCommit } from './afterCommit';
 
-// Cached in-memory after first load so formatMoney() etc. can read it
-// synchronously without every call touching SQLite.
-let cachedCurrency: string | null = null;
+import {
+  DEFAULT_CURRENCY,
+  getCachedCurrency,
+  primeCurrencyCache,
+  readCurrencyCache,
+  setCurrencyCache,
+} from './currencyCache';
+
+export { getCachedCurrency, primeCurrencyCache };
 
 /**
  * Read-modify-write settings (the "seen"/"sent"/queue lists) run one at a time: two overlapping calls would
@@ -18,26 +23,17 @@ function withSettingsLock<T>(fn: () => Promise<T>): Promise<T> {
   return run;
 }
 
-const DEFAULT_CURRENCY = 'INR';
 const CURRENCY_KEY = 'default_currency';
 
 export async function getDefaultCurrency(): Promise<string> {
-  if (cachedCurrency) return cachedCurrency;
+  const cached = readCurrencyCache();
+  if (cached) return cached;
   const db = await getDb();
   const row = await db.getFirstAsync<{ value: string }>('SELECT value FROM settings WHERE key = ?', [
     CURRENCY_KEY,
   ]);
-  cachedCurrency = row?.value ?? DEFAULT_CURRENCY;
-  return cachedCurrency;
-}
-
-export function getCachedCurrency(): string {
-  return cachedCurrency ?? DEFAULT_CURRENCY;
-}
-
-/** For db/client.ts to call during init with an already-open db handle, avoiding a circular getDb() call. */
-export function primeCurrencyCache(value: string | null): void {
-  cachedCurrency = value ?? DEFAULT_CURRENCY;
+  setCurrencyCache(row?.value ?? DEFAULT_CURRENCY);
+  return getCachedCurrency();
 }
 
 export async function setDefaultCurrency(code: string): Promise<void> {
@@ -61,7 +57,7 @@ export async function setDefaultCurrency(code: string): Promise<void> {
       [CURRENCY_KEY, code]
     );
   });
-  cachedCurrency = code;
+  setCurrencyCache(code);
 }
 
 /**
@@ -493,7 +489,7 @@ export async function setLastLocalBackupResult(outcome: BackupOutcome): Promise<
 }
 
 export function resetSettingsCache(): void {
-  cachedCurrency = null;
+  setCurrencyCache(null);
   cachedAccent = null;
   cachedThemeId = undefined;
   cachedDailySpendingGoal = undefined;
@@ -749,8 +745,11 @@ export function getCachedHideSensitiveAmounts(): boolean {
   return cachedHideSensitiveAmounts ?? false;
 }
 
-/** Returns false if saved successfully but queued private reminder content could not be refreshed. */
-export async function setHideSensitiveAmounts(value: boolean): Promise<boolean> {
+/**
+ * Saves the toggle. Queued private reminder content is refreshed by saveHideSensitiveAmounts (afterCommit.ts),
+ * which this module cannot import: afterCommit needs the notification scheduler, which needs these settings.
+ */
+export async function setHideSensitiveAmounts(value: boolean): Promise<void> {
   const db = await getDb();
   await db.runAsync(
     `INSERT INTO settings (key, value) VALUES (?, ?)
@@ -758,7 +757,6 @@ export async function setHideSensitiveAmounts(value: boolean): Promise<boolean> 
     [HIDE_SENSITIVE_AMOUNTS_KEY, value ? '1' : '0']
   );
   cachedHideSensitiveAmounts = value;
-  return refreshPrivacyNotificationsAfterCommit();
 }
 
 export const SUPPORTED_CURRENCIES = [

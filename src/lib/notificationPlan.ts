@@ -2,23 +2,15 @@ import { emiCopy, emiOverdueCopy, logCopy, wrapCopy, morningCopy } from './notif
 import { dayMonth } from './dateLabels';
 import { clampSlotMinutes, TimeSlotKind } from './notificationTimes';
 import { toLocalIsoDate, addDaysToIsoDate } from './date';
+import { NOTIFICATION_ROUTES, type NotificationRoute, type QueuedAlert } from './queuedAlert';
+
+export { NOTIFICATION_ROUTES };
+export type { NotificationRoute, QueuedAlert };
 
 /**
  * What Yume will notify about in the coming days, planned in one place so two never land together.
  * At most two times a day (notificationTimes.ts); items due together merge into one, most pressing first.
  */
-
-/** The screens a notification can open; a payload naming anything else is ignored. */
-export const NOTIFICATION_ROUTES = [
-  '/add-transaction',
-  '/(tabs)/plan',
-  '/loans',
-  '/recurring',
-  '/reports',
-  '/budgets',
-  '/wrap?period=week',
-] as const;
-export type NotificationRoute = (typeof NOTIFICATION_ROUTES)[number];
 
 /** How many days ahead the daily and Monday notifications are scheduled. */
 export const PLAN_DAYS = 14;
@@ -27,22 +19,6 @@ const OVERDUE_EMI_DAYS = 7;
 /** A spending alert nobody could be notified about (both times off) is dropped after this long. */
 const ALERT_MAX_AGE_DAYS = 3;
 const DAY_MS = 24 * 60 * 60 * 1000;
-
-/** A spending alert (a budget limit, a big jump) waiting for the next time. */
-export interface QueuedAlert {
-  /** Stable per alert, so queuing the same one twice keeps one. */
-  id: string;
-  /** When it came up (ISO); it goes out at the first time on or after this. */
-  queuedAt: string;
-  title: string;
-  body: string;
-  extra: string;
-  route: NotificationRoute;
-  /** Re-resolve spending copy against live data/privacy before scheduling. Older queues lack this. */
-  source?:
-    | { kind: 'budget'; budgetId: string; periodMonth: string; level: 'near' | 'over' }
-    | { kind: 'spike'; categoryId: string; periodMonth: string };
-}
 
 /** A borrowed loan's next installment. */
 export interface PlanLoan {

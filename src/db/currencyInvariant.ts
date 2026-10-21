@@ -1,4 +1,4 @@
-import type { AppDb } from './client';
+import type { AppDb } from './dbTypes';
 
 /** Loans, IOUs and goals are denominated in the default currency; no conversion is supported. */
 export async function assertDefaultCurrencyAccount(

@@ -43,13 +43,11 @@ CI now runs `npm run test:perf` after the main tests as a report-only step (`con
 - **Dependencies.** Superseded: the app moved to Expo SDK 58 later the same day; see the [SDK 58 upgrade](SDK_58_UPGRADE_2026_10_21.md).
 - **Bundle.** `MaterialCommunityIcons` (a 1.3MB font plus a 217KB glyph map imported by the widget code) is used in 21 files, so it stays.
 
-## Needs a decision or a phone (circular imports) and a recorded decision (theme)
+## Recorded decision (theme)
 
-- **Circular imports.** `madge` finds 13 cycles, all in the db/lib layer: `settings` ↔ `afterCommit` ↔ `notifications` ↔ `notificationData`/`queuedSpendAlerts`/`reports`, and `client` ↔ `recentlyDeleted`/`refundLabels`. They work today (tests, export and fixture pass) because the cross-calls happen inside functions, but they make load order fragile. Breaking them means inverting the after-commit refresh hook; not attempted without a device.
+- **Circular imports.** Resolved the same day: `madge` found 13 cycles in the db/lib layer, all one web through `settings` ↔ `afterCommit` ↔ `notifications` and `client` ↔ `recentlyDeleted`. They are broken without behavior changes (see the [SDK 58 upgrade record](SDK_58_UPGRADE_2026_10_21.md)), and `npm run check:cycles` now fails CI on a new one.
 - **Light-only theme on Android.** Decided 21 October: the app stays light-only and no dark theme or `expo-system-ui` dependency is added. `app.json` sets `userInterfaceStyle: "light"`, which prebuild says needs `expo-system-ui` to take effect on Android, so on a phone in dark mode some native pieces (system dialogs, keyboard, date pickers) may still follow the system. Not verified on a device; revisit only if that shows up.
 
 ## Open
-
-The circular-import cycles described above are unchanged by the SDK 58 upgrade.
 
 Phone profiling (React Profiler, frame timing, startup, memory), signed-build smoke tests and the deep-link allow-list decision remain open.

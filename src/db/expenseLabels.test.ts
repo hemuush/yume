@@ -1,6 +1,8 @@
 import { createRealDataTestDb } from '@/test-support/realDataTestDb';
 const mockDb = createRealDataTestDb();
 jest.mock('@/db/client', () => ({ getDb: async () => mockDb }));
+// Creating a private category refreshes queued reminders; this test is not about notifications.
+jest.mock('@/lib/notifications', () => ({ rebuildNotifications: async () => true }));
 import { CREATE_TABLES_SQL } from './schema';
 import { createAccount, createCategory, createTransaction, listTransactions } from './ledger';
 import { expenseLabelTotals, listExpenseLabels } from './expenseLabels';

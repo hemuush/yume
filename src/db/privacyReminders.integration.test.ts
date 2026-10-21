@@ -35,9 +35,9 @@ import {
   setAlertQueue,
   getNotificationPrefs,
   resetSettingsCache,
-  setHideSensitiveAmounts,
   setNotificationPrefs,
 } from './settings';
+import { saveHideSensitiveAmounts } from './afterCommit';
 
 const N = jest.mocked(Notifications);
 const scheduled = new Map<string, Notifications.NotificationContentInput>();
@@ -112,11 +112,11 @@ afterEach(() => {
 it('replaces already-queued private bill/refund payloads when privacy is enabled and restores them on reveal', async () => {
   expect(scheduledText()).toContain('Private bill');
   expect(scheduledText()).toContain('Private purchase');
-  expect(await setHideSensitiveAmounts(true)).toBe(true);
+  expect(await saveHideSensitiveAmounts(true)).toBe(true);
   expect(await getHideSensitiveAmounts()).toBe(true);
   expect(scheduledText()).not.toContain('Private bill');
   expect(scheduledText()).not.toContain('Private purchase');
-  expect(await setHideSensitiveAmounts(false)).toBe(true);
+  expect(await saveHideSensitiveAmounts(false)).toBe(true);
   expect(scheduledText()).toContain('Private bill');
   expect(scheduledText()).toContain('Private purchase');
 });
@@ -128,7 +128,7 @@ it('refreshes queued content after sensitivity and parent changes commit', async
     color: '#123456',
     isSensitive: false,
   });
-  await setHideSensitiveAmounts(true);
+  await saveHideSensitiveAmounts(true);
   expect(scheduledText()).toContain('Private bill');
   expect(
     await updateCategory(categoryId, {
@@ -162,7 +162,7 @@ it('reports scheduler failure while preserving committed privacy/category change
   jest.spyOn(console, 'error').mockImplementation(() => {});
   jest.spyOn(console, 'warn').mockImplementation(() => {});
   N.scheduleNotificationAsync.mockRejectedValue(new Error('OS scheduler unavailable'));
-  expect(await setHideSensitiveAmounts(true)).toBe(false);
+  expect(await saveHideSensitiveAmounts(true)).toBe(false);
   expect(await getHideSensitiveAmounts()).toBe(true);
   expect(
     await updateCategory(categoryId, {
@@ -184,7 +184,7 @@ it('clears stale private payloads even when attention topics have since been dis
     recurringAlerts: false,
     refundAlerts: false,
   });
-  expect(await setHideSensitiveAmounts(true)).toBe(true);
+  expect(await saveHideSensitiveAmounts(true)).toBe(true);
   expect(scheduledText()).not.toContain('Private bill');
   expect(scheduledText()).not.toContain('Private purchase');
 });
@@ -196,7 +196,7 @@ it('refreshes existing family payloads when a sensitive child is added, deleted 
     color: '#123456',
     isSensitive: false,
   });
-  await setHideSensitiveAmounts(true);
+  await saveHideSensitiveAmounts(true);
   expect(scheduledText()).toContain('Private bill');
   const child = await createCategory({
     name: 'Private child',
@@ -274,7 +274,7 @@ it('removes queued sensitive budget copy on hide while retaining public alerts',
   }
   expect(allScheduledText()).toContain('Queued medical');
   expect(allScheduledText()).toContain('₹120');
-  expect(await setHideSensitiveAmounts(true)).toBe(true);
+  expect(await saveHideSensitiveAmounts(true)).toBe(true);
   expect(allScheduledText()).not.toContain('Queued medical');
   expect(allScheduledText()).toContain('Public groceries');
   expect((await getAlertQueue()).some((a) => a.title.includes('Queued medical'))).toBe(false);
@@ -307,7 +307,7 @@ it('regenerates budget amounts and labels from live data before applying family 
   expect(allScheduledText()).toContain('Renamed budget');
   expect(allScheduledText()).toContain('₹140');
   expect(allScheduledText()).not.toContain('Public budget');
-  await setHideSensitiveAmounts(true);
+  await saveHideSensitiveAmounts(true);
   await createCategory({
     name: 'Sensitive sibling',
     kind: 'expense',
@@ -332,7 +332,7 @@ it('drops legacy queued copy without privacy provenance when hiding', async () =
   ]);
   await rebuildNotifications();
   expect(allScheduledText()).toContain('Old private label');
-  expect(await setHideSensitiveAmounts(true)).toBe(true);
+  expect(await saveHideSensitiveAmounts(true)).toBe(true);
   expect(allScheduledText()).not.toContain('Old private label');
   expect(await getAlertQueue()).toEqual([]);
 });
@@ -356,7 +356,7 @@ it('removes queued spending-spike copy when its category becomes sensitive', asy
   });
   expect((await getAlertQueue()).some((a) => a.source?.kind === 'spike')).toBe(true);
   expect(allScheduledText()).toContain('Spiking spend');
-  await setHideSensitiveAmounts(true);
+  await saveHideSensitiveAmounts(true);
   await updateCategory(cat.id, { name: cat.name, icon: cat.icon, color: cat.color, isSensitive: true });
   expect(allScheduledText()).not.toContain('Spiking spend');
 });

@@ -1,17 +1,15 @@
 import { rebuildNotificationsAfterCommit } from './afterCommit';
 import { getDb, AppDb } from './client';
 import { restoreRow, RowSnapshot } from './undoSnapshot';
+import { KEEP_DAYS, DAY_MS, retentionCutoff } from './deletedRetention';
 import type { TransactionRow } from './rows';
+
+export { KEEP_DAYS, purgeExpiredDeletedEntries } from './deletedRetention';
 
 /**
  * Entries wait here 30 days holding the exact row Undo captured, so restore keeps id, date and account.
  * Ordinary entries only (loan/person ones undo from their screens); not in backups, and a restore clears it.
  */
-
-/** How long a deleted entry is kept before it's gone for good. */
-export const KEEP_DAYS = 30;
-const DAY_MS = 24 * 60 * 60 * 1000;
-const retentionCutoff = (now: Date) => new Date(now.getTime() - KEEP_DAYS * DAY_MS).toISOString();
 
 /** Keeps a just-deleted entry. Runs on the handle it's given, so it can join the delete's own transaction. */
 export async function keepDeletedEntry(
@@ -29,12 +27,6 @@ export async function keepDeletedEntry(
 /** Drops an entry from the list — when Undo has already put it back. */
 export async function forgetDeletedEntry(db: AppDb, id: string): Promise<void> {
   await db.runAsync('DELETE FROM deleted_entries WHERE id = ?', [id]);
-}
-
-/** Clears anything older than 30 days. Run as the app opens. */
-export async function purgeExpiredDeletedEntries(db: AppDb, now: Date = new Date()): Promise<void> {
-  const cutoff = new Date(now.getTime() - KEEP_DAYS * DAY_MS).toISOString();
-  await db.runAsync('DELETE FROM deleted_entries WHERE deleted_at < ?', [cutoff]);
 }
 
 export interface DeletedEntry {
