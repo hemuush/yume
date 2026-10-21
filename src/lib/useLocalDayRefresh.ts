@@ -33,8 +33,10 @@ export function useLocalDayRefresh(onChange: () => void, refreshOnForeground = f
       };
       schedule();
       const subscription = AppState.addEventListener('change', (state) => {
+        const wasActive = active;
         active = state === 'active';
-        if (active) check(refreshOnForeground);
+        // Still check the date if native resumes without delivering the background event.
+        if (active) check(refreshOnForeground && !wasActive);
         else clearTimeout(timer);
       });
       return () => {

@@ -10,7 +10,7 @@ jest.mock('@/lib/notifications', () => ({ rebuildNotifications: async () => {} }
 
 import { CREATE_TABLES_SQL } from '@/db/schema';
 import { createAccount, createCategory } from '@/db/ledger';
-import { getLoanPaymentContext } from '@/db/loans';
+import { createLoan, getLoanPaymentContext } from '@/db/loans';
 
 const run = (sql: string, params: any[] = []) => mockTestDb.runAsync(sql, params);
 let first: string;
@@ -51,11 +51,29 @@ it("finds the next EMI, the loan's own account and the Loan EMI category", async
   });
   expect(ctx?.account).toEqual({ id: linked, name: 'Linked' });
   expect(ctx?.categoryId).toBe(emi);
+  expect(ctx?.direction).toBe('borrowed');
 });
 
 it('falls back to the first account when the linked one is archived', async () => {
   await run('UPDATE accounts SET archived = 1 WHERE id = ?', [linked]);
   expect((await getLoanPaymentContext('l1'))?.account?.id).toBe(first);
+});
+
+it('carries incoming repayment direction and category to the payment sheet', async () => {
+  const repayment = await createCategory({ name: 'Loan Repayment', kind: 'income' });
+  const loan = await createLoan({
+    direction: 'lent',
+    counterparty: 'Test borrower',
+    principalMinor: 100000,
+    interestRateAnnualBp: 0,
+    tenureMonths: 2,
+    startDate: '2026-10-01',
+    linkedAccountId: first,
+  });
+  const context = await getLoanPaymentContext(loan.id);
+  expect(context?.direction).toBe('lent');
+  expect(context?.categoryId).toBe(repayment.id);
+  expect(context?.account?.id).toBe(first);
 });
 
 it('has nothing to pay once every EMI is paid, or for an unknown loan', async () => {

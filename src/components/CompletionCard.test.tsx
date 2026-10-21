@@ -43,7 +43,7 @@ it('keeps the goal name, funded target and the full sealed note readable without
     .flat(Infinity)
     .join(' ');
   expect(copy).toContain('Goal reached');
-  expect(copy).toContain('Trip is fully funded.');
+  expect(copy).toContain('Trip reached its ₹1,000 target.');
   expect(copy).toContain('You kept going.');
   expect(timing).not.toHaveBeenCalled();
   act(() => tree.unmount());

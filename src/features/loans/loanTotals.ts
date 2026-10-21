@@ -38,7 +38,11 @@ export function summarizeLoans(
     ),
     emiPerMonthMinor: sum(borrowed, (l) => l.emiAmountMinor),
     interestLeftMinor: sum(borrowed, (l) => progress[l.id]?.pendingInterestMinor ?? 0),
-    debtFreeDate: ends.length > 0 ? ends.reduce((a, b) => (a > b ? a : b)) : null,
+    debtFreeDate:
+      ends.length > 0 &&
+      borrowed.every((l) => l.outstandingPrincipalMinor <= 0 || progress[l.id]?.lastDueDate)
+        ? ends.reduce((a, b) => (a > b ? a : b))
+        : null,
     repaidFraction: principal > 0 ? payoffFraction(principal, outstanding) : 0,
     activeCount: active.length,
     closedCount: loans.length - active.length,

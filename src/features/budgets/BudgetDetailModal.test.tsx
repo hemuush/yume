@@ -94,6 +94,7 @@ it('opens a read-only monthly overview and fetches category entries with the cor
   expect(listTransactions).toHaveBeenCalledWith({
     categoryId: 'food',
     includeSubcategories: true,
+    spendingOnly: true,
     currency: 'INR',
     fromDate: '2026-02-01',
     toDate: '2026-02-28',
@@ -112,7 +113,9 @@ it('keeps editing separate, returns from cancel, and refreshes after a successfu
   expect(words(tree)).toContain('Lunch');
   expect(changed).not.toHaveBeenCalled();
   act(() => button(tree, 'Edit limit').props.onPress());
-  act(() => edit().props.onSaved());
+  await act(async () => {
+    await edit().props.onSaved();
+  });
   expect(changed).toHaveBeenCalledTimes(1);
   expect(close).not.toHaveBeenCalled();
 });

@@ -31,6 +31,7 @@ import { debtShares, summarizeLoans } from '@/features/loans/loanTotals';
 import { buildTimeline } from '@/features/loans/timelineLayout';
 import { AddLoanModal } from '@/features/loans/AddLoanModal';
 import { SCREEN } from '@/components/screenStyles';
+import { showAlert } from '@/components/AppDialog';
 
 /**
  * Formal loans with a schedule (informal IOUs live in /people). Reached from the Plan Loans tile, Home EMI
@@ -65,24 +66,16 @@ export default function LoansScreen() {
   const { loaded, hasData, loadError, reload: load } = useScreenLoad(loadLoans);
   const loading = !loaded && !loadError;
   useEffect(() => {
-    if (!loaded || loadError || !detailLoanId || payLoanId) return;
-    setPayOnOpen(false);
-    setSelectedLoan(loans.find((loan) => loan.id === detailLoanId && loan.status !== 'closed') ?? null);
-    router.setParams({ loan: undefined });
-  }, [loaded, loadError, detailLoanId, payLoanId, loans]);
-
-  // Once, when the loans have loaded: open the loan "Pay now" asked for.
-  const [payHandled, setPayHandled] = useState(false);
-  useEffect(() => {
-    // `loaded` also flips on a failed load, when `loans` is just empty: wait for a good load (Retry or the
-    // next focus) rather than using up the request against no data.
-    if (!loaded || loadError || payHandled || !payLoanId) return;
-    setPayHandled(true);
-    const loan = loans.find((l) => l.id === payLoanId && l.status !== 'closed');
-    if (!loan) return;
-    setPayOnOpen(true);
-    setSelectedLoan(loan);
-  }, [loaded, loadError, payHandled, payLoanId, loans]);
+    // Consume each route request after a successful load. A later reminder must work in this same screen.
+    const requested = payLoanId || detailLoanId;
+    if (!loaded || loadError || !requested) return;
+    router.setParams({ pay: undefined, loan: undefined });
+    const selected = loans.find((loan) => loan.id === requested);
+    setSelectedLoan(selected ?? null);
+    setPayOnOpen(!!payLoanId && selected?.status !== 'closed');
+    if (!selected)
+      showAlert('Loan unavailable', 'This loan may have been deleted. Review your current loans below.');
+  }, [loaded, loadError, payLoanId, detailLoanId, loans]);
 
   // A defaulted loan is still money owed (or owed to you), so only closed
   // loans drop out of the totals. Closed ones also sit apart in the list.
@@ -125,7 +118,9 @@ export default function LoansScreen() {
             <PrimaryButton title="Retry" compact variant="secondary" onPress={() => void load()} />
           </View>
         )}
-        <LoansHero totals={totals} shares={shares} hues={hues} timeline={timeline} loading={loading} />
+        {(loading || loans.length > 0) && (
+          <LoansHero totals={totals} shares={shares} hues={hues} timeline={timeline} loading={loading} />
+        )}
         {loading ? (
           [0, 1].map((i) => (
             <Glass key={i} style={styles.card}>

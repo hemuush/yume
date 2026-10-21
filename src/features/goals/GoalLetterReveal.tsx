@@ -3,13 +3,16 @@ import { Text } from '@/components/Text';
 import { CompletionCard } from '@/components/CompletionCard';
 import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
+import { usePrivacy } from '@/theme/PrivacyContext';
 
 /** The sealed note remains readable in the completed goal's existing scrollable sheet. */
 export function GoalLetterReveal({ goalName, note, targetAmountMinor }: GoalLetterRevealProps) {
+  const { hideAmounts } = usePrivacy();
+  if (hideAmounts) return <CompletionCard title="Progress saved" detail="Your savings progress is hidden." />;
   return (
     <CompletionCard
       title="Goal reached"
-      detail={`${goalName} is fully funded. You saved ${formatMoney(targetAmountMinor)}.`}
+      detail={`${goalName} reached its ${formatMoney(targetAmountMinor)} target.`}
     >
       {note && (
         <View style={styles.letterBox}>

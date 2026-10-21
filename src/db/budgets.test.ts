@@ -11,7 +11,7 @@ jest.mock('@/db/client', () => ({
 jest.mock('@/lib/notifications', () => ({ rebuildNotifications: async () => {} }));
 
 import { CREATE_TABLES_SQL } from '@/db/schema';
-import { createAccount, createCategory, createTransaction } from '@/db/ledger';
+import { createAccount, createCategory, createTransaction, listTransactions } from '@/db/ledger';
 import {
   createBudget,
   updateBudget,
@@ -66,6 +66,76 @@ describe('budgets', () => {
     await expect(
       createBudget({ categoryId: diningId, limitAmountMinor: 0, rollover: false, periodMonth: '2026-01' })
     ).rejects.toThrow('positive amount');
+  });
+
+  it('rolls back creation if reading its return value fails, so retry cannot duplicate a committed write', async () => {
+    const categoryId = (await createCategory({ name: 'Atomic budget result', kind: 'expense' })).id;
+    const read = mockTestDb.getFirstAsync;
+    mockTestDb.getFirstAsync = async <T>(sql: string, params?: unknown[]) => {
+      if (sql === 'SELECT * FROM budgets WHERE id = ?') throw new Error('result read failed');
+      return read<T>(sql, params);
+    };
+    try {
+      await expect(
+        createBudget({ categoryId, periodMonth: '2030-01', limitAmountMinor: 10000, rollover: false })
+      ).rejects.toThrow('result read failed');
+    } finally {
+      mockTestDb.getFirstAsync = read;
+    }
+    const created = await createBudget({
+      categoryId,
+      periodMonth: '2030-01',
+      limitAmountMinor: 10000,
+      rollover: false,
+    });
+    expect(created.categoryId).toBe(categoryId);
+    await deleteBudget(created.id);
+  });
+
+  it('filters budget spending and refunds before the recent-entry limit', async () => {
+    const categoryId = (await createCategory({ name: 'Budget entry filter', kind: 'expense' })).id;
+    await createTransaction({
+      type: 'expense',
+      accountId,
+      categoryId,
+      amountMinor: 10000,
+      date: '2029-11-01',
+      note: 'Purchase',
+    });
+    await createTransaction({
+      type: 'income',
+      isRefund: true,
+      accountId,
+      categoryId,
+      amountMinor: 2000,
+      date: '2029-11-02',
+      note: 'Refund',
+    });
+    for (let i = 0; i < 4; i++)
+      await createTransaction({
+        type: 'income',
+        accountId,
+        categoryId,
+        amountMinor: 1000,
+        date: '2029-11-03',
+        note: 'Not spending',
+      });
+    const entries = await listTransactions({ categoryId, spendingOnly: true, limit: 2 });
+    expect(entries.map((tx) => tx.note)).toEqual(['Refund', 'Purchase']);
+  });
+
+  it('rejects income and archived categories and missing budget edits', async () => {
+    const income = await createCategory({ name: 'Budget income', kind: 'income' });
+    const archived = await createCategory({ name: 'Archived budget', kind: 'expense' });
+    await mockTestDb.runAsync('UPDATE categories SET archived = 1 WHERE id = ?', [archived.id]);
+    for (const categoryId of [income.id, archived.id]) {
+      await expect(createBudget({ categoryId, limitAmountMinor: 10000, rollover: false })).rejects.toThrow(
+        /active expense category/i
+      );
+    }
+    await expect(
+      updateBudget('missing-budget', { limitAmountMinor: 10000, rollover: false })
+    ).rejects.toThrow(/no longer exists/i);
   });
 
   it('computes spend for the month, scoped to the default-currency account only', async () => {

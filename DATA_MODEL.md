@@ -42,13 +42,15 @@ EMI = P × r × (1+r)^n / ((1+r)^n − 1)
 
 where `P` = principal, `r` = monthly interest rate (annual rate ÷ 12), `n` = tenure in months. Zero-interest loans fall back to a straight-line split. The last installment absorbs any rounding residue so the outstanding balance hits exactly zero — see `src/lib/loan.ts`.
 
-**Prepayment**: reduces outstanding principal immediately, keeps the EMI fixed, and regenerates the remaining schedule with a shorter tenure (`recalculateAfterPrepayment`). An optional prepayment/foreclosure charge is recorded as its own separate expense, never folded into the principal.
+**Prepayment**: reduces outstanding principal immediately, keeps the EMI fixed, and regenerates the remaining schedule with a shorter tenure (`recalculateAfterPrepayment`). An optional prepayment/foreclosure charge is recorded separately (expense for a borrowed loan, income for a lent loan), never folded into the principal.
 
 **Floating-rate loans** (`rate_type = 'floating'`): `applyRateChange` records a rate change and offers the borrower's real choice — `keepEmi` (EMI fixed, tenure absorbs the change) or `keepTenure` (EMI recomputed to still finish on the same date). Every change is logged to `loan_rate_changes` so the rate history survives being overwritten.
 
 **Asset-backed loans**: a borrowed loan can record what it financed (`asset_label`) and that asset's current value (`asset_value_minor`). When set, the loan's net-worth contribution becomes its real equity (asset value − outstanding) instead of pure debt — see `loanNetWorthContribution` and `computeTrackedBalance` in `src/db/reports.ts`, the shared helpers Home and Profile both use so their headline "Tracked Balance" can never disagree.
 
 Paying an installment (`payInstallment`) atomically: creates the linked transaction (expense if borrowed, income if lent — money moves the opposite direction depending on which side of the loan you're on), marks the installment paid, and updates the loan's outstanding principal — all inside one SQLite transaction so a crash mid-write can't leave the loan and the ledger disagreeing.
+
+The confirmation defaults the actual money-movement date to the local device day; the user can select an earlier date without changing the agreed due date. The schedule shows that actual paid/received date when recorded. Paid-before-tracking history has no fabricated account entry or actual payment date. Derived payoff dates require a final pending row whose remaining principal is zero; missing/truncated schedules do not establish a reliable debt-free date.
 
 ## Friends & Family ledger (`people`, `person_ledger_entries`)
 
@@ -119,4 +121,4 @@ Expense labels reuse the existing `transactions.note` and expense-recurring `not
 
 Recurring rules have `posting_mode` (automatic/confirm), optional `next_amount_minor`, and `scheduled_date` for the original date of a postponed occurrence. Advancing clears the one-off fields and preserves the original cadence. Confirm-first rules create no automatic ledger entries.
 
-Transaction `payment_mode` is available in entry/edit/split flows, Activity filters and a net-spending report. Unrecorded methods remain null; no method is inferred. Currency-specific `monthly_plan_income_<currency>` settings hold optional planning estimates without creating income transactions.
+Transaction `payment_mode` is retained as optional legacy metadata for existing entries, edits, repeats and backup compatibility. Entry controls, Activity filters, details, reports and Excel exports no longer expose payment methods; accounts identify the source/destination. Unrecorded methods remain null; no method is inferred. The unused method-report query has been removed. Currency-specific `monthly_plan_income_<currency>` settings hold optional planning estimates without creating income transactions.

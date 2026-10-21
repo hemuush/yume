@@ -1,7 +1,6 @@
 import { addDaysToIsoDate } from '@/lib/date';
 import { buildRunway } from './runway';
 import {
-  buildDueDays,
   dueTone,
   groupDueItems,
   buildLoansSummary,
@@ -32,6 +31,13 @@ const prog = (over: Partial<PlanLoanProgressInput> & { loanId: string }): PlanLo
 });
 
 describe('buildLoansSummary', () => {
+  it('does not use one loan payoff date as the date for all outstanding debt', () => {
+    const s = buildLoansSummary(
+      [loan({ id: 'a' }), loan({ id: 'missing' })],
+      [prog({ loanId: 'a', lastDueDate: '2028-01-01' })]
+    );
+    expect(s.debtFreeDate).toBeNull();
+  });
   it('totals debt left and how much is paid off, across borrowed loans only', () => {
     const s = buildLoansSummary(
       [
@@ -226,50 +232,6 @@ describe('buildDueItems / buildDueSoon', () => {
     expect(buildDueSoon(items, '2026-09-21').emiMinor).toBe(0);
   });
 
-  it('marks the 14 days of the strip, counting overdue on today', () => {
-    const days = buildDueDays(items, '2026-09-26');
-    expect(days).toHaveLength(14);
-    expect(days[0]).toEqual({ date: '2026-09-26', emi: false, bill: false, amountMinor: 0, titles: [] });
-    expect(days.find((d) => d.date === '2026-10-01')).toEqual({
-      date: '2026-10-01',
-      emi: false,
-      bill: true,
-      amountMinor: 45000,
-      titles: ['youtube'],
-    });
-    expect(days.find((d) => d.date === '2026-10-05')).toEqual({
-      date: '2026-10-05',
-      emi: true,
-      bill: false,
-      amountMinor: 2400000,
-      titles: ['house'],
-    });
-    // Income and transfers aren't money going out, so they add nothing to a day.
-    expect(days.find((d) => d.date === '2026-10-03')).toEqual({
-      date: '2026-10-03',
-      emi: false,
-      bill: false,
-      amountMinor: 0,
-      titles: [],
-    });
-    const overdue = buildDueItems([], [rule({ id: 'rent', nextRunDate: '2026-09-01' })]);
-    expect(buildDueDays(overdue, '2026-09-26')[0]).toMatchObject({ bill: true, amountMinor: 45000 });
-    // A day with an EMI and a bill adds them up and names both.
-    const both = buildDueItems(
-      buildLoansSummary(
-        [loan({ id: 'car' })],
-        [prog({ loanId: 'car', nextDueDate: '2026-10-02', nextEmiMinor: 1000000 })]
-      ).rows,
-      [rule({ id: 'gym', nextRunDate: '2026-10-02', amountMinor: 50000 })]
-    );
-    expect(buildDueDays(both, '2026-09-26').find((d) => d.date === '2026-10-02')).toMatchObject({
-      emi: true,
-      bill: true,
-      amountMinor: 1050000,
-      titles: ['car', 'gym'],
-    });
-  });
-
   it('tones a Coming up row like Home: red when late or due today, amber for an EMI or card bill within 3 days', () => {
     const today = '2026-09-26';
     const item = (kind: 'emi' | 'bill' | 'income' | 'transfer', inDays: number, key = 'rule-x') => ({
@@ -320,6 +282,37 @@ describe('buildDueItems / buildDueSoon', () => {
 });
 
 describe('buildBudgetsSummary', () => {
+  it('counts parent-covered categories once while retaining their individual rows', () => {
+    const rows = [
+      {
+        id: 'root',
+        categoryId: 'food',
+        categoryName: 'Food',
+        effectiveLimitMinor: 100000,
+        spentMinor: 70000,
+        remainingMinor: 30000,
+        percentUsed: 70,
+        overBudget: false,
+      },
+      {
+        id: 'sub',
+        categoryId: 'dining',
+        parentCategoryId: 'food',
+        categoryName: 'Dining',
+        effectiveLimitMinor: 40000,
+        spentMinor: 30000,
+        remainingMinor: 10000,
+        percentUsed: 75,
+        overBudget: false,
+      },
+    ];
+    expect(buildBudgetsSummary(rows)).toMatchObject({
+      usedMinor: 70000,
+      budgetedMinor: 100000,
+      shares: [1, 0],
+      rows,
+    });
+  });
   it('totals what was used against what was budgeted, and each budget’s share', () => {
     const b = (id: string, spent: number, limit: number) => ({
       id,

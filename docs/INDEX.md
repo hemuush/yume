@@ -1,5 +1,9 @@
 # Documentation index
 
+Start with the [README](../README.md), [architecture and logic](ARCHITECTURE.md), [data model](../DATA_MODEL.md), [backup and restore](../BACKUP.md) and [build/release guide](../BUILD.md).
+
+The latest targeted review is the [21 October goals and budgets review](GOALS_BUDGETS_FLOW_REVIEW_2026_10_21.md), covering overview/edit navigation, contribution and reservation safety, privacy, nested totals and shared code structure. The [Add transaction flow review](ADD_TRANSACTION_FLOW_REVIEW_2026_10_21.md) covers edit protection, duplicate submission, deletion coordination, loading recovery and split navigation. The [loan-flow review](LOAN_FLOW_REVIEW_2026_10_21.md) covers entry points, payment/receipt confirmation, schedule completeness and loan sheets. The [pending-flow recheck](PENDING_FLOW_RECHECK_2026_10_21.md) covers shared confirmation callbacks, recurring mutation locks and account-currency initialization. The earlier [cleanup recheck](CLEANUP_RECHECK_2026_10_21.md) covers follow-up removals, date-refresh correction, all-theme coverage and outstanding phone checks. The [initial cleanup report](CODE_REFINEMENT_2026_10_21.md) retains its original removal decisions and validation. Dated reports below describe their recorded revisions; they are not current test runs.
+
 See the [19 October re-audit fixes](REAUDIT_FIXES_2026_10_19.md) for the seven-finding resolution checklist and current validation. The [19 October code re-audit](CODE_REAUDIT_2026_10_19.md) preserves the reproduced findings and audit baseline, including the reopened spending-alert privacy issue.
 
 The [19 October audit fixes](AUDIT_FIXES_2026_10_19.md) records the earlier eight-finding implementation checklist and its validation. The [18 October code audit](CODE_AUDIT_2026_10_18.md) preserves the original findings and baseline results.
@@ -9,8 +13,6 @@ See the [16 October app audit](APP_AUDIT_2026_10_16.md) for popup validation, pr
 See [16 October morning notification fix](NOTIFICATION_FIX_2026_10_16.md) for current reminder behaviour, corrections and verification limits.
 
 See [14 October release readiness](RELEASE_READINESS_2026_10_14.md) for the latest local audit, fixes, fresh validation and remaining release gates.
-
-Start with the [README](../README.md), then [architecture and logic](ARCHITECTURE.md), [data model](../DATA_MODEL.md), [backup and restore](../BACKUP.md) and [build/release guide](../BUILD.md).
 
 Reports retain previous evidence in an expandable historical section. Their dates, test counts and old UI descriptions belong to the recorded revision. Current behavior summaries link back to implementation; changing a contract requires updating its guide and meaningful tests.
 
@@ -42,7 +44,7 @@ Reports retain previous evidence in an expandable historical section. Their date
 | [UI_UX_REFINEMENT_REPORT.md](archive/UI_UX_REFINEMENT_REPORT.md)                  | Historical implementation and validation record      |
 | [vendor/decode-uri-component/README.md](../vendor/decode-uri-component/README.md) | Compatibility package maintenance                    |
 
-See the [latest cleanup record](CLEANUP.md) for removal decisions and validation.
+See the [11 October cleanup record](CLEANUP.md) for that revision's removal decisions and validation.
 
 See the [13 October app-wide audit](FINAL_UI_AUDIT.md) for the reviewed UI/logic changes, SDK compatibility fixes, validation results and remaining device checks. Its results apply to that recorded working tree.
 

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { View } from 'react-native';
+import { View, Keyboard } from 'react-native';
 import { Text } from '@/components/Text';
 import { contributeToGoal, markGoalLetterRevealed, listSavingsGoals } from '@/db/savingsGoals';
 import { toMinor, inputMinor, formatMoney, formatMaskableMoney } from '@/lib/money';
@@ -34,40 +34,54 @@ const DIRECTIONS: { label: string; value: Direction }[] = [
 ];
 
 /** The quick "+ Add money" flow opened from a GoalCard — a single amount, in either direction. */
-export function ContributeModal({
+export function ContributeModal(props: ContributeProps) {
+  return props.goal ? <ContributionForm key={props.goal.id} {...props} goal={props.goal} /> : null;
+}
+
+interface ContributeProps {
+  goal: SavingsGoal | null;
+  onClose: () => void;
+  backLabel?: string;
+  onContributed: () => void | Promise<void>;
+}
+
+function ContributionForm({
   goal,
   onClose,
   backLabel,
   onContributed,
-}: {
-  goal: SavingsGoal | null;
-  onClose: () => void;
-  backLabel?: string;
-  onContributed: () => void;
-}) {
+}: Omit<ContributeProps, 'goal'> & { goal: SavingsGoal }) {
   const [summary, setSummary] = useState<GoalReservationSummary | null>(null);
   const [summaryFailed, setSummaryFailed] = useState(false);
   const [moveTo, setMoveTo] = useState<string | null>(null);
   const [destinations, setDestinations] = useState<SavingsGoal[]>([]);
-  const [direction, setDirection] = useState<Direction>('add');
+  const [direction, setDirection] = useState<Direction>(
+    goal.archived && goal.reservesAccount ? 'withdraw' : 'add'
+  );
   const [amount, setAmount] = useState('');
   const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [reservationReleased, setReservationReleased] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // Shown when this contribution first reaches the target, with the sealed note when one exists.
   // Held locally so the sheet stays open on the reveal instead of the host closing it.
   const [reveal, setReveal] = useState<{ note: string | null } | null>(null);
   // One save at a time: two taps can land before `saving` disables the button.
   const running = useRef(false);
+  const committed = useRef(false);
+  const released = useRef(false);
+  const letterPending = useRef(false);
+  const active = useRef(true);
+  const [retry, setRetry] = useState(0);
   const showNote = useMilestoneNote();
   const { hideAmounts } = usePrivacy();
 
   useEffect(() => {
-    if (!goal) return;
-    setDirection(goal.archived && goal.reservesAccount ? 'withdraw' : 'add');
-    setAmount('');
-    setError(null);
-    setReveal(null);
-  }, [goal]);
+    active.current = true;
+    return () => {
+      active.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     let live = true;
@@ -92,9 +106,7 @@ export function ContributeModal({
     return () => {
       live = false;
     };
-  }, [goal]);
-
-  if (!goal) return null;
+  }, [goal.id, goal.reservesAccount, goal.linkedAccountId, retry]);
 
   // Once per line, ever: crossing 25 and 50 in one save marks both so neither fires later. The completion
   // card already confirms a finished goal, so 100% is remembered but not announced a second time.
@@ -110,14 +122,14 @@ export function ContributeModal({
       await markMilestonesSeen(fresh.map((m) => goalMilestoneKey(goal.id, m)));
       if (!fresh.includes(reached) || (reached === 100 && completionShown)) return;
       const toGo = Math.max(0, goal.targetAmountMinor - after);
-      showNote(goalMilestoneCopy(reached, goal.name, toGo, hideAmounts));
+      if (active.current) showNote(goalMilestoneCopy(reached, goal.name, toGo, hideAmounts));
     } catch {
       // A missed note is never worth failing a save that already went through.
     }
   };
 
   const submit = async () => {
-    if (running.current) return;
+    if (!active.current || committed.current || running.current) return;
     setError(null);
     const amountMinor = toMinor(parseFloat(amount || '0'));
     if (!Number.isFinite(amountMinor) || amountMinor <= 0) {
@@ -127,11 +139,12 @@ export function ContributeModal({
     // Reject an over-withdrawal before writing; the database also checks the live balance atomically.
     if (direction !== 'add' && amountMinor > goal.currentAmountMinor) {
       setError(
-        `You can withdraw up to ${formatMaskableMoney(goal.currentAmountMinor, { masked: hideAmounts })} — that's what's saved so far`
+        `You can ${direction === 'move' ? 'move' : 'withdraw'} up to ${formatMaskableMoney(goal.currentAmountMinor, { masked: hideAmounts })} — that's what's saved so far`
       );
       return;
     }
     running.current = true;
+    Keyboard.dismiss();
     setSaving(true);
     const deltaMinor = direction === 'add' ? amountMinor : -amountMinor;
     try {
@@ -140,11 +153,15 @@ export function ContributeModal({
         await moveGoalReservation(goal.id, moveTo, amountMinor);
       } else await contributeToGoal(goal.id, deltaMinor);
     } catch (e) {
+      if (!active.current) return;
       setError(errorMessage(e));
       setSaving(false);
       running.current = false;
       return;
     }
+    committed.current = true;
+    if (!active.current) return;
+    setSaved(true);
     // The money is in from here on: a later hiccup must not read as "couldn't save" and invite a second tap.
     try {
       haptics.tap();
@@ -155,20 +172,50 @@ export function ContributeModal({
         goal.currentAmountMinor < goal.targetAmountMinor &&
         goal.currentAmountMinor + deltaMinor >= goal.targetAmountMinor;
       const hasLetter = justCompleted && !!goal.noteToSelf && !goal.letterRevealed;
-      if (justCompleted) {
-        if (hasLetter) await markGoalLetterRevealed(goal.id);
-        setReveal({ note: hasLetter ? goal.noteToSelf : null });
+      if (justCompleted && !hideAmounts) {
+        letterPending.current = hasLetter;
+        if (active.current) setReveal({ note: hasLetter ? goal.noteToSelf : null });
       } else {
-        onContributed();
+        await onContributed();
       }
       if (direction === 'add') {
         await announceMilestone(deltaMinor, justCompleted);
       }
     } catch {
-      onContributed();
+      if (active.current)
+        setError('Your progress was saved, but the screen could not refresh. Close and reopen to see it.');
     } finally {
-      setSaving(false);
+      if (active.current) setSaving(false);
       running.current = false;
+    }
+  };
+
+  const finish = async (allowCloseOnFailure = false) => {
+    if (!active.current || running.current) return;
+    running.current = true;
+    setSaving(true);
+    try {
+      if (letterPending.current && !hideAmounts) {
+        try {
+          await markGoalLetterRevealed(goal.id);
+          letterPending.current = false;
+        } catch {
+          if (!allowCloseOnFailure) {
+            if (active.current)
+              setError(
+                'Your progress was saved. The letter could not be acknowledged; try Done again, or close and read it later.'
+              );
+            return;
+          }
+        }
+      }
+      await onContributed();
+    } catch {
+      if (active.current)
+        setError('Your progress was saved, but the screen could not refresh. Close and reopen to see it.');
+    } finally {
+      running.current = false;
+      if (active.current) setSaving(false);
     }
   };
 
@@ -179,7 +226,10 @@ export function ContributeModal({
       title={reveal ? 'Goal completed' : goal.reservesAccount ? 'Goal reservation' : 'Add to goal'}
       visible
       onClose={() => {
-        if (!running.current) (reveal ? onContributed : onClose)();
+        if (!running.current) {
+          if (reveal || committed.current) void finish(true);
+          else onClose();
+        }
       }}
       footer={
         reveal ? (
@@ -190,26 +240,35 @@ export function ContributeModal({
                 loading={saving}
                 variant="secondary"
                 title={saving ? 'Releasing…' : 'Release reservation'}
-                disabled={saving}
+                disabled={saving || reservationReleased}
                 onPress={async () => {
-                  if (running.current) return;
+                  if (!active.current || running.current || released.current) return;
                   running.current = true;
                   setSaving(true);
                   try {
                     await releaseGoalReservation(goal.id);
-                    onContributed();
+                    released.current = true;
+                    if (active.current) {
+                      setReservationReleased(true);
+                      await onContributed();
+                    }
                   } catch (e) {
-                    setError(errorMessage(e));
+                    if (active.current)
+                      setError(
+                        released.current
+                          ? 'Reservation released, but the screen could not refresh. Close and reopen to see it.'
+                          : errorMessage(e)
+                      );
                   } finally {
                     running.current = false;
-                    setSaving(false);
+                    if (active.current) setSaving(false);
                   }
                 }}
               />
             )}
             <PrimaryButton
               title={goal.reservesAccount ? 'Keep reserved' : 'Done'}
-              onPress={onContributed}
+              onPress={() => void finish()}
               disabled={saving}
             />
           </View>
@@ -217,21 +276,29 @@ export function ContributeModal({
           <View style={f.footerCol}>
             {error && <Text style={styles.errorText}>{error}</Text>}
             <PrimaryButton
+              loading={saving}
               title={
                 saving
                   ? 'Saving…'
-                  : direction === 'move'
-                    ? 'Move reservation'
-                    : goal.reservesAccount
-                      ? direction === 'add'
-                        ? 'Reserve money'
-                        : 'Release money'
-                      : direction === 'add'
-                        ? 'Add money'
-                        : 'Withdraw'
+                  : saved
+                    ? 'Done'
+                    : direction === 'move'
+                      ? 'Move reservation'
+                      : goal.reservesAccount
+                        ? direction === 'add'
+                          ? 'Reserve money'
+                          : 'Release money'
+                        : direction === 'add'
+                          ? 'Add money'
+                          : 'Withdraw'
               }
-              onPress={submit}
-              disabled={saving || (goal.reservesAccount && direction === 'add' && !summary)}
+              onPress={saved ? () => finish() : submit}
+              disabled={
+                saving ||
+                (!saved &&
+                  ((goal.reservesAccount && direction === 'add' && !summary) ||
+                    (direction === 'move' && !moveTo)))
+              }
             />
           </View>
         )
@@ -244,7 +311,11 @@ export function ContributeModal({
           targetAmountMinor={goal.targetAmountMinor}
         />
       ) : (
-        <>
+        <View
+          pointerEvents={saving || saved ? 'none' : 'auto'}
+          accessibilityElementsHidden={saving || saved}
+          importantForAccessibility={saving || saved ? 'no-hide-descendants' : 'auto'}
+        >
           {/* The goal as it'll stand once this goes in (or comes out). */}
           <GoalSheetCard
             name={goal.name}
@@ -266,9 +337,17 @@ export function ContributeModal({
               {!summary && (
                 <Text style={styles.modalHint}>
                   {summaryFailed
-                    ? 'Could not load available money. Reopen to retry; releases remain available.'
+                    ? 'Could not load available money. Retry to reserve; releases remain available.'
                     : 'Checking available money…'}
                 </Text>
+              )}
+              {summaryFailed && (
+                <PrimaryButton
+                  title="Retry available money"
+                  compact
+                  variant="secondary"
+                  onPress={() => setRetry((n) => n + 1)}
+                />
               )}
               {summary && summary.shortfallMinor > 0 && (
                 <Text style={styles.errorText}>
@@ -306,12 +385,18 @@ export function ContributeModal({
           <View style={{ height: 14 }} />
           <AmountField
             label="Amount"
+            editable={!saving && !saved}
             value={amount}
             onChangeText={setAmount}
             placeholder="e.g. 2000"
             autoFocus
           />
-        </>
+          <Text style={styles.modalHint}>
+            {goal.reservesAccount
+              ? 'Reservations stay in the linked account. Releasing or moving them does not create a transfer.'
+              : 'This updates goal progress only. No money moves between your accounts.'}
+          </Text>
+        </View>
       )}
     </ModalSheet>
   );

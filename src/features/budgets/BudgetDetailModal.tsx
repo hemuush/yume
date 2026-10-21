@@ -35,7 +35,7 @@ export function BudgetDetailModal({
   accounts: Account[];
   currency: string;
   onClose: () => void;
-  onChanged: () => void;
+  onChanged: () => void | Promise<void>;
 }) {
   const { hideAmounts } = usePrivacy();
   const [editing, setEditing] = useState(false);
@@ -56,6 +56,7 @@ export function BudgetDetailModal({
     void listTransactions({
       categoryId,
       includeSubcategories: true,
+      spendingOnly: true,
       currency,
       fromDate: `${periodMonth}-01`,
       toDate: `${periodMonth}-${new Date(year, month, 0).getDate()}`,
@@ -108,7 +109,13 @@ export function BudgetDetailModal({
           hue={progress.categoryColor}
           icon={progress.categoryIcon}
           title={categorySentence(progress.categoryName, progress.parentName)}
-          kicker={progress.overBudget ? 'Over limit' : 'Remaining this month'}
+          kicker={
+            progress.overBudget
+              ? 'Over limit'
+              : periodMonth === today.slice(0, 7)
+                ? 'Remaining this month'
+                : 'Remaining for this month'
+          }
           amount={formatMoney(Math.abs(progress.remainingMinor), currency)}
           meta={longMonthYear(`${periodMonth}-01`)}
         />
@@ -168,9 +175,9 @@ export function BudgetDetailModal({
           categories={categories}
           backLabel="Back to budget overview"
           onClose={() => setEditing(false)}
-          onSaved={() => {
+          onSaved={async () => {
             setEditing(false);
-            onChanged();
+            await onChanged();
           }}
         />
       )}

@@ -1,6 +1,6 @@
 import { emitTransactionsChanged } from '@/lib/dataEvents';
 import { useEntryDraftRecovery } from '@/features/add/useEntryDraftRecovery';
-import type { EntryDraft } from '@/features/add/entryDraft';
+import { draftReferencesAvailable } from '@/features/add/draftReferences';
 import type { PaymentMode } from '@/types';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, Pressable, Keyboard } from 'react-native';
@@ -76,6 +76,11 @@ import { showAlert } from '@/components/AppDialog';
 import { useUndoToast } from '@/components/UndoToast';
 import { spendableAccountsOf, defaultCurrencyAccountsOf } from '@/lib/account';
 import { useAccent } from '@/theme/AccentContext';
+import { useReduceMotion } from '@/lib/useReduceMotion';
+
+// Part keys belong to the split editor's UI, not to the saved entry.
+const splitSignature = (parts: DraftPart[] | null) =>
+  JSON.stringify(parts?.map((p) => [p.categoryId, p.amountText]) ?? null);
 
 /** How far ahead a date can be before saving asks "are you sure?". */
 const FUTURE_DATE_CHECK_DAYS = 7;
@@ -83,6 +88,7 @@ export default function AddTransactionScreen() {
   const insets = useSafeAreaInsets();
   const { show: showUndo } = useUndoToast();
   const { accent, secondary } = useAccent();
+  const reduceMotion = useReduceMotion();
   // `accountId` pre-selects the account (the "from" side of a transfer) —
   // Home's account summary sheet opens Add this way.
   const params = useLocalSearchParams<{
@@ -117,6 +123,11 @@ export default function AddTransactionScreen() {
     date: string;
     categoryId: string | null;
     accountId: string;
+    toAccountId: string | null;
+    type: EntryType;
+    refund: boolean;
+    expr: string;
+    split: string;
   } | null>(null);
   const [isLinked, setIsLinked] = useState(false);
   // Whether this screen has filled its form once; a ref so the focus reload keeps one identity.
@@ -150,6 +161,8 @@ export default function AddTransactionScreen() {
   const [saving, setSaving] = useState(false);
   const [addingRow, setAddingRow] = useState(false);
   const [saveDone, setSaveDone] = useState(false);
+  // Remains set after a commit until this route closes; queued taps must not replay a save.
+  const committed = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const [searchFocused, setSearchFocused] = useState(false);
   const [footerHeight, setFooterHeight] = useState(0);
@@ -185,6 +198,7 @@ export default function AddTransactionScreen() {
   // The pending "done → back"; cleared on unmount so a swipe-back in that window can't pop a second screen.
   const backTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mounted = useRef(true);
+  const loadRequest = useRef(0);
   useEffect(() => {
     mounted.current = true;
     return () => {
@@ -219,31 +233,9 @@ export default function AddTransactionScreen() {
     expr !== '' || note.trim() !== '' || rows.length > 0 || splitParts !== null
   );
   const resumeDraft = () => {
-    const d: EntryDraft | null = recovery.candidate;
+    const d = recovery.candidate;
     if (!d) return;
-    const accountExists = (id: string | null) => !id || accounts.some((a) => a.id === id && !a.archived);
-    const categoryExists = (id: string | null) => !id || categories.some((c) => c.id === id && !c.archived);
-    const personExists = (id: string | null) => !id || people.some((p) => p.id === id);
-    const formReferencesExist =
-      d.type === 'friend'
-        ? accountExists(d.friendAccountId) && personExists(d.personId)
-        : accountExists(d.accountId) &&
-          (d.type === 'transfer'
-            ? accountExists(d.toAccountId)
-            : !!d.splitParts || categoryExists(d.categoryId));
-    const valid =
-      formReferencesExist &&
-      d.rows.every(
-        (r) =>
-          accountExists(r.accountId) &&
-          (r.kind === 'transaction'
-            ? r.type === 'transfer'
-              ? accountExists(r.toAccountId)
-              : categoryExists(r.categoryId)
-            : personExists(r.personId))
-      ) &&
-      (!d.splitParts || d.splitParts.every((p) => categoryExists(p.categoryId)));
-    if (!valid) {
+    if (!draftReferencesAvailable(d, { accounts, categories, people })) {
       showAlert(
         'Draft references unavailable data',
         'An account, category or person in this draft is no longer available. Restore that item first, or discard this draft and start a new entry.'
@@ -271,13 +263,16 @@ export default function AddTransactionScreen() {
   const editChanged =
     editing !== null &&
     editBaseline !== null &&
-    (!untouchedEdit && !editing.splitId
-      ? true
-      : paymentMode !== editing.paymentMode ||
-        note !== editBaseline.note ||
-        date !== editBaseline.date ||
-        categoryId !== editBaseline.categoryId ||
-        accountId !== editBaseline.accountId);
+    (expr !== editBaseline.expr ||
+      type !== editBaseline.type ||
+      refund !== editBaseline.refund ||
+      toAccountId !== editBaseline.toAccountId ||
+      splitSignature(splitParts) !== editBaseline.split ||
+      paymentMode !== editing.paymentMode ||
+      note !== editBaseline.note ||
+      date !== editBaseline.date ||
+      categoryId !== editBaseline.categoryId ||
+      accountId !== editBaseline.accountId);
   const { leave } = useDiscardGuard(
     !saveDone &&
       !saving &&
@@ -330,92 +325,122 @@ export default function AddTransactionScreen() {
   }, []);
 
   const load = useCallback(async () => {
-    const [allAccs, cats, ppl] = await Promise.all([
-      listAccounts(!!editingId),
-      listCategories(),
-      listPeople(),
-    ]);
-    const tx = editingId && !seeded.current ? await getTransactionById(editingId) : null;
-    if (editingId && !seeded.current && !tx) {
-      // Deleted elsewhere since this was opened: saving would quietly make a new entry instead.
-      seeded.current = true;
-      showAlert('This entry no longer exists', 'It may have been deleted.', [
-        { text: 'OK', onPress: () => router.back() },
+    const request = ++loadRequest.current;
+    const current = () => mounted.current && request === loadRequest.current;
+    try {
+      const [allAccs, cats, ppl] = await Promise.all([
+        listAccounts(!!editingId),
+        listCategories(),
+        listPeople(),
       ]);
-      return;
-    }
-    if (tx) editingAccountIds.current = [tx.accountId, tx.toAccountId].filter((id): id is string => !!id);
-    // An edit keeps the entry's own account(s) on offer even if since archived, or saving would quietly
-    // move the entry onto another account. Other archived accounts stay out of the pickers.
-    const accs = allAccs.filter((a) => !a.archived || editingAccountIds.current.includes(a.id));
-    setAccounts(accs);
-    setCategories(cats);
-    setPeople(ppl);
-
-    if (editingId && !seeded.current) {
-      const link = await getTransactionLink(editingId);
-      if (tx) {
-        setEditing(tx);
-        setIsLinked(link !== null);
-        // A refund is stored as money in, but it's edited where it was made: the Expense tab.
-        setType(tx.isRefund ? 'expense' : tx.type);
-        setRefund(tx.isRefund);
-        setExpr(exprFromMinor(tx.amountMinor));
-        setEditBaseline({ note: tx.note, date: tx.date, categoryId: tx.categoryId, accountId: tx.accountId });
-        setAccountId(tx.accountId);
-        setToAccountId(tx.toAccountId);
-        setCategoryId(tx.categoryId);
-        setNote(tx.note);
-        setPaymentMode(tx.paymentMode);
-        setDate(tx.date);
-        // Editing any part of a split edits the whole payment.
-        if (tx.splitId) {
-          const parts = await getSplitParts(tx.splitId);
-          setSplitParts(
-            draftFromSaved(parts.map((p) => ({ categoryId: p.categoryId, amountMinor: p.amountMinor })))
-          );
-          setExpr(exprFromMinor(parts.reduce((sum, p) => sum + p.amountMinor, 0)));
-        }
+      if (!current()) return;
+      const tx = editingId && !seeded.current ? await getTransactionById(editingId) : null;
+      if (!current()) return;
+      if (editingId && !seeded.current && !tx) {
+        // Deleted elsewhere since this was opened: saving would quietly make a new entry instead.
+        showAlert('This entry no longer exists', 'It may have been deleted.', [
+          {
+            text: 'OK',
+            onPress: () => {
+              if (mounted.current) router.back();
+            },
+          },
+        ]);
+        return;
       }
-    } else if (!editingId && !seeded.current) {
-      addDefaults.current = await getAddDefaults().catch(() => ({}));
-      const startType = isTxType(initialType) ? initialType : 'expense';
-      applyDefaults(startType, accs);
-      // Wins over the remembered default — but only if it can actually take
-      // this entry (a savings account can only be a transfer's "from").
-      if (refundParam === '1') {
-        if (categoryParam && cats.some((c) => c.id === categoryParam && c.kind === 'expense')) {
+      if (tx) editingAccountIds.current = [tx.accountId, tx.toAccountId].filter((id): id is string => !!id);
+      // An edit keeps the entry's own account(s) on offer even if since archived, or saving would quietly
+      // move the entry onto another account. Other archived accounts stay out of the pickers.
+      const accs = allAccs.filter((a) => !a.archived || editingAccountIds.current.includes(a.id));
+      setAccounts(accs);
+      setCategories(cats);
+      setPeople(ppl);
+
+      if (editingId && !seeded.current) {
+        const link = await getTransactionLink(editingId);
+        if (!current()) return;
+        if (tx) {
+          // Editing any part of a split edits the whole payment.
+          let loadedParts: DraftPart[] | null = null;
+          let loadedExpr = exprFromMinor(tx.amountMinor);
+          if (tx.splitId) {
+            const parts = await getSplitParts(tx.splitId);
+            if (!current()) return;
+            loadedParts = draftFromSaved(
+              parts.map((p) => ({ categoryId: p.categoryId, amountMinor: p.amountMinor }))
+            );
+            loadedExpr = exprFromMinor(parts.reduce((sum, p) => sum + p.amountMinor, 0));
+          }
+          // Publish the edit together, after linked/split reads succeed. A failed read must not
+          // expose one split part as an ordinary editable entry.
+          setEditing(tx);
+          setIsLinked(link !== null);
+          setType(tx.isRefund ? 'expense' : tx.type);
+          setRefund(!!tx.isRefund);
+          setExpr(loadedExpr);
+          setSplitParts(loadedParts);
+          setAccountId(tx.accountId);
+          setToAccountId(tx.toAccountId);
+          setCategoryId(tx.categoryId);
+          setNote(tx.note);
+          setPaymentMode(tx.paymentMode);
+          setDate(tx.date);
+          setEditBaseline({
+            note: tx.note,
+            date: tx.date,
+            categoryId: tx.categoryId,
+            accountId: tx.accountId,
+            toAccountId: tx.toAccountId,
+            type: tx.isRefund ? 'expense' : tx.type,
+            refund: !!tx.isRefund,
+            expr: loadedExpr,
+            split: splitSignature(loadedParts),
+          });
+        }
+      } else if (!editingId && !seeded.current) {
+        addDefaults.current = await getAddDefaults().catch(() => ({}));
+        if (!current()) return;
+        const startType = isTxType(initialType) ? initialType : 'expense';
+        applyDefaults(startType, accs);
+        // Wins over the remembered default — but only if it can actually take
+        // this entry (a savings account can only be a transfer's "from").
+        if (refundParam === '1') {
+          if (categoryParam && cats.some((c) => c.id === categoryParam && c.kind === 'expense')) {
+            setCategoryId(categoryParam);
+          }
+        }
+        // A refund's note, or one typed into the daily reminder's "Type it in".
+        if (noteParam) setNote(noteParam);
+        // A Quick Add widget shortcut opens with its category already picked.
+        if (
+          refundParam !== '1' &&
+          categoryParam &&
+          cats.some((c) => c.id === categoryParam && c.kind === startType && !c.archived)
+        ) {
           setCategoryId(categoryParam);
         }
+        const asked = initialAccountId ? accs.find((a) => a.id === initialAccountId) : undefined;
+        if (asked && (startType === 'transfer' || asked.type !== 'savings')) {
+          setAccountId(asked.id);
+          accountPickedByHand.current = true;
+        }
+        const askedTo = initialToAccountId ? accs.find((a) => a.id === initialToAccountId) : undefined;
+        if (askedTo && startType === 'transfer') {
+          setToAccountId(askedTo.id);
+          // Moving money into an account can't come from that same account.
+          setAccountId((from) =>
+            from && from !== askedTo.id
+              ? from
+              : (accs.find((a) => a.id !== askedTo.id && !a.archived && a.type !== 'savings')?.id ?? from)
+          );
+        }
       }
-      // A refund's note, or one typed into the daily reminder's "Type it in".
-      if (noteParam) setNote(noteParam);
-      // A Quick Add widget shortcut opens with its category already picked.
-      if (
-        refundParam !== '1' &&
-        categoryParam &&
-        cats.some((c) => c.id === categoryParam && c.kind === startType && !c.archived)
-      ) {
-        setCategoryId(categoryParam);
-      }
-      const asked = initialAccountId ? accs.find((a) => a.id === initialAccountId) : undefined;
-      if (asked && (startType === 'transfer' || asked.type !== 'savings')) {
-        setAccountId(asked.id);
-        accountPickedByHand.current = true;
-      }
-      const askedTo = initialToAccountId ? accs.find((a) => a.id === initialToAccountId) : undefined;
-      if (askedTo && startType === 'transfer') {
-        setToAccountId(askedTo.id);
-        // Moving money into an account can't come from that same account.
-        setAccountId((from) =>
-          from && from !== askedTo.id
-            ? from
-            : (accs.find((a) => a.id !== askedTo.id && !a.archived && a.type !== 'savings')?.id ?? from)
-        );
-      }
+      seeded.current = true;
+      setError(null);
+      setFormReady(true);
+    } catch (e) {
+      if (current()) throw e;
     }
-    seeded.current = true;
-    setFormReady(true);
   }, [
     editingId,
     initialType,
@@ -429,7 +454,9 @@ export default function AddTransactionScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      load().catch((e) => setError(errorMessage(e)));
+      load().catch((e) => {
+        if (mounted.current) setError(errorMessage(e));
+      });
       // Back from the split page with Done: the entry is split that way now.
       const split = takeSplitResult();
       if (split) {
@@ -438,6 +465,9 @@ export default function AddTransactionScreen() {
         // The total is set; the split card is what's worth seeing now.
         setPadOpen(false);
       }
+      return () => {
+        loadRequest.current += 1;
+      };
     }, [load])
   );
 
@@ -471,7 +501,7 @@ export default function AddTransactionScreen() {
   }, [expr, type, effectiveAccountId, toAccountId, categoryId, date]);
 
   const onTypeChange = (next: EntryType) => {
-    if (saveInFlight.current || saving || addingRow || saveDone) return;
+    if (committed.current || saveInFlight.current || saving || addingRow || saveDone) return;
     // A saved split is one expense across categories: switching it to income or a transfer would save only
     // the tapped part, as the whole payment. It stays an expense here.
     if (editing?.splitId && next !== 'expense') {
@@ -499,6 +529,7 @@ export default function AddTransactionScreen() {
   };
 
   const onPadKey = (key: PadKey) => {
+    if (saveInFlight.current || committed.current) return;
     setError(null);
     setExpr((prev) => applyPadKey(prev, key));
   };
@@ -564,6 +595,7 @@ export default function AddTransactionScreen() {
         message = `You added ${what}${from ? ` from ${from}` : ''} at ${at}. Tap again to add it anyway.`;
       }
     }
+    if (!mounted.current) return true;
     if (!message) return false;
     haptics.warn();
     setRepeatWarning({ key, message });
@@ -571,7 +603,8 @@ export default function AddTransactionScreen() {
   };
 
   const addRow = async () => {
-    if (saveInFlight.current || saving || saveDone) return;
+    if (!mounted.current || !formReady || committed.current || saveInFlight.current || saving || saveDone)
+      return;
     saveInFlight.current = true;
     setAddingRow(true);
     try {
@@ -581,7 +614,7 @@ export default function AddTransactionScreen() {
         setError(res.error);
         return;
       }
-      if (await warnIfRepeat(res.row)) return;
+      if ((await warnIfRepeat(res.row)) || !mounted.current) return;
       setRows((prev) => [...prev, res.row]);
       clearForm();
     } finally {
@@ -590,28 +623,34 @@ export default function AddTransactionScreen() {
     }
   };
 
-  const removeRow = (id: string) => setRows((prev) => prev.filter((r) => r.id !== id));
+  const removeRow = (id: string) => {
+    if (saveInFlight.current || committed.current) return;
+    setRows((prev) => prev.filter((r) => r.id !== id));
+  };
 
   const totals = stagedTotals(rows);
 
   // A brief "done" checkmark (PrimaryButton `done`) before navigating back; the data is already saved, so
   // the delay is purely felt confirmation.
   const goBackAfterSave = () => {
+    committed.current = true;
     emitTransactionsChanged();
     if (!editingId)
-      void recovery
-        .clear()
-        .catch(() =>
+      void recovery.clear().catch(() => {
+        if (mounted.current)
           showAlert(
             'Entry saved',
             'The entry was saved, but its recovery draft could not be removed. Discard that draft if it appears again.'
-          )
-        );
+          );
+      });
     if (!mounted.current) return;
     setSaveDone(true);
-    backTimer.current = setTimeout(() => {
-      if (mounted.current) router.back();
-    }, 320);
+    backTimer.current = setTimeout(
+      () => {
+        if (mounted.current) router.back();
+      },
+      reduceMotion ? 0 : 320
+    );
   };
 
   const onSaveSplit = async () => {
@@ -658,6 +697,7 @@ export default function AddTransactionScreen() {
 
   /** Opens the split page with this payment: its parts so far, or its category holding all of it. */
   const openSplit = () => {
+    if (!formReady || saveInFlight.current || committed.current) return;
     setError(null);
     if (amountMinor <= 0) {
       setError('Enter the amount first');
@@ -715,7 +755,7 @@ export default function AddTransactionScreen() {
         setError(res.error);
         return;
       }
-      if (await warnIfRepeat(res.row)) return;
+      if ((await warnIfRepeat(res.row)) || !mounted.current) return;
       pending.push(res.row);
     }
     if (pending.length === 0) {
@@ -752,16 +792,16 @@ export default function AddTransactionScreen() {
       clearForm();
       setSaving(false);
       showAlert(
-        'Only some entries saved',
+        saved > 0 ? 'Only some entries saved' : 'No entries saved',
         `${saved} of ${pending.length} saved before this went wrong: ${errorMessage(e)}`
       );
     }
   };
 
-  // One save at a time: `saving` is only set after the repeat check, so a fast double tap could save twice.
+  // The synchronous lock covers queued taps before React publishes the busy state.
   const saveInFlight = useRef(false);
   const runSave = async (save: () => Promise<void>, dateChecked = false) => {
-    if (saveInFlight.current) return;
+    if (!mounted.current || !formReady || isLinked || committed.current || saveInFlight.current) return;
     // A date well ahead is usually a typo (the wrong year), and it moves today's balances straight away.
     const pendingDates = !editing && !splitParts ? rows.map((row) => row.date) : [];
     if (editing || splitParts || expr !== '') pendingDates.push(date);
@@ -774,16 +814,41 @@ export default function AddTransactionScreen() {
       return;
     }
     saveInFlight.current = true;
+    setSaving(true);
     try {
       await save();
     } finally {
       saveInFlight.current = false;
+      if (mounted.current && !committed.current) setSaving(false);
     }
   };
 
   const onDelete = () => {
     if (!editing || saveInFlight.current || saving || addingRow || saveDone) return;
-    confirmDeleteEntry({ editing, splitParts: splitParts?.length ?? 2, showUndo, onError: setError });
+    confirmDeleteEntry({
+      editing,
+      splitParts: splitParts?.length ?? 2,
+      showUndo,
+      onStart: () => {
+        if (!mounted.current || committed.current || saveInFlight.current) return false;
+        saveInFlight.current = true;
+        setSaving(true);
+        setError(null);
+        return true;
+      },
+      onDeleted: () => {
+        committed.current = true;
+        if (!mounted.current) return false;
+        leave(() => router.back());
+        return true;
+      },
+      onError: (message) => {
+        saveInFlight.current = false;
+        if (!mounted.current) return;
+        setSaving(false);
+        setError(message);
+      },
+    });
   };
 
   /** Picks the person just added in the new-person sheet. */
@@ -800,7 +865,7 @@ export default function AddTransactionScreen() {
     }
   };
 
-  const title = editing ? 'Edit entry' : 'Add';
+  const title = editingId ? 'Edit entry' : 'Add';
   const sum = hasOperator(expr);
   const shownAmount = sum
     ? amountValue === null
@@ -833,6 +898,7 @@ export default function AddTransactionScreen() {
   });
   // The pad steps aside whenever the phone keyboard is up (a note, a category search).
   const padVisible = padOpen && !noteEditing && !searchFocused && !isLinked;
+  const formBusy = saving || addingRow || saveDone;
 
   // The pad's sum keys wear the entry's colour (green for money back), like the amount above them.
   const wash = refund ? TYPE_WASH.income : typeWash(type, accent);
@@ -845,12 +911,12 @@ export default function AddTransactionScreen() {
       done={saveDone}
       loading={saving && !saveDone}
       onPress={() => void runSave(splitParts ? onSaveSplit : editing ? onSaveSingleEdit : onSaveAll)}
-      disabled={saving || addingRow || saveDone || isLinked || cannotSave}
+      disabled={!formReady || saving || addingRow || saveDone || isLinked || cannotSave}
       style={styles.saveBtn}
     />
   );
-  const addToListDisabled = saving || addingRow || saveDone || !!currentProblem;
-  const addToListButton = !editing && !splitParts && (
+  const addToListDisabled = !formReady || saving || addingRow || saveDone || !!currentProblem;
+  const addToListButton = !editingId && !splitParts && (
     <Pressable
       onPress={addRow}
       disabled={addToListDisabled}
@@ -874,8 +940,8 @@ export default function AddTransactionScreen() {
         wallpaper
         closeIcon
         actions={
-          editing ? (
-            !isLinked ? (
+          editingId ? (
+            editing && !isLinked ? (
               <Pressable
                 onPress={onDelete}
                 disabled={saving || addingRow || saveDone}
@@ -891,10 +957,18 @@ export default function AddTransactionScreen() {
           ) : (
             <Pressable
               onPress={() => {
-                if (!saveInFlight.current && !saving && !addingRow && !saveDone) setRepeatSheetVisible(true);
+                if (
+                  formReady &&
+                  !committed.current &&
+                  !saveInFlight.current &&
+                  !saving &&
+                  !addingRow &&
+                  !saveDone
+                )
+                  setRepeatSheetVisible(true);
               }}
-              disabled={saving || addingRow || saveDone}
-              accessibilityState={{ disabled: saving || addingRow || saveDone }}
+              disabled={!formReady || saving || addingRow || saveDone}
+              accessibilityState={{ disabled: !formReady || saving || addingRow || saveDone }}
               hitSlop={8}
               accessibilityRole="button"
               accessibilityLabel="Repeat a recent entry"
@@ -907,20 +981,42 @@ export default function AddTransactionScreen() {
         }
       >
         <SegmentedControl
-          options={editing ? EDIT_TYPES : ADD_TYPES}
+          options={editingId ? EDIT_TYPES : ADD_TYPES}
           value={type}
           onChange={onTypeChange}
+          disabled={!formReady || formBusy}
           onBand
         />
       </SkyHeader>
 
       <KeyboardAwareScrollView
+        pointerEvents={formBusy ? 'none' : 'auto'}
+        accessibilityElementsHidden={formBusy}
+        importantForAccessibility={formBusy ? 'no-hide-descendants' : 'auto'}
         contentContainerStyle={{ padding: 16, paddingTop: 4, paddingBottom: 28 }}
         keyboardShouldPersistTaps="handled"
         // Clears the sticky footer that rides on the keyboard, not just the keyboard: a focused field (the
         // category search) would otherwise sit right behind Save.
         bottomOffset={footerHeight + 12}
       >
+        {!formReady && (
+          <View style={styles.section}>
+            <Text style={styles.formHint}>{error ? 'The entry could not be loaded.' : 'Loading entry…'}</Text>
+            {error && (
+              <PrimaryButton
+                compact
+                variant="secondary"
+                title="Retry loading"
+                onPress={() => {
+                  setError(null);
+                  void load().catch((e) => {
+                    if (mounted.current) setError(errorMessage(e));
+                  });
+                }}
+              />
+            )}
+          </View>
+        )}
         {isLinked && (
           <StripCard
             tone={theme.colors.slice.due}
@@ -1129,31 +1225,44 @@ export default function AddTransactionScreen() {
         )}
         {rows.length > 0 && <Text style={styles.queueHint}>{rows.length} on your list</Text>}
         {error && <Text style={styles.error}>{error}</Text>}
-        <AddDetailRow
-          type={type}
-          accountName={effectiveAccount?.name}
-          date={date}
-          today={today}
-          yesterday={yesterday}
-          note={note}
-          noteEditing={noteEditing}
-          isLinked={isLinked}
-          refund={refund}
-          splitCount={splitParts ? splitParts.length : null}
-          hasList={rows.length > 0}
-          onNoteChange={setNote}
-          onNoteEditing={setNoteEditing}
-          onPickAccount={() => setAccountSheetOpen(true)}
-          onPickDate={() => setCalendarOpen(true)}
-          onToggleRefund={() => {
-            setRefund((r) => !r);
-            setError(null);
-          }}
-          onSplit={openSplit}
-          onHidePad={padVisible ? () => setPadOpen(false) : undefined}
-        />
+        <View
+          pointerEvents={formBusy || !formReady ? 'none' : 'auto'}
+          accessibilityElementsHidden={formBusy || !formReady}
+          importantForAccessibility={formBusy || !formReady ? 'no-hide-descendants' : 'auto'}
+        >
+          <AddDetailRow
+            type={type}
+            accountName={effectiveAccount?.name}
+            date={date}
+            today={today}
+            yesterday={yesterday}
+            note={note}
+            noteEditing={noteEditing}
+            isLinked={isLinked}
+            refund={refund}
+            splitCount={splitParts ? splitParts.length : null}
+            hasList={rows.length > 0}
+            onNoteChange={setNote}
+            onNoteEditing={setNoteEditing}
+            onPickAccount={() => setAccountSheetOpen(true)}
+            onPickDate={() => setCalendarOpen(true)}
+            onToggleRefund={() => {
+              setRefund((r) => !r);
+              setError(null);
+            }}
+            onSplit={openSplit}
+            onHidePad={padVisible ? () => setPadOpen(false) : undefined}
+          />
+        </View>
         {padVisible ? (
-          <AmountPad keySurface="#F1F5F9" onKey={onPadKey} onClear={() => setExpr('')} tone={padTone}>
+          <AmountPad
+            keySurface="#F1F5F9"
+            onKey={onPadKey}
+            onClear={() => {
+              if (!saveInFlight.current && !committed.current) setExpr('');
+            }}
+            tone={padTone}
+          >
             {addToListButton}
             {saveButton}
           </AmountPad>

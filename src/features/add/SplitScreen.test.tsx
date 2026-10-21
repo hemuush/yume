@@ -36,7 +36,7 @@ jest.mock('@/components/CategoryPicker', () => ({
 
 import { router } from 'expo-router';
 import { SplitScreen } from './SplitScreen';
-import { openSplitSession, takeSplitResult, finishSplitSession } from './splitSession';
+import { openSplitSession, takeSplitResult, finishSplitSession, getSplitSession } from './splitSession';
 import { Category } from '@/types';
 
 const categories = [
@@ -84,6 +84,20 @@ beforeEach(() => {
 });
 
 describe('split page', () => {
+  it('hands the split back only once when Done is tapped twice', () => {
+    const tree = open([
+      { key: 'first', categoryId: 'groceries', amountText: '' },
+      { key: 'second', categoryId: 'food', amountText: '500' },
+    ]);
+    const done = doneButton(tree).props.onPress;
+    act(() => {
+      done();
+      done();
+    });
+    expect(router.back).toHaveBeenCalledTimes(1);
+    expect(takeSplitResult()).toHaveLength(2);
+  });
+
   it('opens with the payment in its first category, and asks for a second', () => {
     const tree = open();
     expect(texts(tree)).toEqual(expect.arrayContaining(['Groceries', 'The rest', 'Add a category']));
@@ -127,8 +141,9 @@ describe('split page', () => {
 
   it('leaves Add as it was when left without Done', () => {
     const tree = open();
-    tree.unmount();
+    act(() => tree.unmount());
     expect(takeSplitResult()).toBeNull();
+    expect(getSplitSession()).toBeNull();
   });
 });
 

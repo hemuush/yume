@@ -100,6 +100,32 @@ it.each([
 });
 
 describe('Plan sections with nothing in them yet', () => {
+  it('does not tell a lender that no loans exist', () => {
+    const loans = buildLoansSummary(
+      [
+        {
+          id: 'lent',
+          counterparty: 'Test borrower',
+          direction: 'lent',
+          status: 'active',
+          principalMinor: 100000,
+          outstandingPrincipalMinor: 50000,
+        },
+      ],
+      []
+    );
+    const open = jest.fn();
+    const tree = render(<DebtPath loans={loans} today="2026-10-21" onOpen={open} />);
+    expect(texts(tree)).toContain('No borrowed loans');
+    expect(texts(tree)).toContain('Review repayments');
+    expect(texts(tree)).not.toContain('No loans yet');
+    const action = tree.root.findAll(
+      (n) => n.props.accessibilityLabel === 'Review repayments. Open loans'
+    )[0];
+    act(() => action.props.onPress());
+    expect(open).toHaveBeenCalledTimes(1);
+    act(() => tree.unmount());
+  });
   it('shows only the debt summary and opens Loans without selecting a loan detail', () => {
     const open = jest.fn();
     const loans = {
@@ -190,7 +216,7 @@ describe('Plan sections with nothing in them yet', () => {
       []
     );
     const shown = texts(render(<DebtPath loans={loans} today="2026-10-09" onOpen={jest.fn()} />));
-    expect(shown).toContain('Track an EMI');
+    expect(shown).toContain('Review repayments');
     expect(shown).toContain('₹2,000 you lent out');
   });
 

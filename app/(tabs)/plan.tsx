@@ -22,6 +22,7 @@ import { Account, Category, Loan, SavingsGoal, RecurringRule, Transaction } from
 import type { BudgetProgress } from '@/db/budgets';
 import type { PersonWithBalance } from '@/db/people';
 import { AddBudgetModal } from '@/features/budgets/AddBudgetModal';
+import { budgetCategories } from '@/features/budgets/budgetCategories';
 import { AddLoanModal } from '@/features/loans/AddLoanModal';
 import { RuleModal } from '@/features/recurring/RuleModal';
 import { BudgetDetailModal } from '@/features/budgets/BudgetDetailModal';
@@ -202,12 +203,13 @@ export default function PlanScreen() {
 
     if (call !== request.current) return;
     const categoriesById = new Map(categories.map((c) => [c.id, c]));
+    const accountsById = new Map(accounts.map((a) => [a.id, a]));
     const categoryLabelOf = (id: string | null) => {
       const cat = id ? categoriesById.get(id) : undefined;
       return cat ? categorySentence(cat.name, parentNameOf(id, categoriesById)) : undefined;
     };
     const savingsIds = savingsAccountIdsOf(accounts);
-    const accountName = (id: string | null) => accounts.find((a) => a.id === id)?.name ?? '—';
+    const accountName = (id: string | null) => (id ? accountsById.get(id)?.name : undefined) ?? '—';
     const loansSummary = buildLoansSummary(loans, progress);
     // Same label Home's Upcoming list uses for a rule.
     const toRuleInput = (r: (typeof rules)[number], type: 'income' | 'expense' | 'transfer' = r.type) => ({
@@ -257,9 +259,7 @@ export default function PlanScreen() {
     // which the app files automatically — "spend 10% less on your EMI" isn't a real choice.
     const top = averages.find(
       (c) =>
-        c.totalMinor > 0 &&
-        !(hideAmounts && c.isSensitive) &&
-        !categories.find((cat) => cat.id === c.categoryId)?.isSystem
+        c.totalMinor > 0 && !(hideAmounts && c.isSensitive) && !categoriesById.get(c.categoryId)?.isSystem
     );
 
     setData({
@@ -293,6 +293,8 @@ export default function PlanScreen() {
           categoryColor: b.categoryColor,
           spentMinor: b.spentMinor,
           effectiveLimitMinor: b.effectiveLimitMinor,
+          categoryId: b.budget.categoryId,
+          parentCategoryId: b.parentCategoryId,
           remainingMinor: b.remainingMinor,
           percentUsed: b.percentUsed,
           overBudget: b.overBudget,
@@ -784,9 +786,7 @@ export default function PlanScreen() {
         <AddBudgetModal
           visible
           editing={null}
-          categories={scoped.categories.filter(
-            (c) => !c.archived && c.kind === 'expense' && !(hideAmounts && c.isSensitive)
-          )}
+          categories={budgetCategories(scoped.categories, hideAmounts)}
           budgetedCategoryIds={new Set(scoped.budgetDetails.map((b) => b.budget.categoryId))}
           onClose={() => setDetail(null)}
           onSaved={() => {
@@ -833,6 +833,7 @@ export default function PlanScreen() {
       {paying && (
         <PayInstallmentSheet
           installment={paying.installment}
+          direction={paying.direction}
           account={paying.account}
           categoryId={paying.categoryId}
           linkedAccountMissing={paying.linkedAccountMissing}

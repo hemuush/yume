@@ -35,7 +35,13 @@ function Marker({ status, isNext }: { status: LoanPayment['status']; isNext: boo
  * Every EMI, a year at a time. The year the next EMI falls in starts open;
  * the others are one tap away, so a 240-month loan doesn't open as a wall of rows.
  */
-export function LoanSchedule({ schedule }: { schedule: LoanPayment[] }) {
+export function LoanSchedule({
+  schedule,
+  direction = 'borrowed',
+}: {
+  schedule: LoanPayment[];
+  direction?: 'borrowed' | 'lent';
+}) {
   const { width, fontScale } = useWindowDimensions();
   const stacked = width < 360 || fontScale > 1.2;
   const years = groupScheduleByYear(schedule);
@@ -100,6 +106,15 @@ export function LoanSchedule({ schedule }: { schedule: LoanPayment[] }) {
                           <Text style={shared.rowSub}>
                             Principal {formatMoney(dispPrincipal)} · Interest {formatMoney(dispInterest)}
                           </Text>
+                          {p.status === 'paid' && (
+                            <Text style={shared.rowSub}>
+                              {p.paidDate
+                                ? `${direction === 'lent' ? 'Received' : 'Paid'} ${dayMonthYear(p.paidDate)}`
+                                : p.transactionId
+                                  ? 'Recorded payment · date unavailable'
+                                  : 'Paid before tracking · no account entry'}
+                            </Text>
+                          )}
                         </View>
                         <View style={[styles.amount, stacked && styles.amountStacked]}>
                           <Text style={shared.rowValue}>{formatMoney(p.emiAmountMinor)}</Text>

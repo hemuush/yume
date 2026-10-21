@@ -14,6 +14,7 @@ import { InsightHeader, InsightStat, InsightRow, insight } from '@/components/In
 export function AccountReservations({ account, onNavigate }: { account: Account; onNavigate: () => void }) {
   const [summary, setSummary] = useState<GoalReservationSummary | null>(null);
   const [failed, setFailed] = useState(false);
+  const [retry, setRetry] = useState(0);
   const { hideAmounts } = usePrivacy();
   useEffect(() => {
     let live = true;
@@ -29,11 +30,21 @@ export function AccountReservations({ account, onNavigate }: { account: Account;
     return () => {
       live = false;
     };
-  }, [account.id, account.currentBalanceMinor]);
+  }, [account.id, account.currentBalanceMinor, retry]);
   const money = (minor: number) =>
     formatMaskableMoney(minor, { currency: account.currency, masked: hideAmounts });
   if (failed)
-    return <Text style={styles.hint}>Couldn't load goal reservations. Reopen this account to retry.</Text>;
+    return (
+      <View style={styles.card}>
+        <Text style={styles.hint}>Couldn't load goal reservations.</Text>
+        <PrimaryButton
+          compact
+          variant="secondary"
+          title="Retry reservations"
+          onPress={() => setRetry((n) => n + 1)}
+        />
+      </View>
+    );
   if (!summary || summary.goals.length === 0) return null;
   return (
     <View style={styles.card}>

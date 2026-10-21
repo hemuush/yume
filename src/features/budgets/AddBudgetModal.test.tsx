@@ -28,6 +28,8 @@ jest.mock('@/db/budgets', () => ({ createBudget: jest.fn(async () => {}), update
 import { AmountField } from '@/components/AmountField';
 import { CategoryPicker } from '@/components/CategoryPicker';
 import { AddBudgetModal, defaultBudgetCategoryId } from './AddBudgetModal';
+import { PrimaryButton } from '@/components/PrimaryButton';
+import { createBudget } from '@/db/budgets';
 
 const cat = (id: string, over: Partial<Category> = {}): Category => ({
   id,
@@ -73,6 +75,32 @@ const field = (r: ReactTestRenderer) => r.root.findByType(AmountField);
 const picker = (r: ReactTestRenderer) => r.root.findByType(CategoryPicker);
 
 describe('AddBudgetModal', () => {
+  it('does not create again after a committed save whose refresh callback fails', async () => {
+    jest.mocked(createBudget).mockClear();
+    let tree!: ReactTestRenderer;
+    act(() => {
+      tree = create(
+        <AddBudgetModal
+          visible
+          editing={null}
+          categories={categories}
+          onClose={jest.fn()}
+          onSaved={() => {
+            throw new Error('refresh failed');
+          }}
+        />
+      );
+    });
+    act(() => field(tree).props.onChangeText('1000'));
+    const save = tree.root.findByType(PrimaryButton).props.onPress;
+    await act(async () => {
+      await save();
+      await save();
+    });
+    expect(createBudget).toHaveBeenCalledTimes(1);
+    act(() => tree.unmount());
+  });
+
   // Warms React Native's lazily-required modules once, with a generous budget.
   beforeAll(() => {
     act(() => {

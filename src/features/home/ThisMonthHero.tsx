@@ -425,8 +425,6 @@ export function ThisMonthHero({
                   today={displayed.spendingTrend.today}
                   periodMode={displayed.spendingTrend.mode}
                   onSeeInsights={onSeeInsights ? () => onSeeInsights(displayed.periodKey) : undefined}
-                  compact
-                  embedded
                 />
               )}
               {onSeeInsights && !displayed.spendingTrend && (

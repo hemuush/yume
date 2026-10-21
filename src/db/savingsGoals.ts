@@ -109,6 +109,7 @@ export async function createSavingsGoal(input: SavingsGoalInput): Promise<Saving
   validateInput(input);
   const db = await getDb();
   const id = newId();
+  let created: SavingsGoal | null = null;
   await db.withTransactionAsync(async (tx) => {
     if (input.linkedAccountId) await assertDefaultCurrencyAccount(tx, input.linkedAccountId, 'Goals');
     if (input.reservesAccount && input.linkedAccountId)
@@ -137,12 +138,13 @@ export async function createSavingsGoal(input: SavingsGoalInput): Promise<Saving
         input.reservesAccount ? 1 : 0,
       ]
     );
+    const row = await tx.getFirstAsync<SavingsGoalRow & { account_balance_minor: number | null }>(
+      `${GOAL_SELECT} WHERE g.id = ?`,
+      [id]
+    );
+    created = rowToGoal(found(row, 'goal'));
   });
-  const row = await db.getFirstAsync<SavingsGoalRow & { account_balance_minor: number | null }>(
-    `${GOAL_SELECT} WHERE g.id = ?`,
-    [id]
-  );
-  return rowToGoal(found(row, 'goal'));
+  return created!;
 }
 
 export async function updateSavingsGoal(id: string, input: SavingsGoalInput): Promise<void> {
@@ -211,8 +213,9 @@ export async function contributeToGoal(id: string, deltaMinor: number): Promise<
       reserve_account: number;
       linked_account_id: string | null;
       current_amount_minor: number;
+      archived: number;
     }>(
-      'SELECT id, track_account, reserve_account, linked_account_id, current_amount_minor FROM savings_goals WHERE id = ?',
+      'SELECT id, track_account, reserve_account, linked_account_id, current_amount_minor, archived FROM savings_goals WHERE id = ?',
       [id]
     );
     if (!existing) throw new Error('This goal no longer exists');
@@ -220,6 +223,7 @@ export async function contributeToGoal(id: string, deltaMinor: number): Promise<
       await changeReservationOn(tx, id, deltaMinor);
       return;
     }
+    if (existing.archived) throw new Error('Unarchive this goal before changing its progress.');
     if (existing.track_account && existing.linked_account_id) {
       throw new Error("This goal follows its account's balance — move money into the account instead.");
     }

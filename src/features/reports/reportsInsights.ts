@@ -12,7 +12,6 @@ import type {
 import { roundedMinor } from '@/lib/round';
 import type { HeatCell } from './SpendHeatmap';
 import { dayMonth } from '@/lib/dateLabels';
-import { PACE_MIN_DAY } from '@/lib/pace';
 
 /** Which categories count as a fixed monthly load rather than a choice. */
 const FIXED_CATEGORY_NAMES = ['Loan EMI', 'Rent', 'Insurance', 'Subscriptions'];
@@ -176,29 +175,6 @@ export function baselineFromTrend(trend: TrendPoint[]): number | null {
     .map((t) => t.totalMinor);
   if (prior.length < 2) return null;
   return prior.reduce((a, b) => a + b, 0) / prior.length;
-}
-
-/**
- * This period's spending vs a usual month, as a % (+ above). The month in progress is held against the usual
- * month scaled to days gone, and silent before PACE_MIN_DAY. A year or custom range has no usual month.
- */
-export function vsUsual(input: {
-  spentMinor: number;
-  baselineMinor: number | null;
-  granularity: 'month' | 'year' | 'custom';
-  inProgress: boolean;
-  todayIso: string;
-}): { pct: number; soFar: boolean } | null {
-  const { spentMinor, baselineMinor, granularity, inProgress, todayIso } = input;
-  if (granularity !== 'month' || !baselineMinor || baselineMinor <= 0) return null;
-  let usual = baselineMinor;
-  if (inProgress) {
-    const today = parseLocalIsoDate(todayIso);
-    const day = today.getDate();
-    if (day < PACE_MIN_DAY) return null;
-    usual = (baselineMinor * day) / new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
-  }
-  return { pct: ((spentMinor - usual) / usual) * 100, soFar: inProgress };
 }
 
 /** Split this period's category spend into the fixed load vs. everything else. */

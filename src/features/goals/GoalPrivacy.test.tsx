@@ -13,6 +13,7 @@ jest.mock('@/theme/PrivacyContext', () => ({
 }));
 
 import { GoalCard } from './GoalCard';
+import { GoalLetterReveal } from './GoalLetterReveal';
 import { SavingsGoal } from '@/types';
 
 afterAll(() => new Promise((resolve) => setTimeout(resolve, 800)));
@@ -42,6 +43,19 @@ function render(): ReactTestRenderer {
 const texts = (r: ReactTestRenderer) => [JSON.stringify(r.toJSON())];
 
 describe('GoalCard while savings amounts are hidden', () => {
+  it('withholds a completion letter and reached status when privacy changes during a reveal', () => {
+    mockHideAmounts = true;
+    let tree!: ReactTestRenderer;
+    act(() => {
+      tree = create(
+        <GoalLetterReveal goalName="Private goal" note="Private sealed letter" targetAmountMinor={15000000} />
+      );
+    });
+    expect(JSON.stringify(tree.toJSON())).not.toContain('Private sealed letter');
+    expect(JSON.stringify(tree.toJSON())).not.toContain('fully funded');
+    expect(JSON.stringify(tree.toJSON())).not.toContain('₹1,50,000');
+    act(() => tree.unmount());
+  });
   it('masks the saved amount, keeps the target, and does not say the goal is reached', () => {
     mockHideAmounts = true;
     const r = render();

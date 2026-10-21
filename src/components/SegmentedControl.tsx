@@ -22,13 +22,20 @@ interface Props<T extends string> {
   onChange: (value: T) => void;
   /** On a coloured band (Add's sky header): a see-through track and an ink pill. */
   onBand?: boolean;
+  disabled?: boolean;
 }
 
 /**
  * A pill switch: one theme-ink pill, measured from the track and moved with the native driver, glides to the
  * tapped choice instead of each segment snapping its own background. Reduce motion: it jumps.
  */
-export function SegmentedControl<T extends string>({ options, value, onChange, onBand }: Props<T>) {
+export function SegmentedControl<T extends string>({
+  options,
+  value,
+  onChange,
+  onBand,
+  disabled = false,
+}: Props<T>) {
   const reduce = useReduceMotion();
   const { accent } = useAccent();
   const colors = interactionColors(accent);
@@ -67,7 +74,11 @@ export function SegmentedControl<T extends string>({ options, value, onChange, o
   };
 
   return (
-    <View style={[styles.wrap, onBand && styles.wrapBand]} onLayout={onLayout}>
+    <View
+      style={[styles.wrap, onBand && styles.wrapBand, disabled && styles.disabled]}
+      onLayout={onLayout}
+      accessibilityRole="tablist"
+    >
       {segWidth > 0 && (
         <Animated.View
           pointerEvents="none"
@@ -84,6 +95,7 @@ export function SegmentedControl<T extends string>({ options, value, onChange, o
           active={opt.value === value}
           fallbackInk={segWidth <= 0 ? colors.ink : undefined}
           label={opt.label}
+          disabled={disabled}
           onPress={() => onChange(opt.value)}
         />
       ))}
@@ -96,11 +108,13 @@ function Segment({
   label,
   onPress,
   fallbackInk,
+  disabled,
 }: {
   active: boolean;
   label: string;
   onPress: () => void;
   fallbackInk?: string;
+  disabled: boolean;
 }) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.95);
   return (
@@ -112,20 +126,17 @@ function Segment({
       ]}
       onPress={() => {
         // A light tick when the choice actually changes — every switch in the app gets it here.
-        if (active) return;
+        if (active || disabled) return;
         haptics.tap();
         onPress();
       }}
-      accessibilityRole="button"
-      accessibilityState={{ selected: active }}
+      disabled={disabled}
+      accessibilityRole="tab"
+      accessibilityState={{ selected: active, disabled }}
       onPressIn={onPressIn}
       onPressOut={onPressOut}
     >
-      <Text
-        style={[styles.segmentText, active && styles.segmentTextActive, active && styles.segmentTextBand]}
-      >
-        {label}
-      </Text>
+      <Text style={[styles.segmentText, active && styles.segmentTextActive]}>{label}</Text>
     </AnimatedPressable>
   );
 }
@@ -154,13 +165,20 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 44,
     paddingVertical: 6,
+    paddingHorizontal: 6,
     borderRadius: theme.radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  segmentText: { fontSize: 13, fontFamily: theme.font.roundedMedium, color: theme.colors.textSecondary },
-  segmentTextActive: { color: theme.colors.textPrimary, fontFamily: theme.font.roundedBold },
+  segmentText: {
+    fontSize: 13,
+    fontFamily: theme.font.roundedMedium,
+    color: theme.colors.textSecondary,
+    textAlign: 'center',
+    flexShrink: 1,
+  },
+  segmentTextActive: { color: theme.colors.surface, fontFamily: theme.font.roundedBold },
   // On a wallpaper (Add's header): a frosted track and an ink pill.
   wrapBand: { backgroundColor: GLASS.fill, borderWidth: 1, borderColor: GLASS.edge, marginBottom: 0 },
-  segmentTextBand: { color: theme.colors.surface },
+  disabled: { opacity: 0.5 },
 });

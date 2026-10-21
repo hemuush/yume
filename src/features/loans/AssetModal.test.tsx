@@ -94,7 +94,7 @@ describe('AssetModal', () => {
     expect(texts(tree)).toContain('Enter a valid current value, or leave it blank for now');
   });
 
-  it('offers to stop tracking only when a value is set, and clears both fields when used', async () => {
+  it('offers to stop tracking an existing asset and clears both fields when used', async () => {
     const without = await render(makeLoan());
     expect(without.tree.root.findAllByType(SheetLink)).toHaveLength(0);
 
@@ -106,6 +106,12 @@ describe('AssetModal', () => {
     });
     expect(mockUpdateAsset).toHaveBeenCalledWith('l1', { assetLabel: null, assetValueMinor: null });
     expect(onDone).toHaveBeenCalledTimes(1);
+  });
+
+  it('can remove an asset label before an estimated value has been added', async () => {
+    const { tree } = await render(makeLoan({ assetLabel: 'Test home', assetValueMinor: null }));
+    await act(async () => tree.root.findByType(SheetLink).props.onPress());
+    expect(mockUpdateAsset).toHaveBeenCalledWith('l1', { assetLabel: null, assetValueMinor: null });
   });
 
   it('shows a failure and does not report success', async () => {

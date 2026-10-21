@@ -65,6 +65,22 @@ afterEach(() => {
 });
 
 describe('AddGoalModal', () => {
+  it('cannot create the goal again if post-save refresh fails', async () => {
+    const { tree } = await render();
+    const onCreated = jest.fn(() => {
+      throw new Error('refresh failed');
+    });
+    act(() => tree.update(element(true, onCreated)));
+    await fill(tree, 'Trip', '1000');
+    const save = tree.root.findByType(PrimaryButton).props.onPress;
+    await act(async () => {
+      await save();
+      await save();
+    });
+    expect(mockCreateGoal).toHaveBeenCalledTimes(1);
+    expect(texts(tree).join(' ')).toContain('saved');
+  });
+
   it('needs a name, then a valid target, before it saves anything', async () => {
     const { tree } = await render();
     await submit(tree);

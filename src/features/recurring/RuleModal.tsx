@@ -109,6 +109,10 @@ export function RuleModal({
   const [hasEndDate, setHasEndDate] = useState(false);
   const [endDate, setEndDate] = useState(() => addMonthsToIsoDate(toLocalIsoDate(new Date()), 12));
   const [saving, setSaving] = useState(false);
+  // Confirmation callbacks outlive submitOnce; every write must share this synchronous lock.
+  const runMutation = useSaveOnce(async (action: () => Promise<void>) => {
+    await action();
+  });
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<'setup' | 'schedule'>('setup');
   // Which row's picker is open in place — one at a time.
@@ -254,53 +258,56 @@ export function RuleModal({
     await save(input);
   };
 
-  const save = async (input: RecurringRuleInput) => {
-    setSaving(true);
-    try {
-      if (editing) {
-        await updateRecurringRule(editing.id, input);
-      } else {
-        await createRecurringRule(input);
+  const save = (input: RecurringRuleInput) =>
+    runMutation(async () => {
+      setSaving(true);
+      try {
+        if (editing) {
+          await updateRecurringRule(editing.id, input);
+        } else {
+          await createRecurringRule(input);
+        }
+        onSaved();
+      } catch (e) {
+        setError(errorMessage(e));
+      } finally {
+        setSaving(false);
       }
-      onSaved();
-    } catch (e) {
-      setError(errorMessage(e));
-    } finally {
-      setSaving(false);
-    }
-  };
+    });
   const submitOnce = useSaveOnce(submit);
 
-  const confirmDelete = async () => {
-    if (!editing) return;
-    setSaving(true);
-    try {
-      const snapshot = await deleteRecurringRule(editing.id);
-      haptics.warn();
-      onDeleted();
-      showUndo('Deleted recurring entry', async () => {
-        await restoreRecurringRule(snapshot);
+  const confirmDelete = () =>
+    runMutation(async () => {
+      if (!editing) return;
+      setSaving(true);
+      try {
+        const snapshot = await deleteRecurringRule(editing.id);
+        haptics.warn();
         onDeleted();
-      });
-    } catch (e) {
-      showAlert("Couldn't delete", errorMessage(e));
-    } finally {
-      setSaving(false);
-    }
-  };
+        showUndo('Deleted recurring entry', async () => {
+          await restoreRecurringRule(snapshot);
+          onDeleted();
+        });
+      } catch (e) {
+        showAlert("Couldn't delete", errorMessage(e));
+      } finally {
+        setSaving(false);
+      }
+    });
 
-  const toggleActive = useSaveOnce(async () => {
-    if (!editing || saving) return;
-    setSaving(true);
-    try {
-      await setRecurringRuleActive(editing.id, !editing.active);
-      onSaved();
-    } catch (e) {
-      setError(errorMessage(e));
-    } finally {
-      setSaving(false);
-    }
-  });
+  const toggleActive = () =>
+    runMutation(async () => {
+      if (!editing || saving) return;
+      setSaving(true);
+      try {
+        await setRecurringRuleActive(editing.id, !editing.active);
+        onSaved();
+      } catch (e) {
+        setError(errorMessage(e));
+      } finally {
+        setSaving(false);
+      }
+    });
   const confirmActive = () => {
     if (!editing || saving) return;
     showAlert(

@@ -26,13 +26,13 @@ Yume brings everyday spending, future payments and longer-term goals together. I
 translucent cards and compact overviews keep the information approachable, with rupee formatting
 and India-friendly dates.
 
-| Screen       | What you can do                                                                                                                                          |
-| ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Home**     | Check money free after bills, explore spending categories, see upcoming payments, budgets, goals and recent activity.                                    |
-| **Activity** | Browse entries by day, switch periods, search words or amounts, filter transactions and open entry details.                                              |
-| **Add**      | Record expenses, income, transfers and friend entries with a calculator pad, usual entries, reusable expense labels, splits and an Add to list workflow. |
-| **Plan**     | Review a 14-day forecast, budget limits, debt progress, savings goals, people balances, habits and scheduled payments.                                   |
-| **Reports**  | Explore daily spending, category or account breakdowns, income, trends, comparisons and custom date ranges.                                              |
+| Screen       | What you can do                                                                                                                                               |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Home**     | Review free-to-use money, today's spending allowance, interactive spending bars, account balances, the largest upcoming outgoings and five recent entries.    |
+| **Activity** | Browse entries by day, switch periods, search words or amounts, filter transactions and open entry details.                                                   |
+| **Add**      | Record expenses, income, transfers and friend entries with a calculator pad, usual entries, reusable labels, splits, staged entries and local draft recovery. |
+| **Plan**     | Review a 14-day forecast, budget limits, debt progress, savings goals, people balances, habits and scheduled payments.                                        |
+| **Reports**  | Explore daily spending, category or account breakdowns, income, trends, comparisons and custom date ranges.                                                   |
 
 ### The details that matter
 

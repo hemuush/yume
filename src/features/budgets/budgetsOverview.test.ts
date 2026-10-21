@@ -11,6 +11,19 @@ const b = (limit: number, spent: number) => ({
 });
 
 describe('budgetsOverview', () => {
+  it('does not count a subcategory twice when its parent has a budget', () => {
+    const h = budgetsOverview(
+      [
+        { ...b(100000, 70000), budget: { categoryId: 'food' }, parentCategoryId: null },
+        { ...b(40000, 30000), budget: { categoryId: 'dining' }, parentCategoryId: 'food' },
+      ],
+      TODAY
+    );
+    expect(h.limitMinor).toBe(100000);
+    expect(h.spentMinor).toBe(70000);
+    expect(h.nestedCount).toBe(1);
+    expect(h.budgetCount).toBe(2);
+  });
   it('adds the limits and spend and spreads what is left over the days after today', () => {
     const h = budgetsOverview([b(1000000, 100000), b(500000, 50000)], TODAY);
     expect(h.limitMinor).toBe(1500000);

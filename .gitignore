@@ -49,3 +49,4 @@ yarn-error.*
 /sites/
 /design-preview/
 /.codex-remote-attachments/
+/.codex-attachments/

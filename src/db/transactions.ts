@@ -10,6 +10,7 @@ import { getDefaultCurrency } from './settings';
 import { Transaction, TransactionType, PaymentMode } from '@/types';
 import { toLocalIsoDate, addDaysToIsoDate, assertValidIsoDate } from '@/lib/date';
 import { parseSearchQuery } from '@/lib/searchQuery';
+import { SPEND_ROWS } from './spendSql';
 
 import { queueSpendAlerts } from './spendAlerts';
 import { rebuildNotifications } from '@/lib/notifications';
@@ -215,10 +216,13 @@ export async function listTransactions(filters?: {
    * category's list is exactly what its total was built from. No-op without subcategories.
    */
   includeSubcategories?: boolean;
+  /** Filter before LIMIT, so ordinary income cannot crowd spending/refunds out of budget details. */
+  spendingOnly?: boolean;
 }): Promise<Transaction[]> {
   const db = await getDb();
   const clauses: string[] = [];
   const args: SqlParam[] = [];
+  if (filters?.spendingOnly) clauses.push(SPEND_ROWS);
 
   if (filters?.currency) {
     clauses.push('account_id IN (SELECT id FROM accounts WHERE currency = ?)');

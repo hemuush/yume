@@ -69,11 +69,12 @@ async function spendByCategory(
      GROUP BY t.category_id`,
     [currency, range.start, range.end]
   );
-  return (categoryId) =>
-    Math.max(
-      0,
-      rows.reduce((sum, r) => (r.id === categoryId || r.parent === categoryId ? sum + r.total : sum), 0)
-    );
+  const totals = new Map<string, number>();
+  for (const row of rows) {
+    totals.set(row.id, (totals.get(row.id) ?? 0) + row.total);
+    if (row.parent) totals.set(row.parent, (totals.get(row.parent) ?? 0) + row.total);
+  }
+  return (categoryId) => Math.max(0, totals.get(categoryId) ?? 0);
 }
 
 export interface BudgetProgress {
@@ -81,6 +82,7 @@ export interface BudgetProgress {
   categoryName: string;
   /** The parent's name when the budget is on a subcategory, so same-named subcategories can be told apart. */
   parentName?: string | null;
+  parentCategoryId?: string | null;
   categoryIcon: string;
   categoryColor: string;
   spentMinor: number;
@@ -116,11 +118,12 @@ async function readBudgetsForMonth(
     BudgetRow & {
       category_name: string;
       parent_name: string | null;
+      parent_category_id: string | null;
       category_icon: string;
       category_color: string;
     }
   >(
-    `SELECT b.*, c.name as category_name, pc.name as parent_name, c.icon as category_icon, c.color as category_color
+    `SELECT b.*, c.name as category_name, c.parent_id as parent_category_id, pc.name as parent_name, c.icon as category_icon, c.color as category_color
      FROM budgets b JOIN categories c ON c.id = b.category_id
      LEFT JOIN categories pc ON pc.id = c.parent_id
      WHERE b.period_month = ?${excludeSensitive ? ` AND ${PUBLIC_BUDGET_FAMILY}` : ''}
@@ -161,6 +164,7 @@ async function readBudgetsForMonth(
       budget,
       categoryName: row.category_name,
       parentName: row.parent_name,
+      parentCategoryId: row.parent_category_id,
       categoryIcon: row.category_icon,
       categoryColor: row.category_color,
       spentMinor,
@@ -234,20 +238,32 @@ export async function createBudget(input: BudgetInput): Promise<Budget> {
   const db = await getDb();
   const periodMonth = input.periodMonth ?? periodMonthOf();
   if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(periodMonth)) throw new Error('Pick a valid budget month');
-  const existing = await db.getFirstAsync<{ id: string }>(
-    'SELECT id FROM budgets WHERE category_id = ? AND period_month = ?',
-    [input.categoryId, periodMonth]
-  );
-  if (existing) {
-    throw new Error('This category already has a budget for this month — edit it instead of adding another.');
-  }
   const id = newId();
-  await db.runAsync(
-    'INSERT INTO budgets (id, category_id, period_month, limit_amount_minor, rollover) VALUES (?, ?, ?, ?, ?)',
-    [id, input.categoryId, periodMonth, input.limitAmountMinor, input.rollover ? 1 : 0]
-  );
-  const row = await db.getFirstAsync<BudgetRow>('SELECT * FROM budgets WHERE id = ?', [id]);
-  return rowToBudget(found(row, 'budget'));
+  let created: Budget | null = null;
+  await db.withTransactionAsync(async (tx) => {
+    const category = await tx.getFirstAsync<{ kind: string; archived: number }>(
+      'SELECT kind, archived FROM categories WHERE id = ?',
+      [input.categoryId]
+    );
+    if (!category || category.kind !== 'expense' || category.archived)
+      throw new Error('Choose an active expense category for this budget.');
+    const existing = await tx.getFirstAsync<{ id: string }>(
+      'SELECT id FROM budgets WHERE category_id = ? AND period_month = ?',
+      [input.categoryId, periodMonth]
+    );
+    if (existing) {
+      throw new Error(
+        'This category already has a budget for this month — edit it instead of adding another.'
+      );
+    }
+    await tx.runAsync(
+      'INSERT INTO budgets (id, category_id, period_month, limit_amount_minor, rollover) VALUES (?, ?, ?, ?, ?)',
+      [id, input.categoryId, periodMonth, input.limitAmountMinor, input.rollover ? 1 : 0]
+    );
+    const row = await tx.getFirstAsync<BudgetRow>('SELECT * FROM budgets WHERE id = ?', [id]);
+    created = rowToBudget(found(row, 'budget'));
+  });
+  return created!;
 }
 
 export async function updateBudget(
@@ -258,20 +274,28 @@ export async function updateBudget(
     throw new Error('Monthly limit must be a positive amount');
   }
   const db = await getDb();
-  await db.runAsync('UPDATE budgets SET limit_amount_minor = ?, rollover = ? WHERE id = ?', [
-    input.limitAmountMinor,
-    input.rollover ? 1 : 0,
-    id,
-  ]);
+  await db.withTransactionAsync(async (tx) => {
+    if (!(await tx.getFirstAsync('SELECT id FROM budgets WHERE id = ?', [id])))
+      throw new Error('This budget no longer exists.');
+    await tx.runAsync('UPDATE budgets SET limit_amount_minor = ?, rollover = ? WHERE id = ?', [
+      input.limitAmountMinor,
+      input.rollover ? 1 : 0,
+      id,
+    ]);
+  });
 }
 
 /** Permanently removes one month's budget row — single row, no cascade, so instant-delete + undo like a transaction. */
 export async function deleteBudget(id: string): Promise<RowSnapshot> {
   const db = await getDb();
-  const snapshot = await captureRow(db, 'budgets', id);
-  if (!snapshot) throw new Error('This budget is already deleted.');
-  await db.runAsync('DELETE FROM budgets WHERE id = ?', [id]);
-  return snapshot;
+  let snapshot: RowSnapshot | null = null;
+  await db.withTransactionAsync(async (tx) => {
+    const captured = await captureRow(tx, 'budgets', id);
+    if (!captured) throw new Error('This budget is already deleted.');
+    await tx.runAsync('DELETE FROM budgets WHERE id = ?', [id]);
+    snapshot = captured;
+  });
+  return snapshot as unknown as RowSnapshot;
 }
 
 /** Undoes `deleteBudget` — re-inserts the exact row, never a fresh one. */

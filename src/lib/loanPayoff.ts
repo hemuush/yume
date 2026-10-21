@@ -2,7 +2,7 @@ import { LoanPayment } from '@/types';
 import { parseLocalIsoDate } from './date';
 
 interface LoanPayoff {
-  /** The last EMI still to pay, YYYY-MM-DD — when the loan is done. Null once nothing is pending. */
+  /** Last pending EMI date only when it clears principal; null for absent/incomplete payoff schedules. */
   lastDueDate: string | null;
   emisLeft: number;
   /** Interest in the EMIs still to pay. */
@@ -19,8 +19,9 @@ export function loanPayoff(schedule: LoanPayment[], outstandingMinor: number): L
   const pending = schedule
     .filter((p) => p.status === 'pending')
     .sort((a, b) => a.installmentNumber - b.installmentNumber);
+  const last = pending[pending.length - 1];
   return {
-    lastDueDate: pending.length > 0 ? pending[pending.length - 1].dueDate : null,
+    lastDueDate: last && last.outstandingAfterMinor === 0 ? last.dueDate : null,
     emisLeft: pending.length,
     interestLeftMinor: pending.reduce((sum, p) => sum + p.interestComponentMinor, 0),
     balances: [outstandingMinor, ...pending.map((p) => p.outstandingAfterMinor)],

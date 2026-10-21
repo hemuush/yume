@@ -19,8 +19,18 @@ function set(v: boolean) {
 function start() {
   if (started) return;
   started = true;
-  AccessibilityInfo.isReduceMotionEnabled().then(set, () => {});
-  AccessibilityInfo.addEventListener('reduceMotionChanged', set);
+  // A live OS change takes precedence over the slower initial native read.
+  let changed = false;
+  AccessibilityInfo.addEventListener('reduceMotionChanged', (value) => {
+    changed = true;
+    set(value);
+  });
+  AccessibilityInfo.isReduceMotionEnabled().then(
+    (value) => {
+      if (!changed) set(value);
+    },
+    () => {}
+  );
 }
 
 function subscribe(notify: () => void) {

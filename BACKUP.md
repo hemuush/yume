@@ -7,6 +7,7 @@
 - Snapshot table reads are serialized in one exclusive database section. Restore validates data and foreign-key consistency; unknown columns and tables emptied by older backups are reported.
 - Restore repairs exact legacy labels on app-created linked refund receipts inside the restore transaction, matching startup repair. Manually linked refunds and custom receipt text are preserved.
 - The phone keeps its folder URI and last-backup status. Already-set app-lock and widget-detail preferences take precedence; a fresh install can adopt those preferences from the backup.
+- The unfinished-entry recovery setting (`entry_draft_v1`) is local transient state: snapshots omit it, imports ignore it and restore clears pending recovery. A draft never becomes a transaction through restore.
 - Daily backup is due on a different local calendar day; weekly/monthly use elapsed windows. Maintenance runs while the app is open, catching up recurring entries first. It is not guaranteed background execution.
 - A successful managed daily write replaces same-day managed files only after the new file is written. Retention keeps the newest 14 managed daily backup files by content ordering; exported copies are outside this policy. Initial-folder preservation avoids replacing existing files or pruning them.
 - The private recovery copy contains the data present before a restore. Its own timestamp/counts must be shown. Putting it back is another restore, not selection of the latest folder file.

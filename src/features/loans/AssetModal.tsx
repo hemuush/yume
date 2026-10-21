@@ -101,7 +101,7 @@ export function AssetModal({
         still owed ({formatMoney(loan.outstandingPrincipalMinor)}) counts toward Tracked Balance/Net Worth.
         Yume doesn't estimate it for you, so update it whenever the real value changes.
       </Text>
-      {!!loan.assetValueMinor && (
+      {(!!loan.assetLabel || loan.assetValueMinor != null) && (
         <SheetLink label="Stop tracking this asset" onPress={stopTracking} disabled={saving} />
       )}
     </ModalSheet>

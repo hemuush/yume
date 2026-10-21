@@ -25,6 +25,10 @@ const prog = (loanId: string, over: Partial<LoanProgress>): LoanProgress => ({
 });
 
 describe('summarizeLoans', () => {
+  it('does not claim a debt-free date when a borrowed loan has no payoff schedule', () => {
+    const t = summarizeLoans([loan({ id: 'a' }), loan({ id: 'missing' })], { a: prog('a', {}) });
+    expect(t.debtFreeDate).toBeNull();
+  });
   it('sums borrowed EMIs, interest and the latest debt-free date; keeps lent money apart', () => {
     const loans = [
       loan({ id: 'a', emiAmountMinor: 180700 }),

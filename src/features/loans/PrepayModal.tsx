@@ -182,6 +182,7 @@ export function PrepayModal({
   // planPrepayment) so the reveal can't disagree. Debounced after typing; a slower earlier result is dropped.
   const [preview, setPreview] = useState<(PrepaymentSummary & { neverPaysOff: boolean }) | null>(null);
   useEffect(() => {
+    setPreview(null);
     if (!Number.isFinite(amountMinor) || amountMinor <= 0) {
       setPreview(null);
       return;

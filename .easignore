@@ -49,6 +49,7 @@ yarn-error.*
 /sites/
 /design-preview/
 /.codex-remote-attachments/
+/.codex-attachments/
 /HOME_FIX_REPORT.md
 /APP_AUDIT.md
 /FIX_REPORT.md

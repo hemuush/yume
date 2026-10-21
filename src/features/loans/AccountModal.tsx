@@ -19,6 +19,7 @@ export function AccountModal({
   onClose,
   backLabel,
   onDone,
+  direction = 'borrowed',
 }: {
   accounts: Account[];
   currentAccountId: string | null;
@@ -26,6 +27,7 @@ export function AccountModal({
   onClose: () => void;
   backLabel?: string;
   onDone: () => void;
+  direction?: 'borrowed' | 'lent';
 }) {
   const runAction = useSaveOnce(async (action: () => Promise<void>) => {
     await action();
@@ -56,7 +58,7 @@ export function AccountModal({
       visible
       onClose={onClose}
       variant="center"
-      title="EMI account"
+      title={direction === 'lent' ? 'Receiving account' : 'EMI account'}
       footer={
         <View style={f.footerCol}>
           {error && <Text style={styles.errorText}>{error}</Text>}
@@ -70,8 +72,10 @@ export function AccountModal({
       }
     >
       <Text style={styles.hintText}>
-        Which account future EMIs for this loan come out of. This only changes payments made from here on — it
-        never rewrites transactions already recorded.
+        {direction === 'lent'
+          ? 'Choose the account future repayments arrive in.'
+          : 'Choose the account future EMIs come out of.'}{' '}
+        This applies only to future entries; recorded transactions stay unchanged.
       </Text>
       <View style={styles.chipRow}>
         {defaultCurrencyAccountsOf(spendableAccountsOf(accounts)).map((acc) => (

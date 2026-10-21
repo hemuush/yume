@@ -155,6 +155,9 @@ export function LoansHero({
               .filter(Boolean)
               .join(' · ')}
           </Text>
+          {owes && !totals.debtFreeDate && (
+            <Text style={styles.statLine}>A complete payoff schedule is not available for every loan.</Text>
+          )}
         </>
       )}
     </Glass>

@@ -9,7 +9,6 @@ import {
   StoryInput,
   summariseDayTotal,
   buildHeatGrid,
-  vsUsual,
   daySpendFacts,
   weekdayRhythm,
   weekdayReadLine,
@@ -422,44 +421,6 @@ describe('buildHeatGrid', () => {
       leadingPad: 0,
       columns: 4,
     });
-  });
-});
-
-describe('vsUsual', () => {
-  // A usual month of ₹33,683.00 in a 31-day month.
-  const usual = 33_683_00;
-  const base = {
-    baselineMinor: usual,
-    granularity: 'month' as const,
-    inProgress: false,
-    todayIso: '2026-10-02',
-  };
-
-  it('says nothing before day 5 of the month in progress', () => {
-    expect(vsUsual({ ...base, spentMinor: 13_784_00, inProgress: true, todayIso: '2026-10-02' })).toBeNull();
-    expect(vsUsual({ ...base, spentMinor: 13_784_00, inProgress: true, todayIso: '2026-10-04' })).toBeNull();
-    expect(
-      vsUsual({ ...base, spentMinor: 13_784_00, inProgress: true, todayIso: '2026-10-05' })
-    ).not.toBeNull();
-  });
-
-  it('holds the month in progress against the usual month so far', () => {
-    const r = vsUsual({ ...base, spentMinor: 14_600_00, inProgress: true, todayIso: '2026-10-12' })!;
-    expect(r.soFar).toBe(true);
-    // 33,683 × 12 ÷ 31 = 13,038.57 → 14,600 is about 12% above.
-    expect(Math.round(r.pct)).toBe(12);
-  });
-
-  it('compares a finished month with the whole usual month', () => {
-    const r = vsUsual({ ...base, spentMinor: 13_784_00 })!;
-    expect(r.soFar).toBe(false);
-    expect(Math.round(r.pct)).toBe(-59);
-  });
-
-  it('has no usual month for a year or a custom range, or without a baseline', () => {
-    expect(vsUsual({ ...base, spentMinor: 1, granularity: 'year' })).toBeNull();
-    expect(vsUsual({ ...base, spentMinor: 1, granularity: 'custom' })).toBeNull();
-    expect(vsUsual({ ...base, spentMinor: 1, baselineMinor: null })).toBeNull();
   });
 });
 

@@ -62,5 +62,11 @@ it('shows a read failure rather than implying zero reservations', async () => {
   const { tree } = await render();
   expect(words(tree)).toContain("Couldn't load goal reservations");
   expect(words(tree)).not.toContain('Available');
+  await act(async () => {
+    await tree.root
+      .find((n) => n.props.title === 'Retry reservations' && typeof n.props.onPress === 'function')
+      .props.onPress();
+  });
+  expect(words(tree)).toContain('Available to reserve');
   await act(async () => tree.unmount());
 });

@@ -244,6 +244,50 @@ it('warns before changing an overdue confirm-first rule to automatic posting', a
   alert.mockRestore();
 });
 
+it('serializes confirmed recurring saves with save, delete and pause actions', async () => {
+  const alert = jest.spyOn(require('@/components/AppDialog'), 'showAlert').mockImplementation(() => {});
+  let resolve!: () => void;
+  (updateRecurringRule as jest.Mock)
+    .mockClear()
+    .mockImplementationOnce(() => new Promise<void>((r) => (resolve = r)));
+  const tree = await render({ ...rule, postingMode: 'confirm', nextRunDate: '2020-01-01' });
+  const { setRecurringRuleActive } = require('@/db/recurring');
+  (deleteRecurringRule as jest.Mock).mockClear();
+  setRecurringRuleActive.mockClear();
+  const disclosure = tree.root.find((n) => n.props.title === 'More options' && typeof n.type !== 'string');
+  act(() =>
+    disclosure.findAll((n) => n.props.accessibilityRole === 'button' && n.props.onPress)[0].props.onPress()
+  );
+  const remove = tree.root.find((n) => n.props.label === 'Delete recurring entry' && n.props.onPress).props
+    .onPress;
+  act(() =>
+    tree.root.find((n) => n.props.label === 'Pause recurring entry' && n.props.onPress).props.onPress()
+  );
+  const pause = (alert.mock.calls.at(-1)?.[2] as { onPress: () => void }[])[1].onPress;
+  act(() => tree.root.find((n) => n.props.value === 'setup' && n.props.onChange).props.onChange('schedule'));
+  act(() =>
+    tree.root.find((n) => n.props.value === 'confirm' && n.props.onChange).props.onChange('automatic')
+  );
+  const press = tree.root.findAllByType(PrimaryButton).find((n) => /^Save/.test(n.props.title))!.props
+    .onPress;
+  await act(async () => press());
+  const confirm = (alert.mock.calls.at(-1)?.[2] as { onPress: () => void }[])[1].onPress;
+  await act(async () => {
+    confirm();
+    confirm();
+    pause();
+    await remove();
+    await press();
+  });
+  // Even an old main-button callback and an old confirmation cannot overlap writes.
+  expect(updateRecurringRule).toHaveBeenCalledTimes(1);
+  expect(deleteRecurringRule).not.toHaveBeenCalled();
+  expect(setRecurringRuleActive).not.toHaveBeenCalled();
+  await act(async () => resolve());
+  act(() => tree.unmount());
+  alert.mockRestore();
+});
+
 it('opens one-off controls from Schedule and returns without losing the recurring draft', async () => {
   const { NextOccurrenceSheet } = require('./NextOccurrenceSheet');
   const { ModalSheet } = require('@/components/ModalSheet');

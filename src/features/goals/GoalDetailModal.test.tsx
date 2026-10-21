@@ -111,6 +111,21 @@ afterEach(() => {
 });
 
 describe('goal form', () => {
+  it('preserves an unsaved draft when the same goal receives a refreshed snapshot', async () => {
+    const { tree } = await render(makeGoal());
+    act(() => byId(tree, 'Goal name').props.onChangeText('My draft'));
+    act(() =>
+      tree.update(
+        <GoalDetailModal
+          goal={makeGoal({ currentAmountMinor: 1000 })}
+          accounts={accounts}
+          onClose={jest.fn()}
+          onChanged={jest.fn()}
+        />
+      )
+    );
+    expect(byId(tree, 'Goal name').props.value).toBe('My draft');
+  });
   it('renders nothing without a goal', async () => {
     const { tree } = await render(null);
     expect(tree.toJSON()).toBeNull();
@@ -314,4 +329,35 @@ it('opens reservation management without a second visible goal sheet and preserv
   act(() => tree.root.findByType(ContributeModal).props.onClose());
   expect(tree.root.findByType(ModalSheet).props.visible).toBe(true);
   expect(byId(tree, 'Goal name').props.value).toBe('My draft');
+});
+
+it('returns to unsaved edits after a reservation change and refreshes without closing the editor', async () => {
+  const value = makeGoal({ reservesAccount: true, linkedAccountId: 'bank' });
+  const { tree, onChanged } = await render(value);
+  const refresh = jest.fn(async () => {});
+  act(() =>
+    tree.update(
+      <GoalDetailModal
+        goal={value}
+        accounts={accounts}
+        onClose={jest.fn()}
+        onChanged={onChanged}
+        onRefresh={refresh}
+      />
+    )
+  );
+  act(() => byId(tree, 'Goal name').props.onChangeText('Keep this draft'));
+  act(() =>
+    tree.root
+      .findAllByType(PrimaryButton)
+      .find((n) => n.props.title === 'Manage reservation')!
+      .props.onPress()
+  );
+  await act(async () => {
+    await tree.root.findByType(ContributeModal).props.onContributed();
+  });
+  expect(tree.root.findByType(ModalSheet).props.visible).toBe(true);
+  expect(byId(tree, 'Goal name').props.value).toBe('Keep this draft');
+  expect(refresh).toHaveBeenCalledTimes(1);
+  expect(onChanged).not.toHaveBeenCalled();
 });

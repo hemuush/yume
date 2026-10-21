@@ -47,6 +47,7 @@ export function GoalAccountField({
       setOthersFollowing([]);
       return;
     }
+    setOthersFollowing([]);
     goalsFollowingAccount(accountId, goalId)
       .then((names) => live && setOthersFollowing(names))
       .catch(() => live && setOthersFollowing([]));
@@ -62,9 +63,16 @@ export function GoalAccountField({
       <Text style={styles.fieldLabel}>Account (optional)</Text>
       <View style={styles.chipRow}>
         <Chip label="None" active={accountId === null} onPress={() => onChangeAccount(null)} />
-        {defaultCurrencyAccountsOf(accounts).map((a) => (
-          <Chip key={a.id} label={a.name} active={accountId === a.id} onPress={() => onChangeAccount(a.id)} />
-        ))}
+        {defaultCurrencyAccountsOf(accounts)
+          .filter((a) => !a.archived || a.id === accountId)
+          .map((a) => (
+            <Chip
+              key={a.id}
+              label={a.name}
+              active={accountId === a.id}
+              onPress={() => onChangeAccount(a.id)}
+            />
+          ))}
       </View>
 
       {account && (

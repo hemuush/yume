@@ -100,6 +100,42 @@ beforeEach(() => {
 });
 
 describe('milestone note on a contribution', () => {
+  it('does not replay an old save callback after showing completion', async () => {
+    let tree!: ReactTestRenderer;
+    await act(async () => {
+      tree = create(
+        <ContributeModal
+          goal={goal({ currentAmountMinor: 900000 })}
+          onClose={jest.fn()}
+          onContributed={jest.fn()}
+        />
+      );
+    });
+    act(() => tree.root.findByProps({ testID: 'amount' }).props.onChangeText('1000'));
+    const submit = tree.root.find(
+      (n) => n.props.title === 'Add money' && typeof n.props.onPress === 'function'
+    ).props.onPress;
+    await act(async () => {
+      await submit();
+      await submit();
+    });
+    expect(mockContribute).toHaveBeenCalledTimes(1);
+    act(() => tree.unmount());
+  });
+
+  it('does not announce completion while savings are hidden', async () => {
+    mockHide.current = true;
+    const { onContributed, tree } = await add(
+      goal({ currentAmountMinor: 900000, noteToSelf: 'Private letter' }),
+      '1000'
+    );
+    expect(onContributed).toHaveBeenCalledTimes(1);
+    expect(require('@/db/savingsGoals').markGoalLetterRevealed).not.toHaveBeenCalled();
+    expect(tree.root.findAllByType(require('./GoalLetterReveal').GoalLetterReveal)).toHaveLength(0);
+    expect(tree.root.findAllByProps({ title: 'Goal completed' })).toHaveLength(0);
+    act(() => tree.unmount());
+  });
+
   it('drops a note when a save crosses a line, and remembers it', async () => {
     const { onContributed } = await add(goal(), '1000');
     expect(onContributed).toHaveBeenCalled();
@@ -140,12 +176,52 @@ describe('milestone note on a contribution', () => {
     expect(mockSeen.keys).toContain('goal:g1:100');
   });
 
+  it('marks a completion letter read only after acknowledgement', async () => {
+    const mark = jest.mocked(require('@/db/savingsGoals').markGoalLetterRevealed);
+    mark.mockClear();
+    const { tree } = await add(goal({ currentAmountMinor: 900000, noteToSelf: 'Keep going' }), '1000');
+    expect(mark).not.toHaveBeenCalled();
+    await act(async () => {
+      await tree.root.findByProps({ title: 'Done' }).props.onPress();
+    });
+    expect(mark).toHaveBeenCalledTimes(1);
+    expect(mark).toHaveBeenCalledWith('g1');
+    act(() => tree.unmount());
+  });
+
+  it('keeps a failed letter acknowledgement retryable and allows closing without replaying progress', async () => {
+    const mark = jest.mocked(require('@/db/savingsGoals').markGoalLetterRevealed);
+    mark
+      .mockRejectedValueOnce(new Error('receipt unavailable'))
+      .mockRejectedValueOnce(new Error('receipt unavailable'));
+    const { tree, onContributed } = await add(
+      goal({ currentAmountMinor: 900000, noteToSelf: 'My note' }),
+      '1000'
+    );
+    await act(async () => {
+      await tree.root.findByProps({ title: 'Done' }).props.onPress();
+    });
+    expect(onContributed).not.toHaveBeenCalled();
+    expect(
+      tree.root
+        .findAllByType(Text)
+        .map((n) => [n.props.children].flat().join(' '))
+        .join(' ')
+    ).toContain('progress was saved');
+    await act(async () => {
+      await tree.root.findByType(require('@/components/ModalSheet').ModalSheet).props.onClose();
+    });
+    expect(onContributed).toHaveBeenCalledTimes(1);
+    expect(mockContribute).toHaveBeenCalledTimes(1);
+    act(() => tree.unmount());
+  });
+
   it('keeps the completion confirmation open without a letter and avoids a duplicate toast', async () => {
     const { tree, onContributed } = await add(goal({ currentAmountMinor: 900_000 }), '1000');
     expect(mockShow).not.toHaveBeenCalled();
     expect(onContributed).not.toHaveBeenCalled();
     expect(mockSeen.keys).toContain('goal:g1:100');
-    act(() => tree.root.findByProps({ title: 'Done' }).props.onPress());
+    await act(async () => tree.root.findByProps({ title: 'Done' }).props.onPress());
     expect(onContributed).toHaveBeenCalledTimes(1);
   });
 });
