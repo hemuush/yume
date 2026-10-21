@@ -43,10 +43,10 @@ CI now runs `npm run test:perf` after the main tests as a report-only step (`con
 - **Dependencies.** Patch updates exist for `expo` (57.0.31), `expo-router` (57.0.29) and `expo-sharing` (57.0.24); SDK 58 is available. None was applied.
 - **Bundle.** `MaterialCommunityIcons` (a 1.3MB font plus a 217KB glyph map imported by the widget code) is used in 21 files, so it stays.
 
-## Needs a decision or a phone
+## Needs a decision or a phone (circular imports) and a recorded decision (theme)
 
 - **Circular imports.** `madge` finds 13 cycles, all in the db/lib layer: `settings` ↔ `afterCommit` ↔ `notifications` ↔ `notificationData`/`queuedSpendAlerts`/`reports`, and `client` ↔ `recentlyDeleted`/`refundLabels`. They work today (tests, export and fixture pass) because the cross-calls happen inside functions, but they make load order fragile. Breaking them means inverting the after-commit refresh hook; not attempted without a device.
-- **Light-only theme on Android.** `app.json` sets `userInterfaceStyle: "light"` and the code never reads the system scheme, but prebuild warns this needs `expo-system-ui` on Android. With the phone in dark mode, native pieces (system dialogs, keyboard, date pickers) may follow dark mode. Not verified on a device; the documented fix is adding that Expo package.
+- **Light-only theme on Android.** Decided 21 October: the app stays light-only and no dark theme or `expo-system-ui` dependency is added. `app.json` sets `userInterfaceStyle: "light"`, which prebuild says needs `expo-system-ui` to take effect on Android, so on a phone in dark mode some native pieces (system dialogs, keyboard, date pickers) may still follow the system. Not verified on a device; revisit only if that shows up.
 
 ## Open
 
