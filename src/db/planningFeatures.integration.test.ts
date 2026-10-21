@@ -2,7 +2,7 @@ import { createRealDataTestDb } from '@/test-support/realDataTestDb';
 const mockTestDb = createRealDataTestDb();
 jest.mock('@/db/client', () => ({ getDb: async () => mockTestDb }));
 jest.mock('@/lib/notifications', () => ({ rebuildNotifications: async () => {} }));
-import { getStillToPayThisMonth } from './reports';
+import { getPeriodSummary, getStillToPayThisMonth } from './reports';
 import { CREATE_TABLES_SQL } from './schema';
 import { createAccount, createCategory, listTransactions, createTransaction } from './ledger';
 import {
@@ -15,7 +15,6 @@ import { changeNextOccurrence } from './recurringOccurrence';
 import { createSavingsGoal, contributeToGoal, deleteSavingsGoal } from './savingsGoals';
 import { listGoalActivity } from './goalHistory';
 import { buildBackupSnapshot, restoreFromSnapshot } from '@/lib/backup';
-import { paymentMethodTotals } from './paymentMethods';
 import { getMonthlyPlanIncome, setMonthlyPlanIncome } from './monthlyPlan';
 
 let accountId: string;
@@ -124,7 +123,7 @@ it('records manual progress atomically, preserves history at zero and round-trip
   await restoreFromSnapshot(backup);
   expect(await listGoalActivity(goal.id)).toHaveLength(2);
 });
-it('reports recorded methods and net refunds, and scopes income estimates by currency', async () => {
+it('retains legacy method metadata in net spending, and scopes income estimates by currency', async () => {
   await createTransaction({
     type: 'expense',
     accountId,
@@ -142,8 +141,8 @@ it('reports recorded methods and net refunds, and scopes income estimates by cur
     date: '2026-09-02',
     paymentMode: 'upi',
   });
-  const rows = await paymentMethodTotals({ start: '2026-09-01', end: '2026-09-30' }, false);
-  expect(rows.find((r) => r.method === 'upi')?.totalMinor).toBe(4000);
+  const summary = await getPeriodSummary({ start: '2026-09-01', end: '2026-09-30' });
+  expect(summary.expenseMinor).toBe(4000);
   await setMonthlyPlanIncome('INR', 12300);
   expect(await getMonthlyPlanIncome('INR')).toBe(12300);
   expect(await getMonthlyPlanIncome('USD')).toBeNull();
@@ -237,38 +236,4 @@ it('rolls back goal progress if its journal cannot be saved', async () => {
     await mockTestDb.getFirstAsync('SELECT current_amount_minor FROM savings_goals WHERE id = ?', [goal.id])
   ).toEqual({ current_amount_minor: 0 });
   expect(await listGoalActivity(goal.id)).toEqual([]);
-});
-it('excludes an entire private category family and other currencies from method totals', async () => {
-  const parent = await createCategory({ name: 'Private family', kind: 'expense' });
-  const child = await createCategory({ name: 'Private child', kind: 'expense', parentId: parent.id });
-  await mockTestDb.runAsync('UPDATE categories SET is_sensitive = 1 WHERE id = ?', [child.id]);
-  await createTransaction({
-    type: 'expense',
-    accountId,
-    categoryId: parent.id,
-    amountMinor: 1000,
-    date: '2026-11-01',
-    paymentMode: 'cash',
-  });
-  await createTransaction({
-    type: 'expense',
-    accountId,
-    categoryId: child.id,
-    amountMinor: 2000,
-    date: '2026-11-01',
-    paymentMode: 'cash',
-  });
-  const usd = await createAccount({ name: 'USD', type: 'bank', currency: 'USD', openingBalanceMinor: 10000 });
-  await createTransaction({
-    type: 'expense',
-    accountId: usd.id,
-    categoryId,
-    amountMinor: 3000,
-    date: '2026-11-01',
-    paymentMode: 'cash',
-  });
-  expect(await paymentMethodTotals({ start: '2026-11-01', end: '2026-11-30' }, true)).toEqual([]);
-  expect((await paymentMethodTotals({ start: '2026-11-01', end: '2026-11-30' }, false))[0].totalMinor).toBe(
-    3000
-  );
 });

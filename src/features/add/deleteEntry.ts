@@ -1,4 +1,3 @@
-import { router } from 'expo-router';
 import { deleteTransaction, restoreTransaction } from '@/db/ledger';
 import { deleteSplit, restoreSplit } from '@/db/splits';
 import { Transaction } from '@/types';
@@ -15,11 +14,17 @@ export function confirmDeleteEntry({
   editing,
   splitParts,
   showUndo,
+  onStart,
+  onDeleted,
   onError,
 }: {
   editing: Transaction;
   splitParts: number;
   showUndo: (message: string, onUndo: () => Promise<void>) => void;
+  /** Acquires the same lock as Save; a stale confirmation must not mutate. */
+  onStart: () => boolean;
+  /** Returns false when the owning screen has already closed. */
+  onDeleted: () => boolean;
   onError: (message: string) => void;
 }) {
   const splitId = editing.splitId;
@@ -33,17 +38,21 @@ export function confirmDeleteEntry({
           text: 'Delete',
           style: 'destructive',
           onPress: async () => {
+            if (!onStart()) return;
+            let snapshots;
             try {
-              const snapshots = await deleteSplit(splitId);
-              haptics.warn();
-              router.back();
-              showUndo('Split moved to Recently deleted', async () => {
-                await restoreSplit(snapshots);
-                emitTransactionsChanged();
-              });
+              snapshots = await deleteSplit(splitId);
             } catch (e) {
               onError(errorMessage(e));
+              return;
             }
+            emitTransactionsChanged();
+            if (!onDeleted()) return;
+            haptics.warn();
+            showUndo('Split moved to Recently deleted', async () => {
+              await restoreSplit(snapshots);
+              emitTransactionsChanged();
+            });
           },
         },
       ]
@@ -59,17 +68,21 @@ export function confirmDeleteEntry({
         text: 'Delete',
         style: 'destructive',
         onPress: async () => {
+          if (!onStart()) return;
+          let snapshot;
           try {
-            const snapshot = await deleteTransaction(editing.id);
-            haptics.warn();
-            router.back();
-            showUndo('Moved to Recently deleted', async () => {
-              await restoreTransaction(snapshot);
-              emitTransactionsChanged();
-            });
+            snapshot = await deleteTransaction(editing.id);
           } catch (e) {
             onError(errorMessage(e));
+            return;
           }
+          emitTransactionsChanged();
+          if (!onDeleted()) return;
+          haptics.warn();
+          showUndo('Moved to Recently deleted', async () => {
+            await restoreTransaction(snapshot);
+            emitTransactionsChanged();
+          });
         },
       },
     ]

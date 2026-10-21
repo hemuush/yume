@@ -77,6 +77,21 @@ describe('SegmentedControl', () => {
     { label: 'Transfer', value: 'transfer' },
   ] as const;
 
+  it('keeps the selection visible but blocks changes while saving', () => {
+    const onChange = jest.fn();
+    let tree!: ReactTestRenderer;
+    act(() => {
+      tree = create(<SegmentedControl options={[...OPTIONS]} value="expense" onChange={onChange} disabled />);
+    });
+    const tabs = tree.root.findAll((n) => n.props.accessibilityRole === 'tab' && n.props.onPress, {
+      deep: false,
+    });
+    expect(tabs).toHaveLength(3);
+    expect(tabs[0].props.accessibilityState).toEqual({ selected: true, disabled: true });
+    act(() => tabs[1].props.onPress());
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
   it('reports the tapped choice, and its pill appears once it has a width', () => {
     const onChange = jest.fn();
     let r!: ReactTestRenderer;
@@ -90,7 +105,7 @@ describe('SegmentedControl', () => {
     const segments = r.root.findAll(
       (n) =>
         typeof n.type !== 'string' &&
-        n.props.accessibilityRole === 'button' &&
+        n.props.accessibilityRole === 'tab' &&
         typeof n.props.onPress === 'function',
       { deep: false }
     );
@@ -139,7 +154,7 @@ it('does not restart a form or filter when its selected segment is tapped', () =
         .find(
           (n) =>
             n.props.onPress &&
-            n.props.accessibilityRole === 'button' &&
+            n.props.accessibilityRole === 'tab' &&
             n.findAllByType(Text).some((t) => t.props.children === label)
         )
         .props.onPress()

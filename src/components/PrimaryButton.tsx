@@ -59,6 +59,8 @@ export function PrimaryButton({
   compact,
   icon,
   accessibilityState,
+  onPressIn: callerPressIn,
+  onPressOut: callerPressOut,
   ...rest
 }: Props) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale();
@@ -78,8 +80,15 @@ export function PrimaryButton({
   return (
     <AnimatedPressable
       disabled={unavailable}
-      onPressIn={onPressIn}
-      onPressOut={onPressOut}
+      onPressIn={(event) => {
+        if (unavailable) return;
+        onPressIn();
+        callerPressIn?.(event);
+      }}
+      onPressOut={(event) => {
+        onPressOut();
+        callerPressOut?.(event);
+      }}
       style={[
         styles.base,
         compact && styles.baseCompact,

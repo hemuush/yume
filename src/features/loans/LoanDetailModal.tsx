@@ -47,21 +47,20 @@ import { showAlert } from '@/components/AppDialog';
 const PAYOFF_LINE_WIDTH = 300;
 const PAYOFF_LINE_HEIGHT = 40;
 
-export function LoanDetailModal({
-  loan,
-  onClose,
-  onChanged,
-  startWithPay = false,
-  hue,
-}: {
+type LoanDetailProps = {
   loan: Loan;
   onClose: () => void;
   onChanged: () => void;
-  /** Opens straight onto the next EMI's pay sheet (an EMI reminder's "Pay now"). */
   startWithPay?: boolean;
-  /** The loan's identity colour from the list (loanHues); the card falls back to coral / mint without it. */
   hue?: string;
-}) {
+};
+
+/** A different loan owns a fresh sheet session, including its pending requests and child forms. */
+export function LoanDetailModal(props: LoanDetailProps) {
+  return <LoanDetailContent key={props.loan.id} {...props} />;
+}
+
+function LoanDetailContent({ loan, onClose, onChanged, startWithPay = false, hue }: LoanDetailProps) {
   const { show: showUndo } = useUndoToast();
   const runAction = useSaveOnce(async (action: () => Promise<void>) => {
     await action();
@@ -73,7 +72,13 @@ export function LoanDetailModal({
   const [rateHistory, setRateHistory] = useState<LoanRateChange[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [payVisible, setPayVisible] = useState(startWithPay);
+  const [payRequested, setPayRequested] = useState(startWithPay);
+  const [payment, setPayment] = useState<{
+    installment: LoanPayment;
+    account: Account;
+    categoryId: string;
+    linkedAccountMissing: boolean;
+  } | null>(null);
   const [prepayVisible, setPrepayVisible] = useState(false);
   const [rateChangeVisible, setRateChangeVisible] = useState(false);
   const [assetModalVisible, setAssetModalVisible] = useState(false);
@@ -155,15 +160,28 @@ export function LoanDetailModal({
     ? (accounts.find((a) => a.id === liveLoan.linkedAccountId) ?? accounts[0])
     : accounts[0];
 
-  const openPay = () => {
-    if (nextInstallment) setPayVisible(true);
-  };
+  const openPay = useCallback(() => {
+    const installment = nextUnpaidInstallment(schedule);
+    if (liveLoan.status === 'closed' || !installment || !defaultAccount || !emiCategory) return;
+    // The parent refreshes after a save. Keep this EMI/account stable until its confirmation closes.
+    setPayment({
+      installment,
+      account: defaultAccount,
+      categoryId: emiCategory.id,
+      linkedAccountMissing,
+    });
+  }, [liveLoan.status, schedule, defaultAccount, emiCategory, linkedAccountMissing]);
+  useEffect(() => {
+    if (!payRequested || !detailsLoaded) return;
+    setPayRequested(false);
+    openPay();
+  }, [payRequested, detailsLoaded, openPay]);
 
   // Pay is the one frequent action so it stays visible; Prepay/Update rate/Delete are rare, behind "⋯"
   // (shared action list) so a 240-month loan's detail screen looks as simple as a 6-month one.
   const moreActionItems: ActionSheetItem[] = [];
   // Offered only when it can open: it needs an account to pay from and the EMI category, like Pay.
-  if (liveLoan.status === 'active' && nextInstallment && defaultAccount && emiCategory) {
+  if (liveLoan.status !== 'closed' && nextInstallment && defaultAccount && emiCategory) {
     moreActionItems.push({
       key: 'prepay',
       // A loan you lent is prepaid by the borrower: you record it.
@@ -172,7 +190,7 @@ export function LoanDetailModal({
       onPress: () => setPrepayVisible(true),
     });
   }
-  if (liveLoan.status === 'active' && liveLoan.rateType === 'floating') {
+  if (liveLoan.status !== 'closed' && nextInstallment && liveLoan.rateType === 'floating') {
     moreActionItems.push({
       key: 'rate',
       label: 'Update interest rate',
@@ -233,7 +251,12 @@ export function LoanDetailModal({
 
   // The loan as a card (coral for money you owe, mint for money lent), then two pages: where it stands, and
   // its schedule. Pay is the footer's one button; Prepay, Update rate and Delete stay behind ⋯.
-  const canPay = liveLoan.status === 'active' && !!nextInstallment;
+  const canPay = liveLoan.status !== 'closed' && !!nextInstallment;
+  const incompleteSchedule =
+    detailsLoaded &&
+    liveLoan.status !== 'closed' &&
+    liveLoan.outstandingPrincipalMinor > 0 &&
+    !payoff.lastDueDate;
   return (
     <>
       <ModalSheet
@@ -241,7 +264,7 @@ export function LoanDetailModal({
         dismissible={!busy}
         visible={
           !(
-            (payVisible && nextInstallment) ||
+            payment ||
             (prepayVisible && defaultAccount && emiCategory) ||
             rateChangeVisible ||
             assetModalVisible ||
@@ -268,7 +291,7 @@ export function LoanDetailModal({
                   title={
                     busy
                       ? 'Recording…'
-                      : `Record EMI ${nextInstallment.installmentNumber} · ${formatMoney(nextInstallment.emiAmountMinor)}${isPayingEarly ? ' · early' : ''}`
+                      : `${liveLoan.direction === 'lent' ? 'Receive' : 'Record'} EMI ${nextInstallment.installmentNumber} · ${formatMoney(nextInstallment.emiAmountMinor)}${isPayingEarly ? ' · early' : ''}`
                   }
                   onPress={openPay}
                   disabled={busy || !defaultAccount || !emiCategory}
@@ -283,7 +306,12 @@ export function LoanDetailModal({
           <ActionList items={moreActionItems} onClose={() => setMoreActionsVisible(false)} />
         ) : (
           <>
-            {loadError && <Text style={styles.errorText}>Couldn't load the latest details: {loadError}</Text>}
+            {loadError && (
+              <View>
+                <Text style={styles.errorText}>Couldn't load the latest details: {loadError}</Text>
+                <PrimaryButton title="Retry" compact variant="secondary" onPress={() => void load()} />
+              </View>
+            )}
 
             <SheetCard
               hue={
@@ -319,7 +347,9 @@ export function LoanDetailModal({
                           : 'Loading…'
                         : nextInstallment
                           ? formatMoney(nextInstallment.emiAmountMinor)
-                          : 'None left',
+                          : incompleteSchedule
+                            ? 'Schedule unavailable'
+                            : 'None left',
                       sub: nextInstallment
                         ? `${weekdayDayMonth(nextInstallment.dueDate)}${nextOverdue ? ' · overdue' : ''}`
                         : undefined,
@@ -345,10 +375,18 @@ export function LoanDetailModal({
                         ? loadError
                           ? 'Unavailable'
                           : 'Loading…'
-                        : formatMoney(payoff.interestLeftMinor),
+                        : incompleteSchedule
+                          ? 'Unavailable'
+                          : formatMoney(payoff.interestLeftMinor),
                     },
                   ]}
                 />
+                {incompleteSchedule && (
+                  <Text style={styles.hintText}>
+                    The remaining schedule does not show a complete payoff. The outstanding balance is still
+                    owed; review the loan data before relying on a payoff date.
+                  </Text>
+                )}
                 {payoff.lastDueDate && (
                   <View style={styles.payoffCard}>
                     <Text style={styles.statLabel}>
@@ -400,7 +438,7 @@ export function LoanDetailModal({
                   <SettingsRow
                     round
                     icon="bank"
-                    label="EMI account"
+                    label={liveLoan.direction === 'lent' ? 'Receiving account' : 'EMI account'}
                     sub={
                       !detailsLoaded
                         ? 'Loading account…'
@@ -443,15 +481,15 @@ export function LoanDetailModal({
                 )}
                 {linkedAccountMissing && defaultAccount && (
                   <Text style={styles.hintText}>
-                    This loan's original account was deleted — payments will go through {defaultAccount.name}{' '}
-                    instead.
+                    This loan's original account is unavailable — payments will go through{' '}
+                    {defaultAccount.name} instead.
                   </Text>
                 )}
               </>
             ) : (
               <>
                 {detailsLoaded ? (
-                  <LoanSchedule schedule={schedule} />
+                  <LoanSchedule schedule={schedule} direction={liveLoan.direction} />
                 ) : (
                   <Text style={styles.hintText}>
                     {loadError ? 'Schedule unavailable. Try again.' : 'Loading schedule…'}
@@ -462,8 +500,8 @@ export function LoanDetailModal({
                   <>
                     <Text style={styles.sectionTitle}>Rate history</Text>
                     {rateHistory.map((r) => (
-                      <View key={r.id} style={styles.scheduleRow}>
-                        <View style={{ flex: 1 }}>
+                      <View key={r.id} style={[styles.scheduleRow, { flexWrap: 'wrap', gap: 8 }]}>
+                        <View style={{ flexGrow: 1, flexBasis: 180, minWidth: 0 }}>
                           <Text style={styles.rowLabel}>
                             {(r.oldRateAnnualBp / 100).toFixed(2)}% → {(r.newRateAnnualBp / 100).toFixed(2)}%
                           </Text>
@@ -473,7 +511,7 @@ export function LoanDetailModal({
                           </Text>
                         </View>
                         {r.mode === 'keepTenure' && (
-                          <Text style={styles.rowValue}>
+                          <Text style={[styles.rowValue, { flexShrink: 1 }]}>
                             {formatMoney(r.oldEmiAmountMinor)} → {formatMoney(r.newEmiAmountMinor)}
                           </Text>
                         )}
@@ -487,14 +525,15 @@ export function LoanDetailModal({
         )}
       </ModalSheet>
 
-      {payVisible && nextInstallment && (
+      {payment && (
         <PayInstallmentSheet
           backLabel="Back to loan"
-          installment={nextInstallment}
-          account={defaultAccount ?? null}
-          categoryId={emiCategory?.id ?? null}
-          linkedAccountMissing={linkedAccountMissing}
-          onClose={() => setPayVisible(false)}
+          installment={payment.installment}
+          direction={liveLoan.direction}
+          account={payment.account}
+          categoryId={payment.categoryId}
+          linkedAccountMissing={payment.linkedAccountMissing}
+          onClose={() => setPayment(null)}
           onPaid={async () => {
             await load();
             await onChanged();
@@ -549,6 +588,7 @@ export function LoanDetailModal({
           backLabel="Back to loan"
           accounts={accounts}
           currentAccountId={defaultAccount?.id ?? null}
+          direction={liveLoan.direction}
           onClose={() => setAccountModalVisible(false)}
           onDone={async () => {
             setAccountModalVisible(false);

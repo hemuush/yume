@@ -49,7 +49,7 @@ export function LoanCard({
   const isBorrowed = loan.direction === 'borrowed';
   const fraction = isClosed ? 1 : payoffFraction(loan.principalMinor, loan.outstandingPrincipalMinor);
   const lastDueDate = progress?.lastDueDate;
-  const nextDueDate = progress?.nextDueDate ?? loan.nextDueDate;
+  const nextDueDate = progress ? progress.nextDueDate : loan.nextDueDate;
   const nextEmiMinor = progress?.nextEmiMinor ?? loan.emiAmountMinor;
   const repaidLine = progress ? `${progress.paidCount} of ${progress.totalCount} EMIs` : null;
 
@@ -79,6 +79,7 @@ export function LoanCard({
                 {(loan.interestRateAnnualBp / 100).toFixed(2)}% ·{' '}
                 {loan.rateType === 'floating' ? 'Floating' : 'Fixed'}
                 {isBorrowed ? '' : ' · Lent'}
+                {loan.status === 'defaulted' ? ' · Defaulted' : ''}
               </Text>
             </View>
           </View>
@@ -115,6 +116,8 @@ export function LoanCard({
               <Text style={styles.captionText}>
                 {isBorrowed ? 'Debt-free' : 'Repaid'} {payoffMonthShort(lastDueDate)}
               </Text>
+            ) : !isClosed && progress ? (
+              <Text style={styles.captionText}>Payoff date unavailable</Text>
             ) : null}
           </View>
 

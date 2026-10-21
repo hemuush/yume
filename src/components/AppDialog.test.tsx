@@ -33,6 +33,79 @@ async function render() {
 }
 
 describe('showAlert', () => {
+  it('consumes a confirmation once even when two taps arrive before rendering', async () => {
+    const tree = await render();
+    const confirm = jest.fn();
+    act(() => showAlert('Continue?', undefined, [{ text: 'Continue', onPress: confirm }]));
+    const press = buttons(tree)[0].props.onPress;
+    act(() => {
+      press();
+      press();
+    });
+    expect(confirm).toHaveBeenCalledTimes(1);
+    act(() => tree.unmount());
+  });
+
+  it('ignores callbacks from a replaced dialog without dismissing its replacement', async () => {
+    const tree = await render();
+    const obsolete = jest.fn();
+    act(() => showAlert('Old confirmation', undefined, [{ text: 'Old', onPress: obsolete }]));
+    const press = buttons(tree)[0].props.onPress;
+    act(() => {
+      showAlert('New notice');
+      press();
+    });
+    expect(obsolete).not.toHaveBeenCalled();
+    expect(texts(tree)).toContain('New notice');
+    act(() => tree.unmount());
+  });
+
+  it('keeps a follow-up dialog open when the old confirmation receives another tap', async () => {
+    const tree = await render();
+    const confirm = jest.fn(() => showAlert('Saved'));
+    act(() => showAlert('Continue?', undefined, [{ text: 'Continue', onPress: confirm }]));
+    const press = buttons(tree)[0].props.onPress;
+    act(() => {
+      press();
+      press();
+    });
+    expect(confirm).toHaveBeenCalledTimes(1);
+    expect(texts(tree)).toContain('Saved');
+    act(() => tree.unmount());
+  });
+
+  it('ignores a queued action after its host unmounts', async () => {
+    const tree = await render();
+    const confirm = jest.fn();
+    act(() => showAlert('Continue?', undefined, [{ text: 'Continue', onPress: confirm }]));
+    const press = buttons(tree)[0].props.onPress;
+    act(() => tree.unmount());
+    act(() => press());
+    expect(confirm).not.toHaveBeenCalled();
+  });
+
+  it('runs cancellation only once and ignores a queued confirmation after dismissal', async () => {
+    const tree = await render();
+    const cancel = jest.fn();
+    const confirm = jest.fn();
+    act(() =>
+      showAlert('Continue?', undefined, [
+        { text: 'Cancel', style: 'cancel', onPress: cancel },
+        { text: 'Continue', onPress: confirm },
+      ])
+    );
+    const close = tree.root.findByType(ModalSheet).props.onClose;
+    const press = buttons(tree)[1].props.onPress;
+    act(() => {
+      close();
+      close();
+      press();
+    });
+    expect(cancel).toHaveBeenCalledTimes(1);
+    expect(confirm).not.toHaveBeenCalled();
+    act(() => tree.unmount());
+  });
+
   it('shows a notice with one OK that closes it', async () => {
     const tree = await render();
     act(() => showAlert("Couldn't save", 'The disk is full.'));

@@ -4,7 +4,7 @@ export interface SpendBar {
   key: string;
   label: string;
   totalMinor: number;
-  /** Today, or the week today is in: drawn dark with its amount on top. */
+  /** Today, or its week: selected by default, with the exact amount in the chart footer. */
   current: boolean;
 }
 

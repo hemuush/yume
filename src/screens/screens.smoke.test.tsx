@@ -820,13 +820,25 @@ describe('Plan links open the selected existing flow', () => {
     const goal = (await listSavingsGoals())[0];
     mockParams = { goal: goal.id };
     const tree = await open(() => require('../../app/savings-goals'));
+    const { GoalOverviewModal } = require('@/features/goals/GoalOverviewModal');
     const { GoalDetailModal } = require('@/features/goals/GoalDetailModal');
-    const detail = tree.root.findByType(GoalDetailModal);
+    const { PrimaryButton } = require('@/components/PrimaryButton');
+    const detail = tree.root.findByType(GoalOverviewModal);
     expect(detail.props.goal.id).toBe(goal.id);
+    await act(async () => {
+      tree.root
+        .findAllByType(PrimaryButton)
+        .find((n) => n.props.title === 'Edit goal')!
+        .props.onPress();
+    });
+    expect(tree.root.findByType(GoalDetailModal).props.goal.id).toBe(goal.id);
+    await act(async () => {
+      tree.root.findByType(GoalDetailModal).props.onClose();
+    });
     await act(async () => {
       detail.props.onClose();
     });
-    expect(tree.root.findByType(GoalDetailModal).props.goal).toBeNull();
+    expect(tree.root.findAllByType(GoalOverviewModal)).toHaveLength(0);
     expect((await listSavingsGoals()).find((g: { id: string }) => g.id === goal.id)).toEqual(goal);
     act(() => tree.unmount());
   });
@@ -842,14 +854,25 @@ describe('Plan links open the selected existing flow', () => {
     act(() => tree.unmount());
   });
 
-  it('opens the selected budget in the existing edit sheet', async () => {
+  it('opens the selected budget overview before its existing edit sheet', async () => {
     const { listBudgetsForMonth } = require('@/db/budgets');
     const budget = (await listBudgetsForMonth())[0];
     mockParams = { budget: budget.budget.id };
     const tree = await open(() => require('../../app/budgets'));
     const { AddBudgetModal } = require('@/features/budgets/AddBudgetModal');
-    expect(tree.root.findByType(AddBudgetModal).props.visible).toBe(true);
-    expect(tree.root.findByType(AddBudgetModal).props.editing.budget.id).toBe(budget.budget.id);
+    const { BudgetDetailModal } = require('@/features/budgets/BudgetDetailModal');
+    const { PrimaryButton } = require('@/components/PrimaryButton');
+    expect(tree.root.findByType(BudgetDetailModal).props.progress.budget.id).toBe(budget.budget.id);
+    expect(tree.root.findByType(AddBudgetModal).props.visible).toBe(false);
+    await act(async () => {
+      tree.root
+        .findAllByType(PrimaryButton)
+        .find((n) => n.props.title === 'Edit limit')!
+        .props.onPress();
+    });
+    const editors = tree.root.findAllByType(AddBudgetModal).filter((n) => n.props.visible);
+    expect(editors).toHaveLength(1);
+    expect(editors[0].props.editing.budget.id).toBe(budget.budget.id);
     act(() => tree.unmount());
   });
 
@@ -1002,6 +1025,7 @@ it('refreshes today spending when Home returns from the background without navig
   const tree = await open(SCREENS[0][1]);
   try {
     expect(textOf(tree)).toContain('₹500 left today');
+    act(() => callbacks.forEach((callback) => callback('background')));
     await createTransaction({
       type: 'expense',
       accountId: bank.id,

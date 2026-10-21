@@ -26,7 +26,7 @@ export function GoalOverviewModal({
   goal: SavingsGoal;
   accounts: Account[];
   onClose: () => void;
-  onChanged: () => void;
+  onChanged: () => void | Promise<void>;
   onMoveMoney: (accountId: string) => void;
 }) {
   const [page, setPage] = useState<'overview' | 'edit' | 'contribute'>('overview');
@@ -36,9 +36,9 @@ export function GoalOverviewModal({
   const { done } = goalProgress(goal.currentAmountMinor, goal.targetAmountMinor);
   const following = goal.tracksAccount;
   const account = accounts.find((a) => a.id === goal.linkedAccountId && !a.archived);
-  const changed = () => {
+  const changed = async () => {
     setPage('overview');
-    onChanged();
+    await onChanged();
   };
   return (
     <>
@@ -122,6 +122,7 @@ export function GoalOverviewModal({
           backLabel="Back to goal overview"
           onClose={() => setPage('overview')}
           onChanged={changed}
+          onRefresh={onChanged}
         />
       )}
       {page === 'contribute' && (

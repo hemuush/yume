@@ -14,7 +14,8 @@ jest.mock('@/components/SheetTabs', () => ({
     require('react').createElement(require('react-native').View, { testID: 'type', ...p }),
 }));
 
-import { FilterModal, type ActivityFilter } from './FilterModal';
+import { FilterModal } from './FilterModal';
+import type { ActivityFilter } from './activityFilter';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { Chip } from '@/components/Chip';
 import { TextInput } from '@/components/Text';

@@ -1,4 +1,4 @@
-import { useSaveOnce } from '@/lib/useSaveOnce';
+import { useSheetMutation } from '@/lib/useSheetMutation';
 import { useState } from 'react';
 import { View } from 'react-native';
 import { Text } from '@/components/Text';
@@ -15,7 +15,6 @@ import { ToggleSwitch } from '@/components/ToggleSwitch';
 import { CategoryPicker } from '@/components/CategoryPicker';
 import { topLevelOnly } from '@/lib/categoryTree';
 import { styles } from './budgets.styles';
-import { errorMessage } from '@/lib/errorMessage';
 import { categorySentence } from '@/lib/categoryLabel';
 import { useAccent } from '@/theme/AccentContext';
 
@@ -35,7 +34,21 @@ export function defaultBudgetCategoryId(
  * Creates a month's budget or edits its limit/rollover. Category and month are fixed once a budget exists
  * (like an account's currency), so re-categorising means delete and add.
  */
-export function AddBudgetModal({
+export function AddBudgetModal(props: AddBudgetProps) {
+  return props.visible ? <BudgetForm key={props.editing?.budget.id ?? 'new'} {...props} /> : null;
+}
+
+interface AddBudgetProps {
+  visible: boolean;
+  editing: BudgetProgress | null;
+  categories: Category[];
+  budgetedCategoryIds?: ReadonlySet<string>;
+  onClose: () => void;
+  onSaved: () => void | Promise<void>;
+  backLabel?: string;
+}
+
+function BudgetForm({
   visible,
   editing,
   categories,
@@ -43,77 +56,33 @@ export function AddBudgetModal({
   onClose,
   onSaved,
   backLabel,
-}: {
-  visible: boolean;
-  editing: BudgetProgress | null;
-  /**
-   * Every expense category (parents and subs), hidden when editing. Not filtered by "already budgeted": hiding
-   * a parent would drop its eligible subs (CategoryPicker needs it); createBudget errors on a duplicate.
-   */
-  categories: Category[];
-  /** Categories that already have a budget this month — skipped when choosing the default category. */
-  budgetedCategoryIds?: ReadonlySet<string>;
-  onClose: () => void;
-  onSaved: () => void;
-  backLabel?: string;
-}) {
+}: AddBudgetProps) {
   const { accent } = useAccent();
-  const runAction = useSaveOnce(async (action: () => Promise<void>) => {
-    await action();
-  });
-  const [categoryId, setCategoryId] = useState<string | null>(null);
-  const [limit, setLimit] = useState('');
-  const [rollover, setRollover] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  // The form starts fresh each time the sheet opens (or switches to another budget). Done while rendering
-  // rather than in an effect, so the first painted frame is already the reset form, not last time's.
-  const openKey = visible ? (editing ? `edit:${editing.budget.id}` : 'new') : null;
-  const [syncedKey, setSyncedKey] = useState<string | null>(null);
-  if (openKey !== syncedKey) {
-    setSyncedKey(openKey);
-    if (openKey) {
-      if (editing) {
-        setCategoryId(editing.budget.categoryId);
-        setLimit((editing.budget.limitAmountMinor / 100).toString());
-        setRollover(editing.budget.rollover);
-      } else {
-        setCategoryId(defaultBudgetCategoryId(categories, budgetedCategoryIds));
-        setLimit('');
-        setRollover(false);
-      }
-      setError(null);
-    }
-  }
+  const [categoryId, setCategoryId] = useState<string | null>(
+    () => editing?.budget.categoryId ?? defaultBudgetCategoryId(categories, budgetedCategoryIds)
+  );
+  const [limit, setLimit] = useState(() => (editing ? String(editing.budget.limitAmountMinor / 100) : ''));
+  const [rollover, setRollover] = useState(editing?.budget.rollover ?? false);
+  const { run, pending: saving, saved, error } = useSheetMutation();
 
   const submit = () =>
-    runAction(async () => {
-      setError(null);
+    run(async () => {
       // Whole units by design: the field takes digits only, so the limit is never fractional.
       const limitAmountMinor = toMinor(parseFloat(limit || '0'));
       if (!Number.isFinite(limitAmountMinor) || limitAmountMinor <= 0) {
-        setError('Enter a valid monthly limit');
-        return;
+        throw new Error('Enter a valid monthly limit');
       }
       if (!editing && !categoryId) {
-        setError('Pick a category');
-        return;
+        throw new Error('Pick a category');
       }
-      setSaving(true);
-      try {
-        if (editing) {
-          await updateBudget(editing.budget.id, { limitAmountMinor, rollover });
-        } else {
-          await createBudget({ categoryId: categoryId!, limitAmountMinor, rollover });
-        }
-        onSaved();
-      } catch (e) {
-        setError(errorMessage(e));
-      } finally {
-        setSaving(false);
+      if (!editing && !categories.some((c) => c.id === categoryId && !c.archived && c.kind === 'expense'))
+        throw new Error('Pick an available expense category');
+      if (editing) {
+        await updateBudget(editing.budget.id, { limitAmountMinor, rollover });
+      } else {
+        await createBudget({ categoryId: categoryId!, limitAmountMinor, rollover });
       }
-    });
+    }, onSaved);
 
   // The calm-sheets sign-off (Direction C): a live card of the budget in
   // its category's colour, then the form.
@@ -130,58 +99,65 @@ export function AddBudgetModal({
           {error && <Text style={styles.errorText}>{error}</Text>}
           <PrimaryButton
             loading={saving}
-            title={saving ? 'Saving…' : editing ? 'Save changes' : 'Create budget'}
+            title={saving ? 'Saving…' : saved ? 'Budget saved' : editing ? 'Save changes' : 'Create budget'}
             onPress={submit}
-            disabled={saving}
+            disabled={saving || saved}
           />
         </View>
       }
     >
-      <SheetCard
-        compact
-        hue={cat?.color ?? accent}
-        icon={cat?.icon ?? 'wallet-outline'}
-        kicker={rollover ? 'Monthly · rolls over' : 'Monthly'}
-        amount={formatMoney(inputMinor(limit))}
-        title={
-          editing
-            ? categorySentence(editing.categoryName, editing.parentName)
-            : (cat?.name ?? 'Pick a category')
-        }
-        meta={
-          editing
-            ? `${longMonthYear(`${editing.budget.periodMonth}-01`)} · category and month are fixed`
-            : 'A limit for this month'
-        }
-      />
-      {!editing &&
-        (categories.length === 0 ? (
-          <Text style={styles.modalHint}>Add an expense category before setting a budget.</Text>
-        ) : (
-          <View style={styles.pickerGap}>
-            <CategoryPicker
-              categories={categories}
-              selectedId={categoryId}
-              onSelect={setCategoryId}
-              variant="medal"
-            />
+      <View
+        pointerEvents={saving || saved ? 'none' : 'auto'}
+        accessibilityElementsHidden={saving || saved}
+        importantForAccessibility={saving || saved ? 'no-hide-descendants' : 'auto'}
+      >
+        <SheetCard
+          compact
+          hue={cat?.color ?? editing?.categoryColor ?? accent}
+          icon={cat?.icon ?? editing?.categoryIcon ?? 'wallet-outline'}
+          kicker={rollover ? 'Monthly · rolls over' : 'Monthly'}
+          amount={formatMoney(inputMinor(limit))}
+          title={
+            editing
+              ? categorySentence(editing.categoryName, editing.parentName)
+              : (cat?.name ?? 'Pick a category')
+          }
+          meta={
+            editing
+              ? `${longMonthYear(`${editing.budget.periodMonth}-01`)} · category and month are fixed`
+              : 'A limit for this month'
+          }
+        />
+        {!editing &&
+          (categories.length === 0 ? (
+            <Text style={styles.modalHint}>Add an expense category before setting a budget.</Text>
+          ) : (
+            <View style={styles.pickerGap}>
+              <CategoryPicker
+                categories={categories}
+                selectedId={categoryId}
+                onSelect={setCategoryId}
+                variant="medal"
+              />
+            </View>
+          ))}
+
+        <AmountField
+          label="Monthly limit"
+          editable={!saving && !saved}
+          value={limit}
+          onChangeText={setLimit}
+          placeholder="e.g. 5000"
+          decimal={false}
+        />
+
+        <View style={styles.toggleRow}>
+          <View style={styles.rolloverCopy}>
+            <Text style={styles.fieldLabel}>Roll over unspent</Text>
+            <Text style={styles.modalHint}>Add this month’s remaining amount to next month’s limit.</Text>
           </View>
-        ))}
-
-      <AmountField
-        label="Monthly limit"
-        value={limit}
-        onChangeText={setLimit}
-        placeholder="e.g. 5000"
-        decimal={false}
-      />
-
-      <View style={styles.toggleRow}>
-        <View style={styles.rolloverCopy}>
-          <Text style={styles.fieldLabel}>Roll over unspent</Text>
-          <Text style={styles.modalHint}>Add this month’s remaining amount to next month’s limit.</Text>
+          <ToggleSwitch value={rollover} onChange={setRollover} accessibilityLabel="Roll over unspent" />
         </View>
-        <ToggleSwitch value={rollover} onChange={setRollover} accessibilityLabel="Roll over unspent" />
       </View>
     </ModalSheet>
   );

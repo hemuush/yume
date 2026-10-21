@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { View, StyleSheet, useWindowDimensions } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
@@ -38,10 +38,16 @@ export function showAlert(title: string, message?: string, buttons?: DialogButto
 export function AppDialogHost() {
   const { width, fontScale } = useWindowDimensions();
   const [dialog, setDialog] = useState<Dialog | null>(null);
+  const current = useRef<Dialog | null>(null);
   useEffect(() => {
-    show = setDialog;
+    const present = (next: Dialog) => {
+      current.current = next;
+      setDialog(next);
+    };
+    show = present;
     return () => {
-      show = null;
+      if (show === present) show = null;
+      current.current = null;
     };
   }, []);
   if (!dialog) return null;
@@ -52,9 +58,15 @@ export function AppDialogHost() {
   const buttons = [...dialog.buttons].sort(
     (a, b) => Number(b.style === 'cancel') - Number(a.style === 'cancel')
   );
-  const close = () => setDialog(null);
+  const close = () => {
+    // Consume synchronously: queued taps and callbacks from replaced dialogs must not act twice.
+    if (current.current !== dialog) return false;
+    current.current = null;
+    setDialog(null);
+    return true;
+  };
   const press = (b: DialogButton) => {
-    close();
+    if (!close()) return;
     b.onPress?.();
   };
   const cancel = dialog.buttons.find((b) => b.style === 'cancel');

@@ -3,6 +3,7 @@ import { advanceOccurrence } from '@/lib/recurrence';
 import type { RecurrenceFrequency } from '@/types';
 import { peopleTotals } from '@/features/people/people.helpers';
 import { payCardRoute, PayCardRoute } from '@/lib/payCard';
+import { nonOverlappingBudgets } from '@/lib/budgetScope';
 
 /**
  * What each Plan tab section says, from data the screen already fetched. Pure (today's date is an input), so
@@ -97,9 +98,14 @@ export function buildLoansSummary(loans: PlanLoanInput[], progress: PlanLoanProg
     borrowedPrincipalMinor,
     paidFraction: borrowedPrincipalMinor > 0 ? Math.min(1, paidOffMinor / borrowedPrincipalMinor) : 0,
     borrowedCount: borrowed.length,
-    debtFreeDate: rows
-      .filter((row) => row.direction === 'borrowed' && row.endDate)
-      .reduce<string | null>((latest, row) => (latest && latest > row.endDate! ? latest : row.endDate), null),
+    debtFreeDate: borrowed.every((l) => l.outstandingPrincipalMinor <= 0 || byId.get(l.id)?.lastDueDate)
+      ? rows
+          .filter((row) => row.direction === 'borrowed' && row.endDate)
+          .reduce<string | null>(
+            (latest, row) => (latest && latest > row.endDate! ? latest : row.endDate),
+            null
+          )
+      : null,
     lentLeftMinor: open
       .filter((l) => l.direction === 'lent')
       .reduce((s, l) => s + l.outstandingPrincipalMinor, 0),
@@ -240,43 +246,11 @@ export function buildDueSoon(items: PlanDueItem[], today: string, days = DUE_SOO
   return { totalMinor: emiMinor + billMinor, emiMinor, billMinor, count, untilDate };
 }
 
-/** One day of the next 14, for the Plan hero's strip. */
-interface DueDay {
-  date: string;
-  /** What's due that day: EMIs and bills only (money going out). */
-  emi: boolean;
-  bill: boolean;
-  /** Their total, and what they are. */
-  amountMinor: number;
-  titles: string[];
-}
-
 /** A day with things due, for Coming up — its items and their total going out. */
 export interface DueGroup {
   date: string;
   items: PlanDueItem[];
   outMinor: number;
-}
-
-/**
- * The next `days` days from today, each marked with whether an EMI or a
- * bill falls on it; anything already overdue counts on today.
- */
-export function buildDueDays(items: PlanDueItem[], today: string, days = DUE_SOON_DAYS): DueDay[] {
-  return Array.from({ length: days }, (_, i) => {
-    const date = addDaysToIsoDate(today, i);
-    const out = items.filter(
-      (it) =>
-        (it.kind === 'emi' || it.kind === 'bill') && (i === 0 ? it.dueDate <= date : it.dueDate === date)
-    );
-    return {
-      date,
-      emi: out.some((it) => it.kind === 'emi'),
-      bill: out.some((it) => it.kind === 'bill'),
-      amountMinor: out.reduce((sum, it) => sum + it.amountMinor, 0),
-      titles: out.map((it) => it.title),
-    };
-  });
 }
 
 /** An EMI or card bill this close is flagged amber in Coming up, as on Home. */
@@ -325,6 +299,8 @@ export function groupDueItems(
 /* ---------- Budgets ---------- */
 
 export interface PlanBudgetInput {
+  categoryId?: string;
+  parentCategoryId?: string | null;
   id: string;
   categoryName: string;
   spentMinor: number;
@@ -348,12 +324,13 @@ export interface BudgetsSummary {
 }
 
 export function buildBudgetsSummary(budgets: PlanBudgetInput[]): BudgetsSummary {
-  const usedMinor = budgets.reduce((s, b) => s + b.spentMinor, 0);
+  const counted = new Set(nonOverlappingBudgets(budgets));
+  const usedMinor = [...counted].reduce((s, b) => s + b.spentMinor, 0);
   return {
     usedMinor,
-    budgetedMinor: budgets.reduce((s, b) => s + b.effectiveLimitMinor, 0),
+    budgetedMinor: [...counted].reduce((s, b) => s + b.effectiveLimitMinor, 0),
     overCount: budgets.filter((b) => b.overBudget).length,
-    shares: budgets.map((b) => (usedMinor > 0 ? b.spentMinor / usedMinor : 0)),
+    shares: budgets.map((b) => (usedMinor > 0 && counted.has(b) ? b.spentMinor / usedMinor : 0)),
     rows: budgets,
   };
 }

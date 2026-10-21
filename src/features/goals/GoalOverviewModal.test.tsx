@@ -83,13 +83,15 @@ it('starts read-only and returns from editing without changing progress', () => 
   expect(button(tree, 'Add money')).toBeDefined();
   expect(changed).not.toHaveBeenCalled();
 });
-it('uses the existing contribution flow and refreshes after saving', () => {
+it('uses the existing contribution flow and refreshes after saving', async () => {
   const tree = render();
   act(() => button(tree, 'Add money').props.onPress());
   const contribute = tree.root.findByProps({ testID: 'goal-contribute' });
   expect(contribute.props.goal.id).toBe('g1');
   expect(contribute.props.backLabel).toBe('Back to goal overview');
-  act(() => contribute.props.onContributed());
+  await act(async () => {
+    await contribute.props.onContributed();
+  });
   expect(changed).toHaveBeenCalledTimes(1);
   expect(button(tree, 'Edit goal')).toBeDefined();
 });

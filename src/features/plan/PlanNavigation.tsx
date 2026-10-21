@@ -31,13 +31,13 @@ export function PlanNavigation({
   const ink = themeInk(accent);
   if (!stacked) return <SegmentedControl options={PLAN_TABS} value={value} onChange={onChange} onBand />;
   return (
-    <View style={styles.track}>
+    <View style={styles.track} accessibilityRole="tablist">
       {[PLAN_TABS.slice(0, 2), PLAN_TABS.slice(2)].map((row, index) => (
         <View key={index} style={styles.row}>
           {row.map((tab) => (
             <Pressable
               key={tab.value}
-              accessibilityRole="button"
+              accessibilityRole="tab"
               accessibilityState={{ selected: value === tab.value }}
               onPress={() => {
                 if (value === tab.value) return;

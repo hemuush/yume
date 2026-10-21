@@ -16,6 +16,9 @@ const payment = (n: number, status: LoanPayment['status'], interest: number, aft
 });
 
 describe('loanPayoff', () => {
+  it('does not label the end of a truncated schedule as full repayment', () => {
+    expect(loanPayoff([payment(1, 'pending', 0, 90000)], 100000).lastDueDate).toBeNull();
+  });
   const schedule = [
     payment(3, 'pending', 300, 18000),
     payment(1, 'paid', 500, 36000),

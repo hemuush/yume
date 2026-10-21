@@ -23,7 +23,7 @@ export interface LoanProgress {
   /** The earliest pending installment's due date and amount; null once nothing is pending. */
   nextDueDate: string | null;
   nextEmiMinor: number | null;
-  /** The last pending installment's due date — when the loan is done. Null once nothing is pending. */
+  /** The final pending installment's date, only if it clears principal. Null for absent/incomplete schedules. */
   lastDueDate: string | null;
   /** Interest still to be paid across the pending installments (0 once nothing is pending). */
   pendingInterestMinor: number;
@@ -51,7 +51,9 @@ export async function getLoanProgress(): Promise<LoanProgress[]> {
           ORDER BY p.installment_number ASC LIMIT 1) AS next_due_date,
        (SELECT p.emi_amount_minor FROM loan_payments p WHERE p.loan_id = l.id AND p.status = 'pending'
           ORDER BY p.installment_number ASC LIMIT 1) AS next_emi_minor,
-       (SELECT MAX(p.due_date) FROM loan_payments p WHERE p.loan_id = l.id AND p.status = 'pending') AS last_due_date,
+       (SELECT CASE WHEN p.outstanding_after_minor = 0 THEN p.due_date ELSE NULL END
+          FROM loan_payments p WHERE p.loan_id = l.id AND p.status = 'pending'
+          ORDER BY p.installment_number DESC LIMIT 1) AS last_due_date,
        (SELECT COALESCE(SUM(p.interest_component_minor), 0) FROM loan_payments p
           WHERE p.loan_id = l.id AND p.status = 'pending') AS pending_interest_minor
      FROM loans l`
@@ -96,6 +98,7 @@ export async function getLoanSchedule(loanId: string): Promise<LoanPayment[]> {
 
 /** What paying a loan's next EMI needs — see getLoanPaymentContext. */
 export interface LoanPaymentContext {
+  direction: Loan['direction'];
   installment: LoanPayment;
   account: { id: string; name: string } | null;
   categoryId: string | null;
@@ -137,6 +140,7 @@ export async function getLoanPaymentContext(loanId: string): Promise<LoanPayment
   const linkedAccountMissing =
     !!loan.linked_account_id && !accounts.some((a) => a.id === loan.linked_account_id);
   return {
+    direction: loan.direction,
     installment: rowToLoanPayment(next),
     account,
     categoryId: category?.id ?? null,

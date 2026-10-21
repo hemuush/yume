@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
 import { Text } from '@/components/Text';
 import { createAccount } from '@/db/ledger';
-import { getDefaultCurrency, SUPPORTED_CURRENCIES } from '@/db/settings';
+import { getCachedCurrency, getDefaultCurrency, SUPPORTED_CURRENCIES } from '@/db/settings';
 import { toMinor, formatMoney } from '@/lib/money';
 import { AccountType } from '@/types';
 import { ModalSheet } from '@/components/ModalSheet';
@@ -45,7 +45,8 @@ export function AddAccountModal({
   const [dueDay, setDueDay] = useState('');
   const [tracked, setTracked] = useState(false);
   const [worth, setWorth] = useState('');
-  const [currency, setCurrency] = useState('INR');
+  const [currency, setCurrency] = useState(getCachedCurrency);
+  const currencyChosen = useRef(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // Set once createAccount succeeds so a retry after a failed valuation only retries the valuation rather
@@ -55,10 +56,17 @@ export function AddAccountModal({
   // Defaults to the app currency each time the modal opens but stays changeable: a foreign account needs its
   // own currency at creation, since it can't be changed once transactions exist.
   useEffect(() => {
-    if (visible)
-      getDefaultCurrency()
-        .then(setCurrency)
-        .catch(() => {});
+    if (!visible) return;
+    let live = true;
+    currencyChosen.current = false;
+    getDefaultCurrency()
+      .then((value) => {
+        if (live && !currencyChosen.current) setCurrency(value);
+      })
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
   }, [visible]);
 
   const reset = () => {
@@ -72,9 +80,7 @@ export function AddAccountModal({
     setWorth('');
     setError(null);
     createdId.current = null;
-    getDefaultCurrency()
-      .then(setCurrency)
-      .catch(() => setCurrency('INR'));
+    setCurrency(getCachedCurrency());
   };
 
   // Closing after the account was created but its valuation failed: the account exists, so refresh the list
@@ -198,7 +204,10 @@ export function AddAccountModal({
             key={c.code}
             label={c.code}
             active={currency === c.code}
-            onPress={() => setCurrency(c.code)}
+            onPress={() => {
+              currencyChosen.current = true;
+              setCurrency(c.code);
+            }}
           />
         ))}
       </View>

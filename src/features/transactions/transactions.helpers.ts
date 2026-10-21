@@ -1,6 +1,6 @@
 import { Account, Category, Transaction } from '@/types';
 import { getCachedCurrency } from '@/db/settings';
-import type { ActivityFilter } from './FilterModal';
+import type { ActivityFilter } from './activityFilter';
 import { toLocalIsoDate, parseLocalIsoDate, addDaysToIsoDate } from '@/lib/date';
 import { dayMonth } from '@/lib/dateLabels';
 import { weekRangesInMonth } from './spendChart';
@@ -131,28 +131,25 @@ export function filterActivity(
   categories: Category[]
 ): Transaction[] {
   const parentOf = new Map(categories.map((c) => [c.id, c.parentId]));
+  const accountIds = new Set(filter.accountIds);
+  const categoryIds = new Set(filter.categoryIds);
+  const expenseLabel = filter.expenseLabel?.trim();
   return transactions.filter((t) => {
     // A refund belongs with spending (it lowers it), so "Spent" shows it and "Income" doesn't.
     const filterAs = t.isRefund ? 'expense' : t.type;
-    if (filter.expenseLabel && (filterAs !== 'expense' || t.note.trim() !== filter.expenseLabel.trim()))
-      return false;
-    if (
-      filter.paymentMode &&
-      (filter.paymentMode === 'unspecified' ? t.paymentMode != null : t.paymentMode !== filter.paymentMode)
-    )
-      return false;
+    if (filter.expenseLabel && (filterAs !== 'expense' || t.note.trim() !== expenseLabel)) return false;
     if (filter.type !== 'all' && filterAs !== filter.type) return false;
     if (
-      filter.accountIds.length > 0 &&
-      !filter.accountIds.includes(t.accountId) &&
-      !(t.toAccountId && filter.accountIds.includes(t.toAccountId))
+      accountIds.size > 0 &&
+      !accountIds.has(t.accountId) &&
+      !(t.toAccountId && accountIds.has(t.toAccountId))
     ) {
       return false;
     }
-    if (filter.categoryIds.length > 0) {
+    if (categoryIds.size > 0) {
       if (!t.categoryId) return false;
       const parent = parentOf.get(t.categoryId);
-      if (!filter.categoryIds.includes(t.categoryId) && !(parent && filter.categoryIds.includes(parent))) {
+      if (!categoryIds.has(t.categoryId) && !(parent && categoryIds.has(parent))) {
         return false;
       }
     }

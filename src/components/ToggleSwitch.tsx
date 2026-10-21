@@ -37,8 +37,8 @@ export function ToggleSwitch({ value, onChange, disabled, small, accessibilityLa
     return () => slide.stop();
   }, [value, anim, reduce]);
 
-  // Slides by transform from its resting `left: 2` (2→19 / 2→22dp), so it runs on the native driver.
-  const knobX = anim.interpolate({ inputRange: [0, 1], outputRange: small ? [0, 17] : [0, 20] });
+  // Symmetric insets keep the thumb centred in either size and at both ends of the track.
+  const knobX = anim.interpolate({ inputRange: [0, 1], outputRange: small ? [0, 16] : [0, 20] });
 
   return (
     <Pressable
@@ -94,11 +94,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   trackSmall: { width: 38, height: 22, borderRadius: 11 },
-  knobSmall: { width: 16, height: 16, borderRadius: 8 },
+  knobSmall: { width: 16, height: 16, borderRadius: 8, top: 3, left: 3 },
   knob: {
     position: 'absolute',
-    top: 2,
-    left: 2,
+    top: 4,
+    left: 4,
     width: 18,
     height: 18,
     borderRadius: 9,

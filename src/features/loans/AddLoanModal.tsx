@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Animated } from 'react-native';
 import { Text } from '@/components/Text';
 import { useReduceMotion } from '@/lib/useReduceMotion';
@@ -68,7 +68,6 @@ export function AddLoanModal({
   const { accent } = useAccent();
   // Recomputed whenever the modal opens, not frozen at mount: the parent tab stays alive all session, so a
   // `useMemo(..., [])` would default new-loan dates to yesterday for anyone adding a loan after midnight.
-  const [today, setToday] = useState(() => new Date());
   const [direction, setDirection] = useState<LoanDirection>('borrowed');
   const [counterparty, setCounterparty] = useState('');
   const [principal, setPrincipal] = useState('');
@@ -83,11 +82,12 @@ export function AddLoanModal({
   const [assetValue, setAssetValue] = useState('');
   const [loanTiming, setLoanTiming] = useState<'new' | 'existing'>('new');
   const [alreadyPaid, setAlreadyPaid] = useState('0');
-  const [startDate, setStartDate] = useState(() => toLocalIsoDate(today));
+  const [startDate, setStartDate] = useState(() => toLocalIsoDate(new Date()));
+  const startDateTouched = useRef(false);
   // First EMI due date, separate from the disbursement date (lenders often leave a gap). Defaults to one
   // month after disbursement and follows it until the user edits it.
   const [emiTouched, setEmiTouched] = useState(false);
-  const [emiStartDate, setEmiStartDate] = useState(() => addMonthsToIsoDate(toLocalIsoDate(today), 1));
+  const [emiStartDate, setEmiStartDate] = useState(() => addMonthsToIsoDate(toLocalIsoDate(new Date()), 1));
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [people, setPeople] = useState<PersonWithBalance[]>([]);
@@ -120,15 +120,18 @@ export function AddLoanModal({
   useEffect(() => {
     if (visible) {
       setWizardStep(1);
-      setToday(new Date());
+      const now = new Date();
+      if (!startDateTouched.current) setStartDate(toLocalIsoDate(now));
     }
   }, [visible]);
 
   useEffect(() => {
     if (!visible) return;
+    let live = true;
     (async () => {
       try {
         const [accs, cats, ppl] = await Promise.all([listAccounts(), listCategories(), listPeople()]);
+        if (!live) return;
         const eligible = defaultCurrencyAccountsOf(accs);
         setAccounts(eligible);
         setCategories(cats);
@@ -140,9 +143,12 @@ export function AddLoanModal({
       } catch (e) {
         // Guarded: a failure here would leave accounts/categories empty, so submit() would reject with the
         // confusing "Pick an account and category" instead of the real error.
-        setError(errorMessage(e));
+        if (live) setError(errorMessage(e));
       }
     })();
+    return () => {
+      live = false;
+    };
   }, [visible]);
 
   // Keeps the EMI-start default following the disbursement date until the
@@ -213,9 +219,11 @@ export function AddLoanModal({
     setAssetValue('');
     setLoanTiming('new');
     setAlreadyPaid('0');
-    setStartDate(toLocalIsoDate(today));
+    startDateTouched.current = false;
+    const now = toLocalIsoDate(new Date());
+    setStartDate(now);
     setEmiTouched(false);
-    setEmiStartDate(addMonthsToIsoDate(toLocalIsoDate(today), 1));
+    setEmiStartDate(addMonthsToIsoDate(now, 1));
     setPersonId(null);
     setDisbCategoryId(null);
     setDisbFee('');
@@ -282,7 +290,7 @@ export function AddLoanModal({
     if (loanTiming === 'existing' && alreadyPaidCount > 0) {
       // The two numbers must agree: 50 installments paid from a start date 13 months ago is a mismatch
       // either way (a real loan got a next-due date 3 years out while active). Caught here, not downstream.
-      const elapsedMonths = monthsBetweenIsoDates(startDate, toLocalIsoDate(today));
+      const elapsedMonths = monthsBetweenIsoDates(startDate, toLocalIsoDate(new Date()));
       if (alreadyPaidCount > elapsedMonths) {
         setError(
           `You said ${alreadyPaidCount} installments are already paid, but only about ${elapsedMonths} month${elapsedMonths === 1 ? '' : 's'} have passed since ${dayMonthYear(startDate)} — double-check the start date or the paid count.`
@@ -292,7 +300,8 @@ export function AddLoanModal({
     }
     // A processing fee is only asked for on a borrowed loan, so a stale value from before switching to
     // "I lent" is ignored rather than recorded.
-    const feeAmountMinor = direction === 'borrowed' && disbFee ? toMinor(parseFloat(disbFee)) : 0;
+    const feeAmountMinor =
+      loanTiming === 'new' && direction === 'borrowed' && disbFee ? toMinor(parseFloat(disbFee)) : 0;
     if (!Number.isFinite(feeAmountMinor) || feeAmountMinor < 0) {
       setError('Enter a valid processing fee, or leave it blank');
       return;
@@ -304,7 +313,7 @@ export function AddLoanModal({
     // The value is optional here too — matching the same "loan asset" edit
     // modal on the detail screen — only validated when actually provided.
     let assetValueMinor: number | null = null;
-    if (trackAsset && assetValue.trim()) {
+    if (direction === 'borrowed' && trackAsset && assetValue.trim()) {
       assetValueMinor = toMinor(parseFloat(assetValue));
       if (!Number.isFinite(assetValueMinor) || assetValueMinor <= 0) {
         setError('Enter a valid current value for the asset, or leave it blank for now');
@@ -323,8 +332,8 @@ export function AddLoanModal({
         emiStartDate: loanTiming === 'new' ? emiStartDate : undefined,
         rateType,
         personId,
-        assetLabel: trackAsset ? assetLabel.trim() || 'Asset' : null,
-        assetValueMinor: trackAsset ? assetValueMinor : null,
+        assetLabel: direction === 'borrowed' && trackAsset ? assetLabel.trim() || 'Asset' : null,
+        assetValueMinor: direction === 'borrowed' && trackAsset ? assetValueMinor : null,
         alreadyPaidInstallments: loanTiming === 'existing' ? alreadyPaidCount : 0,
         linkedAccountId: loanTiming === 'existing' ? repayAccountId : null,
         disbursement:
@@ -515,7 +524,10 @@ export function AddLoanModal({
           <DateField
             label={loanTiming === 'new' ? 'Disbursement date' : 'First EMI period started on'}
             value={startDate}
-            onChange={setStartDate}
+            onChange={(iso) => {
+              startDateTouched.current = true;
+              setStartDate(iso);
+            }}
           />
           <Text style={styles.hintText}>
             The day the money was paid out. Change it if you're catching up.
@@ -570,7 +582,9 @@ export function AddLoanModal({
                 max={tenureMonths > 0 ? tenureMonths : 600}
                 onChange={(n) => setAlreadyPaid(String(n))}
               />
-              <Text style={styles.fieldLabel}>Future EMIs come out of</Text>
+              <Text style={styles.fieldLabel}>
+                {direction === 'lent' ? 'Future repayments arrive in' : 'Future EMIs come out of'}
+              </Text>
               <View style={styles.chipRow}>
                 {spendableAccounts.map((acc) => (
                   <Chip

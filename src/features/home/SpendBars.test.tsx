@@ -1,10 +1,16 @@
 import { Text, StyleSheet } from 'react-native';
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
+import { THEMES } from '@/theme/themes';
+import { themeInk } from '@/theme/interactionColors';
+import { hexToRgba } from '@/lib/color';
+import { haptics } from '@/lib/haptics';
+
+let mockAccent = '#8FCBFF';
 
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
 jest.mock('@/lib/useReduceMotion', () => ({ useReduceMotion: () => true }));
 jest.mock('@/lib/haptics', () => ({ haptics: { tap: jest.fn() } }));
-jest.mock('@/theme/AccentContext', () => ({ useAccent: () => ({ accent: '#8FCBFF' }) }));
+jest.mock('@/theme/AccentContext', () => ({ useAccent: () => ({ accent: mockAccent }) }));
 
 import { SpendBars } from './SpendBars';
 
@@ -28,10 +34,45 @@ function render(daily: { date: string; totalMinor: number }[], today: string) {
 // A bar is the animated view that takes its height from the amount.
 const heights = (r: ReactTestRenderer) =>
   r.root
-    .findAll(
-      (n) => String(n.type) === 'View' && [34, 16].includes(StyleSheet.flatten(n.props.style)?.maxWidth)
-    )
+    .findAll((n) => String(n.type) === 'View' && StyleSheet.flatten(n.props.style)?.maxWidth === 16)
     .map((n) => StyleSheet.flatten(n.props.style).height as number);
+
+it.each(THEMES)('uses the selected $name palette without changing spending heights', (pack) => {
+  mockAccent = pack.primary;
+  const tree = render([{ date: '2026-10-17', totalMinor: 10000 }], '2026-10-17');
+  const bars = tree.root.findAll(
+    (n) => String(n.type) === 'View' && StyleSheet.flatten(n.props.style)?.maxWidth === 16
+  );
+  expect(
+    bars.every((n) => StyleSheet.flatten(n.props.style).backgroundColor === hexToRgba(pack.primary, 0.55))
+  ).toBe(true);
+  const selected = tree.root.findAll(
+    (n) => n.props.onPress && n.props.accessibilityRole === 'button' && n.props.accessibilityState?.selected
+  )[0];
+  expect(
+    selected.findAll((n) => {
+      const style = StyleSheet.flatten(n.props.style);
+      return style?.backgroundColor === themeInk(pack.primary) && style.opacity === 1;
+    }).length
+  ).toBeGreaterThan(0);
+  expect(heights(tree)).toEqual([0, 0, 0, 0, 0, 0, 52]);
+});
+
+it('does not repeat haptics or selection updates when the selected day is tapped again', () => {
+  const tree = render([], '2026-10-17');
+  const selected = () =>
+    tree.root.findAll(
+      (n) => n.props.onPress && n.props.accessibilityRole === 'button' && n.props.accessibilityState?.selected
+    )[0];
+  act(() => selected().props.onPress());
+  expect(haptics.tap).not.toHaveBeenCalled();
+  const previous = tree.root.findAll(
+    (n) => n.props.onPress && n.props.accessibilityLabel?.startsWith('Friday')
+  )[0];
+  act(() => previous.props.onPress());
+  act(() => selected().props.onPress());
+  expect(haptics.tap).toHaveBeenCalledTimes(1);
+});
 
 describe('Home spending bars', () => {
   it('names the days, and calls the last one Today', () => {
@@ -55,32 +96,12 @@ describe('Home spending bars', () => {
   it('opens on today when nothing has been spent', () => {
     expect(text(render([], '2026-10-17'))).toContain('₹0');
   });
-
-  it('keeps an ordinary day visible next to one big payment', () => {
-    // 5,000 against 56,900: a straight scale would draw it at 6 of 44.
-    const r = render(
-      [
-        { date: '2026-10-11', totalMinor: 5_690_000 },
-        { date: '2026-10-12', totalMinor: 500_000 },
-        { date: '2026-10-13', totalMinor: 0 },
-      ],
-      '2026-10-17'
-    );
-    const [big, small, none] = heights(r);
-    expect(big).toBe(44);
-    expect(small).toBeGreaterThanOrEqual(15);
-    expect(small).toBeLessThan(big);
-    // A day with nothing spent stays a thin line, not a small amount.
-    expect(none).toBe(4);
-  });
 });
 
 it('fits seven interactive days inside the balance card without range tabs', () => {
   let r!: ReactTestRenderer;
   act(() => {
-    r = create(
-      <SpendBars daily={[{ date: '2026-10-16', totalMinor: 92700 }]} today="2026-10-17" compact embedded />
-    );
+    r = create(<SpendBars daily={[{ date: '2026-10-16', totalMinor: 92700 }]} today="2026-10-17" />);
   });
   expect(heights(r)).toHaveLength(7);
   expect(r.root.findAll((n) => n.props.accessibilityRole === 'tab')).toHaveLength(0);
@@ -104,8 +125,6 @@ it('shows every completed-month week including the last partial week', () => {
           { date: '2026-09-30', totalMinor: 30000 },
         ]}
         today="2026-09-30"
-        compact
-        embedded
         periodMode="month"
       />
     );
@@ -134,8 +153,6 @@ it('uses proportional zero-baseline heights in the embedded hero', () => {
           { date: '2026-10-12', totalMinor: 5000 },
         ]}
         today="2026-10-17"
-        compact
-        embedded
       />
     );
   });
@@ -148,9 +165,7 @@ it('uses proportional zero-baseline heights in the embedded hero', () => {
 it('defaults to today with zero spend and returns to today after a transaction refresh', () => {
   let tree!: ReactTestRenderer;
   act(() => {
-    tree = create(
-      <SpendBars compact embedded daily={[{ date: '2026-10-19', totalMinor: 11300 }]} today="2026-10-20" />
-    );
+    tree = create(<SpendBars daily={[{ date: '2026-10-19', totalMinor: 11300 }]} today="2026-10-20" />);
   });
   const selected = () =>
     tree.root.findAll(
@@ -172,8 +187,6 @@ it('defaults to today with zero spend and returns to today after a transaction r
   act(() =>
     tree.update(
       <SpendBars
-        compact
-        embedded
         daily={[
           { date: '2026-10-19', totalMinor: 11300 },
           { date: '2026-10-20', totalMinor: 7000 },

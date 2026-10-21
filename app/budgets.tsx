@@ -7,19 +7,17 @@ import { View } from 'react-native';
 import { MovingRow } from '@/components/MovingRow';
 import { Text } from '@/components/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { listCategories } from '@/db/ledger';
+import { listAccounts, listCategories } from '@/db/ledger';
 import {
   listBudgetsForMonth,
   listLapsedBudgets,
   createBudget,
   deleteBudget,
   restoreBudget,
-  periodMonthOf,
   BudgetProgress,
   LapsedBudget,
 } from '@/db/budgets';
-import { Category } from '@/types';
-import { toLocalIsoDate } from '@/lib/date';
+import { Account, Category } from '@/types';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import { theme } from '@/constants/theme';
 import { SkyHeader, HeaderSummary } from '@/features/home/SkyHeader';
@@ -46,14 +44,14 @@ import { useAccent } from '@/theme/AccentContext';
 import { Glass } from '@/components/Glass';
 import { frost } from '@/components/Frost';
 import { errorMessage } from '@/lib/errorMessage';
-import { useReturnOrPush } from '@/lib/useReturnOrPush';
+import { BudgetDetailModal } from '@/features/budgets/BudgetDetailModal';
+import { useToday } from '@/features/budgets/useToday';
+import { getCachedCurrency } from '@/db/settings';
 import { showAlert } from '@/components/AppDialog';
 import { SCREEN } from '@/components/screenStyles';
+import { budgetCategories } from '@/features/budgets/budgetCategories';
 
 export default function BudgetsScreen() {
-  // A category's page and Budgets link to each other: return to that page
-  // when it's already open below, rather than stacking another copy.
-  const returnOrPush = useReturnOrPush();
   const insets = useSafeAreaInsets();
   // The header sits over the page and shrinks as it scrolls.
   const { collapse, headerHeight, scrollHandler, scrollRef } = useCollapsingHeader();
@@ -63,6 +61,8 @@ export default function BudgetsScreen() {
   const [budgets, setBudgets] = useState<BudgetProgress[]>([]);
   const [lapsed, setLapsed] = useState<LapsedBudget[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [detailId, setDetailId] = useState<string | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingBudget, setEditingBudget] = useState<BudgetProgress | null>(null);
   const [manageTarget, setManageTarget] = useState<BudgetProgress | null>(null);
@@ -72,18 +72,39 @@ export default function BudgetsScreen() {
   // Categories' manage sheet).
   const [deleteBusy, setDeleteBusy] = useState(false);
   const continuing = useRef(false);
+  const request = useRef(0);
+  const active = useRef(true);
+  useEffect(() => {
+    active.current = true;
+    return () => {
+      active.current = false;
+      request.current += 1;
+    };
+  }, []);
 
-  const periodMonth = periodMonthOf();
+  const today = useToday();
+  const periodMonth = today.slice(0, 7);
+  useEffect(
+    () => () => {
+      request.current += 1;
+    },
+    [periodMonth, hideAmounts]
+  );
+  const mutationBusy = deleteBusy || continuingAll || continuingId !== null;
 
   const loadBudgets = useCallback(async () => {
-    const [list, lapsedList, cats] = await Promise.all([
+    const id = ++request.current;
+    const [list, lapsedList, cats, accs] = await Promise.all([
       listBudgetsForMonth(periodMonth, hideAmounts),
       listLapsedBudgets(periodMonth, hideAmounts),
-      listCategories(),
+      listCategories(true),
+      listAccounts(true),
     ]);
+    if (!active.current || request.current !== id) return;
     setBudgets(list);
     setLapsed(lapsedList);
     setCategories(cats);
+    setAccounts(accs);
   }, [periodMonth, hideAmounts]);
   const { loaded, hasData, loadError, reload: load } = useScreenLoad(loadBudgets);
   const { budget: budgetId, add } = useLocalSearchParams<{ budget?: string; add?: string }>();
@@ -91,22 +112,36 @@ export default function BudgetsScreen() {
     if (!loaded || loadError || (!budgetId && add !== '1')) return;
     const selected = budgets.find((item) => item.budget.id === budgetId);
     if (add === '1' || selected) {
-      setEditingBudget(add === '1' ? null : (selected ?? null));
-      setModalVisible(true);
+      if (add === '1') {
+        setEditingBudget(null);
+        setModalVisible(true);
+      } else if (selected) setDetailId(selected.budget.id);
+    } else if (budgetId) {
+      showAlert(
+        'Budget unavailable',
+        'This budget is no longer available in the current month or privacy view.'
+      );
     }
     router.setParams({ budget: undefined, add: undefined });
   }, [loaded, loadError, budgetId, add, budgets]);
 
-  const hero = budgetsOverview(budgets, toLocalIsoDate(new Date()));
+  const hero = budgetsOverview(budgets, today);
 
   // Every expense category, parents and subcategories alike, for AddBudgetModal's picker; see that
   // component's comment for why it isn't pre-filtered to "no budget this month".
-  const expenseCategories = categories.filter((c) => c.kind === 'expense' && !(hideAmounts && c.isSensitive));
+  const expenseCategories = useMemo(
+    () => budgetCategories(categories, hideAmounts),
+    [categories, hideAmounts]
+  );
 
   const budgetedIds = useMemo(() => new Set(budgets.map((b) => b.budget.categoryId)), [budgets]);
+  const detail = budgets.find((b) => b.budget.id === detailId);
+  useEffect(() => {
+    if (loaded && !loadError && detailId && !detail) setDetailId(null);
+  }, [loaded, loadError, detailId, detail]);
 
   const onContinue = async (item: LapsedBudget) => {
-    if (continuing.current) return;
+    if (!active.current || continuing.current) return;
     continuing.current = true;
     setContinuingId(item.categoryId);
     try {
@@ -116,47 +151,69 @@ export default function BudgetsScreen() {
         rollover: item.rollover,
         periodMonth,
       });
+      if (!active.current) return;
       haptics.tap();
       await load();
     } catch (e) {
       // The category stays in the list to try again; say why this attempt didn't take.
-      showAlert("Couldn't continue budget", errorMessage(e));
+      if (active.current) showAlert("Couldn't continue budget", errorMessage(e));
     } finally {
       continuing.current = false;
-      setContinuingId(null);
+      if (active.current) setContinuingId(null);
     }
   };
 
   const onContinueAll = async () => {
-    if (continuing.current) return;
+    if (!active.current || continuing.current) return;
     continuing.current = true;
     setContinuingAll(true);
     try {
       const failures = await continueBudgets(lapsed, periodMonth);
+      if (!active.current) return;
       haptics.tap();
       await load();
       if (failures.length) showAlert("Some budgets couldn't continue", failures.join('\n'));
     } finally {
       continuing.current = false;
-      setContinuingAll(false);
+      if (active.current) setContinuingAll(false);
     }
   };
 
   const onDelete = async (progress: BudgetProgress) => {
-    if (deleteBusy) return;
+    if (!active.current || continuing.current) return;
+    continuing.current = true;
     setDeleteBusy(true);
+    let deleted = false;
     try {
       const snapshot = await deleteBudget(progress.budget.id);
+      deleted = true;
+      if (!active.current) return;
       haptics.warn();
-      await load();
       showUndo(`Deleted "${categoryPath(progress.categoryName, progress.parentName)}" budget`, async () => {
         await restoreBudget(snapshot);
-        await load();
+        if (active.current) {
+          try {
+            await load();
+          } catch {
+            showAlert(
+              'Budget restored',
+              'The budget was restored, but the list could not refresh. Reopen Budgets to see it.'
+            );
+          }
+        }
       });
+      await load();
     } catch (e) {
-      showAlert("Couldn't delete budget", errorMessage(e));
+      if (active.current)
+        showAlert(
+          deleted ? 'Budget deleted' : "Couldn't delete budget",
+          deleted
+            ? 'The budget was deleted, but the list could not refresh. Reopen Budgets to see it.'
+            : errorMessage(e)
+        );
     } finally {
-      setDeleteBusy(false);
+      continuing.current = false;
+      if (active.current) setDeleteBusy(false);
     }
   };
 
@@ -262,14 +319,12 @@ export default function BudgetsScreen() {
                       progress={progress}
                       divider={i > 0}
                       showPerDay
-                      // The row opens its category's page; Edit and Delete are in ⋯.
-                      onPress={() =>
-                        returnOrPush(
-                          { name: 'category/[id]', params: { id: progress.budget.categoryId } },
-                          `/category/${progress.budget.categoryId}`
-                        )
-                      }
-                      onMore={() => setManageTarget(progress)}
+                      onPress={() => {
+                        if (!continuing.current) setDetailId(progress.budget.id);
+                      }}
+                      onMore={() => {
+                        if (!continuing.current) setManageTarget(progress);
+                      }}
                     />
                   </MovingRow>
                 ))}
@@ -293,7 +348,16 @@ export default function BudgetsScreen() {
         showBack
         hideUser
         wallpaper
-        actions={<AddButton onPress={() => setModalVisible(true)} label="+ Add" />}
+        actions={
+          <AddButton
+            disabled={mutationBusy}
+            onPress={() => {
+              setEditingBudget(null);
+              setModalVisible(true);
+            }}
+            label="+ Add"
+          />
+        }
       />
 
       <AddBudgetModal
@@ -311,6 +375,17 @@ export default function BudgetsScreen() {
           await load();
         }}
       />
+      {detail && (
+        <BudgetDetailModal
+          key={detail.budget.id}
+          progress={detail}
+          categories={categories}
+          accounts={accounts}
+          currency={getCachedCurrency()}
+          onClose={() => setDetailId(null)}
+          onChanged={load}
+        />
+      )}
 
       <ActionSheet
         visible={!!manageTarget}

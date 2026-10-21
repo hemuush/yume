@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { View } from 'react-native';
 import { Text } from '@/components/Text';
 import { createSavingsGoal } from '@/db/savingsGoals';
@@ -15,20 +15,20 @@ import { ToggleSwitch } from '@/components/ToggleSwitch';
 import { GoalAccountField } from './GoalAccountField';
 import { GoalSheetCard } from './GoalSheetCard';
 import { styles } from './goals.styles';
-import { errorMessage } from '@/lib/errorMessage';
-import { useSaveOnce } from '@/lib/useSaveOnce';
+import { useSheetMutation } from '@/lib/useSheetMutation';
 
-export function AddGoalModal({
-  visible,
-  accounts,
-  onClose,
-  onCreated,
-}: {
+export function AddGoalModal(props: AddGoalProps) {
+  return props.visible ? <AddGoalForm {...props} /> : null;
+}
+
+interface AddGoalProps {
   visible: boolean;
   accounts: Account[];
   onClose: () => void;
-  onCreated: () => void;
-}) {
+  onCreated: () => void | Promise<void>;
+}
+
+function AddGoalForm({ visible, accounts, onClose, onCreated }: AddGoalProps) {
   const today = toLocalIsoDate(new Date());
   const [name, setName] = useState('');
   const [target, setTarget] = useState('');
@@ -38,22 +38,7 @@ export function AddGoalModal({
   const [tracksAccount, setTracksAccount] = useState(false);
   const [reservesAccount, setReservesAccount] = useState(false);
   const [noteToSelf, setNoteToSelf] = useState('');
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!visible) return;
-    setName('');
-    setTarget('');
-    setHasTargetDate(false);
-    // Today as of opening, not of the first render: the form resets only when it opens.
-    setTargetDateValue(addMonthsToIsoDate(toLocalIsoDate(new Date()), 12));
-    setLinkedAccountId(null);
-    setTracksAccount(false);
-    setReservesAccount(false);
-    setNoteToSelf('');
-    setError(null);
-  }, [visible]);
+  const { run, pending: saving, saved, error, setError } = useSheetMutation();
 
   // A savings account is almost always where a goal's money really sits,
   // so picking one starts on Follow; any other account starts by hand.
@@ -75,25 +60,24 @@ export function AddGoalModal({
       return;
     }
     const targetDate = hasTargetDate ? targetDateValue : null;
-    setSaving(true);
-    try {
-      await createSavingsGoal({
-        name: name.trim(),
-        targetAmountMinor,
-        targetDate,
-        linkedAccountId,
-        tracksAccount,
-        reservesAccount,
-        noteToSelf,
-      });
-      onCreated();
-    } catch (e) {
-      setError(errorMessage(e));
-    } finally {
-      setSaving(false);
+    if (linkedAccountId && !accounts.some((a) => a.id === linkedAccountId && !a.archived)) {
+      setError('Choose an available account or None');
+      return;
     }
+    await run(
+      () =>
+        createSavingsGoal({
+          name: name.trim(),
+          targetAmountMinor,
+          targetDate,
+          linkedAccountId,
+          tracksAccount,
+          reservesAccount,
+          noteToSelf,
+        }),
+      onCreated
+    );
   };
-  const submitOnce = useSaveOnce(submit);
 
   return (
     <ModalSheet
@@ -106,56 +90,75 @@ export function AddGoalModal({
           {error && <Text style={styles.errorText}>{error}</Text>}
           <PrimaryButton
             loading={saving}
-            title={saving ? 'Saving…' : 'Create goal'}
-            onPress={submitOnce}
-            disabled={saving}
+            title={saving ? 'Saving…' : saved ? 'Goal saved' : 'Create goal'}
+            onPress={submit}
+            disabled={saving || saved}
           />
         </View>
       }
     >
-      <GoalSheetCard
-        compact
-        name={name.trim() || 'New goal'}
-        savedMinor={0}
-        targetMinor={inputMinor(target)}
-        targetDate={hasTargetDate ? targetDateValue : null}
-      />
-      <FormInput label="Goal name" value={name} onChangeText={setName} placeholder="e.g. Goa trip" />
-      <AmountField label="Target amount" value={target} onChangeText={setTarget} placeholder="e.g. 40000" />
-
-      <View style={styles.toggleRow}>
-        <Text style={styles.fieldLabel}>By a specific date</Text>
-        <ToggleSwitch value={hasTargetDate} onChange={setHasTargetDate} />
-      </View>
-      {hasTargetDate && (
-        <DateField
-          label="Target date"
-          value={targetDateValue}
-          onChange={setTargetDateValue}
-          minDate={today}
+      <View
+        pointerEvents={saving || saved ? 'none' : 'auto'}
+        accessibilityElementsHidden={saving || saved}
+        importantForAccessibility={saving || saved ? 'no-hide-descendants' : 'auto'}
+      >
+        <GoalSheetCard
+          compact
+          name={name.trim() || 'New goal'}
+          savedMinor={0}
+          targetMinor={inputMinor(target)}
+          targetDate={hasTargetDate ? targetDateValue : null}
         />
-      )}
+        <FormInput
+          label="Goal name"
+          editable={!saving && !saved}
+          value={name}
+          onChangeText={setName}
+          placeholder="e.g. Goa trip"
+        />
+        <AmountField
+          label="Target amount"
+          editable={!saving && !saved}
+          value={target}
+          onChangeText={setTarget}
+          placeholder="e.g. 40000"
+        />
 
-      <GoalAccountField
-        accounts={accounts}
-        accountId={linkedAccountId}
-        tracks={tracksAccount}
-        reserves={reservesAccount}
-        onChangeReserves={setReservesAccount}
-        onChangeAccount={pickAccount}
-        onChangeTracks={setTracksAccount}
-      />
+        <View style={styles.toggleRow}>
+          <Text style={styles.fieldLabel}>By a specific date</Text>
+          <ToggleSwitch value={hasTargetDate} onChange={setHasTargetDate} />
+        </View>
+        {hasTargetDate && (
+          <DateField
+            label="Target date"
+            value={targetDateValue}
+            onChange={setTargetDateValue}
+            minDate={today}
+          />
+        )}
 
-      <FormInput
-        label="Why this goal? (optional)"
-        value={noteToSelf}
-        onChangeText={setNoteToSelf}
-        placeholder="For the trip I keep putting off…"
-        multiline
-        numberOfLines={3}
-        style={styles.noteInput}
-      />
-      <Text style={styles.modalHint}>Sealed until you finish saving — Suu hands it back to you then.</Text>
+        <GoalAccountField
+          accounts={accounts}
+          accountId={linkedAccountId}
+          tracks={tracksAccount}
+          reserves={reservesAccount}
+          onChangeReserves={setReservesAccount}
+          onChangeAccount={pickAccount}
+          onChangeTracks={setTracksAccount}
+        />
+
+        <FormInput
+          label="Why this goal? (optional)"
+          editable={!saving && !saved}
+          value={noteToSelf}
+          onChangeText={setNoteToSelf}
+          placeholder="For the trip I keep putting off…"
+          multiline
+          numberOfLines={3}
+          style={styles.noteInput}
+        />
+        <Text style={styles.modalHint}>Sealed until you finish saving — Suu hands it back to you then.</Text>
+      </View>
     </ModalSheet>
   );
 }

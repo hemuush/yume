@@ -49,6 +49,9 @@ jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMoc
 
 import { AddLoanModal } from './AddLoanModal';
 import { PrimaryButton } from '@/components/PrimaryButton';
+import { DateField } from '@/components/DateField';
+import { ToggleSwitch } from '@/components/ToggleSwitch';
+import { toLocalIsoDate, addDaysToIsoDate } from '@/lib/date';
 
 const mounted: ReactTestRenderer[] = [];
 const byId = (t: ReactTestRenderer, id: string) => t.root.findByProps({ testID: id });
@@ -81,6 +84,47 @@ afterEach(() => {
 });
 
 describe('add loan', () => {
+  it('ignores hidden asset fields after switching from borrowing to lending', async () => {
+    const { tree } = await render();
+    act(() => tree.root.findByType(ToggleSwitch).props.onChange(true));
+    act(() => byId(tree, 'Current estimated value (optional)').props.onChangeText('invalid'));
+    await fillStepOne(tree);
+    await act(async () => footerButton(tree, 'Next').props.onPress());
+    await act(async () => footerButton(tree, 'Create loan').props.onPress());
+    expect(mockCreateLoan).toHaveBeenCalledWith(
+      expect.objectContaining({ direction: 'lent', assetLabel: null, assetValueMinor: null })
+    );
+  });
+
+  it('refreshes untouched default dates on reopen while retaining a manually selected date', async () => {
+    jest.useFakeTimers();
+    const original = new Date();
+    const tomorrow = addDaysToIsoDate(toLocalIsoDate(original), 1);
+    const onCreated = jest.fn();
+    const onClose = jest.fn();
+    const { tree } = await render();
+    try {
+      await fillStepOne(tree);
+      await act(async () =>
+        tree.update(<AddLoanModal visible={false} onClose={onClose} onCreated={onCreated} />)
+      );
+      jest.setSystemTime(new Date(`${tomorrow}T12:00:00`));
+      await act(async () => tree.update(<AddLoanModal visible onClose={onClose} onCreated={onCreated} />));
+      await act(async () => footerButton(tree, 'Next').props.onPress());
+      const start = () =>
+        tree.root.findAllByType(DateField).find((f) => f.props.label === 'Disbursement date')!;
+      expect(start().props.value).toBe(tomorrow);
+      act(() => start().props.onChange('2026-01-15'));
+      await act(async () =>
+        tree.update(<AddLoanModal visible={false} onClose={onClose} onCreated={onCreated} />)
+      );
+      await act(async () => tree.update(<AddLoanModal visible onClose={onClose} onCreated={onCreated} />));
+      await act(async () => footerButton(tree, 'Next').props.onPress());
+      expect(start().props.value).toBe('2026-01-15');
+    } finally {
+      jest.useRealTimers();
+    }
+  });
   it('hides the processing fee for a loan you lent and never sends one', async () => {
     const { tree } = await render();
     await fillStepOne(tree);

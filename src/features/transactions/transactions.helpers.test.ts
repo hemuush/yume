@@ -11,7 +11,7 @@ import {
 } from './transactions.helpers';
 import { dayMonth } from '@/lib/dateLabels';
 import { toLocalIsoDate } from '@/lib/date';
-import type { ActivityFilter } from './FilterModal';
+import type { ActivityFilter } from './activityFilter';
 
 describe('Activity helpers', () => {
   it('holds a week inside its month, Sunday to Saturday, cut at both ends', () => {
@@ -147,6 +147,11 @@ describe('filterActivity', () => {
 
   it('keeps everything with no filter', () => {
     expect(ids({})).toEqual(['lunch', 'order', 'cab', 'move']);
+  });
+
+  it('does not silently apply a retired payment-method filter from an older caller', () => {
+    const legacy = { ...none, paymentMode: 'upi' };
+    expect(filterActivity(list, legacy, cats).map((t) => t.id)).toEqual(['lunch', 'order', 'cab', 'move']);
   });
 
   it('matches an account on either side of a transfer', () => {

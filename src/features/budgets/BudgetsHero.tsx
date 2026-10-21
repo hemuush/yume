@@ -73,6 +73,9 @@ export function BudgetsHero({ figures: h }: { figures: BudgetsHeroFigures }) {
           </FrostChip>
         )}
       </View>
+      {!!h.nestedCount && (
+        <Text style={frost.sub}>Subcategory limits are included in their parent budget totals.</Text>
+      )}
     </Glass>
   );
 }

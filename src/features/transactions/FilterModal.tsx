@@ -1,4 +1,4 @@
-import type { PaymentMode } from '@/types';
+import type { ActivityFilter } from './activityFilter';
 import { listExpenseLabels } from '@/db/expenseLabels';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import { useEffect, useMemo, useState } from 'react';
@@ -22,16 +22,6 @@ const FILTER_TYPES: { label: string; value: TransactionType | 'all' }[] = [
   { label: 'Income', value: 'income' },
   { label: 'Transfer', value: 'transfer' },
 ];
-
-/** What Activity is filtered to — see FilterModal. */
-export interface ActivityFilter {
-  paymentMode?: PaymentMode | 'unspecified';
-  type: TransactionType | 'all';
-  expenseLabel?: string;
-  categoryIds: string[];
-  /** A transfer matches either of its accounts. */
-  accountIds: string[];
-}
 
 /**
  * Type, category and account filters applied client-side on top of the active date range: the range is small,

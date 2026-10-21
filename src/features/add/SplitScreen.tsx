@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { View, ScrollView, Pressable, StyleSheet, useWindowDimensions } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -27,7 +27,7 @@ import { SplitDonut } from './SplitDonut';
 import { Glass, GLASS, GLASS_CARD } from '@/components/Glass';
 import { Kicker } from '@/components/Frost';
 import { HomeWallpaper } from '@/features/home/HomeWallpaper';
-import { getSplitSession, finishSplitSession } from './splitSession';
+import { getSplitSession, finishSplitSession, cancelSplitSession } from './splitSession';
 import {
   DraftPart,
   newPartKey,
@@ -57,6 +57,13 @@ export function SplitScreen() {
   const [target, setTarget] = useState<string | null>(null);
   const [picking, setPicking] = useState<Picking | null>(null);
   const [pickNote, setPickNote] = useState<string | null>(null);
+  const completed = useRef(false);
+  useEffect(
+    () => () => {
+      if (session && !completed.current) cancelSplitSession(session);
+    },
+    [session]
+  );
 
   // Reached without Add opening a split (a stale deep link): nothing to show.
   useEffect(() => {
@@ -129,7 +136,8 @@ export function SplitScreen() {
   };
 
   const onDone = () => {
-    if (problem) return;
+    if (problem || completed.current) return;
+    completed.current = true;
     finishSplitSession(parts);
     router.back();
   };

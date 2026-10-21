@@ -25,6 +25,7 @@ export function GoalCard({
   goal,
   hue = theme.colors.idTeal,
   accountName,
+  accountAvailable = true,
   onPress,
   onContribute,
 }: {
@@ -33,6 +34,7 @@ export function GoalCard({
   hue?: string;
   /** The linked account's name — shown when the goal follows it. */
   accountName?: string | null;
+  accountAvailable?: boolean;
   onPress: () => void;
   onContribute: () => void;
 }) {
@@ -126,6 +128,11 @@ export function GoalCard({
             )}
           </View>
         )}
+        {following && !accountAvailable && (
+          <Text style={styles.toGoLabel}>
+            Linked account unavailable. Edit this goal to choose another account.
+          </Text>
+        )}
         <Text style={styles.savedSummary}>
           {hideAmounts
             ? formatMaskableMoney(goal.currentAmountMinor, { masked: true })
@@ -144,8 +151,11 @@ export function GoalCard({
           <View style={styles.tags}>{tags}</View>
           {showPill && (
             <Pressable
+              disabled={following && !accountAvailable}
+              accessibilityState={{ disabled: following && !accountAvailable }}
               onPress={(event) => {
                 event?.stopPropagation();
+                if (following && !accountAvailable) return;
                 if (following)
                   router.push(`/add-transaction?type=transfer&toAccountId=${goal.linkedAccountId}`);
                 else onContribute();

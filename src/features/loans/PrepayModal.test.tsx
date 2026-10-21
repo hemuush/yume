@@ -1,6 +1,7 @@
 /** The prepayment guard compares on the same whole-rupee basis the sheet displays. */
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
 import { Text } from 'react-native';
+import type { PrepaymentSummary } from '@/db/loans';
 
 const mockApply = jest.fn(async (..._a: unknown[]) => ({
   interestSavedMinor: 0,
@@ -10,7 +11,9 @@ const mockApply = jest.fn(async (..._a: unknown[]) => ({
   oldPayoffDate: '2027-01-01',
   newPayoffDate: '2027-01-01',
 }));
-const mockPreview = jest.fn(async (..._a: unknown[]) => null);
+const mockPreview = jest.fn(
+  async (..._a: unknown[]): Promise<(PrepaymentSummary & { neverPaysOff: boolean }) | null> => null
+);
 
 jest.mock('@/db/loans', () => ({
   applyPrepayment: (...a: unknown[]) => mockApply(...a),
@@ -71,6 +74,28 @@ beforeEach(() => {
 });
 
 describe('prepay guard', () => {
+  it('clears the earlier preview while a changed amount waits for its own calculation', async () => {
+    jest.useFakeTimers();
+    try {
+      mockPreview.mockResolvedValueOnce({
+        interestSavedMinor: 10000,
+        monthsShaved: 1,
+        oldRemainingCount: 10,
+        newRemainingCount: 9,
+        oldPayoffDate: '2027-01-01',
+        newPayoffDate: '2026-12-01',
+        neverPaysOff: false,
+      });
+      const tree = await submit(100000, '');
+      act(() => tree.root.findByProps({ testID: 'Amount' }).props.onChangeText('100'));
+      await act(async () => jest.advanceTimersByTime(250));
+      expect(texts(tree)).toContain('If you prepay this today');
+      act(() => tree.root.findByProps({ testID: 'Amount' }).props.onChangeText('200'));
+      expect(texts(tree)).not.toContain('If you prepay this today');
+    } finally {
+      jest.useRealTimers();
+    }
+  });
   it('accepts the balance as displayed when it rounds down', async () => {
     await submit(100_040, '1000'); // owes 1,000.40, shown as 1,000
     expect(mockApply).toHaveBeenCalledWith('l1', expect.objectContaining({ amountMinor: 100_000 }));

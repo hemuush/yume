@@ -28,6 +28,13 @@ export function getSplitSession(): SplitSession | null {
   return session;
 }
 
+/** Cancelling one editor cannot leave its payment available to a later direct route. */
+export function cancelSplitSession(opened: SplitSession): void {
+  if (session !== opened) return;
+  session = null;
+  result = null;
+}
+
 /** The page's Done: these parts go back to Add. */
 export function finishSplitSession(parts: DraftPart[]): void {
   result = parts;

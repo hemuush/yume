@@ -34,7 +34,7 @@ it.each([false, true])('keeps all four destinations visible (stacked: %s)', (sta
   const debt = tree.root.findAll(
     (n) =>
       n.props.onPress &&
-      n.props.accessibilityRole === 'button' &&
+      n.props.accessibilityRole === 'tab' &&
       n.findAllByType(Text).some((t) => t.props.children === 'Debt')
   )[0];
   act(() => debt.props.onPress());

@@ -28,6 +28,7 @@ jest.mock('@/theme/AccentContext', () => ({ useAccent: () => ({ accent: '#8FCBFF
 
 const mockCreateAccount = jest.fn();
 const mockAddValuation = jest.fn();
+const mockGetDefaultCurrency = jest.fn();
 jest.mock('@/db/ledger', () => ({ createAccount: (...a: unknown[]) => mockCreateAccount(...a) }));
 jest.mock('@/db/valuations', () => ({ addValuation: (...a: unknown[]) => mockAddValuation(...a) }));
 jest.mock('@/db/settings', () => ({
@@ -35,7 +36,7 @@ jest.mock('@/db/settings', () => ({
     { code: 'INR', label: 'Indian Rupee' },
     { code: 'USD', label: 'US Dollar' },
   ],
-  getDefaultCurrency: async () => 'INR',
+  getDefaultCurrency: () => mockGetDefaultCurrency(),
   getCachedCurrency: () => 'INR',
 }));
 
@@ -78,6 +79,34 @@ const save = (tree: ReactTestRenderer) =>
 beforeEach(() => {
   mockCreateAccount.mockReset().mockResolvedValue({ id: 'acc-1' });
   mockAddValuation.mockReset().mockResolvedValue(undefined);
+  mockGetDefaultCurrency.mockReset().mockResolvedValue('INR');
+});
+
+it('keeps the chosen currency when a slow default-currency read finishes', async () => {
+  let resolve!: (currency: string) => void;
+  mockGetDefaultCurrency.mockReturnValueOnce(new Promise<string>((r) => (resolve = r)));
+  const { tree } = await render();
+  act(() => byProps(tree, { label: 'Name' }).props.onChangeText('Travel account'));
+  act(() => byProps(tree, { label: 'USD' }).props.onPress());
+  await act(async () => resolve('INR'));
+  await save(tree);
+  expect(mockCreateAccount).toHaveBeenCalledWith(expect.objectContaining({ currency: 'USD' }));
+  act(() => tree.unmount());
+});
+
+it('ignores a default-currency read from a previous opening', async () => {
+  let resolve!: (currency: string) => void;
+  mockGetDefaultCurrency.mockReturnValueOnce(new Promise<string>((r) => (resolve = r)));
+  const { tree, onCreated, onClose } = await render();
+  await act(async () =>
+    tree.update(<AddAccountModal visible={false} onClose={onClose} onCreated={onCreated} />)
+  );
+  await act(async () => tree.update(<AddAccountModal visible onClose={onClose} onCreated={onCreated} />));
+  await act(async () => resolve('USD'));
+  act(() => byProps(tree, { label: 'Name' }).props.onChangeText('Local account'));
+  await save(tree);
+  expect(mockCreateAccount).toHaveBeenCalledWith(expect.objectContaining({ currency: 'INR' }));
+  act(() => tree.unmount());
 });
 
 describe('AddAccountModal retry after a failed valuation', () => {

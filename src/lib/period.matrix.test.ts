@@ -10,7 +10,6 @@ import {
   periodLabel,
   canStepForward,
   stepPeriod,
-  setGranularity,
 } from './period';
 import { toLocalIsoDate, parseLocalIsoDate } from './date';
 
@@ -118,27 +117,6 @@ describe('canStepForward / stepPeriod', () => {
       expect(c).toEqual(CURRENT_PERIOD);
     }
   });
-});
-
-describe('setGranularity — switching axes resets to the current period, same axis is a no-op', () => {
-  for (const offset of [0, -1, -7, -24]) {
-    it(`month@${offset} → year resets offset to 0`, () => {
-      expect(setGranularity({ granularity: 'month', offset }, 'year')).toEqual({
-        granularity: 'year',
-        offset: 0,
-      });
-    });
-    it(`year@${offset} → month resets offset to 0`, () => {
-      expect(setGranularity({ granularity: 'year', offset }, 'month')).toEqual({
-        granularity: 'month',
-        offset: 0,
-      });
-    });
-    it(`month@${offset} → month is unchanged`, () => {
-      const c: PeriodCursor = { granularity: 'month', offset };
-      expect(setGranularity(c, 'month')).toBe(c);
-    });
-  }
 });
 
 describe('periodLabel — always a non-empty string for every reference × offset × granularity', () => {

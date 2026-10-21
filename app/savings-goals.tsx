@@ -1,5 +1,5 @@
 import { ScreenLoadError } from '@/components/ScreenLoadError';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
 import { View } from 'react-native';
 import { MovingRow } from '@/components/MovingRow';
@@ -25,14 +25,16 @@ import { useAccent } from '@/theme/AccentContext';
 import { Glass } from '@/components/Glass';
 import { GoalsHero } from '@/features/goals/GoalsHero';
 import { goalHues, summarizeGoals } from '@/features/goals/goalPlan';
-import { toLocalIsoDate } from '@/lib/date';
+import { useToday } from '@/features/budgets/useToday';
+import { errorMessage } from '@/lib/errorMessage';
 import { AddGoalModal } from '@/features/goals/AddGoalModal';
-import { GoalDetailModal } from '@/features/goals/GoalDetailModal';
+import { GoalOverviewModal } from '@/features/goals/GoalOverviewModal';
 import { ContributeModal } from '@/features/goals/ContributeModal';
 import { GoalLetterReveal } from '@/features/goals/GoalLetterReveal';
 import { ModalSheet } from '@/components/ModalSheet';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { styles } from '@/features/goals/goals.styles';
+import { showAlert } from '@/components/AppDialog';
 
 export default function SavingsGoalsScreen() {
   const insets = useSafeAreaInsets();
@@ -50,23 +52,26 @@ export default function SavingsGoalsScreen() {
   // A goal following its account can hit its target with no tap here (transfer in, salary), so its sealed
   // letter opens the next time this screen loads — once, like a hand-filled goal.
   const [letterGoal, setLetterGoal] = useState<SavingsGoal | null>(null);
+  const [deferLetters, setDeferLetters] = useState(false);
+  const [letterError, setLetterError] = useState<string | null>(null);
+  const [letterSaving, setLetterSaving] = useState(false);
+  const letterLock = useRef(false);
+  const request = useRef(0);
+  const active = useRef(true);
+  useEffect(() => {
+    active.current = true;
+    return () => {
+      active.current = false;
+      request.current += 1;
+    };
+  }, []);
 
   const loadGoals = useCallback(async () => {
-    const [goals, accs] = await Promise.all([listSavingsGoals(true), listAccounts()]);
+    const id = ++request.current;
+    const [goals, accs] = await Promise.all([listSavingsGoals(true), listAccounts(true)]);
+    if (!active.current || id !== request.current) return;
     setAllGoals(goals);
     setAccounts(accs);
-    const reached = goals.find(
-      (g) =>
-        g.tracksAccount &&
-        !g.archived &&
-        !!g.noteToSelf &&
-        !g.letterRevealed &&
-        g.currentAmountMinor >= g.targetAmountMinor
-    );
-    if (reached) {
-      await markGoalLetterRevealed(reached.id);
-      setLetterGoal(reached);
-    }
   }, []);
   const { loaded, hasData, loadError, reload: load } = useScreenLoad(loadGoals);
   const { goal: goalId, add } = useLocalSearchParams<{ goal?: string; add?: string }>();
@@ -75,17 +80,77 @@ export default function SavingsGoalsScreen() {
     if (add === '1') setAddVisible(true);
     else {
       const goal = allGoals.find((g) => g.id === goalId);
+      if (!goal) showAlert('Goal unavailable', 'This goal no longer exists.');
       if (goal?.archived) setShowArchived(true);
       setEditingGoal(goal ?? null);
     }
     router.setParams({ goal: undefined, add: undefined });
   }, [loaded, loadError, goalId, add, allGoals]);
 
-  const activeGoals = allGoals.filter((g) => !g.archived);
-  const archivedGoals = allGoals.filter((g) => g.archived);
+  useEffect(() => {
+    if (
+      deferLetters ||
+      hideAmounts ||
+      addVisible ||
+      editingGoal ||
+      contributingGoal ||
+      letterGoal ||
+      goalId ||
+      add === '1'
+    )
+      return;
+    const reached = allGoals.find(
+      (g) => !g.archived && !!g.noteToSelf && !g.letterRevealed && g.currentAmountMinor >= g.targetAmountMinor
+    );
+    if (reached) {
+      setLetterError(null);
+      setLetterGoal(reached);
+    }
+  }, [
+    allGoals,
+    hideAmounts,
+    addVisible,
+    editingGoal,
+    contributingGoal,
+    letterGoal,
+    goalId,
+    add,
+    deferLetters,
+  ]);
+
+  const acknowledgeLetter = async (dismissOnFailure = false) => {
+    if (!letterGoal || letterLock.current) return;
+    letterLock.current = true;
+    setLetterSaving(true);
+    try {
+      await markGoalLetterRevealed(letterGoal.id);
+      if (!active.current) return;
+      setAllGoals((goals) => goals.map((g) => (g.id === letterGoal.id ? { ...g, letterRevealed: true } : g)));
+      setLetterGoal(null);
+    } catch (e) {
+      if (active.current) {
+        if (dismissOnFailure) {
+          setDeferLetters(true);
+          setLetterGoal(null);
+        } else setLetterError(errorMessage(e));
+      }
+    } finally {
+      letterLock.current = false;
+      if (active.current) setLetterSaving(false);
+    }
+  };
+
+  const activeGoals = useMemo(() => allGoals.filter((g) => !g.archived), [allGoals]);
+  const archivedGoals = useMemo(() => allGoals.filter((g) => g.archived), [allGoals]);
   const visibleGoals = showArchived ? archivedGoals : activeGoals;
-  const totals = summarizeGoals(activeGoals, toLocalIsoDate(new Date()));
-  const hues = goalHues(allGoals);
+  const today = useToday();
+  const totals = useMemo(() => summarizeGoals(activeGoals, today), [activeGoals, today]);
+  const hues = useMemo(() => goalHues(allGoals), [allGoals]);
+  const accountsById = useMemo(() => new Map(accounts.map((a) => [a.id, a])), [accounts]);
+  const selectedGoal = allGoals.find((g) => g.id === editingGoal?.id);
+  useEffect(() => {
+    if (loaded && !loadError && editingGoal && !selectedGoal) setEditingGoal(null);
+  }, [loaded, loadError, editingGoal, selectedGoal]);
 
   if (!hasData && loadError)
     return <ScreenLoadError title="Savings goals" message={loadError} onRetry={() => void load()} />;
@@ -152,7 +217,11 @@ export default function SavingsGoalsScreen() {
                 <GoalCard
                   goal={goal}
                   hue={hues[goal.id]}
-                  accountName={accounts.find((a) => a.id === goal.linkedAccountId)?.name}
+                  accountName={accountsById.get(goal.linkedAccountId ?? '')?.name}
+                  accountAvailable={
+                    !!accountsById.get(goal.linkedAccountId ?? '') &&
+                    !accountsById.get(goal.linkedAccountId ?? '')?.archived
+                  }
                   onPress={() => setEditingGoal(goal)}
                   onContribute={() => setContributingGoal(goal)}
                 />
@@ -201,22 +270,36 @@ export default function SavingsGoalsScreen() {
         }}
       />
 
-      <GoalDetailModal
-        goal={editingGoal}
-        accounts={accounts}
-        onClose={() => setEditingGoal(null)}
-        onChanged={async () => {
-          setEditingGoal(null);
-          await load();
-        }}
-      />
+      {selectedGoal && (
+        <GoalOverviewModal
+          key={selectedGoal.id}
+          goal={selectedGoal}
+          accounts={accounts}
+          onClose={() => setEditingGoal(null)}
+          onChanged={load}
+          onMoveMoney={(accountId) => {
+            setEditingGoal(null);
+            router.push(`/add-transaction?type=transfer&toAccountId=${encodeURIComponent(accountId)}`);
+          }}
+        />
+      )}
 
-      {letterGoal && (
+      {letterGoal && !hideAmounts && !addVisible && !editingGoal && !contributingGoal && (
         <ModalSheet
           visible
           title="Your goal milestone"
-          onClose={() => setLetterGoal(null)}
-          footer={<PrimaryButton title="Nice, thanks Suu" onPress={() => setLetterGoal(null)} />}
+          dismissible={!letterSaving}
+          onClose={() => void acknowledgeLetter(true)}
+          footer={
+            <View>
+              {letterError && <Text style={styles.errorText}>{letterError}</Text>}
+              <PrimaryButton
+                loading={letterSaving}
+                title="Nice, thanks Suu"
+                onPress={() => void acknowledgeLetter()}
+              />
+            </View>
+          }
         >
           <GoalLetterReveal
             goalName={letterGoal.name}

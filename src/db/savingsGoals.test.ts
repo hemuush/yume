@@ -25,6 +25,39 @@ import {
 } from '@/db/savingsGoals';
 
 describe('savings goals', () => {
+  it('rolls back creation when its result read fails', async () => {
+    const read = mockTestDb.getFirstAsync;
+    mockTestDb.getFirstAsync = async <T>(sql: string, params?: unknown[]) => {
+      if (sql.includes('WHERE g.id = ?')) throw new Error('goal result read failed');
+      return read<T>(sql, params);
+    };
+    try {
+      await expect(
+        createSavingsGoal({
+          name: 'Atomic result goal',
+          targetAmountMinor: 10000,
+          targetDate: null,
+          linkedAccountId: null,
+        })
+      ).rejects.toThrow('goal result read failed');
+    } finally {
+      mockTestDb.getFirstAsync = read;
+    }
+    expect((await listSavingsGoals(true)).some((g) => g.name === 'Atomic result goal')).toBe(false);
+  });
+  it('requires unarchiving before changing manual progress', async () => {
+    const g = await createSavingsGoal({
+      name: 'Archived progress',
+      targetAmountMinor: 10000,
+      targetDate: null,
+      linkedAccountId: null,
+    });
+    await contributeToGoal(g.id, 5000);
+    await archiveSavingsGoal(g.id);
+    await expect(contributeToGoal(g.id, 1000)).rejects.toThrow(/unarchive/i);
+    await expect(contributeToGoal(g.id, -1000)).rejects.toThrow(/unarchive/i);
+    expect((await listSavingsGoals(true)).find((item) => item.id === g.id)?.currentAmountMinor).toBe(5000);
+  });
   let accountId: string;
 
   beforeAll(async () => {

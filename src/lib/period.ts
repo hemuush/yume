@@ -78,15 +78,6 @@ export function stepPeriod(cursor: PeriodCursor, delta: -1 | 1): PeriodCursor {
 }
 
 /**
- * Switching month↔year resets to the current period instead of translating ("3 months back" has no year
- * equivalent, and silently landing on 2023 would surprise more than today).
- */
-export function setGranularity(cursor: PeriodCursor, granularity: PeriodGranularity): PeriodCursor {
-  if (cursor.granularity === granularity) return cursor;
-  return { granularity, offset: 0 };
-}
-
-/**
  * A range the person picked themselves on Reports ("Custom") — a trip, the
  * last 30 days, a financial year. Both ends inclusive, YYYY-MM-DD.
  */

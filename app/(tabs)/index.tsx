@@ -621,9 +621,7 @@ export default function DashboardScreen() {
         {loaded && (
           <Animated.View entering={sectionEntering(1)}>
             <HomeAccounts
-              compact
               accounts={accounts}
-              currency={currency}
               onOpenAccounts={() => router.push('/profile')}
               onOpenAccount={setSummaryAccount}
               onAddAccount={() => setAddAccountVisible(true)}

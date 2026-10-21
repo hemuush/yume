@@ -1,8 +1,12 @@
 import { budgetPace } from '@/lib/pace';
 import { parseLocalIsoDate } from '@/lib/date';
 import type { BudgetProgress } from '@/db/budgets';
+import { nonOverlappingBudgets } from '@/lib/budgetScope';
 
-type HeroBudget = Pick<BudgetProgress, 'effectiveLimitMinor' | 'spentMinor' | 'percentUsed' | 'overBudget'>;
+type HeroBudget = Pick<
+  BudgetProgress,
+  'effectiveLimitMinor' | 'spentMinor' | 'percentUsed' | 'overBudget'
+> & { budget?: { categoryId: string }; parentCategoryId?: string | null };
 
 export type BudgetsTone = 'ok' | 'ahead' | 'over';
 
@@ -22,6 +26,7 @@ export interface BudgetsHeroFigures {
   overCount: number;
   /** Budgets still under their limit but past the even-spending line. */
   aheadCount: number;
+  nestedCount?: number;
   /** Worst state across the budgets: any over, else any ahead, else ok. */
   tone: BudgetsTone;
 }
@@ -41,10 +46,13 @@ export function budgetsOverview(budgets: HeroBudget[], today: string): BudgetsHe
   let overCount = 0;
   let aheadCount = 0;
   for (const b of budgets) {
-    limitMinor += b.effectiveLimitMinor;
-    spentMinor += b.spentMinor;
     if (b.overBudget) overCount += 1;
     else if (budgetPace(b.percentUsed / 100, today).state === 'ahead') aheadCount += 1;
+  }
+  const counted = nonOverlappingBudgets(budgets);
+  for (const b of counted) {
+    limitMinor += b.effectiveLimitMinor;
+    spentMinor += b.spentMinor;
   }
 
   const leftMinor = Math.max(0, limitMinor - spentMinor);
@@ -60,6 +68,7 @@ export function budgetsOverview(budgets: HeroBudget[], today: string): BudgetsHe
     budgetCount: budgets.length,
     overCount,
     aheadCount,
+    nestedCount: budgets.length - counted.length,
     tone: overCount > 0 ? 'over' : aheadCount > 0 ? 'ahead' : 'ok',
   };
 }

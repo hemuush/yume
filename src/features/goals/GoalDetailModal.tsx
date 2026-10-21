@@ -1,5 +1,5 @@
-import { useSaveOnce } from '@/lib/useSaveOnce';
-import { useEffect, useState } from 'react';
+import { useSheetMutation } from '@/lib/useSheetMutation';
+import { useState } from 'react';
 import { View } from 'react-native';
 import { Text } from '@/components/Text';
 import {
@@ -26,58 +26,46 @@ import { GoalAccountField } from './GoalAccountField';
 import { useUndoToast } from '@/components/UndoToast';
 import { haptics } from '@/lib/haptics';
 import { styles } from './goals.styles';
-import { errorMessage } from '@/lib/errorMessage';
 import { showAlert } from '@/components/AppDialog';
 
 /**
  * Edit/archive/delete a goal (from a GoalCard). Hand-added progress (`currentAmountMinor > 0`) means Archive
  * only (keeps the number); a never-funded or account-following goal can be deleted (account untouched).
  */
-export function GoalDetailModal({
+export function GoalDetailModal(props: GoalDetailProps) {
+  return props.goal ? <GoalDetailForm key={props.goal.id} {...props} goal={props.goal} /> : null;
+}
+
+interface GoalDetailProps {
+  goal: SavingsGoal | null;
+  accounts: Account[];
+  onClose: () => void;
+  onChanged: () => void | Promise<void>;
+  onRefresh?: () => void | Promise<void>;
+  backLabel?: string;
+}
+
+function GoalDetailForm({
   goal,
   accounts,
   onClose,
   onChanged,
+  onRefresh,
   backLabel,
-}: {
-  goal: SavingsGoal | null;
-  accounts: Account[];
-  onClose: () => void;
-  onChanged: () => void;
-  backLabel?: string;
-}) {
+}: Omit<GoalDetailProps, 'goal'> & { goal: SavingsGoal }) {
   const { show: showUndo } = useUndoToast();
-  const runAction = useSaveOnce(async (action: () => Promise<void>) => {
-    await action();
-  });
+  const { run, pending: saving, saved, error, setError } = useSheetMutation();
+  const busy = saving || saved;
   const [manageReservation, setManageReservation] = useState(false);
-  const [name, setName] = useState('');
-  const [target, setTarget] = useState('');
-  const [hasTargetDate, setHasTargetDate] = useState(false);
-  const [targetDateValue, setTargetDateValue] = useState(() =>
-    addMonthsToIsoDate(toLocalIsoDate(new Date()), 12)
+  const [name, setName] = useState(goal.name);
+  const [target, setTarget] = useState(String(goal.targetAmountMinor / 100));
+  const [hasTargetDate, setHasTargetDate] = useState(!!goal.targetDate);
+  const [targetDateValue, setTargetDateValue] = useState(
+    () => goal.targetDate ?? addMonthsToIsoDate(toLocalIsoDate(new Date()), 12)
   );
-  const [linkedAccountId, setLinkedAccountId] = useState<string | null>(null);
-  const [tracksAccount, setTracksAccount] = useState(false);
-  const [reservesAccount, setReservesAccount] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!goal) return;
-    setManageReservation(false);
-    setName(goal.name);
-    setTarget((goal.targetAmountMinor / 100).toString());
-    setLinkedAccountId(goal.linkedAccountId);
-    setTracksAccount(goal.tracksAccount);
-    setReservesAccount(!!goal.reservesAccount);
-    setHasTargetDate(!!goal.targetDate);
-    setTargetDateValue(goal.targetDate ?? addMonthsToIsoDate(toLocalIsoDate(new Date()), 12));
-    setError(null);
-  }, [goal]);
-
-  if (!goal) return null;
+  const [linkedAccountId, setLinkedAccountId] = useState<string | null>(goal.linkedAccountId);
+  const [tracksAccount, setTracksAccount] = useState(goal.tracksAccount);
+  const [reservesAccount, setReservesAccount] = useState(!!goal.reservesAccount);
 
   // Same rule as AddGoalModal: picking a savings account starts on Follow, any other starts by hand.
   const pickAccount = (id: string | null) => {
@@ -87,35 +75,25 @@ export function GoalDetailModal({
   };
 
   const submit = () =>
-    runAction(async () => {
+    run(async () => {
       setError(null);
       if (!name.trim()) {
-        setError('Enter a name');
-        return;
+        throw new Error('Enter a name');
       }
       const targetAmountMinor = toMinor(parseFloat(target || '0'));
       if (!Number.isFinite(targetAmountMinor) || targetAmountMinor <= 0) {
-        setError('Enter a valid target amount');
-        return;
+        throw new Error('Enter a valid target amount');
       }
       const targetDate = hasTargetDate ? targetDateValue : null;
-      setSaving(true);
-      try {
-        await updateSavingsGoal(goal.id, {
-          name: name.trim(),
-          targetAmountMinor,
-          targetDate,
-          linkedAccountId,
-          tracksAccount,
-          reservesAccount,
-        });
-        onChanged();
-      } catch (e) {
-        setError(errorMessage(e));
-      } finally {
-        setSaving(false);
-      }
-    });
+      await updateSavingsGoal(goal.id, {
+        name: name.trim(),
+        targetAmountMinor,
+        targetDate,
+        linkedAccountId,
+        tracksAccount,
+        reservesAccount,
+      });
+    }, onChanged);
 
   const confirmArchive = (release = false) => {
     showAlert(
@@ -130,53 +108,26 @@ export function GoalDetailModal({
         {
           text: 'Archive',
           style: 'destructive',
-          onPress: () =>
-            runAction(async () => {
-              setBusy(true);
-              try {
-                await archiveSavingsGoal(goal.id, release);
-                onChanged();
-              } catch (e) {
-                showAlert("Couldn't archive", errorMessage(e));
-              } finally {
-                setBusy(false);
-              }
-            }),
+          onPress: () => run(() => archiveSavingsGoal(goal.id, release), onChanged),
         },
       ]
     );
   };
 
-  const onUnarchive = () =>
-    runAction(async () => {
-      setBusy(true);
-      try {
-        await unarchiveSavingsGoal(goal.id);
-        onChanged();
-      } catch (e) {
-        showAlert("Couldn't unarchive", errorMessage(e));
-      } finally {
-        setBusy(false);
-      }
-    });
+  const onUnarchive = () => run(() => unarchiveSavingsGoal(goal.id), onChanged);
 
   const confirmDelete = () =>
-    runAction(async () => {
-      setBusy(true);
-      try {
-        const snapshot = await deleteSavingsGoal(goal.id);
+    run(
+      () => deleteSavingsGoal(goal.id),
+      async (snapshot) => {
         haptics.warn();
-        onChanged();
         showUndo(`Deleted "${goal.name}"`, async () => {
           await restoreSavingsGoal(snapshot);
-          onChanged();
+          await onChanged();
         });
-      } catch (e) {
-        showAlert("Couldn't delete", errorMessage(e));
-      } finally {
-        setBusy(false);
+        await onChanged();
       }
-    });
+    );
 
   const draftSavedMinor = reservesAccount
     ? goal.reservesAccount && goal.linkedAccountId === linkedAccountId
@@ -193,7 +144,7 @@ export function GoalDetailModal({
   return (
     <>
       <ModalSheet
-        dismissible={!saving && !busy}
+        dismissible={!saving}
         title={backLabel ? 'Edit goal' : 'Goal details'}
         backLabel={backLabel}
         visible={!manageReservation}
@@ -203,104 +154,128 @@ export function GoalDetailModal({
             {error && <Text style={styles.errorText}>{error}</Text>}
             <PrimaryButton
               loading={saving}
-              title={saving ? 'Saving…' : 'Save changes'}
+              title={saving ? 'Saving…' : saved ? 'Goal saved' : 'Save changes'}
               onPress={submit}
               disabled={saving || busy}
             />
           </View>
         }
       >
-        <GoalSheetCard
-          name={name.trim() || goal.name}
-          savedMinor={draftSavedMinor}
-          targetMinor={inputMinor(target) || goal.targetAmountMinor}
-          targetDate={hasTargetDate ? targetDateValue : null}
-        />
-        <FormInput label="Goal name" value={name} onChangeText={setName} placeholder="e.g. Goa trip" />
-        <AmountField label="Target amount" value={target} onChangeText={setTarget} placeholder="e.g. 40000" />
+        <View
+          pointerEvents={busy ? 'none' : 'auto'}
+          accessibilityElementsHidden={busy}
+          importantForAccessibility={busy ? 'no-hide-descendants' : 'auto'}
+        >
+          <GoalSheetCard
+            name={name.trim() || goal.name}
+            savedMinor={draftSavedMinor}
+            targetMinor={inputMinor(target) || goal.targetAmountMinor}
+            targetDate={hasTargetDate ? targetDateValue : null}
+          />
+          <FormInput
+            label="Goal name"
+            editable={!busy}
+            value={name}
+            onChangeText={setName}
+            placeholder="e.g. Goa trip"
+          />
+          <AmountField
+            label="Target amount"
+            editable={!busy}
+            value={target}
+            onChangeText={setTarget}
+            placeholder="e.g. 40000"
+          />
 
-        <View style={styles.toggleRow}>
-          <Text style={styles.fieldLabel}>By a specific date</Text>
-          <ToggleSwitch value={hasTargetDate} onChange={setHasTargetDate} />
-        </View>
-        {hasTargetDate && (
-          <DateField label="Target date" value={targetDateValue} onChange={setTargetDateValue} />
-        )}
+          <View style={styles.toggleRow}>
+            <Text style={styles.fieldLabel}>By a specific date</Text>
+            <ToggleSwitch value={hasTargetDate} onChange={setHasTargetDate} />
+          </View>
+          {hasTargetDate && (
+            <DateField label="Target date" value={targetDateValue} onChange={setTargetDateValue} />
+          )}
 
-        <GoalAccountField
-          accounts={accounts}
-          accountId={linkedAccountId}
-          tracks={tracksAccount}
-          reserves={reservesAccount}
-          onChangeReserves={setReservesAccount}
-          onChangeAccount={pickAccount}
-          onChangeTracks={setTracksAccount}
-          goalId={goal.id}
-          manualAmountMinor={
-            goal.manualAmountMinor ??
-            (goal.tracksAccount || goal.reservesAccount ? 0 : goal.currentAmountMinor)
-          }
-        />
+          <GoalAccountField
+            accounts={accounts}
+            accountId={linkedAccountId}
+            tracks={tracksAccount}
+            reserves={reservesAccount}
+            onChangeReserves={setReservesAccount}
+            onChangeAccount={pickAccount}
+            onChangeTracks={setTracksAccount}
+            goalId={goal.id}
+            manualAmountMinor={
+              goal.manualAmountMinor ??
+              (goal.tracksAccount || goal.reservesAccount ? 0 : goal.currentAmountMinor)
+            }
+          />
 
-        {goal.reservesAccount && (
-          <>
-            <Text style={styles.modalHint}>
-              Changing account or tracking mode requires releasing this reservation first. Manual progress
-              from before reservation mode is kept separately.
-            </Text>
-            <PrimaryButton
-              variant="secondary"
-              title="Manage reservation"
-              onPress={() => setManageReservation(true)}
-              disabled={busy || saving}
-            />
-          </>
-        )}
-        {goal.letterRevealed && goal.noteToSelf && (
-          <>
-            <Text style={styles.fieldLabel}>Why you started this</Text>
-            <Text style={styles.letterNote}>&ldquo;{goal.noteToSelf}&rdquo;</Text>
-          </>
-        )}
-
-        <InsightDisclosure title="More options">
-          {goal.archived ? (
-            <SheetLink
-              label={busy ? 'Working…' : 'Unarchive goal'}
-              onPress={onUnarchive}
-              disabled={busy}
-              danger={false}
-            />
-          ) : goal.hasHistory ||
-            (!goal.tracksAccount && (goal.currentAmountMinor > 0 || goal.reservesAccount)) ? (
-            <View>
-              <SheetLink
-                label={
-                  busy ? 'Working…' : goal.reservesAccount ? 'Archive and keep reserved' : 'Archive goal'
-                }
-                onPress={() => confirmArchive()}
-                disabled={busy}
+          {goal.reservesAccount && (
+            <>
+              <Text style={styles.modalHint}>
+                Changing account or tracking mode requires releasing this reservation first. Manual progress
+                from before reservation mode is kept separately.
+              </Text>
+              <PrimaryButton
+                variant="secondary"
+                title="Manage reservation"
+                onPress={() => setManageReservation(true)}
+                disabled={busy || saving}
               />
-              {goal.reservesAccount && (
+            </>
+          )}
+          {goal.letterRevealed && goal.noteToSelf && (
+            <>
+              <Text style={styles.fieldLabel}>Why you started this</Text>
+              <Text style={styles.letterNote}>&ldquo;{goal.noteToSelf}&rdquo;</Text>
+            </>
+          )}
+
+          <InsightDisclosure title="More options">
+            {goal.archived ? (
+              <SheetLink
+                label={busy ? 'Working…' : 'Unarchive goal'}
+                onPress={onUnarchive}
+                disabled={busy}
+                danger={false}
+              />
+            ) : goal.hasHistory ||
+              (!goal.tracksAccount && (goal.currentAmountMinor > 0 || goal.reservesAccount)) ? (
+              <View>
                 <SheetLink
-                  label="Release reservation and archive"
-                  onPress={() => confirmArchive(true)}
+                  label={
+                    busy ? 'Working…' : goal.reservesAccount ? 'Archive and keep reserved' : 'Archive goal'
+                  }
+                  onPress={() => confirmArchive()}
                   disabled={busy}
                 />
-              )}
-            </View>
-          ) : (
-            <SheetLink label={busy ? 'Working…' : 'Delete goal'} onPress={confirmDelete} disabled={busy} />
-          )}
-        </InsightDisclosure>
+                {goal.reservesAccount && (
+                  <SheetLink
+                    label="Release reservation and archive"
+                    onPress={() => confirmArchive(true)}
+                    disabled={busy}
+                  />
+                )}
+              </View>
+            ) : (
+              <SheetLink label={busy ? 'Working…' : 'Delete goal'} onPress={confirmDelete} disabled={busy} />
+            )}
+          </InsightDisclosure>
+        </View>
       </ModalSheet>
       <ContributeModal
         backLabel="Back to goal"
         goal={manageReservation ? goal : null}
         onClose={() => setManageReservation(false)}
-        onContributed={() => {
+        onContributed={async () => {
           setManageReservation(false);
-          onChanged();
+          try {
+            await (onRefresh ?? onChanged)();
+          } catch {
+            setError(
+              'Your reservation was saved, but the goal could not refresh. Reopen it to see the updated progress.'
+            );
+          }
         }}
       />
     </>

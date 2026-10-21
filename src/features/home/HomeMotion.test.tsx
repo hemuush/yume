@@ -186,9 +186,10 @@ it('cancels press feedback on reduced-motion changes and unmount', () => {
   expect(stop).toHaveBeenCalled();
 });
 
-it('labels chart days with full dates while retaining the original week and month controls', () => {
+it('labels days with full dates and takes its chart range from the parent period', () => {
   mockReduce = true;
-  const r = render(<SpendBars daily={[{ date: '2026-10-10', totalMinor: 13200 }]} today="2026-10-10" />);
+  const daily = [{ date: '2026-10-10', totalMinor: 13200 }];
+  const r = render(<SpendBars daily={daily} today="2026-10-10" />);
   expect(
     r.root.findAll(
       (n) =>
@@ -196,31 +197,19 @@ it('labels chart days with full dates while retaining the original week and mont
         /Saturday.*10.*October.*₹132/.test(n.props.accessibilityLabel)
     ).length
   ).toBeGreaterThan(0);
-  act(() =>
-    r.root
-      .find(
-        (n) =>
-          n.props.onPress &&
-          n.props.accessibilityRole === 'tab' &&
-          n.findAllByType(Text).some((t) => t.props.children === 'Month')
-      )
-      .props.onPress()
-  );
-  expect(text(r)).toContain('W2');
-  expect(text(r)).toMatch(/This month\s+₹132/);
+  expect(r.root.findAll((n) => n.props.accessibilityRole === 'tab')).toHaveLength(0);
+  act(() => r.update(<SpendBars daily={daily} today="2026-10-31" periodMode="month" />));
+  expect(text(r)).toContain('W5');
+  expect(text(r)).toMatch(/Spent · by week\s+₹132/);
 });
 
-it('inspects chart bars and resets to the current period when switching range', () => {
+it('inspects exact amounts and resets selection when the parent period changes', () => {
   mockReduce = true;
-  const r = render(
-    <SpendBars
-      daily={[
-        { date: '2026-10-05', totalMinor: 2650000 },
-        { date: '2026-10-10', totalMinor: 13200 },
-      ]}
-      today="2026-10-10"
-    />
-  );
+  const daily = [
+    { date: '2026-10-05', totalMinor: 2650000 },
+    { date: '2026-10-10', totalMinor: 13200 },
+  ];
+  const r = render(<SpendBars daily={daily} today="2026-10-10" />);
   const day = r.root.find(
     (n) =>
       n.props.onPress &&
@@ -228,21 +217,8 @@ it('inspects chart bars and resets to the current period when switching range', 
       /Monday.*5.*October/.test(n.props.accessibilityLabel)
   );
   act(() => day.props.onPress());
-  expect(text(r)).toContain('Sun ₹26,500');
+  expect(text(r)).toContain('Mon, 5 Oct · ₹26,500');
   expect(day.props.accessibilityState.selected).toBe(true);
-  const switchRange = (name: string) =>
-    act(() =>
-      r.root
-        .find(
-          (n) =>
-            n.props.onPress &&
-            n.props.accessibilityRole === 'tab' &&
-            n.findAllByType(Text).some((t) => t.props.children === name)
-        )
-        .props.onPress()
-    );
-  switchRange('Month');
-  // The picked bar says what it holds in its spoken label (there is no separate readout line).
   const picked = () =>
     String(
       r.root.find(
@@ -253,8 +229,13 @@ it('inspects chart bars and resets to the current period when switching range', 
           n.props.accessibilityLabel.includes('₹')
       ).props.accessibilityLabel
     );
+  act(() => r.update(<SpendBars daily={daily} today="2026-10-31" periodMode="month" />));
+  expect(picked()).toMatch(/Week 5 .*₹0/);
+  const week = r.root.find((n) => n.props.onPress && n.props.accessibilityLabel?.startsWith('Week 2 of'));
+  act(() => week.props.onPress());
   expect(picked()).toMatch(/Week 2 .*₹132/);
-  switchRange('Week');
+  expect(text(r)).toContain('8–14 Oct · ₹132');
+  act(() => r.update(<SpendBars daily={daily} today="2026-10-10" />));
   expect(picked()).toMatch(/10 .*₹132/);
   act(() => r.update(<SpendBars daily={[]} today="2026-10-11" />));
   expect(picked()).toMatch(/11 .*₹0/);

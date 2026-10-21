@@ -2,7 +2,9 @@
   "expo": {
     "name": "Yume",
     "slug": "yume",
-    "platforms": ["android"],
+    "platforms": [
+      "android"
+    ],
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -18,7 +20,10 @@
       "predictiveBackGestureEnabled": true,
       "versionCode": 1,
       "allowBackup": false,
-      "permissions": ["android.permission.USE_BIOMETRIC", "android.permission.USE_FINGERPRINT"],
+      "permissions": [
+        "android.permission.USE_BIOMETRIC",
+        "android.permission.USE_FINGERPRINT"
+      ],
       "blockedPermissions": [
         "android.permission.SYSTEM_ALERT_WINDOW",
         "android.permission.READ_EXTERNAL_STORAGE",
@@ -150,7 +155,7 @@
         "style": "dark"
       },
       "eas": {
-        "projectId": "cc28c8d3-765f-46b2-accc-4cd89f084075"
+        "projectId": "e649762d-57b0-4a9a-bcd6-0185188a9294"
       }
     },
     "owner": "hemant.shrma.3004"

@@ -171,6 +171,9 @@ describe('next installment', () => {
 
   it('says none are left and offers no pay button once every installment is paid', async () => {
     setup([installment(1, '2026-01-01', 'paid'), installment(2, '2026-02-01', 'paid')]);
+    mockGetLoanById.mockResolvedValueOnce(
+      makeLoan('l1', 'Test Lender', { status: 'closed', outstandingPrincipalMinor: 0 })
+    );
     const tree = await render();
     expect(texts(tree)).toContain('None left');
     expect(texts(tree)).toContain('2 of 2');
@@ -216,7 +219,7 @@ describe('when paying cannot work', () => {
     mockListCategories.mockImplementation(async () => emiCategories);
     const tree = await render();
     expect(
-      texts(tree).some((t) => t.includes('original account was deleted') && t.includes('Test Bank'))
+      texts(tree).some((t) => t.includes('original account is unavailable') && t.includes('Test Bank'))
     ).toBe(true);
   });
 
@@ -312,4 +315,63 @@ it('does not flash a paid-off EMI or zero interest while the schedule is still l
     release([]);
   });
   act(() => tree.unmount());
+});
+
+it.each([false, true])(
+  'keeps the recorded EMI in its confirmation while refreshing (last=%s)',
+  async (last) => {
+    setup([installment(1, todayIso), ...(last ? [] : [installment(2, addDaysToIsoDate(todayIso, 30))])]);
+    const tree = await render();
+    act(() => payButton(tree).props.onPress());
+    mockGetSchedule.mockResolvedValueOnce(
+      last
+        ? [installment(1, todayIso, 'paid')]
+        : [installment(1, todayIso, 'paid'), installment(2, addDaysToIsoDate(todayIso, 30))]
+    );
+    await act(async () => tree.root.findByType(PayInstallmentSheet).props.onPaid());
+    expect(tree.root.findByType(PayInstallmentSheet).props.installment.id).toBe('i1');
+    expect(tree.root.findByType(ModalSheet).props.visible).toBe(false);
+    act(() => tree.root.findByType(PayInstallmentSheet).props.onClose());
+    expect(tree.root.findByType(ModalSheet).props.visible).toBe(true);
+  }
+);
+
+it('provides a retry after a detail-load failure', async () => {
+  setup([installment(1, todayIso)]);
+  mockGetLoanById.mockRejectedValueOnce(new Error('disk unavailable'));
+  const tree = await render();
+  const retry = tree.root.findAllByType(PrimaryButton).find((b) => b.props.title === 'Retry');
+  expect(retry).toBeDefined();
+  await act(async () => retry!.props.onPress());
+  expect(texts(tree)).not.toContain("Couldn't load the latest details: disk unavailable");
+});
+
+it('identifies an outstanding loan with no schedule as incomplete', async () => {
+  setup([]);
+  const tree = await render();
+  expect(texts(tree)).toContain('Schedule unavailable');
+  expect(texts(tree)).not.toContain('None left');
+});
+
+it('allows recording an overdue EMI on a defaulted loan', async () => {
+  setup([installment(1, todayIso)]);
+  const loan = makeLoan('l1', 'Test Lender', { status: 'defaulted' });
+  mockGetLoanById.mockResolvedValueOnce(loan);
+  const tree = await render(loan);
+  expect(payButton(tree).props.disabled).toBe(false);
+});
+
+it('clears the old child payment when another loan opens while its details are loading', async () => {
+  setup([installment(1, todayIso)]);
+  const tree = await render();
+  act(() => payButton(tree).props.onPress());
+  let release!: (loan: Loan) => void;
+  mockGetLoanById.mockImplementationOnce(() => new Promise<Loan>((r) => (release = r)));
+  const nextLoan = makeLoan('l2', 'Another lender');
+  await act(async () =>
+    tree.update(<LoanDetailModal loan={nextLoan} onClose={jest.fn()} onChanged={jest.fn()} />)
+  );
+  expect(tree.root.findAllByType(PayInstallmentSheet)).toHaveLength(0);
+  expect(tree.root.findByProps({ testID: 'card' }).props.title).toBe('Another lender');
+  await act(async () => release(nextLoan));
 });

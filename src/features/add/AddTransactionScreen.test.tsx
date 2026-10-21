@@ -140,7 +140,8 @@ import {
   getRepeatEntries,
 } from '@/db/ledger';
 import { getAddDefaults, setAddDefaults } from '@/db/settings';
-import { saveSplit, deleteSplit, restoreSplit } from '@/db/splits';
+import { saveSplit, deleteSplit, restoreSplit, getSplitParts } from '@/db/splits';
+import { TransferAccounts } from './AddSections';
 import { openSplitSession, finishSplitSession, getSplitSession } from './splitSession';
 import { addLedgerEntry, listPeople } from '@/db/people';
 import { showAlert } from '@/components/AppDialog';
@@ -245,6 +246,139 @@ beforeEach(() => {
 });
 
 describe('Add screen', () => {
+  it('keeps Save disabled until the complete saved split has loaded and offers retry on failure', async () => {
+    mockParams.current = { id: 't1', amount: '10000', categoryId: 'food' };
+    const tx = {
+      id: 't1',
+      type: 'expense',
+      amountMinor: 10000,
+      accountId: 'bank',
+      toAccountId: null,
+      categoryId: 'food',
+      note: '',
+      date: '2026-09-20',
+      splitId: 's1',
+    };
+    jest
+      .mocked(getTransactionById)
+      .mockResolvedValueOnce(tx as never)
+      .mockResolvedValueOnce(tx as never);
+    jest
+      .mocked(getSplitParts)
+      .mockRejectedValueOnce(new Error('split read failed'))
+      .mockResolvedValueOnce([
+        { id: 't1', categoryId: 'food', amountMinor: 10000 },
+        { id: 't2', categoryId: 'travel', amountMinor: 10000 },
+      ] as never);
+    const tree = await render();
+    const button = tree.root.find((n) => isSaveTitle(n.props.title) && typeof n.props.onPress === 'function');
+    expect(button.props.disabled).toBe(true);
+    expect(mockHeaderRight.current).toBeNull();
+    await act(async () => {
+      button.props.onPress();
+      await settle();
+    });
+    expect(createTransaction).not.toHaveBeenCalled();
+    expect(updateTransaction).not.toHaveBeenCalled();
+    await press(tree, 'Retry loading');
+    expect(texts(tree)).toContain('Split 2 ways');
+    expect(mockGuard.prevent).toBe(false);
+    await save(tree, 'Save changes');
+    expect(saveSplit).toHaveBeenCalledTimes(1);
+    expect(updateTransaction).not.toHaveBeenCalled();
+    act(() => tree.unmount());
+  });
+
+  it('blocks Save while deletion is pending and never navigates after the edit closes', async () => {
+    const changed = jest.spyOn(require('@/lib/dataEvents'), 'emitTransactionsChanged');
+    mockParams.current = { id: 't1' };
+    jest.mocked(getTransactionById).mockResolvedValueOnce({
+      id: 't1',
+      type: 'expense',
+      amountMinor: 45000,
+      accountId: 'bank',
+      toAccountId: null,
+      categoryId: 'food',
+      note: '',
+      date: '2026-09-20',
+    } as never);
+    let finish!: (value: never) => void;
+    jest.mocked(deleteTransaction).mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve;
+        })
+    );
+    const tree = await render();
+    const onSave = tree.root.find(
+      (n) => n.props.title === 'Save changes' && typeof n.props.onPress === 'function'
+    ).props.onPress;
+    act(() => mockHeaderRight.current!.props.onPress());
+    const remove = jest.mocked(showAlert).mock.calls[0][2]!.find((b) => b.text === 'Delete')!.onPress!;
+    let deleting!: Promise<unknown>;
+    await act(async () => {
+      deleting = Promise.resolve(remove());
+      await settle();
+    });
+    await act(async () => {
+      onSave();
+      await settle();
+    });
+    expect(updateTransaction).not.toHaveBeenCalled();
+    act(() => tree.unmount());
+    await act(async () => {
+      finish({ table: 'transactions', row: { id: 't1' } } as never);
+      await deleting;
+    });
+    expect(router.back).not.toHaveBeenCalled();
+    expect(mockShowUndo).not.toHaveBeenCalled();
+    expect(changed).toHaveBeenCalledTimes(1);
+    changed.mockRestore();
+  });
+
+  it('allows retry after a deletion fails', async () => {
+    mockParams.current = { id: 't1' };
+    jest.mocked(getTransactionById).mockResolvedValueOnce({
+      id: 't1',
+      type: 'expense',
+      amountMinor: 45000,
+      accountId: 'bank',
+      toAccountId: null,
+      categoryId: 'food',
+      note: '',
+      date: '2026-09-20',
+    } as never);
+    jest.mocked(deleteTransaction).mockRejectedValueOnce(new Error('database busy'));
+    const tree = await render();
+    act(() => mockHeaderRight.current!.props.onPress());
+    await act(async () => {
+      await jest.mocked(showAlert).mock.calls[0][2]!.find((b) => b.text === 'Delete')!.onPress!();
+    });
+    expect(texts(tree)).toContain('database busy');
+    await save(tree, 'Save changes');
+    expect(updateTransaction).toHaveBeenCalledTimes(1);
+    act(() => tree.unmount());
+  });
+
+  it('ignores a queued save tap after the first save commits', async () => {
+    const tree = await render();
+    await press(tree, 'Food');
+    await typeAmount(tree, '120');
+    const onSave = tree.root.find((n) => isSaveTitle(n.props.title) && typeof n.props.onPress === 'function')
+      .props.onPress;
+    await act(async () => {
+      onSave();
+      await settle();
+    });
+    expect(createTransaction).toHaveBeenCalledTimes(1);
+    await act(async () => {
+      onSave();
+      await settle();
+    });
+    expect(createTransaction).toHaveBeenCalledTimes(1);
+    act(() => tree.unmount());
+  });
+
   it('hides shortcuts from the previous entry type while the next query loads', async () => {
     (getRepeatEntries as jest.Mock).mockResolvedValueOnce([
       {
@@ -573,13 +707,14 @@ describe('Add screen', () => {
     });
     const snapshot = { table: 'transactions', row: { id: 't1' } };
     (deleteTransaction as jest.Mock).mockResolvedValueOnce(snapshot);
-    await render();
+    const tree = await render();
     act(() => mockHeaderRight.current!.props.onPress());
     const buttons = jest.mocked(showAlert).mock.calls[0][2]!;
     await act(async () => {
       await buttons.find((b) => b.text === 'Delete')!.onPress!();
     });
     expect(deleteTransaction).toHaveBeenCalledWith('t1');
+    expect(tree.root.findAll((n) => n.props.done === true)).toHaveLength(0);
     expect(router.back).toHaveBeenCalledTimes(1);
     expect(mockShowUndo).toHaveBeenCalledWith('Moved to Recently deleted', expect.any(Function));
     await act(async () => mockShowUndo.mock.calls[0][1]());
@@ -811,6 +946,104 @@ describe('Add screen', () => {
 });
 
 describe('Add screen — leaving with an unsaved entry', () => {
+  it('protects a changed transfer destination and stops asking when reverted', async () => {
+    mockParams.current = { id: 't1' };
+    jest.mocked(getTransactionById).mockResolvedValueOnce({
+      id: 't1',
+      type: 'transfer',
+      amountMinor: 45000,
+      accountId: 'bank',
+      toAccountId: 'cash',
+      categoryId: null,
+      note: '',
+      date: '2026-09-20',
+    } as never);
+    const tree = await render();
+    expect(mockGuard.prevent).toBe(false);
+    act(() => tree.root.findByType(TransferAccounts).props.onPickTo('bank'));
+    expect(mockGuard.prevent).toBe(true);
+    act(() => tree.root.findByType(TransferAccounts).props.onPickTo('cash'));
+    expect(mockGuard.prevent).toBe(false);
+  });
+
+  it('protects a changed refund flag', async () => {
+    mockParams.current = { id: 't1' };
+    jest.mocked(getTransactionById).mockResolvedValueOnce({
+      id: 't1',
+      type: 'expense',
+      amountMinor: 45000,
+      accountId: 'bank',
+      toAccountId: null,
+      categoryId: 'food',
+      note: '',
+      date: '2026-09-20',
+      isRefund: false,
+    } as never);
+    const tree = await render();
+    expect(mockGuard.prevent).toBe(false);
+    await pressLabelled(tree, 'Money back (a refund)');
+    expect(mockGuard.prevent).toBe(true);
+    await pressLabelled(tree, 'Money back (a refund)');
+    expect(mockGuard.prevent).toBe(false);
+  });
+
+  it('protects split allocation changes returned from the split editor', async () => {
+    mockParams.current = { id: 't1' };
+    jest.mocked(getTransactionById).mockResolvedValueOnce({
+      id: 't1',
+      type: 'expense',
+      amountMinor: 10000,
+      accountId: 'bank',
+      toAccountId: null,
+      categoryId: 'food',
+      note: '',
+      date: '2026-09-20',
+      splitId: 's1',
+    } as never);
+    jest.mocked(getSplitParts).mockResolvedValueOnce([
+      { id: 't1', categoryId: 'food', amountMinor: 10000 },
+      { id: 't2', categoryId: 'travel', amountMinor: 10000 },
+    ] as never);
+    const tree = await render();
+    expect(mockGuard.prevent).toBe(false);
+    // The focus hook runs again when load's route dependency changes, as on return from Split.
+    finishSplitSession([
+      { key: 'new-a', categoryId: 'food', amountText: '' },
+      { key: 'new-b', categoryId: 'travel', amountText: '120' },
+    ]);
+    mockParams.current = { id: 't1', note: 'focus' };
+    await act(async () => {
+      tree.update(<AddTransactionScreen />);
+      await settle();
+    });
+    expect(mockGuard.prevent).toBe(true);
+    act(() => tree.unmount());
+  });
+
+  it('protects changes to an existing split amount', async () => {
+    mockParams.current = { id: 't1' };
+    jest.mocked(getTransactionById).mockResolvedValueOnce({
+      id: 't1',
+      type: 'expense',
+      amountMinor: 10000,
+      accountId: 'bank',
+      toAccountId: null,
+      categoryId: 'food',
+      note: '',
+      date: '2026-09-20',
+      splitId: 's1',
+    } as never);
+    jest.mocked(getSplitParts).mockResolvedValueOnce([
+      { id: 't1', categoryId: 'food', amountMinor: 10000 },
+      { id: 't2', categoryId: 'travel', amountMinor: 10000 },
+    ] as never);
+    const tree = await render();
+    expect(mockGuard.prevent).toBe(false);
+    await clearAmount(tree);
+    await typeAmount(tree, '300');
+    expect(mockGuard.prevent).toBe(true);
+  });
+
   it('lets a blank new entry go, and asks once something is typed', async () => {
     const tree = await render();
     expect(mockGuard.prevent).toBe(false);
@@ -860,7 +1093,7 @@ describe('Add screen — leaving with an unsaved entry', () => {
     expect(mockGuard.prevent).toBe(false);
   });
 
-  it('never asks on an edit', async () => {
+  it('does not ask on an unchanged edit', async () => {
     mockParams.current = { id: 't1' };
     (getTransactionById as jest.Mock).mockResolvedValueOnce({
       id: 't1',

@@ -74,6 +74,18 @@ beforeAll(async () => {
 }, 180000);
 
 describe('GoalCard following an account', () => {
+  it('does not launch a transfer into an unavailable account', async () => {
+    let tree!: ReactTestRenderer;
+    await act(async () => {
+      tree = create(
+        <GoalCard goal={goal} accountAvailable={false} onPress={jest.fn()} onContribute={jest.fn()} />
+      );
+    });
+    jest.mocked(router.push).mockClear();
+    act(() => pressText(tree, 'Move money'));
+    expect(router.push).not.toHaveBeenCalled();
+    act(() => tree.unmount());
+  });
   it('names the account and moves money into it', async () => {
     const onContribute = jest.fn();
     let tree!: ReactTestRenderer;

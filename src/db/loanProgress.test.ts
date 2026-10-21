@@ -70,4 +70,21 @@ describe('getLoanProgress', () => {
       pendingInterestMinor: 0,
     });
   });
+
+  it('keeps a truncated schedule payable but does not claim its last row pays off the loan', async () => {
+    const loan = await createLoan({
+      direction: 'borrowed',
+      counterparty: 'Incomplete test loan',
+      principalMinor: 120000,
+      interestRateAnnualBp: 0,
+      tenureMonths: 12,
+      startDate: '2026-01-01',
+    });
+    await mockTestDb.runAsync('DELETE FROM loan_payments WHERE loan_id = ? AND installment_number > 3', [
+      loan.id,
+    ]);
+    const p = (await getLoanProgress()).find((x) => x.loanId === loan.id)!;
+    expect(p.nextDueDate).not.toBeNull();
+    expect(p.lastDueDate).toBeNull();
+  });
 });

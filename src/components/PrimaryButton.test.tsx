@@ -17,6 +17,19 @@ const pressable = (tree: ReactTestRenderer) =>
   tree.root.findAll((n) => n.props.accessibilityRole === 'button')[0];
 
 describe('PrimaryButton', () => {
+  it('preserves shared press feedback when the caller also handles press events', () => {
+    const start = jest.fn();
+    const end = jest.fn();
+    const tree = render({ onPressIn: start, onPressOut: end });
+    const event = {} as any;
+    expect(pressable(tree).props.onPressIn).not.toBe(start);
+    act(() => {
+      pressable(tree).props.onPressIn(event);
+      pressable(tree).props.onPressOut(event);
+    });
+    expect(start).toHaveBeenCalledWith(event);
+    expect(end).toHaveBeenCalledWith(event);
+  });
   it('announces loading and disables repeated presses while preserving its title', () => {
     const tree = render({ loading: true, title: 'Saving…' });
     expect(pressable(tree).props.disabled).toBe(true);

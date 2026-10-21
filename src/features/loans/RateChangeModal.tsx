@@ -108,7 +108,13 @@ export function RateChangeModal({
         onChangeText={setNewRate}
         placeholder="e.g. 9.75"
       />
-      <DateField label="Effective from" value={effectiveDate} onChange={setEffectiveDate} pastFacing />
+      <DateField
+        label="Effective from"
+        value={effectiveDate}
+        onChange={setEffectiveDate}
+        minDate={loan.startDate}
+        pastFacing
+      />
       <Text style={styles.hintText}>
         Defaults to today — change it if your bank actually applied this rate change earlier and you're only
         entering it now. This doesn't rewrite already-paid installments; it only affects which ones are still

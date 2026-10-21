@@ -33,13 +33,15 @@ export function DebtPath({
           onPress={onOpen}
           style={withPressed()}
           accessibilityRole="button"
-          accessibilityLabel="Track an EMI. Open loans"
+          accessibilityLabel={`${loans.lentLeftMinor > 0 ? 'Review repayments' : 'Track an EMI'}. Open loans`}
         >
           <View style={local.summary}>
-            <Kicker icon="flag">No loans yet</Kicker>
-            <Text style={styles.title}>Track an EMI</Text>
+            <Kicker icon="flag">{loans.lentLeftMinor > 0 ? 'No borrowed loans' : 'No loans yet'}</Kicker>
+            <Text style={styles.title}>{loans.lentLeftMinor > 0 ? 'Review repayments' : 'Track an EMI'}</Text>
             <Text style={styles.sub}>
-              A home or car loan. You&rsquo;ll see the month you&rsquo;re debt-free.
+              {loans.lentLeftMinor > 0
+                ? 'Open Loans to review repayments on money you lent.'
+                : 'A home or car loan. You’ll see the month you’re debt-free.'}
             </Text>
             {loans.lentLeftMinor > 0 && (
               <View style={styles.chips}>
