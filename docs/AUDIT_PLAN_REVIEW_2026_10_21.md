@@ -4,7 +4,7 @@ Recorded 21 October 2026 against `a5622a6` (Android-only Expo SDK 57 app). It ad
 
 ## Baseline
 
-`npm run typecheck`, `npm run lint` and `npm run format:check` passed. `npm test` passed 316 suites and 11,329 tests (2 suites and 2 tests skipped). `node scripts/auditGate.js` reported no blocking advisories; `braces` and `node-forge` remain allow-listed build tooling. `expo-doctor`, `expo export --platform android` and `npm run test:security` were not run.
+`npm run typecheck`, `npm run lint` and `npm run format:check` passed. `npm test` passed 316 suites and 11,329 tests (2 suites and 2 tests skipped). `node scripts/auditGate.js` reported no blocking advisories; `braces` and `node-forge` remain allow-listed build tooling. `npm run test:security` passed (8 tests). `npx expo export --platform android` succeeded with an 8.2MB Hermes bundle (12MB exported). `npx expo-doctor` passed 19 of 21 checks; the two failures (config schema, React Native Directory metadata) need Expo's servers, which the sandbox could not reach, so they were not evaluated.
 
 ## Query plans
 
@@ -32,6 +32,21 @@ Home 62ms / 52 queries, Activity month 10ms / 15, Reports month 131ms / 51, Plan
 ## Change
 
 CI now runs `npm run test:perf` after the main tests as a report-only step (`continue-on-error`), so fixture timings and the output-parity check are visible per run without failing the build on shared-runner noise.
+
+## Second pass
+
+- **Injection and untrusted input.** Interpolated SQL fragments are constant table lists, `?` placeholder strings or SQL built in code. Backup restore takes column names from `PRAGMA table_info`, drops unknown keys, and validates rows, dates and `_minor` amounts before deleting anything. Recently-deleted restore checks the table and every column name. Excel export writes user text as plain strings; only code-built totals are formulas, so there is no spreadsheet formula injection.
+- **Timers and listeners.** Every ref-based timer checked (Undo toast, amount field, milestone note, Wrap hold, pay sheet, timeline settle, Add save-and-close, Activity retry, draft recovery) is cleared on unmount.
+- **Secrets.** No keystore, key or env file is tracked, and no secret-like string was found in source.
+- **Generated manifest** (`expo prebuild` in a scratch copy, release profile): blocked storage, overlay and image permissions and `INTERNET` are `tools:node="remove"`; widget receivers are `exported="false"`; the only exported provider is the caller-checked widget image provider; `MainActivity` handles the `yume` scheme. Library-merged permissions (notifications, alarms) were not inspected because no Gradle build ran.
+- **Advisories.** `npm audit` reports 14 high findings, all via `braces` or `node-forge` in build tooling and covered by the gate's reasoned allow-list.
+- **Dependencies.** Patch updates exist for `expo` (57.0.31), `expo-router` (57.0.29) and `expo-sharing` (57.0.24); SDK 58 is available. None was applied.
+- **Bundle.** `MaterialCommunityIcons` (a 1.3MB font plus a 217KB glyph map imported by the widget code) is used in 21 files, so it stays.
+
+## Needs a decision or a phone
+
+- **Circular imports.** `madge` finds 13 cycles, all in the db/lib layer: `settings` ↔ `afterCommit` ↔ `notifications` ↔ `notificationData`/`queuedSpendAlerts`/`reports`, and `client` ↔ `recentlyDeleted`/`refundLabels`. They work today (tests, export and fixture pass) because the cross-calls happen inside functions, but they make load order fragile. Breaking them means inverting the after-commit refresh hook; not attempted without a device.
+- **Light-only theme on Android.** `app.json` sets `userInterfaceStyle: "light"` and the code never reads the system scheme, but prebuild warns this needs `expo-system-ui` on Android. With the phone in dark mode, native pieces (system dialogs, keyboard, date pickers) may follow dark mode. Not verified on a device; the documented fix is adding that Expo package.
 
 ## Open
 
