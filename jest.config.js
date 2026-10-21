@@ -6,7 +6,8 @@ module.exports = {
     '<rootDir>/sites/',
     '<rootDir>/design-preview/',
   ],
-  testPathIgnorePatterns: ['/node_modules/', '/android/', '/ios/', '/dist/'],
+  // Jest 30 also collects .cjs/.mjs tests by default; scripts/*.test.cjs are node:test suites, run by test:security.
+  testPathIgnorePatterns: ['/node_modules/', '/android/', '/ios/', '/dist/', '\\.cjs$'],
   setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',

@@ -1,3 +1,22 @@
+// Fonts do nothing under Jest. Every @expo/vector-icons icon loads its font asynchronously on mount and then sets
+// state, which logged a "not wrapped in act" error per icon and, with jest-expo 58 and React Native 0.88, also
+// rejected because expo-asset reads an asset registry jest-expo does not stub. Report fonts as loaded instead.
+jest.mock('expo-font', () => ({
+  ...jest.requireActual('expo-font'),
+  isLoaded: jest.fn(() => true),
+  loadAsync: jest.fn(async () => {}),
+  useFonts: jest.fn(() => [true, null]),
+}));
+
+// jest-expo reports an Expo Go environment, so expo-notifications warns on every suite that imports it that push
+// is unavailable. The tests only use local notifications, so drop that one message and keep every other warning.
+const originalWarn = console.warn;
+console.warn = (...args: unknown[]) => {
+  if (typeof args[0] === 'string' && args[0].startsWith('expo-notifications: Android Push notifications'))
+    return;
+  originalWarn(...args);
+};
+
 // expo-notifications registers a device-push-token listener at import time
 // (DevicePushTokenAutoRegistration). In the Node test environment that leaves
 // an open handle behind, which is why Jest reported "a worker process has

@@ -1,5 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { View, Pressable, StyleSheet, ScrollView, useWindowDimensions } from 'react-native';
+import {
+  View,
+  Pressable,
+  StyleSheet,
+  ScrollView,
+  useWindowDimensions,
+  ScrollViewInstance,
+} from 'react-native';
 import Animated, {
   cancelAnimation,
   useSharedValue,
@@ -105,7 +112,7 @@ export function SpendBars({
   onSeeInsights?: () => void;
   periodMode?: Range;
 }) {
-  const chart = useRef<ScrollView>(null);
+  const chart = useRef<ScrollViewInstance>(null);
   const { fontScale } = useWindowDimensions();
   const { accent } = useAccent();
   const ink = themeInk(accent);

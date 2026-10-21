@@ -73,7 +73,7 @@ export async function restoreKeepingSafetyCopy(
             snapshot: current,
           };
           pending.create();
-          pending.write(JSON.stringify(payload));
+          await pending.write(JSON.stringify(payload));
         } catch (e) {
           removeIfPresent(pending);
           throw new SafetyCopyError(errorMessage(e));

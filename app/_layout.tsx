@@ -2,14 +2,7 @@ import { Stack, router, useRootNavigationState } from 'expo-router';
 import { preventScreenCaptureAsync, allowScreenCaptureAsync } from 'expo-screen-capture';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
-import {
-  View,
-  ActivityIndicator,
-  StyleSheet,
-  AppState,
-  AppStateStatus,
-  InteractionManager,
-} from 'react-native';
+import { View, ActivityIndicator, StyleSheet, AppState, AppStateStatus } from 'react-native';
 import { Text } from '@/components/Text';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
@@ -30,6 +23,7 @@ import { shouldRelock } from '@/lib/appLock';
 import { getHasOnboarded, setHasOnboarded, getAppLockEnabled, getHideSensitiveAmounts } from '@/db/settings';
 import { listAccounts, listTransactions } from '@/db/ledger';
 import { runAppMaintenance } from '@/lib/runAppMaintenance';
+import { runWhenIdle } from '@/lib/runWhenIdle';
 import {
   ensureAndroidChannel,
   rebuildNotifications,
@@ -91,7 +85,7 @@ export default function RootLayout() {
         if (cancelled) return;
         setDbReady(true);
         // Start after the first screen settles. Catch-up finishes before the snapshot is taken.
-        InteractionManager.runAfterInteractions(() => {
+        runWhenIdle(() => {
           void runAppMaintenance().catch((err) => console.error('App maintenance failed:', err));
         });
         // Channel setup can reject after a permission change; contain that failure on cold start.
@@ -101,7 +95,7 @@ export default function RootLayout() {
         // Notifications are rebuilt from settings/data each cold start: stays current (scheduled ~2 weeks
         // ahead), carries over old schedules, self-heals after reinstall. After the first screen settles, like
         // the backup: it reads plenty and its bridge calls shouldn't hold up Home's first paint.
-        InteractionManager.runAfterInteractions(() => {
+        runWhenIdle(() => {
           void cancelLegacyScheduledNotifications().catch((err) =>
             console.error('cancelLegacyScheduledNotifications failed:', err)
           );
@@ -233,7 +227,7 @@ function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean;
     const sub = AppState.addEventListener('change', (next: AppStateStatus) => {
       if (next === 'background') refreshAllWidgets();
       if (next === 'active') {
-        InteractionManager.runAfterInteractions(() => {
+        runWhenIdle(() => {
           void runAppMaintenance().catch((err) => console.error('App maintenance failed:', err));
         });
       }

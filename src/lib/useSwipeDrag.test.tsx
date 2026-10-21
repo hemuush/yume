@@ -15,7 +15,7 @@ function mount(onStep: jest.Mock, canStepForward: boolean) {
   let config!: Config;
   jest.spyOn(PanResponder, 'create').mockImplementation((c) => {
     config = c;
-    return { panHandlers: {} };
+    return { panHandlers: {} as never, getInteractionHandle: () => undefined };
   });
   function Probe() {
     useSwipeDrag(onStep, canStepForward);

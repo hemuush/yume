@@ -1,7 +1,7 @@
 import { useLocalDayRefresh } from '@/lib/useLocalDayRefresh';
 import { ExpenseLabelsReport } from '@/features/reports/ExpenseLabelsReport';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { View, Pressable, ActivityIndicator, ScrollView } from 'react-native';
+import { View, Pressable, ActivityIndicator, ScrollView, ScrollViewInstance } from 'react-native';
 import { getCachedCurrency } from '@/db/settings';
 import { Text } from '@/components/Text';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
@@ -197,7 +197,7 @@ export default function ReportsScreen() {
   // stale month's expanded list never carries over.
   const [catExpanded, setCatExpanded] = useState(false);
   // Stable header and tabs are normal-flow siblings, so neither can cover content.
-  const scrollRef = useRef<ScrollView>(null);
+  const scrollRef = useRef<ScrollViewInstance>(null);
   const resetScroll = useCallback(() => scrollRef.current?.scrollTo({ y: 0, animated: false }), []);
   useTabScrollToTop(scrollRef);
   // Only the most recent load may write state — stepping periods quickly
