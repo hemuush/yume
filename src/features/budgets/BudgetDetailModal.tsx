@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
 import { ModalSheet } from '@/components/ModalSheet';
+import { SheetFlow } from '@/components/SheetFlow';
 import { SheetCard } from '@/components/SheetCard';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { LimitMeter } from '@/components/LimitMeter';
@@ -98,8 +99,9 @@ export function BudgetDetailModal({
   const today = toLocalIsoDate(new Date());
   const pace = periodMonth === today.slice(0, 7) ? budgetPace(progress.percentUsed / 100, today) : null;
   return (
-    <>
+    <SheetFlow>
       <ModalSheet
+        flowPage
         visible={!editing}
         title="Budget overview"
         onClose={onClose}
@@ -181,7 +183,7 @@ export function BudgetDetailModal({
           }}
         />
       )}
-    </>
+    </SheetFlow>
   );
 }
 const styles = StyleSheet.create({

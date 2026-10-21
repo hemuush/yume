@@ -1,4 +1,5 @@
 import { GoalHistory } from './GoalHistory';
+import { SheetFlow } from '@/components/SheetFlow';
 import { useRef, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
@@ -41,8 +42,9 @@ export function GoalOverviewModal({
     await onChanged();
   };
   return (
-    <>
+    <SheetFlow>
       <ModalSheet
+        flowPage
         visible={page === 'overview'}
         title="Goal overview"
         onClose={onClose}
@@ -133,7 +135,7 @@ export function GoalOverviewModal({
           onContributed={changed}
         />
       )}
-    </>
+    </SheetFlow>
   );
 }
 const styles = StyleSheet.create({

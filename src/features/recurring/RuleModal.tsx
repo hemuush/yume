@@ -1,4 +1,5 @@
 import { NextOccurrenceSheet } from './NextOccurrenceSheet';
+import { SheetFlow } from '@/components/SheetFlow';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { View } from 'react-native';
 import { Text } from '@/components/Text';
@@ -74,6 +75,7 @@ export function RuleModal({
   onSaved,
   onDeleted,
   prefill,
+  backLabel,
 }: {
   visible: boolean;
   editing: RecurringRule | null;
@@ -82,6 +84,7 @@ export function RuleModal({
   onClose: () => void;
   onSaved: () => void;
   onDeleted: () => void;
+  backLabel?: string;
   /** A new rule's starting values — "Make it recurring" on an entry fills the form from it. */
   prefill?: {
     type: TransactionType;
@@ -351,8 +354,10 @@ export function RuleModal({
   const toggle = (which: 'account' | 'to' | 'category') => setOpen((o) => (o === which ? null : which));
 
   return (
-    <>
+    <SheetFlow visible={visible}>
       <ModalSheet
+        flowPage
+        backLabel={backLabel}
         dismissible={!saving}
         visible={visible && !occurrenceVisible}
         title={editing ? 'Edit recurring entry' : 'New recurring entry'}
@@ -587,6 +592,6 @@ export function RuleModal({
           }}
         />
       )}
-    </>
+    </SheetFlow>
   );
 }

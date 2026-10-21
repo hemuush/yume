@@ -1,5 +1,7 @@
 import { act, create, ReactTestRenderer } from 'react-test-renderer';
-import { Modal, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+jest.unmock('./SheetFlow');
 jest.mock('@expo/vector-icons/Feather', () => () => null);
 jest.mock('@/lib/useReduceMotion', () => ({ useReduceMotion: () => true }));
 jest.mock('@/lib/usePressScale', () => ({
@@ -21,6 +23,7 @@ jest.mock('./AmountField', () => ({
 }));
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { ModalSheet } from './ModalSheet';
+import { SheetFlow } from './SheetFlow';
 function render(over: Partial<Parameters<typeof ModalSheet>[0]> = {}) {
   const close = jest.fn();
   let tree!: ReactTestRenderer;
@@ -34,6 +37,146 @@ function render(over: Partial<Parameters<typeof ModalSheet>[0]> = {}) {
   return { tree, close };
 }
 afterEach(() => jest.restoreAllMocks());
+
+describe('related tasks in one native sheet', () => {
+  it('does not mount an unopened page, and retains its content after returning', () => {
+    const mounted = jest.fn();
+    function Draft() {
+      useEffect(() => {
+        mounted();
+      }, []);
+      return <Text>Draft content</Text>;
+    }
+    const flow = (child: boolean) => (
+      <SheetFlow>
+        <ModalSheet flowPage visible={!child} onClose={jest.fn()} title="Overview">
+          <Text>Overview</Text>
+        </ModalSheet>
+        <ModalSheet flowPage visible={child} onClose={jest.fn()} backLabel="Back to overview">
+          <Draft />
+        </ModalSheet>
+      </SheetFlow>
+    );
+    let tree!: ReactTestRenderer;
+    act(() => {
+      tree = create(flow(false));
+    });
+    expect(mounted).not.toHaveBeenCalled();
+    act(() => tree.update(flow(true)));
+    expect(mounted).toHaveBeenCalledTimes(1);
+    act(() => tree.update(flow(false)));
+    expect(mounted).toHaveBeenCalledTimes(1);
+    expect(tree.root.findAllByType(Draft)).toHaveLength(1);
+    act(() => tree.unmount());
+  });
+
+  it('clamps remembered height to the available viewport with enlarged text', () => {
+    jest
+      .spyOn(require('react-native'), 'useWindowDimensions')
+      .mockReturnValue({ height: 550, width: 320, fontScale: 1.5, scale: 3 });
+    let tree!: ReactTestRenderer;
+    act(() => {
+      tree = create(
+        <SheetFlow>
+          <ModalSheet flowPage visible title="Task" onClose={jest.fn()}>
+            <Text>Body</Text>
+          </ModalSheet>
+        </SheetFlow>
+      );
+    });
+    act(() =>
+      tree.root
+        .findByProps({ testID: 'sheet-surface' })
+        .props.onLayout({ nativeEvent: { layout: { height: 900 } } })
+    );
+    const style = StyleSheet.flatten(tree.root.findByProps({ testID: 'sheet-surface' }).props.style);
+    expect(style.maxHeight).toBe('94%');
+    expect(style.minHeight).toBeCloseTo((550 - 24 - 8) * 0.94);
+    act(() =>
+      tree.root
+        .findByProps({ testID: 'sheet-flow-viewport' })
+        .props.onLayout({ nativeEvent: { layout: { height: 320 } } })
+    );
+    const resized = StyleSheet.flatten(tree.root.findByProps({ testID: 'sheet-surface' }).props.style);
+    expect(resized.minHeight).toBeCloseTo((320 - 24 - 8) * 0.94);
+    act(() => tree.unmount());
+  });
+
+  function FlowFixture({ busy = false }: { busy?: boolean }) {
+    const [child, setChild] = useState(false);
+    const [draft, setDraft] = useState('Keep my draft');
+    return (
+      <SheetFlow>
+        <ModalSheet flowPage visible={!child} title="Loan details" onClose={jest.fn()}>
+          <TextInput testID="draft" value={draft} onChangeText={setDraft} />
+          <Pressable testID="open-child" onPress={() => setChild(true)} />
+        </ModalSheet>
+        {child && (
+          <SheetFlow>
+            <ModalSheet
+              visible
+              variant="center"
+              title="EMI account"
+              backLabel="Back to loan"
+              dismissible={!busy}
+              onClose={() => setChild(false)}
+              footer={<Text>Save</Text>}
+            >
+              <Text>Account choices</Text>
+            </ModalSheet>
+          </SheetFlow>
+        )}
+      </SheetFlow>
+    );
+  }
+
+  it('keeps the same native window, draft and sheet height through child/back navigation', () => {
+    let tree!: ReactTestRenderer;
+    act(() => {
+      tree = create(<FlowFixture />);
+    });
+    const window = tree.root.findByType(Modal);
+    act(() => tree.root.findByProps({ testID: 'draft' }).props.onChangeText('Edited draft'));
+    const surface = tree.root.findAllByProps({ testID: 'sheet-surface' })[0];
+    act(() => surface.props.onLayout({ nativeEvent: { layout: { height: 480 } } }));
+    act(() => tree.root.findByProps({ testID: 'open-child' }).props.onPress());
+    expect(tree.root.findAllByType(Modal)).toHaveLength(1);
+    expect(tree.root.findByType(Modal)).toBe(window);
+    expect(window.props.visible).toBe(true);
+    const childSurface = tree.root.findAllByProps({ testID: 'sheet-surface' }).at(-1)!;
+    expect(StyleSheet.flatten(childSurface.props.style).minHeight).toBe(480);
+    expect(StyleSheet.flatten(childSurface.props.style).borderTopLeftRadius).toBe(32);
+    const childBody = childSurface.findByType(KeyboardAwareScrollView);
+    expect(StyleSheet.flatten(childBody.props.style).flexGrow).toBe(1);
+    const hidden = tree.root.findAllByProps({ importantForAccessibility: 'no-hide-descendants' });
+    expect(hidden.some((n) => StyleSheet.flatten(n.props.style).display === 'none')).toBe(true);
+    act(() => window.props.onRequestClose());
+    expect(tree.root.findAllByProps({ title: 'EMI account' })).toHaveLength(0);
+    expect(tree.root.findByProps({ testID: 'draft' }).props.value).toBe('Edited draft');
+    expect(tree.root.findByType(Modal)).toBe(window);
+    act(() => tree.unmount());
+  });
+
+  it('blocks Android back and child Back while saving, then returns when unlocked', () => {
+    let tree!: ReactTestRenderer;
+    act(() => {
+      tree = create(<FlowFixture busy />);
+    });
+    act(() => tree.root.findByProps({ testID: 'open-child' }).props.onPress());
+    act(() => tree.root.findByType(Modal).props.onRequestClose());
+    expect(tree.root.findAllByProps({ title: 'EMI account' }).length).toBeGreaterThan(0);
+    const back = tree.root.findAll(
+      (n) => n.props.accessibilityLabel === 'Back to loan' && n.props.onPress
+    )[0];
+    expect(back.props.disabled).toBe(true);
+    act(() => back.props.onPress());
+    expect(tree.root.findAllByProps({ title: 'EMI account' }).length).toBeGreaterThan(0);
+    act(() => tree.update(<FlowFixture />));
+    act(() => tree.root.findByType(Modal).props.onRequestClose());
+    expect(tree.root.findAllByProps({ title: 'EMI account' })).toHaveLength(0);
+    act(() => tree.unmount());
+  });
+});
 it.each(['sheet', 'center'] as const)(
   'keeps header and action outside keyboard-aware scrolling for %s',
   (variant) => {

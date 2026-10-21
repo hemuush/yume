@@ -1,4 +1,5 @@
 import { useSheetMutation } from '@/lib/useSheetMutation';
+import { SheetFlow } from '@/components/SheetFlow';
 import { useState } from 'react';
 import { View } from 'react-native';
 import { Text } from '@/components/Text';
@@ -142,8 +143,9 @@ function GoalDetailForm({
   // the end.
 
   return (
-    <>
+    <SheetFlow>
       <ModalSheet
+        flowPage
         dismissible={!saving}
         title={backLabel ? 'Edit goal' : 'Goal details'}
         backLabel={backLabel}
@@ -278,6 +280,6 @@ function GoalDetailForm({
           }
         }}
       />
-    </>
+    </SheetFlow>
   );
 }

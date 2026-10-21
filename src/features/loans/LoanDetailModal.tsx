@@ -1,4 +1,5 @@
 import { useSaveOnce } from '@/lib/useSaveOnce';
+import { SheetFlow } from '@/components/SheetFlow';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
 import { Text } from '@/components/Text';
@@ -57,7 +58,11 @@ type LoanDetailProps = {
 
 /** A different loan owns a fresh sheet session, including its pending requests and child forms. */
 export function LoanDetailModal(props: LoanDetailProps) {
-  return <LoanDetailContent key={props.loan.id} {...props} />;
+  return (
+    <SheetFlow key={props.loan.id}>
+      <LoanDetailContent {...props} />
+    </SheetFlow>
+  );
 }
 
 function LoanDetailContent({ loan, onClose, onChanged, startWithPay = false, hue }: LoanDetailProps) {
@@ -260,6 +265,7 @@ function LoanDetailContent({ loan, onClose, onChanged, startWithPay = false, hue
   return (
     <>
       <ModalSheet
+        flowPage
         size="expanded"
         dismissible={!busy}
         visible={
