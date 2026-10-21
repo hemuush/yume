@@ -11,8 +11,6 @@ import { CategoryIcon } from '@/components/CategoryIcon';
 import { usePressScale } from '@/lib/usePressScale';
 import { styles, TILE_COLUMNS } from './categories.styles';
 
-export { TILE_COLUMNS };
-
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export function CategoryTile({

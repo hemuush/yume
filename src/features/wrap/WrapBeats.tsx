@@ -24,8 +24,6 @@ import { Rise, Kicker } from './WrapBeatPrimitives';
 import { BarsBeat, DaysBeat, WeekDaysBeat } from './WrapCharts';
 import { withPressed } from '@/lib/pressed';
 
-export { BarsBeat, DaysBeat, WeekDaysBeat } from './WrapCharts';
-
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 const EASE = Easing.out(Easing.cubic);
 

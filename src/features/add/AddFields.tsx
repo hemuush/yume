@@ -15,7 +15,7 @@ import { shade } from '@/lib/color';
 import { formatMoney } from '@/lib/money';
 import { hueFor } from '@/lib/hueFor';
 
-export function Chip({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
+function Chip({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
   const { secondary } = useAccent();
   return (
     <Pressable

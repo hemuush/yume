@@ -874,7 +874,6 @@ const styles = StyleSheet.create({
   menuTitle: { fontFamily: theme.font.bodyMedium, fontSize: 15, color: theme.colors.textPrimary },
   menuDescription: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
   tabs: { marginHorizontal: 16, marginTop: theme.layout.screenTopGap, marginBottom: SCREEN.sectionGap },
-  headLink: { flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 48 },
   headLinkText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.link },
   container: { flex: 1, backgroundColor: theme.colors.background },
   errorBanner: {
