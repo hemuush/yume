@@ -24,6 +24,11 @@ const ACCOUNT_ICON: Record<Account['type'], string> = {
 };
 
 /** The icon for an account, by type — one mapping, so an account looks the same everywhere it appears. */
+/** "bank", "credit card", "savings · tracked": what kind of account it is, in words. */
+export function accountTypeLabel(account: Pick<Account, 'type' | 'investment'>): string {
+  return account.investment ? 'savings · tracked' : account.type.replace(/_/g, ' ');
+}
+
 export function accountIcon(type: Account['type']): string {
   return ACCOUNT_ICON[type] ?? 'credit-card';
 }

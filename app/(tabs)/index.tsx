@@ -793,10 +793,11 @@ const styles = StyleSheet.create({
   heroGap: { marginTop: 4 },
   recent: {
     marginHorizontal: SCREEN.gutter,
-    paddingHorizontal: 8,
-    borderRadius: 20,
+    paddingHorizontal: 12,
+    borderRadius: 28,
     backgroundColor: theme.colors.surface,
     overflow: 'hidden',
+    boxShadow: '0px 1px 2px rgba(18,19,15,0.04), 0px 14px 34px -16px rgba(18,19,15,0.14)',
   },
   errorBanner: {
     marginHorizontal: 20,

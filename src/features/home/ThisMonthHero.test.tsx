@@ -25,6 +25,7 @@ jest.mock('@/components/CountUpAmount', () => {
 });
 jest.mock('@/components/LimitMeter', () => ({ LimitMeter: () => null }));
 
+import { theme } from '@/constants/theme';
 import { ThisMonthHero } from './ThisMonthHero';
 
 const texts = (r: ReactTestRenderer) =>
@@ -436,10 +437,13 @@ describe('month card: today and the free figure', () => {
     expect(StyleSheet.flatten(meter(-50_000).props.style).width).toBe('0%');
   });
 
-  it('keeps saying how far over it is, and then shows no meter', () => {
+  it('keeps saying how far over it is, and shows the meter full in the over colour', () => {
     const r = expanded({ today: { spentMinor: 600_000, goalMinor: 500_000 } });
     expect(texts(r)).toContain('₹6,000 today · ₹1,000 over');
-    expect(r.root.findAll((n) => n.props.testID === 'home-today-meter')).toHaveLength(0);
+    const meter = r.root.find((n) => n.props.testID === 'home-today-meter');
+    const style = StyleSheet.flatten(meter.props.style);
+    expect(style.width).toBe('100%');
+    expect(style.backgroundColor).toBe(theme.colors.slice.spent);
   });
 });
 

@@ -12,7 +12,7 @@ import { AccountReservations } from '@/features/goals/AccountReservations';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { SheetCard } from '@/components/SheetCard';
 import { SheetTabs } from '@/components/SheetTabs';
-import { accountHue, accountIcon } from '@/lib/account';
+import { accountHue, accountIcon, accountTypeLabel } from '@/lib/account';
 import { useAccent } from '@/theme/AccentContext';
 import { formatMaskableMoney } from '@/lib/money';
 import { usePrivacy } from '@/theme/PrivacyContext';
@@ -220,7 +220,7 @@ export function AccountSummarySheet({
         <SheetCard
           hue={accountHue(account.type, accent)}
           icon={accountIcon(account.type)}
-          kicker={inv ? 'savings · tracked' : account.type.replace('_', ' ')}
+          kicker={accountTypeLabel(account)}
           amount={money(account.currentBalanceMinor)}
           title={account.name}
           meta={
