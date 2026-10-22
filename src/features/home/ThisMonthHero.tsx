@@ -13,7 +13,8 @@ import { theme } from '@/constants/theme';
 import { formatMoney, formatMaskableMoney } from '@/lib/money';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 import { haptics } from '@/lib/haptics';
-import { MOTION, timing } from '@/lib/animation';
+import { MOTION, timing, ROW_LAYOUT, ROW_EXIT, PANEL_ENTER } from '@/lib/animation';
+import { useDrawnValue } from '@/lib/useDrawnValue';
 import { CountUpAmount } from '@/components/CountUpAmount';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import { heroSlices, withoutSavings } from './heroSlices';
@@ -310,11 +311,14 @@ export function ThisMonthHero({
   const todayPct = shownToday
     ? Math.max(0, Math.min(100, (shownToday.spentMinor / shownToday.goalMinor) * 100))
     : 0;
+  // The meter glides to a new spend on the UI thread; outgoing expenses use up the limit and refunds never refill it.
+  const todayDraw = useDrawnValue('home-today', todayPct);
+  const todayFillStyle = useAnimatedStyle(() => ({ width: `${todayDraw.value}%` }));
   const hasRhythm = !!(displayed.spendingTrend || shownToday || onSeeInsights);
 
   return (
     <>
-      <View style={styles.card}>
+      <ReanimatedAnimated.View layout={ROW_LAYOUT} style={styles.card}>
         <View style={styles.bar}>
           <View style={styles.headTitle}>
             <Text style={styles.headLabel}>{headLabel}</Text>
@@ -421,7 +425,7 @@ export function ThisMonthHero({
           </View>
 
           {slices.hasIncome && showWorking && (
-            <View style={styles.working}>
+            <ReanimatedAnimated.View entering={PANEL_ENTER} exiting={ROW_EXIT} style={styles.working}>
               <WorkingRow label="Income" value={formatMoney(displayed.incomeMinor)} />
               {displayed.carryMinor !== 0 && (
                 <WorkingRow
@@ -462,13 +466,13 @@ export function ThisMonthHero({
                   <Text style={styles.linkText}>View {recap.label} recap →</Text>
                 </Pressable>
               ))}
-            </View>
+            </ReanimatedAnimated.View>
           )}
         </ReanimatedAnimated.View>
-      </View>
+      </ReanimatedAnimated.View>
 
       {hasRhythm && (
-        <ReanimatedAnimated.View style={[styles.rhythm, rhythmSlideStyle]}>
+        <ReanimatedAnimated.View layout={ROW_LAYOUT} style={[styles.rhythm, rhythmSlideStyle]}>
           {shownToday && (
             <>
               <Pressable
@@ -497,20 +501,15 @@ export function ThisMonthHero({
                 </View>
                 {shownToday.goalMinor > 0 && (
                   <View style={styles.todayTrack}>
-                    <View
+                    <ReanimatedAnimated.View
                       testID="home-today-meter"
-                      style={[
-                        styles.todayFill,
-                        // Outgoing expenses consume the saved limit; refunds never refill it.
-                        { width: `${todayPct}%` },
-                        todayOverMinor > 0 && styles.todayFillOver,
-                      ]}
+                      style={[styles.todayFill, todayFillStyle, todayOverMinor > 0 && styles.todayFillOver]}
                     />
                   </View>
                 )}
               </Pressable>
               {showDailyWorking && (
-                <View style={styles.working}>
+                <ReanimatedAnimated.View entering={PANEL_ENTER} exiting={ROW_EXIT} style={styles.working}>
                   <WorkingRow label="Daily limit" value={formatMoney(shownToday.goalMinor)} />
                   <WorkingRow label="Expenses today" value={formatMoney(shownToday.spentMinor)} />
                   <Text style={styles.chipText}>
@@ -525,7 +524,7 @@ export function ThisMonthHero({
                       <Text style={styles.linkText}>View spending details →</Text>
                     </Pressable>
                   )}
-                </View>
+                </ReanimatedAnimated.View>
               )}
             </>
           )}

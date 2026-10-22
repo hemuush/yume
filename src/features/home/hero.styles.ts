@@ -1,27 +1,11 @@
 import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
+import { screenStyles as h } from '@/components/screenStyles';
 
 export const styles = StyleSheet.create({
-  // The two Home cards sit on the page as plain surfaces: no border, a whisper of shadow.
-  card: {
-    marginHorizontal: 16,
-    paddingHorizontal: 20,
-    paddingTop: 18,
-    paddingBottom: 10,
-    borderRadius: 28,
-    backgroundColor: theme.colors.surface,
-    boxShadow: '0px 1px 2px rgba(18,19,15,0.04), 0px 14px 34px -16px rgba(18,19,15,0.14)',
-  },
-  rhythm: {
-    marginHorizontal: 16,
-    marginTop: 12,
-    paddingHorizontal: 20,
-    paddingTop: 10,
-    paddingBottom: 12,
-    borderRadius: 28,
-    backgroundColor: theme.colors.surface,
-    boxShadow: '0px 1px 2px rgba(18,19,15,0.04), 0px 14px 34px -16px rgba(18,19,15,0.14)',
-  },
+  // The two Home cards are the app's one card (screenStyles.card): cream, rounded, a hairline edge, no shadow.
+  card: { ...h.card, paddingHorizontal: 16, paddingTop: 14, paddingBottom: 8 },
+  rhythm: { ...h.card, marginTop: 12, paddingHorizontal: 16, paddingTop: 8, paddingBottom: 10 },
   actions: { marginHorizontal: 16, marginTop: 12 },
   bar: {
     flexDirection: 'row',
@@ -32,21 +16,21 @@ export const styles = StyleSheet.create({
     minHeight: 32,
   },
   body: { gap: 2 },
-  figure: { flexShrink: 1, minWidth: 0, marginTop: 4 },
+  figure: { flexShrink: 1, minWidth: 0, marginTop: 2 },
 
   headTitle: { flexDirection: 'row', alignItems: 'center', gap: 2, flexShrink: 1 },
   headLabel: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textSecondary },
   headValue: {
     fontFamily: theme.font.bodyLight,
-    fontSize: 56,
+    fontSize: theme.typeSize.headline,
     fontVariant: ['tabular-nums'],
-    lineHeight: 62,
-    letterSpacing: -2.4,
+    lineHeight: 40,
+    letterSpacing: -1.1,
     color: theme.colors.textPrimary,
   },
   headSymbol: {
     fontFamily: theme.font.body,
-    fontSize: 24,
+    fontSize: 22,
     letterSpacing: 0,
     color: theme.colors.textMuted,
   },
@@ -63,8 +47,9 @@ export const styles = StyleSheet.create({
   howLinkOn: { backgroundColor: theme.colors.tray },
 
   // The month as one line: spent, saved, bills and free, in the colours the legend below uses.
-  line: { flexDirection: 'row', gap: 3, height: 10, marginTop: 18 },
-  lineSegment: { height: 10, borderRadius: 5, minWidth: 4 },
+  line: { flexDirection: 'row', gap: 3, height: 8, marginTop: 14 },
+  lineOrigin: { transformOrigin: 'left center' },
+  lineSegment: { height: 8, borderRadius: 4, minWidth: 4 },
 
   // Three columns under the line: each dot is the line's colour, so the line is the legend.
   stats: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 },
@@ -95,7 +80,7 @@ export const styles = StyleSheet.create({
   statValue: {
     fontVariant: ['tabular-nums'],
     fontFamily: theme.font.bodyMedium,
-    fontSize: 15,
+    fontSize: 14,
     color: theme.colors.textPrimary,
   },
 

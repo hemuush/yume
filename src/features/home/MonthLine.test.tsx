@@ -1,5 +1,6 @@
 /** The month line: one segment per share, colours matching the legend, nothing that leaks hidden savings. */
 import { StyleSheet } from 'react-native';
+jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
 import { theme } from '@/constants/theme';
 import { heroSlices } from './heroSlices';

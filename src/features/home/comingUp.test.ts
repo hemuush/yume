@@ -3,7 +3,7 @@
  */
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
 
-import { buildComingUp, summarizeComingUp, budgetState, COMING_UP_ROWS } from './comingUp';
+import { buildComingUp, summarizeComingUp, budgetState } from './comingUp';
 import type { Upcoming, UpcomingItem } from './upcomingItems';
 import type { BudgetProgress } from '@/db/budgets';
 import type { SavingsGoal } from '@/types';
@@ -74,7 +74,7 @@ describe('buildComingUp ordering', () => {
 
   it('keeps a source’s own order within the same rank', () => {
     const items = buildComingUp({
-      upcoming: upcoming([payment('a', 40 - 36), payment('b', 5)]),
+      upcoming: upcoming([payment('a', 4), payment('b', 5)]),
       budgets: [],
       goals: [],
       today,
@@ -124,10 +124,30 @@ describe('summarizeComingUp', () => {
     today,
   });
 
-  it('shows at most five rows, and one kind when filtered', () => {
-    expect(summarizeComingUp(all, 'all').visible).toHaveLength(COMING_UP_ROWS);
-    expect(summarizeComingUp(all, 'budget').visible.map((i) => i.kind)).toEqual(['budget', 'budget']);
-    expect(summarizeComingUp(all, 'goal').visible).toHaveLength(2);
+  it('shows three payments, one budget and one goal on All, and up to five of one kind when filtered', () => {
+    const many = buildComingUp({
+      upcoming: upcoming([1, 2, 3, 4, 5, 6].map((d) => payment(`p${d}`, d))),
+      budgets: [budget('b1', 130), budget('b2', 90), budget('b3', 5)],
+      goals: [goal('g1', 1000, { targetDate: inDays(20) }), goal('g2', 50000)],
+      today,
+    });
+    const rows = summarizeComingUp(many, 'all').visible;
+    expect(rows.map((i) => i.kind).sort()).toEqual(['budget', 'goal', 'payment', 'payment', 'payment']);
+    expect(keys(rows)).toContain('budget-b1');
+    expect(summarizeComingUp(many, 'payment').visible).toHaveLength(5);
+    expect(summarizeComingUp(many, 'budget').visible).toHaveLength(3);
+    expect(summarizeComingUp(many, 'goal').visible).toHaveLength(2);
+  });
+
+  it('fills the slots a short kind leaves with the next most pressing rows', () => {
+    const noGoals = buildComingUp({
+      upcoming: upcoming([payment('p1', 1), payment('p2', 2)]),
+      budgets: [budget('b1', 130), budget('b2', 90), budget('b3', 80), budget('b4', 5)],
+      goals: [],
+      today,
+    });
+    expect(summarizeComingUp(noGoals, 'all').visible).toHaveLength(5);
+    expect(summarizeComingUp(noGoals, 'all').visible.filter((i) => i.kind === 'budget')).toHaveLength(3);
   });
 
   it('counts each kind and flags the ones that need a look', () => {

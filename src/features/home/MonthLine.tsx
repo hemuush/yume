@@ -1,6 +1,7 @@
-import { Animated, View } from 'react-native';
+import { View } from 'react-native';
+import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 import { theme } from '@/constants/theme';
-import { useGrowFrom } from '@/lib/useGrowFrom';
+import { useDrawnValue } from '@/lib/useDrawnValue';
 import { DURATIONS } from '@/lib/motionTimings';
 import { heroPct, type HeroSlices } from './heroSlices';
 import { styles } from './hero.styles';
@@ -19,7 +20,8 @@ export function MonthLine({
   hideSavings: boolean;
   periodKey: string;
 }) {
-  const draw = useGrowFrom(`month-line:${periodKey}`, 1, { drawMs: DURATIONS.draw + 220 });
+  const draw = useDrawnValue(`month-line:${periodKey}`, 1, DURATIONS.draw + 220);
+  const drawStyle = useAnimatedStyle(() => ({ transform: [{ scaleX: draw.value }] }));
   const parts = [
     { key: 'spent', share: slices.spent, color: theme.colors.slice.spent },
     { key: 'saved', share: hideSavings ? 0 : slices.saved, color: theme.colors.slice.saved },
@@ -34,7 +36,7 @@ export function MonthLine({
       accessible
       accessibilityRole="image"
       accessibilityLabel={label}
-      style={[styles.line, { transform: [{ scaleX: draw }], transformOrigin: 'left center' }]}
+      style={[styles.line, styles.lineOrigin, drawStyle]}
     >
       {parts.map((part) => (
         <View
