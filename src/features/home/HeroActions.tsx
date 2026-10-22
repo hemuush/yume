@@ -30,7 +30,10 @@ function Action({ type, label, icon, ink }: (typeof ACTIONS)[number] & { ink: st
       onPress={() => pushOnce(`/add-transaction?type=${type}`)}
       onPressIn={onPressIn}
       onPressOut={onPressOut}
-      style={[styles.wrap, { flexBasis: (primary ? 104 : 80) * Math.max(1, fontScale) }]}
+      style={[
+        styles.wrap,
+        { flexBasis: (primary ? 104 : 80) * Math.max(1, fontScale), flexGrow: primary ? 1.45 : 1 },
+      ]}
       accessibilityRole="button"
       accessibilityLabel={type === 'expense' ? 'Add expense' : `Add ${label.toLowerCase()}`}
     >

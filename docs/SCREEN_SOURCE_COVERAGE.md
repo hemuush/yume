@@ -71,7 +71,10 @@ Recorded 13 October 2026 after commit `373ea5a`. Every tracked file was read by 
 - `src/features/home/AccountSummarySheet.tsx`
 - `src/features/home/HeroActions.tsx`
 - `src/features/home/HomeAccounts.tsx`
-- `src/features/home/HomeGlance.tsx`
+- `src/features/home/HomeComingUp.tsx`
+- `src/features/home/comingUp.ts`
+- `src/features/home/upcomingItems.ts`
+- `src/features/home/MonthLine.tsx`
 - `src/features/home/HomeHeader.tsx`
 - `src/features/home/HomeSkeleton.tsx`
 - `src/features/home/HomeSwipeCard.tsx`
