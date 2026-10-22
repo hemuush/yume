@@ -1,6 +1,5 @@
 import { View, Pressable, ScrollView, ActivityIndicator, useWindowDimensions } from 'react-native';
 import { HeaderIconButton } from '@/components/AppHeader';
-import { themeInk } from '@/theme/interactionColors';
 import { Text } from '@/components/Text';
 import Feather from '@expo/vector-icons/Feather';
 import { theme } from '@/constants/theme';
@@ -54,7 +53,6 @@ export function ActivityFilterChips({
   const chipBg = shade(accent, 95);
   const { width, fontScale } = useWindowDimensions();
   const wrapTabs = width < 360 || fontScale > 1.2;
-  const ink = themeInk(accent);
   return (
     <>
       <View style={styles.typeFilterRow}>
@@ -68,7 +66,7 @@ export function ActivityFilterChips({
                 style={withPressed([
                   styles.typeBtn,
                   wrapTabs && { flexBasis: '40%' },
-                  on && { backgroundColor: ink },
+                  on && { backgroundColor: accent },
                 ])}
                 accessibilityRole="radio"
                 accessibilityState={{ selected: on }}
@@ -82,7 +80,7 @@ export function ActivityFilterChips({
         {onOpenFilters && (
           <HeaderIconButton
             icon="sliders"
-            size={44}
+            size={52}
             glass
             onPress={onOpenFilters}
             label={filterCount > 0 ? `Filters, ${filterCount} on` : 'Filters'}

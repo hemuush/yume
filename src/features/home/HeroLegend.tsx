@@ -58,7 +58,7 @@ export function HeroLegend({ items }: { items: LegendItem[] }) {
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 8, rowGap: 4, marginTop: 10, marginBottom: 8 },
+  row: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 8, rowGap: 4, marginTop: 12, marginBottom: 12 },
   col: { flexGrow: 1, flexBasis: 0, minWidth: 60, gap: 1 },
   colPair: { flexBasis: '45%' },
   tap: { minHeight: 44 },

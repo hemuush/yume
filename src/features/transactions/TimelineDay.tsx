@@ -4,6 +4,8 @@ import ReanimatedAnimated from 'react-native-reanimated';
 import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
 import { CategoryIcon } from '@/components/CategoryIcon';
+import { SCREEN } from '@/components/screenStyles';
+import { SECTION_TITLE } from '@/constants/textStyles';
 import { StatusBadge } from '@/components/StatusBadge';
 import { MovingRow } from '@/components/MovingRow';
 import { JustAddedGlow } from '@/components/JustAddedGlow';
@@ -242,7 +244,15 @@ function TimelineDayView({
             accessibilityLabel={`${categorySpoken(categoryName(tx.categoryId), parentNameOf(tx.categoryId, categoriesById))}${tx.isRefund ? ', refund' : ''}${tx.note ? `, ${tx.note}` : ''}, ${money(tx.amountMinor, hidden(tx), tx.accountId)}`}
           >
             <JustAddedGlow ids={[tx.id]} surface="activity" />
-            <CategoryIcon name={cat?.icon ?? 'tag'} color={cat?.color} size={14} square={30} round />
+            <View style={styles.lead}>
+              <CategoryIcon
+                name={cat?.icon ?? 'tag'}
+                color={cat?.color}
+                size={16}
+                square={SCREEN.mark}
+                round
+              />
+            </View>
             <View style={[styles.mid, stacked && styles.wideMid]}>
               <View style={styles.entryHead}>
                 <Text style={[styles.name, styles.stackName]}>{tx.note || categoryName(tx.categoryId)}</Text>
@@ -291,7 +301,9 @@ function TimelineDayView({
         >
           {/* A new entry folded into this line glows the line. */}
           <JustAddedGlow ids={line.items.map((t) => t.id)} surface="activity" />
-          <CategoryIcon name={cat?.icon ?? 'tag'} color={cat?.color} size={14} square={30} round />
+          <View style={styles.lead}>
+            <CategoryIcon name={cat?.icon ?? 'tag'} color={cat?.color} size={16} square={SCREEN.mark} round />
+          </View>
           <View style={[styles.mid, stacked && styles.wideMid]}>
             <View style={styles.stackMid}>
               <Text style={[styles.name, styles.stackName]}>{name}</Text>
@@ -401,8 +413,10 @@ function TimelineDayView({
             accessibilityLabel={`${money(tx.amountMinor, hidden(tx), tx.accountId)} moved from ${accountName(tx.accountId)} to ${accountName(tx.toAccountId!)}`}
           >
             <JustAddedGlow ids={[tx.id]} surface="activity" />
-            <View style={[styles.transferIcon, { backgroundColor: shade(accent, 95) }]}>
-              <Feather name="repeat" size={13} color={theme.colors.ink} />
+            <View style={styles.lead}>
+              <View style={[styles.transferIcon, { backgroundColor: shade(accent, 95) }]}>
+                <Feather name="repeat" size={16} color={theme.colors.ink} />
+              </View>
             </View>
             <View style={[styles.mid, stacked && styles.wideMid]}>
               <Text style={[styles.name, styles.transferName]}>
@@ -433,9 +447,8 @@ const styles = StyleSheet.create({
   title: {
     flexGrow: 1,
     flexBasis: 160,
-    fontFamily: theme.font.roundedMedium,
-    fontSize: 14,
-    color: theme.colors.textPrimary,
+    // The same title style as every section heading.
+    ...SECTION_TITLE,
   },
   date: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
   // Spending reads in ink with its minus sign; only money in is green.
@@ -445,10 +458,11 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: theme.colors.textPrimary,
   },
+  lead: { width: SCREEN.lead, alignItems: 'center', justifyContent: 'center' },
   transferIcon: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    width: SCREEN.mark,
+    height: SCREEN.mark,
+    borderRadius: SCREEN.mark / 2,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -457,14 +471,16 @@ const styles = StyleSheet.create({
   // Flat cream keeps category colours and amounts prominent, matching Home's supporting cards.
   lane: {
     backgroundColor: theme.colors.surface,
-    borderRadius: 24,
-    borderWidth: 1,
+    borderRadius: theme.radius.xl2,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
+    // Rows sit 12 in from the card's edge, so their dividers are inset like Home's.
+    paddingHorizontal: 12,
     // No shadow: at 4% it was invisible, and a shadow on a clipped, rounded row in a scrolling list costs a
     // clipping layer per day on Android.
     overflow: 'hidden',
   },
-  divider: { borderTopWidth: 1, borderTopColor: theme.colors.divider },
+  divider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.divider },
   line: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -509,14 +525,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    // The dot centred under the stack's 30px icon: row padding + (30 − 8) / 2.
-    paddingLeft: 14 + 11,
+    // The dot centred under the stack's 44px icon slot: row padding + (44 − 8) / 2.
+    paddingLeft: 14 + 18,
     paddingRight: 14,
     paddingVertical: 8,
     minHeight: 48,
   },
   // Ends where the icon ends, so the text lines up with the lines above.
-  subDot: { width: 8, height: 8, borderRadius: 4, marginRight: 11 },
+  subDot: { width: 8, height: 8, borderRadius: 4, marginRight: 18 },
 });
 
 /**

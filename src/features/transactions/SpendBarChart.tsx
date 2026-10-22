@@ -153,7 +153,7 @@ export function SpendBarChart({
               )}
             </View>
             {bar.isCurrent ? (
-              <View style={[styles.todayPill, { backgroundColor: ink }]}>
+              <View style={[styles.todayPill, { backgroundColor: accent }]}>
                 <Text style={styles.todayText}>{bar.label}</Text>
               </View>
             ) : (
@@ -197,6 +197,7 @@ export function ChartLegend({
       {canExpand && (
         <Pressable
           style={styles.legendToggle}
+          hitSlop={{ top: 8, bottom: 8 }}
           accessibilityRole="button"
           accessibilityLabel={expanded ? 'Show fewer categories' : `Show all ${items.length} categories`}
           accessibilityState={{ expanded }}
@@ -259,9 +260,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     justifyContent: 'center',
     borderRadius: 6,
-    backgroundColor: theme.colors.ink,
   },
-  todayText: { fontFamily: theme.font.bodyBold, fontSize: 11, lineHeight: 13, color: theme.colors.surface },
+  todayText: {
+    fontFamily: theme.font.bodyBold,
+    fontSize: 11,
+    lineHeight: 13,
+    color: theme.colors.textPrimary,
+  },
   bubbleWrap: { position: 'absolute', left: -24, right: -24, alignItems: 'center' },
   bubble: { paddingHorizontal: 7, paddingVertical: 3, borderRadius: 8, backgroundColor: theme.colors.ink },
   bubbleText: { fontFamily: theme.font.bodyBold, fontSize: 11, color: theme.colors.surface },
@@ -287,7 +292,7 @@ const styles = StyleSheet.create({
   legendDot: { width: 8, height: 8, borderRadius: 3, flexShrink: 0 },
   legendText: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary, flexShrink: 1 },
   legendToggle: {
-    minHeight: 44,
+    minHeight: 28,
     paddingHorizontal: 10,
     justifyContent: 'center',
     borderRadius: 14,

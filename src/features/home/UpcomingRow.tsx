@@ -88,8 +88,8 @@ export function UpcomingRow({
 
 const styles = StyleSheet.create({
   iconWrap: {
-    width: 44,
-    height: 44,
+    width: SCREEN.mark,
+    height: SCREEN.mark,
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',

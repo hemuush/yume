@@ -4,7 +4,7 @@ import { screenStyles as h } from '@/components/screenStyles';
 
 export const styles = StyleSheet.create({
   // The two Home cards are the app's one card (screenStyles.card): cream, rounded, a hairline edge, no shadow.
-  card: { ...h.card, paddingHorizontal: 16, paddingTop: 10, paddingBottom: 8 },
+  card: { ...h.card, paddingHorizontal: 16, paddingTop: 12, paddingBottom: 12 },
   heroRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -13,7 +13,7 @@ export const styles = StyleSheet.create({
     columnGap: 12,
     rowGap: 8,
   },
-  rhythm: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.borderSoft, marginTop: 2 },
+  rhythm: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.borderSoft, marginTop: 0 },
   actions: { marginHorizontal: 16, marginTop: 12 },
   bar: {
     flexDirection: 'row',

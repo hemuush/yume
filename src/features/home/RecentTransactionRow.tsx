@@ -6,9 +6,9 @@ import { Category, Transaction } from '@/types';
 import { JustAddedGlow } from '@/components/JustAddedGlow';
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { Amount } from '@/components/Amount';
-import { dayLabel } from '@/lib/date';
+import { dayLabel, toLocalIsoDate } from '@/lib/date';
 import { categoryPath, joinSub } from '@/lib/categoryLabel';
-import { screenStyles as h } from '@/components/screenStyles';
+import { screenStyles as h, SCREEN } from '@/components/screenStyles';
 import { useAccent } from '@/theme/AccentContext';
 
 /**
@@ -24,6 +24,7 @@ export function RecentTransactionRow({
   divider,
   savingsTransfer = false,
   showDay = true,
+  omitToday = false,
   currency,
   onPress,
 }: {
@@ -38,6 +39,8 @@ export function RecentTransactionRow({
   savingsTransfer?: boolean;
   /** Off when the rows sit under a day heading (Home), so the day isn't said twice. */
   showDay?: boolean;
+  /** Home's list: today is the usual case, so only other days are named. */
+  omitToday?: boolean;
   currency?: string;
   onPress?: () => void;
 }) {
@@ -54,7 +57,7 @@ export function RecentTransactionRow({
     : joinSub([
         note ? category && categoryPath(category.name, parentName) : parentName,
         accountName,
-        showDay && dayLabel(tx.date),
+        showDay && (!omitToday || tx.date !== toLocalIsoDate(new Date())) && dayLabel(tx.date),
       ]);
 
   const Container = onPress ? Pressable : View;
@@ -70,11 +73,14 @@ export function RecentTransactionRow({
       }
     >
       <JustAddedGlow ids={[tx.id]} surface="home" />
-      <CategoryIcon
-        name={isTransfer ? 'swap-horizontal' : (category?.icon ?? 'tag')}
-        color={isTransfer ? secondary : (category?.color ?? theme.colors.textMuted)}
-        round
-      />
+      <View style={styles.lead}>
+        <CategoryIcon
+          name={isTransfer ? 'swap-horizontal' : (category?.icon ?? 'tag')}
+          color={isTransfer ? secondary : (category?.color ?? theme.colors.textMuted)}
+          square={SCREEN.mark}
+          round
+        />
+      </View>
       <View style={[styles.mid, stacked && styles.stackedMid]}>
         <Text style={styles.title}>{title}</Text>
         <Text style={styles.sub}>
@@ -96,7 +102,8 @@ export function RecentTransactionRow({
 }
 
 const styles = StyleSheet.create({
-  row: h.row,
+  row: { ...h.row, gap: 12 },
+  lead: { width: SCREEN.lead, alignItems: 'center', justifyContent: 'center' },
   stackedRow: { flexWrap: 'wrap', rowGap: 6 },
   stackedMid: { flexGrow: 1, flexBasis: '70%' },
   divider: h.divider,

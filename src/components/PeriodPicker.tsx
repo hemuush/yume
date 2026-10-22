@@ -10,7 +10,6 @@ import { haptics } from '@/lib/haptics';
 import { withPressed } from '@/lib/pressed';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import { useAccent } from '@/theme/AccentContext';
-import { themeInk } from '@/theme/interactionColors';
 
 interface PickedPeriod {
   kind: 'month' | 'year';
@@ -62,7 +61,6 @@ export function PeriodPicker({
 }) {
   const { hideAmounts } = usePrivacy();
   const { accent } = useAccent();
-  const ink = themeInk(accent);
   const [mode, setMode] = useState<'month' | 'year'>(selected.kind);
   const [year, setYear] = useState(selected.year);
   const [spend, setSpend] = useState<{ byMonth: Map<string, number>; firstMonth: string | null } | null>(
@@ -114,7 +112,7 @@ export function PeriodPicker({
               <Pressable
                 key={m}
                 onPress={() => setMode(m)}
-                style={[styles.segBtn, mode === m && { backgroundColor: ink }]}
+                style={[styles.segBtn, mode === m && { backgroundColor: accent }]}
                 accessibilityRole="radio"
                 accessibilityState={{ selected: mode === m }}
               >
@@ -139,7 +137,10 @@ export function PeriodPicker({
                   <Pressable
                     key={y}
                     onPress={() => setYear(y)}
-                    style={withPressed([styles.yearChip, on && { backgroundColor: ink, borderColor: ink }])}
+                    style={withPressed([
+                      styles.yearChip,
+                      on && { backgroundColor: accent, borderColor: accent },
+                    ])}
                     accessibilityRole="button"
                     accessibilityState={{ selected: on }}
                     accessibilityLabel={`${y}`}
@@ -166,7 +167,7 @@ export function PeriodPicker({
                     disabled={off}
                     style={withPressed([
                       styles.cell,
-                      isSelected && { backgroundColor: ink, borderColor: ink },
+                      isSelected && { backgroundColor: accent, borderColor: accent },
                       off && styles.off,
                     ])}
                     accessibilityRole="button"
@@ -201,7 +202,7 @@ export function PeriodPicker({
                         disabled={future}
                         style={withPressed([
                           styles.weekChip,
-                          on && { backgroundColor: ink, borderColor: ink },
+                          on && { backgroundColor: accent, borderColor: accent },
                           future && styles.off,
                         ])}
                         accessibilityRole="button"
@@ -226,7 +227,10 @@ export function PeriodPicker({
                 <Pressable
                   key={y}
                   onPress={() => pick(() => onPickYear?.(y))}
-                  style={withPressed([styles.yearCell, on && { backgroundColor: ink, borderColor: ink }])}
+                  style={withPressed([
+                    styles.yearCell,
+                    on && { backgroundColor: accent, borderColor: accent },
+                  ])}
                   accessibilityRole="button"
                   accessibilityLabel={`${y}${y === thisYear ? ', this year' : ''}`}
                   accessibilityState={{ selected: on }}
@@ -266,19 +270,20 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 44,
     paddingVertical: 6,
-    borderRadius: 16,
+    borderRadius: theme.radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
   },
   segText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textSecondary },
-  onInk: { color: theme.colors.white },
-  onInkSoft: { color: 'rgba(255,255,255,0.72)' },
+  // The chosen cell is the theme colour: ink text on it, not a dark fill.
+  onInk: { color: theme.colors.textPrimary },
+  onInkSoft: { color: theme.colors.textSecondary },
   years: { gap: 6, paddingVertical: 1 },
   yearChip: {
     minHeight: 44,
     paddingVertical: 6,
     paddingHorizontal: 16,
-    borderRadius: 17,
+    borderRadius: theme.radius.pill,
     justifyContent: 'center',
     backgroundColor: theme.colors.surface,
     borderWidth: StyleSheet.hairlineWidth,
@@ -308,7 +313,7 @@ const styles = StyleSheet.create({
     borderRadius: 3,
     backgroundColor: theme.colors.link,
   },
-  nowDotOn: { backgroundColor: theme.colors.white },
+  nowDotOn: { backgroundColor: theme.colors.ink },
   yearCell: {
     width: '31%',
     flexGrow: 1,
@@ -327,7 +332,7 @@ const styles = StyleSheet.create({
   weekChip: {
     minHeight: 44,
     paddingHorizontal: 12,
-    borderRadius: 17,
+    borderRadius: theme.radius.pill,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: theme.colors.surface,
@@ -338,7 +343,7 @@ const styles = StyleSheet.create({
   weekDot: { bottom: 3 },
   current: {
     minHeight: 46,
-    borderRadius: 23,
+    borderRadius: theme.radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: theme.colors.surface,

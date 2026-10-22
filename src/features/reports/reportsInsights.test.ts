@@ -9,6 +9,7 @@ import {
   StoryInput,
   summariseDayTotal,
   buildHeat,
+  budgetCover,
   cumulativeSpend,
   daySpendFacts,
   weekdayRhythm,
@@ -344,6 +345,32 @@ describe('buildStoryCards', () => {
     expect(buildStoryCards({ ...base, spendDays: 2 })[0].compact).toBe(true);
     // A finished period is never "too early".
     expect(buildStoryCards({ ...base, spendDays: 2, isCurrentPeriod: false })[0].key).not.toBe('early');
+  });
+});
+
+describe('budgetCover', () => {
+  const b = (categoryId: string, spentMinor: number, limit: number, parent: string | null = null) => ({
+    budget: { categoryId },
+    parentCategoryId: parent,
+    spentMinor,
+    effectiveLimitMinor: limit,
+  });
+  it('compares only what is spent inside the budgeted categories with their limits', () => {
+    expect(budgetCover([b('food', 8000, 12000), b('fuel', 3000, 5000)])).toEqual({
+      limitMinor: 17000,
+      spentMinor: 11000,
+      count: 2,
+    });
+  });
+  it('counts a subcategory budget inside its parent budget once', () => {
+    expect(budgetCover([b('food', 8000, 12000), b('snacks', 2000, 3000, 'food')])).toEqual({
+      limitMinor: 12000,
+      spentMinor: 8000,
+      count: 1,
+    });
+  });
+  it('is null with no budgets', () => {
+    expect(budgetCover([])).toBeNull();
   });
 });
 

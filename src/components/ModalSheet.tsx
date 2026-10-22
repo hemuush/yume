@@ -499,8 +499,9 @@ const styles = StyleSheet.create({
   framedSheetFooter: {
     paddingHorizontal: 20,
     paddingTop: 12,
-    backgroundColor: theme.colors.surfaceAlt,
-    borderTopWidth: 1,
+    // The sheet's own surface with a hairline above, not a second cream band.
+    backgroundColor: theme.colors.surface,
+    borderTopWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.divider,
   },
   framedDialogContent: { paddingHorizontal: 20, paddingBottom: 8 },
@@ -510,7 +511,7 @@ const styles = StyleSheet.create({
   framedDialogFooter: {
     paddingHorizontal: 20,
     paddingTop: 12,
-    backgroundColor: theme.colors.surfaceAlt,
+    backgroundColor: theme.colors.surface,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: theme.colors.divider,
   },
