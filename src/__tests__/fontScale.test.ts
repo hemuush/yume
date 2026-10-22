@@ -20,8 +20,6 @@ const files = [...sourceFiles(path.join(root, 'app')), ...sourceFiles(path.join(
     // Home-screen widgets render through RemoteViews, not React Native's Text.
     !f.includes(`${path.sep}widgets${path.sep}`) &&
     !f.includes(`${path.sep}test-support${path.sep}`) &&
-    // The start-up check screen deliberately imports nothing from the app.
-    !f.includes(`${path.sep}diagnostics${path.sep}`) &&
     !f.endsWith(path.join('components', 'Text.tsx'))
 );
 const rel = (f: string) => path.relative(root, f).split(path.sep).join('/');

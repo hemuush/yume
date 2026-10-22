@@ -40,19 +40,9 @@ For a read-only authentication check from GitHub, run the EAS Build workflow man
 
 The 21 October pre-fix [verification run](https://github.com/hemuush/yume/actions/runs/39578855243) authenticated but failed to resolve the stale project ID. That result does not establish access to the replacement project; rerun verification after pushing the corrected configuration. Local `eas config` checks passed for preview and production with their matching `EAS_BUILD_PROFILE`: both resolve the replacement project, package `com.yume.app`, version code 1, no auto-increment, remote credentials and release Internet blocking. No credentials were generated or replaced. Private `.codex-attachments/` files are excluded from both Git and EAS uploads.
 
-## Diagnosing a release APK that crashes
+## Release APK closes at launch (WorkManager and R8)
 
-Debug builds and Jest cannot show a crash that only the shrunk release build has. Expo SDK 58's Android template changed the release build's R8 setting from the `proguard-android.txt` preset to `proguard-android-optimize.txt`, so R8 now optimises code as well as shrinking it. Two EAS profiles in [eas.json](eas.json) change exactly one release-build setting each from `preview`, using the switches in [app.config.js](app.config.js):
-
-| Profile | What it changes | Command |
-| --- | --- | --- |
-| `diagnose-r8-preset` | Uses SDK 57's non-optimising R8 preset (shrinking and minification stay on) | `eas build --platform android --profile diagnose-r8-preset` |
-| `diagnose-no-minify` | Turns R8 shrinking, minification and resource shrinking off | `eas build --platform android --profile diagnose-no-minify` |
-| `diagnose-modules` | Opens a plain checklist screen (`src/diagnostics`) instead of the app and loads one library per tap, showing pass or fail on screen | `eas build --platform android --profile diagnose-modules` |
-
-To start either build without a computer, use the GitHub website (works in a phone browser): open the repository, then Actions, then EAS Build, then Run workflow. Choose the branch that has the profile, pick the profile (`preview`, `diagnose-r8-preset`, `diagnose-no-minify` or `diagnose-modules`) and run it. When it finishes, open the Yume project on expo.dev, then Builds, and install the APK from there. The `diagnose-*` profiles can run side by side because the concurrency group includes the profile.
-
-Install each APK and open it. If `diagnose-no-minify` runs and `preview` does not, R8 is the cause; if `diagnose-r8-preset` also runs, the optimising preset is the cause and the fix is to keep the SDK 57 preset. If neither runs, R8 is not the cause (both closed on a phone on 22 October). In that case install `diagnose-modules`: if its checklist opens, the native app shell starts and the library whose tap closes the app, or shows FAILED, is the cause; if it also closes, the fault is in the native build itself. Either way, capture the crash so the fix is not a guess: connect the phone with USB debugging on, open Yume, and run `adb logcat -d -b crash` (or `adb logcat -d | grep -E "FATAL|AndroidRuntime|ReactNative|DEBUG"`). The first `Caused by:` line, or a `NoSuchMethodError`, `NoSuchFieldError` or `ClassNotFoundException` naming an obfuscated class, identifies the library that needs a keep rule in [plugins](plugins) or `expo-build-properties`' `extraProguardRules`.
+`react-native-android-widget` depends on WorkManager 2.8.1, which keeps a Room database it creates by reflection at app start. Expo SDK 58 runs R8 in full mode, which removed the generated `WorkDatabase_Impl` constructor, so a release APK closed right after opening (22 October, Pixel on Android 17). Debug builds skip R8 and did not show it. The keep rules in `expo-build-properties`' `extraProguardRules` in [app.json](app.json) fix it, and [appConfig.test.ts](src/__tests__/appConfig.test.ts) guards them; the fixed build opened on the phone. If a future dependency makes a release build close, capture the crash first (`adb logcat -d -b crash`) and add a keep rule for the class it names. Do not remove these rules when upgrading until the widget library depends on a WorkManager that ships its own.
 
 ## Play Store bundle
 
