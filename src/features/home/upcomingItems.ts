@@ -1,22 +1,13 @@
-import { Section } from '@/components/Section';
-import { withPressed } from '@/lib/pressed';
-import { View, Pressable, StyleSheet } from 'react-native';
-import Animated from 'react-native-reanimated';
-import Feather from '@expo/vector-icons/Feather';
-import { router } from 'expo-router';
-import { Text } from '@/components/Text';
+import type Feather from '@expo/vector-icons/Feather';
 import { theme } from '@/constants/theme';
 import { hexToRgba, shade } from '@/lib/color';
 import { dueDateLabel, isDueUrgent } from '@/lib/dueDate';
 import { daysUntilIsoDate } from '@/lib/date';
 import { payCardRoute, PayCardRoute } from '@/lib/payCard';
 import type { PlanCardBillInput } from '@/features/plan/planOverview';
-import { RecurringRule } from '@/types';
-import { UpcomingRow } from './UpcomingRow';
-import { ExpectedRefund } from '@/db/refundTracking';
-import { HomeRefunds } from './HomeRefunds';
+import type { RecurringRule } from '@/types';
 
-interface UpcomingItem {
+export interface UpcomingItem {
   key: string;
   icon: React.ComponentProps<typeof Feather>['name'];
   iconBg: string;
@@ -142,117 +133,3 @@ export function buildUpcomingItems(input: {
   const items = [...inWindow.filter((i) => i.pinned), ...inWindow.filter((i) => !i.pinned)];
   return { all, items, next: all.find((i) => daysUntilIsoDate(i.sortDate) > UPCOMING_DAYS) ?? null };
 }
-
-/** Rank next scheduled money-out occurrences across loans, recurring bills and unpaid cards. */
-export function largestUpcomingOutgoings(upcoming: Upcoming): UpcomingItem[] {
-  const candidates = upcoming.all ?? [...upcoming.items, ...(upcoming.next ? [upcoming.next] : [])];
-  return [
-    ...new Map(
-      candidates.filter((item) => item.sign === '-' && item.amountMinor > 0).map((item) => [item.key, item])
-    ).values(),
-  ]
-    .sort(
-      (a, b) =>
-        b.amountMinor - a.amountMinor || a.sortDate.localeCompare(b.sortDate) || a.key.localeCompare(b.key)
-    )
-    .slice(0, 3);
-}
-
-/** Next payments stay visible; detailed budgets and goals live in Plan. */
-export function HomeGlance({
-  upcoming,
-  rowEntering,
-  onSeeMoreUpcoming,
-  refunds = [],
-  refundError = false,
-  openingRefund,
-  onOpenRefund,
-  onRetryRefunds,
-}: {
-  upcoming: Upcoming;
-  rowEntering: (i: number) => React.ComponentProps<typeof Animated.View>['entering'];
-  onSeeMoreUpcoming: () => void;
-  refunds?: ExpectedRefund[];
-  refundError?: boolean;
-  openingRefund?: string | null;
-  onOpenRefund?: (transactionId: string) => void;
-  onRetryRefunds?: () => void;
-}) {
-  const visible = largestUpcomingOutgoings(upcoming);
-  return (
-    <>
-      <Section compact title="Next up" onSeeAll={onSeeMoreUpcoming} actionLabel="View plan">
-        <View style={styles.card}>
-          {visible.length ? (
-            visible.map((item, i) => (
-              <Animated.View key={item.key} entering={rowEntering(i)}>
-                <UpcomingRow
-                  icon={item.icon}
-                  iconBg={item.iconBg}
-                  iconColor={item.iconColor}
-                  title={item.title}
-                  subtitle={item.subtitle}
-                  amountMinor={item.amountMinor}
-                  sign={item.sign}
-                  onPress={() => router.push(item.route)}
-                  divider={i > 0}
-                  urgent={item.urgent}
-                  soon={item.pinned && !item.urgent}
-                  date={item.sortDate}
-                  dueDate={item.sortDate}
-                  actionLabel={item.pinned && item.payable ? 'Pay' : undefined}
-                  highlight={item.pinned}
-                />
-              </Animated.View>
-            ))
-          ) : (
-            <Pressable
-              onPress={onSeeMoreUpcoming}
-              accessibilityRole="button"
-              accessibilityLabel="Nothing scheduled. Open Plan"
-              style={withPressed(styles.empty)}
-            >
-              <Feather name="check-circle" size={20} color={theme.colors.incomeText} />
-              <View style={styles.copy}>
-                <Text style={styles.title}>Nothing scheduled</Text>
-                <Text style={styles.hint}>Add bills and recurring payments in Plan.</Text>
-              </View>
-              <Feather name="chevron-right" size={16} color={theme.colors.textMuted} />
-            </Pressable>
-          )}
-        </View>
-        {(refunds.length > 0 || refundError) && (
-          <View style={styles.refunds}>
-            <HomeRefunds
-              refunds={refunds}
-              failed={refundError}
-              openingId={openingRefund}
-              onOpen={onOpenRefund}
-              onRetry={onRetryRefunds}
-              compact
-            />
-          </View>
-        )}
-      </Section>
-    </>
-  );
-}
-const styles = StyleSheet.create({
-  card: {
-    marginHorizontal: 16,
-    paddingHorizontal: 8,
-    borderRadius: 20,
-    backgroundColor: theme.colors.surface,
-    overflow: 'hidden',
-  },
-  refunds: {
-    marginHorizontal: 16,
-    marginTop: 8,
-    borderRadius: 20,
-    backgroundColor: theme.colors.surface,
-  },
-  empty: { minHeight: 80, flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14 },
-  copy: { flex: 1, minWidth: 0, gap: 5 },
-  title: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
-  hint: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 18, color: theme.colors.textSecondary },
-});

@@ -516,9 +516,9 @@ describe('re-audit recurring privacy and currency regressions', () => {
           expect(textOf(tree)).toContain('$100');
           expect(textOf(tree)).toContain('Summary and timeline in INR');
         } else if (name === 'home') {
-          const { HomeGlance } = require('@/features/home/HomeGlance');
+          const { HomeComingUp } = require('@/features/home/HomeComingUp');
           expect(
-            tree.root.findByType(HomeGlance).props.upcoming.items.map((i: { key: string }) => i.key)
+            tree.root.findByType(HomeComingUp).props.upcoming.items.map((i: { key: string }) => i.key)
           ).toEqual([ruleIds.INR]);
         } else {
           const { RunwayCard } = require('@/features/plan/RunwayCard');
@@ -761,12 +761,12 @@ describe('Home, stepping between months on a lived-in phone', () => {
     expect(textOf(tree)).toContain(monthName(-1));
     act(() => tree.unmount());
   });
-  it('keeps Accounts before Next up and opens recent entries over Home', async () => {
+  it('keeps Accounts before Coming up and opens recent entries over Home', async () => {
     const tree = await open(SCREENS[0][1]);
     const { Section } = require('@/components/Section');
     const titles = tree.root.findAllByType(Section).map((n) => n.props.title);
     expect(titles.indexOf('Accounts')).toBeGreaterThanOrEqual(0);
-    expect(titles.indexOf('Next up')).toBeGreaterThan(titles.indexOf('Accounts'));
+    expect(titles.indexOf('Coming up')).toBeGreaterThan(titles.indexOf('Accounts'));
     expect(titles).not.toContain('Spending');
     expect(tree.root.findAllByProps({ testID: 'home-swipe-pages' })).toHaveLength(0);
     const { RecentTransactionRow } = require('@/features/home/RecentTransactionRow');

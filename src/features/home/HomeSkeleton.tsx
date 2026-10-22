@@ -1,7 +1,6 @@
 import { View, StyleSheet, useWindowDimensions } from 'react-native';
 import { Skeleton } from '@/components/Skeleton';
-import { Glass } from '@/components/Glass';
-import { cardSurface } from '@/components/CardSurface';
+import { theme } from '@/constants/theme';
 
 export { CardRowsSkeleton } from '@/components/ListSkeleton';
 
@@ -13,7 +12,7 @@ export function ThisMonthHeroSkeleton() {
   const innerWidth = Math.max(0, useWindowDimensions().width - 62);
   const actionWidth = Math.max(0, Math.floor((innerWidth - 16) / 3));
   return (
-    <Glass radius={28} style={[styles.card, cardSurface.summary]}>
+    <View style={styles.card}>
       <View style={styles.bar}>
         <Skeleton width={84} height={12} radius={4} />
         <Skeleton width={96} height={30} radius={15} />
@@ -31,12 +30,18 @@ export function ThisMonthHeroSkeleton() {
           </View>
         ))}
       </View>
-    </Glass>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  card: { marginHorizontal: 16, padding: 14, gap: 10 },
+  card: {
+    marginHorizontal: 16,
+    padding: 18,
+    gap: 10,
+    borderRadius: 28,
+    backgroundColor: theme.colors.surface,
+  },
   bar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   row: { flexDirection: 'row', gap: 8 },
   action: { flex: 1, alignItems: 'center' },
