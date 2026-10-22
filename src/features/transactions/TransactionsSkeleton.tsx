@@ -44,13 +44,13 @@ export function TransactionsSkeleton() {
 }
 
 const styles = StyleSheet.create({
-  wrap: { paddingHorizontal: 20, paddingTop: 6 },
+  wrap: { paddingHorizontal: 16, paddingTop: 6 },
   sumCard: {
     padding: 16,
     backgroundColor: theme.colors.surface,
-    borderWidth: 1,
-    borderColor: theme.colors.inkHairline,
-    borderRadius: 28,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
+    borderRadius: theme.radius.xl2,
   },
   barRow: {
     flexDirection: 'row',
@@ -63,9 +63,9 @@ const styles = StyleSheet.create({
   dayCard: {
     marginTop: 10,
     backgroundColor: theme.colors.surface,
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
-    borderRadius: 24,
+    borderRadius: theme.radius.xl2,
     overflow: 'hidden',
   },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 13, paddingHorizontal: 16 },

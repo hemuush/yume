@@ -75,47 +75,6 @@ export const styles = StyleSheet.create({
   },
   granChipText: { fontFamily: theme.font.roundedMedium, fontSize: 14, color: theme.colors.ink },
   // The Days tab's heatmap card.
-  hmCard: {
-    ...CARD,
-    paddingHorizontal: 14,
-    paddingTop: 16,
-    paddingBottom: 14,
-    gap: 12,
-    marginBottom: BLOCK_GAP,
-  },
-  hmHead: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 8,
-    paddingHorizontal: 2,
-  },
-  hmTitle: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.textPrimary },
-  filterChip: {
-    alignSelf: 'flex-start',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    maxWidth: '100%',
-    borderRadius: theme.radius.pill,
-    backgroundColor: 'rgba(255,255,255,0.7)',
-    minHeight: 44,
-    paddingLeft: 12,
-    paddingRight: 10,
-  },
-  filterChipText: {
-    flexShrink: 1,
-    fontFamily: theme.font.bodyBold,
-    fontSize: 13,
-    color: theme.colors.textPrimary,
-  },
-  hmHint: {
-    paddingHorizontal: 2,
-    fontFamily: theme.font.body,
-    fontSize: 13,
-    color: theme.colors.textSecondary,
-  },
 
   // Shared section headings.
   storyHead: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
@@ -163,59 +122,6 @@ export const styles = StyleSheet.create({
   },
 
   // Weekday rhythm: seven bars, a dashed "usual day" line, and a read line.
-  rhythmBlock: { marginBottom: BLOCK_GAP },
-  rhythmCard: {
-    ...CARD,
-    padding: 16,
-    gap: 12,
-  },
-  rhythmChart: { height: 140, flexDirection: 'row', alignItems: 'flex-end', gap: 8, paddingTop: 16 },
-  rhythmBar: { flex: 1, height: '100%', justifyContent: 'flex-end', alignItems: 'center', gap: 4 },
-  rhythmValue: {
-    minHeight: 15,
-    fontFamily: theme.font.body,
-    fontSize: 11,
-    color: theme.colors.textMuted,
-  },
-  rhythmValueOn: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
-  rhythmFill: { width: '100%', borderTopLeftRadius: 8, borderTopRightRadius: 8, borderRadius: 4 },
-  rhythmLabel: { minHeight: 16, fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
-  rhythmLabelOn: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
-  rhythmUsual: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    borderTopWidth: 1.5,
-    borderStyle: 'dashed',
-    borderColor: theme.colors.textSecondary,
-    opacity: 0.55,
-  },
-  rhythmUsualTag: {
-    position: 'absolute',
-    right: 0,
-    bottom: 2,
-    paddingHorizontal: 4,
-    borderRadius: 4,
-    overflow: 'hidden',
-    backgroundColor: 'rgba(255,255,255,0.85)',
-    fontFamily: theme.font.body,
-    fontSize: 11,
-    color: theme.colors.textSecondary,
-  },
-  rhythmRead: {
-    fontFamily: theme.font.body,
-    fontSize: 13,
-    lineHeight: 20,
-    color: theme.colors.textPrimary,
-  },
-  rhythmEmpty: {
-    paddingVertical: 18,
-    paddingHorizontal: 14,
-    textAlign: 'center',
-    fontFamily: theme.font.body,
-    fontSize: 13,
-    color: theme.colors.textMuted,
-  },
 
   // Biggest spends: the period's largest single expenses, in the day card's row.
   bigBlock: { marginBottom: BLOCK_GAP },
@@ -260,17 +166,6 @@ export const styles = StyleSheet.create({
     gap: 8,
   },
   trendTitle: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.textPrimary },
-  chartTip: {
-    overflow: 'hidden',
-    paddingHorizontal: 9,
-    paddingVertical: 4,
-    borderRadius: 10,
-    backgroundColor: theme.colors.ink,
-    fontFamily: theme.font.bodyBold,
-    fontSize: 12,
-    color: theme.colors.surface,
-    fontVariant: ['tabular-nums'],
-  },
   trendReadTray: {
     borderRadius: 14,
     backgroundColor: theme.colors.tray,
@@ -355,7 +250,6 @@ export const styles = StyleSheet.create({
   },
   trackFootText: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textMuted },
   trackFootLink: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.link },
-  tracksNote: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textMuted, marginTop: 8 },
 
   trendLink: { alignSelf: 'flex-start', paddingVertical: 8 },
   trendLinkText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.link },
@@ -376,7 +270,6 @@ export const styles = StyleSheet.create({
   blockTitle: { ...SECTION_TITLE, marginBottom: SECTION_GAP.bottom },
   legend: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   legendText: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted },
-  legendSwatch: { width: 12, height: 12, borderRadius: 4 },
 
   catCard: {
     ...CARD,

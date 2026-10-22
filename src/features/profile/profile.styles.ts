@@ -80,7 +80,6 @@ export const styles = StyleSheet.create({
     color: theme.colors.textPrimary,
   },
   nameSave: { minWidth: 48, minHeight: 48, alignItems: 'center', justifyContent: 'center' },
-  memberSince: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 2 },
   // SegmentedControl draws its own pill; this only places it.
   tabWrap: { marginHorizontal: SCREEN.gutter, marginTop: 16 },
 

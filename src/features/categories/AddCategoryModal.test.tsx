@@ -1,6 +1,6 @@
 /** The category sheet: creating, editing, one-level nesting, the built-in category rules, and failures. */
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
-import { Text } from 'react-native';
+import { Text, StyleSheet } from 'react-native';
 
 jest.setTimeout(120000);
 
@@ -75,6 +75,17 @@ const element = (visible: boolean, category: Category | null, extra: object = {}
     {...extra}
   />
 );
+/** The colour and icon grids draw once they know their width, so give the first one a width. */
+function measureGrid(tree: ReactTestRenderer, width = 320) {
+  const grid = tree.root.find(
+    (n) =>
+      typeof n.type === 'string' &&
+      typeof n.props.onLayout === 'function' &&
+      StyleSheet.flatten(n.props.style)?.flexWrap === 'wrap'
+  );
+  act(() => grid.props.onLayout({ nativeEvent: { layout: { width, height: 0, x: 0, y: 0 } } }));
+}
+
 async function render(category: Category | null = null, extra: object = {}) {
   const onSaved = jest.fn();
   let tree!: ReactTestRenderer;
@@ -125,6 +136,7 @@ describe('AddCategoryModal — new category', () => {
 
   it('sends the chosen type, colour, icon and sensitivity', async () => {
     const { tree } = await render();
+    measureGrid(tree);
     await type(tree, 'Side income');
     act(() => byId(tree, 'kind').props.onChange('income'));
     act(() => pressable(tree, `Colour 3 of ${CATEGORY_COLOR_PALETTE.length}`).props.onPress());

@@ -171,12 +171,10 @@ export const styles = StyleSheet.create({
     borderColor: theme.colors.borderSoft,
     backgroundColor: theme.colors.surface,
   },
-  parentChipActive: {},
   parentChipText: {
     flexShrink: 1,
     fontSize: 12,
     fontFamily: theme.font.bodyMedium,
     color: theme.colors.textPrimary,
   },
-  parentChipTextActive: {},
 });

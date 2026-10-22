@@ -35,7 +35,8 @@ import { TransactionDetailModal } from '@/features/transactions/TransactionDetai
 import { longMonthYear } from '@/lib/dateLabels';
 import { useReturnOrPush } from '@/lib/useReturnOrPush';
 import { timesLabel } from '@/features/reports/visits';
-import { MonthBars, compactMoney } from '@/features/reports/MonthBars';
+import { MonthBars } from '@/features/reports/MonthBars';
+import { compactMoney } from '@/lib/compactMoney';
 import { SplitBreakdown } from '@/features/reports/SplitBreakdown';
 import { withPressed } from '@/lib/pressed';
 import { usePrivacy } from '@/theme/PrivacyContext';
@@ -436,7 +437,7 @@ const styles = StyleSheet.create({
   heroLabel: { ...EYEBROW },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10 },
   chip: {
-    backgroundColor: '#F1F5F9',
+    backgroundColor: theme.colors.inkWash,
     borderWidth: 1,
     borderColor: GLASS.edge,
     borderRadius: theme.radius.pill,
