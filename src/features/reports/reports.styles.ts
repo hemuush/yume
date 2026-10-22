@@ -271,6 +271,12 @@ export const styles = StyleSheet.create({
     color: theme.colors.surface,
     fontVariant: ['tabular-nums'],
   },
+  trendReadTray: {
+    borderRadius: 14,
+    backgroundColor: theme.colors.tray,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
   trendRead: {
     fontFamily: theme.font.body,
     fontSize: 13,

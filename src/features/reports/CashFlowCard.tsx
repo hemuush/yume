@@ -174,7 +174,6 @@ export function CashFlowCard({
             </View>
           ))}
         </View>
-        <Text style={styles.stripSub}>Kept means income minus spending; it is not your savings balance.</Text>
         <Text style={styles.trendRead}>
           {cashFlowReadLine(
             points[selI],

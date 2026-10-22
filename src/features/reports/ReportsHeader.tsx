@@ -10,7 +10,7 @@ export function ReportsHeader({
   onChange: (cursor: ReportWindow) => void;
 }) {
   return (
-    <SkyHeader title="Reports" wallpaper>
+    <SkyHeader title="Reports" subtitle="See where it all went." wallpaper>
       <PeriodRow cursor={cursor} onChange={onChange} compact />
     </SkyHeader>
   );
