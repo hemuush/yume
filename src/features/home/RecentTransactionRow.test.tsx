@@ -29,7 +29,7 @@ const tx = (note: string, date = today): Transaction => ({
   createdAt: '2026-09-27T10:00:00.000Z',
 });
 
-function texts(note: string, date?: string, parentName?: string) {
+function texts(note: string, date?: string, parentName?: string, omitToday = false) {
   let r!: ReactTestRenderer;
   act(() => {
     r = create(
@@ -40,6 +40,7 @@ function texts(note: string, date?: string, parentName?: string) {
         toAccountName={undefined}
         divider={false}
         parentName={parentName}
+        omitToday={omitToday}
       />
     );
   });
@@ -61,6 +62,11 @@ describe('RecentTransactionRow', () => {
 
   it('puts the category under a note', () => {
     expect(texts('Lunch')).toEqual(expect.arrayContaining(['Lunch', 'Food & Dining · SBI · Today']));
+  });
+
+  it('leaves today out when asked (Home), and still names other days', () => {
+    expect(texts('', today, undefined, true)).toContain('SBI');
+    expect(texts('', addDaysToIsoDate(today, -1), undefined, true)).toContain('SBI · Yesterday');
   });
 
   it('says Yesterday for the day before', () => {
