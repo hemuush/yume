@@ -5,6 +5,7 @@ import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { SCREEN } from '@/components/screenStyles';
+import { SECTION_TITLE } from '@/constants/textStyles';
 import { StatusBadge } from '@/components/StatusBadge';
 import { MovingRow } from '@/components/MovingRow';
 import { JustAddedGlow } from '@/components/JustAddedGlow';
@@ -446,9 +447,8 @@ const styles = StyleSheet.create({
   title: {
     flexGrow: 1,
     flexBasis: 160,
-    fontFamily: theme.font.roundedMedium,
-    fontSize: 14,
-    color: theme.colors.textPrimary,
+    // The same title style as every section heading.
+    ...SECTION_TITLE,
   },
   date: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
   // Spending reads in ink with its minus sign; only money in is green.
