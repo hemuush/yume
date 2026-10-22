@@ -456,7 +456,6 @@ const styles = StyleSheet.create({
   },
   troubleLabel: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
   deliveryCard: { paddingHorizontal: 14, paddingBottom: 14 },
-  deliveryStatus: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textPrimary },
   deliveryHint: {
     fontFamily: theme.font.body,
     fontSize: 12,

@@ -72,7 +72,9 @@ export function DayInspector({
     : spentMinor <= 0
       ? 'A quiet day'
       : usualMinor > 0
-        ? `${ratio.toFixed(1)}× your usual ${scopeName ? `${scopeName.toLowerCase()} ` : ''}day`
+        ? ratio < 0.05
+          ? `A light day against your usual ${scopeName ? `${scopeName.toLowerCase()} ` : ''}day`
+          : `${ratio.toFixed(1)}× your usual ${scopeName ? `${scopeName.toLowerCase()} ` : ''}day`
         : '';
   const date = weekdayDayMonth(iso);
   return (

@@ -70,35 +70,80 @@ describe('related tasks in one native sheet', () => {
     act(() => tree.unmount());
   });
 
-  it('clamps remembered height to the available viewport with enlarged text', () => {
+  it('keeps a lone page at its own height, then clamps the remembered height to the viewport with enlarged text', () => {
     jest
       .spyOn(require('react-native'), 'useWindowDimensions')
       .mockReturnValue({ height: 550, width: 320, fontScale: 1.5, scale: 3 });
+    const Pages = ({ second }: { second: boolean }) => (
+      <SheetFlow>
+        <ModalSheet flowPage visible={!second} title="Task" onClose={jest.fn()}>
+          <Text>Body</Text>
+        </ModalSheet>
+        {second && (
+          <ModalSheet flowPage visible title="Next" onClose={jest.fn()}>
+            <Text>Next body</Text>
+          </ModalSheet>
+        )}
+      </SheetFlow>
+    );
     let tree!: ReactTestRenderer;
     act(() => {
-      tree = create(
-        <SheetFlow>
-          <ModalSheet flowPage visible title="Task" onClose={jest.fn()}>
-            <Text>Body</Text>
-          </ModalSheet>
-        </SheetFlow>
-      );
+      tree = create(<Pages second={false} />);
     });
     act(() =>
       tree.root
         .findByProps({ testID: 'sheet-surface' })
         .props.onLayout({ nativeEvent: { layout: { height: 900 } } })
     );
-    const style = StyleSheet.flatten(tree.root.findByProps({ testID: 'sheet-surface' }).props.style);
-    expect(style.maxHeight).toBe('94%');
+    const lone = StyleSheet.flatten(tree.root.findByProps({ testID: 'sheet-surface' }).props.style);
+    expect(lone.maxHeight).toBe('94%');
+    expect(lone.minHeight).toBe(0);
+    act(() => tree.update(<Pages second />));
+    const style = StyleSheet.flatten(tree.root.findAllByProps({ testID: 'sheet-surface' })[1].props.style);
     expect(style.minHeight).toBeCloseTo((550 - 24 - 8) * 0.94);
     act(() =>
       tree.root
         .findByProps({ testID: 'sheet-flow-viewport' })
         .props.onLayout({ nativeEvent: { layout: { height: 320 } } })
     );
-    const resized = StyleSheet.flatten(tree.root.findByProps({ testID: 'sheet-surface' }).props.style);
+    const resized = StyleSheet.flatten(tree.root.findAllByProps({ testID: 'sheet-surface' })[1].props.style);
     expect(resized.minHeight).toBeCloseTo((320 - 24 - 8) * 0.94);
+    act(() => tree.unmount());
+  });
+
+  it('starts over once every page has closed, so a reopened lone page is not held to an old taller one', async () => {
+    jest
+      .spyOn(require('react-native'), 'useWindowDimensions')
+      .mockReturnValue({ height: 800, width: 360, fontScale: 1, scale: 3 });
+    const Flow = ({ open, second }: { open: boolean; second: boolean }) => (
+      <SheetFlow>
+        <ModalSheet flowPage visible={open && !second} title="One" onClose={jest.fn()}>
+          <Text>One body</Text>
+        </ModalSheet>
+        <ModalSheet flowPage visible={open && second} title="Two" onClose={jest.fn()}>
+          <Text>Two body</Text>
+        </ModalSheet>
+      </SheetFlow>
+    );
+    let tree!: ReactTestRenderer;
+    act(() => {
+      tree = create(<Flow open second={false} />);
+    });
+    act(() => tree.update(<Flow open second />));
+    act(() =>
+      tree.root
+        .findAll((n) => n.props.testID === 'sheet-surface' && typeof n.props.onLayout === 'function')[0]
+        .props.onLayout({ nativeEvent: { layout: { height: 640 } } })
+    );
+    act(() => tree.update(<Flow open={false} second={false} />));
+    await act(async () => {
+      await Promise.resolve();
+    });
+    act(() => tree.update(<Flow open second={false} />));
+    const first = StyleSheet.flatten(
+      tree.root.findAll((n) => n.props.testID === 'sheet-surface')[0].props.style
+    );
+    expect(first.minHeight).toBe(0);
     act(() => tree.unmount());
   });
 

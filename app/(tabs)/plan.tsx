@@ -179,7 +179,7 @@ export default function PlanScreen() {
       accounts,
       dailyGoal,
       averages,
-      cardCycles,
+      allCardCycles,
       streak,
       currency,
     ] = await Promise.all([
@@ -202,6 +202,8 @@ export default function PlanScreen() {
     if (call !== request.current) return;
     const categoriesById = new Map(categories.map((c) => [c.id, c]));
     const accountsById = new Map(accounts.map((a) => [a.id, a]));
+    // Totals and the runway are in the default currency; another currency's card bill isn't added to them.
+    const cardCycles = allCardCycles.filter((c) => accountsById.get(c.accountId)?.currency === currency);
     const categoryLabelOf = (id: string | null) => {
       const cat = id ? categoriesById.get(id) : undefined;
       return cat ? categorySentence(cat.name, parentNameOf(id, categoriesById)) : undefined;

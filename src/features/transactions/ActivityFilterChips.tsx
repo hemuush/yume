@@ -1,3 +1,4 @@
+import { selectedFill } from '@/theme/interactionColors';
 import { View, Pressable, ScrollView, ActivityIndicator, useWindowDimensions } from 'react-native';
 import { HeaderIconButton } from '@/components/AppHeader';
 import { Text } from '@/components/Text';
@@ -66,7 +67,7 @@ export function ActivityFilterChips({
                 style={withPressed([
                   styles.typeBtn,
                   wrapTabs && { flexBasis: '40%' },
-                  on && { backgroundColor: accent },
+                  on && { backgroundColor: selectedFill(accent) },
                 ])}
                 accessibilityRole="radio"
                 accessibilityState={{ selected: on }}

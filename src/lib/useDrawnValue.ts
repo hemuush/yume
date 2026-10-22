@@ -8,9 +8,6 @@ import { useReduceMotion } from './useReduceMotion';
 const lastShown = new Map<string, number>();
 
 /** Test hook: forget every remembered value, as a fresh app launch would. */
-export function resetDrawnMemory(): void {
-  lastShown.clear();
-}
 
 /**
  * A shared value for a bar, line or ring that draws on the UI thread (smooth even while JavaScript is busy):

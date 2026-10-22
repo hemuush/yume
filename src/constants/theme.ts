@@ -143,7 +143,6 @@ export const theme = {
     monoBold: 'SpaceMono_700Bold',
     // Fredoka, a rounded face for Home's warmer register: wordmark, section titles, hero headings.
     // Body copy stays Archivo and amounts stay Space Mono.
-    rounded: 'Fredoka_400Regular',
     roundedMedium: 'Fredoka_500Medium',
     roundedBold: 'Fredoka_600SemiBold',
   },

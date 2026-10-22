@@ -1,6 +1,7 @@
 import { act, create, ReactTestRenderer } from 'react-test-renderer';
 import { Text, StyleSheet } from 'react-native';
-import { MonthBars, compactMoney } from './MonthBars';
+import { MonthBars } from './MonthBars';
+import { compactMoney } from '@/lib/compactMoney';
 it('keeps each amount above its own bar rather than at the common chart top', () => {
   let tree!: ReactTestRenderer;
   act(() => {
@@ -21,6 +22,6 @@ it('keeps each amount above its own bar rather than at the common chart top', ()
   act(() => tree.unmount());
 });
 it('retains the sign on large net-refund totals', () => {
-  expect(compactMoney(-2110000)).toBe('−₹21.1k');
-  expect(compactMoney(2110000)).toBe('₹21.1k');
+  expect(compactMoney(-2110000)).toBe('−₹21k');
+  expect(compactMoney(2110000)).toBe('₹21k');
 });
