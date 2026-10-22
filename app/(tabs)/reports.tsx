@@ -45,17 +45,16 @@ import {
   windowRange,
   previousWindowRange,
   previousPeriodLabel,
-  periodShortLabel,
   rangeDays,
 } from '@/lib/period';
 import { findStartingBalances } from '@/db/tidyUp';
 import { useFreshness } from '@/lib/useFreshness';
 import { ModalSheet } from '@/components/ModalSheet';
-import { dayMonth } from '@/lib/dateLabels';
 import { Amount } from '@/components/Amount';
 import {
   ReportTabs,
-  BreakdownControls,
+  FlowSwitch,
+  GroupPicker,
   ComparisonNote,
   type ReportTab,
 } from '@/features/reports/ReportControls';
@@ -72,9 +71,7 @@ import { ReportHero } from '@/features/reports/ReportHero';
 import { DayCard } from '@/features/reports/DayCard';
 import { ReportInsights } from '@/features/reports/ReportInsights';
 import { CategoryBar } from '@/features/reports/CategoryBar';
-import { CategoryTreemap } from '@/features/reports/CategoryTreemap';
 import { CategoryList } from '@/features/reports/CategoryList';
-import { WeekdayRhythm } from '@/features/reports/WeekdayRhythm';
 import { BiggestSpends } from '@/features/reports/BiggestSpends';
 import { ReportTrends } from '@/features/reports/ReportTrends';
 import { MIN_TREND_POINTS } from '@/features/reports/TrendChart';
@@ -90,11 +87,8 @@ import {
   quietDays,
   buildStoryCards,
   daySpendFacts,
-  weekdayRhythm,
   accountRows,
   categoriesAgainstUsual,
-  cumulativeSpend,
-  daysOfRange,
   StoryAction,
 } from '@/features/reports/reportsInsights';
 import { errorMessage } from '@/lib/errorMessage';
@@ -164,7 +158,6 @@ export default function ReportsScreen() {
   const [catTracks, setCatTracks] = useState<CategoryTrack[]>([]);
   const [daily, setDaily] = useState<DailyExpensePoint[]>([]);
   // The period before, day by day (the hero's comparison line), and the month's total budget when there is one.
-  const [prevDaily, setPrevDaily] = useState<DailyExpensePoint[]>([]);
   const [budgetMinor, setBudgetMinor] = useState<number | null>(null);
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const [errorText, setErrorText] = useState<string | null>(null);
@@ -201,7 +194,6 @@ export default function ReportsScreen() {
   useEffect(() => setLabelsOpen(false), [tab, cursor, flow]);
   const [group, setGroup] = useState<CategoryGroup>('category');
   // The split drawn as tiles (default) or as one bar.
-  const [breakdownView, setBreakdownView] = useState<'tree' | 'bar'>('tree');
   const [selectedAccount, setSelectedAccount] = useState<string | null>(null);
   // Fetched results carry the key they were fetched for, so one for another
   // period, flow or filter is never shown in place of the current one.
@@ -233,7 +225,7 @@ export default function ReportsScreen() {
             : 7;
       try {
         setStatus('loading');
-        const [cmp, tr, nw, cf, ct, dy, cats, tidy, accs, pdy, bud] = await Promise.all([
+        const [cmp, tr, nw, cf, ct, dy, cats, tidy, accs, bud] = await Promise.all([
           getRangeComparison(range, previousWindowRange(c), isCustomWindow(c) ? 'month' : c.granularity),
           getMonthlyExpenseTrend(trendMonths, anchor, hideAmounts),
           getNetWorthTrend(trendMonths, anchor),
@@ -244,7 +236,6 @@ export default function ReportsScreen() {
           // Only the starting-balance names (to word an insight); not Tidy up's whole-ledger repeat scan.
           findStartingBalances().catch(() => null),
           listAccounts(true),
-          getDailyExpenseTotals(previousWindowRange(c), hideAmounts).catch(() => [] as DailyExpensePoint[]),
           // Budgets are per calendar month: other windows have none to draw.
           c.granularity === 'month'
             ? listBudgetsForMonth(range.start.slice(0, 7), hideAmounts)
@@ -279,7 +270,6 @@ export default function ReportsScreen() {
         setCatTracks(ct.map((p) => ({ ...p, totalsMinor: p.totalsMinor.slice(0, lastElapsed + 1) })));
         setSavingsIds(savingsAccountIdsOf(accs));
         setDaily(dy);
-        setPrevDaily(pdy);
         setBudgetMinor(bud > 0 ? bud : null);
         setCategories(cats);
         setStartingBalanceNames(tidy ? tidy.map((g) => g.categoryName) : []);
@@ -578,12 +568,6 @@ export default function ReportsScreen() {
   }
   const heatDays = heat.kind === 'calendar' ? heat.days : heat.rows.flatMap((r) => r.days);
   const inspected = heatDays.find((d) => d?.iso === inspectIso) ?? null;
-  const periodDays = daysOfRange(range);
-  const heroIndex = periodDays.indexOf(inspectIso);
-  const heroCurrent = cumulativeSpend(daily, range, todayIso);
-  const heroPrevious = cumulativeSpend(prevDaily, previousWindowRange(cursor), '9999-12-31').map(
-    (v) => v ?? 0
-  );
   // With a category filter on, the day lists that category's entries (and its subcategories').
   const inFilter = (tx: Transaction) =>
     tx.categoryId != null &&
@@ -699,19 +683,7 @@ export default function ReportsScreen() {
                 inProgress={range.end >= todayIso}
                 spentMinor={dispExpense}
                 perDayMinor={facts.countedDays > 0 ? facts.perDayMinor : null}
-                current={heroCurrent}
-                previous={heroPrevious}
-                labelAt={(i) => dayMonth(periodDays[i] ?? range.end)}
-                selected={heroIndex >= 0 ? heroIndex : null}
-                onSelect={(i) => periodDays[i] && inspectDay(periodDays[i])}
                 budgetMinor={budgetMinor}
-                projectedMinor={
-                  range.end >= todayIso && facts.countedDays > 0
-                    ? Math.round(facts.perDayMinor * daysInPeriod)
-                    : null
-                }
-                currentName={custom ? 'This period' : periodShortLabel(cursor)}
-                previousName={custom ? 'Period before' : isYear ? 'Last year' : 'Month before'}
                 incomeMinor={current.incomeMinor}
                 previousIncomeMinor={previous.incomeMinor}
                 comparedTo={custom ? 'the period before' : previousPeriodLabel(cursor)}
@@ -719,7 +691,6 @@ export default function ReportsScreen() {
               <View style={filterLoading ? styles.dimmed : undefined}>
                 <HeatmapCard
                   model={heat}
-                  daily={heatDaily}
                   selectedIso={inspectIso}
                   onSelect={inspectDay}
                   onOpenMonth={custom && !byMonth ? undefined : openMonthOf}
@@ -776,17 +747,10 @@ export default function ReportsScreen() {
               <ReportInsights
                 // A new period starts at the first card.
                 key={`${range.start}:${range.end}`}
-                title={`${periodName}, in short`}
+                title="Worth a look"
                 cards={stories}
                 onAction={onStoryAction}
               />
-              {!byMonth && (!filterId || filtered?.id === filterId) && (
-                <WeekdayRhythm
-                  key={`${cursorKey}|${filterId ?? ''}`}
-                  rhythm={weekdayRhythm(heatDaily, range, todayIso)}
-                  scopeName={filterCat?.name}
-                />
-              )}
               {!byMonth && (!filterId || filtered?.id === filterId) && (
                 <>
                   {!largest || largest.key !== largestKey ? (
@@ -814,41 +778,54 @@ export default function ReportsScreen() {
             </>
           ) : tab === 'cats' ? (
             <View>
-              <Text style={styles.blockTitle}>{income ? 'Where it came from' : 'Where it went'}</Text>
-              <BreakdownControls
+              <FlowSwitch
                 flow={flow}
-                group={group}
-                view={breakdownView}
-                onView={setBreakdownView}
-                onLabels={() => setLabelsOpen(true)}
                 onFlow={(f) => {
                   setFlow(f);
                   setCatExpanded(false);
                   setSelectedCat(null);
                   setSelectedAccount(null);
                 }}
-                onGroup={(g) => {
-                  setGroup(g);
-                  setCatExpanded(false);
-                  setSelectedCat(null);
-                  setSelectedAccount(null);
-                }}
               />
-              {(byAccount ? accountItems !== null : shownBreakdown.length > 0) && (
-                <View style={styles.breakdownContext}>
-                  <Amount minor={byAccount ? accountTotal : shownTotal} style={styles.breakdownAmount} />
-                  <Text style={styles.stripSub}>
-                    {income ? 'received' : 'spent'} · {periodName}
-                    {range.end >= todayIso ? ' so far' : ''}
-                  </Text>
+              <View style={styles.sumCard}>
+                <View style={styles.sumHead}>
+                  <Text style={styles.sumTitle}>{income ? 'Where it came from' : 'Where it went'}</Text>
+                  <GroupPicker
+                    flow={flow}
+                    group={group}
+                    onLabels={() => setLabelsOpen(true)}
+                    onGroup={(g) => {
+                      setGroup(g);
+                      setCatExpanded(false);
+                      setSelectedCat(null);
+                      setSelectedAccount(null);
+                    }}
+                  />
                 </View>
-              )}
-              {!byAccount && shownBreakdown.length > 0 && (
-                <ComparisonNote
-                  label={`${range.end >= todayIso ? 'So far vs full ' : 'Vs '}${custom ? 'previous period' : previousPeriodLabel(cursor)}`}
-                  partial={range.end >= todayIso}
-                />
-              )}
+                {(byAccount ? accountItems !== null : shownBreakdown.length > 0) && (
+                  <View style={styles.breakdownContext}>
+                    <Amount minor={byAccount ? accountTotal : shownTotal} style={styles.breakdownAmount} />
+                    <Text style={styles.stripSub}>
+                      {income ? 'received' : 'spent'} · {periodName}
+                      {range.end >= todayIso ? ' so far' : ''}
+                    </Text>
+                  </View>
+                )}
+                {byAccount
+                  ? accountItems !== null &&
+                    accountBreakdown.length > 0 && (
+                      <CategoryBar breakdown={accountBreakdown} selectedId={selectedAccount} />
+                    )
+                  : shownBreakdown.length > 0 && (
+                      <CategoryBar breakdown={shownBreakdown} selectedId={selectedCat} />
+                    )}
+                {!byAccount && shownBreakdown.length > 0 && (
+                  <ComparisonNote
+                    label={`${range.end >= todayIso ? 'So far vs full ' : 'Vs '}${custom ? 'previous period' : previousPeriodLabel(cursor)}`}
+                    partial={range.end >= todayIso}
+                  />
+                )}
+              </View>
               <ExpenseLabelsReport visible={labelsOpen} range={range} onClose={() => setLabelsOpen(false)} />
               {byAccount ? (
                 detailErrors.accounts ? null : accountItems === null ? (
@@ -859,17 +836,6 @@ export default function ReportsScreen() {
                   </Text>
                 ) : (
                   <>
-                    {breakdownView === 'tree' ? (
-                      <CategoryTreemap
-                        breakdown={accountBreakdown}
-                        selectedId={selectedAccount}
-                        onSelect={(a) =>
-                          setSelectedAccount((id) => (id === a.categoryId ? null : a.categoryId))
-                        }
-                      />
-                    ) : (
-                      <CategoryBar breakdown={accountBreakdown} selectedId={selectedAccount} />
-                    )}
                     <CategoryList
                       breakdown={accountBreakdown}
                       spentMinor={accountTotal}
@@ -893,15 +859,6 @@ export default function ReportsScreen() {
                 </Text>
               ) : (
                 <>
-                  {breakdownView === 'tree' ? (
-                    <CategoryTreemap
-                      breakdown={shownBreakdown}
-                      selectedId={selectedCat}
-                      onSelect={(c) => setSelectedCat((id) => (id === c.categoryId ? null : c.categoryId))}
-                    />
-                  ) : (
-                    <CategoryBar breakdown={shownBreakdown} selectedId={selectedCat} />
-                  )}
                   <CategoryList
                     breakdown={shownBreakdown}
                     spentMinor={shownTotal}

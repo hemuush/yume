@@ -48,6 +48,22 @@ export function heatLevel(amountMinor: number, maxMinor: number): 0 | 1 | 2 | 3 
   return 1;
 }
 
+/** From this many spending days on, the heat levels follow rank, so one huge day cannot wash out the rest. */
+const RANKED_HEAT_MIN_DAYS = 8;
+
+/**
+ * A level for each day's spend. With enough spending days the levels are shares of the days (about a third,
+ * a third, a quarter, then the heaviest sixth or so), so the ordinary days still show their pattern next to a
+ * month's one big payment; the big-day dot is what marks that payment. Few days: scaled to the heaviest.
+ */
+function heatLevelFor(spends: number[], maxMinor: number): (minor: number) => 0 | 1 | 2 | 3 | 4 {
+  const sorted = spends.filter((v) => v > 0).sort((a, b) => a - b);
+  if (sorted.length < RANKED_HEAT_MIN_DAYS) return (minor) => heatLevel(minor, maxMinor);
+  const at = (p: number) => sorted[Math.min(sorted.length - 1, Math.floor(sorted.length * p))];
+  const [t1, t2, t3] = [at(0.34), at(0.67), at(0.85)];
+  return (minor) => (minor <= 0 ? 0 : minor <= t1 ? 1 : minor <= t2 ? 2 : minor <= t3 ? 3 : 4);
+}
+
 /** One day of the heatmap. */
 export interface HeatDay {
   iso: string;
@@ -83,13 +99,17 @@ export function buildHeat(input: {
   const byDate = new Map(input.daily.map((d) => [d.date, d.totalMinor]));
   const isos = daysOfRange(input.range);
   const maxMinor = Math.max(0, ...isos.filter((i) => i <= input.today).map((i) => byDate.get(i) ?? 0));
+  const levelOf = heatLevelFor(
+    isos.filter((i) => i <= input.today).map((i) => byDate.get(i) ?? 0),
+    maxMinor
+  );
   const dayOf = (iso: string): HeatDay => {
     const minor = iso <= input.today ? (byDate.get(iso) ?? 0) : 0;
     return {
       iso,
       day: Number(iso.slice(8)),
       minor,
-      level: heatLevel(minor, maxMinor),
+      level: levelOf(minor),
       future: iso > input.today,
       today: iso === input.today,
     };
@@ -694,53 +714,3 @@ export function cumulativeSpend(
 
 /** A spend-day that stands well above the period's usual day: marked on the heatmap. */
 export const BIG_DAY_FACTOR = 2.4;
-
-/**
- * Total spend per week row of a calendar grid (the numbers down its right edge). `rows` are the grid's
- * rows, each cell an ISO date or null.
- */
-export function weekTotals(rows: (string | null)[][], daily: DailyExpensePoint[]): number[] {
-  const spentOn = new Map(daily.map((d) => [d.date, d.totalMinor]));
-  return rows.map((row) => row.reduce((sum, iso) => sum + (iso ? (spentOn.get(iso) ?? 0) : 0), 0));
-}
-
-/** One tile of a treemap, as a share (0-100) of the whole box. */
-export interface TreemapTile {
-  id: string;
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-}
-
-/**
- * Lays values out as tiles filling a box, each tile's area its share of the total. Largest first, the list is
- * split in two halves of about equal weight, the box cut along its longer side, and each half laid out in its
- * part: it stays readable (few thin slivers) without a full squarify.
- */
-export function treemapLayout(items: { id: string; value: number }[]): TreemapTile[] {
-  const live = items.filter((i) => i.value > 0).sort((a, b) => b.value - a.value);
-  const out: TreemapTile[] = [];
-  const place = (list: typeof live, x: number, y: number, w: number, h: number) => {
-    if (list.length === 0) return;
-    if (list.length === 1) {
-      out.push({ id: list[0].id, x, y, w, h });
-      return;
-    }
-    const sum = list.reduce((s, i) => s + i.value, 0);
-    let acc = 0;
-    let k = 0;
-    while (k < list.length - 1 && acc + list[k].value < sum / 2) acc += list[k++].value;
-    if (k === 0) acc = list[k++].value;
-    const share = acc / sum;
-    if (w >= h) {
-      place(list.slice(0, k), x, y, w * share, h);
-      place(list.slice(k), x + w * share, y, w * (1 - share), h);
-    } else {
-      place(list.slice(0, k), x, y, w, h * share);
-      place(list.slice(k), x, y + h * share, w, h * (1 - share));
-    }
-  };
-  place(live, 0, 0, 100, 100);
-  return out;
-}

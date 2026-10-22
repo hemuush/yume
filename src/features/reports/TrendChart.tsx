@@ -1,8 +1,9 @@
 import { themeInk } from '@/theme/interactionColors';
-import { useRef, useState } from 'react';
-import { Animated, View, Pressable, ScrollView, ScrollViewInstance } from 'react-native';
+import { useState } from 'react';
+import { Animated, View, Pressable } from 'react-native';
 import Svg, { Circle, Line, Polyline, Text as SvgText } from 'react-native-svg';
 import { Text } from '@/components/Text';
+import { ModalSheet } from '@/components/ModalSheet';
 import type { NetWorthPoint, TrendPoint } from '@/db/reports';
 import { formatMoney } from '@/lib/money';
 import { roundedMinor } from '@/lib/round';
@@ -25,7 +26,6 @@ const PAD_X = 14;
 type Kind = 'spend' | 'netWorth';
 
 const partialProjection = (v: number | null) => (v == null ? -Infinity : v);
-const TIP_W = 150;
 
 const AnimatedPolyline = Animated.createAnimatedComponent(Polyline);
 const DRAW_MS = 800;
@@ -88,7 +88,7 @@ export function TrendChart({
   const hasNw = netWorthTrend.length >= MIN_TREND_POINTS && netWorthTrend.some((p) => p.recorded !== false);
   const [width, setWidth] = useState(0);
   const [sel, setSel] = useState<number | null>(null);
-  const monthScroll = useRef<ScrollViewInstance>(null);
+  const [how, setHow] = useState(false);
   const { accent } = useAccent();
   if (!hasSpend && !hasNw) return null;
   const showing: Kind =
@@ -189,7 +189,16 @@ export function TrendChart({
         onResponderGrant={(e) => pickAt(e.nativeEvent.locationX)}
         onResponderMove={(e) => pickAt(e.nativeEvent.locationX)}
         style={{ height: H }}
-        accessibilityHint="Use the month buttons below to pick a month"
+        accessible
+        accessibilityRole="adjustable"
+        accessibilityLabel={`${points[selI].label}: ${formatMoney(roundedMinor(points[selI].value))}. Swipe to change month`}
+        accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
+        onAccessibilityAction={(e) => {
+          const step = e.nativeEvent.actionName === 'increment' ? 1 : -1;
+          let next = selI + step;
+          while (next >= 0 && next < points.length && !points[next].available) next += step;
+          if (next >= 0 && next < points.length) setSel(next);
+        }}
       >
         {width > 0 && (
           <Svg width={width} height={H} pointerEvents="none">
@@ -318,70 +327,10 @@ export function TrendChart({
             })}
           </Svg>
         )}
-        {width > 0 && (
-          <View
-            pointerEvents="none"
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: Math.max(0, Math.min(width - TIP_W, x(selI) - TIP_W / 2)),
-              width: TIP_W,
-              alignItems: 'center',
-            }}
-          >
-            <Text style={styles.chartTip} numberOfLines={1}>
-              {points[selI].label} · {formatMoney(roundedMinor(points[selI].value))}
-            </Text>
-          </View>
-        )}
       </View>
-      <ScrollView
-        ref={monthScroll}
-        onContentSizeChange={() => {
-          if (sel === null) monthScroll.current?.scrollToEnd({ animated: false });
-        }}
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ gap: 4 }}
-      >
-        {points.map((p, i) => (
-          <Pressable
-            key={i}
-            disabled={!p.available}
-            accessibilityRole="button"
-            accessibilityLabel={`Select ${p.label}`}
-            accessibilityState={{ selected: selI === i, disabled: !p.available }}
-            onPress={() => {
-              haptics.tap();
-              setSel(i);
-            }}
-            style={withPressed({
-              minWidth: 44,
-              minHeight: 44,
-              justifyContent: 'center',
-              alignItems: 'center',
-              borderRadius: 12,
-              backgroundColor: selI === i ? accent : 'transparent',
-              opacity: p.available ? 1 : 0.35,
-            })}
-          >
-            <Text>{points.length > 12 && p.month ? `${p.label} ${p.month.slice(2, 4)}` : p.label}</Text>
-          </Pressable>
-        ))}
-      </ScrollView>
-      <Text style={styles.stripSub}>
-        Scale: {formatMoney(roundedMinor(lo))}–{formatMoney(roundedMinor(hi))}
-      </Text>
-      <Text style={styles.stripSub}>
-        {showing === 'netWorth'
-          ? 'Net worth across your accounts. '
-          : avg != null
-            ? 'Dashed horizontal line: recorded-month average. '
-            : 'More finished months are needed for an average. '}
-        {partial ? 'Dashed segment: current month so far. ' : ''}
-        {points.some((p) => !p.available) ? 'Gaps: before tracking or future months.' : ''}
-      </Text>
-      <Text style={styles.trendRead}>{read}</Text>
+      <View style={styles.trendReadTray}>
+        <Text style={styles.trendRead}>{read}</Text>
+      </View>
       {link && (
         <Pressable
           onPress={link.open}
@@ -392,6 +341,29 @@ export function TrendChart({
           <Text style={styles.trendLinkText}>Open {link.name} in Reports ›</Text>
         </Pressable>
       )}
+      <Pressable
+        onPress={() => setHow(true)}
+        hitSlop={8}
+        style={withPressed(styles.trendLink)}
+        accessibilityRole="button"
+        accessibilityLabel="How to read this chart"
+      >
+        <Text style={styles.trendLinkText}>How this is worked out</Text>
+      </Pressable>
+      <ModalSheet visible={how} onClose={() => setHow(false)} title="How to read this chart">
+        <Text style={styles.trendRead}>
+          Scale: {formatMoney(roundedMinor(lo))} to {formatMoney(roundedMinor(hi))}.
+        </Text>
+        <Text style={styles.trendRead}>
+          {showing === 'netWorth'
+            ? 'Net worth across your accounts. '
+            : avg != null
+              ? 'The dashed horizontal line is the average of your recorded months. '
+              : 'More finished months are needed for an average. '}
+          {partial ? 'The dashed segment is the current month so far. ' : ''}
+          {points.some((p) => !p.available) ? 'Gaps are before tracking or in the future.' : ''}
+        </Text>
+      </ModalSheet>
     </View>
   );
 }

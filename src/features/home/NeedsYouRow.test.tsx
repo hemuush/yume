@@ -1,6 +1,6 @@
 /**
  * Needs you row on the bell screen: smoke-render guard (a Reanimated/core-Animated mismatch once crashed).
- * Contract: title/detail, "Later" only if snoozable, dismiss only if dismissible, right callback per tap.
+ * Contract: title/detail, a verb button, "Later" (menu) only if snoozable, dismiss only if dismissible.
  */
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
 
@@ -84,11 +84,34 @@ describe('NeedsYouRow', () => {
     expect(onPress).toHaveBeenCalledTimes(1);
   });
 
-  it('offers "Later" only on a snoozable item, and it does not open the item', async () => {
-    expect(texts(await render(emi))).not.toContain('Later');
+  const openMenu = (tree: ReactTestRenderer, title: string) =>
+    act(() =>
+      tree.root
+        .find((n) => n.props.accessibilityLabel === `More for ${title}` && n.props.onPress)
+        .props.onPress()
+    );
+
+  it('says in one word what the row does, and tapping it opens the item', async () => {
+    const onPress = jest.fn();
+    const tree = await render(emi, { onPress });
+    expect(texts(tree)).toContain('Pay');
+    act(() =>
+      tree.root
+        .find((n) => n.props.accessibilityLabel === 'Pay: Home loan EMI' && n.props.onPress)
+        .props.onPress()
+    );
+    expect(onPress).toHaveBeenCalledTimes(1);
+  });
+
+  it('offers "Later" in the menu only on a snoozable item, and it does not open the item', async () => {
+    const plain = await render(emi, { onDismiss: jest.fn() });
+    openMenu(plain, 'Home loan EMI');
+    expect(texts(plain)).not.toContain('Later');
     const onPress = jest.fn();
     const onSnooze = jest.fn();
-    const tree = await render(noBackup, { onPress, onSnooze });
+    const tree = await render(noBackup, { onPress, onSnooze, onDismiss: jest.fn() });
+    expect(texts(tree)).not.toContain('Later');
+    openMenu(tree, 'No backup yet');
     expect(texts(tree)).toContain('Later');
     act(() =>
       tree.root
@@ -99,13 +122,41 @@ describe('NeedsYouRow', () => {
     expect(onPress).not.toHaveBeenCalled();
   });
 
-  it('shows a dismiss button only when it can be dismissed', async () => {
+  it('shows Dismiss in the menu only when it can be dismissed', async () => {
     const dismissButtons = (tree: ReactTestRenderer) =>
       tree.root.findAll((n) => n.props.accessibilityLabel === 'Dismiss: Home loan EMI' && n.props.onPress);
-    expect(dismissButtons(await render(emi))).toHaveLength(0);
+    const none = await render(emi);
+    openMenu(none, 'Home loan EMI');
+    expect(dismissButtons(none)).toHaveLength(0);
     const onDismiss = jest.fn();
     const tree = await render(emi, { onDismiss });
+    expect(dismissButtons(tree)).toHaveLength(0);
+    openMenu(tree, 'Home loan EMI');
     act(() => dismissButtons(tree)[0].props.onPress());
+    expect(onDismiss).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows "Show again" instead of the menu on a dismissed row', async () => {
+    const onDismiss = jest.fn();
+    let tree!: ReactTestRenderer;
+    await act(async () => {
+      tree = create(
+        <NeedsYouRow
+          item={emi}
+          divider={false}
+          onPress={jest.fn()}
+          onSnooze={jest.fn()}
+          onDismiss={onDismiss}
+          dismissLabel="Show again"
+        />
+      );
+    });
+    expect(texts(tree)).toContain('Show again');
+    act(() =>
+      tree.root
+        .find((n) => n.props.accessibilityLabel === 'Show again: Home loan EMI' && n.props.onPress)
+        .props.onPress()
+    );
     expect(onDismiss).toHaveBeenCalledTimes(1);
   });
 

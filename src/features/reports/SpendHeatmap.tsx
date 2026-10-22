@@ -4,15 +4,12 @@ import Animated, { FadeIn, ReduceMotion } from 'react-native-reanimated';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { spendHeatScale, hexToHsl } from '@/lib/color';
-import { compactMoney } from '@/lib/compactMoney';
 import { gridRows } from '@/lib/gridRows';
 import { haptics } from '@/lib/haptics';
 import { withPressed } from '@/lib/pressed';
-import type { DailyExpensePoint } from '@/db/reports';
-import { BIG_DAY_FACTOR, HeatDay, HeatModel, heatDayLabel, weekTotals } from './reportsInsights';
+import { BIG_DAY_FACTOR, HeatDay, HeatModel, heatDayLabel } from './reportsInsights';
 
 const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
-const TOTALS_W = 44;
 const CELL_GAP = 4;
 const CELL_H = 40;
 const HEAD_H = 22;
@@ -76,14 +73,12 @@ const enter = (delay: number) => FadeIn.duration(260).delay(delay).reduceMotion(
 
 function CalendarHeat({
   model,
-  daily,
   selectedIso,
   onSelect,
   usualMinor,
   hue,
 }: {
   model: Extract<HeatModel, { kind: 'calendar' }>;
-  daily: DailyExpensePoint[];
   selectedIso: string | null;
   onSelect: (iso: string) => void;
   usualMinor: number;
@@ -92,11 +87,7 @@ function CalendarHeat({
   const { scale, labels } = useHeatColors(hue);
   const [width, setWidth] = useState(0);
   const rows = gridRows(model.days, model.leadingPad, 7);
-  const totals = weekTotals(
-    rows.map((r) => r.map((d) => d?.iso ?? null)),
-    daily
-  );
-  const cellW = (width - TOTALS_W) / 7;
+  const cellW = width / 7;
   const { box, handlers } = useGridScrub((x, y) => {
     if (width <= 0) return null;
     const col = Math.floor(x / cellW);
@@ -131,11 +122,6 @@ function CalendarHeat({
           <Text style={[styles.cellLabel, d.level === 4 && styles.cellLabelTop, { color: labels[d.level] }]}>
             {d.day}
           </Text>
-          {d.level >= 3 && (
-            <Text style={[styles.cellAmount, { color: labels[d.level] }]} numberOfLines={1}>
-              {compactMoney(d.minor)}
-            </Text>
-          )}
           {big && <View style={styles.bigDot} />}
           {d.today && <View style={styles.todayDot} />}
         </Pressable>
@@ -150,12 +136,10 @@ function CalendarHeat({
             {w}
           </Text>
         ))}
-        <Text style={[styles.totalsHead]}>Week</Text>
       </View>
       {rows.map((row, r) => (
         <View key={r} style={styles.weekRow}>
           {row.map((d, c) => (d ? renderDay(d, r * 7 + c) : <View key={`b${c}`} style={styles.slot} />))}
-          <Text style={styles.weekTotal}>{totals[r] > 0 ? compactMoney(totals[r]) : ''}</Text>
         </View>
       ))}
     </View>
@@ -237,13 +221,12 @@ function MatrixHeat({
 }
 
 /**
- * The spend heatmap. A month or two is a calendar tinted by daily spend, with each week's total down the
- * edge, the amount printed on the heavy days and a dot on days far above the usual; a longer period is a
+ * The spend heatmap. A month or two is a calendar tinted by daily spend, with a dot on days far above the
+ * usual; a longer period is a
  * month × day-of-month matrix. Tap a day, or drag across the grid to read them in turn.
  */
 export function SpendHeatmap({
   model,
-  daily,
   selectedIso,
   onSelect,
   onOpenMonth,
@@ -251,7 +234,6 @@ export function SpendHeatmap({
   hue,
 }: {
   model: HeatModel;
-  daily: DailyExpensePoint[];
   selectedIso: string | null;
   onSelect: (iso: string) => void;
   onOpenMonth?: (monthKey: string) => void;
@@ -261,7 +243,6 @@ export function SpendHeatmap({
   return model.kind === 'calendar' ? (
     <CalendarHeat
       model={model}
-      daily={daily}
       selectedIso={selectedIso}
       onSelect={onSelect}
       usualMinor={usualMinor}
@@ -288,29 +269,12 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: theme.colors.textMuted,
   },
-  totalsHead: {
-    width: TOTALS_W,
-    textAlign: 'right',
-    fontFamily: theme.font.body,
-    fontSize: 11,
-    color: theme.colors.textMuted,
-    height: HEAD_H - CELL_GAP,
-  },
-  weekTotal: {
-    width: TOTALS_W,
-    textAlign: 'right',
-    fontFamily: theme.font.bodyBold,
-    fontSize: 11,
-    color: theme.colors.textSecondary,
-    fontVariant: ['tabular-nums'],
-  },
   cell: { height: CELL_H, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
   cellEmpty: { borderWidth: StyleSheet.hairlineWidth, borderColor: theme.colors.borderSoft },
   cellFuture: { borderWidth: 0, opacity: 0.35 },
   cellSelected: { borderWidth: 2.5, borderColor: theme.colors.ink },
   cellLabel: { fontFamily: theme.font.body, fontSize: 12 },
   cellLabelTop: { fontFamily: theme.font.bodyBold },
-  cellAmount: { fontFamily: theme.font.bodyBold, fontSize: 9, marginTop: -1 },
   todayDot: {
     position: 'absolute',
     bottom: 4,

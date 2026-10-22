@@ -25,9 +25,8 @@ import { Section } from '@/components/Section';
 import { screenStyles as h, SCREEN } from '@/components/screenStyles';
 import { NeedsYouRow } from '@/features/home/NeedsYouRow';
 import { NEEDS_TONE } from '@/features/home/needsTone';
-import { Glass } from '@/components/Glass';
+import { HeaderIconButton } from '@/components/AppHeader';
 import { cardSurface } from '@/components/CardSurface';
-import { Kicker, frost } from '@/components/Frost';
 import { HomeWallpaper } from '@/features/home/HomeWallpaper';
 import { SuuIllustration } from '@/components/SuuIllustration';
 import { NeedsYouItem, NeedsYouTone } from '@/features/home/needsYou';
@@ -44,6 +43,11 @@ import { showAlert } from '@/components/AppDialog';
 import { payCardRoute } from '@/lib/payCard';
 
 const TONES: NeedsYouTone[] = ['urgent', 'warn', 'info'];
+const GROUP_TITLE: Record<NeedsYouTone, string> = {
+  urgent: 'Do first',
+  warn: 'Coming up',
+  info: 'When you can',
+};
 
 /**
  * The bell's screen: the full list that Home's card shows the top three of, so both counts match. A glass card
@@ -184,18 +188,34 @@ export default function NeedsYouScreen() {
           <EmptyState
             title="All caught up"
             subtitle="Nothing needs you right now. Suu will say when something does."
-          />
+          >
+            <PrimaryButton
+              title="Choose what Yume mentions"
+              variant="secondary"
+              compact
+              onPress={() => router.push('/notification-settings')}
+            />
+          </EmptyState>
         ) : (
           <>
-            <Glass
-              radius={22}
-              tone="strong"
-              style={[frost.hero, cardSurface.summary, { padding: 14, gap: 8 }]}
-            >
-              <Kicker icon="bell">Needs you</Kicker>
-              <View style={frost.bigRow}>
-                <Text style={frost.bigValue}>{shown.length}</Text>
-                <Text style={frost.bigNote}>{shown.length === 1 ? 'thing' : 'things'}</Text>
+            <View style={[h.card, styles.summary]}>
+              <Text style={styles.summaryLabel}>
+                {shown.some((i) => i.tone === 'urgent') ? 'Needs you today' : 'Needs you'}
+              </Text>
+              <View style={styles.bigRow}>
+                <Text style={styles.bigValue}>{shown.length}</Text>
+                <Text style={styles.bigNote}>{shown.length === 1 ? 'thing' : 'things'}</Text>
+              </View>
+              <View style={styles.bar}>
+                {TONES.map((t) => {
+                  const n = shown.filter((i) => i.tone === t).length;
+                  return n > 0 ? (
+                    <View
+                      key={t}
+                      style={[styles.barSeg, { flexGrow: n, backgroundColor: NEEDS_TONE[t].color }]}
+                    />
+                  ) : null;
+                })}
               </View>
               <View style={styles.tones}>
                 {TONES.map((t) => {
@@ -210,19 +230,26 @@ export default function NeedsYouScreen() {
                   ) : null;
                 })}
               </View>
-            </Glass>
-            <View style={[h.card, cardSurface.neutral, styles.list]}>
-              {shown.map((item, i) => (
-                <NeedsYouRow
-                  key={item.key}
-                  item={item}
-                  divider={i > 0}
-                  onPress={() => open(item)}
-                  onSnooze={() => void snooze(item)}
-                  onDismiss={() => void dismiss(item)}
-                />
-              ))}
             </View>
+            {TONES.map((t) => {
+              const group = shown.filter((i) => i.tone === t);
+              return group.length > 0 ? (
+                <Section key={t} compact title={GROUP_TITLE[t]} badge={group.length}>
+                  <View style={[h.card, cardSurface.neutral]}>
+                    {group.map((item, i) => (
+                      <NeedsYouRow
+                        key={item.key}
+                        item={item}
+                        divider={i > 0}
+                        onPress={() => open(item)}
+                        onSnooze={() => void snooze(item)}
+                        onDismiss={() => void dismiss(item)}
+                      />
+                    ))}
+                  </View>
+                </Section>
+              ) : null;
+            })}
           </>
         )}
 
@@ -285,6 +312,14 @@ export default function NeedsYouScreen() {
           ) : undefined
         }
         title="Needs you"
+        actions={
+          <HeaderIconButton
+            icon="settings"
+            label="Notification settings"
+            glass
+            onPress={() => router.push('/notification-settings')}
+          />
+        }
         showBack
         hideUser
         wallpaper
@@ -295,7 +330,18 @@ export default function NeedsYouScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
-  list: { marginTop: 12 },
+  summary: { marginTop: theme.layout.screenTopGap, padding: 16, gap: 6 },
+  summaryLabel: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textSecondary },
+  bigRow: { flexDirection: 'row', alignItems: 'baseline', gap: 8 },
+  bigValue: {
+    fontFamily: theme.font.bodyLight,
+    fontSize: 40,
+    lineHeight: 46,
+    color: theme.colors.textPrimary,
+  },
+  bigNote: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textSecondary },
+  bar: { flexDirection: 'row', gap: 3, height: 10, marginTop: 4 },
+  barSeg: { flexBasis: 0, height: 10, borderRadius: 5, minWidth: 6 },
   errorBanner: {
     marginHorizontal: SCREEN.gutter,
     marginTop: theme.layout.screenTopGap,
