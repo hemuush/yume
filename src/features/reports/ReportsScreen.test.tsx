@@ -266,6 +266,8 @@ it('keeps the report scroll view mounted during a same-period refresh and refres
   );
   await act(async () => {
     rejectRefresh(new Error('refresh interrupted'));
+    // The failure is handled a few promise hops later; let them settle before reading the screen.
+    await new Promise((resolve) => setTimeout(resolve, 0));
   });
   expect(tree.root.findAllByType(ScrollView).find((node) => node.props.testID === 'reports-content')).toBe(
     scroll
