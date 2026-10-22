@@ -714,3 +714,30 @@ export function cumulativeSpend(
 
 /** A spend-day that stands well above the period's usual day: marked on the heatmap. */
 export const BIG_DAY_FACTOR = 2.4;
+
+/** What this month's budgets cover: their combined limit and what has been spent inside them. */
+export interface BudgetCover {
+  limitMinor: number;
+  spentMinor: number;
+  count: number;
+}
+
+/**
+ * Budgets only watch the categories they are set on, so they are compared with the spending in those
+ * categories, never with the whole month's spending. A budget on a subcategory whose parent also has one is
+ * already inside the parent's, so it is left out rather than counted twice. Null when there are none.
+ */
+export function budgetCover(
+  budgets: {
+    budget: { categoryId: string };
+    parentCategoryId?: string | null;
+    spentMinor: number;
+    effectiveLimitMinor: number;
+  }[]
+): BudgetCover | null {
+  const covered = new Set(budgets.map((b) => b.budget.categoryId));
+  const own = budgets.filter((b) => !b.parentCategoryId || !covered.has(b.parentCategoryId));
+  const limitMinor = own.reduce((sum, b) => sum + b.effectiveLimitMinor, 0);
+  if (own.length === 0 || limitMinor <= 0) return null;
+  return { limitMinor, spentMinor: own.reduce((sum, b) => sum + b.spentMinor, 0), count: own.length };
+}

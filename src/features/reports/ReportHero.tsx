@@ -9,6 +9,7 @@ import { roundedMinor } from '@/lib/round';
 import { hexToRgba } from '@/lib/color';
 import { useAccent } from '@/theme/AccentContext';
 import { themeInk } from '@/theme/interactionColors';
+import type { BudgetCover } from './reportsInsights';
 
 const money = (minor: number) => formatMoney(roundedMinor(minor));
 
@@ -25,7 +26,7 @@ export function ReportHero({
   inProgress,
   spentMinor,
   perDayMinor,
-  budgetMinor,
+  budget,
   incomeMinor,
   previousIncomeMinor,
   comparedTo,
@@ -35,7 +36,8 @@ export function ReportHero({
   inProgress: boolean;
   spentMinor: number;
   perDayMinor: number | null;
-  budgetMinor: number | null;
+  /** The month's budgets and what has been spent inside them (not the whole month's spending). */
+  budget: BudgetCover | null;
   incomeMinor: number;
   previousIncomeMinor: number;
   comparedTo: string;
@@ -43,10 +45,9 @@ export function ReportHero({
 }) {
   const { accent } = useAccent();
   const ink = themeInk(accent);
-  const hasBudget = budgetMinor != null && budgetMinor > 0;
-  const used = hasBudget ? spentMinor / budgetMinor : 0;
-  const over = hasBudget && used > 1;
-  const near = hasBudget && !over && used >= NEAR_BUDGET;
+  const used = budget ? budget.spentMinor / budget.limitMinor : 0;
+  const over = budget != null && used > 1;
+  const near = budget != null && !over && used >= NEAR_BUDGET;
   const barColor = over ? theme.colors.expense : near ? theme.colors.slice.due : accent;
   const kept = incomeMinor - spentMinor;
   const keptPct = incomeMinor > 0 ? Math.round((kept / incomeMinor) * 100) : null;
@@ -66,8 +67,8 @@ export function ReportHero({
       {perDayMinor != null && perDayMinor > 0 && (
         <Text style={styles.sub}>{`${money(perDayMinor)} a day`}</Text>
       )}
-      {hasBudget && (
-        <View style={styles.budget} accessible accessibilityLabel={budgetSpoken(spentMinor, budgetMinor)}>
+      {budget && (
+        <View style={styles.budget} accessible accessibilityLabel={budgetSpoken(budget)}>
           <View style={[styles.track, { backgroundColor: hexToRgba(ink, 0.1) }]}>
             <View
               key={animKey}
@@ -75,9 +76,8 @@ export function ReportHero({
             />
           </View>
           <Text style={[styles.budgetText, over && styles.bad]}>
-            {over
-              ? `${Math.round(used * 100)}% of your ${money(budgetMinor)} budget`
-              : `${money(budgetMinor - spentMinor)} left of your ${money(budgetMinor)} budget`}
+            {`${budget.count} budget${budget.count === 1 ? '' : 's'}: ${money(budget.spentMinor)} of ${money(budget.limitMinor)}`}
+            {over ? ` · ${money(budget.spentMinor - budget.limitMinor)} over` : ''}
           </Text>
         </View>
       )}
@@ -115,7 +115,8 @@ export function ReportHero({
   );
 }
 
-const budgetSpoken = (spent: number, budget: number) => `Budget: ${money(spent)} of ${money(budget)} used`;
+const budgetSpoken = (b: BudgetCover) =>
+  `${b.count} budget${b.count === 1 ? '' : 's'}: ${money(b.spentMinor)} of ${money(b.limitMinor)} used`;
 
 const styles = StyleSheet.create({
   card: { ...h.card, marginHorizontal: 0, marginBottom: 12, paddingHorizontal: 16, paddingVertical: 14 },

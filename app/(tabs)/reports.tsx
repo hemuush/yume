@@ -90,6 +90,8 @@ import {
   accountRows,
   categoriesAgainstUsual,
   StoryAction,
+  budgetCover,
+  BudgetCover,
 } from '@/features/reports/reportsInsights';
 import { errorMessage } from '@/lib/errorMessage';
 import { growHref } from '@/lib/cardGrow';
@@ -158,7 +160,7 @@ export default function ReportsScreen() {
   const [catTracks, setCatTracks] = useState<CategoryTrack[]>([]);
   const [daily, setDaily] = useState<DailyExpensePoint[]>([]);
   // The period before, day by day (the hero's comparison line), and the month's total budget when there is one.
-  const [budgetMinor, setBudgetMinor] = useState<number | null>(null);
+  const [budget, setBudget] = useState<BudgetCover | null>(null);
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const [errorText, setErrorText] = useState<string | null>(null);
   const [loadedKey, setLoadedKey] = useState<string | null>(null);
@@ -239,9 +241,9 @@ export default function ReportsScreen() {
           // Budgets are per calendar month: other windows have none to draw.
           c.granularity === 'month'
             ? listBudgetsForMonth(range.start.slice(0, 7), hideAmounts)
-                .then((list) => list.reduce((sum, b) => sum + b.effectiveLimitMinor, 0))
-                .catch(() => 0)
-            : Promise.resolve(0),
+                .then(budgetCover)
+                .catch(() => null)
+            : Promise.resolve(null),
         ]);
         if (seq !== loadSeq.current) return false;
         const thisMonth = toLocalIsoDate(new Date()).slice(0, 7);
@@ -270,7 +272,7 @@ export default function ReportsScreen() {
         setCatTracks(ct.map((p) => ({ ...p, totalsMinor: p.totalsMinor.slice(0, lastElapsed + 1) })));
         setSavingsIds(savingsAccountIdsOf(accs));
         setDaily(dy);
-        setBudgetMinor(bud > 0 ? bud : null);
+        setBudget(bud);
         setCategories(cats);
         setStartingBalanceNames(tidy ? tidy.map((g) => g.categoryName) : []);
         setStatus('ready');
@@ -683,7 +685,7 @@ export default function ReportsScreen() {
                 inProgress={range.end >= todayIso}
                 spentMinor={dispExpense}
                 perDayMinor={facts.countedDays > 0 ? facts.perDayMinor : null}
-                budgetMinor={budgetMinor}
+                budget={budget}
                 incomeMinor={current.incomeMinor}
                 previousIncomeMinor={previous.incomeMinor}
                 comparedTo={custom ? 'the period before' : previousPeriodLabel(cursor)}
