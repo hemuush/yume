@@ -49,6 +49,8 @@ Debug builds and Jest cannot show a crash that only the shrunk release build has
 | `diagnose-r8-preset` | Uses SDK 57's non-optimising R8 preset (shrinking and minification stay on) | `eas build --platform android --profile diagnose-r8-preset` |
 | `diagnose-no-minify` | Turns R8 shrinking, minification and resource shrinking off | `eas build --platform android --profile diagnose-no-minify` |
 
+To start either build without a computer, use the GitHub website (works in a phone browser): open the repository, then Actions, then EAS Build, then Run workflow. Choose the branch that has the profile, pick the profile (`preview`, `diagnose-r8-preset` or `diagnose-no-minify`) and run it. When it finishes, open the Yume project on expo.dev, then Builds, and install the APK from there. The `diagnose-*` profiles can run side by side because the concurrency group includes the profile.
+
 Install each APK and open it. If `diagnose-no-minify` runs and `preview` does not, R8 is the cause; if `diagnose-r8-preset` also runs, the optimising preset is the cause and the fix is to keep the SDK 57 preset. If neither runs, R8 is not the cause. Either way, capture the crash so the fix is not a guess: connect the phone with USB debugging on, open Yume, and run `adb logcat -d -b crash` (or `adb logcat -d | grep -E "FATAL|AndroidRuntime|ReactNative|DEBUG"`). The first `Caused by:` line, or a `NoSuchMethodError`, `NoSuchFieldError` or `ClassNotFoundException` naming an obfuscated class, identifies the library that needs a keep rule in [plugins](plugins) or `expo-build-properties`' `extraProguardRules`.
 
 ## Play Store bundle
