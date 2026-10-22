@@ -73,21 +73,24 @@ export function TrendChart({
   /** The last point is a month still going: drawn dashed and hollow, and read as "so far". */
   inProgress?: boolean;
   netWorthTrend: NetWorthPoint[];
-  fixedKind?: Kind;
+  /** Which series this card draws; it falls back to the other when this one has too few points. */
+  fixedKind: Kind;
   /** For the picked point (its index and the point count): the month it stands for and how to open it; null if it can't be. */
   monthLink?: (index: number, count: number) => { name: string; open: () => void } | null;
 }) {
   const hasSpend = trend.length >= MIN_TREND_POINTS && trend.some((p) => p.recorded !== false);
   const hasNw = netWorthTrend.length >= MIN_TREND_POINTS && netWorthTrend.some((p) => p.recorded !== false);
-  const [kind, setKind] = useState<Kind>(hasSpend ? 'spend' : 'netWorth');
   const [width, setWidth] = useState(0);
   const [sel, setSel] = useState<number | null>(null);
   const monthScroll = useRef<ScrollViewInstance>(null);
   const { accent } = useAccent();
   if (!hasSpend && !hasNw) return null;
-  const chosen = fixedKind ?? kind;
   const showing: Kind =
-    chosen === 'spend' && !hasSpend ? 'netWorth' : chosen === 'netWorth' && !hasNw ? 'spend' : chosen;
+    fixedKind === 'spend' && !hasSpend
+      ? 'netWorth'
+      : fixedKind === 'netWorth' && !hasNw
+        ? 'spend'
+        : fixedKind;
 
   const points =
     showing === 'spend'
@@ -164,40 +167,10 @@ export function TrendChart({
             : `${points[selI].label}: ${formatMoney(roundedMinor(points[selI].value))} spent.`
         : `${nwDelta >= 0 ? 'Up' : 'Down'} ${formatMoney(Math.abs(nwDelta))} over the last ${netWorthTrend.length} months, now ${formatMoney(roundedMinor(nwLast))}.`;
 
-  const pick = (k: Kind) => {
-    if (k === showing) return;
-    haptics.tap();
-    setKind(k);
-  };
-
   return (
     <View style={styles.trendCard}>
       <View style={{ gap: 10 }}>
         <Text style={styles.trendTitle}>{showing === 'spend' ? 'Spending' : 'Net worth'}</Text>
-        {!fixedKind && hasSpend && hasNw && (
-          <View style={styles.trendSwitch} accessibilityRole="radiogroup">
-            {(['spend', 'netWorth'] as const).map((k) => {
-              const on = showing === k;
-              return (
-                <Pressable
-                  key={k}
-                  onPress={() => pick(k)}
-                  hitSlop={6}
-                  style={withPressed([
-                    styles.trendSwitchBtn,
-                    on && [styles.trendSwitchBtnOn, { backgroundColor: themeInk(accent) }],
-                  ])}
-                  accessibilityRole="radio"
-                  accessibilityState={{ selected: on }}
-                >
-                  <Text style={[styles.trendSwitchText, on && styles.trendSwitchTextOn]}>
-                    {k === 'spend' ? 'Spending' : 'Net worth'}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-        )}
       </View>
 
       <View

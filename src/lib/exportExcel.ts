@@ -14,7 +14,7 @@ const C = {
   ink: '12130F',
   surface: 'FFFDF6',
   surfaceAlt: 'F3ECE0',
-  sky: '8FCBFF', // theme.colors.primary — was 'lime' (sage), ring-mark rebrand
+  sky: '8FCBFF', // theme.colors.primary
   mint: '8FE8C8',
   gold: 'F0E1A8',
   income: '1C9A5B',
@@ -31,7 +31,7 @@ const FONT_NAME = 'Calibri'; // Archivo (the app's own display font) isn't avail
 // No freeze panes: xlsx-js-style has no `!freeze`/sheetView API, and the alternatives (paid SheetJS Pro or
 // hand-patching the sheet XML) are too fragile for a nice-to-have.
 
-/** A thin border on all four sides — every bordered cell in this file uses this, so the grid reads as one table instead of colour patches with no edges (the actual complaint that started this rework). */
+/** A thin border on all four sides — every bordered cell in this file uses this, so the grid reads as one table instead of colour patches with no edges. */
 function allBorders(color: string, style: XLSX.BorderType = 'thin') {
   const side = { style, color: { rgb: color } };
   return { top: side, bottom: side, left: side, right: side };

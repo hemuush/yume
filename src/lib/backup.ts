@@ -79,10 +79,6 @@ export async function buildBackupSnapshotOn(db: AppDb): Promise<BackupSnapshot> 
   };
 }
 
-/**
- * Replaces all local data with a snapshot in one transaction: delete children first, insert parents first.
- * FKs off (transactions and loan_payments reference each other); the PRAGMA can't toggle in a transaction.
- */
 function isValidSnapshotShape(snapshot: unknown): snapshot is BackupSnapshot {
   const s = snapshot as Partial<BackupSnapshot> | null;
   return (
@@ -111,6 +107,10 @@ export interface RestoreResult {
   emptiedTables: string[];
 }
 
+/**
+ * Replaces all local data with a snapshot in one transaction: delete children first, insert parents first.
+ * FKs off (transactions and loan_payments reference each other); the PRAGMA can't toggle in a transaction.
+ */
 export async function restoreFromSnapshot(snapshot: BackupSnapshot): Promise<RestoreResult> {
   return restoreFromSnapshotOn(await getDb(), snapshot);
 }
@@ -147,7 +147,8 @@ export async function restoreFromSnapshotOn(db: AppDb, snapshot: BackupSnapshot)
       throw new Error(
         `This backup file is damaged (the "${table}" section isn't readable) — nothing was changed.`
       );
-    } // Money is whole minor units everywhere: text or a fraction there would be stored as-is (SQLite accepts
+    }
+    // Money is whole minor units everywhere: text or a fraction there would be stored as-is (SQLite accepts
     // it) and quietly break every total later, so it's rejected now, before anything is touched.
     const dateColumns = [
       'date',

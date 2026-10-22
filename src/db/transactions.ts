@@ -627,12 +627,10 @@ async function transactionLinkOn(db: AppDb, id: string): Promise<TransactionLink
 }
 
 /**
- * Deletes a plain transaction; refuses loan-payment/person-linked ones (FKs are ON DELETE SET NULL, so a raw
- * delete would orphan the "paid" status or skew a balance). Use undoInstallmentPayment / undoPersonTransaction.
- */
-/**
- * Deletes an entry and keeps it in Recently deleted for 30 days. `{ keep: false }` is for taking back an add a
- * moment ago ("Log again" Undo), which isn't worth finding later.
+ * Deletes a plain transaction and keeps it in Recently deleted for 30 days (`{ keep: false }` is for taking back
+ * an add a moment ago, which isn't worth finding later). Refuses loan-payment/person-linked ones (FKs are ON
+ * DELETE SET NULL, so a raw delete would orphan the "paid" status or skew a balance): use
+ * undoInstallmentPayment / undoPersonTransaction.
  */
 export async function deleteTransaction(
   id: string,

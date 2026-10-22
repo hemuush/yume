@@ -266,23 +266,6 @@ export const styles = StyleSheet.create({
     gap: 8,
   },
   trendTitle: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.textPrimary },
-  trendSwitch: {
-    flexDirection: 'row',
-    padding: 3,
-    borderRadius: theme.radius.pill,
-    backgroundColor: 'rgba(255,255,255,0.7)',
-  },
-  trendSwitchBtn: {
-    flex: 1,
-    alignItems: 'center',
-    minHeight: 44,
-    justifyContent: 'center',
-    paddingHorizontal: 12,
-    borderRadius: theme.radius.pill,
-  },
-  trendSwitchBtnOn: { backgroundColor: theme.colors.ink },
-  trendSwitchText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textSecondary },
-  trendSwitchTextOn: { fontFamily: theme.font.bodyBold, color: theme.colors.surface },
   trendRead: {
     fontFamily: theme.font.body,
     fontSize: 13,

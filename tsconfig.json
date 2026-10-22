@@ -5,10 +5,8 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "types": ["jest"],
-    "ignoreDeprecations": "6.0",
-    "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["./src/*"]
     }
   },
   "include": ["app", "src", "scripts", "*.ts", "*.tsx", "expo-env.d.ts", ".expo/types/**/*.ts"]

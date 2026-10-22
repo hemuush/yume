@@ -100,7 +100,6 @@ export default function DashboardScreen() {
   );
   const [loanProgress, setLoanProgress] = useState<Awaited<ReturnType<typeof getLoanProgress>>>([]);
   const [cardBills, setCardBills] = useState<Awaited<ReturnType<typeof listCardCycles>>>([]);
-  // Spending per day, from a week back (or the 1st) to today: the Week/Month bars.
   // The default currency: Home's in-hand total counts only accounts in it.
   const [currency, setCurrency] = useState('INR');
   const [refunds, setRefunds] = useState<ExpectedRefund[]>([]);

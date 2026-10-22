@@ -53,13 +53,6 @@ export const styles = StyleSheet.create({
     marginBottom: 6,
   },
   closedDivider: EYEBROW,
-  cardName: {
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 15,
-    color: theme.colors.textPrimary,
-    flexShrink: 1,
-    marginRight: 8,
-  },
   cardSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 4 },
   statLabel: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted },
   errorText: { fontFamily: theme.font.body, color: theme.colors.expenseText, fontSize: 13, marginBottom: 12 },

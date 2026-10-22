@@ -9,11 +9,8 @@ export const SCREEN = {
   /** Space above each section heading (and between a hero card and the block under it). */
   sectionGap: 16,
   gutter: 16,
-  /** Padding inside a standalone card; a hero card with a top strip takes `heroPadTop`. */
+  /** Padding inside a standalone card. */
   cardPad: 12,
-  heroPadTop: 14,
-  /** Between cards stacked in a list. */
-  cardStack: 10,
   rowMinHeight: 56,
   iconTile: 34,
   iconGlyph: 16,

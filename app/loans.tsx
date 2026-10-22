@@ -33,10 +33,6 @@ import { AddLoanModal } from '@/features/loans/AddLoanModal';
 import { SCREEN } from '@/components/screenStyles';
 import { showAlert } from '@/components/AppDialog';
 
-/**
- * Formal loans with a schedule (informal IOUs live in /people). Reached from the Plan Loans tile, Home EMI
- * rows, loan-due notifications and the Next Due widget; /loans?pay=<loan id> opens that EMI's pay sheet.
- */
 const listTitle = {
   ...SECTION_TITLE,
   marginHorizontal: SCREEN.gutter,
@@ -44,6 +40,10 @@ const listTitle = {
   marginBottom: SECTION_GAP.bottom,
 };
 
+/**
+ * Formal loans with a schedule (informal IOUs live in /people). Reached from the Plan Loans tile, Home EMI
+ * rows, loan-due notifications and the Next Due widget; /loans?pay=<loan id> opens that EMI's pay sheet.
+ */
 export default function LoansScreen() {
   const insets = useSafeAreaInsets();
   const { accent, secondary } = useAccent();

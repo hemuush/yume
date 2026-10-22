@@ -87,15 +87,15 @@ export function dayLabel(isoDate: string): string {
   return parseLocalIsoDate(isoDate).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
 }
 
-/**
- * Every ISO date from `from` to `to` inclusive, in order, for UIs needing one entry per calendar day
- * (e.g. a bar per day in a spend chart).
- */
 /** Whether a route param (or any string) is a plain YYYY-MM-DD date. */
 export function isIsoDate(v: string | undefined): v is string {
   return !!v && /^\d{4}-\d{2}-\d{2}$/.test(v);
 }
 
+/**
+ * Every ISO date from `from` to `to` inclusive, in order, for UIs needing one entry per calendar day
+ * (e.g. a bar per day in a spend chart).
+ */
 export function isoDatesInRange(from: string, to: string): string[] {
   const dates: string[] = [];
   let cursor = from;
