@@ -96,7 +96,6 @@ export function PrimaryButton({
         { paddingVertical: Math.round((compact ? 7 : 12) * uiScale) },
         variantStyle,
         variant === 'primary' && { backgroundColor: colors.ink },
-        secondary && { borderColor: colors.edge },
         (icon || loading) && !done && styles.withIcon,
         unavailable && !loading && !done && styles.disabled,
         animatedStyle,

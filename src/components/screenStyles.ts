@@ -13,6 +13,10 @@ export const SCREEN = {
   cardPad: 12,
   rowMinHeight: 56,
   iconTile: 34,
+  /** The slot every list row's leading mark sits in, so titles start at the same place on every row. */
+  lead: 44,
+  /** A mark inside that slot (date tile, category disc, ring). */
+  mark: 40,
   iconGlyph: 16,
 } as const;
 

@@ -82,7 +82,10 @@ it.each(THEMES)('updates buttons, selectors and switches for the $name theme', (
         node.props?.accessibilityState.selected
     );
     expect(selected.length).toBeGreaterThan(1);
-    expect(selected.every((node) => color(node) === themeInk(mockAccent))).toBe(true);
+    // SheetTabs fill with the theme ink; the pill switch fills with the theme colour itself.
+    expect(selected.every((node) => [themeInk(mockAccent), mockAccent].includes(color(node) as string))).toBe(
+      true
+    );
     const toggle = tree.root.findAll(
       (node) => node.props?.accessibilityRole === 'switch' && node.props?.onPress
     )[0];

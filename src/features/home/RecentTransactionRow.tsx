@@ -8,7 +8,7 @@ import { CategoryIcon } from '@/components/CategoryIcon';
 import { Amount } from '@/components/Amount';
 import { dayLabel } from '@/lib/date';
 import { categoryPath, joinSub } from '@/lib/categoryLabel';
-import { screenStyles as h } from '@/components/screenStyles';
+import { screenStyles as h, SCREEN } from '@/components/screenStyles';
 import { useAccent } from '@/theme/AccentContext';
 
 /**
@@ -70,11 +70,14 @@ export function RecentTransactionRow({
       }
     >
       <JustAddedGlow ids={[tx.id]} surface="home" />
-      <CategoryIcon
-        name={isTransfer ? 'swap-horizontal' : (category?.icon ?? 'tag')}
-        color={isTransfer ? secondary : (category?.color ?? theme.colors.textMuted)}
-        round
-      />
+      <View style={styles.lead}>
+        <CategoryIcon
+          name={isTransfer ? 'swap-horizontal' : (category?.icon ?? 'tag')}
+          color={isTransfer ? secondary : (category?.color ?? theme.colors.textMuted)}
+          square={SCREEN.mark}
+          round
+        />
+      </View>
       <View style={[styles.mid, stacked && styles.stackedMid]}>
         <Text style={styles.title}>{title}</Text>
         <Text style={styles.sub}>
@@ -96,7 +99,8 @@ export function RecentTransactionRow({
 }
 
 const styles = StyleSheet.create({
-  row: h.row,
+  row: { ...h.row, gap: 12 },
+  lead: { width: SCREEN.lead, alignItems: 'center', justifyContent: 'center' },
   stackedRow: { flexWrap: 'wrap', rowGap: 6 },
   stackedMid: { flexGrow: 1, flexBasis: '70%' },
   divider: h.divider,

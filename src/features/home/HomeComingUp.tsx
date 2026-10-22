@@ -10,13 +10,12 @@ import { ProgressRing } from '@/components/ProgressRing';
 import { theme } from '@/constants/theme';
 import { haptics } from '@/lib/haptics';
 import { ROW_LAYOUT } from '@/lib/animation';
-import { screenStyles as h } from '@/components/screenStyles';
+import { screenStyles as h, SCREEN } from '@/components/screenStyles';
 import { categorySentence } from '@/lib/categoryLabel';
 import { formatMoney, formatMaskableMoney } from '@/lib/money';
 import { withPressed } from '@/lib/pressed';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import { useAccent } from '@/theme/AccentContext';
-import { themeInk } from '@/theme/interactionColors';
 import { GOAL_PACE_LABEL } from '@/features/goals/goalPlan';
 import type { BudgetProgress } from '@/db/budgets';
 import type { ExpectedRefund } from '@/db/refundTracking';
@@ -52,7 +51,7 @@ function FilterChip({
       accessibilityRole="button"
       accessibilityState={{ selected: active }}
       accessibilityLabel={attention ? `${label}, needs a look` : label}
-      style={withPressed([styles.chip, active && { backgroundColor: themeInk(accent) }])}
+      style={withPressed([styles.chip, active && { backgroundColor: accent }])}
     >
       <Text style={[styles.chipText, active && styles.chipTextOn]}>{label}</Text>
       {attention && !active && <View style={styles.chipDot} />}
@@ -82,7 +81,7 @@ function BudgetRow({
         <CategoryIcon
           name={progress.categoryIcon}
           color={progress.categoryColor}
-          square={46}
+          square={SCREEN.mark}
           size={18}
           round
         />
@@ -123,6 +122,7 @@ function GoalRow({ entry, divider }: { entry: Extract<ComingUpItem, { kind: 'goa
           percent={hideAmounts ? 0 : percent}
           color={behind ? theme.colors.slice.due : theme.colors.slice.saved}
           animKey={`home-goal:${goal.id}`}
+          size={SCREEN.lead}
         >
           {hideAmounts ? (
             <Feather name="eye-off" size={14} color={theme.colors.textMuted} />
@@ -290,8 +290,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 2,
   },
   chip: {
-    minHeight: 44,
-    paddingHorizontal: 16,
+    minHeight: 36,
+    paddingHorizontal: 14,
     borderRadius: theme.radius.pill,
     flexDirection: 'row',
     alignItems: 'center',
@@ -299,7 +299,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.tray,
   },
   chipText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textSecondary },
-  chipTextOn: { color: theme.colors.white },
+  chipTextOn: { color: theme.colors.textPrimary, fontFamily: theme.font.bodyBold },
   chipDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: theme.colors.slice.due },
   ringText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textPrimary },
   refunds: { marginTop: 4, marginHorizontal: -12, borderRadius: 20, backgroundColor: theme.colors.surface },

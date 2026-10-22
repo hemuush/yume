@@ -9,7 +9,6 @@ import { useReduceMotion } from '@/lib/useReduceMotion';
 import { DURATIONS } from '@/lib/motionTimings';
 
 import { useAccent } from '@/theme/AccentContext';
-import { interactionColors } from '@/theme/interactionColors';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -38,7 +37,6 @@ export function SegmentedControl<T extends string>({
 }: Props<T>) {
   const reduce = useReduceMotion();
   const { accent } = useAccent();
-  const colors = interactionColors(accent);
   // The track's inner width; each segment's share is worked out per render, so
   // a switch whose options change (Add in edit mode) still sizes its pill right.
   const [innerWidth, setInnerWidth] = useState(0);
@@ -84,7 +82,7 @@ export function SegmentedControl<T extends string>({
           pointerEvents="none"
           style={[
             styles.pill,
-            { backgroundColor: colors.ink, borderColor: colors.ink },
+            { backgroundColor: accent },
             { width: segWidth, transform: [{ translateX: x }] },
           ]}
         />
@@ -93,7 +91,7 @@ export function SegmentedControl<T extends string>({
         <Segment
           key={opt.value}
           active={opt.value === value}
-          fallbackInk={segWidth <= 0 ? colors.ink : undefined}
+          fallbackInk={segWidth <= 0 ? accent : undefined}
           label={opt.label}
           disabled={disabled}
           onPress={() => onChange(opt.value)}
@@ -155,11 +153,8 @@ const styles = StyleSheet.create({
     bottom: PAD,
     left: PAD,
     borderRadius: theme.radius.pill,
-    backgroundColor: theme.colors.surface,
-    // A hairline, not elevation: on Android an elevated view draws above its
-    // later siblings, which would put the pill on top of the labels.
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
+    // The chosen segment is the theme colour with ink text, not a dark fill: ink is for the one primary button.
+    // No border and no elevation (on Android an elevated view draws above its later siblings, over the labels).
   },
   segment: {
     flex: 1,
@@ -177,8 +172,13 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     flexShrink: 1,
   },
-  segmentTextActive: { color: theme.colors.surface, fontFamily: theme.font.roundedBold },
+  segmentTextActive: { color: theme.colors.textPrimary, fontFamily: theme.font.roundedBold },
   // On a wallpaper (Add's header): a frosted track and an ink pill.
-  wrapBand: { backgroundColor: GLASS.fill, borderWidth: 1, borderColor: GLASS.edge, marginBottom: 0 },
+  wrapBand: {
+    backgroundColor: GLASS.fill,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
+    marginBottom: 0,
+  },
   disabled: { opacity: 0.5 },
 });
