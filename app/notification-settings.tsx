@@ -12,7 +12,7 @@ import { ToggleSwitch } from '@/components/ToggleSwitch';
 import { SettingsRow } from '@/components/SettingsRow';
 import { Section } from '@/components/Section';
 import { screenStyles as h, SCREEN } from '@/components/screenStyles';
-import { SlotTimeStepper } from '@/features/notifications/SlotTimeStepper';
+import { SlotCard } from '@/features/notifications/SlotCard';
 import { CardRowsSkeleton } from '@/components/ListSkeleton';
 import { getNotificationPrefs, setNotificationPrefs, NotificationPrefs } from '@/db/settings';
 import {
@@ -22,7 +22,7 @@ import {
   sendTestNotification,
   NotificationDeliveryStatus,
 } from '@/lib/notifications';
-import { TimeSlotKind, clampSlotMinutes, formatSlotTime } from '@/lib/notificationTimes';
+import { TimeSlotKind, clampSlotMinutes } from '@/lib/notificationTimes';
 import { theme } from '@/constants/theme';
 import { errorMessage } from '@/lib/errorMessage';
 import { showAlert } from '@/components/AppDialog';
@@ -43,6 +43,15 @@ type SwitchKey =
   | 'recurringAlerts'
   | 'refundAlerts';
 
+const noTimesEarly = (p: NotificationPrefs) => !p.morningEnabled && !p.eveningEnabled;
+const MENTION_KEYS = [
+  'billAlerts',
+  'overspendAlerts',
+  'recurringAlerts',
+  'refundAlerts',
+  'weeklySummary',
+] as const;
+
 export default function NotificationSettingsScreen() {
   const insets = useSafeAreaInsets();
   const { accent, secondary } = useAccent();
@@ -55,7 +64,6 @@ export default function NotificationSettingsScreen() {
     latest.current = next;
     setPrefsState(next);
   }, []);
-  const [openSlot, setOpenSlot] = useState<TimeSlotKind | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [delivery, setDelivery] = useState<NotificationDeliveryStatus | null>(null);
   const [deliveryError, setDeliveryError] = useState<string | null>(null);
@@ -186,8 +194,26 @@ export default function NotificationSettingsScreen() {
 
   const morningMinutes = prefs.morningHour * 60 + prefs.morningMinute;
   const eveningMinutes = prefs.eveningHour * 60 + prefs.eveningMinute;
+  const deliveryOk =
+    !deliveryError && !!delivery && delivery.permitted && !delivery.channelBlocked && !noTimesEarly(prefs);
+  const deliveryTitle = deliveryError
+    ? 'Could not check notifications'
+    : !delivery
+      ? 'Checking…'
+      : !delivery.permitted
+        ? 'Phone permission is off'
+        : delivery.channelBlocked
+          ? 'Yume reminders category is off'
+          : noTimesEarly(prefs)
+            ? 'Nothing scheduled'
+            : 'Delivering';
+  const deliverySub = !delivery
+    ? 'Tap for details'
+    : delivery.permitted && !delivery.channelBlocked
+      ? `${delivery.scheduledCount} reminders scheduled`
+      : 'Tap to see how to fix it';
   const noTimes = !prefs.morningEnabled && !prefs.eveningEnabled;
-  const toggleSlot = (kind: TimeSlotKind) => setOpenSlot((open) => (open === kind ? null : kind));
+  const onCount = MENTION_KEYS.filter((k) => prefs[k] === true).length;
 
   return (
     <View style={styles.container}>
@@ -211,61 +237,34 @@ export default function NotificationSettingsScreen() {
             <PrimaryButton title="Turn on" compact onPress={() => void Linking.openSettings()} />
           </View>
         )}
-        {/* The same grouped rows as Profile's settings: a section title, one glass card, hairlines between rows. */}
-        <Section title="Times">
-          <View style={[h.card, cardSurface.neutral]}>
-            <SettingsRow
-              icon="white-balance-sunny"
-              iconBg={theme.colors.goldTint}
-              label="Morning"
-              sub="Check-in plus due EMIs and alerts"
-              value={formatSlotTime(morningMinutes)}
-              expanded={openSlot === 'morning'}
-              onPress={() => toggleSlot('morning')}
-              right={
-                <ToggleSwitch
-                  accessibilityLabel="Morning"
-                  value={prefs.morningEnabled}
-                  onChange={(v) => toggle('morningEnabled', v)}
-                />
-              }
-            />
-            {openSlot === 'morning' && (
-              <SlotTimeStepper
-                kind="morning"
-                minutes={morningMinutes}
-                onChange={(m) => setSlotMinutes('morning', m)}
-              />
-            )}
-            <SettingsRow
-              icon="weather-night"
-              iconBg={shade(accent, 95)}
-              label="Evening"
-              sub="Log nudge if nothing logged"
-              value={formatSlotTime(eveningMinutes)}
-              expanded={openSlot === 'evening'}
-              divider
-              onPress={() => toggleSlot('evening')}
-              right={
-                <ToggleSwitch
-                  accessibilityLabel="Evening"
-                  value={prefs.eveningEnabled}
-                  onChange={(v) => toggle('eveningEnabled', v)}
-                />
-              }
-            />
-            {openSlot === 'evening' && (
-              <SlotTimeStepper
-                kind="evening"
-                minutes={eveningMinutes}
-                onChange={(m) => setSlotMinutes('evening', m)}
-              />
-            )}
-          </View>
-          {noTimes && <Text style={styles.warn}>Switch on a time to get notifications.</Text>}
-        </Section>
+        <View style={styles.slots}>
+          <SlotCard
+            kind="morning"
+            sub="Check-in, EMIs, alerts"
+            on={prefs.morningEnabled}
+            minutes={morningMinutes}
+            onToggle={(v) => toggle('morningEnabled', v)}
+            onChange={(m) => setSlotMinutes('morning', m)}
+          />
+          <SlotCard
+            kind="evening"
+            sub="Log nudge if none today"
+            on={prefs.eveningEnabled}
+            minutes={eveningMinutes}
+            onToggle={(v) => toggle('eveningEnabled', v)}
+            onChange={(m) => setSlotMinutes('evening', m)}
+          />
+        </View>
+        {noTimes && <Text style={styles.warn}>Switch on a time to get notifications.</Text>}
 
-        <Section title="Yume can mention">
+        <Section
+          title="Yume can mention"
+          right={
+            <Text style={styles.count}>
+              {onCount} of {MENTION_KEYS.length} on
+            </Text>
+          }
+        >
           <View style={[h.card, cardSurface.neutral]}>
             <SettingsRow
               icon="credit-card-outline"
@@ -344,69 +343,6 @@ export default function NotificationSettingsScreen() {
           </View>
         </Section>
 
-        <Section title="Troubleshooting">
-          <View style={[h.card, cardSurface.neutral]}>
-            <Pressable
-              onPress={() => setTroubleOpen((v) => !v)}
-              style={withPressed(styles.troubleRow)}
-              accessibilityRole="button"
-              accessibilityState={{ expanded: troubleOpen }}
-              accessibilityLabel="Delivery check"
-            >
-              <Text style={styles.troubleLabel}>Delivery check</Text>
-              <Feather
-                name={troubleOpen ? 'chevron-up' : 'chevron-down'}
-                size={16}
-                color={theme.colors.textSecondary}
-              />
-            </Pressable>
-          </View>
-          {troubleOpen && (
-            <View style={[h.card, cardSurface.neutral, styles.deliveryCard, { marginTop: 8 }]}>
-              <Text style={styles.deliveryStatus}>
-                {deliveryError
-                  ? 'Could not check notifications'
-                  : !delivery
-                    ? 'Checking…'
-                    : !delivery.permitted
-                      ? 'Phone permission is off'
-                      : delivery.channelBlocked
-                        ? 'Yume reminders category is off'
-                        : `${delivery.scheduledCount} reminders scheduled`}
-              </Text>
-              <Text style={styles.deliveryHint}>
-                {deliveryError ??
-                  'Morning includes a daily check-in. Evening skips the log reminder if you’ve logged that day. Reminders are planned 14 days ahead and renewed when you open Yume; Android may delay delivery.'}
-              </Text>
-              {delivery?.permitted &&
-                !delivery.channelBlocked &&
-                typeof delivery.morningCount === 'number' &&
-                typeof delivery.eveningCount === 'number' && (
-                  <Text style={styles.deliveryHint}>
-                    Morning: {prefs.morningEnabled ? `${delivery.morningCount} scheduled` : 'Off'} · Evening:{' '}
-                    {prefs.eveningEnabled ? `${delivery.eveningCount} scheduled` : 'Off'}
-                  </Text>
-                )}
-              <View style={styles.deliveryActions}>
-                <PrimaryButton
-                  compact
-                  variant="secondary"
-                  title="Test notification"
-                  disabled={deliveryBusy}
-                  onPress={() => void checkDelivery(true)}
-                />
-                <PrimaryButton
-                  compact
-                  variant="secondary"
-                  title="Rebuild reminders"
-                  disabled={deliveryBusy}
-                  onPress={() => void checkDelivery(false)}
-                />
-              </View>
-            </View>
-          )}
-        </Section>
-
         <Section title="In the app">
           <View style={[h.card, cardSurface.neutral]}>
             <SettingsRow
@@ -422,6 +358,67 @@ export default function NotificationSettingsScreen() {
                 />
               }
             />
+          </View>
+        </Section>
+
+        <Section title="Delivery">
+          <View style={[h.card, cardSurface.neutral]}>
+            <Pressable
+              onPress={() => setTroubleOpen((v) => !v)}
+              style={withPressed(styles.troubleRow)}
+              accessibilityRole="button"
+              accessibilityState={{ expanded: troubleOpen }}
+              accessibilityLabel="Delivery check"
+            >
+              <View
+                style={[
+                  styles.live,
+                  { backgroundColor: deliveryOk ? theme.colors.income : theme.colors.expense },
+                ]}
+              />
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <Text style={styles.troubleLabel}>{deliveryTitle}</Text>
+                <Text style={styles.deliveryHint}>{deliverySub}</Text>
+              </View>
+              <Feather
+                name={troubleOpen ? 'chevron-up' : 'chevron-down'}
+                size={16}
+                color={theme.colors.textSecondary}
+              />
+            </Pressable>
+            {troubleOpen && (
+              <View style={styles.deliveryCard}>
+                <Text style={styles.deliveryHint}>
+                  {deliveryError ??
+                    'Morning includes a daily check-in. Evening skips the log reminder if you’ve logged that day. Reminders are planned 14 days ahead and renewed when you open Yume; Android may delay delivery.'}
+                </Text>
+                {delivery?.permitted &&
+                  !delivery.channelBlocked &&
+                  typeof delivery.morningCount === 'number' &&
+                  typeof delivery.eveningCount === 'number' && (
+                    <Text style={styles.deliveryHint}>
+                      Morning: {prefs.morningEnabled ? `${delivery.morningCount} scheduled` : 'Off'} ·
+                      Evening: {prefs.eveningEnabled ? `${delivery.eveningCount} scheduled` : 'Off'}
+                    </Text>
+                  )}
+                <View style={styles.deliveryActions}>
+                  <PrimaryButton
+                    compact
+                    variant="secondary"
+                    title="Test notification"
+                    disabled={deliveryBusy}
+                    onPress={() => void checkDelivery(true)}
+                  />
+                  <PrimaryButton
+                    compact
+                    variant="secondary"
+                    title="Rebuild reminders"
+                    disabled={deliveryBusy}
+                    onPress={() => void checkDelivery(false)}
+                  />
+                </View>
+              </View>
+            )}
           </View>
         </Section>
 
@@ -447,9 +444,18 @@ const styles = StyleSheet.create({
   },
   permissionTitle: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.expenseText },
   permissionSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.expenseText },
-  troubleRow: { minHeight: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  slots: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginHorizontal: SCREEN.gutter, marginTop: 12 },
+  count: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textMuted },
+  live: { width: 10, height: 10, borderRadius: 5, marginRight: 2 },
+  troubleRow: {
+    minHeight: 56,
+    paddingHorizontal: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
   troubleLabel: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
-  deliveryCard: { padding: 14 },
+  deliveryCard: { paddingHorizontal: 14, paddingBottom: 14 },
   deliveryStatus: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textPrimary },
   deliveryHint: {
     fontFamily: theme.font.body,

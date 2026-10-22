@@ -27,8 +27,11 @@ jest.mock('@/db/settings', () => ({
     billAlerts: true,
     weeklySummary: false,
     suuCheckins: true,
-    morningMinutes: 540,
-    eveningMinutes: 1260,
+    recurringAlerts: true,
+    morningHour: 9,
+    morningMinute: 0,
+    eveningHour: 21,
+    eveningMinute: 0,
   }),
   setNotificationPrefs: jest.fn(async () => {}),
 }));
@@ -65,7 +68,7 @@ describe('Notification settings', () => {
   it('shows no banner while notifications are allowed, and keeps the delivery check folded', async () => {
     const shown = texts(await render());
     expect(shown).not.toContain('Notifications are off for Yume');
-    expect(shown).toContain('Troubleshooting');
+    expect(shown).toContain('Delivery');
     expect(shown).not.toContain('Test notification');
   });
 
@@ -79,6 +82,20 @@ describe('Notification settings', () => {
     );
     act(() => turnOn.props.onPress());
     expect(open).toHaveBeenCalled();
+  });
+
+  it('steps a time by 30 minutes from its card, and shows how many of the mentions are on', async () => {
+    const { setNotificationPrefs } = require('@/db/settings');
+    const tree = await render();
+    expect(texts(tree)).toContain('3 of 5 on');
+    await act(async () => {
+      tree.root
+        .find((n) => n.props.accessibilityLabel === 'Morning time 30 minutes later' && n.props.onPress)
+        .props.onPress();
+    });
+    expect(setNotificationPrefs).toHaveBeenCalledWith(
+      expect.objectContaining({ morningHour: 9, morningMinute: 30 })
+    );
   });
 
   it('opens the delivery check on tap', async () => {

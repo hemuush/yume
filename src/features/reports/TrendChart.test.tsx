@@ -11,6 +11,7 @@ afterEach(() => {
   mounted.length = 0;
 });
 
+jest.mock('@/components/ModalSheet', () => ({ ModalSheet: () => null }));
 jest.mock('@/lib/money', () => ({
   ...jest.requireActual('@/lib/money'),
   formatMoney: (minor: number) => `₹${minor / 100}`,
@@ -69,10 +70,12 @@ describe('TrendChart sentence', () => {
     });
     mounted.push(r);
     expect(texts(r).some((t) => t.startsWith('Oct: ₹250'))).toBe(true);
-    const missing = r.root.findAll(
-      (n) => typeof n.props.onPress === 'function' && n.props.accessibilityLabel === 'Select Aug'
-    )[0];
-    expect(missing.props.disabled).toBe(true);
+    // Swiping back from Oct lands on Sep and skips nothing; the unrecorded Aug is never selectable.
+    const touch = r.root.findByProps({ testID: 'trend-touch' });
+    act(() => touch.props.onAccessibilityAction({ nativeEvent: { actionName: 'decrement' } }));
+    expect(r.root.findByProps({ testID: 'trend-touch' }).props.accessibilityLabel).toContain('Sep');
+    act(() => touch.props.onAccessibilityAction({ nativeEvent: { actionName: 'decrement' } }));
+    expect(r.root.findByProps({ testID: 'trend-touch' }).props.accessibilityLabel).toContain('Sep');
     expect(texts(r).join(' ')).not.toContain('999999');
   });
   it('reads a finished month against the average', () => {
@@ -115,12 +118,12 @@ describe('TrendChart touch', () => {
     act(() => touch.props.onResponderGrant({ nativeEvent: { locationX: 286 } }));
     expect(texts(r).some((text) => text.startsWith('Feb: ₹200'))).toBe(true);
   });
-  it('floats the picked month and its amount over the chart', () => {
+  it('names the picked month and its amount for the chart', () => {
     const r = chart(true);
     const touch = r.root.findByProps({ testID: 'trend-touch' });
     act(() => touch.props.onLayout({ nativeEvent: { layout: { width: 300 } } }));
     act(() => touch.props.onResponderGrant({ nativeEvent: { locationX: 14 } }));
-    expect(texts(r)).toContain('May · ₹31200');
+    expect(r.root.findByProps({ testID: 'trend-touch' }).props.accessibilityLabel).toContain('May: ₹31200');
   });
   const pressable = (r: ReactTestRenderer, text: string) =>
     r.root.find(

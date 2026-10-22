@@ -196,12 +196,6 @@ export function CategoryTracks({
           </Pressable>
         )}
       </View>
-      <Text style={styles.tracksNote}>The dashed line in each is that category's usual month.</Text>
-      {inProgress && (
-        <Text style={styles.tracksNote}>
-          This month so far is compared with full earlier recorded months.
-        </Text>
-      )}
     </View>
   );
 }

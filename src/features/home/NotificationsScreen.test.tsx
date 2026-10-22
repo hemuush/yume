@@ -16,7 +16,7 @@ jest.mock('expo-router', () => ({
   useFocusEffect: (cb: () => void) => require('react').useEffect(cb, [cb]),
 }));
 jest.mock('@/lib/haptics', () => ({ haptics: { tap: jest.fn() } }));
-jest.mock('@/components/AppHeader', () => ({ HeaderUserButton: () => null }));
+jest.mock('@/components/AppHeader', () => ({ HeaderUserButton: () => null, HeaderIconButton: () => null }));
 jest.mock('@/theme/AccentContext', () => ({
   useAccent: () => ({ dot: '#F0876A', accent: '#A6B4F2', secondary: '#8FE8C8' }),
 }));
@@ -134,4 +134,27 @@ it('counts what needs you by urgency at the top', async () => {
   const tree = await render();
   const shown = tree.root.findAllByType(Text).map((t) => [].concat(t.props.children).join(''));
   expect(shown).toEqual(expect.arrayContaining(['4', 'things', '1 urgent', '2 soon', '1 when you can']));
+});
+
+it('when nothing needs you, says so and links to what Yume mentions', async () => {
+  mockData.loadNeedsYou.mockResolvedValue({ shown: [], dismissed: [] });
+  const { router } = require('expo-router');
+  const tree = await render();
+  const shown = tree.root.findAllByType(Text).map((t) => [].concat(t.props.children).join(''));
+  expect(shown).toContain('All caught up');
+  act(() =>
+    tree.root.find((n) => n.props.title === 'Choose what Yume mentions' && n.props.onPress).props.onPress()
+  );
+  expect(router.push).toHaveBeenCalledWith('/notification-settings');
+});
+
+it('groups what needs you by urgency, most pressing first', async () => {
+  mockData.loadNeedsYou.mockResolvedValue({
+    shown: [item('i', { tone: 'info' }), item('u', { tone: 'urgent' }), item('w')],
+    dismissed: [],
+  });
+  const tree = await render();
+  expect(keys(tree)).toEqual(['u', 'w', 'i']);
+  const shown = tree.root.findAllByType(Text).map((t) => [].concat(t.props.children).join(''));
+  expect(shown).toEqual(expect.arrayContaining(['Do first', 'Coming up', 'When you can']));
 });
