@@ -20,8 +20,5 @@
       },
       "autoIncrement": false
     }
-  },
-  "submit": {
-    "production": {}
   }
 }

@@ -1,5 +1,8 @@
 import { addMonthsToIsoDate, parseLocalIsoDate, toLocalIsoDate } from './date';
 
+/** Beyond a century of saving there is no date worth showing. */
+const MAX_ETA_MONTHS = 1200;
+
 /** Whole days between two YYYY-MM-DD dates (`to` minus `from`) — negative if `to` is earlier. */
 function daysBetweenIsoDates(from: string, to: string): number {
   const a = parseLocalIsoDate(from);
@@ -65,6 +68,8 @@ export function projectGoalPace(
   const etaFrom = (monthlyRate: number): string | null => {
     if (monthlyRate <= 0) return null;
     const monthsNeeded = remaining / monthlyRate;
+    // A pace this slow has no date worth showing, and a huge month count overflows into an invalid date.
+    if (monthsNeeded > MAX_ETA_MONTHS) return null;
     return addMonthsToIsoDate(today, Math.ceil(monthsNeeded));
   };
 

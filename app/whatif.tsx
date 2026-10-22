@@ -72,13 +72,13 @@ function PaceLane({ width, color, faded }: { width: `${number}%`; color: string;
   );
 }
 
+/** How many category chips What-if shows before "N more". */
+const CATEGORY_CHIPS = 6;
+
 /**
  * Non-destructive sandbox: pick a category, cut its spend by a percentage, see how much sooner a savings
  * goal lands. Nothing is saved; numbers are recomputed client-side from existing data (src/lib/whatIf.ts).
  */
-/** How many category chips What-if shows before "N more". */
-const CATEGORY_CHIPS = 6;
-
 export default function WhatIfScreen() {
   const insets = useSafeAreaInsets();
   const { accent, secondary } = useAccent();

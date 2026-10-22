@@ -308,11 +308,6 @@ export async function undoInstallmentPayment(loanPaymentId: string): Promise<voi
   await rebuildNotificationsAfterCommit();
 }
 
-/**
- * Applies a lump-sum prepayment: cuts principal, regenerates the schedule (EMI fixed, tenure shrinks).
- * `chargeAmountMinor`: caller-supplied charge (RBI bars it on floating loans), its own entry, not principal:
- * an expense when you borrowed, income when you lent.
- */
 export interface PrepaymentSummary {
   interestSavedMinor: number;
   /** Remaining installments shaved off — `oldRemainingCount - newRemainingCount`. */
@@ -449,6 +444,11 @@ export async function comparePrepayments(
   );
 }
 
+/**
+ * Applies a lump-sum prepayment: cuts principal, regenerates the schedule (EMI fixed, tenure shrinks).
+ * `chargeAmountMinor`: caller-supplied charge (RBI bars it on floating loans), its own entry, not principal:
+ * an expense when you borrowed, income when you lent.
+ */
 export async function applyPrepayment(
   loanId: string,
   opts: {

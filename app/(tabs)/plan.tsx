@@ -115,8 +115,6 @@ interface PlanData {
   dailyGoalMinor: number | null;
 }
 
-/** Overview shows one row of budget and goal tiles and this many payments; the tabs hold the rest. */
-
 /** Plan previews open item sheets directly; collection links keep the full-screen routes. */
 export default function PlanScreen() {
   const { width, fontScale } = useWindowDimensions();

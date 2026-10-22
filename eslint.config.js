@@ -20,28 +20,12 @@ const configs = defineConfig([
   expoConfig,
   eslintPluginPrettierRecommended,
   {
-    ignores: [
-      'dist/*',
-      'node_modules/*',
-      '.expo/*',
-      'scripts/fixtures/*',
-      'android/*',
-      'ios/*',
-      'sites/**',
-      'vendor/**',
-      'design-preview/**',
-    ],
+    ignores: ['dist/*', 'node_modules/*', '.expo/*', 'android/*', 'ios/*', 'sites/**', 'design-preview/**'],
   },
   {
-    // Rule calibration. The bundled react-hooks plugin ships the newer
-    // React Compiler-oriented rules; this app doesn't use the compiler.
-    //   - refs / immutability: kept on (as warnings) — the codebase is now
-    //     clean of both, so a warning here catches a regression.
-    //   - set-state-in-effect: off. It flags the standard, correct pattern of
-    //     re-initializing a modal's form state when it opens or its edited
-    //     record changes (and async "fetch then setState" effects). The
-    //     compiler-friendly alternatives (remount via `key`, derive-in-render)
-    //     are per-call-site structural rewrites with no user-facing benefit.
+    // Rule calibration for the bundled react-hooks plugin, whose newer rules target the React Compiler (not used):
+    // refs and immutability stay on as warnings; set-state-in-effect is off because re-initialising a form when
+    // its sheet opens is the correct pattern here.
     plugins: { 'react-hooks': reactHooks, react },
     rules: {
       'react/no-unescaped-entities': 'off',

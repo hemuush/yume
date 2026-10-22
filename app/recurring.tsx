@@ -46,7 +46,7 @@ import { showAlert } from '@/components/AppDialog';
 
 /**
  * Rent, subscriptions, salary: rules caught up on app open (runDueRecurringRules, src/db/recurring.ts, via
- * app/_layout.tsx). This screen only edits/pauses rules; their entries show in Transactions.
+ * runAppMaintenance). This screen only edits/pauses rules; their entries show in Transactions.
  */
 export default function RecurringScreen() {
   const insets = useSafeAreaInsets();

@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
 import { Text } from '@/components/Text';
-import { PrimaryButton } from '@/components/PrimaryButton';
 import { DateRange } from '@/types';
 import { getSpendingExplanation } from '@/db/spendingExplanation';
 import { formatMoney } from '@/lib/money';
@@ -16,13 +15,11 @@ export function SpendingExplanation({
   categoryId,
   current,
   previous,
-  onExplore,
   onBeforeEntry,
 }: {
   categoryId: string;
   current: DateRange;
   previous: DateRange;
-  onExplore?: () => void;
   onBeforeEntry?: () => void;
 }) {
   const [loadedResult, setResult] = useState<{
@@ -135,9 +132,6 @@ export function SpendingExplanation({
                 ))}
               </InsightDisclosure>
             </>
-          )}
-          {onExplore && (
-            <PrimaryButton compact variant="secondary" title="Explore category entries" onPress={onExplore} />
           )}
         </>
       )}
