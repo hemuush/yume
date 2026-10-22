@@ -108,7 +108,7 @@ export const styles = StyleSheet.create({
   sensitiveRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 14 },
   tile: { alignItems: 'center' },
   tileRing: { padding: 2, borderWidth: 2, borderColor: 'transparent', borderRadius: 999 },
-  tileRingOn: { borderColor: theme.colors.ink },
+  tileRingOn: { borderColor: theme.colors.textSecondary },
   tileBadge: {
     position: 'absolute',
     top: -4,

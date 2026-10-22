@@ -1,4 +1,3 @@
-import { themeInk } from '@/theme/interactionColors';
 import { View, Pressable, ScrollView } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { theme } from '@/constants/theme';
@@ -12,6 +11,7 @@ import { PrimaryButton } from '@/components/PrimaryButton';
 import { styles } from './add.styles';
 import { withPressed } from '@/lib/pressed';
 import { shade } from '@/lib/color';
+import { softTint } from '@/components/softTint';
 import { formatMoney } from '@/lib/money';
 import { hueFor } from '@/lib/hueFor';
 
@@ -86,10 +86,7 @@ export function DetailChip({
       disabled={disabled}
       style={withPressed([
         styles.detailChip,
-        active && [
-          styles.detailChipActive,
-          { backgroundColor: themeInk(accent), borderColor: themeInk(accent) },
-        ],
+        active && [styles.detailChipActive, { backgroundColor: softTint(accent, 0.3), borderColor: accent }],
         disabled && styles.detailChipDisabled,
       ])}
       accessibilityRole={active === undefined ? 'button' : 'switch'}
@@ -101,7 +98,7 @@ export function DetailChip({
       <Feather
         name={icon}
         size={13}
-        color={active ? theme.colors.surface : muted ? theme.colors.textMuted : shade(accent, 40, 8)}
+        color={active ? theme.colors.textPrimary : muted ? theme.colors.textMuted : shade(accent, 40, 8)}
       />
       <Text
         style={[
@@ -114,7 +111,7 @@ export function DetailChip({
         {label}
       </Text>
       {active ? (
-        <Feather name="check" size={12} color={theme.colors.surface} />
+        <Feather name="check" size={12} color={theme.colors.textPrimary} />
       ) : (
         !muted &&
         active === undefined && <Feather name="chevron-down" size={12} color={theme.colors.textMuted} />
@@ -145,6 +142,7 @@ export function FriendFields({
   /** Opens the new-person sheet right here, instead of sending you to Plan first. */
   onAddPerson: () => void;
 }) {
+  const { accent } = useAccent();
   if (people.length === 0) {
     return (
       <View style={styles.section}>
@@ -176,7 +174,7 @@ export function FriendFields({
                 accessibilityRole="button"
                 accessibilityState={{ selected: on }}
               >
-                <View style={[styles.avatarRing, on && styles.avatarRingOn]}>
+                <View style={[styles.avatarRing, on && { borderColor: accent }]}>
                   <View style={[styles.avatar, { backgroundColor: hueFor(p.id) }]}>
                     <Text style={styles.avatarText}>{p.name.trim().charAt(0).toUpperCase()}</Text>
                   </View>

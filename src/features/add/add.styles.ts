@@ -13,7 +13,6 @@ export const styles = StyleSheet.create({
   people: { gap: 10, paddingRight: 4 },
   person: { width: 60, alignItems: 'center', gap: 5 },
   avatarRing: { padding: 2, borderRadius: 28, borderWidth: 2, borderColor: 'transparent' },
-  avatarRingOn: { borderColor: theme.colors.ink },
   avatar: { width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center' },
   avatarAdd: { borderWidth: 1.5, borderStyle: 'dashed', borderColor: theme.colors.borderSoft },
   avatarText: { fontFamily: theme.font.bodyBold, fontSize: 15, color: theme.colors.ink },
@@ -68,7 +67,7 @@ export const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
   },
-  pickRowOn: { borderWidth: 2, borderColor: theme.colors.ink },
+  pickRowOn: { borderWidth: 1.5 },
   pickSub: {
     fontFamily: theme.font.body,
     fontSize: 12,
@@ -160,7 +159,7 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingTop: 8,
     paddingBottom: 12,
-    borderRadius: 28,
+    borderRadius: theme.radius.xl2,
     backgroundColor: GLASS.fill,
     borderWidth: 1,
     borderColor: GLASS.edge,
@@ -177,11 +176,11 @@ export const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: theme.radius.pill,
     backgroundColor: GLASS.fillStrong,
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderColor: GLASS.edge,
     maxWidth: '100%',
   },
-  recentChipActive: { backgroundColor: theme.colors.surface, borderColor: theme.colors.ink },
+  recentChipActive: { backgroundColor: theme.colors.surface },
   recentChipText: {
     fontFamily: theme.font.bodyMedium,
     fontSize: 12,
@@ -206,7 +205,7 @@ export const styles = StyleSheet.create({
   noAccountBtn: { marginTop: 12 },
   frequentRow: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-start', gap: 6, marginTop: 8 },
   frequentChip: {
-    minHeight: 44,
+    minHeight: 40,
     justifyContent: 'center',
     paddingHorizontal: 11,
     paddingVertical: 7,
@@ -215,9 +214,9 @@ export const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: GLASS.edge,
   },
-  frequentChipActive: { backgroundColor: theme.colors.ink, borderColor: theme.colors.ink },
+  frequentChipActive: {},
   frequentChipText: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
-  frequentChipTextActive: { color: theme.colors.surface },
+  frequentChipTextActive: { color: theme.colors.textPrimary },
 
   noteInput: {
     marginBottom: 10,
@@ -309,9 +308,9 @@ export const styles = StyleSheet.create({
 
   // Frosted discs and pills on the wallpaper, like the other headers' buttons.
   trashBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: GLASS.fillStrong,
@@ -323,10 +322,10 @@ export const styles = StyleSheet.create({
   footer: {
     borderTopWidth: 1,
     borderTopColor: GLASS.edge,
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
+    borderTopLeftRadius: theme.radius.xl2,
+    borderTopRightRadius: theme.radius.xl2,
     backgroundColor: 'rgba(248,250,252,0.98)',
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
     paddingTop: 12,
     boxShadow: '0px -10px 30px rgba(16,32,51,0.08)',
   },
@@ -336,7 +335,7 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    minHeight: 48,
+    minHeight: 44,
     paddingHorizontal: 14,
     borderRadius: theme.radius.pill,
     backgroundColor: GLASS.fillStrong,
@@ -362,9 +361,9 @@ export const styles = StyleSheet.create({
     color: theme.colors.dueInk,
   },
   // Bleeds to the panel's edges so it can slide sideways; its first chip is padded in to line up with the pad.
-  detailBar: { marginHorizontal: -12, marginBottom: 10, flexGrow: 0 },
+  detailBar: { marginHorizontal: -16, marginBottom: 10, flexGrow: 0 },
   detailBarFlush: { marginHorizontal: 0, marginBottom: 0 },
-  detailRow: { flexDirection: 'row', alignItems: 'center', marginHorizontal: -12, marginBottom: 10 },
+  detailRow: { flexDirection: 'row', alignItems: 'center', marginHorizontal: -16, marginBottom: 10 },
   hidePadBtn: {
     width: 44,
     height: 44,
@@ -378,14 +377,14 @@ export const styles = StyleSheet.create({
   },
   // The bar bleeds to the panel's edges so chips scroll under them, but the first one lines up with the hint and
   // the buttons (the panel's own 12 padding).
-  detailBarContent: { paddingLeft: 12, paddingRight: 16, gap: 6 },
+  detailBarContent: { paddingLeft: 16, paddingRight: 16, gap: 6 },
   detailChip: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    minHeight: 44,
-    paddingHorizontal: 10,
-    borderRadius: 17,
+    minHeight: 40,
+    paddingHorizontal: 12,
+    borderRadius: theme.radius.pill,
     backgroundColor: theme.colors.surface,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
@@ -399,8 +398,8 @@ export const styles = StyleSheet.create({
   detailChipDisabled: { opacity: 0.4 },
   detailChipTextMuted: { color: theme.colors.textMuted },
   // A detail chip that's a switch (Money back), switched on.
-  detailChipActive: { backgroundColor: theme.colors.ink, borderColor: theme.colors.ink },
-  detailChipTextActive: { color: theme.colors.surface },
+  detailChipActive: {},
+  detailChipTextActive: {},
   error: {
     fontFamily: theme.font.bodyBold,
     fontSize: 12,

@@ -1,4 +1,3 @@
-import { themeInk } from '@/theme/interactionColors';
 import { useState } from 'react';
 import { View, Pressable, Animated, ScrollView, useWindowDimensions } from 'react-native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
@@ -21,6 +20,7 @@ import { TYPE_WASH, typeWash, EntryType, Staged, dateChipLabel } from './addEntr
 import { withPressed } from '@/lib/pressed';
 import { categorySpoken, inParent } from '@/lib/categoryLabel';
 import { useAccent } from '@/theme/AccentContext';
+import { softTint } from '@/components/softTint';
 
 /**
  * The Add screen's display pieces: amount card, From/To pickers, "Your usual" chips, staged-entry list.
@@ -133,7 +133,7 @@ export function AmountCard({
                   styles.frequentChip,
                   active && [
                     styles.frequentChipActive,
-                    { backgroundColor: themeInk(accent), borderColor: themeInk(accent) },
+                    { backgroundColor: softTint(accent, 0.3), borderColor: accent },
                   ],
                 ])}
                 accessibilityRole="button"
@@ -286,7 +286,10 @@ export function AccountPickList({
               haptics.tap();
               onPick(a.id);
             }}
-            style={withPressed([styles.pickRow, on && styles.pickRowOn])}
+            style={withPressed([
+              styles.pickRow,
+              on && [styles.pickRowOn, { borderColor: accent, backgroundColor: softTint(accent, 0.12) }],
+            ])}
             accessibilityRole="button"
             accessibilityState={{ selected: on }}
             accessibilityLabel={a.name}
@@ -338,7 +341,7 @@ export function UsualChips({
   onPick: (entry: RepeatEntry) => void;
 }) {
   const { fontScale } = useWindowDimensions();
-  const { secondary } = useAccent();
+  const { accent } = useAccent();
   const { hideAmounts } = usePrivacy();
   const usualMoney = (u: RepeatEntry) =>
     formatMaskableMoney(u.amountMinor, { currency: u.accountCurrency, masked: hideAmounts && u.isSensitive });
@@ -365,7 +368,7 @@ export function UsualChips({
               style={withPressed([
                 styles.recentChip,
                 { maxWidth: Math.min(300, 220 * Math.max(1, fontScale)) },
-                active && [styles.recentChipActive, { borderColor: secondary }],
+                active && [styles.recentChipActive, { borderColor: accent }],
               ])}
               accessibilityRole="button"
               accessibilityState={{ selected: active }}
