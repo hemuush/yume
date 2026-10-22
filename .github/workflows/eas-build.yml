@@ -24,6 +24,7 @@ on:
           - preview
           - diagnose-r8-preset
           - diagnose-no-minify
+          - diagnose-modules
         default: preview
 
 permissions:
