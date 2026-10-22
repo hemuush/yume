@@ -131,6 +131,7 @@ export function AddDetailRow({
           <Pressable
             onPress={onHidePad}
             style={withPressed(styles.hidePadBtn)}
+            hitSlop={4}
             accessibilityRole="button"
             accessibilityLabel="Hide pad"
           >

@@ -5,7 +5,7 @@ import { haptics } from '@/lib/haptics';
 import { withPressed } from '@/lib/pressed';
 
 import { useAccent } from '@/theme/AccentContext';
-import { interactionColors } from '@/theme/interactionColors';
+import { interactionColors, selectedFill } from '@/theme/interactionColors';
 
 /** Match the main page filters, with a clear selected state and light tap feedback. */
 export function SheetTabs<T extends string>({
@@ -38,7 +38,7 @@ export function SheetTabs<T extends string>({
             variant === 'pill' && styles.pillTab,
             option.value === value &&
               (variant === 'pill'
-                ? { backgroundColor: accent }
+                ? { backgroundColor: selectedFill(accent) }
                 : [styles.selected, { borderBottomColor: colors.ink }]),
           ])}
         >

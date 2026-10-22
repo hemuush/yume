@@ -33,7 +33,7 @@ export function AddButton({ label = '+ Add', disabled, style, ...rest }: Props) 
         style,
       ]}
       accessibilityRole="button"
-      // The pill is ~33dp tall; the slop lifts the touch target to 48dp without changing how it looks.
+      // The pill is 36dp tall; the slop lifts the touch target to 52dp without changing how it looks.
       hitSlop={HIT_SLOP}
       {...rest}
     >
@@ -45,7 +45,8 @@ export function AddButton({ label = '+ Add', disabled, style, ...rest }: Props) 
 const styles = StyleSheet.create({
   btn: {
     paddingHorizontal: 14,
-    paddingVertical: 8,
+    minHeight: 36,
+    justifyContent: 'center',
     borderRadius: theme.radius.pill,
     backgroundColor: theme.colors.ink,
   },

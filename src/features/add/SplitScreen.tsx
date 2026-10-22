@@ -12,7 +12,6 @@ import { CategoryIcon } from '@/components/CategoryIcon';
 import { CategoryPicker } from '@/components/CategoryPicker';
 import { ModalSheet } from '@/components/ModalSheet';
 import { theme } from '@/constants/theme';
-import { EYEBROW } from '@/constants/textStyles';
 import { screenStyles as h } from '@/components/screenStyles';
 import { childrenOf } from '@/lib/categoryTree';
 import { categorySentence, categorySpoken, inParent, joinSub, parentNameOf } from '@/lib/categoryLabel';
@@ -186,7 +185,7 @@ export function SplitScreen() {
         ]}
         keyboardShouldPersistTaps="handled"
       >
-        <Glass radius={28} tone="strong" style={styles.summary}>
+        <Glass radius={theme.radius.xl2} tone="strong" style={styles.summary}>
           <View style={styles.summaryTop}>
             <SplitDonut parts={parts} amounts={amounts} categories={categories} />
             <View style={styles.summaryText}>
@@ -325,6 +324,7 @@ export function SplitScreen() {
         summary={<HeaderSummary figure={money(totalMinor)} rest="to split" dot={theme.colors.slice.spent} />}
         title="Split payment"
         showBack
+        closeIcon
         hideUser
         wallpaper
       />
@@ -379,7 +379,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
   content: { paddingTop: theme.layout.screenTopGap },
   summary: { marginHorizontal: 16, padding: 16, gap: 12 },
-  summaryTop: { flexDirection: 'row', alignItems: 'center', gap: 16 },
+  summaryTop: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   summaryText: { flex: 1, minWidth: 0, gap: 4 },
   legend: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 12, rowGap: 6 },
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: 5, maxWidth: '100%' },
@@ -397,23 +397,22 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: theme.radius.md,
     backgroundColor: GLASS.fillStrong,
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderColor: GLASS.edge,
   },
-  boxLive: { borderColor: theme.colors.ink, backgroundColor: theme.colors.surface },
+  boxLive: { borderColor: theme.colors.textSecondary, backgroundColor: theme.colors.surface },
   boxRow: { flexDirection: 'row', alignItems: 'center' },
   boxText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textPrimary },
   caret: { width: 1.5, height: 15, backgroundColor: theme.colors.ink, marginLeft: 2 },
   restBox: { paddingVertical: 6, backgroundColor: theme.colors.incomeTint },
   restBoxBad: { backgroundColor: theme.colors.expenseTint },
   restLabel: {
-    ...EYEBROW,
-    fontFamily: theme.font.bodyBold,
+    fontFamily: theme.font.bodyMedium,
     fontSize: 11,
-    color: theme.colors.incomeText,
-    marginBottom: 2,
+    color: theme.colors.textSecondary,
+    marginBottom: 1,
   },
-  restText: { color: theme.colors.incomeText },
+  restText: { color: theme.colors.textPrimary },
   bad: { color: theme.colors.expenseText },
   remove: {
     width: 44,
@@ -431,18 +430,18 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 17,
     color: theme.colors.textMuted,
-    marginTop: 10,
-    marginHorizontal: 24,
+    marginTop: 12,
+    marginHorizontal: 16,
   },
   // A glass dock over the wallpaper.
   footer: {
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
+    borderTopLeftRadius: theme.radius.xl2,
+    borderTopRightRadius: theme.radius.xl2,
     borderWidth: 1,
     borderBottomWidth: 0,
     borderColor: GLASS.edge,
-    backgroundColor: 'rgba(255,255,255,0.86)',
-    boxShadow: '0px -8px 24px rgba(16,32,51,0.06)',
+    backgroundColor: 'rgba(255,253,248,0.94)',
+    boxShadow: '0px -8px 24px rgba(18,19,15,0.06)',
     paddingHorizontal: 16,
     paddingTop: 12,
   },

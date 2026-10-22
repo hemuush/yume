@@ -125,12 +125,12 @@ export function PadButton({
 }
 
 const styles = StyleSheet.create({
-  pad: { gap: 7 },
-  row: { flexDirection: 'row', gap: 7 },
+  pad: { gap: 8 },
+  row: { flexDirection: 'row', gap: 8 },
   key: {
     flex: 1,
     height: 46,
-    borderRadius: 15,
+    borderRadius: theme.radius.md,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: theme.colors.surface,

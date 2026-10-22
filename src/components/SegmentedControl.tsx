@@ -1,3 +1,4 @@
+import { selectedFill } from '@/theme/interactionColors';
 import { useEffect, useRef, useState } from 'react';
 import { View, Pressable, Animated, Easing, StyleSheet, LayoutChangeEvent } from 'react-native';
 import { Text } from '@/components/Text';
@@ -82,7 +83,7 @@ export function SegmentedControl<T extends string>({
           pointerEvents="none"
           style={[
             styles.pill,
-            { backgroundColor: accent },
+            { backgroundColor: selectedFill(accent) },
             { width: segWidth, transform: [{ translateX: x }] },
           ]}
         />
@@ -91,7 +92,7 @@ export function SegmentedControl<T extends string>({
         <Segment
           key={opt.value}
           active={opt.value === value}
-          fallbackInk={segWidth <= 0 ? accent : undefined}
+          fallbackInk={segWidth <= 0 ? selectedFill(accent) : undefined}
           label={opt.label}
           disabled={disabled}
           onPress={() => onChange(opt.value)}
