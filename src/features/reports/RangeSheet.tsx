@@ -1,3 +1,4 @@
+import { selectedFill } from '@/theme/interactionColors';
 import { useState } from 'react';
 import { View, Pressable, StyleSheet, ScrollView } from 'react-native';
 import { Text } from '@/components/Text';
@@ -130,7 +131,7 @@ export function RangeSheet({
               }}
               style={withPressed([
                 styles.pick,
-                on && { backgroundColor: accent, borderColor: theme.colors.ink },
+                on && { backgroundColor: selectedFill(accent), borderColor: selectedFill(accent) },
               ])}
               accessibilityRole="button"
               accessibilityState={{ selected: on }}
