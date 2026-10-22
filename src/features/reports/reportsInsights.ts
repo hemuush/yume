@@ -10,7 +10,6 @@ import type {
   TrendPoint,
 } from '@/db/reports';
 import { roundedMinor } from '@/lib/round';
-import type { HeatCell } from './SpendHeatmap';
 import { dayMonth } from '@/lib/dateLabels';
 
 /** Which categories count as a fixed monthly load rather than a choice. */
@@ -49,120 +48,81 @@ export function heatLevel(amountMinor: number, maxMinor: number): 0 | 1 | 2 | 3 
   return 1;
 }
 
-const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
-
-/**
- * The heatmap grid for a period. A month is a calendar (7 columns, blanks before the 1st, today marked,
- * spend days tappable via `onDayPress`); a year is its 12 months in 4 columns, from `trend`.
- */
-export function buildHeatGrid(input: {
-  granularity: 'month' | 'year';
-  /** First day of the period. */
-  start: Date;
-  trend: TrendPoint[];
-  daily: DailyExpensePoint[];
-  onDayPress: (iso: string) => void;
-  /** The day whose entries are open below the grid: ringed. */
-  selectedIso?: string | null;
-  /** Injectable for tests; defaults to today. */
-  todayIso?: string;
-}): { cells: HeatCell[]; leadingPad: number; columns: number; weekdayLabels?: string[] } {
-  if (input.granularity === 'year') {
-    const maxMonth = Math.max(1, ...input.trend.map((t) => t.totalMinor));
-    return {
-      cells: input.trend.map((t, i) => ({
-        key: `m-${i}`,
-        label: t.label,
-        level: heatLevel(t.totalMinor, maxMonth),
-      })),
-      leadingPad: 0,
-      columns: 4,
-    };
-  }
-  const y = input.start.getFullYear();
-  const m = input.start.getMonth();
-  const daysInMonth = new Date(y, m + 1, 0).getDate();
-  const byDate = new Map(input.daily.map((d) => [d.date, d.totalMinor]));
-  const maxDay = Math.max(1, ...input.daily.map((d) => d.totalMinor));
-  const todayIso = input.todayIso ?? toLocalIsoDate(new Date());
-  const cells = Array.from({ length: daysInMonth }, (_, i): HeatCell => {
-    const day = i + 1;
-    const iso = `${y}-${String(m + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    const total = byDate.get(iso) ?? 0;
-    return {
-      key: iso,
-      label: String(day),
-      a11yLabel: heatCellA11y(iso, total),
-      level: heatLevel(total, maxDay),
-      isToday: iso === todayIso,
-      isFuture: iso > todayIso,
-      isSelected: iso === input.selectedIso,
-      onPress: iso <= todayIso ? () => input.onDayPress(iso) : undefined,
-    };
-  });
-  return { cells, leadingPad: new Date(y, m, 1).getDay(), columns: 7, weekdayLabels: WEEKDAYS };
+/** One day of the heatmap. */
+export interface HeatDay {
+  iso: string;
+  day: number;
+  minor: number;
+  level: 0 | 1 | 2 | 3 | 4;
+  future: boolean;
+  today: boolean;
 }
 
-/** What a screen reader says for a heatmap day: its date and what was spent. */
-function heatCellA11y(iso: string, totalMinor: number): string {
-  return `${dayMonth(iso)}, ${totalMinor > 0 ? `spent ${formatMoney(totalMinor)}` : 'nothing spent'}`;
-}
+export type HeatModel =
+  | { kind: 'calendar'; leadingPad: number; days: HeatDay[]; maxMinor: number }
+  | {
+      kind: 'matrix';
+      /** One row per calendar month the period touches, 31 slots each (null: outside the period). */
+      rows: { key: string; label: string; days: (HeatDay | null)[] }[];
+      maxMinor: number;
+    };
 
-/** A custom range up to this many days is drawn day by day; a longer one by month. */
+/** A period up to this many days is drawn day by day as a calendar; a longer one as a month × day matrix. */
 export const RANGE_DAY_GRID_MAX_DAYS = 62;
 
 /**
- * The heatmap grid for a custom range: up to about two months, a calendar of exactly its days (blanks before
- * the first, so weekdays line up); longer, one cell per month summed from the range's own days.
+ * The heatmap for a period: a calendar when it is a month or two (blanks before the first day so weekdays
+ * line up), otherwise a matrix of months down and the day of the month across, so a bill that lands on the
+ * 1st shows as one darker column. Days after `today` are marked future.
  */
-export function buildRangeHeatGrid(input: {
-  start: string;
-  end: string;
+export function buildHeat(input: {
+  range: { start: string; end: string };
   daily: DailyExpensePoint[];
-  onDayPress: (iso: string) => void;
-  selectedIso?: string | null;
-  todayIso?: string;
-}): { cells: HeatCell[]; leadingPad: number; columns: number; weekdayLabels?: string[] } {
+  today: string;
+}): HeatModel {
   const byDate = new Map(input.daily.map((d) => [d.date, d.totalMinor]));
-  const days: string[] = [];
-  for (let d = parseLocalIsoDate(input.start); toLocalIsoDate(d) <= input.end; d.setDate(d.getDate() + 1)) {
-    days.push(toLocalIsoDate(d));
-  }
-  if (days.length <= RANGE_DAY_GRID_MAX_DAYS) {
-    const maxDay = Math.max(1, ...input.daily.map((d) => d.totalMinor));
-    const todayIso = input.todayIso ?? toLocalIsoDate(new Date());
+  const isos = daysOfRange(input.range);
+  const maxMinor = Math.max(0, ...isos.filter((i) => i <= input.today).map((i) => byDate.get(i) ?? 0));
+  const dayOf = (iso: string): HeatDay => {
+    const minor = iso <= input.today ? (byDate.get(iso) ?? 0) : 0;
     return {
-      cells: days.map((iso) => {
-        const total = byDate.get(iso) ?? 0;
-        return {
-          key: iso,
-          label: String(Number(iso.slice(8))),
-          a11yLabel: heatCellA11y(iso, total),
-          level: heatLevel(total, maxDay),
-          isToday: iso === todayIso,
-          isFuture: iso > todayIso,
-          isSelected: iso === input.selectedIso,
-          onPress: iso <= todayIso ? () => input.onDayPress(iso) : undefined,
-        };
-      }),
-      leadingPad: parseLocalIsoDate(input.start).getDay(),
-      columns: 7,
-      weekdayLabels: WEEKDAYS,
+      iso,
+      day: Number(iso.slice(8)),
+      minor,
+      level: heatLevel(minor, maxMinor),
+      future: iso > input.today,
+      today: iso === input.today,
+    };
+  };
+  if (isos.length <= RANGE_DAY_GRID_MAX_DAYS) {
+    return {
+      kind: 'calendar',
+      leadingPad: parseLocalIsoDate(input.range.start).getDay(),
+      days: isos.map(dayOf),
+      maxMinor,
     };
   }
-  const months = new Map<string, number>();
-  for (const iso of days)
-    months.set(iso.slice(0, 7), (months.get(iso.slice(0, 7)) ?? 0) + (byDate.get(iso) ?? 0));
-  const maxMonth = Math.max(1, ...months.values());
+  const months = new Map<string, (HeatDay | null)[]>();
+  for (const iso of isos) {
+    const key = iso.slice(0, 7);
+    if (!months.has(key)) months.set(key, new Array<HeatDay | null>(31).fill(null));
+    months.get(key)![Number(iso.slice(8)) - 1] = dayOf(iso);
+  }
   return {
-    cells: [...months].map(([ym, total]) => ({
-      key: `m-${ym}`,
-      label: parseLocalIsoDate(`${ym}-01`).toLocaleDateString(undefined, { month: 'short' }),
-      level: heatLevel(total, maxMonth),
+    kind: 'matrix',
+    rows: [...months].map(([key, days]) => ({
+      key,
+      label: parseLocalIsoDate(`${key}-01`).toLocaleDateString(undefined, { month: 'short' }),
+      days,
     })),
-    leadingPad: 0,
-    columns: 4,
+    maxMinor,
   };
+}
+
+/** What a screen reader says for a heatmap day: its date and what was spent. */
+export function heatDayLabel(d: HeatDay): string {
+  if (d.future) return `${dayMonth(d.iso)}, hasn't happened yet`;
+  return `${dayMonth(d.iso)}, ${d.minor > 0 ? `spent ${formatMoney(d.minor)}` : 'nothing spent'}`;
 }
 
 /** Rolling average of the prior months in a monthly trend (excludes the last / current point). */
@@ -703,4 +663,43 @@ export function categoriesAgainstUsual(tracks: CategoryTrack[]): CategoryAgainst
   return rows.sort(
     (a, b) => b.nowMinor - b.usualMinor - (a.nowMinor - a.usualMinor) || a.name.localeCompare(b.name)
   );
+}
+
+/** The days of a range, as ISO dates, first to last. */
+export function daysOfRange(range: { start: string; end: string }): string[] {
+  const days: string[] = [];
+  for (let d = parseLocalIsoDate(range.start); toLocalIsoDate(d) <= range.end; d.setDate(d.getDate() + 1)) {
+    days.push(toLocalIsoDate(d));
+  }
+  return days;
+}
+
+/**
+ * Running spend for each day of a range: what had been spent by the end of that day. Days after `today`
+ * are null (not happened yet), so a month in progress draws only as far as today.
+ */
+export function cumulativeSpend(
+  daily: DailyExpensePoint[],
+  range: { start: string; end: string },
+  today: string
+): (number | null)[] {
+  const spentOn = new Map(daily.map((d) => [d.date, d.totalMinor]));
+  let sum = 0;
+  return daysOfRange(range).map((iso) => {
+    if (iso > today) return null;
+    sum += spentOn.get(iso) ?? 0;
+    return sum;
+  });
+}
+
+/** A spend-day that stands well above the period's usual day: marked on the heatmap. */
+export const BIG_DAY_FACTOR = 2.4;
+
+/**
+ * Total spend per week row of a calendar grid (the numbers down its right edge). `rows` are the grid's
+ * rows, each cell an ISO date or null.
+ */
+export function weekTotals(rows: (string | null)[][], daily: DailyExpensePoint[]): number[] {
+  const spentOn = new Map(daily.map((d) => [d.date, d.totalMinor]));
+  return rows.map((row) => row.reduce((sum, iso) => sum + (iso ? (spentOn.get(iso) ?? 0) : 0), 0));
 }

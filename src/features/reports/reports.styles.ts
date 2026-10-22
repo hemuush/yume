@@ -10,6 +10,7 @@ const BLOCK_GAP = SCREEN.sectionGap;
 // Shared by the Reports screen and its pieces (PeriodRow, HeatmapCard, DayCard, ReportInsights, CategoryBar, CategoryList, TrendChart, DayTotal).
 export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
+  dimmed: { opacity: 0.55 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
   errTitle: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.expenseText },
   errDetail: {

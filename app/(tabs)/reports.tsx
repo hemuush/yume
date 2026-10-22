@@ -29,6 +29,7 @@ import {
   CategoryBreakdownItem,
 } from '@/db/reports';
 import { listTransactions, listCategories, listAccounts } from '@/db/ledger';
+import { listBudgetsForMonth } from '@/db/budgets';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import { savingsAccountIdsOf } from '@/lib/account';
 import { isSavingsEntry, privateComparison } from '@/lib/privateSummary';
@@ -42,11 +43,13 @@ import {
   windowRange,
   previousWindowRange,
   previousPeriodLabel,
+  periodShortLabel,
   rangeDays,
 } from '@/lib/period';
 import { findStartingBalances } from '@/db/tidyUp';
 import { useFreshness } from '@/lib/useFreshness';
 import { ModalSheet } from '@/components/ModalSheet';
+import { dayMonth } from '@/lib/dateLabels';
 import { Amount } from '@/components/Amount';
 import {
   ReportTabs,
@@ -61,8 +64,9 @@ import { HomeWallpaper } from '@/features/home/HomeWallpaper';
 import { useAccent } from '@/theme/AccentContext';
 import { ReportsSkeleton } from '@/features/reports/ReportsSkeleton';
 import { ReportsHeader } from '@/features/reports/ReportsHeader';
-import { HeatmapCard } from '@/features/reports/HeatmapCard';
-import { DaysSummary } from '@/features/reports/DaysSummary';
+import { HeatmapCard, HeatScope } from '@/features/reports/HeatmapCard';
+import { DayInspector } from '@/features/reports/DayInspector';
+import { ReportHero } from '@/features/reports/ReportHero';
 import { DayCard } from '@/features/reports/DayCard';
 import { ReportInsights } from '@/features/reports/ReportInsights';
 import { CategoryBar } from '@/features/reports/CategoryBar';
@@ -75,8 +79,7 @@ import { MIN_TREND_POINTS } from '@/features/reports/TrendChart';
 import { CategoryTracks } from '@/features/reports/CategoryTracks';
 import { styles } from '@/features/reports/reports.styles';
 import {
-  buildHeatGrid,
-  buildRangeHeatGrid,
+  buildHeat,
   RANGE_DAY_GRID_MAX_DAYS,
   baselineFromTrend,
   recurringVsDiscretionary,
@@ -88,6 +91,8 @@ import {
   weekdayRhythm,
   accountRows,
   categoriesAgainstUsual,
+  cumulativeSpend,
+  daysOfRange,
   StoryAction,
 } from '@/features/reports/reportsInsights';
 import { errorMessage } from '@/lib/errorMessage';
@@ -101,6 +106,8 @@ type CategoryGroup = 'category' | 'account';
 const BIGGEST_COUNT = 5;
 /** Rows shown before "N more" in Categories (CategoryList's own limit). */
 const CATEGORIES_COLLAPSED = 5;
+/** How many categories get a chip on the heatmap. */
+const HEAT_SCOPES = 4;
 export default function ReportsScreen() {
   const reduceMotion = useReduceMotion();
   const { hideAmounts } = usePrivacy();
@@ -154,6 +161,9 @@ export default function ReportsScreen() {
   const [cashFlow, setCashFlow] = useState<CashFlowPoint[]>([]);
   const [catTracks, setCatTracks] = useState<CategoryTrack[]>([]);
   const [daily, setDaily] = useState<DailyExpensePoint[]>([]);
+  // The period before, day by day (the hero's comparison line), and the month's total budget when there is one.
+  const [prevDaily, setPrevDaily] = useState<DailyExpensePoint[]>([]);
+  const [budgetMinor, setBudgetMinor] = useState<number | null>(null);
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const [errorText, setErrorText] = useState<string | null>(null);
   const [loadedKey, setLoadedKey] = useState<string | null>(null);
@@ -175,6 +185,7 @@ export default function ReportsScreen() {
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [dayData, setDayData] = useState<{ iso: string; txs: Transaction[] } | null>(null);
   const [dayError, setDayError] = useState<string | null>(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
   const daySeq = useRef(0);
   // A category the heatmap is narrowed to, with its daily totals; the id says which category they belong
   // to, so a stale set is never shown for another.
@@ -218,7 +229,7 @@ export default function ReportsScreen() {
             : 7;
       try {
         setStatus('loading');
-        const [cmp, tr, nw, cf, ct, dy, cats, tidy, accs] = await Promise.all([
+        const [cmp, tr, nw, cf, ct, dy, cats, tidy, accs, pdy, bud] = await Promise.all([
           getRangeComparison(range, previousWindowRange(c), isCustomWindow(c) ? 'month' : c.granularity),
           getMonthlyExpenseTrend(trendMonths, anchor, hideAmounts),
           getNetWorthTrend(trendMonths, anchor),
@@ -229,6 +240,13 @@ export default function ReportsScreen() {
           // Only the starting-balance names (to word an insight); not Tidy up's whole-ledger repeat scan.
           findStartingBalances().catch(() => null),
           listAccounts(true),
+          getDailyExpenseTotals(previousWindowRange(c), hideAmounts).catch(() => [] as DailyExpensePoint[]),
+          // Budgets are per calendar month: other windows have none to draw.
+          c.granularity === 'month'
+            ? listBudgetsForMonth(range.start.slice(0, 7), hideAmounts)
+                .then((list) => list.reduce((sum, b) => sum + b.effectiveLimitMinor, 0))
+                .catch(() => 0)
+            : Promise.resolve(0),
         ]);
         if (seq !== loadSeq.current) return false;
         const thisMonth = toLocalIsoDate(new Date()).slice(0, 7);
@@ -257,6 +275,8 @@ export default function ReportsScreen() {
         setCatTracks(ct.map((p) => ({ ...p, totalsMinor: p.totalsMinor.slice(0, lastElapsed + 1) })));
         setSavingsIds(savingsAccountIdsOf(accs));
         setDaily(dy);
+        setPrevDaily(pdy);
+        setBudgetMinor(bud > 0 ? bud : null);
         setCategories(cats);
         setStartingBalanceNames(tidy ? tidy.map((g) => g.categoryName) : []);
         setStatus('ready');
@@ -286,42 +306,54 @@ export default function ReportsScreen() {
     }, [load, cursor, freshness])
   );
   const catById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
-  // The heatmap leaves savings and investments out while they're hidden, so the day it opens does too.
-  const openDay = useCallback(
-    async (iso: string) => {
-      const seq = ++daySeq.current;
-      setSelectedDay(iso);
-      setDayData(null);
-      setDayError(null);
+  // The day under the heatmap's inspector: the one touched last, else today (or the period's last day).
+  const inspectIso = useMemo(() => {
+    const r = windowRange(cursor);
+    const t = toLocalIsoDate(new Date());
+    return selectedDay ?? (r.end < t ? r.end : t);
+  }, [cursor, selectedDay]);
+  const [dayRetry, setDayRetry] = useState(0);
+  // Its entries, read a moment after the finger settles. The heatmap leaves savings and investments out
+  // while they're hidden, so the day does too.
+  useEffect(() => {
+    const seq = ++daySeq.current;
+    setDayError(null);
+    const timer = setTimeout(async () => {
       try {
-        const txs = await listTransactions({ fromDate: iso, toDate: iso, currency: getCachedCurrency() });
+        const txs = await listTransactions({
+          fromDate: inspectIso,
+          toDate: inspectIso,
+          currency: getCachedCurrency(),
+        });
         if (seq !== daySeq.current) return;
         setDayData({
-          iso,
+          iso: inspectIso,
           txs: hideAmounts ? txs.filter((tx) => !isSavingsEntry(tx, catById, savingsIds)) : txs,
         });
       } catch (e) {
         if (seq === daySeq.current) setDayError(errorMessage(e));
       }
-    },
-    [hideAmounts, catById, savingsIds]
-  );
-  const closeDay = useCallback(() => {
-    ++daySeq.current;
-    setSelectedDay(null);
-    setDayData(null);
-    setDayError(null);
+    }, 120);
+    return () => clearTimeout(timer);
+  }, [inspectIso, hideAmounts, catById, savingsIds, dayRetry]);
+  // Picking a day only inspects it; its sheet opens from the inspector (or a story / biggest spend).
+  const inspectDay = useCallback((iso: string) => setSelectedDay(iso), []);
+  const openDay = useCallback((iso: string) => {
+    setSelectedDay(iso);
+    setSheetOpen(true);
   }, []);
+  const closeDay = useCallback(() => setSheetOpen(false), []);
   // A new period starts clean: no day open, no filter, no category picked.
   const cursorKey = isCustomWindow(cursor)
     ? `${cursor.start}|${cursor.end}`
     : `${cursor.granularity}:${cursor.offset}`;
   useEffect(() => {
-    closeDay();
+    setSelectedDay(null);
+    setSheetOpen(false);
     setCatFilter(null);
     setSelectedCat(null);
     setSelectedAccount(null);
-  }, [cursorKey, hideAmounts, closeDay]);
+  }, [cursorKey, hideAmounts]);
   useEffect(() => {
     setDetailErrors({});
   }, [cursorKey, hideAmounts, catFilter, selectedCat, flow, group]);
@@ -516,35 +548,44 @@ export default function ReportsScreen() {
     router.push(grow ? growHref(href) : href);
   };
   const onPressCategory = (c: CategoryBreakdownItem) => openCategory(c.categoryId);
-  // The heatmap is narrowed to a category's days only where it has days at all.
-  const filterId = byMonth ? null : catFilter;
+  // The heatmap can be narrowed to one category, at any period length.
+  const filterId = catFilter;
   const filterCat = filterId ? catById.get(filterId) : undefined;
+  const filterLoading = filterId != null && filtered?.id !== filterId;
   const heatDaily = filterId ? (filtered?.id === filterId ? filtered.daily : []) : daily;
-  const onTapDay = (iso: string) => (iso === selectedDay ? closeDay() : openDay(iso));
-  /* eslint-disable react-hooks/refs -- These pure builders store the event handler; they do not invoke it or read refs during render. */
-  const heatGrid = custom
-    ? buildRangeHeatGrid({
-        start: range.start,
-        end: range.end,
-        daily: heatDaily,
-        onDayPress: onTapDay,
-        selectedIso: selectedDay,
-      })
-    : buildHeatGrid({
-        granularity: cursor.granularity,
-        start: rangeStart,
-        trend,
-        daily: heatDaily,
-        onDayPress: onTapDay,
-        selectedIso: selectedDay,
-      });
-  /* eslint-enable react-hooks/refs */
+  const heat = buildHeat({ range, daily: heatDaily, today: todayIso });
+  const usualMinor =
+    facts.countedDays > 0
+      ? filterId
+        ? Math.round(
+            heatDaily.filter((d) => d.date <= todayIso).reduce((sum, d) => sum + d.totalMinor, 0) /
+              facts.countedDays
+          )
+        : facts.perDayMinor
+      : 0;
+  const heatScopes: HeatScope[] = [
+    { id: null, name: 'All', color: accent },
+    ...current.categoryBreakdown
+      .slice(0, HEAT_SCOPES)
+      .map((c) => ({ id: c.categoryId, name: c.name, color: c.color })),
+  ];
+  if (filterId && filterCat && !heatScopes.some((x) => x.id === filterId)) {
+    heatScopes.push({ id: filterId, name: filterCat.name, color: filterCat.color });
+  }
+  const heatDays = heat.kind === 'calendar' ? heat.days : heat.rows.flatMap((r) => r.days);
+  const inspected = heatDays.find((d) => d?.iso === inspectIso) ?? null;
+  const periodDays = daysOfRange(range);
+  const heroIndex = periodDays.indexOf(inspectIso);
+  const heroCurrent = cumulativeSpend(daily, range, todayIso);
+  const heroPrevious = cumulativeSpend(prevDaily, previousWindowRange(cursor), '9999-12-31').map(
+    (v) => v ?? 0
+  );
   // With a category filter on, the day lists that category's entries (and its subcategories').
   const inFilter = (tx: Transaction) =>
     tx.categoryId != null &&
     (tx.categoryId === filterId || catById.get(tx.categoryId)?.parentId === filterId);
   // Entries that arrive for a day other than the open one are never shown.
-  const dayTx = dayData?.iso === selectedDay ? dayData.txs : null;
+  const dayTx = dayData?.iso === inspectIso ? dayData.txs : null;
   const shownDayTx = dayTx && filterId ? dayTx.filter(inFilter) : dayTx;
   const showCategoryDays = (c: CategoryBreakdownItem) => {
     closeDay();
@@ -578,6 +619,13 @@ export default function ReportsScreen() {
     setFlow('expense');
     if (a.type === 'category') pickCategory(a.id);
     else setSelectedCat(null);
+  };
+  // A month row of the heatmap matrix opens Reports on that month.
+  const openMonthOf = (monthKey: string) => {
+    const [y, m] = monthKey.split('-').map(Number);
+    const now = new Date();
+    const offset = y * 12 + (m - 1) - (now.getFullYear() * 12 + now.getMonth());
+    if (offset <= 0 && offset >= -120) stepCursor({ granularity: 'month', offset });
   };
   // A point on the trend chart stands for a month: this opens Reports on it.
   const monthLink = custom
@@ -637,51 +685,64 @@ export default function ReportsScreen() {
           />
         ) : tab === 'days' ? (
           <>
-            {!filterId && (
-              <DaysSummary
-                periodName={periodName}
-                inProgress={range.end >= todayIso}
-                spentMinor={dispExpense}
-                changeMinor={
-                  range.end < todayIso && previous.expenseMinor > 0
-                    ? dispExpense - roundedMinor(previous.expenseMinor)
-                    : null
-                }
-                comparedTo={custom ? 'the period before' : previousPeriodLabel(cursor)}
-                perDayMinor={facts.countedDays > 0 ? facts.perDayMinor : null}
-              />
-            )}
-            {filterId && filtered?.id !== filterId ? (
-              !detailErrors.heatmap && (
-                <ActivityIndicator
-                  accessibilityLabel="Loading category days"
-                  color={theme.colors.ink}
-                  style={styles.daySpinner}
-                />
-              )
-            ) : (
+            <ReportHero
+              animKey={cursorKey}
+              periodName={periodName}
+              inProgress={range.end >= todayIso}
+              spentMinor={dispExpense}
+              perDayMinor={facts.countedDays > 0 ? facts.perDayMinor : null}
+              current={heroCurrent}
+              previous={heroPrevious}
+              labelAt={(i) => dayMonth(periodDays[i] ?? range.end)}
+              selected={heroIndex >= 0 ? heroIndex : null}
+              onSelect={(i) => periodDays[i] && inspectDay(periodDays[i])}
+              budgetMinor={budgetMinor}
+              projectedMinor={
+                range.end >= todayIso && facts.countedDays > 0
+                  ? Math.round(facts.perDayMinor * daysInPeriod)
+                  : null
+              }
+              currentName={custom ? 'This period' : periodShortLabel(cursor)}
+              previousName={custom ? 'Period before' : isYear ? 'Last year' : 'Month before'}
+              incomeMinor={current.incomeMinor}
+              previousIncomeMinor={previous.incomeMinor}
+              comparedTo={custom ? 'the period before' : previousPeriodLabel(cursor)}
+            />
+            <View style={filterLoading ? styles.dimmed : undefined}>
               <HeatmapCard
-                grid={heatGrid}
-                isYear={byMonth}
-                filter={
-                  filterCat
-                    ? {
-                        name: filterCat.name,
-                        color: filterCat.color,
-                        onClear: () => {
-                          closeDay();
-                          setCatFilter(null);
-                        },
-                      }
-                    : null
-                }
-              />
-            )}
-            {!byMonth && selectedDay && (
+                model={heat}
+                daily={heatDaily}
+                selectedIso={inspectIso}
+                onSelect={inspectDay}
+                onOpenMonth={custom && !byMonth ? undefined : openMonthOf}
+                usualMinor={usualMinor}
+                scopes={heatScopes}
+                scopeId={filterId}
+                onScope={(id) => {
+                  setCatFilter(id);
+                  setFiltered(null);
+                }}
+                hue={filterCat?.color ?? accent}
+              >
+                {inspected && (
+                  <DayInspector
+                    iso={inspectIso}
+                    spentMinor={inspected.minor}
+                    future={inspected.future}
+                    usualMinor={usualMinor}
+                    scopeName={filterCat?.name}
+                    txs={shownDayTx}
+                    catById={catById}
+                    onOpen={() => setSheetOpen(true)}
+                  />
+                )}
+              </HeatmapCard>
+            </View>
+            {sheetOpen && (
               <ModalSheet
                 visible
                 onClose={closeDay}
-                title={parseLocalIsoDate(selectedDay).toLocaleDateString(undefined, {
+                title={parseLocalIsoDate(inspectIso).toLocaleDateString(undefined, {
                   weekday: 'short',
                   day: 'numeric',
                   month: 'long',
@@ -694,12 +755,12 @@ export default function ReportsScreen() {
               >
                 <DayCard
                   embedded
-                  iso={selectedDay}
+                  iso={inspectIso}
                   txs={shownDayTx}
                   catById={catById}
                   onClose={closeDay}
                   error={dayError}
-                  onRetry={() => void openDay(selectedDay)}
+                  onRetry={() => setDayRetry((n) => n + 1)}
                 />
               </ModalSheet>
             )}
@@ -829,7 +890,7 @@ export default function ReportsScreen() {
                   onSelect={(c) => setSelectedCat((id) => (id === c.categoryId ? null : c.categoryId))}
                   split={detailErrors.split ? [] : split?.id === selectedCat ? split.items : null}
                   onOpen={onPressCategory}
-                  onShowDays={income || byMonth ? undefined : showCategoryDays}
+                  onShowDays={income ? undefined : showCategoryDays}
                   kind={flow}
                   iconOf={(id) => catById.get(id)?.icon}
                 />
