@@ -1,76 +1,162 @@
-import { View, Pressable, StyleSheet } from 'react-native';
-import Feather from '@expo/vector-icons/Feather';
+import { View, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
-import { spendHeatScale } from '@/lib/color';
+import { screenStyles as h } from '@/components/screenStyles';
 import { theme } from '@/constants/theme';
-import { useAccent } from '@/theme/AccentContext';
+import { spendHeatScale } from '@/lib/color';
+import { haptics } from '@/lib/haptics';
 import { withPressed } from '@/lib/pressed';
-import { SpendHeatmap, HeatCell } from './SpendHeatmap';
-import { styles } from './reports.styles';
+import { compactMoney } from '@/lib/compactMoney';
+import { useAccent } from '@/theme/AccentContext';
+import { themeInk } from '@/theme/interactionColors';
+import type { DailyExpensePoint } from '@/db/reports';
+import { SpendHeatmap } from './SpendHeatmap';
+import type { HeatModel } from './reportsInsights';
 
-const LEVELS = [0, 1, 2, 3, 4] as const;
+export interface HeatScope {
+  /** Null for "All". */
+  id: string | null;
+  name: string;
+  color: string;
+}
+
+function ScopeChip({ scope, active, onPress }: { scope: HeatScope; active: boolean; onPress: () => void }) {
+  const { accent } = useAccent();
+  return (
+    <Pressable
+      onPress={() => {
+        if (!active) haptics.tap();
+        onPress();
+      }}
+      accessibilityRole="button"
+      accessibilityState={{ selected: active }}
+      accessibilityLabel={scope.id ? `${scope.name} days` : 'All spending'}
+      style={withPressed([styles.chip, active && { backgroundColor: themeInk(accent) }])}
+    >
+      {scope.id != null && <View style={[styles.chipDot, { backgroundColor: scope.color }]} />}
+      <Text style={[styles.chipText, active && styles.chipTextOn]}>{scope.name}</Text>
+    </Pressable>
+  );
+}
 
 /**
- * The Days tab's heatmap: a titled card with its legend, the period's day grid, and a hint. A category picked in Categories narrows
- * it to that category's days (a chip clears it). Tapping a day opens its list; cells carry their own onPress.
+ * Days' heatmap card: a title with the scale, category chips that recolour the grid to one category, the
+ * grid itself and (as children) the inspector for the day picked. A category picked in Breakdown shows here
+ * as the active chip.
  */
 export function HeatmapCard({
-  grid,
-  isYear,
-  filter,
+  model,
+  daily,
+  selectedIso,
+  onSelect,
+  onOpenMonth,
+  usualMinor,
+  scopes,
+  scopeId,
+  onScope,
+  hue,
+  children,
 }: {
-  grid: { cells: HeatCell[]; leadingPad: number; columns: number; weekdayLabels?: string[] };
-  isYear: boolean;
-  /** The category the grid is narrowed to, if any. */
-  filter?: { name: string; color: string; onClear: () => void } | null;
+  model: HeatModel;
+  daily: DailyExpensePoint[];
+  selectedIso: string | null;
+  onSelect: (iso: string) => void;
+  onOpenMonth?: (monthKey: string) => void;
+  usualMinor: number;
+  scopes: HeatScope[];
+  scopeId: string | null;
+  onScope: (id: string | null) => void;
+  /** The colour the grid is tinted in: the theme's, or the chosen category's. */
+  hue: string;
+  children?: React.ReactNode;
 }) {
-  const heatScale = spendHeatScale(useAccent().accent);
+  const scale = spendHeatScale(hue);
   return (
-    <View style={styles.hmCard}>
-      <View style={styles.hmHead}>
-        <Text style={styles.hmTitle}>{isYear ? 'Spending by month' : 'Spending by day'}</Text>
-        <View style={styles.legend} accessibilityLabel="Lighter means less spent, darker means more">
-          <Text style={styles.legendText}>less</Text>
-          {LEVELS.map((l) => (
-            <View
-              key={l}
-              style={[
-                styles.legendSwatch,
-                l === 0
-                  ? { borderWidth: StyleSheet.hairlineWidth, borderColor: theme.colors.borderSoft }
-                  : { backgroundColor: heatScale[l] },
-              ]}
+    <View style={styles.card}>
+      <View style={styles.head}>
+        <Text style={styles.title}>Spending by day</Text>
+        <Text style={styles.hint}>
+          {model.kind === 'calendar' ? 'Tap or drag across days' : 'Drag across the grid'}
+        </Text>
+      </View>
+      {scopes.length > 1 && (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.chips}
+          accessibilityLabel="Colour the heatmap by category"
+        >
+          {scopes.map((s) => (
+            <ScopeChip
+              key={s.id ?? 'all'}
+              scope={s}
+              active={s.id === scopeId}
+              onPress={() => onScope(s.id)}
             />
           ))}
-          <Text style={styles.legendText}>more</Text>
+        </ScrollView>
+      )}
+      <View style={styles.grid}>
+        <SpendHeatmap
+          model={model}
+          daily={daily}
+          selectedIso={selectedIso}
+          onSelect={onSelect}
+          onOpenMonth={onOpenMonth}
+          usualMinor={usualMinor}
+          hue={hue}
+        />
+      </View>
+      <View style={styles.legend} accessibilityLabel="Lighter means less spent, darker means more" accessible>
+        <Text style={styles.legendText}>{compactMoney(0)}</Text>
+        <View style={styles.legendBar}>
+          {scale.slice(1).map((c, i) => (
+            <View key={i} style={[styles.legendStep, { backgroundColor: c }]} />
+          ))}
+        </View>
+        <Text style={styles.legendText}>{compactMoney(model.maxMinor)}</Text>
+        <View style={styles.legendBig}>
+          <View style={styles.legendBigDot} />
+          <Text style={styles.legendText}>Big day</Text>
         </View>
       </View>
-
-      {filter && (
-        <Pressable
-          onPress={filter.onClear}
-          style={withPressed(styles.filterChip)}
-          accessibilityRole="button"
-          accessibilityLabel={`Clear the ${filter.name} filter`}
-        >
-          <View style={[styles.catDot, { backgroundColor: filter.color }]} />
-          <Text style={styles.filterChipText} numberOfLines={1}>
-            {filter.name}
-          </Text>
-          <Feather name="x" size={14} color={theme.colors.textSecondary} />
-        </Pressable>
-      )}
-
-      <SpendHeatmap
-        cells={grid.cells}
-        leadingPad={grid.leadingPad}
-        columns={grid.columns}
-        weekdayLabels={grid.weekdayLabels}
-      />
-
-      <Text style={styles.hmHint}>
-        {isYear ? 'Darker months spent more' : 'Tap a day to see what went out'}
-      </Text>
+      {children}
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  card: { ...h.card, marginHorizontal: 0, paddingTop: 14, paddingBottom: 14, marginBottom: 12 },
+  head: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+    gap: 8,
+    paddingHorizontal: 16,
+  },
+  title: {
+    fontFamily: theme.font.roundedBold,
+    fontSize: theme.typeSize.section,
+    color: theme.colors.textPrimary,
+  },
+  hint: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
+  chips: { gap: 8, paddingHorizontal: 16, paddingTop: 10, paddingBottom: 10 },
+  chip: {
+    minHeight: 44,
+    paddingHorizontal: 14,
+    borderRadius: theme.radius.pill,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+    backgroundColor: theme.colors.tray,
+  },
+  chipDot: { width: 8, height: 8, borderRadius: 4 },
+  chipText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textSecondary },
+  chipTextOn: { color: theme.colors.white },
+  grid: { paddingHorizontal: 14, paddingTop: 4 },
+  legend: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 18, paddingTop: 8 },
+  legendBar: { flex: 1, flexDirection: 'row', height: 8, borderRadius: 4, overflow: 'hidden' },
+  legendStep: { flex: 1 },
+  legendText: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted },
+  legendBig: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  legendBigDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: theme.colors.ink },
+});

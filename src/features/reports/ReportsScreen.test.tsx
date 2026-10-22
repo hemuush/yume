@@ -75,6 +75,7 @@ jest.mock('@/components/ModalSheet', () => ({
         )
       : null,
 }));
+jest.mock('@/db/budgets', () => ({ listBudgetsForMonth: async () => [] }));
 jest.mock('@/db/tidyUp', () => ({
   findStartingBalances: async () => [{ categoryName: 'Previous' }],
 }));
@@ -265,6 +266,8 @@ it('keeps the report scroll view mounted during a same-period refresh and refres
   );
   await act(async () => {
     rejectRefresh(new Error('refresh interrupted'));
+    // The failure is handled a few promise hops later; let them settle before reading the screen.
+    await new Promise((resolve) => setTimeout(resolve, 0));
   });
   expect(tree.root.findAllByType(ScrollView).find((node) => node.props.testID === 'reports-content')).toBe(
     scroll
@@ -286,6 +289,12 @@ const pressText = async (tree: ReactTestRenderer, label: string) => {
   await act(async () => {
     node.props.onPress();
     await new Promise((resolve) => setTimeout(resolve, 0));
+  });
+};
+// A tapped day's entries are read a moment after the finger settles.
+const settle = async () => {
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 200));
   });
 };
 /** Month / Year / Custom sit in the period button's menu: open it, then pick. */
@@ -321,22 +330,26 @@ describe('Reports screen', () => {
   it('opens directly on Days with the period total, not Home’s full summary', async () => {
     const shown = texts(await render());
     expect(shown).toEqual(
-      expect.arrayContaining(['Days', 'Breakdown', 'Trends', 'Tap a day to see what went out'])
+      expect.arrayContaining(['Overview', 'Breakdown', 'Trends', 'Tap or drag across days'])
     );
     // One compact card with the period's total (Reports can look at any period, unlike Home).
     expect(shown.some((t) => t.startsWith('Spent in '))).toBe(true);
     expect(shown).not.toContain('Usual month');
-    expect(shown.some((t) => t.endsWith(', in short'))).toBe(false);
-    expect(shown).toContain('Spending patterns');
+    // The period in a few answers, as swipeable cards, with the weekday rhythm under them.
+    expect(shown.some((t) => t.endsWith(', in short'))).toBe(true);
+    expect(shown).toContain('Weekday rhythm');
     expect(shown).not.toContain('Where it went');
   });
   it('shows a failed day read and retries instead of presenting an empty day', async () => {
     const tree = await render();
     mockListTransactions.mockRejectedValueOnce(new Error('Read interrupted'));
     await pressText(tree, '5');
+    await settle();
+    await pressText(tree, 'Open day');
     expect(texts(tree)).toContain('Couldn’t load this day');
     expect(texts(tree)).not.toContain('Nothing on this day.');
     await pressText(tree, 'Retry day');
+    await settle();
     expect(texts(tree)).toContain('Groceries');
     expect(texts(tree)).not.toContain('Couldn’t load this day');
   });
@@ -372,6 +385,8 @@ describe('Reports screen', () => {
         })
     );
     await pressText(tree, '5');
+    await settle();
+    await pressText(tree, 'Open day');
     await act(async () => byLabel(tree, 'Close').props.onPress());
     await act(async () =>
       finish([
@@ -404,7 +419,7 @@ describe('Reports screen', () => {
     await pressText(tree, 'Breakdown');
     let shown = texts(tree);
     expect(shown).toEqual(expect.arrayContaining(['Where it went', 'Spending', 'Income', 'Rent', 'Food']));
-    expect(shown).not.toContain('Tap a day to see what went out');
+    expect(shown).not.toContain('Tap or drag across days');
     await pressText(tree, 'Trends');
     await layOut(tree);
     shown = texts(tree);
@@ -420,8 +435,8 @@ describe('Reports screen', () => {
     expect(tree.root.findByType(require('./TrendChart').TrendChart).props.fixedKind).toBe('netWorth');
     expect(shown).toContain('Against your usual');
     expect(shown).not.toContain('Where it went');
-    await pressText(tree, 'Days');
-    expect(texts(tree)).toContain('Tap a day to see what went out');
+    await pressText(tree, 'Overview');
+    expect(texts(tree)).toContain('Tap or drag across days');
   });
   it('scales category bars to their share of all spending', async () => {
     const tree = await render();
@@ -432,24 +447,12 @@ describe('Reports screen', () => {
     expect(bars[1]).toBeCloseTo((620000 / 2420000) * 100);
     expect(bars.reduce((sum, value) => sum + value, 0)).toBeCloseTo(100);
   });
-  it('expands insights individually and keeps the stable header outside report scrolling', async () => {
+  it('shows the insight cards with their own buttons, and keeps the header outside report scrolling', async () => {
     const tree = await render();
     const scroll = tree.root.findAllByType(ScrollView).find((n) => n.props.testID === 'reports-content')!;
     expect(scroll.props.stickyHeaderIndices).toBeUndefined();
     expect(scroll.findAllByType(Text).map((n) => n.props.children)).not.toContain('Reports');
-    expect(texts(tree)).not.toContain('Show on the heatmap →');
-    await pressText(tree, 'Spending patterns');
-    const insight = tree.root.find(
-      (n) =>
-        typeof n.props.onPress === 'function' &&
-        typeof n.props.accessibilityLabel === 'string' &&
-        n.props.accessibilityLabel.startsWith('Heaviest day')
-    );
-    await act(async () => insight.props.onPress());
-    expect(insight.props.accessibilityState.expanded).toBe(true);
     expect(texts(tree)).toContain('Show on the heatmap →');
-    await act(async () => insight.props.onPress());
-    expect(texts(tree)).not.toContain('Show on the heatmap →');
   });
   it('Trends asks for the in-and-out and category tracks with savings left out while hidden', async () => {
     mockHide.current = true;
@@ -471,11 +474,15 @@ describe('Reports screen', () => {
   it('opens a heatmap day in a sheet with a fixed header, and closes it', async () => {
     const tree = await render();
     await pressText(tree, '5');
+    await settle();
     expect(mockListTransactions).toHaveBeenCalledWith({
       fromDate: '2026-10-05',
       toDate: '2026-10-05',
       currency: 'INR',
     });
+    // Tapping only inspects the day; its entries open from the inspector.
+    expect(texts(tree)).not.toContain('Groceries');
+    await pressText(tree, 'Open day');
     let shown = texts(tree);
     expect(shown).toContain('Groceries');
     expect(shown).toContain('1 transaction');
@@ -485,17 +492,29 @@ describe('Reports screen', () => {
     shown = texts(tree);
     expect(shown).not.toContain('Groceries');
   });
-  it('tapping the open day again puts it away', async () => {
+  it('inspects a tapped day under the grid: its amount, usual-day comparison and what it was made of', async () => {
     const tree = await render();
     await pressText(tree, '5');
-    expect(texts(tree)).toContain('Groceries');
-    await pressText(tree, '5');
-    expect(texts(tree)).not.toContain('Groceries');
+    await settle();
+    const shown = texts(tree);
+    expect(shown).toContain('Mon, 5 Oct');
+    expect(shown.some((t) => t.endsWith('× your usual day'))).toBe(true);
+    expect(shown.some((t) => t.startsWith('Food '))).toBe(true);
+  });
+  it('drags across the hero chart as the same day the heatmap inspects', async () => {
+    const tree = await render();
+    await layOut(tree);
+    const chart = tree.root.find((n) => n.props.accessibilityRole === 'adjustable');
+    await act(async () => {
+      chart.props.onAccessibilityAction({ nativeEvent: { actionName: 'decrement' } });
+    });
+    await settle();
+    expect(
+      tree.root.find((n) => n.props.accessibilityRole === 'adjustable').props.accessibilityLabel
+    ).toContain('19 Oct');
   });
   it('the heaviest-day story opens that day on the heatmap', async () => {
     const tree = await render();
-    await pressText(tree, 'Spending patterns');
-    await layOut(tree);
     const card = tree.root.find(
       (n) =>
         typeof n.props.onPress === 'function' &&
@@ -507,6 +526,7 @@ describe('Reports screen', () => {
       await new Promise((resolve) => setTimeout(resolve, 0));
     });
     await pressText(tree, 'Show on the heatmap →');
+    await settle();
     expect(mockListTransactions).toHaveBeenCalledWith({
       fromDate: '2026-10-05',
       toDate: '2026-10-05',
@@ -516,8 +536,6 @@ describe('Reports screen', () => {
   });
   it('a category story switches to Categories with that row picked', async () => {
     const tree = await render();
-    await pressText(tree, 'Spending patterns');
-    await layOut(tree);
     const card = tree.root.find(
       (n) =>
         typeof n.props.onPress === 'function' &&
@@ -528,7 +546,6 @@ describe('Reports screen', () => {
       card.props.onPress();
       await new Promise((resolve) => setTimeout(resolve, 0));
     });
-    await pressText(tree, 'Show in categories →');
     const shown = texts(tree);
     expect(shown).toContain('Where it went');
     expect(shown).toContain('Open Food ›');
@@ -547,26 +564,25 @@ describe('Reports screen', () => {
     await pressText(tree, 'Breakdown');
     await pressText(tree, 'Food');
     await pressText(tree, 'See its days on the heatmap →');
-    expect(texts(tree)).toContain('Tap a day to see what went out');
+    expect(texts(tree)).toContain('Tap or drag across days');
     expect(mockDaily.mock.calls.some((c) => c[2] === 'food')).toBe(true);
+    expect(byLabel(tree, 'Food days').props.accessibilityState.selected).toBe(true);
     await act(async () => {
-      byLabel(tree, 'Clear the Food filter').props.onPress();
+      byLabel(tree, 'All spending').props.onPress();
     });
-    expect(tree.root.findAll((n) => n.props.accessibilityLabel === 'Clear the Food filter')).toHaveLength(0);
+    expect(byLabel(tree, 'Food days').props.accessibilityState.selected).toBe(false);
   });
   it('a new period forgets the open day and the filter', async () => {
     const tree = await render();
     await pressText(tree, 'Breakdown');
     await pressText(tree, 'Food');
     await pressText(tree, 'See its days on the heatmap →');
-    expect(
-      tree.root.findAll((n) => n.props.accessibilityLabel === 'Clear the Food filter').length
-    ).toBeGreaterThan(0);
+    expect(byLabel(tree, 'Food days').props.accessibilityState.selected).toBe(true);
     await act(async () => {
       byLabel(tree, 'Previous period').props.onPress();
       await new Promise((resolve) => setTimeout(resolve, 0));
     });
-    expect(tree.root.findAll((n) => n.props.accessibilityLabel === 'Clear the Food filter')).toHaveLength(0);
+    expect(byLabel(tree, 'Food days').props.accessibilityState.selected).toBe(false);
   });
   it('switches to where the money came from, and points starting balances at Tidy up', async () => {
     const tree = await render();
@@ -622,7 +638,6 @@ describe('Reports screen', () => {
   describe('Weekday rhythm', () => {
     it('shows seven bars with the busiest weekday read out, and a tapped bar reads its own line', async () => {
       const tree = await render();
-      await pressText(tree, 'Spending patterns');
       const shown = texts(tree);
       expect(shown).toContain('Weekday rhythm');
       expect(shown.some((t) => t.startsWith('Mondays run highest: '))).toBe(true);
@@ -639,7 +654,6 @@ describe('Reports screen', () => {
       jest.setSystemTime(new Date(2026, 9, 5, 12));
       try {
         const tree = await render();
-        await pressText(tree, 'Spending patterns');
         const shown = texts(tree);
         expect(shown).toContain('Weekday rhythm');
         expect(shown.some((t) => t.startsWith('Needs about 2 weeks of entries'))).toBe(true);
@@ -686,6 +700,7 @@ describe('Reports screen', () => {
         byLabel(tree, 'Weekly groceries, Mon, 5 Oct. Show this day').props.onPress();
         await new Promise((resolve) => setTimeout(resolve, 0));
       });
+      await settle();
       expect(mockListTransactions).toHaveBeenCalledWith({
         fromDate: '2026-10-05',
         toDate: '2026-10-05',
@@ -762,7 +777,7 @@ describe('Reports screen', () => {
     it('still shows the lenses and the income breakdown', async () => {
       mockIncomeOnly.current = true;
       const tree = await render();
-      expect(texts(tree)).toEqual(expect.arrayContaining(['Days', 'Breakdown', 'Trends']));
+      expect(texts(tree)).toEqual(expect.arrayContaining(['Overview', 'Breakdown', 'Trends']));
       await pressText(tree, 'Breakdown');
       await pressText(tree, 'Income');
       expect(texts(tree)).toEqual(expect.arrayContaining(['Where it came from', 'Salary']));

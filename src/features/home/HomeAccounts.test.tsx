@@ -57,24 +57,43 @@ it('offers a direct action to add the first account', () => {
   expect(add).toHaveBeenCalledTimes(1);
 });
 
-it('keeps zero balances and per-account currencies without inventing a combined total', () => {
+it('keeps per-account currencies without inventing a combined total, and skips accounts with no balance', () => {
   mockHideAmounts = false;
   const tree = render({
     accounts: [
       account('Empty', 'bank', 0),
       account('Foreign', 'wallet', 5000, 'USD'),
       account('Pot', 'savings', 999900),
+      account('Card', 'credit_card', -2500),
     ],
   });
   const copy = texts(tree).join(' ');
-  expect(copy).toContain('₹0');
+  expect(copy).not.toContain('Empty');
   expect(copy).toContain('$50');
   expect(copy).toContain('₹9,999');
+  expect(copy).toContain('Card');
+});
+
+it('keeps an account with no balance reachable under View all and still offers Add account', () => {
+  const onOpenAccounts = jest.fn();
+  const add = jest.fn();
+  const tree = render({ accounts: [account('Empty', 'bank', 0)], onOpenAccounts, onAddAccount: add });
+  expect(texts(tree)).not.toContain('Empty');
+  act(() =>
+    tree.root
+      .find((n) => n.props.accessibilityLabel === 'View all — Accounts' && n.props.onPress)
+      .props.onPress()
+  );
+  act(() =>
+    tree.root.find((n) => n.props.onPress && n.props.accessibilityLabel === 'Add an account').props.onPress()
+  );
+  expect(onOpenAccounts).toHaveBeenCalledTimes(1);
+  expect(add).toHaveBeenCalledTimes(1);
 });
 
 it('limits the row to eight accounts while leaving the full list reachable', () => {
   const tree = render({
-    accounts: Array.from({ length: 10 }, (_, i) => account(`Bank ${i}`, 'bank', i * 100)),
+    accounts: Array.from({ length: 10 }, (_, i) => account(`Bank ${i}`, 'bank', (i + 1) * 100)),
   });
   expect(texts(tree)).toContain('Bank 7');
   expect(texts(tree)).not.toContain('Bank 8');

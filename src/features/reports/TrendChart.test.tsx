@@ -115,6 +115,13 @@ describe('TrendChart touch', () => {
     act(() => touch.props.onResponderGrant({ nativeEvent: { locationX: 286 } }));
     expect(texts(r).some((text) => text.startsWith('Feb: ₹200'))).toBe(true);
   });
+  it('floats the picked month and its amount over the chart', () => {
+    const r = chart(true);
+    const touch = r.root.findByProps({ testID: 'trend-touch' });
+    act(() => touch.props.onLayout({ nativeEvent: { layout: { width: 300 } } }));
+    act(() => touch.props.onResponderGrant({ nativeEvent: { locationX: 14 } }));
+    expect(texts(r)).toContain('May · ₹31200');
+  });
   const pressable = (r: ReactTestRenderer, text: string) =>
     r.root.find(
       (n) =>

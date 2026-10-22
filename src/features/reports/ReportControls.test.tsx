@@ -16,6 +16,8 @@ it('keeps category/account navigation and opens label exploration from the spend
       <BreakdownControls
         flow="expense"
         group="category"
+        view="tree"
+        onView={jest.fn()}
         onFlow={jest.fn()}
         onGroup={onGroup}
         onLabels={onLabels}
@@ -30,6 +32,30 @@ it('keeps category/account navigation and opens label exploration from the spend
   expect(onLabels).toHaveBeenCalledTimes(1);
 });
 
+it('switches the split between tiles and a bar', () => {
+  const onView = jest.fn();
+  act(() => {
+    tree = create(
+      <BreakdownControls
+        flow="expense"
+        group="category"
+        view="tree"
+        onView={onView}
+        onFlow={jest.fn()}
+        onGroup={jest.fn()}
+      />
+    );
+  });
+  const bar = tree.root.find((n) => n.props.accessibilityLabel === 'Show as bar');
+  act(() => bar.props.onPress());
+  expect(onView).toHaveBeenCalledWith('bar');
+  expect(
+    tree.root.find((n) => n.props.accessibilityLabel === 'Show as tiles').props.accessibilityState
+  ).toEqual({
+    selected: true,
+  });
+});
+
 it('does not offer expense labels in income or when no label action is provided', () => {
   for (const flow of ['expense', 'income'] as const) {
     act(() => {
@@ -37,6 +63,8 @@ it('does not offer expense labels in income or when no label action is provided'
         <BreakdownControls
           flow={flow}
           group="account"
+          view="tree"
+          onView={jest.fn()}
           onFlow={jest.fn()}
           onGroup={jest.fn()}
           {...(flow === 'income' ? { onLabels: jest.fn() } : {})}

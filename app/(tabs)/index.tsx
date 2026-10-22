@@ -61,7 +61,7 @@ import { HomeAccounts } from '@/features/home/HomeAccounts';
 import { spendBarsStart } from '@/features/home/spendBarData';
 import { SuuRefreshBadge } from '@/features/home/SuuRefreshBadge';
 import { Section } from '@/components/Section';
-import { SCREEN } from '@/components/screenStyles';
+import { SCREEN, screenStyles } from '@/components/screenStyles';
 import { HomeComingUp } from '@/features/home/HomeComingUp';
 import { buildUpcomingItems } from '@/features/home/upcomingItems';
 import type { ComingUpFilter } from '@/features/home/comingUp';
@@ -568,7 +568,7 @@ export default function DashboardScreen() {
 
         <View style={styles.heroGap}>
           {loaded && historyAccounts.length === 0 ? null : loaded ? (
-            <Animated.View entering={sectionEntering(0)}>
+            <Animated.View entering={sectionEntering(0)} layout={ROW_LAYOUT}>
               <ThisMonthHero
                 periodKey={`${loadedCursor.granularity}:${loadedCursor.offset}`}
                 direction={heroDirection}
@@ -636,7 +636,7 @@ export default function DashboardScreen() {
 
         {/* Accounts remain directly below the balance area. */}
         {loaded && (
-          <Animated.View entering={sectionEntering(1)}>
+          <Animated.View entering={sectionEntering(1)} layout={ROW_LAYOUT}>
             <HomeAccounts
               accounts={accounts}
               onOpenAccounts={() => router.push('/profile')}
@@ -648,7 +648,7 @@ export default function DashboardScreen() {
 
         {/* Next payments and pending refunds stay visible without tabs. */}
         {loaded && historyAccounts.length > 0 && (
-          <Animated.View entering={sectionEntering(2)}>
+          <Animated.View entering={sectionEntering(2)} layout={ROW_LAYOUT}>
             <HomeComingUp
               upcoming={upcoming}
               budgets={budgets}
@@ -666,7 +666,7 @@ export default function DashboardScreen() {
         )}
 
         {loaded && historyAccounts.length > 0 && (
-          <Animated.View entering={sectionEntering(4)}>
+          <Animated.View entering={sectionEntering(4)} layout={ROW_LAYOUT}>
             <Section
               compact
               title="Recent activity"
@@ -791,14 +791,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
   scroll: { flex: 1 },
   heroGap: { marginTop: 4 },
-  recent: {
-    marginHorizontal: SCREEN.gutter,
-    paddingHorizontal: 12,
-    borderRadius: 28,
-    backgroundColor: theme.colors.surface,
-    overflow: 'hidden',
-    boxShadow: '0px 1px 2px rgba(18,19,15,0.04), 0px 14px 34px -16px rgba(18,19,15,0.14)',
-  },
+  recent: { ...screenStyles.card, paddingHorizontal: 12 },
   errorBanner: {
     marginHorizontal: 20,
     marginTop: 16,

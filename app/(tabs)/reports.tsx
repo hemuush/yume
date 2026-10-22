@@ -1,3 +1,5 @@
+import Animated, { FadeIn, ReduceMotion } from 'react-native-reanimated';
+import { DURATIONS } from '@/lib/motionTimings';
 import { useLocalDayRefresh } from '@/lib/useLocalDayRefresh';
 import { ExpenseLabelsReport } from '@/features/reports/ExpenseLabelsReport';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -29,6 +31,7 @@ import {
   CategoryBreakdownItem,
 } from '@/db/reports';
 import { listTransactions, listCategories, listAccounts } from '@/db/ledger';
+import { listBudgetsForMonth } from '@/db/budgets';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import { savingsAccountIdsOf } from '@/lib/account';
 import { isSavingsEntry, privateComparison } from '@/lib/privateSummary';
@@ -42,11 +45,13 @@ import {
   windowRange,
   previousWindowRange,
   previousPeriodLabel,
+  periodShortLabel,
   rangeDays,
 } from '@/lib/period';
 import { findStartingBalances } from '@/db/tidyUp';
 import { useFreshness } from '@/lib/useFreshness';
 import { ModalSheet } from '@/components/ModalSheet';
+import { dayMonth } from '@/lib/dateLabels';
 import { Amount } from '@/components/Amount';
 import {
   ReportTabs,
@@ -61,22 +66,22 @@ import { HomeWallpaper } from '@/features/home/HomeWallpaper';
 import { useAccent } from '@/theme/AccentContext';
 import { ReportsSkeleton } from '@/features/reports/ReportsSkeleton';
 import { ReportsHeader } from '@/features/reports/ReportsHeader';
-import { HeatmapCard } from '@/features/reports/HeatmapCard';
-import { DaysSummary } from '@/features/reports/DaysSummary';
+import { HeatmapCard, HeatScope } from '@/features/reports/HeatmapCard';
+import { DayInspector } from '@/features/reports/DayInspector';
+import { ReportHero } from '@/features/reports/ReportHero';
 import { DayCard } from '@/features/reports/DayCard';
 import { ReportInsights } from '@/features/reports/ReportInsights';
 import { CategoryBar } from '@/features/reports/CategoryBar';
+import { CategoryTreemap } from '@/features/reports/CategoryTreemap';
 import { CategoryList } from '@/features/reports/CategoryList';
 import { WeekdayRhythm } from '@/features/reports/WeekdayRhythm';
 import { BiggestSpends } from '@/features/reports/BiggestSpends';
-import { ReportPatterns } from '@/features/reports/ReportPatterns';
 import { ReportTrends } from '@/features/reports/ReportTrends';
 import { MIN_TREND_POINTS } from '@/features/reports/TrendChart';
 import { CategoryTracks } from '@/features/reports/CategoryTracks';
 import { styles } from '@/features/reports/reports.styles';
 import {
-  buildHeatGrid,
-  buildRangeHeatGrid,
+  buildHeat,
   RANGE_DAY_GRID_MAX_DAYS,
   baselineFromTrend,
   recurringVsDiscretionary,
@@ -88,6 +93,8 @@ import {
   weekdayRhythm,
   accountRows,
   categoriesAgainstUsual,
+  cumulativeSpend,
+  daysOfRange,
   StoryAction,
 } from '@/features/reports/reportsInsights';
 import { errorMessage } from '@/lib/errorMessage';
@@ -101,6 +108,8 @@ type CategoryGroup = 'category' | 'account';
 const BIGGEST_COUNT = 5;
 /** Rows shown before "N more" in Categories (CategoryList's own limit). */
 const CATEGORIES_COLLAPSED = 5;
+/** How many categories get a chip on the heatmap. */
+const HEAT_SCOPES = 4;
 export default function ReportsScreen() {
   const reduceMotion = useReduceMotion();
   const { hideAmounts } = usePrivacy();
@@ -154,6 +163,9 @@ export default function ReportsScreen() {
   const [cashFlow, setCashFlow] = useState<CashFlowPoint[]>([]);
   const [catTracks, setCatTracks] = useState<CategoryTrack[]>([]);
   const [daily, setDaily] = useState<DailyExpensePoint[]>([]);
+  // The period before, day by day (the hero's comparison line), and the month's total budget when there is one.
+  const [prevDaily, setPrevDaily] = useState<DailyExpensePoint[]>([]);
+  const [budgetMinor, setBudgetMinor] = useState<number | null>(null);
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const [errorText, setErrorText] = useState<string | null>(null);
   const [loadedKey, setLoadedKey] = useState<string | null>(null);
@@ -175,6 +187,7 @@ export default function ReportsScreen() {
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [dayData, setDayData] = useState<{ iso: string; txs: Transaction[] } | null>(null);
   const [dayError, setDayError] = useState<string | null>(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
   const daySeq = useRef(0);
   // A category the heatmap is narrowed to, with its daily totals; the id says which category they belong
   // to, so a stale set is never shown for another.
@@ -187,6 +200,8 @@ export default function ReportsScreen() {
   const [labelsOpen, setLabelsOpen] = useState(false);
   useEffect(() => setLabelsOpen(false), [tab, cursor, flow]);
   const [group, setGroup] = useState<CategoryGroup>('category');
+  // The split drawn as tiles (default) or as one bar.
+  const [breakdownView, setBreakdownView] = useState<'tree' | 'bar'>('tree');
   const [selectedAccount, setSelectedAccount] = useState<string | null>(null);
   // Fetched results carry the key they were fetched for, so one for another
   // period, flow or filter is never shown in place of the current one.
@@ -218,7 +233,7 @@ export default function ReportsScreen() {
             : 7;
       try {
         setStatus('loading');
-        const [cmp, tr, nw, cf, ct, dy, cats, tidy, accs] = await Promise.all([
+        const [cmp, tr, nw, cf, ct, dy, cats, tidy, accs, pdy, bud] = await Promise.all([
           getRangeComparison(range, previousWindowRange(c), isCustomWindow(c) ? 'month' : c.granularity),
           getMonthlyExpenseTrend(trendMonths, anchor, hideAmounts),
           getNetWorthTrend(trendMonths, anchor),
@@ -229,6 +244,13 @@ export default function ReportsScreen() {
           // Only the starting-balance names (to word an insight); not Tidy up's whole-ledger repeat scan.
           findStartingBalances().catch(() => null),
           listAccounts(true),
+          getDailyExpenseTotals(previousWindowRange(c), hideAmounts).catch(() => [] as DailyExpensePoint[]),
+          // Budgets are per calendar month: other windows have none to draw.
+          c.granularity === 'month'
+            ? listBudgetsForMonth(range.start.slice(0, 7), hideAmounts)
+                .then((list) => list.reduce((sum, b) => sum + b.effectiveLimitMinor, 0))
+                .catch(() => 0)
+            : Promise.resolve(0),
         ]);
         if (seq !== loadSeq.current) return false;
         const thisMonth = toLocalIsoDate(new Date()).slice(0, 7);
@@ -257,6 +279,8 @@ export default function ReportsScreen() {
         setCatTracks(ct.map((p) => ({ ...p, totalsMinor: p.totalsMinor.slice(0, lastElapsed + 1) })));
         setSavingsIds(savingsAccountIdsOf(accs));
         setDaily(dy);
+        setPrevDaily(pdy);
+        setBudgetMinor(bud > 0 ? bud : null);
         setCategories(cats);
         setStartingBalanceNames(tidy ? tidy.map((g) => g.categoryName) : []);
         setStatus('ready');
@@ -286,42 +310,54 @@ export default function ReportsScreen() {
     }, [load, cursor, freshness])
   );
   const catById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
-  // The heatmap leaves savings and investments out while they're hidden, so the day it opens does too.
-  const openDay = useCallback(
-    async (iso: string) => {
-      const seq = ++daySeq.current;
-      setSelectedDay(iso);
-      setDayData(null);
-      setDayError(null);
+  // The day under the heatmap's inspector: the one touched last, else today (or the period's last day).
+  const inspectIso = useMemo(() => {
+    const r = windowRange(cursor);
+    const t = toLocalIsoDate(new Date());
+    return selectedDay ?? (r.end < t ? r.end : t);
+  }, [cursor, selectedDay]);
+  const [dayRetry, setDayRetry] = useState(0);
+  // Its entries, read a moment after the finger settles. The heatmap leaves savings and investments out
+  // while they're hidden, so the day does too.
+  useEffect(() => {
+    const seq = ++daySeq.current;
+    setDayError(null);
+    const timer = setTimeout(async () => {
       try {
-        const txs = await listTransactions({ fromDate: iso, toDate: iso, currency: getCachedCurrency() });
+        const txs = await listTransactions({
+          fromDate: inspectIso,
+          toDate: inspectIso,
+          currency: getCachedCurrency(),
+        });
         if (seq !== daySeq.current) return;
         setDayData({
-          iso,
+          iso: inspectIso,
           txs: hideAmounts ? txs.filter((tx) => !isSavingsEntry(tx, catById, savingsIds)) : txs,
         });
       } catch (e) {
         if (seq === daySeq.current) setDayError(errorMessage(e));
       }
-    },
-    [hideAmounts, catById, savingsIds]
-  );
-  const closeDay = useCallback(() => {
-    ++daySeq.current;
-    setSelectedDay(null);
-    setDayData(null);
-    setDayError(null);
+    }, 120);
+    return () => clearTimeout(timer);
+  }, [inspectIso, hideAmounts, catById, savingsIds, dayRetry]);
+  // Picking a day only inspects it; its sheet opens from the inspector (or a story / biggest spend).
+  const inspectDay = useCallback((iso: string) => setSelectedDay(iso), []);
+  const openDay = useCallback((iso: string) => {
+    setSelectedDay(iso);
+    setSheetOpen(true);
   }, []);
+  const closeDay = useCallback(() => setSheetOpen(false), []);
   // A new period starts clean: no day open, no filter, no category picked.
   const cursorKey = isCustomWindow(cursor)
     ? `${cursor.start}|${cursor.end}`
     : `${cursor.granularity}:${cursor.offset}`;
   useEffect(() => {
-    closeDay();
+    setSelectedDay(null);
+    setSheetOpen(false);
     setCatFilter(null);
     setSelectedCat(null);
     setSelectedAccount(null);
-  }, [cursorKey, hideAmounts, closeDay]);
+  }, [cursorKey, hideAmounts]);
   useEffect(() => {
     setDetailErrors({});
   }, [cursorKey, hideAmounts, catFilter, selectedCat, flow, group]);
@@ -516,35 +552,44 @@ export default function ReportsScreen() {
     router.push(grow ? growHref(href) : href);
   };
   const onPressCategory = (c: CategoryBreakdownItem) => openCategory(c.categoryId);
-  // The heatmap is narrowed to a category's days only where it has days at all.
-  const filterId = byMonth ? null : catFilter;
+  // The heatmap can be narrowed to one category, at any period length.
+  const filterId = catFilter;
   const filterCat = filterId ? catById.get(filterId) : undefined;
+  const filterLoading = filterId != null && filtered?.id !== filterId;
   const heatDaily = filterId ? (filtered?.id === filterId ? filtered.daily : []) : daily;
-  const onTapDay = (iso: string) => (iso === selectedDay ? closeDay() : openDay(iso));
-  /* eslint-disable react-hooks/refs -- These pure builders store the event handler; they do not invoke it or read refs during render. */
-  const heatGrid = custom
-    ? buildRangeHeatGrid({
-        start: range.start,
-        end: range.end,
-        daily: heatDaily,
-        onDayPress: onTapDay,
-        selectedIso: selectedDay,
-      })
-    : buildHeatGrid({
-        granularity: cursor.granularity,
-        start: rangeStart,
-        trend,
-        daily: heatDaily,
-        onDayPress: onTapDay,
-        selectedIso: selectedDay,
-      });
-  /* eslint-enable react-hooks/refs */
+  const heat = buildHeat({ range, daily: heatDaily, today: todayIso });
+  const usualMinor =
+    facts.countedDays > 0
+      ? filterId
+        ? Math.round(
+            heatDaily.filter((d) => d.date <= todayIso).reduce((sum, d) => sum + d.totalMinor, 0) /
+              facts.countedDays
+          )
+        : facts.perDayMinor
+      : 0;
+  const heatScopes: HeatScope[] = [
+    { id: null, name: 'All', color: accent },
+    ...current.categoryBreakdown
+      .slice(0, HEAT_SCOPES)
+      .map((c) => ({ id: c.categoryId, name: c.name, color: c.color })),
+  ];
+  if (filterId && filterCat && !heatScopes.some((x) => x.id === filterId)) {
+    heatScopes.push({ id: filterId, name: filterCat.name, color: filterCat.color });
+  }
+  const heatDays = heat.kind === 'calendar' ? heat.days : heat.rows.flatMap((r) => r.days);
+  const inspected = heatDays.find((d) => d?.iso === inspectIso) ?? null;
+  const periodDays = daysOfRange(range);
+  const heroIndex = periodDays.indexOf(inspectIso);
+  const heroCurrent = cumulativeSpend(daily, range, todayIso);
+  const heroPrevious = cumulativeSpend(prevDaily, previousWindowRange(cursor), '9999-12-31').map(
+    (v) => v ?? 0
+  );
   // With a category filter on, the day lists that category's entries (and its subcategories').
   const inFilter = (tx: Transaction) =>
     tx.categoryId != null &&
     (tx.categoryId === filterId || catById.get(tx.categoryId)?.parentId === filterId);
   // Entries that arrive for a day other than the open one are never shown.
-  const dayTx = dayData?.iso === selectedDay ? dayData.txs : null;
+  const dayTx = dayData?.iso === inspectIso ? dayData.txs : null;
   const shownDayTx = dayTx && filterId ? dayTx.filter(inFilter) : dayTx;
   const showCategoryDays = (c: CategoryBreakdownItem) => {
     closeDay();
@@ -578,6 +623,13 @@ export default function ReportsScreen() {
     setFlow('expense');
     if (a.type === 'category') pickCategory(a.id);
     else setSelectedCat(null);
+  };
+  // A month row of the heatmap matrix opens Reports on that month.
+  const openMonthOf = (monthKey: string) => {
+    const [y, m] = monthKey.split('-').map(Number);
+    const now = new Date();
+    const offset = y * 12 + (m - 1) - (now.getFullYear() * 12 + now.getMonth());
+    if (offset <= 0 && offset >= -120) stepCursor({ granularity: 'month', offset });
   };
   // A point on the trend chart stands for a month: this opens Reports on it.
   const monthLink = custom
@@ -626,254 +678,295 @@ export default function ReportsScreen() {
             <PrimaryButton title="Retry details" variant="secondary" onPress={retryDetails} />
           </View>
         )}
-        {tab === 'days' && !hasSpend ? (
-          <EmptyState
-            title="Nothing spent in this period"
-            subtitle={
-              hasData
-                ? 'Money in is under Breakdown, and Trends shows the bigger picture.'
-                : 'Use the arrows to look back, or open Trends for recorded history.'
-            }
-          />
-        ) : tab === 'days' ? (
-          <>
-            {!filterId && (
-              <DaysSummary
+        <Animated.View
+          key={tab}
+          entering={FadeIn.duration(DURATIONS.standard).reduceMotion(ReduceMotion.System)}
+        >
+          {tab === 'days' && !hasSpend ? (
+            <EmptyState
+              title="Nothing spent in this period"
+              subtitle={
+                hasData
+                  ? 'Money in is under Breakdown, and Trends shows the bigger picture.'
+                  : 'Use the arrows to look back, or open Trends for recorded history.'
+              }
+            />
+          ) : tab === 'days' ? (
+            <>
+              <ReportHero
+                animKey={cursorKey}
                 periodName={periodName}
                 inProgress={range.end >= todayIso}
                 spentMinor={dispExpense}
-                changeMinor={
-                  range.end < todayIso && previous.expenseMinor > 0
-                    ? dispExpense - roundedMinor(previous.expenseMinor)
-                    : null
-                }
-                comparedTo={custom ? 'the period before' : previousPeriodLabel(cursor)}
                 perDayMinor={facts.countedDays > 0 ? facts.perDayMinor : null}
-              />
-            )}
-            {filterId && filtered?.id !== filterId ? (
-              !detailErrors.heatmap && (
-                <ActivityIndicator
-                  accessibilityLabel="Loading category days"
-                  color={theme.colors.ink}
-                  style={styles.daySpinner}
-                />
-              )
-            ) : (
-              <HeatmapCard
-                grid={heatGrid}
-                isYear={byMonth}
-                filter={
-                  filterCat
-                    ? {
-                        name: filterCat.name,
-                        color: filterCat.color,
-                        onClear: () => {
-                          closeDay();
-                          setCatFilter(null);
-                        },
-                      }
+                current={heroCurrent}
+                previous={heroPrevious}
+                labelAt={(i) => dayMonth(periodDays[i] ?? range.end)}
+                selected={heroIndex >= 0 ? heroIndex : null}
+                onSelect={(i) => periodDays[i] && inspectDay(periodDays[i])}
+                budgetMinor={budgetMinor}
+                projectedMinor={
+                  range.end >= todayIso && facts.countedDays > 0
+                    ? Math.round(facts.perDayMinor * daysInPeriod)
                     : null
                 }
+                currentName={custom ? 'This period' : periodShortLabel(cursor)}
+                previousName={custom ? 'Period before' : isYear ? 'Last year' : 'Month before'}
+                incomeMinor={current.incomeMinor}
+                previousIncomeMinor={previous.incomeMinor}
+                comparedTo={custom ? 'the period before' : previousPeriodLabel(cursor)}
               />
-            )}
-            {!byMonth && selectedDay && (
-              <ModalSheet
-                visible
-                onClose={closeDay}
-                title={parseLocalIsoDate(selectedDay).toLocaleDateString(undefined, {
-                  weekday: 'short',
-                  day: 'numeric',
-                  month: 'long',
-                })}
-                subtitle={
-                  shownDayTx && shownDayTx.length > 0
-                    ? `${shownDayTx.length} transaction${shownDayTx.length === 1 ? '' : 's'}`
-                    : undefined
-                }
-              >
-                <DayCard
-                  embedded
-                  iso={selectedDay}
-                  txs={shownDayTx}
-                  catById={catById}
-                  onClose={closeDay}
-                  error={dayError}
-                  onRetry={() => void openDay(selectedDay)}
-                />
-              </ModalSheet>
-            )}
-
-            {!byMonth && (!filterId || filtered?.id === filterId) && (
-              <>
-                {!largest || largest.key !== largestKey ? (
-                  !detailErrors.largest && (
-                    <ActivityIndicator
-                      accessibilityLabel="Loading biggest spends"
-                      color={theme.colors.ink}
-                      style={styles.daySpinner}
+              <View style={filterLoading ? styles.dimmed : undefined}>
+                <HeatmapCard
+                  model={heat}
+                  daily={heatDaily}
+                  selectedIso={inspectIso}
+                  onSelect={inspectDay}
+                  onOpenMonth={custom && !byMonth ? undefined : openMonthOf}
+                  usualMinor={usualMinor}
+                  scopes={heatScopes}
+                  scopeId={filterId}
+                  onScope={(id) => {
+                    setCatFilter(id);
+                    setFiltered(null);
+                  }}
+                  hue={filterCat?.color ?? accent}
+                >
+                  {inspected && (
+                    <DayInspector
+                      iso={inspectIso}
+                      spentMinor={inspected.minor}
+                      future={inspected.future}
+                      usualMinor={usualMinor}
+                      scopeName={filterCat?.name}
+                      txs={shownDayTx}
+                      catById={catById}
+                      onOpen={() => setSheetOpen(true)}
                     />
-                  )
-                ) : (
-                  <BiggestSpends
-                    key={largestKey}
-                    items={largest?.key === largestKey ? largest.items : []}
-                    catById={catById}
-                    shareOfMinor={biggestShareOf}
-                    openIso={selectedDay}
-                    onOpenDay={showBiggestDay}
-                    inProgress={range.end >= todayIso}
-                    scopeName={filterCat?.name}
-                  />
-                )}
-              </>
-            )}
-            {(stories.length > 0 || (!byMonth && (!filterId || filtered?.id === filterId))) && (
-              <ReportPatterns key={`patterns-${cursorKey}-${filterId ?? ''}`}>
-                <ReportInsights
-                  // A new period closes any expanded insight.
-                  key={`${range.start}:${range.end}`}
-                  title={`${periodName}, in short`}
-                  cards={stories}
-                  onAction={onStoryAction}
-                />
-                {!byMonth && (!filterId || filtered?.id === filterId) && (
-                  <WeekdayRhythm
-                    key={`${cursorKey}|${filterId ?? ''}`}
-                    rhythm={weekdayRhythm(heatDaily, range, todayIso)}
-                    scopeName={filterCat?.name}
-                  />
-                )}
-              </ReportPatterns>
-            )}
-          </>
-        ) : tab === 'cats' ? (
-          <View>
-            <Text style={styles.blockTitle}>{income ? 'Where it came from' : 'Where it went'}</Text>
-            <BreakdownControls
-              flow={flow}
-              group={group}
-              onLabels={() => setLabelsOpen(true)}
-              onFlow={(f) => {
-                setFlow(f);
-                setCatExpanded(false);
-                setSelectedCat(null);
-                setSelectedAccount(null);
-              }}
-              onGroup={(g) => {
-                setGroup(g);
-                setCatExpanded(false);
-                setSelectedCat(null);
-                setSelectedAccount(null);
-              }}
-            />
-            {(byAccount ? accountItems !== null : shownBreakdown.length > 0) && (
-              <View style={styles.breakdownContext}>
-                <Amount minor={byAccount ? accountTotal : shownTotal} style={styles.breakdownAmount} />
-                <Text style={styles.stripSub}>
-                  {income ? 'received' : 'spent'} · {periodName}
-                  {range.end >= todayIso ? ' so far' : ''}
-                </Text>
+                  )}
+                </HeatmapCard>
               </View>
-            )}
-            {!byAccount && shownBreakdown.length > 0 && (
-              <ComparisonNote
-                label={`${range.end >= todayIso ? 'So far vs full ' : 'Vs '}${custom ? 'previous period' : previousPeriodLabel(cursor)}`}
-                partial={range.end >= todayIso}
+              {sheetOpen && (
+                <ModalSheet
+                  visible
+                  onClose={closeDay}
+                  title={parseLocalIsoDate(inspectIso).toLocaleDateString(undefined, {
+                    weekday: 'short',
+                    day: 'numeric',
+                    month: 'long',
+                  })}
+                  subtitle={
+                    shownDayTx && shownDayTx.length > 0
+                      ? `${shownDayTx.length} transaction${shownDayTx.length === 1 ? '' : 's'}`
+                      : undefined
+                  }
+                >
+                  <DayCard
+                    embedded
+                    iso={inspectIso}
+                    txs={shownDayTx}
+                    catById={catById}
+                    onClose={closeDay}
+                    error={dayError}
+                    onRetry={() => setDayRetry((n) => n + 1)}
+                  />
+                </ModalSheet>
+              )}
+
+              <ReportInsights
+                // A new period starts at the first card.
+                key={`${range.start}:${range.end}`}
+                title={`${periodName}, in short`}
+                cards={stories}
+                onAction={onStoryAction}
               />
-            )}
-            <ExpenseLabelsReport visible={labelsOpen} range={range} onClose={() => setLabelsOpen(false)} />
-            {byAccount ? (
-              detailErrors.accounts ? null : accountItems === null ? (
-                <ActivityIndicator color={theme.colors.ink} style={styles.daySpinner} />
-              ) : accountBreakdown.length === 0 ? (
+              {!byMonth && (!filterId || filtered?.id === filterId) && (
+                <WeekdayRhythm
+                  key={`${cursorKey}|${filterId ?? ''}`}
+                  rhythm={weekdayRhythm(heatDaily, range, todayIso)}
+                  scopeName={filterCat?.name}
+                />
+              )}
+              {!byMonth && (!filterId || filtered?.id === filterId) && (
+                <>
+                  {!largest || largest.key !== largestKey ? (
+                    !detailErrors.largest && (
+                      <ActivityIndicator
+                        accessibilityLabel="Loading biggest spends"
+                        color={theme.colors.ink}
+                        style={styles.daySpinner}
+                      />
+                    )
+                  ) : (
+                    <BiggestSpends
+                      key={largestKey}
+                      items={largest?.key === largestKey ? largest.items : []}
+                      catById={catById}
+                      shareOfMinor={biggestShareOf}
+                      openIso={selectedDay}
+                      onOpenDay={showBiggestDay}
+                      inProgress={range.end >= todayIso}
+                      scopeName={filterCat?.name}
+                    />
+                  )}
+                </>
+              )}
+            </>
+          ) : tab === 'cats' ? (
+            <View>
+              <Text style={styles.blockTitle}>{income ? 'Where it came from' : 'Where it went'}</Text>
+              <BreakdownControls
+                flow={flow}
+                group={group}
+                view={breakdownView}
+                onView={setBreakdownView}
+                onLabels={() => setLabelsOpen(true)}
+                onFlow={(f) => {
+                  setFlow(f);
+                  setCatExpanded(false);
+                  setSelectedCat(null);
+                  setSelectedAccount(null);
+                }}
+                onGroup={(g) => {
+                  setGroup(g);
+                  setCatExpanded(false);
+                  setSelectedCat(null);
+                  setSelectedAccount(null);
+                }}
+              />
+              {(byAccount ? accountItems !== null : shownBreakdown.length > 0) && (
+                <View style={styles.breakdownContext}>
+                  <Amount minor={byAccount ? accountTotal : shownTotal} style={styles.breakdownAmount} />
+                  <Text style={styles.stripSub}>
+                    {income ? 'received' : 'spent'} · {periodName}
+                    {range.end >= todayIso ? ' so far' : ''}
+                  </Text>
+                </View>
+              )}
+              {!byAccount && shownBreakdown.length > 0 && (
+                <ComparisonNote
+                  label={`${range.end >= todayIso ? 'So far vs full ' : 'Vs '}${custom ? 'previous period' : previousPeriodLabel(cursor)}`}
+                  partial={range.end >= todayIso}
+                />
+              )}
+              <ExpenseLabelsReport visible={labelsOpen} range={range} onClose={() => setLabelsOpen(false)} />
+              {byAccount ? (
+                detailErrors.accounts ? null : accountItems === null ? (
+                  <ActivityIndicator color={theme.colors.ink} style={styles.daySpinner} />
+                ) : accountBreakdown.length === 0 ? (
+                  <Text style={styles.empty}>
+                    No {income ? 'income' : 'spending'} in {periodName}.
+                  </Text>
+                ) : (
+                  <>
+                    {breakdownView === 'tree' ? (
+                      <CategoryTreemap
+                        breakdown={accountBreakdown}
+                        selectedId={selectedAccount}
+                        onSelect={(a) =>
+                          setSelectedAccount((id) => (id === a.categoryId ? null : a.categoryId))
+                        }
+                      />
+                    ) : (
+                      <CategoryBar breakdown={accountBreakdown} selectedId={selectedAccount} />
+                    )}
+                    <CategoryList
+                      breakdown={accountBreakdown}
+                      spentMinor={accountTotal}
+                      deltas={new Map()}
+                      expanded={catExpanded}
+                      onToggleExpanded={() => setCatExpanded((v) => !v)}
+                      selectedId={selectedAccount}
+                      onSelect={(a) =>
+                        setSelectedAccount((id) => (id === a.categoryId ? null : a.categoryId))
+                      }
+                      split={accountSplit}
+                      splitCaption="Top categories"
+                      onOpen={onPressAccount}
+                      kind={flow}
+                    />
+                  </>
+                )
+              ) : shownBreakdown.length === 0 ? (
                 <Text style={styles.empty}>
                   No {income ? 'income' : 'spending'} in {periodName}.
                 </Text>
               ) : (
                 <>
-                  <CategoryBar breakdown={accountBreakdown} selectedId={selectedAccount} />
+                  {breakdownView === 'tree' ? (
+                    <CategoryTreemap
+                      breakdown={shownBreakdown}
+                      selectedId={selectedCat}
+                      onSelect={(c) => setSelectedCat((id) => (id === c.categoryId ? null : c.categoryId))}
+                    />
+                  ) : (
+                    <CategoryBar breakdown={shownBreakdown} selectedId={selectedCat} />
+                  )}
                   <CategoryList
-                    breakdown={accountBreakdown}
-                    spentMinor={accountTotal}
-                    deltas={new Map()}
+                    breakdown={shownBreakdown}
+                    spentMinor={shownTotal}
+                    deltas={deltas}
+                    splitError={detailErrors.split}
+                    onRetrySplit={retryDetails}
                     expanded={catExpanded}
                     onToggleExpanded={() => setCatExpanded((v) => !v)}
-                    selectedId={selectedAccount}
-                    onSelect={(a) => setSelectedAccount((id) => (id === a.categoryId ? null : a.categoryId))}
-                    split={accountSplit}
-                    splitCaption="Top categories"
-                    onOpen={onPressAccount}
+                    currentRange={range}
+                    previousRange={previousWindowRange(cursor)}
+                    selectedId={selectedCat}
+                    onSelect={(c) => setSelectedCat((id) => (id === c.categoryId ? null : c.categoryId))}
+                    split={detailErrors.split ? [] : split?.id === selectedCat ? split.items : null}
+                    onOpen={onPressCategory}
+                    onShowDays={income ? undefined : showCategoryDays}
                     kind={flow}
+                    iconOf={(id) => catById.get(id)?.icon}
                   />
                 </>
-              )
-            ) : shownBreakdown.length === 0 ? (
-              <Text style={styles.empty}>
-                No {income ? 'income' : 'spending'} in {periodName}.
-              </Text>
-            ) : (
-              <>
-                <CategoryBar breakdown={shownBreakdown} selectedId={selectedCat} />
-                <CategoryList
-                  breakdown={shownBreakdown}
-                  spentMinor={shownTotal}
-                  deltas={deltas}
-                  splitError={detailErrors.split}
-                  onRetrySplit={retryDetails}
-                  expanded={catExpanded}
-                  onToggleExpanded={() => setCatExpanded((v) => !v)}
-                  currentRange={range}
-                  previousRange={previousWindowRange(cursor)}
-                  selectedId={selectedCat}
-                  onSelect={(c) => setSelectedCat((id) => (id === c.categoryId ? null : c.categoryId))}
-                  split={detailErrors.split ? [] : split?.id === selectedCat ? split.items : null}
-                  onOpen={onPressCategory}
-                  onShowDays={income || byMonth ? undefined : showCategoryDays}
-                  kind={flow}
-                  iconOf={(id) => catById.get(id)?.icon}
-                />
-              </>
-            )}
-            {startingHeavy && (
-              <Pressable
-                onPress={() => router.push('/tidy-up')}
-                style={withPressed(styles.tidyNudge)}
-                accessibilityRole="button"
-              >
-                <Text style={styles.tidyNudgeText}>
-                  {startingHeavy.name} is over half of this income, and looks like starting balances.{' '}
-                  <Text style={styles.tidyNudgeLink}>Tidy up</Text>
-                </Text>
-              </Pressable>
-            )}
-          </View>
-        ) : trend.length >= MIN_TREND_POINTS || netWorthTrend.length >= MIN_TREND_POINTS ? (
-          <>
-            <ReportTrends
-              cashFlow={cashFlow}
-              key={cursorKey}
-              periodName={periodName}
-              spentMinor={current.expenseMinor}
-              trend={trend}
-              baseline={baseline}
-              inProgress={monthInProgress}
-              netWorthTrend={netWorthTrend}
-              monthLink={monthLink}
+              )}
+              {startingHeavy && (
+                <Pressable
+                  onPress={() => router.push('/tidy-up')}
+                  style={withPressed(styles.tidyNudge)}
+                  accessibilityRole="button"
+                >
+                  <Text style={styles.tidyNudgeText}>
+                    {startingHeavy.name} is over half of this income, and looks like starting balances.{' '}
+                    <Text style={styles.tidyNudgeLink}>Tidy up</Text>
+                  </Text>
+                </Pressable>
+              )}
+            </View>
+          ) : trend.length >= MIN_TREND_POINTS || netWorthTrend.length >= MIN_TREND_POINTS ? (
+            <>
+              <ReportTrends
+                cashFlow={cashFlow}
+                key={cursorKey}
+                periodName={periodName}
+                spentMinor={current.expenseMinor}
+                trend={trend}
+                baseline={baseline}
+                inProgress={monthInProgress}
+                netWorthTrend={netWorthTrend}
+                monthLink={monthLink}
+                projectedMinor={
+                  monthInProgress && facts.countedDays > 0
+                    ? Math.round(facts.perDayMinor * daysInPeriod)
+                    : null
+                }
+              />
+              <CategoryTracks
+                rows={categoriesAgainstUsual(catTracks)}
+                catById={catById}
+                inProgress={historyInProgress}
+                onOpen={(id) => openCategory(id, true)}
+              />
+            </>
+          ) : (
+            <EmptyState
+              title="Not enough history yet"
+              subtitle="Trends show up once there are a few months of entries."
             />
-            <CategoryTracks
-              rows={categoriesAgainstUsual(catTracks)}
-              catById={catById}
-              inProgress={historyInProgress}
-              onOpen={(id) => openCategory(id, true)}
-            />
-          </>
-        ) : (
-          <EmptyState
-            title="Not enough history yet"
-            subtitle="Trends show up once there are a few months of entries."
-          />
-        )}
+          )}
+        </Animated.View>
       </ScrollView>
     </View>
   );

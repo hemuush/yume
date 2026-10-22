@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { View, Pressable, ScrollView, StyleSheet, useWindowDimensions } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
@@ -10,6 +11,7 @@ import { shade } from '@/lib/color';
 import { withPressed } from '@/lib/pressed';
 import { useAccent } from '@/theme/AccentContext';
 import { Section } from '@/components/Section';
+import { screenStyles as h } from '@/components/screenStyles';
 import type { Account } from '@/types';
 
 /** Accounts shown in the row; the rest are one tap away under "View all". */
@@ -53,8 +55,10 @@ export function HomeAccounts({
       </Pressable>
     );
   }
-  const savings = accounts.filter((a) => a.type === 'savings');
-  const everyday = accounts.filter((a) => a.type !== 'savings');
+  // Only accounts holding money (or owing it) get a tile; an empty one is still one tap away under "View all".
+  const held = accounts.filter((a) => a.currentBalanceMinor !== 0);
+  const savings = held.filter((a) => a.type === 'savings');
+  const everyday = held.filter((a) => a.type !== 'savings');
   const preview = [...everyday, ...savings].slice(0, PREVIEW_ACCOUNTS);
   // Bigger text needs a wider tile for a balance to stay on one line.
   const width = Math.round(TILE_WIDTH * Math.min(1.3, Math.max(1, fontScale)));
@@ -62,45 +66,17 @@ export function HomeAccounts({
     <Section compact title="Accounts" onSeeAll={onOpenAccounts} actionLabel="View all">
       <ScrollView
         horizontal
+        nestedScrollEnabled
+        overScrollMode="never"
         showsHorizontalScrollIndicator={false}
         snapToInterval={width + TILE_GAP}
+        snapToAlignment="start"
         decelerationRate="fast"
         contentContainerStyle={styles.row}
       >
-        {preview.map((a) => {
-          const hue = accountHue(a.type, accent);
-          return (
-            <Pressable
-              key={a.id}
-              onPress={() => onOpenAccount(a)}
-              accessibilityRole="button"
-              accessibilityLabel={`${a.name}, ${accountTypeLabel(a)}. Open summary`}
-              style={withPressed([styles.tile, { width }])}
-            >
-              <View style={[styles.icon, { backgroundColor: shade(hue, 88) }]}>
-                <MaterialCommunityIcons
-                  name={accountIcon(a.type) as McIconName}
-                  size={18}
-                  color={shade(hue, 30, 10)}
-                />
-              </View>
-              <Text style={styles.name} numberOfLines={1}>
-                {a.name}
-              </Text>
-              <Text style={styles.kind} numberOfLines={1}>
-                {accountTypeLabel(a)}
-              </Text>
-              <Amount
-                minor={a.currentBalanceMinor}
-                currency={a.currency}
-                sensitive={a.type === 'savings'}
-                style={styles.balance}
-                numberOfLines={1}
-                adjustsFontSizeToFit
-              />
-            </Pressable>
-          );
-        })}
+        {preview.map((a) => (
+          <AccountTile key={a.id} account={a} width={width} accent={accent} onOpen={onOpenAccount} />
+        ))}
         <Pressable
           onPress={onAddAccount}
           accessibilityRole="button"
@@ -115,22 +91,65 @@ export function HomeAccounts({
   );
 }
 
+/** One tile, memoised so scrolling the row re-renders none of them. */
+const AccountTile = memo(function AccountTile({
+  account: a,
+  width,
+  accent,
+  onOpen,
+}: {
+  account: Account;
+  width: number;
+  accent: string;
+  onOpen: (account: Account) => void;
+}) {
+  const hue = accountHue(a.type, accent);
+  return (
+    <Pressable
+      onPress={() => onOpen(a)}
+      accessibilityRole="button"
+      accessibilityLabel={`${a.name}, ${accountTypeLabel(a)}. Open summary`}
+      style={withPressed([styles.tile, { width }])}
+    >
+      <View style={[styles.icon, { backgroundColor: shade(hue, 88) }]}>
+        <MaterialCommunityIcons
+          name={accountIcon(a.type) as McIconName}
+          size={18}
+          color={shade(hue, 30, 10)}
+        />
+      </View>
+      <Text style={styles.name} numberOfLines={1}>
+        {a.name}
+      </Text>
+      <Text style={styles.kind} numberOfLines={1}>
+        {accountTypeLabel(a)}
+      </Text>
+      <Amount
+        minor={a.currentBalanceMinor}
+        currency={a.currency}
+        sensitive={a.type === 'savings'}
+        style={styles.balance}
+        numberOfLines={1}
+      />
+    </Pressable>
+  );
+});
+
 const styles = StyleSheet.create({
   row: { paddingHorizontal: 16, paddingVertical: 4, gap: TILE_GAP },
-  tile: {
-    minHeight: 112,
-    borderRadius: 24,
-    padding: 14,
-    backgroundColor: theme.colors.surface,
-    boxShadow: '0px 1px 2px rgba(18,19,15,0.04), 0px 10px 24px -14px rgba(18,19,15,0.16)',
-  },
+  tile: { ...h.card, marginHorizontal: 0, minHeight: 108, padding: 12 },
   icon: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
-  name: { marginTop: 10, fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
-  kind: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted },
+  name: {
+    marginTop: 10,
+    fontFamily: theme.font.bodyBold,
+    fontSize: theme.typeSize.row,
+    color: theme.colors.textPrimary,
+  },
+  kind: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
   balance: {
     marginTop: 2,
     fontFamily: theme.font.bodyBold,
-    fontSize: 16,
+    fontSize: 15,
     fontVariant: ['tabular-nums'],
     color: theme.colors.textPrimary,
   },
@@ -139,14 +158,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
     backgroundColor: 'transparent',
-    boxShadow: 'none',
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderStyle: 'dashed',
     borderColor: theme.colors.borderSoft,
   },
   addText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textSecondary },
   wrap: { marginHorizontal: 16 },
-  fresh: { padding: 18, gap: 4, borderRadius: 28, backgroundColor: theme.colors.surface },
+  fresh: { ...h.card, marginHorizontal: 0, padding: 16, gap: 4 },
   freshHead: { minHeight: 40, flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 },
   freshTitle: { flex: 1, fontFamily: theme.font.bodyBold, fontSize: 15, color: theme.colors.textPrimary },
   freshBig: {
