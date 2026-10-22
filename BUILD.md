@@ -40,6 +40,17 @@ For a read-only authentication check from GitHub, run the EAS Build workflow man
 
 The 21 October pre-fix [verification run](https://github.com/hemuush/yume/actions/runs/39578855243) authenticated but failed to resolve the stale project ID. That result does not establish access to the replacement project; rerun verification after pushing the corrected configuration. Local `eas config` checks passed for preview and production with their matching `EAS_BUILD_PROFILE`: both resolve the replacement project, package `com.yume.app`, version code 1, no auto-increment, remote credentials and release Internet blocking. No credentials were generated or replaced. Private `.codex-attachments/` files are excluded from both Git and EAS uploads.
 
+## Diagnosing a release APK that crashes
+
+Debug builds and Jest cannot show a crash that only the shrunk release build has. Expo SDK 58's Android template changed the release build's R8 setting from the `proguard-android.txt` preset to `proguard-android-optimize.txt`, so R8 now optimises code as well as shrinking it. Two EAS profiles in [eas.json](eas.json) change exactly one release-build setting each from `preview`, using the switches in [app.config.js](app.config.js):
+
+| Profile | What it changes | Command |
+| --- | --- | --- |
+| `diagnose-r8-preset` | Uses SDK 57's non-optimising R8 preset (shrinking and minification stay on) | `eas build --platform android --profile diagnose-r8-preset` |
+| `diagnose-no-minify` | Turns R8 shrinking, minification and resource shrinking off | `eas build --platform android --profile diagnose-no-minify` |
+
+Install each APK and open it. If `diagnose-no-minify` runs and `preview` does not, R8 is the cause; if `diagnose-r8-preset` also runs, the optimising preset is the cause and the fix is to keep the SDK 57 preset. If neither runs, R8 is not the cause. Either way, capture the crash so the fix is not a guess: connect the phone with USB debugging on, open Yume, and run `adb logcat -d -b crash` (or `adb logcat -d | grep -E "FATAL|AndroidRuntime|ReactNative|DEBUG"`). The first `Caused by:` line, or a `NoSuchMethodError`, `NoSuchFieldError` or `ClassNotFoundException` naming an obfuscated class, identifies the library that needs a keep rule in [plugins](plugins) or `expo-build-properties`' `extraProguardRules`.
+
 ## Play Store bundle
 
 ```sh

@@ -1,11 +1,22 @@
-// Flat config (ESLint 9, the default from Expo SDK 53 onward).
+// Flat config (ESLint 10).
 const { defineConfig } = require('eslint/config');
 const expoConfig = require('eslint-config-expo/flat');
 const eslintPluginPrettierRecommended = require('eslint-plugin-prettier/recommended');
 const reactHooks = require('eslint-plugin-react-hooks');
 const react = require('eslint-plugin-react');
 
-module.exports = defineConfig([
+// eslint-plugin-react and eslint-plugin-import (both pulled in by eslint-config-expo) still call context APIs that
+// ESLint 10 removed (context.getFilename), which crashes linting. Wrapping every plugin with ESLint's own compat
+// layer restores those calls. Each plugin is wrapped once, so a plugin registered in several config blocks stays one
+// object. Remove this wrapper once those plugins release ESLint 10 support.
+const { fixupPluginRules } = require('@eslint/compat');
+const wrapped = new Map();
+const compat = (plugin) => {
+  if (!wrapped.has(plugin)) wrapped.set(plugin, fixupPluginRules(plugin));
+  return wrapped.get(plugin);
+};
+
+const configs = defineConfig([
   expoConfig,
   eslintPluginPrettierRecommended,
   {
@@ -66,3 +77,14 @@ module.exports = defineConfig([
     },
   },
 ]);
+
+module.exports = configs.map((config) =>
+  config.plugins
+    ? {
+        ...config,
+        plugins: Object.fromEntries(
+          Object.entries(config.plugins).map(([name, plugin]) => [name, compat(plugin)])
+        ),
+      }
+    : config
+);

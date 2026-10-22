@@ -3,10 +3,11 @@ import { Directory, File, Paths } from 'expo-file-system';
 import { CREATE_TABLES_SQL } from './schema';
 import { DEFAULT_CATEGORIES } from '@/constants/categories';
 import { newId } from '@/lib/id';
-import { primeCurrencyCache } from './settings';
+import type { AppDb, SqlParam } from './dbTypes';
+import { primeCurrencyCache } from './currencyCache';
 import { BACKFILL_LOAN_TX_KIND_SQL } from './loanTxKind';
 import { addMonthsToIsoDate } from '@/lib/date';
-import { purgeExpiredDeletedEntries } from './recentlyDeleted';
+import { purgeExpiredDeletedEntries } from './deletedRetention';
 import { bumpDataVersion, trackDataVersion } from './dataVersion';
 import { repairTrackedRefundLabels } from './refundLabels';
 
@@ -46,25 +47,7 @@ export async function migrateDbFilename(): Promise<void> {
   }
 }
 
-/**
- * App-facing db handle: its own type, not `SQLite.SQLiteDatabase`, because `withTransactionAsync` passes a
- * `tx` to its callback (see serializeDb). Only used methods; src/test-support's AsyncDb mirrors this shape.
- */
-/** One value bound to a `?` in a query — what expo-sqlite accepts. */
-export type SqlParam = SQLite.SQLiteBindValue;
-
-export interface AppDb {
-  getFirstAsync<T>(sql: string, params?: SqlParam[]): Promise<T | null>;
-  getAllAsync<T>(sql: string, params?: SqlParam[]): Promise<T[]>;
-  runAsync(sql: string, params?: SqlParam[]): Promise<void>;
-  execAsync(sql: string): Promise<void>;
-  withTransactionAsync(task: (tx: AppDb) => Promise<void>): Promise<void>;
-  /**
-   * Runs `task` as ONE queue entry with the raw connection, for work that can't interleave yet can't be one
-   * transaction (restore's PRAGMA foreign_keys, backup read). Use the given handle, not outer db: deadlock.
-   */
-  exclusiveAsync<T>(task: (db: AppDb) => Promise<T>): Promise<T>;
-}
+export type { AppDb, SqlParam };
 
 // The in-flight (or resolved) db setup — see getDb(). Cached as a promise so
 // concurrent first callers share one setup run.

@@ -32,6 +32,8 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm run lint
+      # Circular imports make module load order fragile; the guard ignores type-only imports.
+      - run: npm run check:cycles
       - run: npm run format:check
       - run: npm test
       - run: npm run test:security
