@@ -30,3 +30,24 @@ Phone acceptance of the layout, the new motion and the swipeable accounts row on
 - On All, Coming up shows up to three payments, one budget and one goal; a chip shows up to five of one kind. Several pending refunds read as one total that opens into the list.
 - Accounts with no balance leave the row (still under View all). Tiles are flat and memoised, which keeps the sideways scroll light.
 - The month line and goal rings draw on the UI thread (`useDrawnValue`), the today meter glides, and cards and sections slide into place when a panel opens or a filter changes.
+
+## One calm month card (22 October, later)
+
+The month card and the "today and week" card are now one card. Top to bottom: the label with its working button
+and the month pill; the free figure beside a small tile (a ring for the days left in the month, and what can be
+spent a day for them: free money over the days after today, current month only, left out when nothing is
+free); the caption; the month line (10px, with today's date pinned over it in the month's proportion) and a
+legend of one column per slice (spent, saved, bills, free) with its compact amount and share of what the
+month had to spend; then the week. The week is seven soft capsules, empty days kept as empty capsules, each
+with its amount over it, and a dashed tick at the daily goal on every capsule (past months show their weeks the
+same way, with no goal). The row above the capsules reads the picked day (today to begin with): its amount
+and a chip: "No spending", "N left", "N over", or "A big day" past four times the goal (calm amber, never
+red). Tapping today's row, when a goal is set, opens how the allowance works.
+
+Theme and phone: every colour that is the user's comes from their selected theme (the capsule gradient runs
+from the theme's two colours, the track and the corner glow are tints of its main colour, the days ring is its
+ink); the slice colours keep their meaning. Text follows the phone's font setting up to the app's 130% cap
+(`Text`): the figure and tile wrap onto two lines, the legend pairs up into two rows past 115%, the
+capsules grow taller and drop the amounts over them (the picked day's is still in the row above), so nothing is
+cut off. The daily-goal meter and the separate "Spent · last 7 days" header are gone; the goal, its working and
+Insights moved into the week.

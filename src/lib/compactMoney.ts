@@ -6,7 +6,8 @@ export function compactMoney(minor: number): string {
   const sym = getCurrencySymbol();
   const major = Math.round(minor / 100);
   if (major < 1000) return `${sym}${major}`;
-  if (major < 100000) {
+  // 99,600 rounds to "100k": that is a lakh, said as one.
+  if (major < 99500) {
     const k = major / 1000;
     return `${sym}${k < 10 ? k.toFixed(1).replace(/\.0$/, '') : Math.round(k)}k`;
   }

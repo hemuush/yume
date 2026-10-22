@@ -69,9 +69,12 @@ Recorded 13 October 2026 after commit `373ea5a`. Every tracked file was read by 
 - `src/features/goals/GoalChip.tsx`
 - `src/features/goals/GoalRing.tsx`
 - `src/features/home/AccountSummarySheet.tsx`
+- `src/features/home/AllowanceTile.tsx`
 - `src/features/home/HeroActions.tsx`
+- `src/features/home/HeroLegend.tsx`
 - `src/features/home/HomeAccounts.tsx`
 - `src/features/home/HomeComingUp.tsx`
+- `src/features/home/allowance.ts`
 - `src/features/home/comingUp.ts`
 - `src/features/home/upcomingItems.ts`
 - `src/features/home/MonthLine.tsx`

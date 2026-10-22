@@ -4,8 +4,16 @@ import { screenStyles as h } from '@/components/screenStyles';
 
 export const styles = StyleSheet.create({
   // The two Home cards are the app's one card (screenStyles.card): cream, rounded, a hairline edge, no shadow.
-  card: { ...h.card, paddingHorizontal: 16, paddingTop: 14, paddingBottom: 8 },
-  rhythm: { ...h.card, marginTop: 12, paddingHorizontal: 16, paddingTop: 8, paddingBottom: 10 },
+  card: { ...h.card, paddingHorizontal: 16, paddingTop: 10, paddingBottom: 8 },
+  heroRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    columnGap: 12,
+    rowGap: 8,
+  },
+  rhythm: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.borderSoft, marginTop: 2 },
   actions: { marginHorizontal: 16, marginTop: 12 },
   bar: {
     flexDirection: 'row',
@@ -15,6 +23,7 @@ export const styles = StyleSheet.create({
     gap: 8,
     minHeight: 32,
   },
+  glow: { position: 'absolute', right: -80, top: -100 },
   body: { gap: 2 },
   figure: { flexShrink: 1, minWidth: 0, marginTop: 2 },
 
@@ -47,69 +56,36 @@ export const styles = StyleSheet.create({
   howLinkOn: { backgroundColor: theme.colors.tray },
 
   // The month as one line: spent, saved, bills and free, in the colours the legend below uses.
-  line: { flexDirection: 'row', gap: 3, height: 8, marginTop: 14 },
+  line: { flexDirection: 'row', gap: 3, height: 10 },
+  lineWrap: { marginTop: 16 },
   lineOrigin: { transformOrigin: 'left center' },
-  lineSegment: { height: 8, borderRadius: 4, minWidth: 4 },
+  lineSegment: { height: 10, borderRadius: 5, minWidth: 5 },
+  // Today's date pinned over the line, in the month's own proportion.
+  tick: {
+    position: 'absolute',
+    top: -6,
+    bottom: -6,
+    width: 2,
+    marginLeft: -1,
+    borderRadius: 1,
+    backgroundColor: theme.colors.textPrimary,
+    opacity: 0.55,
+    alignItems: 'center',
+  },
+  tickDay: {
+    position: 'absolute',
+    top: -14,
+    fontFamily: theme.font.bodyBold,
+    fontSize: 11,
+    lineHeight: 13,
+    color: theme.colors.textSecondary,
+    width: 24,
+    textAlign: 'center',
+  },
 
   // Three columns under the line: each dot is the line's colour, so the line is the legend.
-  stats: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 },
-  stat: {
-    flexGrow: 1,
-    flexBasis: 100,
-    minWidth: 0,
-    minHeight: 56,
-    flexDirection: 'column',
-    alignItems: 'flex-start',
-    justifyContent: 'center',
-    gap: 3,
-  },
-  statStack: {
-    flexBasis: '100%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  statHead: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  statDot: { width: 7, height: 7, borderRadius: 4 },
-  statLabel: {
-    flexShrink: 1,
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 12,
-    color: theme.colors.textSecondary,
-  },
-  statValue: {
-    fontVariant: ['tabular-nums'],
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 14,
-    color: theme.colors.textPrimary,
-  },
 
   // Today's allowance: what is left, with a thin meter under it.
-  today: { minHeight: 44, paddingTop: 6, paddingBottom: 12, gap: 10 },
-  todayRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 8,
-  },
-  todayFigure: {
-    flexShrink: 1,
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 18,
-    fontVariant: ['tabular-nums'],
-    color: theme.colors.textPrimary,
-  },
-  todayFigureOver: { color: theme.colors.expenseText },
-  todayRight: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  todayTrack: {
-    height: 6,
-    borderRadius: 3,
-    overflow: 'hidden',
-    backgroundColor: theme.colors.trayTrack,
-  },
-  todayFill: { height: 6, borderRadius: 3, backgroundColor: theme.colors.slice.free },
-  todayFillOver: { backgroundColor: theme.colors.slice.spent },
   chipText: {
     flexShrink: 1,
     fontFamily: theme.font.bodyMedium,
@@ -117,12 +93,6 @@ export const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
   },
 
-  trend: { gap: 0 },
-  trendBelowToday: {
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: theme.colors.borderSoft,
-    paddingTop: 10,
-  },
   insightsLink: {
     minHeight: 44,
     flexDirection: 'row',

@@ -18,7 +18,9 @@ jest.mock('@/lib/useReduceMotion', () => ({ useReduceMotion: () => mockReduce })
 jest.mock('@expo/vector-icons/Feather', () => () => null);
 jest.mock('@expo/vector-icons/MaterialCommunityIcons', () => () => null);
 jest.mock('@/lib/haptics', () => ({ haptics: { tap: jest.fn() } }));
-jest.mock('@/theme/AccentContext', () => ({ useAccent: () => ({ accent: '#8FCBFF' }) }));
+jest.mock('@/theme/AccentContext', () => ({
+  useAccent: () => ({ accent: '#8FCBFF', secondary: '#8FE8C8' }),
+}));
 jest.mock('@/theme/PrivacyContext', () => ({ usePrivacy: () => ({ hideAmounts: false }) }));
 jest.mock('./HeroActions', () => ({ HeroActions: () => null }));
 
@@ -121,6 +123,11 @@ it('keeps the month label, figures and current-month chips together through inte
       renderPeriod={(key) => <Text>{key}</Text>}
       onPeriodDisplayed={displayed}
       today={key === 'month:0' ? { spentMinor: 13200, goalMinor: 50000 } : null}
+      spendingTrend={
+        key === 'month:0'
+          ? { daily: [{ date: '2026-10-10', totalMinor: 13200 }], today: '2026-10-10', mode: 'week' }
+          : null
+      }
     />
   );
   const r = render(hero('month:0', 100000));
@@ -130,7 +137,7 @@ it('keeps the month label, figures and current-month chips together through inte
   act(() => r.update(hero('month:-1', 200000)));
   const stale = mockCompletions.at(-1)!;
   expect(text(r)).toContain('month:0');
-  expect(text(r)).toContain('₹368 left today');
+  expect(text(r)).toContain('₹368 left');
   act(() => r.update(hero('month:-2', 300000)));
   const latest = mockCompletions.at(-1)!;
   act(() => stale.finish(true));
@@ -138,7 +145,7 @@ it('keeps the month label, figures and current-month chips together through inte
   act(() => latest.finish(true));
   expect(text(r)).toContain('month:-2');
   expect(r.root.findAllByType(CountUpAmount)[0].props.minor).toBe(300000);
-  expect(text(r)).not.toContain('₹368 left today');
+  expect(text(r)).not.toContain('₹368 left');
   expect(displayed.mock.calls.map(([key]) => key)).toEqual(['month:0', 'month:-2']);
   act(() => r.unmount());
   roots = roots.filter((root) => root !== r);
@@ -202,7 +209,7 @@ it('labels days with full dates and takes its chart range from the parent period
   expect(r.root.findAll((n) => n.props.accessibilityRole === 'tab')).toHaveLength(0);
   act(() => r.update(<SpendBars daily={daily} today="2026-10-31" periodMode="month" />));
   expect(text(r)).toContain('W5');
-  expect(text(r)).toMatch(/Spent · by week\s+₹132/);
+  expect(text(r)).toContain('Week 5 · 29–31 Oct ₹0');
 });
 
 it('inspects exact amounts and resets selection when the parent period changes', () => {
@@ -219,7 +226,7 @@ it('inspects exact amounts and resets selection when the parent period changes',
       /Monday.*5.*October/.test(n.props.accessibilityLabel)
   );
   act(() => day.props.onPress());
-  expect(text(r)).toContain('Mon, 5 Oct · ₹26,500');
+  expect(text(r)).toContain('Mon, 5 Oct ₹26,500');
   expect(day.props.accessibilityState.selected).toBe(true);
   const picked = () =>
     String(
@@ -236,7 +243,7 @@ it('inspects exact amounts and resets selection when the parent period changes',
   const week = r.root.find((n) => n.props.onPress && n.props.accessibilityLabel?.startsWith('Week 2 of'));
   act(() => week.props.onPress());
   expect(picked()).toMatch(/Week 2 .*₹132/);
-  expect(text(r)).toContain('8–14 Oct · ₹132');
+  expect(text(r)).toContain('Week 2 · 8–14 Oct ₹132');
   act(() => r.update(<SpendBars daily={daily} today="2026-10-10" />));
   expect(picked()).toMatch(/10 .*₹132/);
   act(() => r.update(<SpendBars daily={[]} today="2026-10-11" />));
