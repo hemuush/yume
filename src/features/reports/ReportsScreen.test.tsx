@@ -304,6 +304,13 @@ const settle = async () => {
     await new Promise((resolve) => setTimeout(resolve, 200));
   });
 };
+// A slow runner can take longer than `settle`: wait until the screen shows the text, for up to two seconds.
+const waitForText = async (tree: ReactTestRenderer, text: string) => {
+  for (let i = 0; i < 40 && !texts(tree).includes(text); i++)
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    });
+};
 /** Month / Year / Custom sit in the period button's menu: open it, then pick. */
 const pickPeriodType = async (tree: ReactTestRenderer, label: string) => {
   await pressText(tree, 'Month');
@@ -350,10 +357,11 @@ describe('Reports screen', () => {
     await pressText(tree, '5');
     await settle();
     await pressText(tree, 'Open day');
+    await waitForText(tree, 'Couldn’t load this day');
     expect(texts(tree)).toContain('Couldn’t load this day');
     expect(texts(tree)).not.toContain('Nothing on this day.');
     await pressText(tree, 'Retry day');
-    await settle();
+    await waitForText(tree, 'Groceries');
     expect(texts(tree)).toContain('Groceries');
     expect(texts(tree)).not.toContain('Couldn’t load this day');
   });
