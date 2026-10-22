@@ -221,7 +221,7 @@ export const styles = StyleSheet.create({
 
   noteInput: {
     marginBottom: 10,
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderColor: theme.colors.borderSoft,
     borderRadius: theme.radius.lg,
     backgroundColor: theme.colors.surface,
