@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
     gap: 4,
     padding: 12,
     borderRadius: theme.radius.xl,
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderColor: theme.colors.borderSoft,
     backgroundColor: theme.colors.surface,
   },

@@ -296,7 +296,7 @@ const styles = StyleSheet.create({
   medalRing: { borderRadius: 30, borderWidth: 2, borderColor: 'transparent', padding: 2 },
   // One consistent "selected" ring across the picker (ink), instead of each
   // tile lighting up in its own category colour.
-  medalRingActive: { borderColor: theme.colors.ink },
+  medalRingActive: { borderColor: theme.colors.textSecondary },
   medalRingSub: { opacity: 0.88 },
   medalName: {
     fontFamily: theme.font.bodyMedium,

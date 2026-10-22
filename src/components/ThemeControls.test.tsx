@@ -3,7 +3,7 @@ import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { PrimaryButton } from './PrimaryButton';
 import { SheetTabs } from './SheetTabs';
 import { ToggleSwitch } from './ToggleSwitch';
-import { themeInk } from '@/theme/interactionColors';
+import { themeInk, selectedFill } from '@/theme/interactionColors';
 import { theme } from '@/constants/theme';
 import { THEMES } from '@/theme/themes';
 import { SegmentedControl } from './SegmentedControl';
@@ -83,9 +83,11 @@ it.each(THEMES)('updates buttons, selectors and switches for the $name theme', (
     );
     expect(selected.length).toBeGreaterThan(1);
     // SheetTabs fill with the theme ink; the pill switch fills with the theme colour itself.
-    expect(selected.every((node) => [themeInk(mockAccent), mockAccent].includes(color(node) as string))).toBe(
-      true
-    );
+    expect(
+      selected.every((node) =>
+        [themeInk(mockAccent), mockAccent, selectedFill(mockAccent)].includes(color(node) as string)
+      )
+    ).toBe(true);
     const toggle = tree.root.findAll(
       (node) => node.props?.accessibilityRole === 'switch' && node.props?.onPress
     )[0];

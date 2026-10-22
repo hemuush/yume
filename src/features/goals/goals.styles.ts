@@ -69,7 +69,7 @@ export const styles = StyleSheet.create({
     gap: 10,
     padding: 12,
     borderRadius: theme.radius.lg,
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderColor: theme.colors.borderSoft,
     backgroundColor: theme.colors.surface,
   },

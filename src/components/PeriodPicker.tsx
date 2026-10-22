@@ -1,3 +1,4 @@
+import { selectedFill } from '@/theme/interactionColors';
 import { useEffect, useState } from 'react';
 import { View, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
@@ -112,7 +113,7 @@ export function PeriodPicker({
               <Pressable
                 key={m}
                 onPress={() => setMode(m)}
-                style={[styles.segBtn, mode === m && { backgroundColor: accent }]}
+                style={[styles.segBtn, mode === m && { backgroundColor: selectedFill(accent) }]}
                 accessibilityRole="radio"
                 accessibilityState={{ selected: mode === m }}
               >
@@ -139,7 +140,7 @@ export function PeriodPicker({
                     onPress={() => setYear(y)}
                     style={withPressed([
                       styles.yearChip,
-                      on && { backgroundColor: accent, borderColor: accent },
+                      on && { backgroundColor: selectedFill(accent), borderColor: selectedFill(accent) },
                     ])}
                     accessibilityRole="button"
                     accessibilityState={{ selected: on }}
@@ -167,7 +168,10 @@ export function PeriodPicker({
                     disabled={off}
                     style={withPressed([
                       styles.cell,
-                      isSelected && { backgroundColor: accent, borderColor: accent },
+                      isSelected && {
+                        backgroundColor: selectedFill(accent),
+                        borderColor: selectedFill(accent),
+                      },
                       off && styles.off,
                     ])}
                     accessibilityRole="button"
@@ -202,7 +206,7 @@ export function PeriodPicker({
                         disabled={future}
                         style={withPressed([
                           styles.weekChip,
-                          on && { backgroundColor: accent, borderColor: accent },
+                          on && { backgroundColor: selectedFill(accent), borderColor: selectedFill(accent) },
                           future && styles.off,
                         ])}
                         accessibilityRole="button"
@@ -229,7 +233,7 @@ export function PeriodPicker({
                   onPress={() => pick(() => onPickYear?.(y))}
                   style={withPressed([
                     styles.yearCell,
-                    on && { backgroundColor: accent, borderColor: accent },
+                    on && { backgroundColor: selectedFill(accent), borderColor: selectedFill(accent) },
                   ])}
                   accessibilityRole="button"
                   accessibilityLabel={`${y}${y === thisYear ? ', this year' : ''}`}

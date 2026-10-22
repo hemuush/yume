@@ -55,7 +55,7 @@ const styles = StyleSheet.create({
   input: {
     // A transparent border by default so the focus ring can appear without
     // shifting the field's height.
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderColor: theme.colors.borderSoft,
     borderRadius: theme.radius.lg,
     paddingHorizontal: 14,

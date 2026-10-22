@@ -13,7 +13,7 @@ export const styles = StyleSheet.create({
     marginVertical: 10,
   },
   repaymentFill: { height: '100%', backgroundColor: theme.colors.incomeText },
-  forecastDisclosure: { paddingHorizontal: 10, borderRadius: 16, backgroundColor: theme.colors.surfaceAlt },
+  forecastDisclosure: { marginTop: 4 },
   container: { flex: 1, backgroundColor: theme.colors.background },
   errorBanner: {
     marginHorizontal: 20,

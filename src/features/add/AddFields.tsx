@@ -1,4 +1,4 @@
-import { themeInk } from '@/theme/interactionColors';
+import { selectedFill } from '@/theme/interactionColors';
 import { View, Pressable, ScrollView } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { theme } from '@/constants/theme';
@@ -88,7 +88,7 @@ export function DetailChip({
         styles.detailChip,
         active && [
           styles.detailChipActive,
-          { backgroundColor: themeInk(accent), borderColor: themeInk(accent) },
+          { backgroundColor: selectedFill(accent), borderColor: selectedFill(accent) },
         ],
         disabled && styles.detailChipDisabled,
       ])}
@@ -101,7 +101,7 @@ export function DetailChip({
       <Feather
         name={icon}
         size={13}
-        color={active ? theme.colors.surface : muted ? theme.colors.textMuted : shade(accent, 40, 8)}
+        color={active ? theme.colors.textPrimary : muted ? theme.colors.textMuted : shade(accent, 40, 8)}
       />
       <Text
         style={[
@@ -114,7 +114,7 @@ export function DetailChip({
         {label}
       </Text>
       {active ? (
-        <Feather name="check" size={12} color={theme.colors.surface} />
+        <Feather name="check" size={12} color={theme.colors.textPrimary} />
       ) : (
         !muted &&
         active === undefined && <Feather name="chevron-down" size={12} color={theme.colors.textMuted} />
@@ -145,6 +145,7 @@ export function FriendFields({
   /** Opens the new-person sheet right here, instead of sending you to Plan first. */
   onAddPerson: () => void;
 }) {
+  const { accent } = useAccent();
   if (people.length === 0) {
     return (
       <View style={styles.section}>
@@ -176,7 +177,7 @@ export function FriendFields({
                 accessibilityRole="button"
                 accessibilityState={{ selected: on }}
               >
-                <View style={[styles.avatarRing, on && styles.avatarRingOn]}>
+                <View style={[styles.avatarRing, on && { borderColor: accent }]}>
                   <View style={[styles.avatar, { backgroundColor: hueFor(p.id) }]}>
                     <Text style={styles.avatarText}>{p.name.trim().charAt(0).toUpperCase()}</Text>
                   </View>

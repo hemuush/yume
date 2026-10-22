@@ -188,7 +188,7 @@ export function BudgetDetailModal({
 }
 const styles = StyleSheet.create({
   summary: {
-    padding: 14,
+    paddingVertical: 14,
     gap: 12,
     borderRadius: 22,
     backgroundColor: theme.colors.surface,

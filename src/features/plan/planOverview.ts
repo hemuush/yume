@@ -1,3 +1,4 @@
+import { loanIcon } from '@/features/loans/loanIdentity';
 import { addDaysToIsoDate, parseLocalIsoDate } from '@/lib/date';
 import { advanceOccurrence } from '@/lib/recurrence';
 import type { RecurrenceFrequency } from '@/types';
@@ -22,6 +23,8 @@ export interface PlanLoanInput {
   status: 'active' | 'closed' | 'defaulted';
   principalMinor: number;
   outstandingPrincipalMinor: number;
+  /** What it financed ("HDFC House"); picks the row's icon. */
+  assetLabel?: string | null;
 }
 
 export interface PlanLoanProgressInput {
@@ -38,6 +41,8 @@ interface PlanLoanRow {
   id: string;
   name: string;
   direction: 'borrowed' | 'lent';
+  /** MaterialCommunityIcons name for the row's mark. */
+  icon?: string;
   leftMinor: number;
   nextDueDate: string | null;
   nextEmiMinor: number | null;
@@ -78,6 +83,7 @@ export function buildLoansSummary(loans: PlanLoanInput[], progress: PlanLoanProg
       id: l.id,
       name: l.counterparty,
       direction: l.direction,
+      icon: loanIcon({ direction: l.direction, assetLabel: l.assetLabel ?? null }),
       leftMinor: l.outstandingPrincipalMinor,
       nextDueDate: p?.nextDueDate ?? null,
       nextEmiMinor: p?.nextEmiMinor ?? null,

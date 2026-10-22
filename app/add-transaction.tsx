@@ -1216,7 +1216,7 @@ export default function AddTransactionScreen() {
         offset={{ opened: insets.bottom }}
         style={[styles.footer, { paddingBottom: insets.bottom + 12 }]}
       >
-        {!error && !repeatWarning && !splitParts && currentProblem && (
+        {!error && !repeatWarning && !splitParts && !invalidAmount && currentProblem && (
           <View style={styles.footerStatus}>
             <Text style={styles.formHint}>
               {invalidAmount ? 'Enter a positive amount. Check the calculation.' : currentProblem}
@@ -1256,7 +1256,6 @@ export default function AddTransactionScreen() {
         </View>
         {padVisible ? (
           <AmountPad
-            keySurface="#F1F5F9"
             onKey={onPadKey}
             onClear={() => {
               if (!saveInFlight.current && !committed.current) setExpr('');

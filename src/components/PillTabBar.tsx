@@ -15,7 +15,7 @@ import { useUiScale } from '@/lib/uiScale';
 import { usePressScale } from '@/lib/usePressScale';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 import { useAccent } from '@/theme/AccentContext';
-import { themeInk } from '@/theme/interactionColors';
+import { themeInk, selectedFill } from '@/theme/interactionColors';
 
 type TabBarProps = Parameters<NonNullable<React.ComponentProps<typeof Tabs>['tabBar']>>[0];
 
@@ -142,7 +142,7 @@ export function PillTabBar({
               label={label}
               Icon={Icon}
               focused={focused}
-              fill={accent}
+              fill={selectedFill(accent)}
               size={inner}
               logAgain={isHome}
               onPress={() => {

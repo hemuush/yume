@@ -1,5 +1,6 @@
 import { View, StyleSheet } from 'react-native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import type { McIconName } from '@/components/iconName';
 import { Glass } from '@/components/Glass';
 import { cardSurface } from '@/components/CardSurface';
 import { theme } from '@/constants/theme';
@@ -29,7 +30,7 @@ export function DebtLoans({ loans, onLoan }: { loans: LoansSummary; onLoan: (id:
             leading={
               <View style={local.mark}>
                 <MaterialCommunityIcons
-                  name={lent ? 'arrow-top-right' : 'home-outline'}
+                  name={(r.icon ?? (lent ? 'hand-coin-outline' : 'bank-outline')) as McIconName}
                   size={20}
                   color={theme.colors.ink}
                 />

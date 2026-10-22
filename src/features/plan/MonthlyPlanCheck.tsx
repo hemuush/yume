@@ -144,7 +144,7 @@ export function MonthlyPlanCheck({
                 style={[
                   s.fill,
                   {
-                    backgroundColor: themeInk(accent),
+                    backgroundColor: accent,
                     width: `${Math.min(100, (plan.totalMinor / Math.max(1, income)) * 100)}%`,
                   },
                 ]}
