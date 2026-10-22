@@ -24,6 +24,9 @@ const PAD_X = 14;
 
 type Kind = 'spend' | 'netWorth';
 
+const partialProjection = (v: number | null) => (v == null ? -Infinity : v);
+const TIP_W = 150;
+
 const AnimatedPolyline = Animated.createAnimatedComponent(Polyline);
 const DRAW_MS = 800;
 
@@ -64,6 +67,7 @@ export function TrendChart({
   netWorthTrend,
   monthLink,
   fixedKind,
+  projectedMinor = null,
 }: {
   periodName: string;
   /** This period's exact spend — compared against the baseline. */
@@ -75,6 +79,8 @@ export function TrendChart({
   netWorthTrend: NetWorthPoint[];
   /** Which series this card draws; it falls back to the other when this one has too few points. */
   fixedKind: Kind;
+  /** Where the month still going ends at its pace so far (spending only): a dashed step above its point. */
+  projectedMinor?: number | null;
   /** For the picked point (its index and the point count): the month it stands for and how to open it; null if it can't be. */
   monthLink?: (index: number, count: number) => { name: string; open: () => void } | null;
 }) {
@@ -107,10 +113,12 @@ export function TrendChart({
           month: t.month,
         }));
   const avg = showing === 'spend' ? baseline : null;
+  const projected =
+    showing === 'spend' && projectedMinor != null && projectedMinor > 0 ? projectedMinor : null;
 
   const values = points.filter((p) => p.available).map((p) => p.value);
   const lo = Math.min(...values, avg ?? Infinity);
-  const hi = Math.max(...values, avg ?? -Infinity);
+  const hi = Math.max(...values, avg ?? -Infinity, partialProjection(projected));
   const pad = (hi - lo) * 0.12 || Math.abs(hi) * 0.1 || 1;
   const y = (v: number) => PLOT_BOTTOM - ((v - (lo - pad)) / (hi - lo + 2 * pad)) * (PLOT_BOTTOM - PLOT_TOP);
   const x = (i: number) => PAD_X + (i * (width - 2 * PAD_X)) / Math.max(1, points.length - 1);
@@ -176,7 +184,8 @@ export function TrendChart({
       <View
         testID="trend-touch"
         onLayout={(e) => setWidth(e.nativeEvent.layout.width)}
-        onStartShouldSetResponder={() => false}
+        onStartShouldSetResponder={() => true}
+        onResponderTerminationRequest={() => true}
         onResponderGrant={(e) => pickAt(e.nativeEvent.locationX)}
         onResponderMove={(e) => pickAt(e.nativeEvent.locationX)}
         style={{ height: H }}
@@ -225,6 +234,38 @@ export function TrendChart({
                 strokeLinecap="round"
               />
             )}
+            {partial && projected != null && (
+              <>
+                <Line
+                  x1={x(lastI)}
+                  x2={x(lastI)}
+                  y1={y(points[lastI].value)}
+                  y2={y(projected)}
+                  stroke={theme.colors.ink}
+                  strokeWidth={1.6}
+                  strokeDasharray="3 4"
+                  strokeLinecap="round"
+                />
+                <Circle
+                  cx={x(lastI)}
+                  cy={y(projected)}
+                  r={4.5}
+                  fill={theme.colors.surface}
+                  stroke={theme.colors.ink}
+                  strokeWidth={1.6}
+                />
+                <SvgText
+                  x={x(lastI) - 10}
+                  y={y(projected) + 4}
+                  textAnchor="end"
+                  fontFamily={theme.font.bodyBold}
+                  fontSize={11}
+                  fill={theme.colors.textPrimary}
+                >
+                  {`projected ${formatMoney(roundedMinor(projected))}`}
+                </SvgText>
+              </>
+            )}
             <Line
               x1={x(selI)}
               x2={x(selI)}
@@ -246,7 +287,13 @@ export function TrendChart({
                   cx={x(i)}
                   cy={y(p.value)}
                   r={on ? 6 : last ? 5 : 3}
-                  fill={filled ? theme.colors.ink : theme.colors.surface}
+                  fill={
+                    filled
+                      ? theme.colors.ink
+                      : avg != null && p.value > avg && !last
+                        ? theme.colors.slice.spent
+                        : theme.colors.surface
+                  }
                   stroke={on ? theme.colors.surface : theme.colors.ink}
                   strokeWidth={on ? 2 : filled ? 0 : 1.5}
                 />
@@ -270,6 +317,22 @@ export function TrendChart({
               );
             })}
           </Svg>
+        )}
+        {width > 0 && (
+          <View
+            pointerEvents="none"
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: Math.max(0, Math.min(width - TIP_W, x(selI) - TIP_W / 2)),
+              width: TIP_W,
+              alignItems: 'center',
+            }}
+          >
+            <Text style={styles.chartTip} numberOfLines={1}>
+              {points[selI].label} · {formatMoney(roundedMinor(points[selI].value))}
+            </Text>
+          </View>
         )}
       </View>
       <ScrollView

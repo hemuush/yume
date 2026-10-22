@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import Animated, { useAnimatedStyle } from 'react-native-reanimated';
+import { useDrawnValue } from '@/lib/useDrawnValue';
 import { View, Pressable } from 'react-native';
 import { Text } from '@/components/Text';
 import { useAccent } from '@/theme/AccentContext';
@@ -14,6 +16,13 @@ const BAR_MIN_HEIGHT = 6;
 const BASELINE = 20;
 const LETTERS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 const NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+/** One weekday's bar: draws up from the baseline once, glides to its new height when the scope changes. */
+function Bar({ animKey, height, style }: { animKey: string; height: number; style: object }) {
+  const h = useDrawnValue(animKey, height);
+  const animated = useAnimatedStyle(() => ({ height: h.value }));
+  return <Animated.View style={[style, animated]} />;
+}
 
 const barLabel = (minor: number) => Math.round(toMajor(minor)).toLocaleString();
 
@@ -80,11 +89,12 @@ export function WeekdayRhythm({
                 <Text style={[styles.rhythmValue, on && styles.rhythmValueOn]} numberOfLines={1}>
                   {shows ? barLabel(avg) : ''}
                 </Text>
-                <View
+                <Bar
+                  animKey={`rhythm:${scopeName ?? 'all'}:${i}`}
+                  height={Math.max(BAR_MIN_HEIGHT, (avg / max) * BAR_MAX_HEIGHT)}
                   style={[
                     styles.rhythmFill,
                     {
-                      height: Math.max(BAR_MIN_HEIGHT, (avg / max) * BAR_MAX_HEIGHT),
                       backgroundColor: i === rhythm.peak || on ? accent : accent + '6B',
                       borderWidth: on ? 2 : 0,
                       borderColor: theme.colors.ink,

@@ -10,6 +10,7 @@ import {
   summariseDayTotal,
   buildHeat,
   cumulativeSpend,
+  treemapLayout,
   weekTotals,
   daySpendFacts,
   weekdayRhythm,
@@ -647,5 +648,36 @@ describe('categoriesAgainstUsual', () => {
   it('leaves out a category with fewer than two earlier months', () => {
     expect(categoriesAgainstUsual([t('a', 'New', [0, 0, 0, 200, 400])])).toEqual([]);
     expect(categoriesAgainstUsual([t('a', 'Quiet', [0, 0, 0, 0, 400])])).toEqual([]);
+  });
+});
+
+describe('treemapLayout', () => {
+  it('gives every value a tile whose area is its share, together filling the box', () => {
+    const tiles = treemapLayout([
+      { id: 'rent', value: 50 },
+      { id: 'food', value: 25 },
+      { id: 'fun', value: 15 },
+      { id: 'misc', value: 10 },
+    ]);
+    expect(tiles.map((t) => t.id).sort()).toEqual(['food', 'fun', 'misc', 'rent']);
+    const area = (id: string) => {
+      const t = tiles.find((x) => x.id === id)!;
+      return (t.w * t.h) / 100;
+    };
+    expect(area('rent')).toBeCloseTo(50);
+    expect(area('food')).toBeCloseTo(25);
+    expect(area('fun')).toBeCloseTo(15);
+    expect(area('misc')).toBeCloseTo(10);
+    for (const t of tiles) {
+      expect(t.x).toBeGreaterThanOrEqual(0);
+      expect(t.y).toBeGreaterThanOrEqual(0);
+      expect(t.x + t.w).toBeLessThanOrEqual(100.0001);
+      expect(t.y + t.h).toBeLessThanOrEqual(100.0001);
+    }
+  });
+  it('leaves out empty values and handles one or none', () => {
+    expect(treemapLayout([])).toEqual([]);
+    expect(treemapLayout([{ id: 'a', value: 0 }])).toEqual([]);
+    expect(treemapLayout([{ id: 'a', value: 7 }])).toEqual([{ id: 'a', x: 0, y: 0, w: 100, h: 100 }]);
   });
 });

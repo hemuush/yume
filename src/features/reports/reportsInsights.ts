@@ -703,3 +703,44 @@ export function weekTotals(rows: (string | null)[][], daily: DailyExpensePoint[]
   const spentOn = new Map(daily.map((d) => [d.date, d.totalMinor]));
   return rows.map((row) => row.reduce((sum, iso) => sum + (iso ? (spentOn.get(iso) ?? 0) : 0), 0));
 }
+
+/** One tile of a treemap, as a share (0-100) of the whole box. */
+export interface TreemapTile {
+  id: string;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
+/**
+ * Lays values out as tiles filling a box, each tile's area its share of the total. Largest first, the list is
+ * split in two halves of about equal weight, the box cut along its longer side, and each half laid out in its
+ * part: it stays readable (few thin slivers) without a full squarify.
+ */
+export function treemapLayout(items: { id: string; value: number }[]): TreemapTile[] {
+  const live = items.filter((i) => i.value > 0).sort((a, b) => b.value - a.value);
+  const out: TreemapTile[] = [];
+  const place = (list: typeof live, x: number, y: number, w: number, h: number) => {
+    if (list.length === 0) return;
+    if (list.length === 1) {
+      out.push({ id: list[0].id, x, y, w, h });
+      return;
+    }
+    const sum = list.reduce((s, i) => s + i.value, 0);
+    let acc = 0;
+    let k = 0;
+    while (k < list.length - 1 && acc + list[k].value < sum / 2) acc += list[k++].value;
+    if (k === 0) acc = list[k++].value;
+    const share = acc / sum;
+    if (w >= h) {
+      place(list.slice(0, k), x, y, w * share, h);
+      place(list.slice(k), x + w * share, y, w * (1 - share), h);
+    } else {
+      place(list.slice(0, k), x, y, w, h * share);
+      place(list.slice(k), x, y + h * share, w, h * (1 - share));
+    }
+  };
+  place(live, 0, 0, 100, 100);
+  return out;
+}

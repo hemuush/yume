@@ -70,10 +70,10 @@ import { ReportHero } from '@/features/reports/ReportHero';
 import { DayCard } from '@/features/reports/DayCard';
 import { ReportInsights } from '@/features/reports/ReportInsights';
 import { CategoryBar } from '@/features/reports/CategoryBar';
+import { CategoryTreemap } from '@/features/reports/CategoryTreemap';
 import { CategoryList } from '@/features/reports/CategoryList';
 import { WeekdayRhythm } from '@/features/reports/WeekdayRhythm';
 import { BiggestSpends } from '@/features/reports/BiggestSpends';
-import { ReportPatterns } from '@/features/reports/ReportPatterns';
 import { ReportTrends } from '@/features/reports/ReportTrends';
 import { MIN_TREND_POINTS } from '@/features/reports/TrendChart';
 import { CategoryTracks } from '@/features/reports/CategoryTracks';
@@ -198,6 +198,8 @@ export default function ReportsScreen() {
   const [labelsOpen, setLabelsOpen] = useState(false);
   useEffect(() => setLabelsOpen(false), [tab, cursor, flow]);
   const [group, setGroup] = useState<CategoryGroup>('category');
+  // The split drawn as tiles (default) or as one bar.
+  const [breakdownView, setBreakdownView] = useState<'tree' | 'bar'>('tree');
   const [selectedAccount, setSelectedAccount] = useState<string | null>(null);
   // Fetched results carry the key they were fetched for, so one for another
   // period, flow or filter is never shown in place of the current one.
@@ -765,6 +767,20 @@ export default function ReportsScreen() {
               </ModalSheet>
             )}
 
+            <ReportInsights
+              // A new period starts at the first card.
+              key={`${range.start}:${range.end}`}
+              title={`${periodName}, in short`}
+              cards={stories}
+              onAction={onStoryAction}
+            />
+            {!byMonth && (!filterId || filtered?.id === filterId) && (
+              <WeekdayRhythm
+                key={`${cursorKey}|${filterId ?? ''}`}
+                rhythm={weekdayRhythm(heatDaily, range, todayIso)}
+                scopeName={filterCat?.name}
+              />
+            )}
             {!byMonth && (!filterId || filtered?.id === filterId) && (
               <>
                 {!largest || largest.key !== largestKey ? (
@@ -789,24 +805,6 @@ export default function ReportsScreen() {
                 )}
               </>
             )}
-            {(stories.length > 0 || (!byMonth && (!filterId || filtered?.id === filterId))) && (
-              <ReportPatterns key={`patterns-${cursorKey}-${filterId ?? ''}`}>
-                <ReportInsights
-                  // A new period closes any expanded insight.
-                  key={`${range.start}:${range.end}`}
-                  title={`${periodName}, in short`}
-                  cards={stories}
-                  onAction={onStoryAction}
-                />
-                {!byMonth && (!filterId || filtered?.id === filterId) && (
-                  <WeekdayRhythm
-                    key={`${cursorKey}|${filterId ?? ''}`}
-                    rhythm={weekdayRhythm(heatDaily, range, todayIso)}
-                    scopeName={filterCat?.name}
-                  />
-                )}
-              </ReportPatterns>
-            )}
           </>
         ) : tab === 'cats' ? (
           <View>
@@ -814,6 +812,8 @@ export default function ReportsScreen() {
             <BreakdownControls
               flow={flow}
               group={group}
+              view={breakdownView}
+              onView={setBreakdownView}
               onLabels={() => setLabelsOpen(true)}
               onFlow={(f) => {
                 setFlow(f);
@@ -853,7 +853,17 @@ export default function ReportsScreen() {
                 </Text>
               ) : (
                 <>
-                  <CategoryBar breakdown={accountBreakdown} selectedId={selectedAccount} />
+                  {breakdownView === 'tree' ? (
+                    <CategoryTreemap
+                      breakdown={accountBreakdown}
+                      selectedId={selectedAccount}
+                      onSelect={(a) =>
+                        setSelectedAccount((id) => (id === a.categoryId ? null : a.categoryId))
+                      }
+                    />
+                  ) : (
+                    <CategoryBar breakdown={accountBreakdown} selectedId={selectedAccount} />
+                  )}
                   <CategoryList
                     breakdown={accountBreakdown}
                     spentMinor={accountTotal}
@@ -875,7 +885,15 @@ export default function ReportsScreen() {
               </Text>
             ) : (
               <>
-                <CategoryBar breakdown={shownBreakdown} selectedId={selectedCat} />
+                {breakdownView === 'tree' ? (
+                  <CategoryTreemap
+                    breakdown={shownBreakdown}
+                    selectedId={selectedCat}
+                    onSelect={(c) => setSelectedCat((id) => (id === c.categoryId ? null : c.categoryId))}
+                  />
+                ) : (
+                  <CategoryBar breakdown={shownBreakdown} selectedId={selectedCat} />
+                )}
                 <CategoryList
                   breakdown={shownBreakdown}
                   spentMinor={shownTotal}
@@ -921,6 +939,9 @@ export default function ReportsScreen() {
               inProgress={monthInProgress}
               netWorthTrend={netWorthTrend}
               monthLink={monthLink}
+              projectedMinor={
+                monthInProgress && facts.countedDays > 0 ? Math.round(facts.perDayMinor * daysInPeriod) : null
+              }
             />
             <CategoryTracks
               rows={categoriesAgainstUsual(catTracks)}

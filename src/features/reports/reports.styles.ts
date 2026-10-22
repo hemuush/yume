@@ -4,6 +4,14 @@ import { SECTION_TITLE, SECTION_GAP } from '@/constants/textStyles';
 import { SCREEN } from '@/components/screenStyles';
 import { GLASS } from '@/components/Glass';
 
+/** Every Reports card: the app's one flat card (cream, rounded, a hairline edge), without the screen margin. */
+const CARD = {
+  backgroundColor: theme.colors.surface,
+  borderRadius: theme.radius.xl2,
+  borderWidth: StyleSheet.hairlineWidth,
+  borderColor: theme.colors.borderSoft,
+} as const;
+
 /** The even gap between Reports' blocks (heatmap card, day card, story cards, "Where it went"). */
 const BLOCK_GAP = SCREEN.sectionGap;
 
@@ -68,10 +76,7 @@ export const styles = StyleSheet.create({
   granChipText: { fontFamily: theme.font.roundedMedium, fontSize: 14, color: theme.colors.ink },
   // The Days tab's heatmap card.
   hmCard: {
-    backgroundColor: GLASS.fill,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: GLASS.edge,
+    ...CARD,
     paddingHorizontal: 14,
     paddingTop: 16,
     paddingBottom: 14,
@@ -118,10 +123,7 @@ export const styles = StyleSheet.create({
 
   // The day open under the heatmap.
   dayCard: {
-    backgroundColor: GLASS.fill,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: GLASS.edge,
+    ...CARD,
     paddingTop: 14,
     paddingBottom: 12,
     marginBottom: BLOCK_GAP,
@@ -163,10 +165,7 @@ export const styles = StyleSheet.create({
   // Weekday rhythm: seven bars, a dashed "usual day" line, and a read line.
   rhythmBlock: { marginBottom: BLOCK_GAP },
   rhythmCard: {
-    backgroundColor: GLASS.fill,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: GLASS.edge,
+    ...CARD,
     padding: 16,
     gap: 12,
   },
@@ -221,10 +220,7 @@ export const styles = StyleSheet.create({
   // Biggest spends: the period's largest single expenses, in the day card's row.
   bigBlock: { marginBottom: BLOCK_GAP },
   bigCard: {
-    backgroundColor: GLASS.fill,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: GLASS.edge,
+    ...CARD,
     paddingTop: 4,
     paddingBottom: 12,
     overflow: 'hidden',
@@ -252,10 +248,7 @@ export const styles = StyleSheet.create({
 
   // Trends: one line chart with a Spending / Net worth switch.
   trendCard: {
-    backgroundColor: GLASS.fill,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: GLASS.edge,
+    ...CARD,
     padding: 16,
     gap: 8,
   },
@@ -267,6 +260,17 @@ export const styles = StyleSheet.create({
     gap: 8,
   },
   trendTitle: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.textPrimary },
+  chartTip: {
+    overflow: 'hidden',
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 10,
+    backgroundColor: theme.colors.ink,
+    fontFamily: theme.font.bodyBold,
+    fontSize: 12,
+    color: theme.colors.surface,
+    fontVariant: ['tabular-nums'],
+  },
   trendRead: {
     fontFamily: theme.font.body,
     fontSize: 13,
@@ -296,10 +300,7 @@ export const styles = StyleSheet.create({
   flowLabelOn: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
   stripCard: {
     flexDirection: 'row',
-    backgroundColor: GLASS.fill,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: GLASS.edge,
+    ...CARD,
   },
   stripCardStack: { flexDirection: 'column' },
   stripCell: { flex: 1, minWidth: 0, paddingHorizontal: 14, paddingVertical: 14, gap: 3 },
@@ -317,10 +318,7 @@ export const styles = StyleSheet.create({
   // Against your usual: each category's month beside its own earlier months.
   tracksBlock: { marginTop: BLOCK_GAP },
   tracksCard: {
-    backgroundColor: GLASS.fill,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: GLASS.edge,
+    ...CARD,
     overflow: 'hidden',
   },
   trackRow: {
@@ -375,10 +373,7 @@ export const styles = StyleSheet.create({
   legendSwatch: { width: 12, height: 12, borderRadius: 4 },
 
   catCard: {
-    backgroundColor: GLASS.fill,
-    borderWidth: 1,
-    borderColor: GLASS.edge,
-    borderRadius: 20,
+    ...CARD,
     paddingHorizontal: 16,
     overflow: 'hidden',
   },
@@ -416,8 +411,9 @@ export const styles = StyleSheet.create({
   },
   breakdownAmount: {
     fontVariant: ['tabular-nums'],
-    fontFamily: theme.font.body,
-    fontSize: 26,
+    fontFamily: theme.font.bodyLight,
+    fontSize: theme.typeSize.headline,
+    letterSpacing: -1.1,
     color: theme.colors.textPrimary,
   },
   catMain: { flex: 1, minWidth: 0 },

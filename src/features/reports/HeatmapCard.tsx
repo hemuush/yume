@@ -125,7 +125,7 @@ export function HeatmapCard({
 }
 
 const styles = StyleSheet.create({
-  card: { ...h.card, paddingTop: 14, paddingBottom: 14, marginBottom: 12 },
+  card: { ...h.card, marginHorizontal: 0, paddingTop: 14, paddingBottom: 14, marginBottom: 12 },
   head: {
     flexDirection: 'row',
     alignItems: 'baseline',

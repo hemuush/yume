@@ -304,7 +304,14 @@ export function ReportHero({
 }
 
 const styles = StyleSheet.create({
-  card: { ...h.card, marginBottom: 12, paddingHorizontal: 16, paddingTop: 14, paddingBottom: 12 },
+  card: {
+    ...h.card,
+    marginHorizontal: 0,
+    marginBottom: 12,
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    paddingBottom: 12,
+  },
   label: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textSecondary },
   figure: {
     fontFamily: theme.font.bodyLight,
@@ -338,7 +345,7 @@ const styles = StyleSheet.create({
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   legendKey: { width: 14, height: 3, borderRadius: 2 },
   legendText: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
-  kpis: { ...h.card, flexDirection: 'row', marginBottom: 12 },
+  kpis: { ...h.card, marginHorizontal: 0, flexDirection: 'row', marginBottom: 12 },
   kpi: { flex: 1, minWidth: 0, minHeight: 80, paddingHorizontal: 14, paddingVertical: 12, gap: 2 },
   kpiLabel: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
   kpiValue: {

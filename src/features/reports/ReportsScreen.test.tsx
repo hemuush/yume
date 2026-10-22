@@ -327,12 +327,15 @@ describe('Reports screen', () => {
   });
   it('opens directly on Days with the period total, not Home’s full summary', async () => {
     const shown = texts(await render());
-    expect(shown).toEqual(expect.arrayContaining(['Days', 'Breakdown', 'Trends', 'Tap or drag across days']));
+    expect(shown).toEqual(
+      expect.arrayContaining(['Overview', 'Breakdown', 'Trends', 'Tap or drag across days'])
+    );
     // One compact card with the period's total (Reports can look at any period, unlike Home).
     expect(shown.some((t) => t.startsWith('Spent in '))).toBe(true);
     expect(shown).not.toContain('Usual month');
-    expect(shown.some((t) => t.endsWith(', in short'))).toBe(false);
-    expect(shown).toContain('Spending patterns');
+    // The period in a few answers, as swipeable cards, with the weekday rhythm under them.
+    expect(shown.some((t) => t.endsWith(', in short'))).toBe(true);
+    expect(shown).toContain('Weekday rhythm');
     expect(shown).not.toContain('Where it went');
   });
   it('shows a failed day read and retries instead of presenting an empty day', async () => {
@@ -430,7 +433,7 @@ describe('Reports screen', () => {
     expect(tree.root.findByType(require('./TrendChart').TrendChart).props.fixedKind).toBe('netWorth');
     expect(shown).toContain('Against your usual');
     expect(shown).not.toContain('Where it went');
-    await pressText(tree, 'Days');
+    await pressText(tree, 'Overview');
     expect(texts(tree)).toContain('Tap or drag across days');
   });
   it('scales category bars to their share of all spending', async () => {
@@ -442,24 +445,12 @@ describe('Reports screen', () => {
     expect(bars[1]).toBeCloseTo((620000 / 2420000) * 100);
     expect(bars.reduce((sum, value) => sum + value, 0)).toBeCloseTo(100);
   });
-  it('expands insights individually and keeps the stable header outside report scrolling', async () => {
+  it('shows the insight cards with their own buttons, and keeps the header outside report scrolling', async () => {
     const tree = await render();
     const scroll = tree.root.findAllByType(ScrollView).find((n) => n.props.testID === 'reports-content')!;
     expect(scroll.props.stickyHeaderIndices).toBeUndefined();
     expect(scroll.findAllByType(Text).map((n) => n.props.children)).not.toContain('Reports');
-    expect(texts(tree)).not.toContain('Show on the heatmap →');
-    await pressText(tree, 'Spending patterns');
-    const insight = tree.root.find(
-      (n) =>
-        typeof n.props.onPress === 'function' &&
-        typeof n.props.accessibilityLabel === 'string' &&
-        n.props.accessibilityLabel.startsWith('Heaviest day')
-    );
-    await act(async () => insight.props.onPress());
-    expect(insight.props.accessibilityState.expanded).toBe(true);
     expect(texts(tree)).toContain('Show on the heatmap →');
-    await act(async () => insight.props.onPress());
-    expect(texts(tree)).not.toContain('Show on the heatmap →');
   });
   it('Trends asks for the in-and-out and category tracks with savings left out while hidden', async () => {
     mockHide.current = true;
@@ -522,8 +513,6 @@ describe('Reports screen', () => {
   });
   it('the heaviest-day story opens that day on the heatmap', async () => {
     const tree = await render();
-    await pressText(tree, 'Spending patterns');
-    await layOut(tree);
     const card = tree.root.find(
       (n) =>
         typeof n.props.onPress === 'function' &&
@@ -545,8 +534,6 @@ describe('Reports screen', () => {
   });
   it('a category story switches to Categories with that row picked', async () => {
     const tree = await render();
-    await pressText(tree, 'Spending patterns');
-    await layOut(tree);
     const card = tree.root.find(
       (n) =>
         typeof n.props.onPress === 'function' &&
@@ -557,7 +544,6 @@ describe('Reports screen', () => {
       card.props.onPress();
       await new Promise((resolve) => setTimeout(resolve, 0));
     });
-    await pressText(tree, 'Show in categories →');
     const shown = texts(tree);
     expect(shown).toContain('Where it went');
     expect(shown).toContain('Open Food ›');
@@ -650,7 +636,6 @@ describe('Reports screen', () => {
   describe('Weekday rhythm', () => {
     it('shows seven bars with the busiest weekday read out, and a tapped bar reads its own line', async () => {
       const tree = await render();
-      await pressText(tree, 'Spending patterns');
       const shown = texts(tree);
       expect(shown).toContain('Weekday rhythm');
       expect(shown.some((t) => t.startsWith('Mondays run highest: '))).toBe(true);
@@ -667,7 +652,6 @@ describe('Reports screen', () => {
       jest.setSystemTime(new Date(2026, 9, 5, 12));
       try {
         const tree = await render();
-        await pressText(tree, 'Spending patterns');
         const shown = texts(tree);
         expect(shown).toContain('Weekday rhythm');
         expect(shown.some((t) => t.startsWith('Needs about 2 weeks of entries'))).toBe(true);
@@ -791,7 +775,7 @@ describe('Reports screen', () => {
     it('still shows the lenses and the income breakdown', async () => {
       mockIncomeOnly.current = true;
       const tree = await render();
-      expect(texts(tree)).toEqual(expect.arrayContaining(['Days', 'Breakdown', 'Trends']));
+      expect(texts(tree)).toEqual(expect.arrayContaining(['Overview', 'Breakdown', 'Trends']));
       await pressText(tree, 'Breakdown');
       await pressText(tree, 'Income');
       expect(texts(tree)).toEqual(expect.arrayContaining(['Where it came from', 'Salary']));
