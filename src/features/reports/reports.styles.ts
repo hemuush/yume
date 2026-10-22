@@ -387,6 +387,10 @@ export const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   catBarSeg: { flexBasis: 0, minWidth: 3, borderRadius: 4 },
+  // The card over "Where it went": its title and group menu, the total and the split as one bar.
+  sumCard: { ...CARD, padding: 16, marginBottom: 12 },
+  sumHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
+  sumTitle: { ...SECTION_TITLE, flexShrink: 1 },
   breakdownContext: {
     flexDirection: 'row',
     flexWrap: 'wrap',

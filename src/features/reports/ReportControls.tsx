@@ -1,7 +1,4 @@
 import { useState } from 'react';
-import Animated, { useAnimatedStyle } from 'react-native-reanimated';
-import { useDrawnValue } from '@/lib/useDrawnValue';
-import { DURATIONS } from '@/lib/motionTimings';
 import { View, Pressable, StyleSheet } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
@@ -10,8 +7,7 @@ import { ModalSheet } from '@/components/ModalSheet';
 import { theme } from '@/constants/theme';
 import { withPressed } from '@/lib/pressed';
 
-import { useAccent } from '@/theme/AccentContext';
-import { themeInk } from '@/theme/interactionColors';
+import { SegmentedControl } from '@/components/SegmentedControl';
 
 export type ReportTab = 'days' | 'cats' | 'trends';
 const TAB_LABELS = [
@@ -20,106 +16,65 @@ const TAB_LABELS = [
   ['trends', 'Trends'],
 ] as const;
 
-/** Three lenses as plain labels over one rule; the accent underline slides to the one in view. */
+/** Three lenses in the same pill switch as Plan's tabs, so the two screens read as one family. */
 export function ReportTabs({ value, onChange }: { value: ReportTab; onChange: (value: ReportTab) => void }) {
-  const { accent } = useAccent();
-  const ink = themeInk(accent);
-  const [width, setWidth] = useState(0);
-  const index = TAB_LABELS.findIndex(([key]) => key === value);
-  const left = useDrawnValue('reports-tab-underline', index, DURATIONS.standard);
-  const slide = useAnimatedStyle(() => ({ transform: [{ translateX: left.value * (width / 3) }] }));
   return (
-    <View style={s.tabs} accessibilityRole="tablist" onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
-      {TAB_LABELS.map(([key, label]) => (
-        <Pressable
-          key={key}
-          onPress={() => {
-            if (value !== key) onChange(key);
-          }}
-          accessibilityRole="tab"
-          accessibilityState={{ selected: value === key }}
-          style={withPressed(s.tab)}
-        >
-          <Text style={[s.tabText, value === key && s.tabOn]}>{label}</Text>
-        </Pressable>
-      ))}
-      <Animated.View
-        pointerEvents="none"
-        style={[s.underline, { width: width / 3, backgroundColor: ink }, slide]}
+    <View style={s.tabs}>
+      <SegmentedControl
+        options={TAB_LABELS.map(([key, label]) => ({ label, value: key }))}
+        value={value}
+        onChange={onChange}
+        onBand
       />
     </View>
   );
 }
 
-export function BreakdownControls({
+/** Spending or income, in the same pill switch as the tabs above it. */
+export function FlowSwitch({
+  flow,
+  onFlow,
+}: {
+  flow: 'expense' | 'income';
+  onFlow: (value: 'expense' | 'income') => void;
+}) {
+  return (
+    <View style={s.flow}>
+      <SegmentedControl
+        options={[
+          { label: 'Spending', value: 'expense' as const },
+          { label: 'Income', value: 'income' as const },
+        ]}
+        value={flow}
+        onChange={onFlow}
+        onBand
+      />
+    </View>
+  );
+}
+
+/** "By category" as one small dropdown on the summary card; it also offers expense labels while spending. */
+export function GroupPicker({
   flow,
   group,
-  onFlow,
   onGroup,
   onLabels,
-  view,
-  onView,
 }: {
   flow: 'expense' | 'income';
   group: 'category' | 'account';
-  onFlow: (value: 'expense' | 'income') => void;
   onGroup: (value: 'category' | 'account') => void;
   onLabels?: () => void;
-  /** The split drawn as tiles or as one bar. */
-  view: 'tree' | 'bar';
-  onView: (value: 'tree' | 'bar') => void;
 }) {
   const [open, setOpen] = useState(false);
   return (
-    <View style={s.filters}>
-      <View style={s.flow}>
-        {(
-          [
-            ['expense', 'Spending'],
-            ['income', 'Income'],
-          ] as const
-        ).map(([key, label]) => (
-          <Pressable
-            key={key}
-            onPress={() => onFlow(key)}
-            accessibilityRole="button"
-            accessibilityState={{ selected: flow === key }}
-            style={withPressed([s.flowButton, flow === key && s.flowOn])}
-          >
-            <Text style={[s.filterText, flow === key && s.activeText]}>{label}</Text>
-          </Pressable>
-        ))}
-      </View>
-      <View style={s.flow}>
-        {(
-          [
-            ['tree', 'grid', 'Tiles'],
-            ['bar', 'bar-chart-2', 'Bar'],
-          ] as const
-        ).map(([key, icon, label]) => (
-          <Pressable
-            key={key}
-            onPress={() => onView(key)}
-            accessibilityRole="button"
-            accessibilityLabel={`Show as ${label.toLowerCase()}`}
-            accessibilityState={{ selected: view === key }}
-            style={withPressed([s.viewButton, view === key && s.flowOn])}
-          >
-            <Feather
-              name={icon}
-              size={16}
-              color={view === key ? theme.colors.ink : theme.colors.textSecondary}
-            />
-          </Pressable>
-        ))}
-      </View>
+    <>
       <Pressable
         onPress={() => setOpen(true)}
         accessibilityRole="button"
         accessibilityLabel={`Group breakdown: By ${group}. Change`}
         style={withPressed(s.group)}
       >
-        <Text style={s.filterText}>{group === 'category' ? 'By category' : 'By account'}</Text>
+        <Text style={s.groupText}>{group === 'category' ? 'By category' : 'By account'}</Text>
         <Feather name="chevron-down" size={14} color={theme.colors.textSecondary} />
       </Pressable>
       <ActionSheet
@@ -138,7 +93,7 @@ export function BreakdownControls({
             : []),
         ]}
       />
-    </View>
+    </>
   );
 }
 
@@ -175,55 +130,19 @@ export function ComparisonNote({ label, partial }: { label: string; partial: boo
 }
 
 const s = StyleSheet.create({
-  tabs: {
-    flexDirection: 'row',
-    marginHorizontal: 16,
-    marginTop: theme.layout.screenTopGap,
-    marginBottom: 6,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: theme.colors.borderSoft,
-  },
-  tab: { flex: 1, minWidth: 0, minHeight: 48, justifyContent: 'center', alignItems: 'center' },
-  tabText: { fontFamily: theme.font.bodyMedium, fontSize: 14, color: theme.colors.textSecondary },
-  tabOn: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
-  underline: { position: 'absolute', left: 0, bottom: -1, height: 3, borderRadius: 2 },
-  filters: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 8,
-    flexWrap: 'wrap',
-    marginBottom: 12,
-    padding: 6,
-    borderRadius: 22,
-    backgroundColor: theme.colors.surface,
-  },
-  flow: { flexDirection: 'row', backgroundColor: theme.colors.inkWash, borderRadius: 12, padding: 3 },
-  flowButton: {
-    minHeight: 48,
-    paddingHorizontal: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 9,
-  },
-  viewButton: {
-    minHeight: 48,
-    minWidth: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 9,
-  },
-  flowOn: { backgroundColor: theme.colors.surface },
-  filterText: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textSecondary },
-  activeText: { fontFamily: theme.font.bodyBold, color: theme.colors.ink },
+  // The same margins as Plan's tabs.
+  tabs: { marginHorizontal: 16, marginTop: theme.layout.screenTopGap, marginBottom: 6 },
+  flow: { marginBottom: 12 },
   group: {
-    minHeight: 48,
+    minHeight: 44,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    paddingHorizontal: 8,
-    flexShrink: 1,
+    paddingHorizontal: 12,
+    borderRadius: theme.radius.pill,
+    backgroundColor: theme.colors.tray,
   },
+  groupText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
   comparison: { minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 },
   note: { flex: 1, fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textMuted },
   explanation: {

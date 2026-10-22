@@ -10,8 +10,6 @@ import {
   summariseDayTotal,
   buildHeat,
   cumulativeSpend,
-  treemapLayout,
-  weekTotals,
   daySpendFacts,
   weekdayRhythm,
   weekdayReadLine,
@@ -391,6 +389,23 @@ describe('buildHeat', () => {
     expect(heat.days.find((d) => d.iso === '2026-09-02')?.level).toBe(4);
   });
 
+  it('shades by rank once there are enough spending days, so one huge day does not wash out the rest', () => {
+    const ordinary = [1200, 900, 1500, 2000, 1100, 1700, 1300, 1900, 800].map((totalMinor, i) => ({
+      date: `2026-09-${String(i + 1).padStart(2, '0')}`,
+      totalMinor,
+    }));
+    const heat = buildHeat({
+      range: { start: '2026-09-01', end: '2026-09-30' },
+      daily: [...ordinary, { date: '2026-09-10', totalMinor: 5000000 }],
+      today: '2026-09-12',
+    });
+    if (heat.kind !== 'calendar') throw new Error('expected a calendar');
+    const levels = heat.days.slice(0, 10).map((d) => d.level);
+    expect(levels[9]).toBe(4);
+    // Against the one huge day the others would all be level 1; by rank they spread over the levels.
+    expect(new Set(levels.slice(0, 9)).size).toBeGreaterThan(2);
+  });
+
   it('draws a year as months down and the day of the month across', () => {
     const heat = buildHeat({
       range: { start: '2026-01-01', end: '2026-12-31' },
@@ -425,24 +440,6 @@ describe('cumulativeSpend', () => {
       '2026-09-04'
     );
     expect(series).toEqual([100, 100, 150, 150, null]);
-  });
-});
-
-describe('weekTotals', () => {
-  it('sums each calendar row, blanks counting for nothing', () => {
-    expect(
-      weekTotals(
-        [
-          [null, '2026-09-01', '2026-09-02'],
-          ['2026-09-08', null, null],
-        ],
-        [
-          { date: '2026-09-01', totalMinor: 100 },
-          { date: '2026-09-02', totalMinor: 25 },
-          { date: '2026-09-08', totalMinor: 7 },
-        ]
-      )
-    ).toEqual([125, 7]);
   });
 });
 
@@ -648,36 +645,5 @@ describe('categoriesAgainstUsual', () => {
   it('leaves out a category with fewer than two earlier months', () => {
     expect(categoriesAgainstUsual([t('a', 'New', [0, 0, 0, 200, 400])])).toEqual([]);
     expect(categoriesAgainstUsual([t('a', 'Quiet', [0, 0, 0, 0, 400])])).toEqual([]);
-  });
-});
-
-describe('treemapLayout', () => {
-  it('gives every value a tile whose area is its share, together filling the box', () => {
-    const tiles = treemapLayout([
-      { id: 'rent', value: 50 },
-      { id: 'food', value: 25 },
-      { id: 'fun', value: 15 },
-      { id: 'misc', value: 10 },
-    ]);
-    expect(tiles.map((t) => t.id).sort()).toEqual(['food', 'fun', 'misc', 'rent']);
-    const area = (id: string) => {
-      const t = tiles.find((x) => x.id === id)!;
-      return (t.w * t.h) / 100;
-    };
-    expect(area('rent')).toBeCloseTo(50);
-    expect(area('food')).toBeCloseTo(25);
-    expect(area('fun')).toBeCloseTo(15);
-    expect(area('misc')).toBeCloseTo(10);
-    for (const t of tiles) {
-      expect(t.x).toBeGreaterThanOrEqual(0);
-      expect(t.y).toBeGreaterThanOrEqual(0);
-      expect(t.x + t.w).toBeLessThanOrEqual(100.0001);
-      expect(t.y + t.h).toBeLessThanOrEqual(100.0001);
-    }
-  });
-  it('leaves out empty values and handles one or none', () => {
-    expect(treemapLayout([])).toEqual([]);
-    expect(treemapLayout([{ id: 'a', value: 0 }])).toEqual([]);
-    expect(treemapLayout([{ id: 'a', value: 7 }])).toEqual([{ id: 'a', x: 0, y: 0, w: 100, h: 100 }]);
   });
 });
