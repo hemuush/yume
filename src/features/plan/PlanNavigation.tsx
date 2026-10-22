@@ -7,7 +7,7 @@ import { haptics } from '@/lib/haptics';
 import { withPressed } from '@/lib/pressed';
 
 import { useAccent } from '@/theme/AccentContext';
-import { themeInk } from '@/theme/interactionColors';
+import { selectedFill } from '@/theme/interactionColors';
 
 export type PlanTab = 'overview' | 'upcoming' | 'money' | 'debt';
 export const PLAN_TABS: { label: string; value: PlanTab }[] = [
@@ -28,7 +28,6 @@ export function PlanNavigation({
   stacked: boolean;
 }) {
   const { accent } = useAccent();
-  const ink = themeInk(accent);
   if (!stacked) return <SegmentedControl options={PLAN_TABS} value={value} onChange={onChange} onBand />;
   return (
     <View style={styles.track} accessibilityRole="tablist">
@@ -44,7 +43,10 @@ export function PlanNavigation({
                 haptics.tap();
                 onChange(tab.value);
               }}
-              style={withPressed([styles.tab, value === tab.value && { backgroundColor: ink }])}
+              style={withPressed([
+                styles.tab,
+                value === tab.value && { backgroundColor: selectedFill(accent) },
+              ])}
             >
               <Text style={[styles.label, value === tab.value && styles.activeLabel]}>{tab.label}</Text>
             </Pressable>
@@ -81,5 +83,5 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
     textAlign: 'center',
   },
-  activeLabel: { fontFamily: theme.font.roundedBold, color: theme.colors.surface },
+  activeLabel: { fontFamily: theme.font.roundedBold, color: theme.colors.textPrimary },
 });

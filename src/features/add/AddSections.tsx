@@ -1,3 +1,4 @@
+import { selectedFill } from '@/theme/interactionColors';
 import { useState } from 'react';
 import { View, Pressable, Animated, ScrollView, useWindowDimensions } from 'react-native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
@@ -136,7 +137,7 @@ export function AmountCard({
                   styles.frequentChip,
                   active && [
                     styles.frequentChipActive,
-                    { backgroundColor: softTint(accent, 0.3), borderColor: accent },
+                    { backgroundColor: selectedFill(accent), borderColor: selectedFill(accent) },
                   ],
                 ])}
                 accessibilityRole="button"

@@ -5,7 +5,7 @@ import { theme } from '@/constants/theme';
 import { dayMonth, weekdayDayMonth } from '@/lib/dateLabels';
 import { formatMoney } from '@/lib/money';
 import { withPressed } from '@/lib/pressed';
-import { themeInk } from '@/theme/interactionColors';
+import { selectedFill } from '@/theme/interactionColors';
 import { useAccent } from '@/theme/AccentContext';
 import type { Runway, RunwayDay } from './runway';
 
@@ -18,7 +18,6 @@ export function UpcomingDates({
   renderDay?: (day: RunwayDay, mode: 'outgoing' | 'income') => React.ReactNode;
 }) {
   const { accent } = useAccent();
-  const ink = themeInk(accent);
   const [mode, setMode] = useState<'outgoing' | 'income'>('outgoing');
   const dates = runway.days.filter((day) => (mode === 'income' ? day.inMinor : day.outMinor) > 0);
   const [selectedDate, setSelectedDate] = useState(dates[0]?.date);
@@ -32,7 +31,7 @@ export function UpcomingDates({
             accessibilityRole="radio"
             accessibilityState={{ selected: mode === value }}
             onPress={() => setMode(value)}
-            style={withPressed([s.mode, mode === value && { backgroundColor: ink }])}
+            style={withPressed([s.mode, mode === value && { backgroundColor: selectedFill(accent) }])}
           >
             <Text style={[s.dateLabel, mode === value && s.activeText]}>
               {value === 'outgoing' ? 'Money out' : 'Scheduled income'}
@@ -60,7 +59,10 @@ export function UpcomingDates({
                   accessibilityLabel={`${weekdayDayMonth(day.date)}, scheduled ${mode === 'income' ? 'income' : 'outgoing'} ${formatMoney(mode === 'income' ? day.inMinor : day.outMinor)}`}
                   accessibilityState={{ selected: active }}
                   onPress={() => setSelectedDate(day.date)}
-                  style={withPressed([s.date, active && { backgroundColor: ink, borderColor: ink }])}
+                  style={withPressed([
+                    s.date,
+                    active && { backgroundColor: selectedFill(accent), borderColor: selectedFill(accent) },
+                  ])}
                 >
                   <Text style={[s.dateLabel, active && s.activeText]}>{dayMonth(day.date)}</Text>
                   <Text style={[s.amount, active && s.activeText]}>
@@ -147,7 +149,7 @@ const s = StyleSheet.create({
     color: theme.colors.textSecondary,
     fontVariant: ['tabular-nums'],
   },
-  activeText: { color: theme.colors.white },
+  activeText: { color: theme.colors.textPrimary },
   summary: {
     marginHorizontal: 16,
     padding: 12,

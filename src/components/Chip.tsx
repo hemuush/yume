@@ -1,3 +1,4 @@
+import { selectedFill } from '@/theme/interactionColors';
 import { Animated, Pressable, StyleSheet, View } from 'react-native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import type { McIconName } from '@/components/iconName';
@@ -37,7 +38,7 @@ export function Chip({ label, active, onPress, activeBorderColor, icon, iconColo
         styles.chip,
         icon && styles.chipWithIcon,
         // Chosen: a wash of the theme colour with its own edge, not an ink outline.
-        active && !tinted && { backgroundColor: softTint(accent, 0.3), borderColor: accent },
+        active && !tinted && { backgroundColor: selectedFill(accent), borderColor: selectedFill(accent) },
         tinted && { backgroundColor: softTint(activeBorderColor, 0.1), borderColor: activeBorderColor },
         animatedStyle,
       ]}
