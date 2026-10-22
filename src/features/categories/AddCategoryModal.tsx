@@ -14,7 +14,7 @@ import { SheetCard } from '@/components/SheetCard';
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { CATEGORY_COLOR_PALETTE, modalFooterStyles as f, theme } from '@/constants/theme';
 import { CATEGORY_ICON_CHOICES } from '@/constants/categories';
-import { styles } from './categories.styles';
+import { styles, GRID_COLUMNS, GRID_GAP } from './categories.styles';
 import { errorMessage } from '@/lib/errorMessage';
 import { withPressed } from '@/lib/pressed';
 import { useSaveOnce } from '@/lib/useSaveOnce';
@@ -42,6 +42,10 @@ export function AddCategoryModal({
   onManage?: () => void;
 }) {
   const { accent } = useAccent();
+  // The colour and icon grids share the sheet's width evenly, so they are sized from it once it is known.
+  const [gridWidth, setGridWidth] = useState(0);
+  const cell = gridWidth > 0 ? Math.floor((gridWidth - GRID_GAP * (GRID_COLUMNS - 1)) / GRID_COLUMNS) : 44;
+  const cellSize = { width: cell, height: cell };
   const [name, setName] = useState('');
   const [kind, setKind] = useState<CategoryKind>('expense');
   const [parentId, setParentId] = useState<string | null>(null);
@@ -227,7 +231,7 @@ export function AddCategoryModal({
         </>
       )}
       <Text style={styles.fieldLabel}>Color</Text>
-      <View style={styles.colorRow}>
+      <View style={styles.colorRow} onLayout={(e) => setGridWidth(e.nativeEvent.layout.width)}>
         {CATEGORY_COLOR_PALETTE.map((c, i) => (
           <Pressable
             key={c}
@@ -237,6 +241,7 @@ export function AddCategoryModal({
             accessibilityState={{ selected: color === c }}
             style={withPressed([
               styles.colorSwatch,
+              cellSize,
               { backgroundColor: c },
               color === c && styles.colorSwatchActive,
             ])}
@@ -252,7 +257,7 @@ export function AddCategoryModal({
             accessibilityRole="button"
             accessibilityLabel={`${iconName.replace(/-/g, ' ')} icon`}
             accessibilityState={{ selected: icon === iconName }}
-            style={withPressed([styles.iconChoice, icon === iconName && styles.iconChoiceActive])}
+            style={withPressed([styles.iconChoice, cellSize, icon === iconName && styles.iconChoiceActive])}
           >
             <CategoryIcon
               name={iconName}

@@ -3,6 +3,10 @@ import { theme } from '@/constants/theme';
 import { listScreenStyles } from '@/features/shared/listScreenStyles';
 import { SECTION_TITLE, SECTION_GAP } from '@/constants/textStyles';
 
+/** Choices per row, and the space between them, in Category setup's colour and icon grids. */
+export const GRID_COLUMNS = 7;
+export const GRID_GAP = 8;
+
 /** Tiles per row on the Categories grid (a cell is one column wide). */
 export const TILE_COLUMNS = 4;
 
@@ -139,11 +143,8 @@ export const styles = StyleSheet.create({
     textAlign: 'center',
   },
   // Seven to a row, sharing the width evenly so the grid ends flush with the field above it.
-  iconGrid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: '-0.6%', marginBottom: 20 },
+  iconGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: GRID_GAP, marginBottom: 20 },
   iconChoice: {
-    width: '12.8%',
-    aspectRatio: 1,
-    margin: '0.6%',
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 14,
@@ -151,12 +152,9 @@ export const styles = StyleSheet.create({
     borderColor: theme.colors.borderSoft,
   },
   iconChoiceActive: { borderWidth: 1.5, borderColor: theme.colors.textSecondary },
-  colorRow: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: '-0.6%', marginBottom: 20 },
+  colorRow: { flexDirection: 'row', flexWrap: 'wrap', gap: GRID_GAP, marginBottom: 20 },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 20 },
   colorSwatch: {
-    width: '12.8%',
-    aspectRatio: 1,
-    margin: '0.6%',
     borderRadius: 999,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.inkHairline,
