@@ -1,5 +1,5 @@
 /** The live Home account grid: order, currency, privacy, navigation and responsive layout. */
-import { Text, StyleSheet, View } from 'react-native';
+import { Text, StyleSheet } from 'react-native';
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
 
 // Icons draw nothing here: their font load would update state after each test.
@@ -72,12 +72,12 @@ it('keeps zero balances and per-account currencies without inventing a combined 
   expect(copy).toContain('₹9,999');
 });
 
-it('limits the preview to six accounts while leaving the full list reachable', () => {
+it('limits the row to eight accounts while leaving the full list reachable', () => {
   const tree = render({
-    accounts: Array.from({ length: 8 }, (_, i) => account(`Bank ${i}`, 'bank', i * 100)),
+    accounts: Array.from({ length: 10 }, (_, i) => account(`Bank ${i}`, 'bank', i * 100)),
   });
-  expect(texts(tree)).toContain('Bank 5');
-  expect(texts(tree)).not.toContain('Bank 6');
+  expect(texts(tree)).toContain('Bank 7');
+  expect(texts(tree)).not.toContain('Bank 8');
   expect(
     tree.root.findAll((n) => n.props.onPress && n.props.accessibilityLabel === 'View all — Accounts')
   ).not.toHaveLength(0);
@@ -111,10 +111,10 @@ it('masks a savings-only preview and never invents an everyday balance', () => {
 });
 
 it.each([
-  [320, 1, 'row'],
-  [390, 1.5, 'column'],
-  [390, 1, 'row'],
-])('keeps both account previews reachable at width %s and text scale %s', (width, fontScale, direction) => {
+  [320, 1],
+  [390, 1],
+  [390, 1.5],
+])('keeps every account in the row tappable at width %s and text scale %s', (width, fontScale) => {
   const dimensions = jest
     .spyOn(require('react-native'), 'useWindowDimensions')
     .mockReturnValue({ width, height: 800, fontScale, scale: 1 });
@@ -124,11 +124,6 @@ it.each([
       accounts: [account('First bank account', 'bank', 100), account('Cash', 'cash', 200)],
       onOpenAccount: open,
     });
-    const grid = tree.root.findAllByType(View).find((node) => {
-      const style = StyleSheet.flatten(node.props.style);
-      return style?.gap === 10 && (style.flexDirection === 'row' || style.flexDirection === 'column');
-    });
-    expect(StyleSheet.flatten(grid!.props.style).flexDirection).toBe(direction);
     for (const name of ['First bank account', 'Cash'])
       act(() =>
         tree.root
@@ -142,28 +137,34 @@ it.each([
   }
 });
 
-it('places six compact accounts in two rows of three at standard width', () => {
-  const dimensions = jest
-    .spyOn(require('react-native'), 'useWindowDimensions')
-    .mockReturnValue({ width: 390, height: 800, fontScale: 1, scale: 1 });
-  try {
-    const r = render({
-      accounts: Array.from({ length: 6 }, (_, i) => account(`Bank ${i}`, 'bank', i * 100)),
-    });
-    const rows = r.root
-      .findAllByType(View)
-      .filter(
-        (n) =>
-          StyleSheet.flatten(n.props.style)?.gap === 10 &&
-          StyleSheet.flatten(n.props.style)?.flexDirection === 'row'
+it('widens the tiles with the text size so a balance keeps one line', () => {
+  const widthOf = (fontScale: number) => {
+    const dimensions = jest
+      .spyOn(require('react-native'), 'useWindowDimensions')
+      .mockReturnValue({ width: 390, height: 800, fontScale, scale: 1 });
+    try {
+      const tree = render({ accounts: [account('Bank', 'bank', 100)] });
+      const tile = tree.root.find(
+        (n) => String(n.props.accessibilityLabel).startsWith('Bank,') && n.props.onPress
       );
-    expect(rows).toHaveLength(2);
-    for (const row of rows)
-      expect(
-        row.findAll((n) => n.props.onPress && n.props.accessibilityLabel?.includes('Open summary'))
-      ).toHaveLength(3);
-    act(() => r.unmount());
-  } finally {
-    dimensions.mockRestore();
-  }
+      const style = StyleSheet.flatten(
+        typeof tile.props.style === 'function' ? tile.props.style({ pressed: false }) : tile.props.style
+      );
+      act(() => tree.unmount());
+      return style.width as number;
+    } finally {
+      dimensions.mockRestore();
+    }
+  };
+  expect(widthOf(1)).toBe(148);
+  expect(widthOf(1.5)).toBe(192);
+});
+
+it('ends the row with an Add account tile', () => {
+  const add = jest.fn();
+  const tree = render({ accounts: [account('Bank', 'bank', 100)], onAddAccount: add });
+  act(() =>
+    tree.root.find((n) => n.props.onPress && n.props.accessibilityLabel === 'Add an account').props.onPress()
+  );
+  expect(add).toHaveBeenCalledTimes(1);
 });
