@@ -4,8 +4,8 @@ import { theme } from '@/constants/theme';
 import { Category } from '@/types';
 import type { DraftPart } from './splitDraft';
 
-const SIZE = 104;
-const STROKE = 14;
+const SIZE = 84;
+const STROKE = 12;
 const R = (SIZE - STROKE) / 2;
 const CIRC = 2 * Math.PI * R;
 /** The gap between two slices, along the ring. */
@@ -42,7 +42,7 @@ export function SplitDonut({
           cx={SIZE / 2}
           cy={SIZE / 2}
           r={R}
-          stroke="rgba(16,32,51,0.06)"
+          stroke="rgba(18,19,15,0.06)"
           strokeWidth={STROKE}
           fill="none"
         />
