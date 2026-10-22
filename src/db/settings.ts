@@ -132,7 +132,7 @@ export async function getNotificationPrefs(): Promise<NotificationPrefs> {
   const row = await db.getFirstAsync<{ value: string }>('SELECT value FROM settings WHERE key = ?', [
     NOTIFICATION_PREFS_KEY,
   ]);
-  if (!row) return DEFAULT_NOTIFICATION_PREFS;
+  if (!row) return { ...DEFAULT_NOTIFICATION_PREFS };
   try {
     const stored = JSON.parse(row.value);
     // `flynnCheckins` was renamed to `suuCheckins`; carry an existing install's value across so anyone who
@@ -153,7 +153,7 @@ export async function getNotificationPrefs(): Promise<NotificationPrefs> {
     delete stored.reminderMinute;
     return clampPrefTimes({ ...DEFAULT_NOTIFICATION_PREFS, ...stored });
   } catch {
-    return DEFAULT_NOTIFICATION_PREFS;
+    return { ...DEFAULT_NOTIFICATION_PREFS };
   }
 }
 
@@ -180,7 +180,7 @@ export function getCachedAccentColor(): string {
 // code never reaches an existing install): remap once here, then persist.
 const LEGACY_ACCENT_REMAP: Record<string, string> = {
   '#D6FF3D': '#E0F0A8', // original neon-lime mockup colour, softened
-  '#FFB84D': '#EFD3A8', // original harsher gold/tan
+  '#FFB84D': '#F0A387', // original harsher gold/tan, straight to Terracotta like Tan below
   // Ink and Cream were dropped from ACCENT_SWATCHES: they're the app's text/page colours, not accents, so
   // picking either turned buttons black or switched accents off.
   '#12130F': '#E0F0A8',
@@ -415,10 +415,6 @@ export async function setAppLockEnabled(value: boolean): Promise<void> {
   cachedAppLockEnabled = value;
 }
 
-/**
- * Clears every in-memory settings cache so the next read hits the database. Needed after a full restore, which
- * writes the `settings` table directly (bypassing these setters) and would leave caches stale until relaunch.
- */
 export type BackupFrequency = 'daily' | 'weekly' | 'monthly';
 const BACKUP_FREQUENCY_KEY = 'backup_frequency';
 let cachedBackupFrequency: BackupFrequency | undefined;
@@ -488,6 +484,10 @@ export async function setLastLocalBackupResult(outcome: BackupOutcome): Promise<
   cachedLastLocalResult = outcome;
 }
 
+/**
+ * Clears every in-memory settings cache so the next read hits the database. Needed after a full restore, which
+ * writes the `settings` table directly (bypassing these setters) and would leave caches stale until relaunch.
+ */
 export function resetSettingsCache(): void {
   setCurrencyCache(null);
   cachedAccent = null;
@@ -862,24 +862,26 @@ export async function getSeenWraps(): Promise<string[]> {
 }
 
 export async function markWrapSeen(key: string): Promise<void> {
-  const db = await getDb();
-  const row = await db.getFirstAsync<{ value: string }>('SELECT value FROM settings WHERE key = ?', [
-    WRAPS_SEEN_KEY,
-  ]);
-  let seen: string[] = [];
-  try {
-    const parsed: unknown = row ? JSON.parse(row.value) : [];
-    if (Array.isArray(parsed)) seen = parsed.filter((k): k is string => typeof k === 'string');
-  } catch {
-    seen = [];
-  }
-  if (seen.includes(key)) return;
-  const next = [...seen, key].slice(-WRAPS_SEEN_KEEP);
-  await db.runAsync(
-    `INSERT INTO settings (key, value) VALUES (?, ?)
-     ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
-    [WRAPS_SEEN_KEY, JSON.stringify(next)]
-  );
+  await withSettingsLock(async () => {
+    const db = await getDb();
+    const row = await db.getFirstAsync<{ value: string }>('SELECT value FROM settings WHERE key = ?', [
+      WRAPS_SEEN_KEY,
+    ]);
+    let seen: string[] = [];
+    try {
+      const parsed: unknown = row ? JSON.parse(row.value) : [];
+      if (Array.isArray(parsed)) seen = parsed.filter((k): k is string => typeof k === 'string');
+    } catch {
+      seen = [];
+    }
+    if (seen.includes(key)) return;
+    const next = [...seen, key].slice(-WRAPS_SEEN_KEEP);
+    await db.runAsync(
+      `INSERT INTO settings (key, value) VALUES (?, ?)
+       ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
+      [WRAPS_SEEN_KEY, JSON.stringify(next)]
+    );
+  });
 }
 
 const RECENT_SEARCHES_KEY = 'recent_searches';

@@ -13,7 +13,7 @@ jest.mock('@/db/client', () => ({
 jest.mock('@/lib/notifications', () => ({ rebuildNotifications: async () => {} }));
 
 import { CREATE_TABLES_SQL } from '@/db/schema';
-import { createAccount, createCategory, listTransactions } from '@/db/ledger';
+import { createAccount, createCategory, createTransaction, listTransactions } from '@/db/ledger';
 import {
   createLoan,
   getLoanSchedule,
@@ -611,6 +611,18 @@ describe('transaction-wrapped writes against a real SQLite engine', () => {
     await undoPersonTransaction(ledger[0].transactionId!);
     ledger = await getPersonLedger(person.id);
     expect(ledger).toHaveLength(0);
+  });
+
+  it('undoPersonTransaction refuses an ordinary transaction instead of deleting it', async () => {
+    const plain = await createTransaction({
+      type: 'income',
+      accountId,
+      categoryId: incomeCategoryId,
+      amountMinor: 5000,
+      date: '2026-03-06',
+    });
+    await expect(undoPersonTransaction(plain.id)).rejects.toThrow('not a Friends & Family entry');
+    expect((await listTransactions({})).some((t) => t.id === plain.id)).toBe(true);
   });
 
   it('deleteLedgerEntry removes a balance-only entry (no linked transaction) that undoPersonTransaction cannot reach', async () => {

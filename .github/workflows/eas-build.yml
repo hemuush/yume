@@ -3,9 +3,6 @@ name: EAS Build
 # Starts an EAS Android preview build (installable APK) after CI passes on main.
 # Download the APK from the build page on expo.dev. Nothing is uploaded to the
 # Play Store.
-#
-# Run it by hand from the Actions tab (Run workflow) to build a different profile, for example one of the
-# diagnose-* profiles from a phone's browser, with no computer. Pick the branch, then the profile.
 on:
   workflow_run:
     workflows: [CI]
@@ -17,21 +14,12 @@ on:
         description: Verify Expo project access without starting a build
         type: boolean
         default: false
-      profile:
-        description: EAS build profile to build (see eas.json and BUILD.md)
-        type: choice
-        options:
-          - preview
-          - diagnose-r8-preset
-          - diagnose-no-minify
-          - diagnose-modules
-        default: preview
 
 permissions:
   contents: read
 
 concurrency:
-  group: eas-build-${{ github.ref }}-${{ inputs.profile || 'preview' }}
+  group: eas-build-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -68,12 +56,9 @@ jobs:
       # not spent waiting; the build page link is in the log.
       - name: Start Android build
         if: github.event_name != 'workflow_dispatch' || !inputs.verify_only
-        env:
-          # A fixed choice list for manual runs; automatic runs after CI always build preview.
-          PROFILE: ${{ inputs.profile || 'preview' }}
         run: |
-          npx eas-cli build --platform android --profile "$PROFILE" --non-interactive --no-wait
+          npx eas-cli build --platform android --profile preview --non-interactive --no-wait
           {
-            echo "Started the **$PROFILE** Android build."
+            echo "Started the **preview** Android build."
             echo "Open expo.dev, then the Yume project, then Builds, and install the APK when it finishes."
           } >> "$GITHUB_STEP_SUMMARY"

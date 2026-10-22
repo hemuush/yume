@@ -35,12 +35,10 @@ export function AnnualBillPreparation({
     [busy, setBusy] = useState(false),
     [loaded, setLoaded] = useState(false);
   const { hideAmounts } = usePrivacy();
+  // The bill and what is set aside are in the rule's own account currency, which may not be the default.
+  const currency = accounts.find((a) => a.id === rule.accountId)?.currency;
   const eligible = accounts.filter(
-    (a) =>
-      !a.archived &&
-      !a.investment &&
-      a.type !== 'credit_card' &&
-      a.currency === accounts.find((a) => a.id === rule.accountId)?.currency
+    (a) => !a.archived && !a.investment && a.type !== 'credit_card' && a.currency === currency
   );
   useEffect(() => {
     let live = true;
@@ -83,7 +81,7 @@ export function AnnualBillPreparation({
     toLocalIsoDate(new Date())
   );
   const hidePreparation = hideAmounts && (sensitive || !!goal);
-  const money = (minor: number) => formatMaskableMoney(minor, { masked: hidePreparation });
+  const money = (minor: number) => formatMaskableMoney(minor, { currency, masked: hidePreparation });
   return (
     <View style={insight.card}>
       <InsightHeader
@@ -106,6 +104,7 @@ export function AnnualBillPreparation({
           <InsightRow
             label="Annual bill"
             value={formatMaskableMoney(rule.nextAmountMinor ?? rule.amountMinor, {
+              currency,
               masked: hideAmounts && sensitive,
             })}
           />

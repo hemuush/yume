@@ -132,7 +132,8 @@ export function FilterModal({
     accountIds: draftAccountIds,
     ...(draftLabel.trim() ? { expenseLabel: draftLabel.trim() } : {}),
   };
-  const count = countFor?.(draft);
+  // Counted only while the sheet is open: the count scans every transaction, and the sheet stays mounted.
+  const count = visible ? countFor?.(draft) : undefined;
   const applyTitle =
     count == null
       ? 'Apply'

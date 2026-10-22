@@ -33,6 +33,7 @@ function chart(inProgress: boolean) {
   act(() => {
     r = create(
       <TrendChart
+        fixedKind="spend"
         periodName="October"
         spentMinor={13_784_00}
         trend={trend}
@@ -52,6 +53,7 @@ describe('TrendChart sentence', () => {
     act(() => {
       r = create(
         <TrendChart
+          fixedKind="spend"
           periodName="2026"
           spentMinor={99999999}
           trend={[
@@ -90,6 +92,7 @@ describe('TrendChart touch', () => {
     act(() => {
       r = create(
         <TrendChart
+          fixedKind="spend"
           periodName="2026"
           spentMinor={60000}
           baseline={null}
@@ -124,6 +127,7 @@ describe('TrendChart touch', () => {
     act(() => {
       r = create(
         <TrendChart
+          fixedKind="spend"
           periodName="October"
           spentMinor={13_784_00}
           trend={trend}
@@ -159,6 +163,7 @@ describe('TrendChart touch', () => {
     act(() => {
       r = create(
         <TrendChart
+          fixedKind="spend"
           periodName="October"
           spentMinor={13_784_00}
           trend={trend}

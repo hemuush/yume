@@ -90,11 +90,9 @@ export default function RootLayout() {
         });
         // Channel setup can reject after a permission change; contain that failure on cold start.
         void ensureAndroidChannel().catch((err) => console.error('ensureAndroidChannel failed:', err));
-        // One-time: drop notifications still scheduled under the pre-rename
-        // `flynse-*` identifiers.
-        // Notifications are rebuilt from settings/data each cold start: stays current (scheduled ~2 weeks
-        // ahead), carries over old schedules, self-heals after reinstall. After the first screen settles, like
-        // the backup: it reads plenty and its bridge calls shouldn't hold up Home's first paint.
+        // Drops notifications still scheduled under the pre-rename `flynse-*` ids, then rebuilds them all from
+        // settings and data (about two weeks ahead, so a reinstall heals). Runs once the first screen has
+        // settled: it reads plenty and its bridge calls shouldn't hold up Home's first paint.
         runWhenIdle(() => {
           void cancelLegacyScheduledNotifications().catch((err) =>
             console.error('cancelLegacyScheduledNotifications failed:', err)

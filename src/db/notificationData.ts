@@ -37,8 +37,7 @@ export async function listReminderAttention(today: string, recurring: boolean, r
   return items;
 }
 
-/** What planNotifications needs from the database: the next EMI of each active borrowed loan, and whether anything was logged today. */
-
+/** The next EMI of each active borrowed loan, for planNotifications. */
 export async function listLoansDue(): Promise<PlanLoan[]> {
   const db = await getDb();
   const rows = await db.getAllAsync<{

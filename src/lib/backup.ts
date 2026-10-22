@@ -63,12 +63,15 @@ export async function buildBackupSnapshotOn(db: AppDb): Promise<BackupSnapshot> 
   const tables: Record<string, BackupRow[]> = {};
   // One exclusive slot for all table reads: separate reads would let another screen's write land between them
   // (a loan created after `loans` but before `loan_payments`), leaving rows that point at missing parents.
-  await db.exclusiveAsync(async (xdb) => {
-    for (const table of TABLES) {
-      tables[table] = await xdb.getAllAsync<BackupRow>(`SELECT * FROM ${table}`);
-      if (table === 'settings') tables[table] = tables[table].filter((row) => row.key !== ENTRY_DRAFT_KEY);
-    }
-  });
+  await db.exclusiveAsync(
+    async (xdb) => {
+      for (const table of TABLES) {
+        tables[table] = await xdb.getAllAsync<BackupRow>(`SELECT * FROM ${table}`);
+        if (table === 'settings') tables[table] = tables[table].filter((row) => row.key !== ENTRY_DRAFT_KEY);
+      }
+    },
+    { readOnly: true }
+  );
   return {
     formatVersion: BACKUP_FORMAT_VERSION,
     exportedAt: new Date().toISOString(),
@@ -76,10 +79,6 @@ export async function buildBackupSnapshotOn(db: AppDb): Promise<BackupSnapshot> 
   };
 }
 
-/**
- * Replaces all local data with a snapshot in one transaction: delete children first, insert parents first.
- * FKs off (transactions and loan_payments reference each other); the PRAGMA can't toggle in a transaction.
- */
 function isValidSnapshotShape(snapshot: unknown): snapshot is BackupSnapshot {
   const s = snapshot as Partial<BackupSnapshot> | null;
   return (
@@ -108,6 +107,10 @@ export interface RestoreResult {
   emptiedTables: string[];
 }
 
+/**
+ * Replaces all local data with a snapshot in one transaction: delete children first, insert parents first.
+ * FKs off (transactions and loan_payments reference each other); the PRAGMA can't toggle in a transaction.
+ */
 export async function restoreFromSnapshot(snapshot: BackupSnapshot): Promise<RestoreResult> {
   return restoreFromSnapshotOn(await getDb(), snapshot);
 }
@@ -144,7 +147,8 @@ export async function restoreFromSnapshotOn(db: AppDb, snapshot: BackupSnapshot)
       throw new Error(
         `This backup file is damaged (the "${table}" section isn't readable) — nothing was changed.`
       );
-    } // Money is whole minor units everywhere: text or a fraction there would be stored as-is (SQLite accepts
+    }
+    // Money is whole minor units everywhere: text or a fraction there would be stored as-is (SQLite accepts
     // it) and quietly break every total later, so it's rejected now, before anything is touched.
     const dateColumns = [
       'date',

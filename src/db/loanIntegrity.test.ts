@@ -222,6 +222,14 @@ describe('loan integrity', () => {
     expect(charge!.category_id).toBe(emiCategoryId);
   });
 
+  it('refuses a borrowed loan fee with no fee category instead of filing it under income', async () => {
+    await expect(
+      borrowed('No Fee Category Bank', {
+        disbursement: { accountId, categoryId: salaryCategoryId, feeAmountMinor: 2000 },
+      })
+    ).rejects.toThrow('category for the loan fee');
+  });
+
   it('tags every loan-linked transaction with its kind, and deleteLoan still refuses a prepaid loan', async () => {
     const loan = await borrowed('Kinds Bank', {
       disbursement: {

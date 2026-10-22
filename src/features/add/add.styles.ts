@@ -401,7 +401,6 @@ export const styles = StyleSheet.create({
   // A detail chip that's a switch (Money back), switched on.
   detailChipActive: { backgroundColor: theme.colors.ink, borderColor: theme.colors.ink },
   detailChipTextActive: { color: theme.colors.surface },
-  total: { alignItems: 'center' },
   error: {
     fontFamily: theme.font.bodyBold,
     fontSize: 12,

@@ -267,42 +267,50 @@ export async function undoDeleteNewestOfGroup(snapshot: RowSnapshot): Promise<vo
 interface OpeningBalanceMove {
   transactions: RowSnapshot[];
   accountId: string;
-  previousOpeningMinor: number;
+  /** What was added to the opening balance, so undo subtracts it instead of overwriting later edits. */
+  movedMinor: number;
 }
 
 /**
  * Moves a group of old balances into its account's opening balance: the total is added to it and the entries
- * deleted together, so the account's balance is unchanged and only those months' income drops.
+ * deleted together, so the account's balance is unchanged and only those months' income drops. The total comes
+ * from the rows as they are when deleted; if any changed since Tidy up loaded, nothing is moved.
  */
 export async function moveToOpeningBalance(group: StartingBalanceGroup): Promise<OpeningBalanceMove> {
   const db = await getDb();
-  const account = await db.getFirstAsync<{ opening_balance_minor: number }>(
-    'SELECT opening_balance_minor FROM accounts WHERE id = ?',
-    [group.accountId]
-  );
-  if (!account) throw new Error("These entries' account no longer exists.");
   const transactions: RowSnapshot[] = [];
+  let movedMinor = 0;
   // Captured in the same transaction that deletes them, so the undo snapshot is exactly what was removed.
   await db.withTransactionAsync(async (tx) => {
+    const account = await tx.getFirstAsync<{ id: string }>('SELECT id FROM accounts WHERE id = ?', [
+      group.accountId,
+    ]);
+    if (!account) throw new Error("These entries' account no longer exists.");
     for (const id of group.ids) {
       const snapshot = await captureRow(tx, 'transactions', id);
       if (!snapshot) throw new Error('Some of these entries are already gone — open Tidy up again.');
+      if (snapshot.row.type !== 'income' || snapshot.row.account_id !== group.accountId) {
+        throw new Error('Some of these entries changed — open Tidy up again.');
+      }
+      movedMinor += Number(snapshot.row.amount_minor);
       transactions.push(snapshot);
     }
+    if (movedMinor !== group.totalMinor)
+      throw new Error('Some of these entries changed — open Tidy up again.');
     await tx.runAsync('UPDATE accounts SET opening_balance_minor = opening_balance_minor + ? WHERE id = ?', [
-      group.totalMinor,
+      movedMinor,
       group.accountId,
     ]);
     for (const id of group.ids) await tx.runAsync('DELETE FROM transactions WHERE id = ?', [id]);
   });
-  return { transactions, accountId: group.accountId, previousOpeningMinor: account.opening_balance_minor };
+  return { transactions, accountId: group.accountId, movedMinor };
 }
 
 export async function undoMoveToOpeningBalance(move: OpeningBalanceMove): Promise<void> {
   const db = await getDb();
   await db.withTransactionAsync(async (tx) => {
-    await tx.runAsync('UPDATE accounts SET opening_balance_minor = ? WHERE id = ?', [
-      move.previousOpeningMinor,
+    await tx.runAsync('UPDATE accounts SET opening_balance_minor = opening_balance_minor - ? WHERE id = ?', [
+      move.movedMinor,
       move.accountId,
     ]);
     for (const snapshot of move.transactions) await restoreRow(tx, snapshot);

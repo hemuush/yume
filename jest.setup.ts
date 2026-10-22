@@ -17,12 +17,8 @@ console.warn = (...args: unknown[]) => {
   originalWarn(...args);
 };
 
-// expo-notifications registers a device-push-token listener at import time
-// (DevicePushTokenAutoRegistration). In the Node test environment that leaves
-// an open handle behind, which is why Jest reported "a worker process has
-// failed to exit gracefully". None of the suites exercise the real native
-// module — the ones that care already mock '@/lib/notifications' — so a
-// blanket automock here removes the leak without changing any assertion.
+// expo-notifications registers a push-token listener at import time that leaves an open handle in Node; no suite
+// uses the real module, so it is automocked.
 jest.mock('expo-notifications');
 jest.mock('expo-screen-capture', () => ({
   preventScreenCaptureAsync: jest.fn(async () => {}),

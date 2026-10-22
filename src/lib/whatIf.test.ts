@@ -27,6 +27,16 @@ describe('projectGoalPace', () => {
     expect(result.daysSooner).toBe(0);
   });
 
+  it('a pace too slow to reach the goal within a century has no date, not an invalid one', () => {
+    const result = projectGoalPace(
+      { currentAmountMinor: 1, targetAmountMinor: 1_000_000_000, createdAt: '2026-01-01 10:00:00' },
+      0,
+      '2026-06-01'
+    );
+    expect(result.currentEtaDate).toBeNull();
+    expect(result.newEtaDate).toBeNull();
+  });
+
   it('a goal with zero progress and no extra amount has no projectable date', () => {
     const result = projectGoalPace(
       { currentAmountMinor: 0, targetAmountMinor: 100000, createdAt: '2026-01-01 10:00:00' },

@@ -43,19 +43,24 @@ function backupFilename(dateIso: string): string {
 // Android may add a ".json" extension to the name, and a " (1)" when a name is taken.
 const BACKUP_NAME = /^yume-backup-(\d{4}-\d{2}-\d{2})(?: \(\d+\))?(?:\.json)?$/;
 
+/** The file name at the end of a storage URI (after the last "/" and ":"), or null if the URI doesn't decode. */
+function backupBaseName(uri: string): string | null {
+  try {
+    const decoded = decodeURIComponent(uri);
+    const afterSlash = decoded.slice(decoded.lastIndexOf('/') + 1);
+    return afterSlash.slice(afterSlash.lastIndexOf(':') + 1);
+  } catch {
+    return null;
+  }
+}
+
 /**
  * The day a backup is for, read from the file's own name (last part of its URI), or null if not ours.
  * Name only: a folder called "yume-backup-…" would otherwise claim every file in it. Exported for tests.
  */
 export function backupFileDate(uri: string): string | null {
-  let decoded: string;
-  try {
-    decoded = decodeURIComponent(uri);
-  } catch {
-    return null;
-  }
-  const afterSlash = decoded.slice(decoded.lastIndexOf('/') + 1);
-  const name = afterSlash.slice(afterSlash.lastIndexOf(':') + 1);
+  const name = backupBaseName(uri);
+  if (name === null) return null;
   const day = BACKUP_NAME.exec(name)?.[1];
   if (
     day &&
@@ -93,10 +98,7 @@ async function pruneOldLocalBackups(directoryUri: string): Promise<void> {
   try {
     const files = await listLocalBackups(directoryUri, Number.MAX_SAFE_INTEGER);
     const backups = files
-      .filter((file) => {
-        const name = decodeURIComponent(file.uri).split('/').pop()?.split(':').pop() ?? '';
-        return BACKUP_NAME.test(name);
-      })
+      .filter((file) => BACKUP_NAME.test(backupBaseName(file.uri) ?? ''))
       .map((file) => file.uri)
       .reverse();
     for (const uri of backups.slice(0, Math.max(0, backups.length - KEEP_DAILY_BACKUPS))) {
@@ -125,10 +127,7 @@ export async function writeLocalBackupNow(
   // Exported copies and backups discovered in a newly chosen folder are never replaced.
   const sameDay = options?.preserveExisting
     ? []
-    : existing.filter((uri) => {
-        const name = decodeURIComponent(uri).split('/').pop()?.split(':').pop() ?? '';
-        return BACKUP_NAME.test(name) && backupFileDate(uri) === today;
-      });
+    : existing.filter((uri) => BACKUP_NAME.test(backupBaseName(uri) ?? '') && backupFileDate(uri) === today);
 
   const fileUri = await StorageAccessFramework.createFileAsync(directoryUri, filename, 'application/json');
   try {

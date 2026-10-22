@@ -263,7 +263,9 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
                   // The intro slides skip ahead to adding accounts; only the accounts step itself finishes, so
                   // nobody leaves setup by accident with nowhere to record a first entry.
                   onPress={
-                    slide.isAccountsStep ? finish : () => setIndex(SLIDES.findIndex((s) => s.isAccountsStep))
+                    slide.isAccountsStep
+                      ? () => !creating && finish()
+                      : () => setIndex(SLIDES.findIndex((s) => s.isAccountsStep))
                   }
                   hitSlop={10}
                   accessibilityRole="button"

@@ -9,7 +9,7 @@ import { themeInk } from '@/theme/interactionColors';
 import { withPressed } from '@/lib/pressed';
 import { TrendChart, MIN_TREND_POINTS } from './TrendChart';
 import { CashFlowCard } from './CashFlowCard';
-type Props = React.ComponentProps<typeof TrendChart> & {
+type Props = Omit<React.ComponentProps<typeof TrendChart>, 'fixedKind'> & {
   cashFlow: React.ComponentProps<typeof CashFlowCard>['points'];
 };
 /** One selected metric owns the primary chart; period/privacy changes cannot leave an invalid metric active. */
