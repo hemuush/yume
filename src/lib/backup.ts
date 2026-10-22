@@ -63,12 +63,15 @@ export async function buildBackupSnapshotOn(db: AppDb): Promise<BackupSnapshot> 
   const tables: Record<string, BackupRow[]> = {};
   // One exclusive slot for all table reads: separate reads would let another screen's write land between them
   // (a loan created after `loans` but before `loan_payments`), leaving rows that point at missing parents.
-  await db.exclusiveAsync(async (xdb) => {
-    for (const table of TABLES) {
-      tables[table] = await xdb.getAllAsync<BackupRow>(`SELECT * FROM ${table}`);
-      if (table === 'settings') tables[table] = tables[table].filter((row) => row.key !== ENTRY_DRAFT_KEY);
-    }
-  });
+  await db.exclusiveAsync(
+    async (xdb) => {
+      for (const table of TABLES) {
+        tables[table] = await xdb.getAllAsync<BackupRow>(`SELECT * FROM ${table}`);
+        if (table === 'settings') tables[table] = tables[table].filter((row) => row.key !== ENTRY_DRAFT_KEY);
+      }
+    },
+    { readOnly: true }
+  );
   return {
     formatVersion: BACKUP_FORMAT_VERSION,
     exportedAt: new Date().toISOString(),

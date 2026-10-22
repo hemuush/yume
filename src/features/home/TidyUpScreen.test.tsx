@@ -51,7 +51,7 @@ jest.mock('@/db/tidyUp', () => ({
   moveToOpeningBalance: jest.fn(async () => ({
     transaction: {},
     accountId: 'bank',
-    previousOpeningMinor: 0,
+    movedMinor: 0,
   })),
   undoMoveToOpeningBalance: jest.fn(async () => {}),
 }));

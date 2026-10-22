@@ -83,7 +83,14 @@ export async function saveSplit(input: SaveSplitInput): Promise<string> {
       await tx.runAsync('DELETE FROM transactions WHERE id = ?', [input.replacesEntryId]);
     for (const e of entries) await insertTransactionRow(tx, e);
   });
-  for (const e of entries) await checkOverspendForNewTransaction(e);
+  // The check reads only type, category and date, so parts sharing them need it once.
+  const checked = new Set<string>();
+  for (const e of entries) {
+    const key = `${e.type}|${e.categoryId ?? ''}|${e.date}`;
+    if (checked.has(key)) continue;
+    checked.add(key);
+    await checkOverspendForNewTransaction(e);
+  }
   return splitId;
 }
 

@@ -74,7 +74,7 @@ async function readOn(db: AppDb, transactionId: string): Promise<ExpectedRefund 
   };
 }
 export async function getExpectedRefund(transactionId: string) {
-  return (await getDb()).exclusiveAsync((db) => readOn(db, transactionId));
+  return (await getDb()).exclusiveAsync((db) => readOn(db, transactionId), { readOnly: true });
 }
 export async function listExpectedRefunds(): Promise<ExpectedRefund[]> {
   const rows = await (

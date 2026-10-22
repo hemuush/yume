@@ -48,7 +48,7 @@ export async function reservationSummaryOn(db: AppDb, accountId: string): Promis
 
 export async function getGoalReservationSummary(accountId: string): Promise<GoalReservationSummary> {
   const db = await getDb();
-  return db.exclusiveAsync((tx) => reservationSummaryOn(tx, accountId));
+  return db.exclusiveAsync((tx) => reservationSummaryOn(tx, accountId), { readOnly: true });
 }
 
 /** Only real, active cash balances in the default currency can receive new reservations. */
