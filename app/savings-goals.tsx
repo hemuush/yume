@@ -250,7 +250,7 @@ export default function SavingsGoalsScreen() {
             <HeaderIconButton
               icon={showArchived ? 'eye-off' : 'archive'}
               glass
-              size={40}
+              size={36}
               onPress={() => setShowArchived((v) => !v)}
               label={showArchived ? 'Hide archived goals' : 'Show archived goals'}
               badge={!showArchived && archivedGoals.length > 0}
