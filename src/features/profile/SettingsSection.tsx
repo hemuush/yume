@@ -39,10 +39,10 @@ import { screenStyles as h } from '@/components/screenStyles';
 import { styles } from './profile.styles';
 import { SafetyCheck } from './SafetyCheck';
 import { cardSurface } from '@/components/CardSurface';
-import { softTint } from '@/components/softTint';
 import { errorMessage } from '@/lib/errorMessage';
 import type { McIconName } from '@/components/iconName';
 import { withPressed } from '@/lib/pressed';
+import { haptics } from '@/lib/haptics';
 import { refreshAllWidgets } from '@/widgets/notifyWidgets';
 import { showAlert } from '@/components/AppDialog';
 
@@ -93,7 +93,7 @@ function AboutFact({ icon, text }: { icon: string; text: string }) {
  * each row with its icon on a soft tint.
  */
 export function SettingsSection() {
-  const { themeId } = useAccent();
+  const { themeId, setTheme } = useAccent();
   const { lockEnabled, setLockEnabled } = useAppLock();
   const { hideAmounts, toggleHideAmounts } = usePrivacy();
   const [hideWidgets, setHideWidgets] = useState<boolean | null>(null);
@@ -306,7 +306,6 @@ export function SettingsSection() {
         <View style={[h.card, cardSurface.neutral]}>
           <SettingsRow
             icon="currency-inr"
-            iconBg={softTint(theme.colors.slice.free, 0.35)}
             round
             label="Default currency"
             sub="New accounts and displayed amounts"
@@ -341,7 +340,6 @@ export function SettingsSection() {
           <MovingRow>
             <SettingsRow
               icon="gauge"
-              iconBg={softTint(theme.colors.slice.due, 0.35)}
               round
               label="Daily spending goal"
               sub="Shown on Home each day"
@@ -388,7 +386,6 @@ export function SettingsSection() {
           <MovingRow>
             <SettingsRow
               icon="tag-outline"
-              iconBg={softTint(theme.colors.slice.spent, 0.35)}
               round
               label="Categories"
               sub="Add, rename, or archive"
@@ -403,7 +400,6 @@ export function SettingsSection() {
         <View style={[h.card, cardSurface.neutral]}>
           <SettingsRow
             icon="fingerprint"
-            iconBg={softTint(theme.colors.slice.saved, 0.35)}
             round
             label="Require unlock"
             sub="Fingerprint, face, or your phone's PIN"
@@ -413,7 +409,6 @@ export function SettingsSection() {
           />
           <SettingsRow
             icon="eye-off-outline"
-            iconBg={softTint(theme.colors.slice.debt, 0.35)}
             round
             label="Hide savings & investment amounts"
             sub="Also on the eye icon at the top"
@@ -443,7 +438,6 @@ export function SettingsSection() {
           />
           <SettingsRow
             icon="bell-outline"
-            iconBg={softTint(theme.colors.slice.free, 0.35)}
             round
             label="Notifications"
             sub={
@@ -461,7 +455,6 @@ export function SettingsSection() {
         <View style={[h.card, cardSurface.neutral]}>
           <SettingsRow
             icon="folder-outline"
-            iconBg={softTint(theme.colors.slice.free, 0.35)}
             round
             label="Backup & restore"
             sub={backupSub}
@@ -470,7 +463,6 @@ export function SettingsSection() {
           />
           <SettingsRow
             icon="delete-restore"
-            iconBg={softTint(theme.colors.slice.spent, 0.35)}
             round
             label="Recently deleted"
             sub={
@@ -483,7 +475,6 @@ export function SettingsSection() {
           />
           <SettingsRow
             icon="broom"
-            iconBg={softTint(theme.colors.slice.due, 0.35)}
             round
             label="Tidy up"
             sub={
@@ -501,19 +492,43 @@ export function SettingsSection() {
       </Section>
 
       <Section compact title="Appearance">
-        <Pressable
-          onPress={() => router.push('/themes')}
-          style={withPressed([h.card, cardSurface.neutral, h.row])}
-          accessibilityRole="button"
-          accessibilityLabel={`Theme: ${activeTheme.name}. Change theme`}
-        >
-          <ThemeThumb pack={activeTheme} />
-          <View style={h.mid}>
-            <Text style={h.title}>Theme</Text>
-            <Text style={h.sub}>{activeTheme.name}</Text>
+        <View style={[h.card, cardSurface.neutral]}>
+          <Pressable
+            onPress={() => router.push('/themes')}
+            style={withPressed(h.row)}
+            accessibilityRole="button"
+            accessibilityLabel={`Theme: ${activeTheme.name}. Change theme`}
+          >
+            <ThemeThumb pack={activeTheme} />
+            <View style={h.mid}>
+              <Text style={h.title}>Theme</Text>
+              <Text style={h.sub}>{activeTheme.name}</Text>
+            </View>
+            <Feather name="chevron-right" size={18} color={theme.colors.textMuted} />
+          </Pressable>
+          <View style={styles.swatches}>
+            {THEMES.map((pack) => {
+              const active = pack.id === themeId;
+              return (
+                <Pressable
+                  key={pack.id}
+                  onPress={() => {
+                    if (!active) haptics.tap();
+                    setTheme(pack.id);
+                  }}
+                  style={withPressed([styles.swatchHit, active && styles.swatchActive])}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${pack.name} theme`}
+                  accessibilityState={{ selected: active }}
+                >
+                  <View style={[styles.swatch, { backgroundColor: pack.primary }]}>
+                    <View style={[styles.swatchHalf, { backgroundColor: pack.secondary }]} />
+                  </View>
+                </Pressable>
+              );
+            })}
           </View>
-          <Feather name="chevron-right" size={18} color={theme.colors.textMuted} />
-        </Pressable>
+        </View>
       </Section>
 
       <View style={styles.footer}>

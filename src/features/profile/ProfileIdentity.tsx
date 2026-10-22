@@ -2,8 +2,6 @@ import { View, Pressable, StyleSheet } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { Text, TextInput } from '@/components/Text';
 import { theme } from '@/constants/theme';
-import { Glass } from '@/components/Glass';
-import { cardSurface } from '@/components/CardSurface';
 import { withPressed } from '@/lib/pressed';
 import { SCREEN } from '@/components/screenStyles';
 import { useAccent } from '@/theme/AccentContext';
@@ -35,7 +33,7 @@ export function ProfileIdentity({
   const { accent, onAccent, secondary } = useAccent();
 
   return (
-    <Glass radius={22} tone="strong" style={[local.card, cardSurface.summary]}>
+    <View style={local.card}>
       <View style={styles.identityRow}>
         <View style={[local.halo, { borderColor: secondary }]}>
           <View
@@ -88,22 +86,23 @@ export function ProfileIdentity({
             </Pressable>
           )}
 
-          <Text style={styles.memberSince}>Member since {memberSince ?? new Date().getFullYear()}</Text>
           <View style={local.chip}>
-            <Feather name="lock" size={11} color={theme.colors.textSecondary} />
-            <Text style={local.chipText}>On this phone only</Text>
+            <Feather name="lock" size={11} color={theme.colors.textMuted} />
+            <Text style={local.chipText}>
+              Member since {memberSince ?? new Date().getFullYear()} · on this phone only
+            </Text>
           </View>
         </View>
       </View>
-    </Glass>
+    </View>
   );
 }
 
 const local = StyleSheet.create({
-  card: { marginHorizontal: SCREEN.gutter, marginTop: theme.layout.screenTopGap, padding: 14 },
-  halo: { padding: 2, borderRadius: 28, borderWidth: 1 },
+  card: { marginHorizontal: SCREEN.gutter, marginTop: theme.layout.screenTopGap, paddingVertical: 6 },
+  halo: { padding: 3, borderRadius: 32, borderWidth: 1 },
   chip: {
-    marginTop: 6,
+    marginTop: -2,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,

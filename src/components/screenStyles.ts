@@ -43,6 +43,7 @@ export const screenStyles = StyleSheet.create({
     paddingHorizontal: 14,
     minHeight: SCREEN.rowMinHeight,
   },
+  dividerLeft: { borderLeftWidth: StyleSheet.hairlineWidth, borderLeftColor: theme.colors.borderSoft },
   divider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.borderSoft },
   // Same compact footprint as CategoryIcon; same radius ratio (0.32×).
   iconTile: {
