@@ -323,6 +323,8 @@ export default function CategoriesScreen() {
           <>
             <HeaderIconButton
               icon={showArchived ? 'eye-off' : 'archive'}
+              glass
+              size={36}
               onPress={() => setShowArchived((v) => !v)}
               label={showArchived ? 'Hide archived categories' : 'Show archived categories'}
               badge={!showArchived && archivedCategories.length > 0}
