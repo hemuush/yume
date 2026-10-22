@@ -249,6 +249,10 @@ async function render() {
 }
 it('keeps the report scroll view mounted during a same-period refresh and refresh failure', async () => {
   const tree = await render();
+  // Let every load the mount starts finish first, so none can land after the refresh and hide its failure.
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 250));
+  });
   const scroll = tree.root.findAllByType(ScrollView).find((node) => node.props.testID === 'reports-content');
   expect(scroll).toBeDefined();
   let rejectRefresh!: (error: Error) => void;
@@ -266,9 +270,12 @@ it('keeps the report scroll view mounted during a same-period refresh and refres
   );
   await act(async () => {
     rejectRefresh(new Error('refresh interrupted'));
-    // The failure is handled a few promise hops later; let them settle before reading the screen.
-    await new Promise((resolve) => setTimeout(resolve, 0));
   });
+  // The failure is shown a few promise hops later; give a slow runner time for them.
+  for (let i = 0; i < 20 && !texts(tree).includes('Couldn’t refresh your report'); i++)
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    });
   expect(tree.root.findAllByType(ScrollView).find((node) => node.props.testID === 'reports-content')).toBe(
     scroll
   );
