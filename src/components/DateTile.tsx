@@ -1,6 +1,7 @@
 import { View, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
+import { SCREEN } from '@/components/screenStyles';
 import { parseLocalIsoDate } from '@/lib/date';
 
 /**
@@ -35,8 +36,8 @@ export function DateTile({
 
 const styles = StyleSheet.create({
   tile: {
-    minWidth: 44,
-    minHeight: 44,
+    minWidth: SCREEN.mark,
+    minHeight: SCREEN.mark,
     paddingHorizontal: 6,
     paddingVertical: 4,
     borderRadius: 13,

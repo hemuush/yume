@@ -536,6 +536,7 @@ export function TransactionDetailModal({
                 round
                 icon="note-text-outline"
                 iconBg={theme.colors.idGold}
+                field
                 label={tx.type === 'expense' || tx.isRefund ? 'Label' : 'Note'}
                 sub={tx.note}
                 divider

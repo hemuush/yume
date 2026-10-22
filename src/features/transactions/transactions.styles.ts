@@ -5,6 +5,9 @@ import { GLASS } from '@/components/Glass';
 
 // Shared by the Transactions screen and its modals/rows (FilterModal, TransactionRow,
 // TransactionDetailModal).
+/** One height for Activity's pill controls (period, Week | Month, type): a 44 target plus 3 of padding each side. */
+const CONTROL_H = 52;
+
 export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
   errorBanner: {
@@ -104,7 +107,7 @@ export const styles = StyleSheet.create({
 
   // The Spent card leads the tab, frosted like Home's month card: the kicker, a big light figure, its chips
   // (the change, money in, net), the chart and a one-line legend.
-  sumCard: { marginHorizontal: 16, marginTop: 8, padding: 14 },
+  sumCard: { marginHorizontal: 16, marginTop: 8, padding: 16 },
   sumKicker: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textSecondary },
   headlineAmt: {
     fontFamily: theme.font.bodyLight,
@@ -143,8 +146,8 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 2,
-    minHeight: 50,
-    padding: 4,
+    minHeight: CONTROL_H,
+    padding: 3,
     borderRadius: theme.radius.pill,
     backgroundColor: GLASS.fill,
     borderWidth: 1,
@@ -159,7 +162,7 @@ export const styles = StyleSheet.create({
   },
   scopeBtnStacked: { flex: 1, alignItems: 'center' },
   scopeText: { fontFamily: theme.font.roundedMedium, fontSize: 13, color: theme.colors.textPrimary },
-  scopeTextOn: { color: theme.colors.white },
+  scopeTextOn: { color: theme.colors.textPrimary, fontFamily: theme.font.roundedBold },
 
   // ‹ This week › in a frosted pill, Week | Month beside it.
   periodBar: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 2 },
@@ -170,8 +173,9 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    minHeight: 50,
+    minHeight: CONTROL_H,
     paddingHorizontal: 3,
+    paddingVertical: 3,
     borderRadius: theme.radius.pill,
     overflow: 'hidden',
     backgroundColor: GLASS.fill,
@@ -243,8 +247,8 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     flex: 1,
     minWidth: 0,
-    minHeight: 50,
-    padding: 4,
+    minHeight: CONTROL_H,
+    padding: 3,
     borderRadius: theme.radius.pill,
     backgroundColor: GLASS.fill,
     borderWidth: 1,
@@ -265,14 +269,14 @@ export const styles = StyleSheet.create({
     fontSize: 12,
     color: theme.colors.textSecondary,
   },
-  typeTextOn: { color: theme.colors.surface, fontFamily: theme.font.roundedBold },
+  typeTextOn: { color: theme.colors.textPrimary, fontFamily: theme.font.roundedBold },
   chipsRow: { gap: 8, paddingHorizontal: 16, paddingTop: 10 },
   filterGap: { height: 16 },
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    minHeight: 48,
+    minHeight: 40,
     paddingHorizontal: 12,
     borderRadius: theme.radius.pill,
     backgroundColor: GLASS.fill,
@@ -325,10 +329,10 @@ export const styles = StyleSheet.create({
   detailFoot: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
   detailEdit: { flexGrow: 1, flexBasis: 140 },
   deleteBtn: {
-    minWidth: 52,
-    minHeight: 52,
-    paddingVertical: 12,
-    borderRadius: 26,
+    minWidth: 48,
+    minHeight: 48,
+    paddingVertical: 0,
+    borderRadius: 24,
     paddingHorizontal: 16,
     flexDirection: 'row',
     alignItems: 'center',

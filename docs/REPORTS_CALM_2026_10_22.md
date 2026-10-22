@@ -10,7 +10,7 @@ explanations under the Trends chart.
 - **Tabs and header match Plan.** Overview / Breakdown / Trends use the same pill `SegmentedControl` and margins as
   Plan's tabs, the Trends metric switch (Spending / Cash flow / Net worth) and Breakdown's Spending / Income
   switch use it too, and the header has a subtitle like Plan's.
-- **Overview.** One card (`ReportHero`): spent, a day, the budget as a single bar, income and kept. No chart.
+- **Overview.** One card (`ReportHero`): spent, a day, the budgets as a single bar (their own spending against their combined limit, not the whole month), income and kept. No chart.
   The heatmap card has one "All spending" dropdown instead of a row of category chips, no week-total column and no
   amounts inside cells; its levels follow rank once there are 8+ spending days (`heatLevelFor`) so one huge day
   cannot wash out the rest, and the big-day dot marks it. "Worth a look" is plain rows (`ReportInsights`), and the

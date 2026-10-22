@@ -10,6 +10,7 @@ import { formatMaskableMoney, formatMoney } from '@/lib/money';
 import { dayMonth } from '@/lib/dateLabels';
 import { toLocalIsoDate } from '@/lib/date';
 import { withPressed } from '@/lib/pressed';
+import { SCREEN } from '@/components/screenStyles';
 
 export function HomeRefunds({
   refunds,
@@ -161,7 +162,8 @@ export function HomeRefunds({
   );
 }
 const styles = StyleSheet.create({
-  compactRow: { borderTopWidth: 0, paddingBottom: 6 },
+  // Inside Home's Coming up card (whose rows sit 26 in from its edge): the mark and text line up with theirs.
+  compactRow: { borderTopWidth: 0, paddingBottom: 6, paddingHorizontal: 26, gap: 12 },
   body: { padding: 14, gap: 4 },
   row: {
     flexDirection: 'row',
@@ -174,7 +176,7 @@ const styles = StyleSheet.create({
     borderTopColor: theme.colors.divider,
   },
   icon: {
-    width: 36,
+    width: SCREEN.lead,
     height: 36,
     borderRadius: 18,
     alignItems: 'center',

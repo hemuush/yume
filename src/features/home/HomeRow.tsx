@@ -4,7 +4,7 @@ import { StatusBadge } from '@/components/StatusBadge';
 import { theme } from '@/constants/theme';
 import { usePressScale } from '@/lib/usePressScale';
 import { useCardGrow } from '@/lib/cardGrow';
-import { screenStyles as h } from '@/components/screenStyles';
+import { screenStyles as h, SCREEN } from '@/components/screenStyles';
 
 import { useAccent } from '@/theme/AccentContext';
 import { themeInk } from '@/theme/interactionColors';
@@ -66,7 +66,7 @@ export function HomeRow({
       accessibilityLabel={accessibilityLabel}
       style={[styles.row, divider && styles.divider, highlight && styles.highlight, animatedStyle]}
     >
-      {leading}
+      <View style={styles.lead}>{leading}</View>
       <View style={styles.mid}>
         <Text style={styles.title} numberOfLines={2}>
           {title}
@@ -108,6 +108,7 @@ export function HomeRow({
 const styles = StyleSheet.create({
   row: { ...h.row, minHeight: HOME_ROW_HEIGHT, gap: 12 },
   divider: h.divider,
+  lead: { width: SCREEN.lead, alignItems: 'center', justifyContent: 'center' },
   highlight: {
     marginHorizontal: 8,
     marginVertical: 4,

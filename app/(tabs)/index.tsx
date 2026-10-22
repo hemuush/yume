@@ -685,6 +685,7 @@ export default function DashboardScreen() {
                       exiting={ROW_EXIT}
                     >
                       <RecentTransactionRow
+                        omitToday
                         onPress={() => {
                           refundRequest.current++;
                           openingRefundRef.current = false;

@@ -99,6 +99,13 @@ export function FilterModal({
   }, [categories, draftType]);
 
   const topLevelCategories = useMemo(() => topLevelOnly(visibleCategories), [visibleCategories]);
+  // An expense and an income category can share a name ("Friends & Family"): say which is which on the chips.
+  const sharedNames = useMemo(() => {
+    const seen = new Set<string>();
+    const dup = new Set<string>();
+    for (const c of topLevelCategories) (seen.has(c.name) ? dup : seen).add(c.name);
+    return dup;
+  }, [topLevelCategories]);
   const expandedChildren = expandedParentId ? childrenOf(visibleCategories, expandedParentId) : [];
   const expandedParent = expandedParentId
     ? visibleCategories.find((c) => c.id === expandedParentId)
@@ -200,7 +207,11 @@ export function FilterModal({
             {topLevelCategories.map((cat) => (
               <Chip
                 key={cat.id}
-                label={cat.name}
+                label={
+                  sharedNames.has(cat.name)
+                    ? `${cat.name} · ${cat.kind === 'income' ? 'Income' : 'Expense'}`
+                    : cat.name
+                }
                 icon={cat.icon}
                 more={childrenOf(visibleCategories, cat.id).length > 0}
                 active={draftCategoryIds.includes(cat.id)}

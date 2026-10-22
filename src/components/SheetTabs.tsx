@@ -38,7 +38,7 @@ export function SheetTabs<T extends string>({
             variant === 'pill' && styles.pillTab,
             option.value === value &&
               (variant === 'pill'
-                ? { backgroundColor: colors.ink }
+                ? { backgroundColor: accent }
                 : [styles.selected, { borderBottomColor: colors.ink }]),
           ])}
         >
@@ -90,7 +90,7 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.borderSoft,
   },
   pillTab: { borderBottomWidth: 0, borderRadius: 21 },
-  pillActive: { color: theme.colors.surface },
+  pillActive: { color: theme.colors.textPrimary },
   label: {
     fontFamily: theme.font.body,
     fontSize: 13,

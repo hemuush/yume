@@ -33,7 +33,7 @@ function Tab({
   label,
   Icon,
   focused,
-  ink,
+  fill,
   size,
   onPress,
   onLongPress,
@@ -42,7 +42,8 @@ function Tab({
   label: string;
   Icon: typeof HomeIcon;
   focused: boolean;
-  ink: string;
+  /** The chosen tab's pill: the theme colour itself, with ink on it. The Add button keeps the dark ink. */
+  fill: string;
   size: number;
   onPress: () => void;
   onLongPress: () => void;
@@ -69,10 +70,10 @@ function Tab({
           style={[
             styles.tab,
             { height: size, minWidth: size, borderRadius: size / 2 },
-            focused && { backgroundColor: ink, paddingHorizontal: 16 },
+            focused && { backgroundColor: fill, paddingHorizontal: 16 },
           ]}
         >
-          <Icon color={focused ? theme.colors.white : theme.colors.inkSoft} size={20} />
+          <Icon color={focused ? theme.colors.ink : theme.colors.inkSoft} size={20} />
           {focused && (
             <View>
               <Text style={styles.label} numberOfLines={1} maxFontSizeMultiplier={1.15}>
@@ -141,7 +142,7 @@ export function PillTabBar({
               label={label}
               Icon={Icon}
               focused={focused}
-              ink={ink}
+              fill={accent}
               size={inner}
               logAgain={isHome}
               onPress={() => {
@@ -204,7 +205,7 @@ const styles = StyleSheet.create({
     boxShadow: '0px 10px 28px rgba(16,32,51,0.12)',
   },
   tab: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7 },
-  label: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.white },
+  label: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.ink },
   add: {
     alignItems: 'center',
     justifyContent: 'center',
