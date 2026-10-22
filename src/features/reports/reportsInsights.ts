@@ -275,7 +275,7 @@ export function patternFacts(
         big: `Weekends −${pct}%`,
         detail: 'Saturdays and Sundays ran below your weekday average.',
       });
-    } else if (weAvg > wdAvg * 1.4) {
+    } else if (wdAvg > 0 && weAvg > wdAvg * 1.4) {
       const pct = Math.round((weAvg / wdAvg - 1) * 100);
       facts.push({
         key: 'weekends',

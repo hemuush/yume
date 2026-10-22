@@ -67,7 +67,6 @@ export const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
   },
-  pickRowOn: { borderWidth: 1.5 },
   pickSub: {
     fontFamily: theme.font.body,
     fontSize: 12,
@@ -181,7 +180,6 @@ export const styles = StyleSheet.create({
     borderColor: GLASS.edge,
     maxWidth: '100%',
   },
-  recentChipActive: { backgroundColor: theme.colors.surface },
   recentChipText: {
     fontFamily: theme.font.bodyMedium,
     fontSize: 12,
@@ -215,9 +213,7 @@ export const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: GLASS.edge,
   },
-  frequentChipActive: {},
   frequentChipText: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
-  frequentChipTextActive: { color: theme.colors.textPrimary },
 
   noteInput: {
     marginBottom: 10,
@@ -344,6 +340,18 @@ export const styles = StyleSheet.create({
     borderColor: GLASS.edge,
   },
   repeatBtnText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
+  draftCard: {
+    marginBottom: 12,
+    padding: 14,
+    gap: 8,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radius.xl2,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
+  },
+  draftTitle: { fontFamily: theme.font.bodyBold, fontSize: 14, color: theme.colors.textPrimary },
+  draftText: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textSecondary },
+  draftActions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   repeatNote: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -399,9 +407,6 @@ export const styles = StyleSheet.create({
   },
   detailChipDisabled: { opacity: 0.4 },
   detailChipTextMuted: { color: theme.colors.textMuted },
-  // A detail chip that's a switch (Money back), switched on.
-  detailChipActive: {},
-  detailChipTextActive: {},
   error: {
     fontFamily: theme.font.bodyBold,
     fontSize: 12,

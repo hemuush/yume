@@ -804,7 +804,9 @@ export default function AddTransactionScreen() {
     if (!mounted.current || !formReady || isLinked || committed.current || saveInFlight.current) return;
     // A date well ahead is usually a typo (the wrong year), and it moves today's balances straight away.
     const pendingDates = !editing && !splitParts ? rows.map((row) => row.date) : [];
-    if (editing || splitParts || expr !== '') pendingDates.push(date);
+    // An unchanged date on an entry being edited was already accepted when it was saved.
+    const dateUnchanged = !!editing && editBaseline !== null && editBaseline.date === date;
+    if ((editing || splitParts || expr !== '') && !dateUnchanged) pendingDates.push(date);
     const futureDate = pendingDates.find((d) => d > addDaysToIsoDate(today, FUTURE_DATE_CHECK_DAYS));
     if (!dateChecked && futureDate) {
       showAlert(`Save it for ${dateChipLabel(futureDate)}?`, "That's more than a week from today.", [
@@ -1058,21 +1060,12 @@ export default function AddTransactionScreen() {
         />
 
         {recovery.candidate && (
-          <View
-            style={{
-              marginHorizontal: 16,
-              marginBottom: 12,
-              padding: 14,
-              gap: 8,
-              backgroundColor: theme.colors.surface,
-              borderRadius: theme.radius.lg,
-            }}
-          >
-            <Text style={{ fontFamily: theme.font.bodyBold }}>Continue your unfinished entry?</Text>
-            <Text style={{ color: theme.colors.textSecondary }}>
+          <View style={styles.draftCard}>
+            <Text style={styles.draftTitle}>Continue your unfinished entry?</Text>
+            <Text style={styles.draftText}>
               Nothing in this draft has been recorded. Check its date and accounts before saving.
             </Text>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+            <View style={styles.draftActions}>
               <PrimaryButton
                 compact
                 title="Resume draft"

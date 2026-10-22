@@ -1,18 +1,11 @@
 import { View, StyleSheet, useWindowDimensions } from 'react-native';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
-import { formatMoney, getCurrencySymbol, toMajor } from '@/lib/money';
+import { compactMoney } from '@/lib/compactMoney';
+import { formatMoney } from '@/lib/money';
 import { shortMonth } from '@/lib/dateLabels';
 
 const TRACK = 72;
-
-/** "₹3.3k", "₹1.2M" — short enough to sit above a bar; under 1,000 it is the plain amount. */
-export function compactMoney(minor: number): string {
-  const major = Math.abs(toMajor(minor));
-  if (major < 1000) return formatMoney(minor);
-  const [n, unit] = major < 1_000_000 ? [major / 1000, 'k'] : [major / 1_000_000, 'M'];
-  return `${minor < 0 ? '−' : ''}${getCurrencySymbol()}${n.toFixed(1).replace(/\.0$/, '')}${unit}`;
-}
 
 /**
  * Monthly totals as labelled bars: value above each, the period's own (last) month in full colour and

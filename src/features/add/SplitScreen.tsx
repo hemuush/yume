@@ -95,7 +95,11 @@ export function SplitScreen() {
 
   const onPadKey = (key: PadKey) => {
     if (!targetPart) return;
-    update(targetPart.key, { amountText: applyPadKey(targetPart.amountText, key) });
+    const targetKey = targetPart.key;
+    // From the latest text, so two quick presses never start from the same stale value.
+    setParts((prev) =>
+      prev.map((p) => (p.key === targetKey ? { ...p, amountText: applyPadKey(p.amountText, key) } : p))
+    );
   };
 
   const removePart = (key: string) => {
@@ -440,7 +444,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderBottomWidth: 0,
     borderColor: GLASS.edge,
-    backgroundColor: 'rgba(255,253,248,0.94)',
+    backgroundColor: theme.colors.surface,
     boxShadow: '0px -8px 24px rgba(18,19,15,0.06)',
     paddingHorizontal: 16,
     paddingTop: 12,

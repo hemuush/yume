@@ -69,7 +69,9 @@ export function CalendarSheet({
 
   // Re-seed the view when the sheet is reopened for a different value.
   const [seededFor, setSeededFor] = useState(value);
-  if (visible && seededFor !== value) {
+  const [wasVisible, setWasVisible] = useState(visible);
+  if (visible !== wasVisible) setWasVisible(visible);
+  if (visible && (seededFor !== value || !wasVisible)) {
     setSeededFor(value);
     setViewMonth(value.slice(0, 7));
     setPickingMonth(false);

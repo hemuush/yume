@@ -1,3 +1,4 @@
+import { selectedFill } from '@/theme/interactionColors';
 import { useState } from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -51,7 +52,7 @@ function FilterChip({
       accessibilityRole="button"
       accessibilityState={{ selected: active }}
       accessibilityLabel={attention ? `${label}, needs a look` : label}
-      style={withPressed([styles.chip, active && { backgroundColor: accent }])}
+      style={withPressed([styles.chip, active && { backgroundColor: selectedFill(accent) }])}
     >
       <Text style={[styles.chipText, active && styles.chipTextOn]}>{label}</Text>
       {attention && !active && <View style={styles.chipDot} />}

@@ -56,9 +56,9 @@ export async function loadNeedsYou(
   ] = await Promise.all([
     isolate(getNextDueInstallment(), null),
     isolate(listBudgetsForMonth(periodMonthOf(now), hideSensitive), []),
-    getLocalBackupFolderUri(),
-    getLastLocalBackupResult(),
-    getBackupNudgeSnoozedUntil(),
+    isolate(getLocalBackupFolderUri(), null),
+    isolate(getLastLocalBackupResult(), null),
+    isolate(getBackupNudgeSnoozedUntil(), null),
     isolate(countTransactions(), 0),
     isolate(
       getPeriodComparison('month', now).then((c) => privateComparison(c, hideSensitive)),

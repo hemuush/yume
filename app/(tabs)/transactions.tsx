@@ -48,7 +48,7 @@ import { savingsAccountIdsOf } from '@/lib/account';
 import { privateComparison, isSavingsEntry } from '@/lib/privateSummary';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import { useAccent } from '@/theme/AccentContext';
-import { themeInk } from '@/theme/interactionColors';
+import { themeInk, selectedFill } from '@/theme/interactionColors';
 import { haptics } from '@/lib/haptics';
 import { errorMessage } from '@/lib/errorMessage';
 import { DURATIONS } from '@/lib/motionTimings';
@@ -491,7 +491,9 @@ export default function TransactionsScreen() {
     const amountOf = transactions.find(
       (t) => t.type === 'expense' && !isSavingsEntry(t, categoriesById, savingsAccountIdsOf(accounts))
     );
-    if (amountOf) out.push(String(Math.round(amountOf.amountMinor / 100)));
+    // A one-digit amount would be under the search minimum, so the chip would do nothing.
+    const amountText = amountOf ? String(Math.round(amountOf.amountMinor / 100)) : '';
+    if (amountText.length >= SEARCH_MIN_CHARS) out.push(amountText);
     if (transactions[0]) out.push(dayMonth(transactions[0].date));
     return out;
   }, [transactions, categoriesById, accounts]);
@@ -809,7 +811,7 @@ export default function TransactionsScreen() {
                   />
 
                   {/* The same Suu empty state as every other screen, not a bare line of grey text. */}
-                  {accounts.length === 0 && (
+                  {accounts.length === 0 && !loadError && (
                     <EmptyState title="No accounts yet" subtitle="Add an account before recording entries." />
                   )}
                   {accounts.length > 0 && transactions.length > 0 && filteredTransactions.length === 0 && (
@@ -974,7 +976,7 @@ export default function TransactionsScreen() {
                     style={withPressed([
                       styles.scopeBtn,
                       stackPeriod && styles.scopeBtnStacked,
-                      on && { backgroundColor: accent },
+                      on && { backgroundColor: selectedFill(accent) },
                     ])}
                     accessibilityRole="radio"
                     accessibilityState={{ selected: on }}

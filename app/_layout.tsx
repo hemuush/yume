@@ -15,7 +15,6 @@ import { Archivo_600SemiBold } from '@expo-google-fonts/archivo/600SemiBold';
 import { Archivo_700Bold } from '@expo-google-fonts/archivo/700Bold';
 import { SpaceMono_400Regular } from '@expo-google-fonts/space-mono/400Regular';
 import { SpaceMono_700Bold } from '@expo-google-fonts/space-mono/700Bold';
-import { Fredoka_400Regular } from '@expo-google-fonts/fredoka/400Regular';
 import { Fredoka_500Medium } from '@expo-google-fonts/fredoka/500Medium';
 import { Fredoka_600SemiBold } from '@expo-google-fonts/fredoka/600SemiBold';
 import { getDb } from '@/db/client';
@@ -73,7 +72,6 @@ export default function RootLayout() {
     Archivo_700Bold,
     SpaceMono_400Regular,
     SpaceMono_700Bold,
-    Fredoka_400Regular,
     Fredoka_500Medium,
     Fredoka_600SemiBold,
   });

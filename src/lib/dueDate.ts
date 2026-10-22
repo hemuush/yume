@@ -10,7 +10,7 @@ export function dueDateLabel(dateStr: string): string {
   if (days === 0) return 'Due today';
   if (days === 1) return 'Due tomorrow';
   if (days <= 90) return `Due in ${days} days`;
-  return `Due on ${dateStr}`;
+  return `Due on ${new Date(`${dateStr}T00:00:00`).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}`;
 }
 
 /** Today or already past — the threshold for the "urgent" (coral) treatment on Home's Upcoming list. */

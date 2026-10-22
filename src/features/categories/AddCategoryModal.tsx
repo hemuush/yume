@@ -1,6 +1,6 @@
 import { useAccent } from '@/theme/AccentContext';
 import { selectedFill } from '@/theme/interactionColors';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { View, Pressable } from 'react-native';
 import { Text } from '@/components/Text';
 import { createCategory, updateCategory } from '@/db/ledger';
@@ -14,7 +14,7 @@ import { SheetCard } from '@/components/SheetCard';
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { CATEGORY_COLOR_PALETTE, modalFooterStyles as f, theme } from '@/constants/theme';
 import { CATEGORY_ICON_CHOICES } from '@/constants/categories';
-import { styles } from './categories.styles';
+import { styles, GRID_COLUMNS, GRID_GAP } from './categories.styles';
 import { errorMessage } from '@/lib/errorMessage';
 import { withPressed } from '@/lib/pressed';
 import { useSaveOnce } from '@/lib/useSaveOnce';
@@ -42,6 +42,10 @@ export function AddCategoryModal({
   onManage?: () => void;
 }) {
   const { accent } = useAccent();
+  // The colour and icon grids share the sheet's width evenly, so they are sized from it once it is known.
+  const [gridWidth, setGridWidth] = useState(0);
+  const cell = gridWidth > 0 ? Math.floor((gridWidth - GRID_GAP * (GRID_COLUMNS - 1)) / GRID_COLUMNS) : 44;
+  const cellSize = useMemo(() => ({ width: cell, height: cell }), [cell]);
   const [name, setName] = useState('');
   const [kind, setKind] = useState<CategoryKind>('expense');
   const [parentId, setParentId] = useState<string | null>(null);
@@ -187,14 +191,11 @@ export function AddCategoryModal({
               style={withPressed([
                 styles.parentChip,
                 parentId === null && [
-                  styles.parentChipActive,
                   { backgroundColor: selectedFill(accent), borderColor: selectedFill(accent) },
                 ],
               ])}
             >
-              <Text style={[styles.parentChipText, parentId === null && styles.parentChipTextActive]}>
-                {category?.parentId ? 'Top level' : 'None'}
-              </Text>
+              <Text style={styles.parentChipText}>{category?.parentId ? 'Top level' : 'None'}</Text>
             </Pressable>
             {eligibleParents.map((p) => (
               <Pressable
@@ -206,14 +207,11 @@ export function AddCategoryModal({
                 style={withPressed([
                   styles.parentChip,
                   parentId === p.id && [
-                    styles.parentChipActive,
                     { backgroundColor: selectedFill(accent), borderColor: selectedFill(accent) },
                   ],
                 ])}
               >
-                <Text style={[styles.parentChipText, parentId === p.id && styles.parentChipTextActive]}>
-                  {p.name}
-                </Text>
+                <Text style={styles.parentChipText}>{p.name}</Text>
               </Pressable>
             ))}
           </View>
@@ -227,41 +225,44 @@ export function AddCategoryModal({
         </>
       )}
       <Text style={styles.fieldLabel}>Color</Text>
-      <View style={styles.colorRow}>
-        {CATEGORY_COLOR_PALETTE.map((c, i) => (
-          <Pressable
-            key={c}
-            onPress={() => setColor(c)}
-            accessibilityRole="button"
-            accessibilityLabel={`Colour ${i + 1} of ${CATEGORY_COLOR_PALETTE.length}`}
-            accessibilityState={{ selected: color === c }}
-            style={withPressed([
-              styles.colorSwatch,
-              { backgroundColor: c },
-              color === c && styles.colorSwatchActive,
-            ])}
-          />
-        ))}
+      <View style={styles.colorRow} onLayout={(e) => setGridWidth(Math.round(e.nativeEvent.layout.width))}>
+        {gridWidth > 0 &&
+          CATEGORY_COLOR_PALETTE.map((c, i) => (
+            <Pressable
+              key={c}
+              onPress={() => setColor(c)}
+              accessibilityRole="button"
+              accessibilityLabel={`Colour ${i + 1} of ${CATEGORY_COLOR_PALETTE.length}`}
+              accessibilityState={{ selected: color === c }}
+              style={withPressed([
+                styles.colorSwatch,
+                cellSize,
+                { backgroundColor: c },
+                color === c && styles.colorSwatchActive,
+              ])}
+            />
+          ))}
       </View>
       <Text style={styles.fieldLabel}>Icon</Text>
       <View style={styles.iconGrid}>
-        {CATEGORY_ICON_CHOICES.map((iconName) => (
-          <Pressable
-            key={iconName}
-            onPress={() => setIcon(iconName)}
-            accessibilityRole="button"
-            accessibilityLabel={`${iconName.replace(/-/g, ' ')} icon`}
-            accessibilityState={{ selected: icon === iconName }}
-            style={withPressed([styles.iconChoice, icon === iconName && styles.iconChoiceActive])}
-          >
-            <CategoryIcon
-              name={iconName}
-              color={icon === iconName ? color : theme.colors.surface}
-              square={38}
-              size={18}
-            />
-          </Pressable>
-        ))}
+        {gridWidth > 0 &&
+          CATEGORY_ICON_CHOICES.map((iconName) => (
+            <Pressable
+              key={iconName}
+              onPress={() => setIcon(iconName)}
+              accessibilityRole="button"
+              accessibilityLabel={`${iconName.replace(/-/g, ' ')} icon`}
+              accessibilityState={{ selected: icon === iconName }}
+              style={withPressed([styles.iconChoice, cellSize, icon === iconName && styles.iconChoiceActive])}
+            >
+              <CategoryIcon
+                name={iconName}
+                color={icon === iconName ? color : theme.colors.surface}
+                square={Math.min(38, cell - 4)}
+                size={18}
+              />
+            </Pressable>
+          ))}
       </View>
       <View style={styles.sensitiveRow}>
         <View style={{ flex: 1, marginRight: 10 }}>

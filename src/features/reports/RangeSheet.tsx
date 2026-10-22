@@ -1,3 +1,4 @@
+import { selectedFill } from '@/theme/interactionColors';
 import { useState } from 'react';
 import { View, Pressable, StyleSheet, ScrollView } from 'react-native';
 import { Text } from '@/components/Text';
@@ -130,12 +131,12 @@ export function RangeSheet({
               }}
               style={withPressed([
                 styles.pick,
-                on && { backgroundColor: accent, borderColor: theme.colors.ink },
+                on && { backgroundColor: selectedFill(accent), borderColor: selectedFill(accent) },
               ])}
               accessibilityRole="button"
               accessibilityState={{ selected: on }}
             >
-              <Text style={[styles.pickText, on && { color: onAccent }]}>{p.label}</Text>
+              <Text style={[styles.pickText, on && styles.pickTextOn]}>{p.label}</Text>
             </Pressable>
           );
         })}
@@ -228,6 +229,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.surface,
   },
   pickText: { fontFamily: theme.font.roundedMedium, fontSize: 13, color: theme.colors.textPrimary },
+  pickTextOn: { fontFamily: theme.font.roundedBold },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 },
   navBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   monthLabel: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.textPrimary },

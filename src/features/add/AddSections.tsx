@@ -21,7 +21,6 @@ import { TYPE_WASH, typeWash, EntryType, Staged, dateChipLabel } from './addEntr
 import { withPressed } from '@/lib/pressed';
 import { categorySpoken, inParent } from '@/lib/categoryLabel';
 import { useAccent } from '@/theme/AccentContext';
-import { softTint } from '@/components/softTint';
 
 /**
  * The Add screen's display pieces: amount card, From/To pickers, "Your usual" chips, staged-entry list.
@@ -135,17 +134,12 @@ export function AmountCard({
                 }}
                 style={withPressed([
                   styles.frequentChip,
-                  active && [
-                    styles.frequentChipActive,
-                    { backgroundColor: selectedFill(accent), borderColor: selectedFill(accent) },
-                  ],
+                  active && [{ backgroundColor: selectedFill(accent), borderColor: selectedFill(accent) }],
                 ])}
                 accessibilityRole="button"
                 accessibilityState={{ selected: active }}
               >
-                <Text style={[styles.frequentChipText, active && styles.frequentChipTextActive]}>
-                  {formatMoney(minor, currency)}
-                </Text>
+                <Text style={styles.frequentChipText}>{formatMoney(minor, currency)}</Text>
               </Pressable>
             );
           })}
@@ -292,7 +286,7 @@ export function AccountPickList({
             }}
             style={withPressed([
               styles.pickRow,
-              on && [styles.pickRowOn, { borderColor: accent, backgroundColor: softTint(accent, 0.12) }],
+              on && { backgroundColor: selectedFill(accent), borderColor: selectedFill(accent) },
             ])}
             accessibilityRole="button"
             accessibilityState={{ selected: on }}
@@ -372,7 +366,7 @@ export function UsualChips({
               style={withPressed([
                 styles.recentChip,
                 { maxWidth: Math.min(300, 220 * Math.max(1, fontScale)) },
-                active && [styles.recentChipActive, { borderColor: accent }],
+                active && { backgroundColor: selectedFill(accent), borderColor: selectedFill(accent) },
               ])}
               accessibilityRole="button"
               accessibilityState={{ selected: active }}

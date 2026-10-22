@@ -16,7 +16,7 @@ import { formatMoney } from '@/lib/money';
 import { hueFor } from '@/lib/hueFor';
 
 function Chip({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
-  const { secondary } = useAccent();
+  const { accent } = useAccent();
   return (
     <Pressable
       onPress={() => {
@@ -25,7 +25,7 @@ function Chip({ label, active, onPress }: { label: string; active: boolean; onPr
       }}
       style={withPressed([
         styles.chip,
-        active && { borderColor: secondary, backgroundColor: shade(secondary, 94) },
+        active && { borderColor: selectedFill(accent), backgroundColor: selectedFill(accent) },
       ])}
       accessibilityRole="button"
       accessibilityState={{ selected: active }}
@@ -86,10 +86,7 @@ export function DetailChip({
       disabled={disabled}
       style={withPressed([
         styles.detailChip,
-        active && [
-          styles.detailChipActive,
-          { backgroundColor: selectedFill(accent), borderColor: selectedFill(accent) },
-        ],
+        active && [{ backgroundColor: selectedFill(accent), borderColor: selectedFill(accent) }],
         disabled && styles.detailChipDisabled,
       ])}
       accessibilityRole={active === undefined ? 'button' : 'switch'}
@@ -103,14 +100,7 @@ export function DetailChip({
         size={13}
         color={active ? theme.colors.textPrimary : muted ? theme.colors.textMuted : shade(accent, 40, 8)}
       />
-      <Text
-        style={[
-          styles.detailChipText,
-          muted && styles.detailChipTextMuted,
-          active && styles.detailChipTextActive,
-        ]}
-        numberOfLines={1}
-      >
+      <Text style={[styles.detailChipText, muted && styles.detailChipTextMuted]} numberOfLines={1}>
         {label}
       </Text>
       {active ? (

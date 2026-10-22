@@ -65,7 +65,9 @@ export function formatMaskableMoney(
  * `currency` defaults to the user's Settings choice (getDefaultCurrency).
  */
 export function formatMoney(minor: number, currency?: string): string {
-  const major = toMajor(minor);
+  // Less than half a unit prints as "₹0", never "-₹0".
+  const raw = toMajor(minor);
+  const major = Math.abs(raw) < 0.5 ? 0 : raw;
   const resolvedCurrency = currency ?? getCachedCurrency();
   try {
     // Intl sets per-currency precision (a fixed maximumFractionDigits would print "¥500.00" for JPY).

@@ -122,7 +122,8 @@ function ContributionForm({
       await markMilestonesSeen(fresh.map((m) => goalMilestoneKey(goal.id, m)));
       if (!fresh.includes(reached) || (reached === 100 && completionShown)) return;
       const toGo = Math.max(0, goal.targetAmountMinor - after);
-      if (active.current) showNote(goalMilestoneCopy(reached, goal.name, toGo, hideAmounts));
+      // Not guarded by `active`: the host often closes this sheet inside onContributed, and the note is root-level.
+      showNote(goalMilestoneCopy(reached, goal.name, toGo, hideAmounts));
     } catch {
       // A missed note is never worth failing a save that already went through.
     }
