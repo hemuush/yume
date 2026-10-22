@@ -1,11 +1,13 @@
 import { useState } from 'react';
-import { View, Pressable } from 'react-native';
+import { View, Pressable, StyleSheet } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { ForecastDetails } from './ForecastDetails';
 import { withPressed } from '@/lib/pressed';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { Text } from '@/components/Text';
 import { Glass } from '@/components/Glass';
+import { screenStyles } from '@/components/screenStyles';
+import { RunwayChart } from './RunwayChart';
 import { cardSurface } from '@/components/CardSurface';
 import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
@@ -66,12 +68,13 @@ export function RunwayCard({
   if (compact)
     return (
       <>
-        <Glass radius={24} style={[styles.card, styles.cardFirst, cardSurface.summary]}>
+        <View style={[screenStyles.card, local.card]}>
           <View style={styles.forecastHeading}>
             <View style={styles.forecastFigure}>
-              <Text style={styles.forecastFact}>Spending-account outlook</Text>
-              <Text style={styles.forecastValue}>{formatMoney(outgoingMinor)}</Text>
-              <Text style={styles.forecastFact}>Scheduled outgoing · next {days} days</Text>
+              <Text style={styles.forecastFact}>
+                {hasAccounts ? `Runway · next ${days} days` : `Scheduled outgoing · next ${days} days`}
+              </Text>
+              <Text style={styles.forecastValue}>{hasAccounts ? figure : formatMoney(outgoingMinor)}</Text>
             </View>
             {hasAccounts && (
               <Pressable
@@ -90,27 +93,37 @@ export function RunwayCard({
             )}
           </View>
           {hasAccounts ? (
-            <View style={[styles.forecastAttention, runway.short && styles.forecastWarning]}>
-              <Feather
-                name={runway.short ? 'alert-circle' : 'check-circle'}
-                size={19}
-                color={runway.short ? theme.colors.expenseText : theme.colors.incomeText}
-              />
-              <View style={styles.forecastAttentionCopy}>
-                <Text style={styles.forecastStatusTitle}>
-                  {none
-                    ? 'Nothing due'
-                    : runway.short
-                      ? `${formatMoney(runway.short.minor)} more needed`
-                      : 'Covered'}
-                </Text>
-                <Text style={styles.forecastFact}>
-                  {runway.short
-                    ? `First shortfall · ${dayMonth(runway.short.date)}`
-                    : 'Based on scheduled cash flow'}
-                </Text>
+            <>
+              <View style={local.verdictRow}>
+                <View style={[local.chip, runway.short ? local.chipBad : local.chipOk]}>
+                  <Feather
+                    name={runway.short ? 'alert-circle' : 'check-circle'}
+                    size={14}
+                    color={runway.short ? theme.colors.expenseText : theme.colors.incomeText}
+                  />
+                  <Text
+                    style={[
+                      local.chipText,
+                      { color: runway.short ? theme.colors.expenseText : theme.colors.incomeText },
+                    ]}
+                  >
+                    {none
+                      ? 'Nothing due'
+                      : runway.short
+                        ? `${formatMoney(runway.short.minor)} more needed`
+                        : 'Covered'}
+                  </Text>
+                </View>
               </View>
-            </View>
+              <Text style={styles.forecastFact}>
+                {none
+                  ? note
+                  : runway.short
+                    ? `${formatMoney(outgoingMinor)} going out · first shortfall ${dayMonth(runway.short.date)}${comingIn}`
+                    : `${formatMoney(outgoingMinor)} going out · lowest ${formatMoney(runway.lowMinor)} on ${dayMonth(runway.lowDate)}${comingIn}`}
+              </Text>
+              {!none && runway.days.length > 1 && <RunwayChart runway={runway} />}
+            </>
           ) : (
             <>
               <Text style={styles.bigNote}>{note}</Text>
@@ -135,7 +148,7 @@ export function RunwayCard({
               <Feather name="arrow-right" size={16} color={theme.colors.link} />
             </Pressable>
           )}
-        </Glass>
+        </View>
         {details && hasAccounts && <ForecastDetails runway={runway} onClose={() => setDetails(false)} />}
       </>
     );
@@ -207,3 +220,19 @@ export function RunwayCard({
     </>
   );
 }
+
+const local = StyleSheet.create({
+  card: { padding: 16, marginTop: 4, gap: 4 },
+  verdictRow: { flexDirection: 'row', marginTop: 2, marginBottom: 4 },
+  chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    minHeight: 28,
+    paddingHorizontal: 10,
+    borderRadius: 14,
+  },
+  chipOk: { backgroundColor: theme.colors.incomeTint },
+  chipBad: { backgroundColor: theme.colors.expenseTint },
+  chipText: { fontFamily: theme.font.bodyBold, fontSize: 12 },
+});

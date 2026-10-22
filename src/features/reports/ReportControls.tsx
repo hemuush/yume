@@ -1,10 +1,12 @@
 import { useState } from 'react';
+import Animated, { useAnimatedStyle } from 'react-native-reanimated';
+import { useDrawnValue } from '@/lib/useDrawnValue';
+import { DURATIONS } from '@/lib/motionTimings';
 import { View, Pressable, StyleSheet } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
 import { ActionSheet } from '@/components/ActionSheet';
 import { ModalSheet } from '@/components/ModalSheet';
-import { GLASS } from '@/components/Glass';
 import { theme } from '@/constants/theme';
 import { withPressed } from '@/lib/pressed';
 
@@ -12,18 +14,23 @@ import { useAccent } from '@/theme/AccentContext';
 import { themeInk } from '@/theme/interactionColors';
 
 export type ReportTab = 'days' | 'cats' | 'trends';
+const TAB_LABELS = [
+  ['days', 'Overview'],
+  ['cats', 'Breakdown'],
+  ['trends', 'Trends'],
+] as const;
+
+/** Three lenses as plain labels over one rule; the accent underline slides to the one in view. */
 export function ReportTabs({ value, onChange }: { value: ReportTab; onChange: (value: ReportTab) => void }) {
   const { accent } = useAccent();
   const ink = themeInk(accent);
+  const [width, setWidth] = useState(0);
+  const index = TAB_LABELS.findIndex(([key]) => key === value);
+  const left = useDrawnValue('reports-tab-underline', index, DURATIONS.standard);
+  const slide = useAnimatedStyle(() => ({ transform: [{ translateX: left.value * (width / 3) }] }));
   return (
-    <View style={s.tabs} accessibilityRole="tablist">
-      {(
-        [
-          ['days', 'Days'],
-          ['cats', 'Breakdown'],
-          ['trends', 'Trends'],
-        ] as const
-      ).map(([key, label]) => (
+    <View style={s.tabs} accessibilityRole="tablist" onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
+      {TAB_LABELS.map(([key, label]) => (
         <Pressable
           key={key}
           onPress={() => {
@@ -31,11 +38,15 @@ export function ReportTabs({ value, onChange }: { value: ReportTab; onChange: (v
           }}
           accessibilityRole="tab"
           accessibilityState={{ selected: value === key }}
-          style={withPressed([s.tab, value === key && { backgroundColor: ink }])}
+          style={withPressed(s.tab)}
         >
           <Text style={[s.tabText, value === key && s.tabOn]}>{label}</Text>
         </Pressable>
       ))}
+      <Animated.View
+        pointerEvents="none"
+        style={[s.underline, { width: width / 3, backgroundColor: ink }, slide]}
+      />
     </View>
   );
 }
@@ -46,12 +57,17 @@ export function BreakdownControls({
   onFlow,
   onGroup,
   onLabels,
+  view,
+  onView,
 }: {
   flow: 'expense' | 'income';
   group: 'category' | 'account';
   onFlow: (value: 'expense' | 'income') => void;
   onGroup: (value: 'category' | 'account') => void;
   onLabels?: () => void;
+  /** The split drawn as tiles or as one bar. */
+  view: 'tree' | 'bar';
+  onView: (value: 'tree' | 'bar') => void;
 }) {
   const [open, setOpen] = useState(false);
   return (
@@ -71,6 +87,29 @@ export function BreakdownControls({
             style={withPressed([s.flowButton, flow === key && s.flowOn])}
           >
             <Text style={[s.filterText, flow === key && s.activeText]}>{label}</Text>
+          </Pressable>
+        ))}
+      </View>
+      <View style={s.flow}>
+        {(
+          [
+            ['tree', 'grid', 'Tiles'],
+            ['bar', 'bar-chart-2', 'Bar'],
+          ] as const
+        ).map(([key, icon, label]) => (
+          <Pressable
+            key={key}
+            onPress={() => onView(key)}
+            accessibilityRole="button"
+            accessibilityLabel={`Show as ${label.toLowerCase()}`}
+            accessibilityState={{ selected: view === key }}
+            style={withPressed([s.viewButton, view === key && s.flowOn])}
+          >
+            <Feather
+              name={icon}
+              size={16}
+              color={view === key ? theme.colors.ink : theme.colors.textSecondary}
+            />
           </Pressable>
         ))}
       </View>
@@ -140,30 +179,14 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     marginHorizontal: 16,
     marginTop: theme.layout.screenTopGap,
-    marginBottom: 14,
-    padding: 4,
-    borderRadius: theme.radius.pill,
-    borderWidth: 1,
-    borderColor: GLASS.edge,
-    backgroundColor: GLASS.fill,
+    marginBottom: 6,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: theme.colors.borderSoft,
   },
-  tab: {
-    flex: 1,
-    minWidth: 0,
-    minHeight: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 4,
-    paddingVertical: 6,
-    borderRadius: theme.radius.pill,
-  },
-  tabText: {
-    fontFamily: theme.font.roundedMedium,
-    fontSize: 13,
-    color: theme.colors.textSecondary,
-    textAlign: 'center',
-  },
-  tabOn: { fontFamily: theme.font.roundedBold, color: theme.colors.surface },
+  tab: { flex: 1, minWidth: 0, minHeight: 48, justifyContent: 'center', alignItems: 'center' },
+  tabText: { fontFamily: theme.font.bodyMedium, fontSize: 14, color: theme.colors.textSecondary },
+  tabOn: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
+  underline: { position: 'absolute', left: 0, bottom: -1, height: 3, borderRadius: 2 },
   filters: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -179,6 +202,13 @@ const s = StyleSheet.create({
   flowButton: {
     minHeight: 48,
     paddingHorizontal: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 9,
+  },
+  viewButton: {
+    minHeight: 48,
+    minWidth: 44,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 9,

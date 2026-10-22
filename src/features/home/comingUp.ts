@@ -94,12 +94,35 @@ export function buildComingUp(input: {
     .map(({ item }) => item);
 }
 
+/** On "All" the list is a mix, not the five most pressing of any kind: this many of each, then any slack. */
+const ALL_QUOTA: Record<ComingUpKind, number> = { payment: 3, budget: 1, goal: 1 };
+
+/**
+ * The rows "All" shows: up to three payments, one budget and one goal (each kind's most pressing), in rank
+ * order. A kind with fewer than its share leaves its rows to the next most pressing of the others.
+ */
+function mixedRows(items: ComingUpItem[]): ComingUpItem[] {
+  const taken = new Set<ComingUpItem>();
+  for (const kind of ['payment', 'budget', 'goal'] as const) {
+    items
+      .filter((i) => i.kind === kind)
+      .slice(0, ALL_QUOTA[kind])
+      .forEach((i) => taken.add(i));
+  }
+  for (const item of items) {
+    if (taken.size >= COMING_UP_ROWS) break;
+    taken.add(item);
+  }
+  return items.filter((i) => taken.has(i));
+}
+
 /** What the list shows for a filter, and the counts and attention flags the filter chips carry. */
 export function summarizeComingUp(items: ComingUpItem[], filter: ComingUpFilter) {
   const kinds: ComingUpKind[] = ['payment', 'budget', 'goal'];
   const count = (kind: ComingUpKind) => items.filter((i) => i.kind === kind).length;
   return {
-    visible: (filter === 'all' ? items : items.filter((i) => i.kind === filter)).slice(0, COMING_UP_ROWS),
+    visible:
+      filter === 'all' ? mixedRows(items) : items.filter((i) => i.kind === filter).slice(0, COMING_UP_ROWS),
     counts: Object.fromEntries(kinds.map((k) => [k, count(k)])) as Record<ComingUpKind, number>,
     // A dot on a chip means something in it needs a look: a payment due soon or late, a budget over or
     // ahead of pace, a goal behind.

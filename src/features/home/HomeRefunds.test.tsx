@@ -162,3 +162,36 @@ it('lists payments in Coming up and keeps the full schedule reachable', () => {
   press(tree, 'View plan — Coming up');
   expect(all).toHaveBeenCalledWith('all');
 });
+
+it('sums several pending refunds in the compact view and opens them from the total', () => {
+  const open = jest.fn();
+  const tree = render(
+    <HomeRefunds
+      refunds={[refund('a', '2026-10-25'), { ...refund('b'), remainingMinor: 12000 }]}
+      failed={false}
+      onOpen={open}
+      compact
+    />
+  );
+  expect(texts(tree)).toContain('₹200 refunds pending');
+  expect(texts(tree)).toContain('2 purchases · excluded from balance');
+  expect(texts(tree)).not.toContain('Purchase a');
+  press(tree, '₹200 refunds pending');
+  expect(texts(tree)).toContain('Purchase a');
+  expect(texts(tree)).toContain('Purchase b');
+  press(tree, 'Purchase b');
+  expect(open).toHaveBeenCalledWith('tx-b');
+});
+
+it('keeps a hidden sensitive refund out of the compact total', () => {
+  mockHide = true;
+  const tree = render(
+    <HomeRefunds
+      refunds={[refund('a'), { ...refund('b'), remainingMinor: 500000, isSensitive: true }]}
+      failed={false}
+      compact
+    />
+  );
+  expect(texts(tree)).toContain('₹80 + ₹•••• refunds pending');
+  expect(texts(tree)).not.toContain('5,000');
+});

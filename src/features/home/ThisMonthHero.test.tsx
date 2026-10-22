@@ -2,8 +2,29 @@
  * Home's month card: the free-to-use headline with income and carry-over under it, chips for the spent
  * share, today and bills still to pay, the Add buttons, and stepping the period. All figures are made up.
  */
-import { StyleSheet, Text } from 'react-native';
+import { Text } from 'react-native';
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
+// The allowance and the day tick read the date: fix it (22 October, 9 days left) so the figures are steady.
+beforeAll(() => {
+  jest.useFakeTimers({
+    now: new Date(2026, 9, 22, 12),
+    doNotFake: [
+      'nextTick',
+      'setImmediate',
+      'clearImmediate',
+      'setInterval',
+      'clearInterval',
+      'setTimeout',
+      'clearTimeout',
+      'requestAnimationFrame',
+      'cancelAnimationFrame',
+      'queueMicrotask',
+      'performance',
+      'hrtime',
+    ],
+  });
+});
+afterAll(() => jest.useRealTimers());
 jest.mock('@expo/vector-icons/Feather', () => () => null);
 jest.mock('@expo/vector-icons/MaterialCommunityIcons', () => () => null);
 
@@ -25,7 +46,6 @@ jest.mock('@/components/CountUpAmount', () => {
 });
 jest.mock('@/components/LimitMeter', () => ({ LimitMeter: () => null }));
 
-import { theme } from '@/constants/theme';
 import { ThisMonthHero } from './ThisMonthHero';
 
 const texts = (r: ReactTestRenderer) =>
@@ -44,6 +64,7 @@ const byLabel = (r: ReactTestRenderer, start: string) =>
   );
 
 function hero(over: Partial<React.ComponentProps<typeof ThisMonthHero>> = {}) {
+  const today = 'today' in over ? over.today : { spentMinor: 204_500, goalMinor: 500_000 };
   return (
     <ThisMonthHero
       periodKey="month:0"
@@ -55,7 +76,16 @@ function hero(over: Partial<React.ComponentProps<typeof ThisMonthHero>> = {}) {
       savingsMinor={9_950_000}
       surplusMinor={79_400}
       dueMinor={0}
-      today={{ spentMinor: 204_500, goalMinor: 500_000 }}
+      today={today}
+      spendingTrend={
+        today
+          ? {
+              daily: [{ date: '2026-10-22', totalMinor: today.spentMinor }],
+              today: '2026-10-22',
+              mode: 'week',
+            }
+          : null
+      }
       pace={{ projectedMinor: 10_370_000, byLabel: '30 Sept' }}
       {...over}
     />
@@ -79,7 +109,7 @@ describe('month card', () => {
     expect(texts(r)).toContain('Daily limit');
     expect(texts(r)).toContain('Expenses today');
     expect(texts(r)).toContain('Refunds and income do not refill your daily limit. Transfers are excluded.');
-    expect(texts(r)).toContain('₹230 left today');
+    expect(texts(r)).toContain('₹230 left');
   });
 
   it('leads with what is free to use, what it is out of, and what is left today as a chip', () => {
@@ -96,11 +126,9 @@ describe('month card', () => {
       ])
     );
     // The money-bar legend stays scoped to this month.
-    expect(all).toEqual(
-      expect.arrayContaining(['Spent this month', 'Saved this month', '₹95,762', '₹99,500'])
-    );
+    expect(all).toEqual(expect.arrayContaining(['Spent', 'Saved', 'Free', '₹96k', '₹1L', '49%', '51%']));
     expect(all).not.toContain('Bills left');
-    expect(all).toContain('₹2,955 left today');
+    expect(all).toContain('₹2,955 left');
     expect(byLabel(r, 'How this adds up')).toBeDefined();
     // Free to use is said once, as the headline.
     expect(all.filter((t) => t === 'Free to use')).toHaveLength(1);
@@ -118,10 +146,8 @@ describe('month card', () => {
   });
 
   it('says how far over the daily goal today is', () => {
-    const r = render({ today: { spentMinor: 600_000, goalMinor: 500_000 } });
-    act(() => byLabel(r, 'How this adds up').props.onPress());
-    const all = texts(r);
-    expect(all).toContain('₹6,000 today · ₹1,000 over');
+    const all = texts(render({ today: { spentMinor: 600_000, goalMinor: 500_000 } }));
+    expect(all).toEqual(expect.arrayContaining(['Today', '₹6,000', '₹1,000 over']));
   });
 
   it('says when more went out than came in', () => {
@@ -163,7 +189,8 @@ describe('month card with bills still to pay', () => {
         '₹40,000',
         'after spending, savings and bills',
         'Bills left',
-        '₹20,000',
+        '₹20k',
+        '20%',
       ])
     );
     expect(all).not.toContain('Free to use');
@@ -191,7 +218,7 @@ describe('month card with bills still to pay', () => {
 
   it('says short when the bills are more than what is free', () => {
     const all = texts(render({ ...base, dueMinor: 7_000_000 }));
-    expect(all).toEqual(expect.arrayContaining(['Short after bills', '-₹10,000', '₹70,000']));
+    expect(all).toEqual(expect.arrayContaining(['Short after bills', '-₹10,000', '₹70k']));
   });
 
   it('is the plain Free to use card when nothing is due', () => {
@@ -237,7 +264,7 @@ describe('month card with savings hidden', () => {
 
   it('keeps the free headline, and never says what was saved', () => {
     const all = texts(render(hidden));
-    expect(all).toEqual(expect.arrayContaining(['Free to use', '₹30,000', 'Spent this month']));
+    expect(all).toEqual(expect.arrayContaining(['Free to use', '₹30,000', 'Spent']));
     expect(all).not.toContain('Saved');
   });
 
@@ -420,30 +447,35 @@ describe('month card: today and the free figure', () => {
   });
 
   it('says what is left of the daily goal, and none left once it is spent', () => {
-    expect(texts(expanded({ today: { spentMinor: 0, goalMinor: 500_000 } }))).toContain('₹5,000 left today');
-    expect(texts(expanded({ today: { spentMinor: 500_000, goalMinor: 500_000 } }))).toContain(
-      '₹0 left today'
-    );
+    expect(texts(expanded({ today: { spentMinor: 0, goalMinor: 500_000 } }))).toContain('No spending');
+    expect(texts(expanded({ today: { spentMinor: 250_000, goalMinor: 500_000 } }))).toContain('₹2,500 left');
+    expect(texts(expanded({ today: { spentMinor: 500_000, goalMinor: 500_000 } }))).toContain('₹0 left');
   });
 
-  it('draws a thin meter that fills as the daily goal is spent', () => {
-    const meter = (spentMinor: number) =>
-      expanded({ today: { spentMinor, goalMinor: 500_000 } }).root.findAll(
-        (n) => n.props.testID === 'home-today-meter'
-      )[0];
-    expect(StyleSheet.flatten(meter(125_000).props.style).width).toBe('25%');
-    expect(StyleSheet.flatten(meter(0).props.style).width).toBe('0%');
-    // Refunds can make today's net spend negative: the meter stays empty rather than going below zero.
-    expect(StyleSheet.flatten(meter(-50_000).props.style).width).toBe('0%');
+  it('says a day far over the goal was a big day, not a slip', () => {
+    expect(texts(expanded({ today: { spentMinor: 5_000_000, goalMinor: 500_000 } }))).toContain('A big day');
+    expect(texts(expanded({ today: { spentMinor: 600_000, goalMinor: 500_000 } }))).toContain('₹1,000 over');
   });
+});
 
-  it('keeps saying how far over it is, and shows the meter full in the over colour', () => {
-    const r = expanded({ today: { spentMinor: 600_000, goalMinor: 500_000 } });
-    expect(texts(r)).toContain('₹6,000 today · ₹1,000 over');
-    const meter = r.root.find((n) => n.props.testID === 'home-today-meter');
-    const style = StyleSheet.flatten(meter.props.style);
-    expect(style.width).toBe('100%');
-    expect(style.backgroundColor).toBe(theme.colors.slice.spent);
+describe('month card: what can be spent a day', () => {
+  it('shows the days left and a day’s allowance for the current month', () => {
+    // ₹794 free over the 9 days after 22 October.
+    expect(texts(render())).toEqual(expect.arrayContaining(['₹88 a day']));
+    expect(texts(render()).some((t) => t.endsWith('days left'))).toBe(true);
+  });
+  it('pins today’s date on the month line', () => {
+    expect(texts(render())).toContain('22');
+  });
+  it('is left out of a past month, a month over its income, and one with nothing free', () => {
+    expect(texts(render({ periodKey: 'month:-1' })).some((t) => t.includes('a day'))).toBe(false);
+    expect(texts(render({ periodKey: 'month:-1' }))).not.toContain('22');
+    expect(
+      texts(render({ spentMinor: 25_000_000, savingsMinor: 0, surplusMinor: -5_395_000 })).some((t) =>
+        t.includes('a day')
+      )
+    ).toBe(false);
+    expect(texts(render({ surplusMinor: 0 })).some((t) => t.includes('a day'))).toBe(false);
   });
 });
 

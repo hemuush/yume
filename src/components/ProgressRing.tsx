@@ -1,13 +1,15 @@
-import { Animated, View, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
+import Animated, { useAnimatedProps } from 'react-native-reanimated';
 import Svg, { Circle } from 'react-native-svg';
 import { theme } from '@/constants/theme';
-import { useGrowFrom } from '@/lib/useGrowFrom';
+import { useDrawnValue } from '@/lib/useDrawnValue';
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 /**
- * A round progress mark with its label in the middle. The arc draws in once after app open, stays still on
- * revisit and glides on a real change (useGrowFrom). Decoration: put the figure in the row's own text.
+ * A round progress mark with its label in the middle. The arc draws in once after app open on the UI thread,
+ * stays still on revisit and glides on a real change (useDrawnValue). Decoration: put the figure in the row's
+ * own text.
  */
 export function ProgressRing({
   percent,
@@ -20,7 +22,7 @@ export function ProgressRing({
   /** 0-100. */
   percent: number;
   color: string;
-  /** Ring identity, e.g. `goal:<id>` (see useGrowFrom). */
+  /** Ring identity, e.g. `goal:<id>` (see useDrawnValue). */
   animKey: string;
   size?: number;
   stroke?: number;
@@ -28,12 +30,10 @@ export function ProgressRing({
 }) {
   const r = (size - stroke) / 2;
   const circumference = 2 * Math.PI * r;
-  const filled = useGrowFrom(animKey, Math.min(100, Math.max(0, percent)));
-  const dashOffset = filled.interpolate({
-    inputRange: [0, 100],
-    outputRange: [circumference, 0],
-    extrapolate: 'clamp',
-  });
+  const filled = useDrawnValue(animKey, Math.min(100, Math.max(0, percent)));
+  const animatedProps = useAnimatedProps(() => ({
+    strokeDashoffset: circumference * (1 - filled.value / 100),
+  }));
   return (
     <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
       <Svg
@@ -60,7 +60,7 @@ export function ProgressRing({
           strokeLinecap="round"
           fill="none"
           strokeDasharray={`${circumference} ${circumference}`}
-          strokeDashoffset={dashOffset}
+          animatedProps={animatedProps}
           transform={`rotate(-90 ${size / 2} ${size / 2})`}
         />
       </Svg>

@@ -8,7 +8,10 @@ import {
   quietDays,
   StoryInput,
   summariseDayTotal,
-  buildHeatGrid,
+  buildHeat,
+  cumulativeSpend,
+  treemapLayout,
+  weekTotals,
   daySpendFacts,
   weekdayRhythm,
   weekdayReadLine,
@@ -346,81 +349,100 @@ describe('buildStoryCards', () => {
   });
 });
 
-describe('buildHeatGrid', () => {
-  it('lays a month out as a calendar: blanks before the 1st, today marked, spend days tappable', () => {
-    const onDayPress = jest.fn();
-    const grid = buildHeatGrid({
-      granularity: 'month',
-      start: new Date(2026, 8, 1), // Tue Sep 1 2026
-      trend: [],
+describe('buildHeat', () => {
+  const daily = [
+    { date: '2026-09-05', totalMinor: 90000 },
+    { date: '2026-09-06', totalMinor: 10000 },
+  ];
+
+  it('lays a month out as a calendar: blanks before the 1st, today marked, later days future', () => {
+    const heat = buildHeat({ range: { start: '2026-09-01', end: '2026-09-30' }, daily, today: '2026-09-06' });
+    if (heat.kind !== 'calendar') throw new Error('expected a calendar');
+    expect(heat.leadingPad).toBe(2); // Tue 1 Sep 2026
+    expect(heat.days).toHaveLength(30);
+    expect(heat.maxMinor).toBe(90000);
+    expect(heat.days[4]).toMatchObject({ iso: '2026-09-05', day: 5, level: 4, today: false, future: false });
+    expect(heat.days[5]).toMatchObject({ iso: '2026-09-06', level: 1, today: true });
+    expect(heat.days[0]).toMatchObject({ level: 0, future: false });
+    expect(heat.days[6].future).toBe(true);
+  });
+
+  it('ignores spending dated after today when scaling', () => {
+    const heat = buildHeat({
+      range: { start: '2026-09-01', end: '2026-09-30' },
+      daily: [...daily, { date: '2026-09-20', totalMinor: 900000 }],
+      today: '2026-09-06',
+    });
+    expect(heat.maxMinor).toBe(90000);
+  });
+
+  it('draws a short custom range as a calendar lined up under its weekdays', () => {
+    const heat = buildHeat({
+      range: { start: '2026-08-28', end: '2026-09-03' },
       daily: [
-        { date: '2026-09-05', totalMinor: 90000 },
-        { date: '2026-09-06', totalMinor: 10000 },
+        { date: '2026-08-30', totalMinor: 5000 },
+        { date: '2026-09-02', totalMinor: 20000 },
       ],
-      onDayPress,
-      todayIso: '2026-09-06',
+      today: '2026-09-03',
     });
-    expect(grid.columns).toBe(7);
-    expect(grid.leadingPad).toBe(2);
-    expect(grid.weekdayLabels).toHaveLength(7);
-    expect(grid.cells).toHaveLength(30);
-    const sat = grid.cells[4];
-    expect(sat).toMatchObject({ key: '2026-09-05', label: '5', level: 4, isToday: false });
-    expect(grid.cells[5]).toMatchObject({ key: '2026-09-06', level: 1, isToday: true });
-    expect(grid.cells[0]).toMatchObject({ level: 0, isToday: false, onPress: expect.any(Function) });
-    grid.cells[0].onPress!();
-    expect(onDayPress).toHaveBeenCalledWith('2026-09-01');
-    expect(grid.cells[6].onPress).toBeUndefined();
-    sat.onPress!();
-    expect(onDayPress).toHaveBeenCalledWith('2026-09-05');
+    if (heat.kind !== 'calendar') throw new Error('expected a calendar');
+    expect(heat.leadingPad).toBe(5); // Fri 28 Aug 2026
+    expect(heat.days.map((d) => d.day)).toEqual([28, 29, 30, 31, 1, 2, 3]);
+    expect(heat.days.find((d) => d.iso === '2026-09-02')?.level).toBe(4);
   });
 
-  it('marks the days after today as future, so they can be faded', () => {
-    const grid = buildHeatGrid({
-      granularity: 'month',
-      start: new Date(2026, 8, 1),
-      trend: [],
-      daily: [],
-      onDayPress: jest.fn(),
-      todayIso: '2026-09-06',
-    });
-    expect(grid.cells[5].isFuture).toBe(false);
-    expect(grid.cells[6].isFuture).toBe(true);
-    expect(grid.cells[0].isFuture).toBe(false);
-  });
-
-  it('marks the picked day as selected', () => {
-    const grid = buildHeatGrid({
-      granularity: 'month',
-      start: new Date(2026, 8, 1),
-      trend: [],
-      daily: [{ date: '2026-09-05', totalMinor: 90000 }],
-      onDayPress: jest.fn(),
-      todayIso: '2026-09-06',
-      selectedIso: '2026-09-05',
-    });
-    expect(grid.cells.filter((c) => c.isSelected).map((c) => c.key)).toEqual(['2026-09-05']);
-  });
-
-  it('lays a year out as its months, four to a row, with no weekday header', () => {
-    const grid = buildHeatGrid({
-      granularity: 'year',
-      start: new Date(2026, 0, 1),
-      trend: [
-        { label: 'Jan', totalMinor: 100 },
-        { label: 'Feb', totalMinor: 0 },
+  it('draws a year as months down and the day of the month across', () => {
+    const heat = buildHeat({
+      range: { start: '2026-01-01', end: '2026-12-31' },
+      daily: [
+        { date: '2026-01-01', totalMinor: 1200000 },
+        { date: '2026-02-01', totalMinor: 1200000 },
+        { date: '2026-02-14', totalMinor: 100 },
       ],
-      daily: [],
-      onDayPress: jest.fn(),
+      today: '2026-10-22',
     });
-    expect(grid).toEqual({
-      cells: [
-        { key: 'm-0', label: 'Jan', level: 4 },
-        { key: 'm-1', label: 'Feb', level: 0 },
+    if (heat.kind !== 'matrix') throw new Error('expected a matrix');
+    expect(heat.rows).toHaveLength(12);
+    expect(heat.rows[0].days).toHaveLength(31);
+    // Rent on the 1st: the same column dark in both months.
+    expect(heat.rows[0].days[0]?.level).toBe(4);
+    expect(heat.rows[1].days[0]?.level).toBe(4);
+    expect(heat.rows[1].days[13]?.level).toBe(1);
+    // February has no 29th to 31st.
+    expect(heat.rows[1].days.slice(28)).toEqual([null, null, null]);
+    expect(heat.rows[11].days[0]?.future).toBe(true);
+  });
+});
+
+describe('cumulativeSpend', () => {
+  it('keeps a running total per day and stops at today', () => {
+    const series = cumulativeSpend(
+      [
+        { date: '2026-09-01', totalMinor: 100 },
+        { date: '2026-09-03', totalMinor: 50 },
       ],
-      leadingPad: 0,
-      columns: 4,
-    });
+      { start: '2026-09-01', end: '2026-09-05' },
+      '2026-09-04'
+    );
+    expect(series).toEqual([100, 100, 150, 150, null]);
+  });
+});
+
+describe('weekTotals', () => {
+  it('sums each calendar row, blanks counting for nothing', () => {
+    expect(
+      weekTotals(
+        [
+          [null, '2026-09-01', '2026-09-02'],
+          ['2026-09-08', null, null],
+        ],
+        [
+          { date: '2026-09-01', totalMinor: 100 },
+          { date: '2026-09-02', totalMinor: 25 },
+          { date: '2026-09-08', totalMinor: 7 },
+        ]
+      )
+    ).toEqual([125, 7]);
   });
 });
 
@@ -626,5 +648,36 @@ describe('categoriesAgainstUsual', () => {
   it('leaves out a category with fewer than two earlier months', () => {
     expect(categoriesAgainstUsual([t('a', 'New', [0, 0, 0, 200, 400])])).toEqual([]);
     expect(categoriesAgainstUsual([t('a', 'Quiet', [0, 0, 0, 0, 400])])).toEqual([]);
+  });
+});
+
+describe('treemapLayout', () => {
+  it('gives every value a tile whose area is its share, together filling the box', () => {
+    const tiles = treemapLayout([
+      { id: 'rent', value: 50 },
+      { id: 'food', value: 25 },
+      { id: 'fun', value: 15 },
+      { id: 'misc', value: 10 },
+    ]);
+    expect(tiles.map((t) => t.id).sort()).toEqual(['food', 'fun', 'misc', 'rent']);
+    const area = (id: string) => {
+      const t = tiles.find((x) => x.id === id)!;
+      return (t.w * t.h) / 100;
+    };
+    expect(area('rent')).toBeCloseTo(50);
+    expect(area('food')).toBeCloseTo(25);
+    expect(area('fun')).toBeCloseTo(15);
+    expect(area('misc')).toBeCloseTo(10);
+    for (const t of tiles) {
+      expect(t.x).toBeGreaterThanOrEqual(0);
+      expect(t.y).toBeGreaterThanOrEqual(0);
+      expect(t.x + t.w).toBeLessThanOrEqual(100.0001);
+      expect(t.y + t.h).toBeLessThanOrEqual(100.0001);
+    }
+  });
+  it('leaves out empty values and handles one or none', () => {
+    expect(treemapLayout([])).toEqual([]);
+    expect(treemapLayout([{ id: 'a', value: 0 }])).toEqual([]);
+    expect(treemapLayout([{ id: 'a', value: 7 }])).toEqual([{ id: 'a', x: 0, y: 0, w: 100, h: 100 }]);
   });
 });

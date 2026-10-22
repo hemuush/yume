@@ -2,39 +2,38 @@ import { Animated, Pressable, View, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { usePressScale } from '@/lib/usePressScale';
-import { SCREEN } from '@/components/screenStyles';
+import { screenStyles as h } from '@/components/screenStyles';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-function Tile({
+function Stat({
   value,
   label,
-  tone,
+  divider,
   onPress,
 }: {
   value: number;
   label: string;
-  tone: string;
+  divider: boolean;
   onPress: () => void;
 }) {
-  const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.96);
+  const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.97);
   return (
     <AnimatedPressable
-      style={[styles.tile, animatedStyle]}
+      style={[styles.stat, divider && h.dividerLeft, animatedStyle]}
       onPress={onPress}
       onPressIn={onPressIn}
       onPressOut={onPressOut}
       accessibilityRole="button"
       accessibilityLabel={`${value} ${label}`}
     >
-      <View style={[styles.dot, { backgroundColor: tone }]} />
       <Text style={styles.value}>{value}</Text>
       <Text style={styles.label}>{label}</Text>
     </AnimatedPressable>
   );
 }
 
-/** Entries, active loans and friends as three glass tiles, each with a dot of its colour, opening its screen. */
+/** Entries, active loans and friends as one strip of three counts, each opening its screen. */
 export function LinkTiles({
   entries,
   loans,
@@ -52,34 +51,16 @@ export function LinkTiles({
 }) {
   return (
     <View style={styles.row}>
-      <Tile value={entries} label="Entries" tone={theme.colors.slice.free} onPress={onEntries} />
-      <Tile value={loans} label="Active loans" tone={theme.colors.slice.due} onPress={onLoans} />
-      <Tile value={friends} label="Friends" tone={theme.colors.slice.spent} onPress={onFriends} />
+      <Stat value={entries} label="Entries" divider={false} onPress={onEntries} />
+      <Stat value={loans} label="Active loans" divider onPress={onLoans} />
+      <Stat value={friends} label="Friends" divider onPress={onFriends} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginHorizontal: SCREEN.gutter, marginTop: 10 },
-  tile: {
-    flexGrow: 1,
-    flexBasis: 96,
-    minWidth: 0,
-    paddingHorizontal: 12,
-    paddingTop: 13,
-    paddingBottom: 10,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: theme.colors.borderSoft,
-    backgroundColor: theme.colors.surface,
-    boxShadow: 'none',
-  },
-  dot: { position: 'absolute', top: 12, right: 12, width: 8, height: 8, borderRadius: 4 },
-  value: { fontFamily: theme.font.roundedBold, fontSize: 18, color: theme.colors.textPrimary },
-  label: {
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 12,
-    lineHeight: 17,
-    color: theme.colors.textSecondary,
-  },
+  row: { ...h.card, flexDirection: 'row', marginTop: 12 },
+  stat: { flex: 1, minWidth: 0, minHeight: 68, alignItems: 'center', justifyContent: 'center', gap: 1 },
+  value: { fontFamily: theme.font.bodyBold, fontSize: 18, color: theme.colors.textPrimary },
+  label: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
 });

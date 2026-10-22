@@ -2,9 +2,8 @@ import { View, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
 import { CountUpAmount } from '@/components/CountUpAmount';
 import { Amount } from '@/components/Amount';
-import { Glass } from '@/components/Glass';
-import { cardSurface } from '@/components/CardSurface';
-import { Kicker, frost } from '@/components/Frost';
+import { screenStyles as h } from '@/components/screenStyles';
+import { styles as hero } from '@/features/home/hero.styles';
 import { theme } from '@/constants/theme';
 import { formatMaskableMoney } from '@/lib/money';
 
@@ -43,16 +42,16 @@ export function CashHero({
   // Only money that's there makes the bar; a card in debt shows in the legend instead.
   const bar = shares.filter((s) => s.minor > 0 && !(masked && s.sensitive));
   return (
-    <Glass radius={22} tone="strong" style={[frost.hero, cardSurface.summary, { padding: 14, gap: 8 }]}>
-      <Kicker icon="layers">{label}</Kicker>
+    <View style={styles.card}>
+      <Text style={styles.label}>{label}</Text>
       {masked ? (
-        <Text style={frost.bigValue}>{formatMaskableMoney(0, { masked: true })}</Text>
+        <Text style={hero.headValue}>{formatMaskableMoney(0, { masked: true })}</Text>
       ) : (
         <CountUpAmount
           minor={minor}
           countFromZero={false}
-          symbolStyle={frost.bigSymbol}
-          style={frost.bigValue}
+          symbolStyle={hero.headSymbol}
+          style={hero.headValue}
           numberOfLines={1}
           adjustsFontSizeToFit
         />
@@ -86,14 +85,16 @@ export function CashHero({
         </View>
       )}
       {children}
-    </Glass>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  card: { ...h.card, marginTop: 12, paddingHorizontal: 16, paddingTop: 14, paddingBottom: 12, gap: 8 },
+  label: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textSecondary },
   sub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary, marginTop: -6 },
-  shelf: { flexDirection: 'row', gap: 3, height: 5 },
-  slice: { flexBasis: 0, minWidth: 8, height: 5, borderRadius: 3 },
+  shelf: { flexDirection: 'row', gap: 3, height: 8 },
+  slice: { flexBasis: 0, minWidth: 8, height: 8, borderRadius: 4 },
   legend: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 12, rowGap: 6 },
   legendItem: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', maxWidth: '100%' },
   key: { width: 9, height: 9, borderRadius: 5, marginRight: 5 },

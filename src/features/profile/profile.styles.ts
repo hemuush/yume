@@ -39,9 +39,9 @@ export const styles = StyleSheet.create({
   identityRow: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   identityText: { flex: 1, minWidth: 0 },
   avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     alignItems: 'center',
     justifyContent: 'center',
     // Without this, a circular View's background can render clipped to a stale layout measurement on Android
@@ -159,6 +159,13 @@ export const styles = StyleSheet.create({
   // PrimaryButton because it sits inline in a settings row.
   dailyGoalBtnRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 2 },
   dailyGoalBtn: { flexGrow: 1, flexBasis: 120 },
+
+  // ---- Settings: inline theme swatches ----
+  swatches: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 8, paddingBottom: 10 },
+  swatchHit: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
+  swatchActive: { borderWidth: 2, borderColor: theme.colors.ink },
+  swatch: { width: 30, height: 30, borderRadius: 15, overflow: 'hidden', justifyContent: 'flex-end' },
+  swatchHalf: { height: '50%' },
 
   // ---- Settings: About footer ----
   footer: { alignItems: 'center', gap: 2, paddingTop: 26, paddingBottom: 4 },

@@ -8,6 +8,8 @@ import { formatMoney } from '@/lib/money';
 import type { BudgetsSummary, DueGroup, LoansSummary } from './planOverview';
 import type { SavingsGoal } from '@/types';
 import type { PlanTab } from './PlanNavigation';
+import type { Runway } from './runway';
+import { dayMonth } from '@/lib/dateLabels';
 
 type Row = {
   key: string;
@@ -52,6 +54,7 @@ export function PlanOverviewPanels({
   goals,
   today,
   hideAmounts,
+  runway,
   onTab,
   onBudget,
 }: {
@@ -61,6 +64,8 @@ export function PlanOverviewPanels({
   goals: SavingsGoal[];
   today: string;
   hideAmounts: boolean;
+  /** When its balance dips below zero, the shortfall is the first thing needing attention. */
+  runway?: Runway;
   onTab: (tab: PlanTab) => void;
   onBudget: (id: string) => void;
 }) {
@@ -68,6 +73,15 @@ export function PlanOverviewPanels({
     .flatMap((g) => g.items)
     .filter((item) => item.dueDate < today && (item.kind === 'bill' || item.kind === 'emi'));
   const alerts: Row[] = [];
+  if (runway?.short)
+    alerts.push({
+      key: 'short',
+      title: 'Balance runs short',
+      detail: `${formatMoney(runway.short.minor)} below zero on ${dayMonth(runway.short.date)}`,
+      icon: 'trending-down',
+      warning: true,
+      onPress: () => onTab('upcoming'),
+    });
   if (overdue.length)
     alerts.push({
       key: 'late',

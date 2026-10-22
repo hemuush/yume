@@ -8,6 +8,9 @@ import { Section } from '@/components/Section';
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { ProgressRing } from '@/components/ProgressRing';
 import { theme } from '@/constants/theme';
+import { haptics } from '@/lib/haptics';
+import { ROW_LAYOUT } from '@/lib/animation';
+import { screenStyles as h } from '@/components/screenStyles';
 import { categorySentence } from '@/lib/categoryLabel';
 import { formatMoney, formatMaskableMoney } from '@/lib/money';
 import { withPressed } from '@/lib/pressed';
@@ -215,7 +218,7 @@ export function HomeComingUp({
       onSeeAll={() => onSeeAll(filter)}
       actionLabel={filter === 'budget' ? 'All budgets' : filter === 'goal' ? 'All goals' : 'View plan'}
     >
-      <View style={styles.card}>
+      <Animated.View layout={ROW_LAYOUT} style={styles.card}>
         {kindsPresent > 1 && (
           <View style={styles.chips} accessibilityRole="toolbar" accessibilityLabel="Filter coming up">
             {FILTERS.filter((f) => f.key === 'all' || counts[f.key] > 0).map((f) => (
@@ -224,7 +227,10 @@ export function HomeComingUp({
                 label={f.label}
                 active={filter === f.key}
                 attention={f.key !== 'all' && attention[f.key]}
-                onPress={() => setPicked(f.key)}
+                onPress={() => {
+                  if (f.key !== filter) haptics.tap();
+                  setPicked(f.key);
+                }}
               />
             ))}
           </View>
@@ -268,20 +274,13 @@ export function HomeComingUp({
             />
           </View>
         )}
-      </View>
+      </Animated.View>
     </Section>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
-    marginHorizontal: 16,
-    paddingHorizontal: 12,
-    paddingBottom: 6,
-    borderRadius: 28,
-    backgroundColor: theme.colors.surface,
-    overflow: 'hidden',
-  },
+  card: { ...h.card, paddingHorizontal: 12, paddingBottom: 6 },
   chips: {
     flexDirection: 'row',
     flexWrap: 'wrap',

@@ -914,7 +914,7 @@ it('updates Home daily remaining after save/edit/deletion without a refund refil
   const food = await createCategory({ name: 'Today food', kind: 'expense' });
   const tree = await open(SCREENS[0][1]);
   try {
-    expect(textOf(tree)).toContain('₹500 left today');
+    expect(textOf(tree)).toContain('No spending');
     let expense!: Awaited<ReturnType<typeof createTransaction>>;
     await act(async () => {
       expense = await createTransaction({
@@ -927,7 +927,7 @@ it('updates Home daily remaining after save/edit/deletion without a refund refil
       emitTransactionsChanged();
       await settle();
     });
-    expect(textOf(tree)).toContain('₹430 left today');
+    expect(textOf(tree)).toContain('₹430 left');
     await act(async () => {
       await updateTransaction(expense.id, {
         type: 'expense',
@@ -939,7 +939,7 @@ it('updates Home daily remaining after save/edit/deletion without a refund refil
       emitTransactionsChanged();
       await settle();
     });
-    expect(textOf(tree)).toContain('₹400 left today');
+    expect(textOf(tree)).toContain('₹400 left');
     await act(async () => {
       await createTransaction({
         type: 'income',
@@ -952,13 +952,13 @@ it('updates Home daily remaining after save/edit/deletion without a refund refil
       emitTransactionsChanged();
       await settle();
     });
-    expect(textOf(tree)).toContain('₹400 left today');
+    expect(textOf(tree)).toContain('₹400 left');
     await act(async () => {
       await deleteTransaction(expense.id);
       emitTransactionsChanged();
       await settle();
     });
-    expect(textOf(tree)).toContain('₹500 left today');
+    expect(textOf(tree)).toContain('No spending');
   } finally {
     act(() => tree.unmount());
   }
@@ -980,7 +980,7 @@ it('refreshes daily remaining together with the current month after period navig
   const food = await createCategory({ name: 'Period food', kind: 'expense' });
   const tree = await open(SCREENS[0][1]);
   try {
-    expect(textOf(tree)).toContain('₹500 left today');
+    expect(textOf(tree)).toContain('No spending');
     await createTransaction({
       type: 'expense',
       accountId: bank.id,
@@ -997,7 +997,7 @@ it('refreshes daily remaining together with the current month after period navig
       await settle();
     });
     expect(tree.root.findByType(ThisMonthHero).props.spentMinor).toBe(7000);
-    expect(textOf(tree)).toContain('₹430 left today');
+    expect(textOf(tree)).toContain('₹430 left');
   } finally {
     act(() => tree.unmount());
   }
@@ -1024,7 +1024,7 @@ it('refreshes today spending when Home returns from the background without navig
   const food = await createCategory({ name: 'Foreground food', kind: 'expense' });
   const tree = await open(SCREENS[0][1]);
   try {
-    expect(textOf(tree)).toContain('₹500 left today');
+    expect(textOf(tree)).toContain('No spending');
     act(() => callbacks.forEach((callback) => callback('background')));
     await createTransaction({
       type: 'expense',
@@ -1037,8 +1037,8 @@ it('refreshes today spending when Home returns from the background without navig
       callbacks.forEach((callback) => callback('active'));
       await settle();
     });
-    expect(textOf(tree)).toContain('₹430 left today');
-    expect(textOf(tree)).toContain('₹70 spent today');
+    expect(textOf(tree)).toContain('₹430 left');
+    expect(textOf(tree)).toContain('Today | ₹70 | ₹430 left');
   } finally {
     act(() => tree.unmount());
     subscription.mockRestore();

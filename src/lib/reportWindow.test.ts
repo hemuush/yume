@@ -14,7 +14,7 @@ import {
   rangeDays,
   CustomRange,
 } from './period';
-import { buildRangeHeatGrid } from '@/features/reports/reportsInsights';
+import { buildHeat } from '@/features/reports/reportsInsights';
 
 const custom = (start: string, end: string): CustomRange => ({ granularity: 'custom', start, end });
 
@@ -86,51 +86,28 @@ describe('custom report ranges', () => {
   });
 });
 
-describe('buildRangeHeatGrid', () => {
-  const daily = [
-    { date: '2026-08-30', totalMinor: 5000 },
-    { date: '2026-09-02', totalMinor: 20000 },
-  ];
-
-  it('draws a short range day by day, lined up under its weekdays', () => {
-    const onDayPress = jest.fn();
-    const grid = buildRangeHeatGrid({
-      start: '2026-08-28',
-      end: '2026-09-03',
-      daily,
-      onDayPress,
-      todayIso: '2026-09-03',
-    });
-    expect(grid.columns).toBe(7);
-    expect(grid.leadingPad).toBe(5); // 28 Aug 2026 is a Friday
-    expect(grid.cells.map((c) => c.label)).toEqual(['28', '29', '30', '31', '1', '2', '3']);
-    expect(grid.cells.find((c) => c.key === '2026-09-02')?.level).toBe(4);
-    expect(grid.cells.find((c) => c.key === '2026-09-03')?.isToday).toBe(true);
-    grid.cells.find((c) => c.key === '2026-08-30')?.onPress?.();
-    expect(onDayPress).toHaveBeenCalledWith('2026-08-30');
-    grid.cells.find((c) => c.key === '2026-08-31')?.onPress?.();
-    expect(onDayPress).toHaveBeenCalledWith('2026-08-31');
-  });
-
-  it('draws a long range one cell per month, from its own days only', () => {
-    const grid = buildRangeHeatGrid({
-      start: '2026-04-01',
-      end: '2026-09-26',
+describe('buildHeat for a custom range', () => {
+  it('draws a long range as a matrix with a row per month it touches', () => {
+    const heat = buildHeat({
+      range: { start: '2026-04-01', end: '2026-09-26' },
       daily: [
         { date: '2026-04-10', totalMinor: 100 },
         { date: '2026-09-20', totalMinor: 400 },
       ],
-      onDayPress: jest.fn(),
+      today: '2026-09-26',
     });
-    expect(grid.columns).toBe(4);
-    expect(grid.cells.map((c) => c.key)).toEqual([
-      'm-2026-04',
-      'm-2026-05',
-      'm-2026-06',
-      'm-2026-07',
-      'm-2026-08',
-      'm-2026-09',
+    if (heat.kind !== 'matrix') throw new Error('expected a matrix');
+    expect(heat.rows.map((r) => r.key)).toEqual([
+      '2026-04',
+      '2026-05',
+      '2026-06',
+      '2026-07',
+      '2026-08',
+      '2026-09',
     ]);
-    expect(grid.cells.map((c) => c.level)).toEqual([2, 0, 0, 0, 0, 4]);
+    expect(heat.rows[0].days[9]?.level).toBe(2);
+    expect(heat.rows[5].days[19]?.level).toBe(4);
+    // The range ends on the 26th: later days of September are outside it.
+    expect(heat.rows[5].days[26]).toBeNull();
   });
 });

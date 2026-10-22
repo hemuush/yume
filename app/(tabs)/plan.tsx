@@ -432,6 +432,7 @@ export default function PlanScreen() {
                     goals={data.goals}
                     today={data.today}
                     hideAmounts={hideAmounts}
+                    runway={data.hasAccounts ? data.runway : undefined}
                     onTab={selectTab}
                     onBudget={(id) => openDetail('budget', id)}
                   />

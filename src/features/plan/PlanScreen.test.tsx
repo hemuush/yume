@@ -307,7 +307,7 @@ describe('Plan tab', () => {
   it('shows the balance with its verdict, then the sections of Overview', async () => {
     const shown = texts(await render());
     const headings = [
-      'Spending-account outlook',
+      'Runway · next 30 days',
       'Covered',
       'Needs attention',
       'Your plans',
@@ -325,7 +325,7 @@ describe('Plan tab', () => {
 
   it("shows each section's own figures", async () => {
     const shown = texts(await render());
-    expect(shown).toEqual(expect.arrayContaining(['₹500', '4 days', 'Your plans', 'Food', '₹25,450']));
+    expect(shown).toEqual(expect.arrayContaining(['₹500', '4 days', 'Your plans', 'Food', '₹30,000']));
     expect(shown.some((t) => t.endsWith('over budget'))).toBe(true);
     expect(shown).not.toContain('Streaming');
     expect(shown).not.toContain('Home loan');
@@ -347,7 +347,7 @@ describe('Plan tab', () => {
         day: 'numeric',
         month: 'short',
       });
-      expect(shown).toContain(`First shortfall · ${short}`);
+      expect(shown.some((t) => t.includes(`first shortfall ${short}`))).toBe(true);
       expect(shown).toContain('₹15,450 more needed');
     } finally {
       mockBank = 3000000;
