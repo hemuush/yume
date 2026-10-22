@@ -447,22 +447,29 @@ export default function TransactionsScreen() {
   // Past searches (kept on the phone), shown before anything is typed; a search counts once it is
   // submitted or one of its results is opened.
   const [recentSearches, setRecentSearchesState] = useState<string[]>([]);
-  const rememberSearch = useCallback((q: string) => {
-    const trimmed = q.trim();
-    if (trimmed.length < SEARCH_MIN_CHARS) return;
-    setRecentSearchesState((prev) => {
-      const next = [trimmed, ...prev.filter((p) => p.toLowerCase() !== trimmed.toLowerCase())].slice(
-        0,
-        RECENT_SEARCHES_KEPT
-      );
-      void setRecentSearches(next).catch(() => {});
-      return next;
-    });
+  // The latest list, so remembering a search computes from it and saves once, outside a state updater.
+  const recentSearchesRef = useRef<string[]>([]);
+  const showRecentSearches = useCallback((list: string[]) => {
+    recentSearchesRef.current = list;
+    setRecentSearchesState(list);
   }, []);
+  const rememberSearch = useCallback(
+    (q: string) => {
+      const trimmed = q.trim();
+      if (trimmed.length < SEARCH_MIN_CHARS) return;
+      const next = [
+        trimmed,
+        ...recentSearchesRef.current.filter((p) => p.toLowerCase() !== trimmed.toLowerCase()),
+      ].slice(0, RECENT_SEARCHES_KEPT);
+      showRecentSearches(next);
+      void setRecentSearches(next).catch(() => {});
+    },
+    [showRecentSearches]
+  );
   const openSearch = () => {
     setSearching(true);
     getRecentSearches()
-      .then(setRecentSearchesState)
+      .then(showRecentSearches)
       .catch(() => {});
   };
   const closeSearch = () => {
@@ -734,7 +741,7 @@ export default function TransactionsScreen() {
                     recent={recentSearches}
                     onPick={setSearchQuery}
                     onClearRecent={() => {
-                      setRecentSearchesState([]);
+                      showRecentSearches([]);
                       void setRecentSearches([]).catch(() => {});
                     }}
                   />

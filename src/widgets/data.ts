@@ -9,7 +9,8 @@ import {
 } from '@/db/reports';
 import { getNextDueInstallment } from '@/db/loans';
 import { listRecurringRules } from '@/db/recurring';
-import { getAccentColor, getThemeId, getHideSensitiveAmounts } from '@/db/settings';
+import { getAccentColor, getDefaultCurrency, getThemeId, getHideSensitiveAmounts } from '@/db/settings';
+import { recurringRulesInCurrency } from '@/lib/recurringScope';
 import { formatMaskableMoney, formatMoney } from '@/lib/money';
 import { resolveActiveTheme } from '@/theme/themes';
 import { CURRENT_PERIOD, periodRange, previousPeriodRange } from '@/lib/period';
@@ -208,14 +209,17 @@ interface DueCandidate extends NextDueWidgetData {
 }
 
 export async function getNextDueWidgetData(): Promise<NextDueWidgetData | null> {
-  const [nextDue, rules, categories, theme, hideAmounts, accounts] = await Promise.all([
+  const [nextDue, allRules, categories, theme, hideAmounts, accounts, currency] = await Promise.all([
     getNextDueInstallment(),
     listRecurringRules(),
     listCategories(),
     getActiveThemeOnce(),
     getHideSensitiveAmounts(),
     listAccounts(),
+    getDefaultCurrency(),
   ]);
+  // Amounts here print in the default currency, so a rule on another currency's account is left out, as on Home.
+  const rules = recurringRulesInCurrency(allRules, accounts, currency);
   const categoriesById = new Map(categories.map((c) => [c.id, c]));
   const savingsIds = savingsAccountIdsOf(accounts);
 

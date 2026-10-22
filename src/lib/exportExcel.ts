@@ -3,7 +3,7 @@ import { listAccounts, listCategories, listTransactions } from '@/db/ledger';
 import { listLoans } from '@/db/loans';
 import { listPeople, PersonWithBalance } from '@/db/people';
 import { getDefaultCurrency } from '@/db/settings';
-import { toMajor } from './money';
+import { getCurrencySymbol, toMajor } from './money';
 import { Account, Category, Loan, Transaction } from '@/types';
 
 /**
@@ -108,16 +108,6 @@ function tileValueStyle(fill: string, numFmt: string, color: string = C.ink): Ce
   };
 }
 
-/** Extracts just the currency symbol/prefix Intl would use, for a numFmt literal like "₹"#,##0.00 */
-function currencySymbol(currency: string): string {
-  try {
-    const parts = new Intl.NumberFormat(undefined, { style: 'currency', currency }).formatToParts(0);
-    return parts.find((p) => p.type === 'currency')?.value ?? currency;
-  } catch {
-    return currency;
-  }
-}
-
 function moneyFmt(symbol: string): string {
   // Escaped so Excel treats the symbol as a literal, not a format directive; negatives render red with a
   // leading minus, matching how the app colours expenses.
@@ -171,7 +161,7 @@ export interface ExportData {
  */
 export function buildExportWorkbook(data: ExportData): XLSX.WorkBook {
   const { currency, accounts, categories, transactions, loans, people } = data;
-  const symbol = currencySymbol(currency);
+  const symbol = getCurrencySymbol(currency);
   const moneyStyle = moneyFmt(symbol);
 
   const accountName = new Map(accounts.map((a) => [a.id, a.name]));
@@ -312,7 +302,7 @@ export function buildExportWorkbook(data: ExportData): XLSX.WorkBook {
   const txHeaders = ['Date', 'Type', 'Account', 'To Account', 'Category', 'Amount', 'Note', 'Currency'];
   const transactionCurrencies = new Set(sorted.map((t) => currencyOf.get(t.accountId) ?? currency));
   const mixedCurrencies = transactionCurrencies.size > 1;
-  const transactionMoneyStyle = moneyFmt(currencySymbol([...transactionCurrencies][0] ?? currency));
+  const transactionMoneyStyle = moneyFmt(getCurrencySymbol([...transactionCurrencies][0] ?? currency));
   const txRows = sorted.map((t) => [
     t.date,
     t.isRefund ? 'Refund' : t.type[0].toUpperCase() + t.type.slice(1),
@@ -335,7 +325,7 @@ export function buildExportWorkbook(data: ExportData): XLSX.WorkBook {
       const ref = XLSX.utils.encode_cell({ r: i + 1, c });
       if (c === 5) {
         txSheet[ref].s = bodyStyle(shaded, {
-          numFmt: moneyFmt(currencySymbol(currencyOf.get(sorted[i].accountId) ?? currency)),
+          numFmt: moneyFmt(getCurrencySymbol(currencyOf.get(sorted[i].accountId) ?? currency)),
           font: { color: { rgb: amountColor }, bold: true },
           alignment: { horizontal: 'right' },
         });
@@ -349,7 +339,9 @@ export function buildExportWorkbook(data: ExportData): XLSX.WorkBook {
   setCell(
     txSheet,
     XLSX.utils.encode_cell({ r: totalRowIdx, c: 0 }),
-    mixedCurrencies ? 'Mixed currencies — no combined total' : 'Total (respects any filter applied above)',
+    mixedCurrencies
+      ? 'Mixed currencies — no combined total'
+      : 'Sum of amounts listed (income, expenses and transfers all count as positive; respects any filter)',
     totalRowStyle()
   );
   for (let c = 1; c < 5; c++) {
@@ -426,7 +418,7 @@ export function buildExportWorkbook(data: ExportData): XLSX.WorkBook {
       accSheet[ref].s =
         c === 2 || c >= 4
           ? bodyStyle(shaded, {
-              numFmt: moneyFmt(currencySymbol(accounts[i].currency)),
+              numFmt: moneyFmt(getCurrencySymbol(accounts[i].currency)),
               font: { color: { rgb: c === 2 && negative ? C.expense : C.ink }, bold: c === 2 },
               alignment: { horizontal: 'right' },
             })

@@ -129,6 +129,18 @@ describe('writeLocalBackupNow', () => {
     expect(writeOrder).toBeLessThan(deleteOrder);
   });
 
+  it('writes the backup even when another file in the folder has a name that cannot be decoded', async () => {
+    (StorageAccessFramework.readDirectoryAsync as jest.Mock).mockResolvedValue([
+      'content://tree/primary/100%-done',
+    ]);
+    (StorageAccessFramework.createFileAsync as jest.Mock).mockResolvedValue('content://new-file');
+
+    await expect(writeLocalBackupNow('content://tree/primary')).resolves.toEqual(
+      expect.objectContaining({ sizeBytes: expect.any(Number) })
+    );
+    expect(StorageAccessFramework.deleteAsync).not.toHaveBeenCalled();
+  });
+
   it("keeps today's existing backup when writing the new one fails, and removes the half-written file", async () => {
     const todayIso = toLocalIsoDate(new Date());
     const existingUri = `content://tree/primary/yume-backup-${todayIso}`;

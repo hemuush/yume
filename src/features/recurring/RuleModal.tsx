@@ -379,7 +379,10 @@ export function RuleModal({
           hue={type === 'transfer' ? secondary : (cat?.color ?? accent)}
           icon={type === 'transfer' ? 'swap-horizontal' : (cat?.icon ?? 'repeat')}
           kicker={cadenceLabel(frequency, interval)}
-          amount={formatMoney(inputMinor(amount))}
+          amount={formatMoney(
+            inputMinor(amount),
+            accounts.find((a) => a.id === effectiveAccountId)?.currency
+          )}
           title={
             note ||
             (type === 'transfer'

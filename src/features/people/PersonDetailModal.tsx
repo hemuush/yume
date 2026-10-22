@@ -117,9 +117,6 @@ export function PersonDetailModal({
   // Derived from the live ledger, not the `person` prop, which is a snapshot from when the modal opened and
   // goes stale once a new entry is recorded.
   const currency = getCachedCurrency();
-  const liveBalanceMinor = detailsLoaded
-    ? ledger.reduce((sum, e) => ((e.currency ?? currency) === currency ? sum + e.amountMinor : sum), 0)
-    : person.balanceMinor;
   // Show each history entry rounded so the running list adds up to the
   // rounded balance shown at the top of the sheet.
   const dispEntryAmounts = new Array<number>(ledger.length);
@@ -193,6 +190,14 @@ export function PersonDetailModal({
       }
       setAmount('');
       setNote('');
+    } catch (e) {
+      setError(errorMessage(e));
+      setSaving(false);
+      running.current = false;
+      return;
+    }
+    // The entry is saved. A failed refresh must not read as a failed save, or a retry would record it twice.
+    try {
       await load();
       await onChanged();
     } catch (e) {
@@ -212,8 +217,13 @@ export function PersonDetailModal({
     try {
       const snapshot = await deleteLedgerEntry(entry.id);
       haptics.warn();
+      // The entry is gone, so a failed refresh must not hide the Undo or read as a failed delete.
       await load();
-      await onChanged();
+      try {
+        await onChanged();
+      } catch {
+        // The parent refreshes again on focus.
+      }
       showUndo(`Deleted ${entry.note || (entry.amountMinor >= 0 ? 'Lent' : 'Repaid')}`, async () => {
         await restoreLedgerEntry(snapshot);
         await load();
@@ -265,7 +275,7 @@ export function PersonDetailModal({
         ) : (
           // Worded from where the balance stands: when you owe them, paying back is the main action.
           <View style={[f.footerRow, stacked && styles.footerStack]}>
-            {liveBalanceMinor < 0 ? (
+            {dispBalanceMinor < 0 ? (
               <>
                 <PrimaryButton
                   loading={saving}
@@ -311,16 +321,16 @@ export function PersonDetailModal({
           record money either way, and the history. */}
       <SheetCard
         hue={
-          liveBalanceMinor > 0
+          dispBalanceMinor > 0
             ? theme.colors.secondary
-            : liveBalanceMinor < 0
+            : dispBalanceMinor < 0
               ? theme.colors.idCoralDeep
               : accent
         }
         icon="account-outline"
-        kicker={liveBalanceMinor > 0 ? 'Owes you' : liveBalanceMinor < 0 ? 'You owe' : 'All square'}
+        kicker={dispBalanceMinor > 0 ? 'Owes you' : dispBalanceMinor < 0 ? 'You owe' : 'All square'}
         amount={formatMoney(Math.abs(dispBalanceMinor))}
-        amountColor={liveBalanceMinor < 0 ? theme.colors.expenseText : theme.colors.textPrimary}
+        amountColor={dispBalanceMinor < 0 ? theme.colors.expenseText : theme.colors.textPrimary}
         title={person.name}
         meta={
           !detailsLoaded
@@ -377,13 +387,13 @@ export function PersonDetailModal({
       {tab === 'settle' && (
         <>
           <AmountField label="Amount" value={amount} onChangeText={setAmount} placeholder="0" />
-          {liveBalanceMinor !== 0 && (
+          {dispBalanceMinor !== 0 && (
             // One tap fills the whole balance, the usual way a friend's tab gets settled.
             <View style={styles.settleRow}>
               <Chip
-                label={`Settle ${formatMoney(Math.abs(liveBalanceMinor))}`}
-                active={inputMinor(amount) === Math.abs(liveBalanceMinor)}
-                onPress={() => setAmount(String(Math.abs(liveBalanceMinor) / 100))}
+                label={`Settle ${formatMoney(Math.abs(dispBalanceMinor))}`}
+                active={inputMinor(amount) === Math.abs(dispBalanceMinor)}
+                onPress={() => setAmount(String(Math.abs(dispBalanceMinor) / 100))}
               />
             </View>
           )}
@@ -414,7 +424,7 @@ export function PersonDetailModal({
           </View>
           <Text style={styles.hintText}>
             {accountId
-              ? liveBalanceMinor < 0
+              ? dispBalanceMinor < 0
                 ? '“I owe more” records money in. “I paid them back” records money out of the selected account.'
                 : '“They owe more” records money out. “They repaid” records money into the selected account.'
               : 'Balance only adjusts what’s owed. Choose an account if money actually moved.'}
