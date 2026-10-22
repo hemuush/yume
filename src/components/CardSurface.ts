@@ -6,7 +6,7 @@ export const cardSurface = StyleSheet.create({
   neutral: { backgroundColor: theme.colors.surface, borderColor: theme.colors.borderSoft, boxShadow: 'none' },
   summary: {
     backgroundColor: theme.colors.surface,
-    borderColor: theme.colors.inkHairline,
+    borderColor: theme.colors.borderSoft,
     boxShadow: 'none',
   },
   savings: {

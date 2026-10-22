@@ -974,7 +974,7 @@ export default function TransactionsScreen() {
                     style={withPressed([
                       styles.scopeBtn,
                       stackPeriod && styles.scopeBtnStacked,
-                      on && { backgroundColor: ink },
+                      on && { backgroundColor: accent },
                     ])}
                     accessibilityRole="radio"
                     accessibilityState={{ selected: on }}

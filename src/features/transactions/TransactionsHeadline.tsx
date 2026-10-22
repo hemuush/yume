@@ -108,7 +108,7 @@ export function TransactionsHeadline({
   const net = displayed.incomeMinor - displayed.expenseMinor;
   const change = displayed.expenseChangeMinor;
   return (
-    <Glass radius={28} style={[styles.sumCard, cardSurface.summary]}>
+    <Glass radius={theme.radius.xl2} style={[styles.sumCard, cardSurface.summary]}>
       <ReanimatedAnimated.View style={slideStyle}>
         <View style={[styles.sumTop, stacked && styles.sumTopStacked]}>
           <View style={styles.sumLead}>
