@@ -418,7 +418,7 @@ export default function NotificationSettingsScreen() {
                 <ToggleSwitch
                   accessibilityLabel="Suu's check-ins"
                   value={prefs.suuCheckins}
-                  onChange={(v) => save({ ...prefs, suuCheckins: v })}
+                  onChange={(v) => latest.current && save({ ...latest.current, suuCheckins: v })}
                 />
               }
             />

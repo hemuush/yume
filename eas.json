@@ -19,30 +19,6 @@
         "buildType": "app-bundle"
       },
       "autoIncrement": false
-    },
-    "diagnose-r8-preset": {
-      "extends": "preview",
-      "env": {
-        "ORG_GRADLE_PROJECT_reactNativeArchitectures": "arm64-v8a",
-        "YUME_R8_PRESET": "legacy"
-      }
-    },
-    "diagnose-modules": {
-      "extends": "preview",
-      "env": {
-        "ORG_GRADLE_PROJECT_reactNativeArchitectures": "arm64-v8a",
-        "EXPO_PUBLIC_YUME_DIAG": "modules"
-      }
-    },
-    "diagnose-no-minify": {
-      "extends": "preview",
-      "env": {
-        "ORG_GRADLE_PROJECT_reactNativeArchitectures": "arm64-v8a",
-        "YUME_MINIFY": "off"
-      }
     }
-  },
-  "submit": {
-    "production": {}
   }
 }

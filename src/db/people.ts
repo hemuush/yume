@@ -211,9 +211,9 @@ export async function undoPersonTransaction(transactionId: string): Promise<void
       'SELECT id FROM person_ledger_entries WHERE transaction_id = ?',
       [transactionId]
     );
-    if (entry) {
-      await tx.runAsync('DELETE FROM person_ledger_entries WHERE id = ?', [entry.id]);
-    }
+    // Any other transaction has its own undo or delete path, which this must not bypass.
+    if (!entry) throw new Error('That transaction is not a Friends & Family entry');
+    await tx.runAsync('DELETE FROM person_ledger_entries WHERE id = ?', [entry.id]);
     await tx.runAsync('DELETE FROM transactions WHERE id = ?', [transactionId]);
   });
   await rebuildNotificationsAfterCommit();

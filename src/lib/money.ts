@@ -21,14 +21,28 @@ export function toMajor(minor: number): number {
   return minor / 100;
 }
 
+// Building an Intl.NumberFormat is slow and lists format one amount per row, so each currency's is made once.
+const symbolFormats = new Map<string, Intl.NumberFormat>();
+const wholeUnitFormats = new Map<string, Intl.NumberFormat>();
+
+function cachedFormat(
+  cache: Map<string, Intl.NumberFormat>,
+  currency: string,
+  options: Intl.NumberFormatOptions
+): Intl.NumberFormat {
+  let format = cache.get(currency);
+  if (!format) {
+    format = new Intl.NumberFormat(undefined, { style: 'currency', currency, ...options });
+    cache.set(currency, format);
+  }
+  return format;
+}
+
 /** Just the currency symbol/prefix (e.g. "₹", "$") — used wherever a real amount is masked but should still read as money, not a stray number. */
 export function getCurrencySymbol(currency?: string): string {
   const resolvedCurrency = currency ?? getCachedCurrency();
   try {
-    const parts = new Intl.NumberFormat(undefined, {
-      style: 'currency',
-      currency: resolvedCurrency,
-    }).formatToParts(0);
+    const parts = cachedFormat(symbolFormats, resolvedCurrency, {}).formatToParts(0);
     return parts.find((p) => p.type === 'currency')?.value ?? resolvedCurrency;
   } catch {
     return resolvedCurrency;
@@ -56,9 +70,7 @@ export function formatMoney(minor: number, currency?: string): string {
   try {
     // Intl sets per-currency precision (a fixed maximumFractionDigits would print "¥500.00" for JPY).
     // Amounts show rounded to whole units: paise/cents matter for stored math but are noise on screen.
-    return new Intl.NumberFormat(undefined, {
-      style: 'currency',
-      currency: resolvedCurrency,
+    return cachedFormat(wholeUnitFormats, resolvedCurrency, {
       maximumFractionDigits: 0,
       minimumFractionDigits: 0,
     }).format(major);

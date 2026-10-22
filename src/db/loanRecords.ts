@@ -173,6 +173,10 @@ export async function createLoan(input: CreateLoanInput): Promise<Loan> {
         ]
       );
       if (feeAmountMinor > 0) {
+        if (input.direction === 'borrowed' && !input.disbursement.feeCategoryId) {
+          // The disbursement's own category is income when borrowing, so it cannot carry the fee expense.
+          throw new Error('Choose a category for the loan fee');
+        }
         // Always an expense, whatever the direction: real cash left via processing/documentation charges,
         // separate from principal.
         await tx.runAsync(

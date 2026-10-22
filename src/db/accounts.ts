@@ -354,12 +354,10 @@ export async function getAccountTransactionCount(accountId: string): Promise<num
 }
 
 /**
- * Hides an account from pickers and totals, keeping its history, like `archiveCategory`. Linked loans'
- * `linked_account_id` keeps working: that FK is SET NULL only on real deletes.
- */
-/**
- * Archives an account and pauses the recurring entries that post into or out of it: they'd otherwise keep
- * landing in an account hidden from every total. Unarchiving leaves them paused to resume by hand.
+ * Archives an account: hidden from pickers and totals, history kept (like `archiveCategory`), and linked loans'
+ * `linked_account_id` keeps working (that FK is SET NULL only on real deletes). Recurring entries posting into
+ * or out of it are paused, or they'd keep landing in an account hidden from every total. Unarchiving leaves
+ * them paused to resume by hand.
  */
 export async function archiveAccount(id: string): Promise<void> {
   const db = await getDb();
@@ -378,16 +376,16 @@ export async function unarchiveAccount(id: string): Promise<void> {
   await db.runAsync('UPDATE accounts SET archived = 0 WHERE id = ?', [id]);
 }
 
-/**
- * Permanently deletes a never-used account; one with history must be archived. Checked first so the user
- * gets a clear message, not the raw SQLite error from `ON DELETE RESTRICT` on `transactions.account_id`.
- */
 interface DeletedAccount extends RowSnapshot {
   /** Loans and goals that pointed at the account; the delete unlinks them (ON DELETE SET NULL), Undo relinks. */
   linkedLoanIds: string[];
   linkedGoalIds: string[];
 }
 
+/**
+ * Permanently deletes a never-used account; one with history must be archived. Checked first so the user
+ * gets a clear message, not the raw SQLite error from `ON DELETE RESTRICT` on `transactions.account_id`.
+ */
 export async function deleteAccount(id: string): Promise<DeletedAccount> {
   const db = await getDb();
   let snapshot: DeletedAccount | null = null;

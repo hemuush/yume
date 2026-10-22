@@ -151,8 +151,6 @@ export const frost = StyleSheet.create({
   sideValue: { fontFamily: theme.font.body, fontSize: 15, color: theme.colors.textPrimary, marginTop: 1 },
   sub: { fontFamily: theme.font.body, fontSize: 13, lineHeight: 19, color: theme.colors.textSecondary },
   subBold: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
-  /** A small line under a bar. */
-
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   chip: {
     flexDirection: 'row',
@@ -194,15 +192,5 @@ export const frost = StyleSheet.create({
     marginLeft: -1,
     borderRadius: 1,
     backgroundColor: theme.colors.ink,
-  },
-
-  /** Section title over a glass list, on the wallpaper. */
-  note: {
-    fontFamily: theme.font.body,
-    fontSize: 12,
-    lineHeight: 17,
-    color: theme.colors.textMuted,
-    marginHorizontal: SCREEN.gutter + 4,
-    marginTop: 8,
   },
 });
