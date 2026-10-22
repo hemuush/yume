@@ -1,4 +1,4 @@
-import type { AppDb, SqlParam } from './client';
+import type { AppDb, SqlParam } from './dbTypes';
 
 /**
  * An exact raw copy of one row, bypassing the `rowToXxx` mappers. Schema-agnostic on purpose: restoring via plain

@@ -18,7 +18,7 @@ jest.mock('@/lib/useReduceMotion', () => ({ useReduceMotion: () => true }));
 jest.mock('@/lib/haptics', () => ({
   haptics: { tap: jest.fn(), confirm: jest.fn(), warn: jest.fn(), select: jest.fn() },
 }));
-jest.mock('@/lib/notifications', () => ({ rebuildNotifications: async () => {} }));
+jest.mock('@/lib/notifications', () => ({ rebuildNotifications: async () => true }));
 
 jest.mock('react-native-keyboard-controller', () => ({
   KeyboardAwareScrollView: require('react-native').ScrollView,

@@ -65,10 +65,10 @@ function element(visible: boolean, filter: ActivityFilter, onApply = jest.fn(), 
     />
   );
 }
-function render(filter: ActivityFilter = none, accs = accounts) {
+async function render(filter: ActivityFilter = none, accs = accounts) {
   const onApply = jest.fn();
   let tree!: ReactTestRenderer;
-  act(() => {
+  await act(async () => {
     tree = create(element(true, filter, onApply, accs));
   });
   mounted.push(tree);
@@ -90,8 +90,8 @@ describe('FilterModal', () => {
     expect(labels(tree)).not.toContain('Travel');
     expect(listExpenseLabels).toHaveBeenCalledTimes(1);
   });
-  it('opens on the filter already applied', () => {
-    const { tree } = render({ type: 'expense', categoryIds: ['fuel'], accountIds: ['a2'] });
+  it('opens on the filter already applied', async () => {
+    const { tree } = await render({ type: 'expense', categoryIds: ['fuel'], accountIds: ['a2'] });
     expect(typeControl(tree).props.value).toBe('expense');
     expect(chip(tree, 'Test Fuel').props.active).toBe(true);
     expect(chip(tree, 'Test Food').props.active).toBe(false);
@@ -99,8 +99,8 @@ describe('FilterModal', () => {
     expect(chip(tree, 'Test Bank').props.active).toBe(false);
   });
 
-  it('shows only top-level categories until one with subcategories is tapped', () => {
-    const { tree } = render();
+  it('shows only top-level categories until one with subcategories is tapped', async () => {
+    const { tree } = await render();
     expect(labels(tree)).toEqual(
       expect.arrayContaining(['Test Food', 'Test Fuel', 'Test Pay', 'Test Bank', 'Test Cash'])
     );
@@ -114,15 +114,15 @@ describe('FilterModal', () => {
     expect(labels(tree)).not.toContain('Test Eating out');
   });
 
-  it('lets a category be switched off again by tapping it twice', () => {
-    const { tree } = render();
+  it('lets a category be switched off again by tapping it twice', async () => {
+    const { tree } = await render();
     act(() => chip(tree, 'Test Fuel').props.onPress());
     act(() => chip(tree, 'Test Fuel').props.onPress());
     expect(chip(tree, 'Test Fuel').props.active).toBe(false);
   });
 
-  it('narrows the categories to the chosen type and drops picks of the other kind', () => {
-    const { tree, onApply } = render({ type: 'all', categoryIds: ['fuel', 'pay'], accountIds: [] });
+  it('narrows the categories to the chosen type and drops picks of the other kind', async () => {
+    const { tree, onApply } = await render({ type: 'all', categoryIds: ['fuel', 'pay'], accountIds: [] });
     act(() => typeControl(tree).props.onChange('income'));
     expect(labels(tree)).toContain('Test Pay');
     expect(labels(tree)).not.toContain('Test Fuel');
@@ -130,26 +130,26 @@ describe('FilterModal', () => {
     expect(onApply).toHaveBeenCalledWith({ type: 'income', categoryIds: ['pay'], accountIds: [] });
   });
 
-  it('keeps every pick while the type stays on All', () => {
-    const { tree, onApply } = render({ type: 'all', categoryIds: ['fuel', 'pay'], accountIds: [] });
+  it('keeps every pick while the type stays on All', async () => {
+    const { tree, onApply } = await render({ type: 'all', categoryIds: ['fuel', 'pay'], accountIds: [] });
     act(() => button(tree, 'Apply').props.onPress());
     expect(onApply).toHaveBeenCalledWith({ type: 'all', categoryIds: ['fuel', 'pay'], accountIds: [] });
   });
 
-  it('hides the category chips for transfers, which have no categories of their own', () => {
-    const { tree } = render();
+  it('hides the category chips for transfers, which have no categories of their own', async () => {
+    const { tree } = await render();
     act(() => typeControl(tree).props.onChange('transfer'));
     expect(labels(tree)).not.toContain('Test Fuel');
     expect(labels(tree)).toContain('Test Bank');
   });
 
-  it('offers the account filter only when there is more than one account', () => {
-    const { tree } = render(none, [acc('a1', 'Test Bank')]);
+  it('offers the account filter only when there is more than one account', async () => {
+    const { tree } = await render(none, [acc('a1', 'Test Bank')]);
     expect(labels(tree)).not.toContain('Test Bank');
   });
 
-  it('applies the chosen accounts and categories together', () => {
-    const { tree, onApply } = render();
+  it('applies the chosen accounts and categories together', async () => {
+    const { tree, onApply } = await render();
     act(() => chip(tree, 'Test Bank').props.onPress());
     act(() => chip(tree, 'Test Cash').props.onPress());
     act(() => chip(tree, 'Test Cash').props.onPress());
@@ -158,28 +158,28 @@ describe('FilterModal', () => {
     expect(onApply).toHaveBeenCalledWith({ type: 'all', categoryIds: ['fuel'], accountIds: ['a1'] });
   });
 
-  it('clears every filter in one tap, whatever is picked in the sheet', () => {
-    const { tree, onApply } = render({ type: 'expense', categoryIds: ['fuel'], accountIds: ['a1'] });
+  it('clears every filter in one tap, whatever is picked in the sheet', async () => {
+    const { tree, onApply } = await render({ type: 'expense', categoryIds: ['fuel'], accountIds: ['a1'] });
     act(() => button(tree, 'Clear filters').props.onPress());
     expect(onApply).toHaveBeenCalledWith(none);
   });
 
-  it('forgets unapplied picks when it is reopened', () => {
-    const { tree } = render();
+  it('forgets unapplied picks when it is reopened', async () => {
+    const { tree } = await render();
     act(() => chip(tree, 'Test Fuel').props.onPress());
     act(() => typeControl(tree).props.onChange('expense'));
     act(() => tree.update(element(false, none)));
-    act(() => tree.update(element(true, none)));
+    await act(async () => tree.update(element(true, none)));
     expect(typeControl(tree).props.value).toBe('all');
     expect(chip(tree, 'Test Fuel').props.active).toBe(false);
   });
 });
 
 describe('FilterModal count', () => {
-  it('says how many entries the picks would show', () => {
+  it('says how many entries the picks would show', async () => {
     let tree!: ReactTestRenderer;
     const countFor = (f: ActivityFilter) => (f.categoryIds.length ? 3 : 12);
-    act(() => {
+    await act(async () => {
       tree = create(
         <FilterModal
           visible
@@ -199,15 +199,15 @@ describe('FilterModal count', () => {
   });
 });
 
-it('drops hidden category picks when switching to transfers, preserving the account filter', () => {
-  const { tree, onApply } = render({ type: 'expense', categoryIds: ['food'], accountIds: ['a2'] });
+it('drops hidden category picks when switching to transfers, preserving the account filter', async () => {
+  const { tree, onApply } = await render({ type: 'expense', categoryIds: ['food'], accountIds: ['a2'] });
   act(() => typeControl(tree).props.onChange('transfer'));
   act(() => button(tree, 'Apply').props.onPress());
   expect(onApply).toHaveBeenCalledWith({ type: 'transfer', categoryIds: [], accountIds: ['a2'] });
 });
 
-it('keeps a selected expense label and clears it for an incompatible type', () => {
-  const { tree, onApply } = render({
+it('keeps a selected expense label and clears it for an incompatible type', async () => {
+  const { tree, onApply } = await render({
     type: 'expense',
     categoryIds: [],
     accountIds: [],

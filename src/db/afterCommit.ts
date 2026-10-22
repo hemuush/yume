@@ -1,5 +1,5 @@
 import { rebuildNotifications } from '@/lib/notifications';
-import { getNotificationPrefs } from './settings';
+import { getNotificationPrefs, setHideSensitiveAmounts } from './settings';
 
 /** Privacy changes can invalidate both optional topics. Report failure separately from the committed save. */
 export async function refreshPrivacyNotificationsAfterCommit(): Promise<boolean> {
@@ -12,6 +12,12 @@ export async function refreshPrivacyNotificationsAfterCommit(): Promise<boolean>
     console.warn('Private reminder refresh failed after a committed change:', e);
     return false;
   }
+}
+
+/** Saves the privacy toggle, then refreshes queued reminders. Returns false if the save worked but they could not be refreshed. */
+export async function saveHideSensitiveAmounts(value: boolean): Promise<boolean> {
+  await setHideSensitiveAmounts(value);
+  return refreshPrivacyNotificationsAfterCommit();
 }
 
 /** Optional attention topics refresh only after their write commits; scheduling cannot fail the saved action. */

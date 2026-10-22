@@ -1,6 +1,6 @@
 import { getHideSensitiveAmounts } from './settings';
 import { listBudgetsForMonth } from './budgets';
-import { listCategories } from './categories';
+import { listCategories } from './categoryList';
 import { findTopGrowingCategory, getPeriodComparison } from './reports';
 import { budgetAlertCopy, spikeCopy } from '@/lib/notificationCopy';
 import { NOTIFICATION_ROUTES, type QueuedAlert } from '@/lib/notificationPlan';
