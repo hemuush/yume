@@ -40,7 +40,7 @@ it('restores the SDK 57 R8 preset only when asked, and keeps minification on', (
 it('turns R8 minification and resource shrinking off only when asked, without the preset plugin', () => {
   process.env.YUME_MINIFY = 'off';
   const config = buildConfig({ config: appJson });
-  expect(buildProperties(config)).toEqual({
+  expect(buildProperties(config)).toMatchObject({
     enableProguardInReleaseBuilds: false,
     enableShrinkResourcesInReleaseBuilds: false,
     enableMinifyInReleaseBuilds: false,
@@ -64,4 +64,17 @@ it('rewrites only the preset line of the generated app/build.gradle', () => {
   );
   const already = 'proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"';
   expect(useLegacyPreset(already)).toBe(already);
+});
+
+describe('R8 keep rules for WorkManager', () => {
+  // react-native-android-widget pulls in WorkManager 2.8.1 (Room 2.5.0). Under SDK 58's full-mode R8 the generated
+  // WorkDatabase_Impl loses its constructor and the release app closes at launch, before React Native starts.
+  it('keeps the constructors WorkManager creates by reflection', () => {
+    const props = appJson.plugins.find(
+      (p: unknown) => Array.isArray(p) && p[0] === 'expo-build-properties'
+    )[1];
+    const rules: string = props.android.extraProguardRules;
+    expect(rules).toContain('-keep class * extends androidx.room.RoomDatabase { <init>(); }');
+    expect(rules).toContain('-keep class * extends androidx.work.InputMerger { <init>(); }');
+  });
 });
