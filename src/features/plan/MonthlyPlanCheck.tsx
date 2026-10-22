@@ -172,8 +172,8 @@ export function MonthlyPlanCheck({
           </InsightDisclosure>
           {plan.incompleteLoans > 0 && (
             <Text style={s.hint}>
-              {plan.incompleteLoans} borrowed loans have no usable EMI schedule. Their payments are excluded;
-              this estimate is incomplete.
+              {plan.incompleteLoans} borrowed {plan.incompleteLoans === 1 ? 'loan has' : 'loans have'} no
+              usable EMI schedule. Their payments are excluded; this estimate is incomplete.
             </Text>
           )}
           {plan.undatedGoals > 0 && (

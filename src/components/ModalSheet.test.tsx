@@ -111,6 +111,42 @@ describe('related tasks in one native sheet', () => {
     act(() => tree.unmount());
   });
 
+  it('starts over once every page has closed, so a reopened lone page is not held to an old taller one', async () => {
+    jest
+      .spyOn(require('react-native'), 'useWindowDimensions')
+      .mockReturnValue({ height: 800, width: 360, fontScale: 1, scale: 3 });
+    const Flow = ({ open, second }: { open: boolean; second: boolean }) => (
+      <SheetFlow>
+        <ModalSheet flowPage visible={open && !second} title="One" onClose={jest.fn()}>
+          <Text>One body</Text>
+        </ModalSheet>
+        <ModalSheet flowPage visible={open && second} title="Two" onClose={jest.fn()}>
+          <Text>Two body</Text>
+        </ModalSheet>
+      </SheetFlow>
+    );
+    let tree!: ReactTestRenderer;
+    act(() => {
+      tree = create(<Flow open second={false} />);
+    });
+    act(() => tree.update(<Flow open second />));
+    act(() =>
+      tree.root
+        .findAll((n) => n.props.testID === 'sheet-surface' && typeof n.props.onLayout === 'function')[0]
+        .props.onLayout({ nativeEvent: { layout: { height: 640 } } })
+    );
+    act(() => tree.update(<Flow open={false} second={false} />));
+    await act(async () => {
+      await Promise.resolve();
+    });
+    act(() => tree.update(<Flow open second={false} />));
+    const first = StyleSheet.flatten(
+      tree.root.findAll((n) => n.props.testID === 'sheet-surface')[0].props.style
+    );
+    expect(first.minHeight).toBe(0);
+    act(() => tree.unmount());
+  });
+
   function FlowFixture({ busy = false }: { busy?: boolean }) {
     const [child, setChild] = useState(false);
     const [draft, setDraft] = useState('Keep my draft');

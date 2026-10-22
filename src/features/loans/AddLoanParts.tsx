@@ -1,10 +1,10 @@
+import { selectedFill } from '@/theme/interactionColors';
 import { View, Pressable, StyleSheet } from 'react-native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { haptics } from '@/lib/haptics';
 import type { McIconName } from '@/components/iconName';
-import { shade } from '@/lib/color';
 import { useAccent } from '@/theme/AccentContext';
 
 export interface Option<T extends string> {
@@ -24,7 +24,7 @@ export function OptionCards<T extends string>({
   value: T;
   onChange: (next: T) => void;
 }) {
-  const { accent, secondary } = useAccent();
+  const { accent } = useAccent();
   return (
     <View style={styles.row}>
       {options.map((o) => {
@@ -37,7 +37,7 @@ export function OptionCards<T extends string>({
             accessibilityState={{ selected: active }}
             style={({ pressed }) => [
               styles.card,
-              active && { backgroundColor: shade(accent, 95), borderColor: secondary },
+              active && { backgroundColor: selectedFill(accent), borderColor: selectedFill(accent) },
               pressed && styles.pressed,
             ]}
           >

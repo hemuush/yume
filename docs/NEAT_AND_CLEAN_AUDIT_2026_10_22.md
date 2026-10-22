@@ -56,3 +56,20 @@ onboarding checkbox); not audited against screenshots.
 Device rendering of every change; lighter themes (half-strength fill may read faint); Categories grid layout.
 Screens not yet reviewed: Profile and Settings, Notifications, Reports (post-redesign), Accounts, People, Loans list,
 Budgets list, Recurring, Wrap, Garden, What-if, Backup.
+
+## Ten-round audit (five reviewers, read-only, then fixes)
+Fixed: Infinity% weekend card; range-sheet text colour; "0.0x" day inspector; Activity empty-state on load error; one-digit
+amount search chip; Needs-you backup reads isolated; "-₹0"; due dates beyond 90 days show a readable date; one
+`compactMoney`; unused fonts and styles removed; far-future prompt on unchanged edits; Split keypad race; calendar
+reopen; card-bill currency in Plan; goal milestone note lost when the sheet closes; "1 borrowed loans"; draft card
+style; SheetFlow resets when all pages close; selected states unified in Add, Loans and Activity.
+
+Open, reported not changed (need a decision or are larger):
+- Editing a split with paise rounds parts to whole units (money correctness; needs care).
+- Staged list ignores account currency; Plan debt totals sum raw paise; forecast counts one EMI per loan.
+- Garden streak ignores hide-amounts; notification time clock may truncate at 360dp.
+- Four theme packs derive the same grey ink; splash colour differs from app background.
+- Lone tabbed sheets (Loan details, Rule) now resize on tab change; backup folder is parsed on every launch;
+  data repairs run every cold start; Home loads two queries twice; reports recomputes unmemoised.
+- Unlabelled switches in goal and loan sheets; Coming up uses "-" not "−"; Activity row labels omit spent/received.
+- Radius and border drift (20/24/28 vs 22, 1px vs hairline) in Plan, Loans, Goals; dead Plan compact code.
