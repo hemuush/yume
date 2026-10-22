@@ -4,8 +4,14 @@
 // needs to run before/alongside that so Android's headless widget task has
 // something to call into. `expo-router/entry` itself still does all of its
 // usual work; this file only adds the one extra registration on top of it.
-import 'expo-router/entry';
-import { registerWidgetTaskHandler } from 'react-native-android-widget';
-import { widgetTaskHandler } from './src/widgets/widgetTaskHandler';
-
-registerWidgetTaskHandler(widgetTaskHandler);
+//
+// A diagnose-modules build (EXPO_PUBLIC_YUME_DIAG=modules) starts a plain checklist screen instead, to find which
+// library closes a release APK. Both paths use require so the other path's modules are not loaded at start.
+if (process.env.EXPO_PUBLIC_YUME_DIAG === 'modules') {
+  require('./src/diagnostics/startDiagnostics');
+} else {
+  require('expo-router/entry');
+  const { registerWidgetTaskHandler } = require('react-native-android-widget');
+  const { widgetTaskHandler } = require('./src/widgets/widgetTaskHandler');
+  registerWidgetTaskHandler(widgetTaskHandler);
+}
