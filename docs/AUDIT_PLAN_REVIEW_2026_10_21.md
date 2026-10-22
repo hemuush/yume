@@ -46,7 +46,7 @@ CI now runs `npm run test:perf` after the main tests as a report-only step (`con
 ## Recorded decision (theme)
 
 - **Circular imports.** Resolved the same day: `madge` found 13 cycles in the db/lib layer, all one web through `settings` ↔ `afterCommit` ↔ `notifications` and `client` ↔ `recentlyDeleted`. They are broken without behavior changes (see the [SDK 58 upgrade record](SDK_58_UPGRADE_2026_10_21.md)), and `npm run check:cycles` now fails CI on a new one.
-- **Light-only theme on Android.** Decided 21 October: the app stays light-only and no dark theme or `expo-system-ui` dependency is added. `app.json` sets `userInterfaceStyle: "light"`, which prebuild says needs `expo-system-ui` to take effect on Android, so on a phone in dark mode some native pieces (system dialogs, keyboard, date pickers) may still follow the system. Not verified on a device; revisit only if that shows up.
+- **Light-only theme on Android.** Decided 21 October: the app stays light-only and has no dark theme. `app.json` sets `userInterfaceStyle: "light"`, which only takes effect on Android with `expo-system-ui`; that package was added on 22 October (SDK 58 pin) so prebuild no longer warns and the system's dark mode does not reach native pieces (dialogs, keyboard, date pickers). Not verified on a device.
 
 ## Open
 
