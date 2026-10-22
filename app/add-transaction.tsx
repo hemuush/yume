@@ -1256,7 +1256,6 @@ export default function AddTransactionScreen() {
         </View>
         {padVisible ? (
           <AmountPad
-            keySurface="#F1F5F9"
             onKey={onPadKey}
             onClear={() => {
               if (!saveInFlight.current && !committed.current) setExpr('');
