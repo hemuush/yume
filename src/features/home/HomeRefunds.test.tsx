@@ -8,7 +8,8 @@ jest.mock('@expo/vector-icons/MaterialCommunityIcons', () => () => null);
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
 jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
 import { HomeRefunds } from './HomeRefunds';
-import { HomeGlance } from './HomeGlance';
+import { HomeComingUp } from './HomeComingUp';
+import { toLocalIsoDate } from '@/lib/date';
 const refund = (id: string, dueDate: string | null = null): ExpectedRefund => ({
   id,
   transactionId: `tx-${id}`,
@@ -108,22 +109,27 @@ it('expands all purchases and reports query failure with retry', () => {
   );
   expect(retry).toHaveBeenCalledTimes(1);
 });
+const comingUpProps = {
+  upcoming: { items: [], next: null },
+  budgets: [],
+  goals: [],
+  today: '2026-10-19',
+  rowEntering: () => undefined,
+  onSeeAll: jest.fn(),
+};
+
 it('shows compact refunds below Coming up only for pending data or a failed read', () => {
-  const props = {
-    upcoming: { items: [], next: null },
-    rowEntering: () => undefined,
-    onSeeMoreUpcoming: jest.fn(),
-  };
-  const tree = render(<HomeGlance {...props} refunds={[refund('a')]} />);
+  const props = comingUpProps;
+  const tree = render(<HomeComingUp {...props} refunds={[refund('a')]} />);
   expect(texts(tree)).toContain('₹80 refund pending');
   expect(tree.root.findAll((n) => n.props.accessibilityRole === 'tab')).toHaveLength(0);
-  act(() => tree.update(<HomeGlance {...props} refunds={[]} />));
+  act(() => tree.update(<HomeComingUp {...props} refunds={[]} />));
   expect(texts(tree)).not.toContain('refund pending');
-  act(() => tree.update(<HomeGlance {...props} refunds={[]} refundError />));
+  act(() => tree.update(<HomeComingUp {...props} refunds={[]} refundError />));
   expect(texts(tree)).toContain('Couldn’t load refunds');
 });
 
-it('previews three outgoing payments without tabs and keeps the full schedule reachable', () => {
+it('lists payments in Coming up and keeps the full schedule reachable', () => {
   const { router } = require('expo-router');
   const item = (key: string) => ({
     key,
@@ -133,7 +139,7 @@ it('previews three outgoing payments without tabs and keeps the full schedule re
     subtitle: 'Due today',
     amountMinor: 10000,
     sign: '-' as const,
-    sortDate: '2026-10-19',
+    sortDate: toLocalIsoDate(new Date()),
     route: '/recurring' as const,
     urgent: true,
     payable: false,
@@ -141,10 +147,10 @@ it('previews three outgoing payments without tabs and keeps the full schedule re
   });
   const all = jest.fn();
   const tree = render(
-    <HomeGlance
+    <HomeComingUp
+      {...comingUpProps}
       upcoming={{ items: [item('First'), item('Second'), item('Third')], next: null }}
-      rowEntering={() => undefined}
-      onSeeMoreUpcoming={all}
+      onSeeAll={all}
     />
   );
   expect(texts(tree)).toContain('First');
@@ -153,6 +159,6 @@ it('previews three outgoing payments without tabs and keeps the full schedule re
   const { UpcomingRow } = require('./UpcomingRow');
   act(() => tree.root.findAllByType(UpcomingRow)[0].props.onPress());
   expect(router.push).toHaveBeenCalledWith('/recurring');
-  press(tree, 'View plan — Next up');
-  expect(all).toHaveBeenCalledTimes(1);
+  press(tree, 'View plan — Coming up');
+  expect(all).toHaveBeenCalledWith('all');
 });

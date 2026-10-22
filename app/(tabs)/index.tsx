@@ -7,6 +7,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
 import { listAccounts, listCategories, listTransactions } from '@/db/ledger';
 import { listLoans, getLoanProgress } from '@/db/loans';
+import { listBudgetsForMonth, BudgetProgress } from '@/db/budgets';
+import { listSavingsGoals } from '@/db/savingsGoals';
 import { listCardCycles } from '@/db/cardCycles';
 import { listExpectedRefunds, ExpectedRefund } from '@/db/refundTracking';
 import { getTransactionById } from '@/db/transactions';
@@ -27,7 +29,7 @@ import { getUserName, getDailySpendingGoal, getDefaultCurrency } from '@/db/sett
 import { savingsAccountIdsOf } from '@/lib/account';
 import { privateComparison, isSavingsEntry } from '@/lib/privateSummary';
 import { roundedMinor } from '@/lib/round';
-import { Account, Category, Transaction, Loan, RecurringRule } from '@/types';
+import { Account, Category, Transaction, Loan, RecurringRule, SavingsGoal } from '@/types';
 import { theme } from '@/constants/theme';
 import { useTabScrollPad } from '@/lib/uiScale';
 import { useReduceMotion } from '@/lib/useReduceMotion';
@@ -60,7 +62,9 @@ import { spendBarsStart } from '@/features/home/spendBarData';
 import { SuuRefreshBadge } from '@/features/home/SuuRefreshBadge';
 import { Section } from '@/components/Section';
 import { SCREEN } from '@/components/screenStyles';
-import { HomeGlance, buildUpcomingItems } from '@/features/home/HomeGlance';
+import { HomeComingUp } from '@/features/home/HomeComingUp';
+import { buildUpcomingItems } from '@/features/home/upcomingItems';
+import type { ComingUpFilter } from '@/features/home/comingUp';
 import { recurringRulesInCurrency } from '@/lib/recurringScope';
 import { buildLoansSummary } from '@/features/plan/planOverview';
 import { RecentTransactionRow } from '@/features/home/RecentTransactionRow';
@@ -90,6 +94,9 @@ export default function DashboardScreen() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [recent, setRecent] = useState<Transaction[]>([]);
   const [loans, setLoans] = useState<Loan[]>([]);
+  // This month's budgets and the open goals, for Coming up (they stay in place while a month is browsed).
+  const [budgets, setBudgets] = useState<BudgetProgress[]>([]);
+  const [goals, setGoals] = useState<SavingsGoal[]>([]);
   const [recurringRules, setRecurringRules] = useState<RecurringRule[]>([]);
   const [rawComparison, setComparison] = useState<PeriodComparison | null>(null);
   // What earlier months left over (or, when negative, ran short by) — added to the period's own free-to-use.
@@ -290,6 +297,8 @@ export default function DashboardScreen() {
           needs,
           wraps,
           defaultCurrency,
+          budgetRows,
+          goalRows,
           refundResult,
         ] = await Promise.all([
           fetchPeriod(c),
@@ -306,6 +315,9 @@ export default function DashboardScreen() {
           loadNeedsYou(),
           loadReadyWraps(),
           getDefaultCurrency(),
+          // Budgets and goals are extras here: a failed read leaves them out instead of blanking Home.
+          listBudgetsForMonth(undefined, hideAmounts).catch(() => [] as BudgetProgress[]),
+          listSavingsGoals().catch(() => [] as SavingsGoal[]),
           listExpectedRefunds()
             .then((rows) => ({ rows, failed: false }))
             .catch(() => ({ rows: [] as ExpectedRefund[], failed: true })),
@@ -336,6 +348,8 @@ export default function DashboardScreen() {
         }
         setLoanProgress(progress);
         setCardBills(cycles);
+        setBudgets(budgetRows);
+        setGoals(goalRows);
         setUserNameState(name);
         setRefunds(refundResult.rows);
         setRefundError(refundResult.failed);
@@ -501,7 +515,11 @@ export default function DashboardScreen() {
     currency,
   ]);
 
-  const openUpcomingPlan = () => router.navigate({ pathname: '/plan', params: { tab: 'upcoming' } });
+  const openComingUp = (filter: ComingUpFilter) => {
+    if (filter === 'budget') router.navigate('/budgets');
+    else if (filter === 'goal') router.navigate('/savings-goals');
+    else router.navigate({ pathname: '/plan', params: { tab: 'upcoming' } });
+  };
 
   const openSpendingReports = (key: string) => {
     const [kind, offset] = key.split(':');
@@ -631,15 +649,18 @@ export default function DashboardScreen() {
         {/* Next payments and pending refunds stay visible without tabs. */}
         {loaded && historyAccounts.length > 0 && (
           <Animated.View entering={sectionEntering(2)}>
-            <HomeGlance
+            <HomeComingUp
               upcoming={upcoming}
+              budgets={budgets}
+              goals={goals}
+              today={todayIso}
               refunds={refunds}
               refundError={refundError}
               openingRefund={openingRefund}
               onOpenRefund={(id) => void openRefund(id)}
               onRetryRefunds={() => void load(cursorRef.current)}
               rowEntering={rowEntering}
-              onSeeMoreUpcoming={openUpcomingPlan}
+              onSeeAll={openComingUp}
             />
           </Animated.View>
         )}
