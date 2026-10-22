@@ -339,10 +339,10 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     overflow: 'hidden',
     justifyContent: 'flex-end',
-    borderWidth: 2,
+    borderWidth: 1.5,
     borderColor: 'transparent',
   },
-  trackOn: { borderColor: 'rgba(18,19,15,0.3)' },
+  trackOn: { borderColor: 'rgba(18,19,15,0.22)' },
   fill: { width: '100%', borderRadius: 12, overflow: 'hidden' },
   goalTick: {
     position: 'absolute',

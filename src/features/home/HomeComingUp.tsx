@@ -287,7 +287,7 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingTop: 10,
     paddingBottom: 6,
-    paddingHorizontal: 2,
+    paddingHorizontal: 14,
   },
   chip: {
     minHeight: 36,
