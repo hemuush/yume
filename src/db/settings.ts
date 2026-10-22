@@ -862,24 +862,26 @@ export async function getSeenWraps(): Promise<string[]> {
 }
 
 export async function markWrapSeen(key: string): Promise<void> {
-  const db = await getDb();
-  const row = await db.getFirstAsync<{ value: string }>('SELECT value FROM settings WHERE key = ?', [
-    WRAPS_SEEN_KEY,
-  ]);
-  let seen: string[] = [];
-  try {
-    const parsed: unknown = row ? JSON.parse(row.value) : [];
-    if (Array.isArray(parsed)) seen = parsed.filter((k): k is string => typeof k === 'string');
-  } catch {
-    seen = [];
-  }
-  if (seen.includes(key)) return;
-  const next = [...seen, key].slice(-WRAPS_SEEN_KEEP);
-  await db.runAsync(
-    `INSERT INTO settings (key, value) VALUES (?, ?)
-     ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
-    [WRAPS_SEEN_KEY, JSON.stringify(next)]
-  );
+  await withSettingsLock(async () => {
+    const db = await getDb();
+    const row = await db.getFirstAsync<{ value: string }>('SELECT value FROM settings WHERE key = ?', [
+      WRAPS_SEEN_KEY,
+    ]);
+    let seen: string[] = [];
+    try {
+      const parsed: unknown = row ? JSON.parse(row.value) : [];
+      if (Array.isArray(parsed)) seen = parsed.filter((k): k is string => typeof k === 'string');
+    } catch {
+      seen = [];
+    }
+    if (seen.includes(key)) return;
+    const next = [...seen, key].slice(-WRAPS_SEEN_KEEP);
+    await db.runAsync(
+      `INSERT INTO settings (key, value) VALUES (?, ?)
+       ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
+      [WRAPS_SEEN_KEY, JSON.stringify(next)]
+    );
+  });
 }
 
 const RECENT_SEARCHES_KEY = 'recent_searches';
