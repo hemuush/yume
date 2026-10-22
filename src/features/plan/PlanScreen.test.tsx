@@ -147,6 +147,10 @@ jest.mock('@/db/reports', () => ({
     { categoryId: 'food', name: 'Food', totalMinor: 2000000 },
   ],
 }));
+jest.mock('@/db/monthlyPlan', () => ({
+  getMonthlyPlanIncome: async () => null,
+  setMonthlyPlanIncome: async () => {},
+}));
 jest.mock('@/db/settings', () => ({
   ...jest.requireActual('@/db/settings'),
   getDailySpendingGoal: async () => 500000,
@@ -327,7 +331,7 @@ describe('Plan tab', () => {
     expect(shown).not.toContain('Home loan');
     // The Goals tab holds what-if: it cuts the biggest category it can, not the EMI (10% of Food's ₹20,000).
     const goalsTab = await render();
-    openTab(goalsTab, 'money');
+    await openTabAndSettle(goalsTab, 'money');
     expect(texts(goalsTab)).toContain('Food −10% saves ₹2,000 a month');
     // 25% of the home loan's principal repaid.
     expect(shown.some((t) => t.includes('25% repaid'))).toBe(false);
