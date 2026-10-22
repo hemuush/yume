@@ -123,7 +123,7 @@ export const styles = StyleSheet.create({
   amountHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
   amountHeaderStacked: { flexDirection: 'column', alignItems: 'stretch', gap: 0 },
   amountRowStacked: { justifyContent: 'flex-start', flex: 0 },
-  actionDisabled: { opacity: 0.4 },
+  actionDisabled: { opacity: 0.55 },
   amountRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -142,6 +142,7 @@ export const styles = StyleSheet.create({
     color: theme.colors.textPrimary,
     flexShrink: 1,
   },
+  amountError: { color: theme.colors.expenseText, fontFamily: theme.font.bodyMedium },
   amountPlaceholder: { color: theme.colors.textMuted },
   // A blinking-free caret: shows the pad is typing into this amount.
   caret: { width: 2, height: 36, borderRadius: 1, backgroundColor: theme.colors.ink, marginLeft: 2 },
@@ -365,10 +366,11 @@ export const styles = StyleSheet.create({
   detailBarFlush: { marginHorizontal: 0, marginBottom: 0 },
   detailRow: { flexDirection: 'row', alignItems: 'center', marginHorizontal: -16, marginBottom: 10 },
   hidePadBtn: {
-    width: 44,
-    height: 44,
-    marginRight: 12,
-    borderRadius: 22,
+    width: 40,
+    height: 40,
+    marginLeft: 8,
+    marginRight: 16,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: theme.colors.surface,

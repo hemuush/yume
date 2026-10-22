@@ -113,7 +113,10 @@ export function AmountCard({
       </View>
       {isSum && <Text style={styles.expression}>{expr.replace(/([+−×÷])/g, ' $1 ')}</Text>}
       {amountIssue && (
-        <Text style={styles.hint} accessibilityLiveRegion="polite">
+        <Text
+          style={[styles.hint, amountIssue.startsWith('Enter') && styles.amountError]}
+          accessibilityLiveRegion="polite"
+        >
           {amountIssue}
         </Text>
       )}
