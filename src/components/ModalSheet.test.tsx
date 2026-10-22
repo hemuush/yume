@@ -70,34 +70,43 @@ describe('related tasks in one native sheet', () => {
     act(() => tree.unmount());
   });
 
-  it('clamps remembered height to the available viewport with enlarged text', () => {
+  it('keeps a lone page at its own height, then clamps the remembered height to the viewport with enlarged text', () => {
     jest
       .spyOn(require('react-native'), 'useWindowDimensions')
       .mockReturnValue({ height: 550, width: 320, fontScale: 1.5, scale: 3 });
+    const Pages = ({ second }: { second: boolean }) => (
+      <SheetFlow>
+        <ModalSheet flowPage visible={!second} title="Task" onClose={jest.fn()}>
+          <Text>Body</Text>
+        </ModalSheet>
+        {second && (
+          <ModalSheet flowPage visible title="Next" onClose={jest.fn()}>
+            <Text>Next body</Text>
+          </ModalSheet>
+        )}
+      </SheetFlow>
+    );
     let tree!: ReactTestRenderer;
     act(() => {
-      tree = create(
-        <SheetFlow>
-          <ModalSheet flowPage visible title="Task" onClose={jest.fn()}>
-            <Text>Body</Text>
-          </ModalSheet>
-        </SheetFlow>
-      );
+      tree = create(<Pages second={false} />);
     });
     act(() =>
       tree.root
         .findByProps({ testID: 'sheet-surface' })
         .props.onLayout({ nativeEvent: { layout: { height: 900 } } })
     );
-    const style = StyleSheet.flatten(tree.root.findByProps({ testID: 'sheet-surface' }).props.style);
-    expect(style.maxHeight).toBe('94%');
+    const lone = StyleSheet.flatten(tree.root.findByProps({ testID: 'sheet-surface' }).props.style);
+    expect(lone.maxHeight).toBe('94%');
+    expect(lone.minHeight).toBe(0);
+    act(() => tree.update(<Pages second />));
+    const style = StyleSheet.flatten(tree.root.findAllByProps({ testID: 'sheet-surface' })[1].props.style);
     expect(style.minHeight).toBeCloseTo((550 - 24 - 8) * 0.94);
     act(() =>
       tree.root
         .findByProps({ testID: 'sheet-flow-viewport' })
         .props.onLayout({ nativeEvent: { layout: { height: 320 } } })
     );
-    const resized = StyleSheet.flatten(tree.root.findByProps({ testID: 'sheet-surface' }).props.style);
+    const resized = StyleSheet.flatten(tree.root.findAllByProps({ testID: 'sheet-surface' })[1].props.style);
     expect(resized.minHeight).toBeCloseTo((320 - 24 - 8) * 0.94);
     act(() => tree.unmount());
   });
