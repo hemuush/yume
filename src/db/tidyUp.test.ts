@@ -149,6 +149,25 @@ describe('tidy up', () => {
     expect((await getPeriodSummary(august)).incomeMinor).toBe(augustBefore);
   });
 
+  it('moves nothing when an entry was edited after Tidy up loaded', async () => {
+    const [group] = (await getTidyUpReport()).startingBalances;
+    const balanceBefore = await getAccountBalance(bank);
+    await run('UPDATE transactions SET amount_minor = amount_minor + 100 WHERE id = ?', [group.ids[0]]);
+    await expect(moveToOpeningBalance(group)).rejects.toThrow('changed');
+    await run('UPDATE transactions SET amount_minor = amount_minor - 100 WHERE id = ?', [group.ids[0]]);
+    expect(await getAccountBalance(bank)).toBe(balanceBefore);
+  });
+
+  it('undoes by subtracting what was moved, so a later opening-balance edit survives', async () => {
+    const [group] = (await getTidyUpReport()).startingBalances;
+    const move = await moveToOpeningBalance(group);
+    await run('UPDATE accounts SET opening_balance_minor = opening_balance_minor + 500 WHERE id = ?', [bank]);
+    const balanceEdited = await getAccountBalance(bank);
+    await undoMoveToOpeningBalance(move);
+    expect(await getAccountBalance(bank)).toBe(balanceEdited);
+    await run('UPDATE accounts SET opening_balance_minor = opening_balance_minor - 500 WHERE id = ?', [bank]);
+  });
+
   it('leaves an old balance you say is real income', async () => {
     const [group] = (await getTidyUpReport()).startingBalances;
     await keepAsIncome(group.key);

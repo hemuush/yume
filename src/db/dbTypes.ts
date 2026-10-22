@@ -16,6 +16,7 @@ export interface AppDb {
   /**
    * Runs `task` as ONE queue entry with the raw connection, for work that can't interleave yet can't be one
    * transaction (restore's PRAGMA foreign_keys, backup read). Use the given handle, not outer db: deadlock.
+   * It counts as a write (moves the data version on) unless `readOnly` says the task only reads.
    */
-  exclusiveAsync<T>(task: (db: AppDb) => Promise<T>): Promise<T>;
+  exclusiveAsync<T>(task: (db: AppDb) => Promise<T>, options?: { readOnly?: boolean }): Promise<T>;
 }

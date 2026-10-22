@@ -97,8 +97,9 @@ function serializeDb(raw: SQLite.SQLiteDatabase): AppDb {
     runAsync: (sql, params) => serialize(() => writing(() => rawDb.runAsync(sql, params))),
     execAsync: (sql) => serialize(() => writing(() => rawDb.execAsync(sql))),
     withTransactionAsync: (task) => serialize(() => writing(() => rawDb.withTransactionAsync(task))),
-    // Used for backup reads as well as restore; counting it as a write only costs one extra reload.
-    exclusiveAsync: (task) => serialize(() => writing(() => task(rawDb))),
+    // Counted as a write unless the caller says it only reads, so a read doesn't reload every screen's data.
+    exclusiveAsync: (task, options) =>
+      serialize(() => (options?.readOnly ? task(rawDb) : writing(() => task(rawDb)))),
   };
 }
 

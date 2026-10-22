@@ -423,27 +423,30 @@ export async function comparePrepayments(
   assertValidIsoDate(date);
   if (!Number.isSafeInteger(amountMinor) || amountMinor <= 0) throw new Error('Enter a valid extra payment.');
   const db = await getDb();
-  return db.exclusiveAsync(async (handle) => {
-    const rows: { id: string; summary?: PrepaymentSummary; error?: string }[] = [];
-    for (const id of [...new Set(loanIds)]) {
-      const loan = await handle.getFirstAsync<LoanRow>('SELECT * FROM loans WHERE id = ?', [id]);
-      if (!loan || loan.status === 'closed' || loan.direction !== 'borrowed') {
-        rows.push({ id, error: 'This borrowed loan is no longer active' });
-        continue;
+  return db.exclusiveAsync(
+    async (handle) => {
+      const rows: { id: string; summary?: PrepaymentSummary; error?: string }[] = [];
+      for (const id of [...new Set(loanIds)]) {
+        const loan = await handle.getFirstAsync<LoanRow>('SELECT * FROM loans WHERE id = ?', [id]);
+        if (!loan || loan.status === 'closed' || loan.direction !== 'borrowed') {
+          rows.push({ id, error: 'This borrowed loan is no longer active' });
+          continue;
+        }
+        if (amountMinor > loan.outstanding_principal_minor) {
+          rows.push({ id, error: 'Amount exceeds remaining principal' });
+          continue;
+        }
+        const { summary, neverPaysOff } = await planPrepayment(handle, loan, amountMinor, date);
+        rows.push(
+          summary.oldRemainingCount > 0 && !neverPaysOff
+            ? { id, summary }
+            : { id, error: 'A reliable payoff comparison is unavailable' }
+        );
       }
-      if (amountMinor > loan.outstanding_principal_minor) {
-        rows.push({ id, error: 'Amount exceeds remaining principal' });
-        continue;
-      }
-      const { summary, neverPaysOff } = await planPrepayment(handle, loan, amountMinor, date);
-      rows.push(
-        summary.oldRemainingCount > 0 && !neverPaysOff
-          ? { id, summary }
-          : { id, error: 'A reliable payoff comparison is unavailable' }
-      );
-    }
-    return rows;
-  });
+      return rows;
+    },
+    { readOnly: true }
+  );
 }
 
 export async function applyPrepayment(
