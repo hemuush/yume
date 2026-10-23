@@ -26,6 +26,7 @@ jest.mock('@/db/spendingExplanation', () => ({
 import { SpendingExplanation } from './SpendingExplanation';
 import { getSpendingExplanation } from '@/db/spendingExplanation';
 import { router } from 'expo-router';
+import { dayMonth } from '@/lib/dateLabels';
 const current = { start: '2026-10-01', end: '2026-10-31' },
   previous = { start: '2026-09-01', end: '2026-09-30' };
 const words = (t: ReactTestRenderer) =>
@@ -64,14 +65,11 @@ it('shows matching dates, explains the three effects and opens a contributing en
     tree = create(<SpendingExplanation categoryId="food" current={current} previous={previous} />);
   });
   expect(getSpendingExplanation).toHaveBeenCalledWith('food', current, previous, false);
-  await act(async () =>
-    tree.root
-      .find(
-        (n) => n.props.accessibilityLabel === 'Comparison details' && typeof n.props.onPress === 'function'
-      )
-      .props.onPress()
+  expect(words(tree)).toContain(
+    `${dayMonth('2026-10-01')} – ${dayMonth('2026-10-12')} vs ${dayMonth('2026-09-01')} – ${dayMonth('2026-09-12')} · 12 days each`
   );
-  expect(words(tree)).toContain('12 days in each');
+  expect(words(tree)).toContain('The three effects add up to the change');
+  expect(words(tree)).not.toContain('Comparison details');
   expect(words(tree)).toContain('Purchase frequency');
   expect(words(tree)).toContain('₹50');
   expect(words(tree)).toContain('-₹10');
