@@ -14,8 +14,11 @@ import { softTint } from './softTint';
 import { useAccent } from '@/theme/AccentContext';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
-/** The narrowest a medal column gets: the 48px tile, its ring, and room for a short name. */
-const MEDAL_MIN_WIDTH = 70;
+/**
+ * The narrowest a medal column gets: the 48px tile, its ring, and room for the longest everyday name ("Miscellaneous",
+ * "Entertainment") on one line. Narrower and those split mid-word.
+ */
+const MEDAL_MIN_WIDTH = 80;
 
 interface Props {
   /** Already filtered to the relevant kind (income/expense) — this component doesn't filter by kind itself. */
@@ -284,7 +287,13 @@ function MedalTile({
         <View style={[styles.medalRing, sub && styles.medalRingSub, active && styles.medalRingActive]}>
           <CategoryIcon name={icon} color={color} size={sub ? 16 : 20} square={sub ? 38 : 48} round />
         </View>
-        <Text style={[styles.medalName, active && styles.medalNameActive]} numberOfLines={2}>
+        {/* A single long word shrinks a little rather than splitting mid-word (larger text sizes, narrow phones). */}
+        <Text
+          style={[styles.medalName, active && styles.medalNameActive]}
+          numberOfLines={2}
+          adjustsFontSizeToFit
+          minimumFontScale={0.8}
+        >
           {name}
         </Text>
         {hint && (

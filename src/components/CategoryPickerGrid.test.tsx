@@ -60,9 +60,9 @@ describe('category grid', () => {
   });
   it('splits the width into equal columns', () => {
     const r = render();
-    // 371 / 70 → 5 columns of 74 px.
-    expect(flat(tileOf(r, 'Food').props.style).width).toBe(74);
-    expect(flat(tileOf(r, 'Rent').props.style).width).toBe(74);
+    // 371 / 80 → 4 columns of 92 px.
+    expect(flat(tileOf(r, 'Food').props.style).width).toBe(92);
+    expect(flat(tileOf(r, 'Rent').props.style).width).toBe(92);
   });
 
   it('fades the categories the host marks as taken', () => {

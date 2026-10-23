@@ -180,7 +180,6 @@ export function AddEntryFields({ model }: Props): ReactElement {
                   }}
                   variant="medal"
                   searchable
-                  minColumnWidth={80}
                   onSearchFocusChange={setSearchFocused}
                 />
               </Glass>
