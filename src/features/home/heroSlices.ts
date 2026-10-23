@@ -37,24 +37,10 @@ export function heroSlices(
   };
 }
 
-/** Headline views shared by Home and the monthly widget. */
-type HeroMode = 'kept' | 'spent' | 'saved' | 'free';
-
 /** "54%", or "<1%" for a real but tiny share rather than a misleading "0%". */
 export function heroPct(fraction: number): string {
   const v = fraction * 100;
   return v > 0 && v < 1 ? '<1%' : `${Math.round(v)}%`;
-}
-
-/** Each headline view's share of income — "kept" is savings plus free to use. */
-export function heroShare(s: HeroSlices, mode: HeroMode): number {
-  return mode === 'kept' ? s.saved + s.free : s[mode];
-}
-
-/** The resting headline: Kept, or Spent when nothing was kept. With savings hidden, Free or Spent. */
-export function heroRestingMode(s: HeroSlices, hideSavings = false): HeroMode {
-  if (hideSavings) return s.free > 0 ? 'free' : 'spent';
-  return heroShare(s, 'kept') > 0 ? 'kept' : 'spent';
 }
 
 /**

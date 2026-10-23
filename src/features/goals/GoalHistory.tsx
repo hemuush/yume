@@ -65,11 +65,10 @@ export function GoalHistory({ goalId, refreshToken }: { goalId: string; refreshT
   };
   return (
     <View style={styles.wrap}>
-      <Text style={styles.title}>Progress history</Text>
-      <Text style={styles.hint}>
-        Recorded additions, withdrawals and reservations. Earlier progress and automatic account changes are
-        not reconstructed.
-      </Text>
+      <View style={styles.head}>
+        <Text style={styles.title}>Progress history</Text>
+        {rows.length > 0 && <Text style={styles.hint}>Recorded changes</Text>}
+      </View>
       {rows.map((row) => (
         <View key={row.id} style={styles.row}>
           <View style={styles.copy}>
@@ -100,8 +99,11 @@ export function GoalHistory({ goalId, refreshToken }: { goalId: string; refreshT
           </View>
         </View>
       ))}
+      {rows.length > 0 && (
+        <Text style={styles.hint}>Earlier progress and automatic account changes are not reconstructed.</Text>
+      )}
       {!busy && !error && rows.length === 0 && (
-        <Text style={styles.hint}>Your next change will appear here.</Text>
+        <Text style={styles.hint}>No changes recorded yet. Your next change will appear here.</Text>
       )}
       {busy && <Text style={styles.hint}>Loading history…</Text>}
       {(error || (more && rows.length > 0)) && (
@@ -117,14 +119,15 @@ export function GoalHistory({ goalId, refreshToken }: { goalId: string; refreshT
   );
 }
 const styles = StyleSheet.create({
-  wrap: { gap: 10, paddingTop: 8 },
+  wrap: { gap: 4, paddingTop: 2 },
+  head: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 },
   title: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.textPrimary },
   hint: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textSecondary },
   label: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textPrimary },
   row: {
     flexDirection: 'row',
     gap: 12,
-    paddingVertical: 10,
+    paddingVertical: 8,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: theme.colors.divider,
   },

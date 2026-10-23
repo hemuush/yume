@@ -21,9 +21,14 @@ jest.mock('@/components/ModalSheet', () => ({
   ModalSheet: ({ children, footer }: { children: unknown; footer?: unknown }) =>
     require('react').createElement(require('react').Fragment, null, children, footer),
 }));
-jest.mock('@/components/SheetCard', () => ({
-  SheetCard: (p: { title: string }) =>
-    require('react').createElement(require('react-native').View, { testID: 'card', title: p.title }),
+jest.mock('@/components/DraftCard', () => ({
+  DraftCard: (p: { title: string; figure?: string; meta: string }) =>
+    require('react').createElement(require('react-native').View, {
+      testID: 'card',
+      title: p.title,
+      emi: p.figure,
+      meta: p.meta,
+    }),
 }));
 jest.mock('@/components/AmountField', () => ({
   AmountField: (p: { label: string; onChangeText: (v: string) => void }) =>
@@ -84,6 +89,16 @@ afterEach(() => {
 });
 
 describe('add loan', () => {
+  it('works the monthly EMI out on the card once the amount, rate and tenure are in', async () => {
+    const { tree } = await render();
+    expect(byId(tree, 'card').props.emi).toBeUndefined();
+    expect(byId(tree, 'card').props.meta).toContain('EMI shows once');
+    await fillStepOne(tree);
+    await act(async () => byId(tree, 'Annual interest rate (%)').props.onChangeText('12'));
+    expect(byId(tree, 'card').props.emi).toMatch(/1,0[0-9]{2}/);
+    expect(byId(tree, 'card').props.meta).toContain('interest over the term');
+  });
+
   it('ignores hidden asset fields after switching from borrowing to lending', async () => {
     const { tree } = await render();
     act(() => tree.root.findByType(ToggleSwitch).props.onChange(true));

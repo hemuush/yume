@@ -8,7 +8,6 @@ export const theme = {
     background: '#F1EDE2',
     surface: '#FFFDF8',
     surfaceAlt: '#F3ECE0',
-    border: '#12130F', // ink, for a deliberate emphasis edge only; cards and rows use the `borderSoft` hairline
 
     ink: '#12130F',
     inkSoft: '#5B5748',
@@ -90,16 +89,16 @@ export const theme = {
     inkWash: 'rgba(18,19,15,0.05)',
     // Ink at a little more opacity — a hairline on a translucent chip.
     inkHairline: 'rgba(18,19,15,0.1)',
+    // A clearer ink line for rails and rings that must read on cream (a timeline rail, a dot's ring), ~1.9:1.
+    inkLine: 'rgba(18,19,15,0.16)',
+    // Ink for an "off" state or a faint chart line that still has to be seen (~1.9:1 on the card).
+    inkOff: 'rgba(18,19,15,0.28)',
     // White at partial opacity — a frosted chip or figure sitting on a
     // pastel card, letting the card's colour show through.
     glass: 'rgba(255,255,255,0.6)',
     // The dimmed backdrop behind every sheet and dialog: warm ink, light
     // enough that you still see where you were (calm sheets).
     scrim: 'rgba(18,19,15,0.3)',
-    // Cream on an ink card (the goal letter): a faint fill, its hairline, and soft text.
-    onInkWash: 'rgba(255,253,246,0.06)',
-    onInkHairline: 'rgba(255,253,246,0.15)',
-    onInkSoft: '#D8D3C0',
   },
   radius: {
     sm: 8,
@@ -123,12 +122,11 @@ export const theme = {
   // and legend text, 12 captions, 13 body and row titles, 14-15 emphasis, then these.
   typeSize: { hero: 34, headline: 30, inputAmount: 40, title: 18, greeting: 16, section: 15, row: 13 },
   accessibility: { maxFontScale: 2, reflowFontScale: 1.3, minTouchTarget: 44, lineHeightRatio: 1.4 },
-  // Tab bar metrics shared with screens that scroll clear of it. A tab screen needs `tabScreenScrollPad`
-  // bottom padding (bar height + margin), a pushed screen `screenScrollPad`; callers add `insets.bottom`.
+  // Metrics shared with screens that scroll clear of the tab bar: a pushed screen needs `screenScrollPad`
+  // bottom padding (callers add `insets.bottom`); a tab screen clears the bar by its height (see uiScale).
   layout: {
     // The floating pill tab bar (PillTabBar): its 60 height plus the 10 gap under it.
-    tabBar: { height: 70, topRadius: 20 },
-    tabScreenScrollPad: 64 + 24,
+    tabBar: { height: 70 },
     screenScrollPad: 40,
     // Between a screen's header (which already leaves 12 below its title) and
     // the screen's first block — the same 20 in total on every screen.

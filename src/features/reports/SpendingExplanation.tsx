@@ -8,9 +8,22 @@ import { formatMoney } from '@/lib/money';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import { allocateRoundedMinor } from '@/lib/round';
 import { errorMessage } from '@/lib/errorMessage';
-import { dayMonthYear } from '@/lib/dateLabels';
+import { dayMonth, dayMonthYear } from '@/lib/dateLabels';
 import { router } from 'expo-router';
 import { InsightRow, InsightDisclosure, insight } from '@/components/InsightCard';
+
+/** "1 Oct – 23 Oct vs 1 Sep – 23 Sep"; years are added only when the two periods are not in the same one. */
+function comparedLabel(ranges: { current: DateRange; previous: DateRange }): string {
+  const years = new Set(
+    [ranges.current.start, ranges.current.end, ranges.previous.start, ranges.previous.end].map((d) =>
+      d.slice(0, 4)
+    )
+  );
+  const label = years.size === 1 ? dayMonth : dayMonthYear;
+  const range = (r: DateRange) => `${label(r.start)} – ${label(r.end)}`;
+  return `${range(ranges.current)} vs ${range(ranges.previous)}`;
+}
+
 export function SpendingExplanation({
   categoryId,
   current,
@@ -66,20 +79,27 @@ export function SpendingExplanation({
   return (
     <View style={styles.section}>
       <Text style={styles.heading}>What changed?</Text>
-      <Text style={insight.caption}>Compared over matching days</Text>
+      {!result || !hasActivity ? (
+        <Text style={insight.caption}>Compared over matching days</Text>
+      ) : (
+        <Text style={insight.caption}>
+          {comparedLabel(result.ranges)} · {result.ranges.days} days each
+        </Text>
+      )}
       {error ? (
         <Text style={insight.caption}>{error}</Text>
       ) : !result ? (
         <Text style={insight.caption}>Comparing matching days…</Text>
       ) : (
         <>
-          <Text style={styles.change}>
-            {!hasActivity
-              ? 'No spending to compare'
-              : result.deltaMinor === 0
-                ? 'No net change'
-                : `${money(Math.abs(result.deltaMinor))} ${result.deltaMinor > 0 ? 'more' : 'less'} spending`}
-          </Text>
+          {!hasActivity || result.deltaMinor === 0 ? (
+            <Text style={styles.change}>{!hasActivity ? 'No spending to compare' : 'No net change'}</Text>
+          ) : (
+            <Text style={styles.change}>
+              {money(Math.abs(result.deltaMinor))}{' '}
+              <Text style={styles.changeWords}>{result.deltaMinor > 0 ? 'more' : 'less'} spending</Text>
+            </Text>
+          )}
           {!hasActivity && (
             <Text style={insight.caption}>No purchases or refunds in these matching days.</Text>
           )}
@@ -103,18 +123,11 @@ export function SpendingExplanation({
               <EffectRow label="Refund changes" value={money(effects[2])} />
             </>
           )}
-          <InsightDisclosure title="Comparison details">
-            <Text style={insight.caption}>
-              {dayMonthYear(result.ranges.current.start)}–{dayMonthYear(result.ranges.current.end)} vs{' '}
-              {dayMonthYear(result.ranges.previous.start)}–{dayMonthYear(result.ranges.previous.end)}.{' '}
-              {result.ranges.days} days in each.
+          {hasActivity && (
+            <Text style={[insight.caption, styles.footnote]}>
+              The three effects add up to the change. This describes recorded entries, not why you spent.
             </Text>
-            {hasActivity && (
-              <Text style={insight.caption}>
-                These three effects add up to the change. This describes recorded entries, not why you spent.
-              </Text>
-            )}
-          </InsightDisclosure>
+          )}
           {result.largest.length > 0 && (
             <>
               <InsightDisclosure title="Largest contributing entries">
@@ -153,26 +166,30 @@ function EffectRow({ label, value, detail }: { label: string; value: string; det
 
 const styles = StyleSheet.create({
   section: {
-    gap: 6,
-    padding: 14,
-    marginTop: 12,
-    borderRadius: 22,
+    gap: 4,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginTop: 10,
+    borderRadius: 20,
     backgroundColor: theme.colors.surface,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
   },
   heading: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.textPrimary },
   change: {
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 21,
+    fontFamily: theme.font.body,
+    fontSize: 22,
     color: theme.colors.textPrimary,
-    marginVertical: 4,
+    fontVariant: ['tabular-nums'],
+    marginVertical: 2,
   },
-  effect: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8, paddingVertical: 6 },
+  changeWords: { fontFamily: theme.font.body, fontSize: 15, color: theme.colors.textSecondary },
+  footnote: { marginTop: 4 },
+  effect: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8, paddingVertical: 4 },
   copy: { flexGrow: 1, flexBasis: 180, minWidth: 0, gap: 2 },
   label: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
   amount: {
-    fontFamily: theme.font.bodyBold,
+    fontFamily: theme.font.bodyMedium,
     fontSize: 13,
     color: theme.colors.textPrimary,
     fontVariant: ['tabular-nums'],

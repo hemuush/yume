@@ -61,16 +61,6 @@ export const styles = StyleSheet.create({
   lineOrigin: { transformOrigin: 'left center' },
   lineSegment: { height: 10, borderRadius: 5, minWidth: 5 },
 
-  // Three columns under the line: each dot is the line's colour, so the line is the legend.
-
-  // Today's allowance: what is left, with a thin meter under it.
-  chipText: {
-    flexShrink: 1,
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 13,
-    color: theme.colors.textSecondary,
-  },
-
   insightsLink: {
     minHeight: 44,
     flexDirection: 'row',

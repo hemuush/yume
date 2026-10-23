@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import { Animated, Easing } from 'react-native';
 import { DURATIONS } from './motionTimings';
 import { useReduceMotion } from './useReduceMotion';
@@ -32,6 +32,20 @@ export function useGrowFrom(
   const drawn = useRef(lastShown.has(key));
   const previous = useRef({ key, target: lastShown.get(key) ?? 0 });
 
+  // The durations are fixed per call site; only a new value or key moves the bar, so the effect starts the
+  // animation through an Effect Event instead of depending on them.
+  const animateTo = useEffectEvent((first: boolean) => {
+    const animation = Animated.timing(v, {
+      toValue: target,
+      duration: first ? drawMs : changeMs,
+      delay: first ? delay : 0,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: false,
+    });
+    animation.start();
+    return animation;
+  });
+
   useEffect(() => {
     lastShown.set(key, target);
     const unchanged = previous.current.key === key && previous.current.target === target;
@@ -44,18 +58,9 @@ export function useGrowFrom(
     }
     const first = !drawn.current;
     drawn.current = true;
-    const animation = Animated.timing(v, {
-      toValue: target,
-      duration: first ? drawMs : changeMs,
-      delay: first ? delay : 0,
-      easing: Easing.out(Easing.cubic),
-      useNativeDriver: false,
-    });
-    animation.start();
+    const animation = animateTo(first);
     return () => animation.stop();
-    // The durations are fixed per call site; only a new value or key moves it.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key, target, reduce]);
+  }, [key, target, reduce, v]);
 
   return v;
 }

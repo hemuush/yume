@@ -22,7 +22,7 @@ jest.mock('@/components/AmountField', () => ({ AmountField: mockStub('target') }
 jest.mock('@/components/DateField', () => ({ DateField: mockStub('date') }));
 jest.mock('@/components/ToggleSwitch', () => ({ ToggleSwitch: mockStub('toggle') }));
 jest.mock('./GoalAccountField', () => ({ GoalAccountField: mockStub('account') }));
-jest.mock('./GoalSheetCard', () => ({ GoalSheetCard: mockStub('card') }));
+jest.mock('@/components/DraftCard', () => ({ DraftCard: mockStub('card') }));
 
 import { AddGoalModal } from './AddGoalModal';
 import { PrimaryButton } from '@/components/PrimaryButton';
@@ -65,6 +65,20 @@ afterEach(() => {
 });
 
 describe('AddGoalModal', () => {
+  it('shows the target and, with a date, the monthly pace on the card', async () => {
+    const { tree } = await render();
+    expect(byId(tree, 'card').props.figure).toBeUndefined();
+    expect(byId(tree, 'card').props.meta).toBeUndefined();
+    await fill(tree, 'Trip', '12000');
+    expect(byId(tree, 'card').props.figure).toMatch(/12,000/);
+    expect(byId(tree, 'card').props.meta).toBeUndefined();
+    await act(async () => byId(tree, 'toggle').props.onChange(true));
+    await act(async () =>
+      byId(tree, 'date').props.onChange(addMonthsToIsoDate(toLocalIsoDate(new Date()), 12))
+    );
+    expect(byId(tree, 'card').props.meta).toMatch(/1,000 a month to get there by/);
+  });
+
   it('cannot create the goal again if post-save refresh fails', async () => {
     const { tree } = await render();
     const onCreated = jest.fn(() => {

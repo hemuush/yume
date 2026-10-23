@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
 import { View, StyleSheet, Pressable } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
@@ -10,7 +10,7 @@ import { ModalSheet } from '@/components/ModalSheet';
 import { SheetFlow } from '@/components/SheetFlow';
 import { AccountReservations } from '@/features/goals/AccountReservations';
 import { PrimaryButton } from '@/components/PrimaryButton';
-import { SheetCard } from '@/components/SheetCard';
+import { DraftCard } from '@/components/DraftCard';
 import { SheetTabs } from '@/components/SheetTabs';
 import { accountHue, accountIcon, accountTypeLabel } from '@/lib/account';
 import { useAccent } from '@/theme/AccentContext';
@@ -128,6 +128,8 @@ export function AccountSummarySheet({
       });
   }, [account]);
 
+  // `accounts` only names the source account of the next SIP, so it is read without re-running the load.
+  const accountName = useEffectEvent((id: string) => accounts.find((a) => a.id === id)?.name);
   useEffect(() => {
     if (!accountId || !valueKey) {
       setValuations(null);
@@ -154,7 +156,7 @@ export function AccountSummarySheet({
             ? {
                 amountMinor: next.amountMinor,
                 date: next.nextRunDate,
-                fromName: accounts.find((a) => a.id === next.accountId)?.name,
+                fromName: accountName(next.accountId),
               }
             : null
         );
@@ -165,8 +167,6 @@ export function AccountSummarySheet({
     return () => {
       cancelled = true;
     };
-    // `accounts` only names the source account of the next SIP.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accountId, valueKey]);
 
   if (!account) return null;
@@ -182,6 +182,10 @@ export function AccountSummarySheet({
     [own > 0 ? `${ownLabel} ${money(own)}` : null, moved > 0 ? `${movedLabel} ${money(moved)}` : null]
       .filter(Boolean)
       .join(' · ');
+  // What a bar was made of, said only when it adds to the amount beside it: both parts when they are mixed, the
+  // transfer's name alone when it is all a transfer, and nothing for a plain "Income" or "Spent".
+  const detail = (own: number, ownLabel: string, moved: number, movedLabel: string) =>
+    own > 0 && moved > 0 ? parts(own, ownLabel, moved, movedLabel) : moved > 0 ? movedLabel : '';
   const net = flow ? flow.inMinor - flow.outMinor : 0;
   const netLine = !flow
     ? ''
@@ -190,8 +194,9 @@ export function AccountSummarySheet({
       : net === 0
         ? 'Everything that came in went out.'
         : net > 0
-          ? `${money(net)} more came in than went out.`
-          : `${money(-net)} more went out than came in.`;
+          ? 'more came in than went out'
+          : 'more went out than came in';
+  const typeLabel = ((t) => t.charAt(0).toUpperCase() + t.slice(1))(accountTypeLabel(account));
 
   return (
     <SheetFlow key={account.id}>
@@ -217,12 +222,13 @@ export function AccountSummarySheet({
           </View>
         }
       >
-        <SheetCard
+        <DraftCard
           hue={accountHue(account.type, accent)}
           icon={accountIcon(account.type)}
-          kicker={accountTypeLabel(account)}
-          amount={money(account.currentBalanceMinor)}
           title={account.name}
+          kicker={typeLabel}
+          figure={money(account.currentBalanceMinor)}
+          per={inv ? 'value' : 'balance'}
           meta={
             inv
               ? inv.valuedAt
@@ -232,7 +238,7 @@ export function AccountSummarySheet({
                       : ''
                   }`
                 : 'Value · not updated yet'
-              : 'Balance'
+              : undefined
           }
         />
         <AccountReservations account={account} onNavigate={onClose} />
@@ -319,7 +325,7 @@ export function AccountSummarySheet({
                 fraction={flow && maxFlow > 0 ? flow.inMinor / maxFlow : 0}
                 ownShare={flow && flow.inMinor > 0 ? flow.incomeMinor / flow.inMinor : 1}
                 detail={
-                  flow ? parts(flow.incomeMinor, 'Income', flow.transferInMinor, 'from your accounts') : ''
+                  flow ? detail(flow.incomeMinor, 'Income', flow.transferInMinor, 'from your accounts') : ''
                 }
                 color={theme.colors.incomeText}
                 fillColor={theme.colors.secondary}
@@ -330,7 +336,7 @@ export function AccountSummarySheet({
                 fraction={flow && maxFlow > 0 ? flow.outMinor / maxFlow : 0}
                 ownShare={flow && flow.outMinor > 0 ? flow.expenseMinor / flow.outMinor : 1}
                 detail={
-                  flow ? parts(flow.expenseMinor, 'Spent', flow.transferOutMinor, 'to your accounts') : ''
+                  flow ? detail(flow.expenseMinor, 'Spent', flow.transferOutMinor, 'to your accounts') : ''
                 }
                 color={theme.colors.expenseText}
                 fillColor={theme.colors.idCoralDeep}
@@ -499,7 +505,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 10,
     paddingHorizontal: 14,
-    paddingVertical: 11,
+    paddingVertical: 9,
   },
   billDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.borderSoft },
   billLabel: {
@@ -511,14 +517,14 @@ const styles = StyleSheet.create({
   },
   billLabelStrong: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
   billValue: {
-    fontFamily: theme.font.bodyBold,
+    fontFamily: theme.font.bodyMedium,
     fontSize: 13,
     fontVariant: ['tabular-nums'],
     color: theme.colors.textPrimary,
   },
   payBill: { marginTop: 10 },
   sectionGap: { marginTop: 18 },
-  flows: { gap: 10, marginTop: 10 },
+  flows: { gap: 8, marginTop: 8 },
   flowRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   flowLabel: {
     fontFamily: theme.font.bodyMedium,
@@ -547,15 +553,15 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: theme.colors.textMuted,
     marginLeft: 40,
-    marginTop: 3,
+    marginTop: 2,
   },
   netRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     alignItems: 'baseline',
     gap: 8,
-    marginTop: 12,
-    paddingTop: 10,
+    marginTop: 10,
+    paddingTop: 8,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: theme.colors.borderSoft,
   },
@@ -566,19 +572,20 @@ const styles = StyleSheet.create({
     width: 30,
   },
   netValue: {
-    fontFamily: theme.font.bodyBold,
+    fontFamily: theme.font.bodyMedium,
     fontSize: 13,
     fontVariant: ['tabular-nums'],
     color: theme.colors.textPrimary,
   },
   netText: {
-    flexBasis: '100%',
+    flexGrow: 1,
+    flexBasis: 120,
     fontFamily: theme.font.body,
     fontSize: 12,
     color: theme.colors.textSecondary,
   },
   flowValue: {
-    fontFamily: theme.font.bodyBold,
+    fontFamily: theme.font.bodyMedium,
     fontSize: 13,
     fontVariant: ['tabular-nums'],
     minWidth: 92,

@@ -36,9 +36,15 @@ jest.mock('@/components/ModalSheet', () => ({
   SheetFooter: ({ children, onMore }: { children: unknown; onMore?: () => void }) =>
     require('react').createElement(require('react-native').View, { testID: 'loan-footer', onMore }, children),
 }));
-jest.mock('@/components/SheetCard', () => ({
-  SheetCard: (p: { title: string }) =>
-    require('react').createElement(require('react-native').View, { testID: 'card', title: p.title }),
+jest.mock('./LoanHero', () => ({
+  LoanHero: (p: { title: string; paid: unknown; ends?: string; kicker: string }) =>
+    require('react').createElement(require('react-native').View, {
+      testID: 'card',
+      title: p.title,
+      paid: p.paid,
+      ends: p.ends,
+      kicker: p.kicker,
+    }),
 }));
 jest.mock('@/components/SettingsRow', () => ({
   SettingsRow: (p: { label: string; sub?: string }) =>
@@ -145,7 +151,7 @@ describe('next installment', () => {
     const tree = await render();
     const shown = texts(tree);
     expect(shown).toContain(`${weekdayDayMonth(due)} · overdue`);
-    expect(shown).toContain('1 of 3');
+    expect(tree.root.findByProps({ testID: 'card' }).props.paid).toEqual({ figure: '1 of 3' });
     expect(payButton(tree).props.title).toBe(`Record EMI 2 · ${formatMoney(100_000)}`);
     expect(payButton(tree).props.disabled).toBe(false);
   });
@@ -176,7 +182,7 @@ describe('next installment', () => {
     );
     const tree = await render();
     expect(texts(tree)).toContain('None left');
-    expect(texts(tree)).toContain('2 of 2');
+    expect(tree.root.findByProps({ testID: 'card' }).props.paid).toEqual({ figure: '2 of 2' });
     expect(tree.root.findAllByType(PrimaryButton)).toHaveLength(0);
   });
 });
@@ -288,6 +294,20 @@ it('shows only the payment popup and restores the loan when it closes', async ()
   expect(tree.root.findByType(ModalSheet).props.visible).toBe(false);
   act(() => tree.root.findByType(PayInstallmentSheet).props.onClose());
   expect(tree.root.findByType(ModalSheet).props.visible).toBe(true);
+});
+
+it('shows the repayment progress and payoff month on the loan card, not as separate blocks', async () => {
+  setup([{ ...installment(1, addDaysToIsoDate(todayIso, 10)), outstandingAfterMinor: 0 }]);
+  const tree = await render();
+  const card = tree.root.findByProps({ testID: 'card' }).props;
+  expect(card.paid).toEqual({ figure: '0 of 1' });
+  expect(card.ends).toMatch(/^Debt-free /);
+  const labels = tree.root
+    .findAllByType(Text)
+    .map((n) => [n.props.children].flat().join(''))
+    .join(' | ');
+  expect(labels).not.toContain('EMIs paid');
+  expect(labels).not.toContain('Debt-free in');
 });
 
 it('does not flash a paid-off EMI or zero interest while the schedule is still loading', async () => {

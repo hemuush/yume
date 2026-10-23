@@ -17,6 +17,7 @@ jest.mock('expo-router', () => ({
     { Screen: () => null }
   ),
   useRootNavigationState: () => ({ key: 'ready' }),
+  usePathname: () => '/',
   router: { navigate: jest.fn() },
 }));
 jest.mock('expo-screen-capture', () => ({

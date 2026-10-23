@@ -27,7 +27,7 @@ export type ComingUpItem =
     };
 
 /** How many rows Coming up shows at once; the rest are one tap away in Plan, Budgets or Goals. */
-export const COMING_UP_ROWS = 5;
+const COMING_UP_ROWS = 5;
 /** Outgoing payments further away than this stay out of Home; Plan lists them all. */
 const PAYMENT_WINDOW_DAYS = 31;
 

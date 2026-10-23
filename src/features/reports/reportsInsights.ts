@@ -200,8 +200,7 @@ interface PatternFact {
 
 /**
  * The notable reads of a month's daily-spend shape, most telling first, at most three; a flat month gets
- * fewer. The weekend read averages over every day so far (spend-free ones included), the same basis as
- * `weekdayRhythm`, so the two never disagree.
+ * fewer. The weekend read averages over every day so far, spend-free ones included.
  */
 export function patternFacts(
   daily: DailyExpensePoint[],
@@ -478,64 +477,6 @@ export function buildStoryCards(input: StoryInput): StoryCard[] {
   return cards;
 }
 
-/** Fewer counted days than this and a weekday has been seen only once or twice — too little to call a pattern. */
-export const WEEKDAY_MIN_DAYS = 14;
-
-export interface WeekdayRhythm {
-  /** The average spend on each weekday (Sunday first), over every such day so far, spend-free days included. */
-  avgMinor: number[];
-  /** How many of each weekday fall in the days counted. */
-  counts: number[];
-  /** The average day across the whole period so far — the dashed line. */
-  usualMinor: number;
-  peak: number;
-  countedDays: number;
-}
-
-/**
- * Average spend by weekday for days so far. Days after `today` (and spending dated ahead) are excluded,
- * as in `daySpendFacts`. Null when there are too few days or nothing was spent.
- */
-export function weekdayRhythm(
-  daily: DailyExpensePoint[],
-  range: { start: string; end: string },
-  today: string
-): WeekdayRhythm | null {
-  const last = today < range.end ? today : range.end;
-  const spentOn = new Map(daily.map((d) => [d.date, d.totalMinor]));
-  const totals = new Array<number>(7).fill(0);
-  const counts = new Array<number>(7).fill(0);
-  let countedDays = 0;
-  let sum = 0;
-  for (let d = parseLocalIsoDate(range.start); toLocalIsoDate(d) <= last; d.setDate(d.getDate() + 1)) {
-    const dow = d.getDay();
-    const amount = spentOn.get(toLocalIsoDate(d)) ?? 0;
-    totals[dow] += amount;
-    counts[dow] += 1;
-    sum += amount;
-    countedDays++;
-  }
-  if (countedDays < WEEKDAY_MIN_DAYS || sum <= 0) return null;
-  const avgMinor = totals.map((t, i) => (counts[i] > 0 ? Math.round(t / counts[i]) : 0));
-  const peak = avgMinor.indexOf(Math.max(...avgMinor));
-  return { avgMinor, counts, usualMinor: Math.round(sum / countedDays), peak, countedDays };
-}
-
-/** The sentence under the bars for one weekday: its average against the period's usual day. */
-export function weekdayReadLine(r: WeekdayRhythm, dow: number): string {
-  const name = WEEKDAY[dow];
-  const avg = r.avgMinor[dow];
-  // usualMinor is never 0 from weekdayRhythm (it returns null then), but guard the divide anyway.
-  const pct = r.usualMinor > 0 ? Math.round((Math.abs(avg - r.usualMinor) / r.usualMinor) * 100) : 0;
-  const usual = formatMoney(r.usualMinor);
-  if (dow === r.peak && avg > r.usualMinor) {
-    return `${name}s run highest: ${formatMoney(avg)} on average, ${pct}% above your ${usual} day.`;
-  }
-  const against =
-    pct < 5 ? `about your ${usual}` : `${pct}% ${avg > r.usualMinor ? 'above' : 'below'} your ${usual}`;
-  return `${name}: ${formatMoney(avg)} a day over ${r.counts[dow]} ${name}${r.counts[dow] === 1 ? '' : 's'} · ${against}.`;
-}
-
 /** Accounts have no colour of their own, so each takes the next of these pastel tones by its place in the list. */
 const ACCOUNT_COLORS = ['#8CB8E8', '#F0876A', '#9CC96B', '#E0AC3F', '#6CCFC0', '#C9B8FF', '#FFA8CE'];
 
@@ -686,30 +627,12 @@ export function categoriesAgainstUsual(tracks: CategoryTrack[]): CategoryAgainst
 }
 
 /** The days of a range, as ISO dates, first to last. */
-export function daysOfRange(range: { start: string; end: string }): string[] {
+function daysOfRange(range: { start: string; end: string }): string[] {
   const days: string[] = [];
   for (let d = parseLocalIsoDate(range.start); toLocalIsoDate(d) <= range.end; d.setDate(d.getDate() + 1)) {
     days.push(toLocalIsoDate(d));
   }
   return days;
-}
-
-/**
- * Running spend for each day of a range: what had been spent by the end of that day. Days after `today`
- * are null (not happened yet), so a month in progress draws only as far as today.
- */
-export function cumulativeSpend(
-  daily: DailyExpensePoint[],
-  range: { start: string; end: string },
-  today: string
-): (number | null)[] {
-  const spentOn = new Map(daily.map((d) => [d.date, d.totalMinor]));
-  let sum = 0;
-  return daysOfRange(range).map((iso) => {
-    if (iso > today) return null;
-    sum += spentOn.get(iso) ?? 0;
-    return sum;
-  });
 }
 
 /** A spend-day that stands well above the period's usual day: marked on the heatmap. */

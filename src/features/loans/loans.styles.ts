@@ -5,15 +5,6 @@ import { EYEBROW, SECTION_TITLE, SECTION_GAP } from '@/constants/textStyles';
 // Shared by the Loans screen and every loan modal (LoanCard, LoanDetailModal, AssetModal, AccountModal,
 // RateChangeModal, PrepayModal, AddLoanModal), so styling stays in one place.
 export const styles = StyleSheet.create({
-  repaymentTrack: {
-    height: 5,
-    borderRadius: 3,
-    overflow: 'hidden',
-    backgroundColor: theme.colors.inkHairline,
-    marginVertical: 10,
-  },
-  repaymentFill: { height: '100%', backgroundColor: theme.colors.incomeText },
-  forecastDisclosure: { marginTop: 4 },
   container: { flex: 1, backgroundColor: theme.colors.background },
   errorBanner: {
     marginHorizontal: 20,
@@ -54,7 +45,6 @@ export const styles = StyleSheet.create({
   },
   closedDivider: EYEBROW,
   cardSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 4 },
-  statLabel: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted },
   errorText: { fontFamily: theme.font.body, color: theme.colors.expenseText, fontSize: 13, marginBottom: 12 },
   // The Overview / Schedule switch under a loan's card.
   sectionTitle: {
@@ -110,9 +100,9 @@ export const styles = StyleSheet.create({
     fontSize: 11,
     letterSpacing: 0.5,
     color: theme.colors.textMuted,
-    marginBottom: 8,
+    marginBottom: 6,
   },
-  progressRow: { flexDirection: 'row', gap: 5, marginBottom: 16 },
+  progressRow: { flexDirection: 'row', gap: 5, marginBottom: 12 },
   progressSeg: {
     flex: 1,
     height: 4,
@@ -130,23 +120,26 @@ export const styles = StyleSheet.create({
     marginTop: 10,
     marginBottom: 8,
   },
-  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 14 },
-  payoffCard: {
+  // Two fields side by side, wrapping to separate rows on a narrow screen or at large text.
+  pairRow: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 10 },
+  pairCell: { flexGrow: 1, flexBasis: 150, minWidth: 0 },
+  assetRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
     marginBottom: 12,
-    padding: 14,
-    gap: 4,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 22,
+    borderRadius: 18,
     backgroundColor: theme.colors.surface,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
   },
-  payoffMonth: { fontFamily: theme.font.roundedBold, fontSize: 18, color: theme.colors.textPrimary },
+  assetCopy: { flex: 1, minWidth: 0 },
+  assetTitle: { fontFamily: theme.font.bodyMedium, fontSize: 14, color: theme.colors.textPrimary },
+  assetHint: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textMuted },
+  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 14 },
+  forecast: { paddingHorizontal: 14, paddingBottom: 12, gap: 4 },
   payoffAxis: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, justifyContent: 'space-between' },
-  payoffHeading: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'baseline',
-    justifyContent: 'space-between',
-    gap: 8,
-  },
 });

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { useEffect, useEffectEvent, useRef, useState, useSyncExternalStore } from 'react';
 import { Animated, Easing, StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
 import { useReduceMotion } from '@/lib/useReduceMotion';
@@ -23,7 +23,9 @@ export function JustAddedGlow({ ids, surface }: { ids: string[]; surface: JustAd
   const running = useRef<Animated.CompositeAnimation | null>(null);
   useEffect(() => () => running.current?.stop(), []);
 
-  useEffect(() => {
+  // `ids` is compared through `idsKey` and `reduce` only picks the style of a glow already decided, so the
+  // effect starts the glow through an Effect Event instead of depending on either.
+  const startGlow = useEffectEvent(() => {
     if (!takeJustAdded(ids, surface)) return;
     setOn(true);
     glow.setValue(1);
@@ -41,8 +43,9 @@ export function JustAddedGlow({ ids, surface }: { ids: string[]; surface: JustAd
     anim.start(({ finished }) => {
       if (finished) setOn(false);
     });
-    // `ids` is compared through idsKey; `reduce` only picks the style of a glow already decided.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  });
+  useEffect(() => {
+    startGlow();
   }, [idsKey, surface, version]);
 
   if (!on) return null;

@@ -22,7 +22,7 @@ export interface DayMixPart {
  * What a day's spending was made of: each expense rolled up to its top-level category, largest first.
  * Refunds and income are left out; the bar shows where the money went, not the net.
  */
-export function dayMix(txs: Transaction[], catById: Map<string, Category>): DayMixPart[] {
+function dayMix(txs: Transaction[], catById: Map<string, Category>): DayMixPart[] {
   const by = new Map<string, DayMixPart>();
   for (const tx of txs) {
     if (tx.type !== 'expense' || tx.amountMinor <= 0) continue;

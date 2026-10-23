@@ -187,9 +187,6 @@ export default function GardenScreen() {
                       <Text style={styles.streakValue}>
                         {streakToday > 0 ? `${streakToday}-day streak` : 'No streak yet'}
                       </Text>
-                    </View>
-                    <View style={styles.goalRow}>
-                      <Text style={styles.summaryGoal}>Daily goal · under {formatMoney(dailyGoalMinor)}</Text>
                       <Pressable
                         accessibilityRole="button"
                         accessibilityLabel="Change daily goal"
@@ -199,53 +196,75 @@ export default function GardenScreen() {
                         <Text style={styles.editGoalText}>Edit goal</Text>
                       </Pressable>
                     </View>
-                    {todaySpend?.private === hideAmounts && (
-                      <Text style={styles.summaryGoal}>
-                        {todaySpentMinor <= dailyGoalMinor
-                          ? `${formatMoney(dailyGoalMinor - todaySpentMinor)} left today`
-                          : `${formatMoney(todaySpentMinor - dailyGoalMinor)} over today's goal`}
-                      </Text>
+                    {todaySpend?.private === hideAmounts ? (
+                      <>
+                        <View style={styles.todayTrack}>
+                          <View
+                            style={[
+                              styles.todayFill,
+                              {
+                                width: `${Math.min(100, (todaySpentMinor / dailyGoalMinor) * 100)}%`,
+                                backgroundColor:
+                                  todaySpentMinor > dailyGoalMinor
+                                    ? theme.colors.expense
+                                    : shade(secondary, 46),
+                              },
+                            ]}
+                          />
+                        </View>
+                        <View style={styles.todayLine}>
+                          <Text style={styles.todayFigure}>
+                            {todaySpentMinor <= dailyGoalMinor
+                              ? `${formatMoney(dailyGoalMinor - todaySpentMinor)} left today`
+                              : `${formatMoney(todaySpentMinor - dailyGoalMinor)} over today's goal`}
+                          </Text>
+                          <Text style={styles.summaryGoal}>Goal {formatMoney(dailyGoalMinor)} a day</Text>
+                        </View>
+                      </>
+                    ) : (
+                      <Text style={styles.summaryGoal}>Daily goal · under {formatMoney(dailyGoalMinor)}</Text>
                     )}
                     <Text style={styles.introHint}>
                       {hideAmounts ? 'Sensitive spending excluded from the amount above. ' : ''}Today's result
                       can change until the day ends.
                     </Text>
                   </Glass>
-                  <Glass radius={28} tone="strong" style={styles.bed}>
-                    {potDays.map((point) => {
-                      const isToday = point.date === today;
-                      const stage = stageForStreak(point.streakDays);
-                      const label = isToday
-                        ? 'Today'
-                        : parseLocalIsoDate(point.date).toLocaleDateString(undefined, { weekday: 'short' });
-                      return (
-                        <View key={point.date} style={[styles.pot, isToday && styles.potToday]}>
-                          <View style={styles.plantSlot}>
-                            <GardenPlant
-                              stage={stage}
-                              size={isToday ? 48 : 40}
-                              animKey={isToday ? `garden:${point.date}` : undefined}
-                            />
+                  <Glass radius={28} tone="strong" style={styles.bedCard}>
+                    <View style={styles.bed}>
+                      {potDays.map((point) => {
+                        const isToday = point.date === today;
+                        const stage = stageForStreak(point.streakDays);
+                        const label = isToday
+                          ? 'Today'
+                          : parseLocalIsoDate(point.date).toLocaleDateString(undefined, { weekday: 'short' });
+                        return (
+                          <View key={point.date} style={[styles.pot, isToday && styles.potToday]}>
+                            <View style={styles.plantSlot}>
+                              <GardenPlant
+                                stage={stage}
+                                size={isToday ? 48 : 40}
+                                animKey={isToday ? `garden:${point.date}` : undefined}
+                              />
+                            </View>
+                            <View style={styles.soil} />
+                            <Text style={[styles.dayLabel, isToday && styles.dayLabelToday]}>{label}</Text>
                           </View>
-                          <View style={styles.soil} />
-                          <Text style={[styles.dayLabel, isToday && styles.dayLabelToday]}>{label}</Text>
-                        </View>
-                      );
-                    })}
-                  </Glass>
-
-                  <Glass radius={22} style={styles.note}>
-                    <View style={styles.legend}>
-                      {LEGEND_STAGES.map((stage) => (
-                        <View key={stage} style={styles.legendItem}>
-                          <GardenPlant stage={stage} size={30} decorative />
-                          <Text style={styles.legendLabel}>{stageLabel(stage)}</Text>
-                        </View>
-                      ))}
+                        );
+                      })}
                     </View>
-
-                    <Text style={styles.noteLabel}>Suu says</Text>
-                    <Text style={styles.noteText}>{noteFor(stageToday, streakToday)}</Text>
+                    <View style={styles.note}>
+                      <Text style={styles.noteText}>
+                        <Text style={styles.noteLabel}>Suu says</Text> · {noteFor(stageToday, streakToday)}
+                      </Text>
+                      <View style={styles.legend}>
+                        {LEGEND_STAGES.map((stage) => (
+                          <View key={stage} style={styles.legendItem}>
+                            <GardenPlant stage={stage} size={24} decorative />
+                            <Text style={styles.legendLabel}>{stageLabel(stage)}</Text>
+                          </View>
+                        ))}
+                      </View>
+                    </View>
                   </Glass>
 
                   <GardenMonthCard month={month} today={today} />

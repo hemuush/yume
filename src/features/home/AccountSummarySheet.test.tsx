@@ -28,7 +28,7 @@ jest.mock('@/components/ModalSheet', () => ({
 function mockStub(testID: string) {
   return (p: object) => require('react').createElement(require('react-native').View, { testID, ...p });
 }
-jest.mock('@/components/SheetCard', () => ({ SheetCard: mockStub('card') }));
+jest.mock('@/components/DraftCard', () => ({ DraftCard: mockStub('card') }));
 jest.mock('@/components/SheetTabs', () => ({ SheetTabs: mockStub('tabs') }));
 jest.mock('./RecentTransactionRow', () => ({ RecentTransactionRow: mockStub('row') }));
 jest.mock('@/features/investments/InvestmentPanel', () => ({ InvestmentPanel: mockStub('panel') }));
@@ -139,14 +139,23 @@ describe('AccountSummarySheet', () => {
 
   it('opens on the money in and out, with the net and what each side was made of', async () => {
     const tree = await render();
-    expect(byId(tree, 'card').props.amount).toBe(formatMoney(500_000));
-    expect(byId(tree, 'card').props.meta).toBe('Balance');
+    expect(byId(tree, 'card').props.figure).toBe(formatMoney(500_000));
+    expect(byId(tree, 'card').props.per).toBe('balance');
+    expect(byId(tree, 'card').props.meta).toBeUndefined();
     const t = texts(tree);
     expect(t).toContain(`+${formatMoney(400_000)}`);
     expect(t).toContain(`−${formatMoney(100_000)}`);
     expect(t).toContain(`Income ${formatMoney(300_000)} · from your accounts ${formatMoney(100_000)}`);
-    expect(t).toContain(`Spent ${formatMoney(100_000)}`);
-    expect(t).toContain(`${formatMoney(300_000)} more came in than went out.`);
+    // A plain "Spent" would only repeat the amount beside the bar.
+    expect(t.some((x) => x.startsWith('Spent'))).toBe(false);
+    expect(t).toContain('more came in than went out');
+  });
+
+  it('names a transfer-only side without repeating its amount', async () => {
+    mockFlow.mockResolvedValue({ ...flow, inMinor: 100_000, incomeMinor: 0, transferInMinor: 100_000 });
+    const tree = await render();
+    expect(texts(tree)).toContain('from your accounts');
+    expect(texts(tree).some((x) => x.includes('from your accounts ₹'))).toBe(false);
   });
 
   it('asks for the flow of this account over the period it is looking at', async () => {
@@ -231,11 +240,11 @@ describe('AccountSummarySheet', () => {
     mockHide = true;
     const savings = account({ type: 'savings' });
     const hidden = await render({ account: savings, accounts: [savings] });
-    expect(byId(hidden, 'card').props.amount).not.toBe(formatMoney(500_000));
+    expect(byId(hidden, 'card').props.figure).not.toBe(formatMoney(500_000));
     expect(texts(hidden).some((s) => s.includes('••••'))).toBe(true);
 
     const bank = await render();
-    expect(byId(bank, 'card').props.amount).toBe(formatMoney(500_000));
+    expect(byId(bank, 'card').props.figure).toBe(formatMoney(500_000));
   });
 
   it('follows the accounts list so a new balance shows without reopening', async () => {
@@ -243,7 +252,7 @@ describe('AccountSummarySheet', () => {
     await act(async () => {
       tree.update(element({ accounts: [account({ currentBalanceMinor: 900_000 })] }));
     });
-    expect(byId(tree, 'card').props.amount).toBe(formatMoney(900_000));
+    expect(byId(tree, 'card').props.figure).toBe(formatMoney(900_000));
   });
 });
 
@@ -347,7 +356,7 @@ describe('AccountSummarySheet — tracked account', () => {
       },
     ]);
     const tree = await render({ account: tracked, accounts: [tracked] });
-    expect(byId(tree, 'card').props.kicker).toBe('savings · tracked');
+    expect(byId(tree, 'card').props.kicker).toBe('Savings · tracked');
     expect(has(tree, 'panel')).toBe(true);
     expect(byId(tree, 'panel').props.valuations).toEqual([{ id: 'v1' }]);
     expect(byId(tree, 'panel').props.nextSip).toEqual({
