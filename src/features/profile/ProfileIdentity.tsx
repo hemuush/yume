@@ -4,6 +4,7 @@ import { Text, TextInput } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { withPressed } from '@/lib/pressed';
 import { SCREEN } from '@/components/screenStyles';
+import { shade } from '@/lib/color';
 import { useAccent } from '@/theme/AccentContext';
 import { styles } from './profile.styles';
 
@@ -35,7 +36,7 @@ export function ProfileIdentity({
   return (
     <View style={local.card}>
       <View style={styles.identityRow}>
-        <View style={[local.halo, { borderColor: secondary }]}>
+        <View style={[local.halo, { borderColor: shade(secondary, 55) }]}>
           <View
             style={[styles.avatar, { backgroundColor: accent }]}
             accessible

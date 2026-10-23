@@ -94,10 +94,10 @@ const styles = StyleSheet.create({
   label: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textSecondary },
   sub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary, marginTop: -6 },
   shelf: { flexDirection: 'row', gap: 3, height: 8 },
-  slice: { flexBasis: 0, minWidth: 8, height: 8, borderRadius: 4 },
+  slice: { flexBasis: 0, minWidth: 8, height: 8, borderRadius: 4, boxShadow: `inset 0 0 0 1px ${theme.colors.inkHairline}` },
   legend: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 12, rowGap: 6 },
   legendItem: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', maxWidth: '100%' },
-  key: { width: 9, height: 9, borderRadius: 5, marginRight: 5 },
+  key: { width: 9, height: 9, borderRadius: 5, marginRight: 5, boxShadow: `inset 0 0 0 1px ${theme.colors.inkHairline}` },
   legendLabel: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
   legendValue: {
     fontVariant: ['tabular-nums'],
