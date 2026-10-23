@@ -228,16 +228,6 @@ export async function getThemeId(): Promise<string | null> {
   return cachedThemeId;
 }
 
-export async function setThemeId(id: string): Promise<void> {
-  const db = await getDb();
-  await db.runAsync(
-    `INSERT INTO settings (key, value) VALUES (?, ?)
-     ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
-    [THEME_ID_KEY, id]
-  );
-  cachedThemeId = id;
-}
-
 /** One SQLite statement keeps the pack and its compatibility accent atomic, including their caches. */
 export async function setThemeSelection(id: string, hex: string): Promise<void> {
   if (!id.trim() || !/^#[0-9a-f]{6}$/i.test(hex)) throw new Error('Choose a valid theme.');
