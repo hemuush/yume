@@ -94,8 +94,8 @@ export const styles = StyleSheet.create({
   nodeRow: { flexWrap: 'wrap', gap: 8 },
   nodeDetails: { flexGrow: 1, flexBasis: 160 },
   linkAction: { minHeight: 48, justifyContent: 'center' },
-  nodeCopy: { backgroundColor: theme.colors.idTeal },
-  rail: { position: 'absolute', left: 22, width: 2, backgroundColor: theme.colors.borderSoft },
+  nodeCopy: {},
+  rail: { position: 'absolute', left: 22, width: 2, backgroundColor: 'rgba(18,19,15,0.16)' },
   dot: {
     position: 'absolute',
     left: 17,

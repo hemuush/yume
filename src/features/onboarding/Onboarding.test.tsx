@@ -9,7 +9,11 @@ import { create, act, ReactTestRenderer, ReactTestInstance } from 'react-test-re
 jest.setTimeout(30000);
 
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
-jest.mock('react-native-keyboard-controller', () => ({ KeyboardAvoidingView: require('react-native').View }));
+jest.mock('react-native-keyboard-controller', () => ({
+  KeyboardAvoidingView: require('react-native').View,
+  KeyboardProvider: ({ children }: { children: unknown }) => children,
+  useKeyboardState: () => false,
+}));
 jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
 }));

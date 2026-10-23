@@ -10,6 +10,7 @@ import { ROW_LAYOUT, ROW_EXIT } from '@/lib/animation';
 import { lastActivityShort, personInitials } from './people.helpers';
 import { styles } from './people.styles';
 import { Glass } from '@/components/Glass';
+import { cardSurface } from '@/components/CardSurface';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -43,7 +44,7 @@ export function PersonTile({
   const look = LOOK[dispBalanceMinor > 0 ? 'owed' : 'owe'];
   return (
     <ReanimatedAnimated.View style={styles.tileCell} layout={ROW_LAYOUT} exiting={ROW_EXIT}>
-      <Glass radius={22} style={styles.personTile}>
+      <Glass radius={22} style={[styles.personTile, cardSurface.neutral]}>
         <AnimatedPressable
           style={animatedStyle}
           onPress={onPress}

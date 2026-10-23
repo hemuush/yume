@@ -241,7 +241,7 @@ const styles = StyleSheet.create({
     fontSize: 10,
     lineHeight: 16,
     letterSpacing: 1,
-    color: theme.colors.textMuted,
+    color: theme.colors.textSecondary,
     marginBottom: 2,
   },
   greet: {

@@ -9,7 +9,7 @@ import { theme } from '@/constants/theme';
 import { EYEBROW } from '@/constants/textStyles';
 import { PANEL_ENTER, ROW_EXIT } from '@/lib/animation';
 import { formatMaskableMoney, formatMoney } from '@/lib/money';
-import { withPressed } from '@/lib/pressed';
+import { withPressedTint } from '@/lib/pressed';
 import { screenStyles as h } from '@/components/screenStyles';
 import { useAccent } from '@/theme/AccentContext';
 import { cardSurface } from '@/components/CardSurface';
@@ -68,7 +68,7 @@ export function TrackedCard({
   return (
     <View style={embedded ? styles.embedded : [h.card, cardSurface.neutral, styles.card]}>
       <Pressable
-        style={withPressed([styles.head, embedded && styles.headEmbedded])}
+        style={withPressedTint(secondary, [styles.head, embedded && styles.headEmbedded])}
         onPress={() => setOpen((v) => !v)}
         accessibilityRole="button"
         accessibilityState={{ expanded: open }}
@@ -115,7 +115,7 @@ export function TrackedCard({
           </View>
           {untrackedAssetLoan ? (
             <Pressable
-              style={withPressed([styles.hint, styles.hintWarn, !embedded && styles.inset])}
+              style={withPressedTint(secondary, [styles.hint, styles.hintWarn, !embedded && styles.inset])}
               onPress={() => router.push('/loans')}
               accessibilityRole="button"
               accessibilityLabel="A loan's home or vehicle isn't counted yet. Open loans to add its value"

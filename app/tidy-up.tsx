@@ -38,7 +38,8 @@ import { categoryPath } from '@/lib/categoryLabel';
 import { showAlert } from '@/components/AppDialog';
 import { useAccent } from '@/theme/AccentContext';
 import Feather from '@expo/vector-icons/Feather';
-import { Glass, GLASS, GLASS_CARD } from '@/components/Glass';
+import { Glass } from '@/components/Glass';
+import { cardSurface } from '@/components/CardSurface';
 import { Kicker, frost } from '@/components/Frost';
 import { HomeWallpaper } from '@/features/home/HomeWallpaper';
 
@@ -218,7 +219,7 @@ export default function TidyUpScreen() {
 
   return (
     <View style={styles.container}>
-      <HomeWallpaper accent={accent} secondary={secondary} />
+      <HomeWallpaper accent={accent} secondary={secondary} plain />
       <ReanimatedAnimated.ScrollView
         ref={scrollRef}
         onScroll={scrollHandler}
@@ -259,7 +260,7 @@ export default function TidyUpScreen() {
 
             {report.repeats.length > 0 && (
               <Section title="Same entry twice?">
-                <View style={[h.card, GLASS_CARD]}>
+                <View style={[h.card, cardSurface.neutral]}>
                   {report.repeats.map((g, i) => (
                     <View key={g.key} style={[styles.item, i > 0 && h.divider]}>
                       <View style={styles.itemTop}>
@@ -304,7 +305,7 @@ export default function TidyUpScreen() {
 
             {report.startingBalances.length > 0 && (
               <Section title="Old balances logged as income">
-                <View style={[h.card, GLASS_CARD]}>
+                <View style={[h.card, cardSurface.neutral]}>
                   {report.startingBalances.map((g, i) => {
                     const one = g.ids.length === 1;
                     const when = one
@@ -358,7 +359,7 @@ export default function TidyUpScreen() {
 
             {report.fractionalCount > 0 && (
               <Section title="Amounts with paise">
-                <View style={[h.card, GLASS_CARD]}>
+                <View style={[h.card, cardSurface.neutral]}>
                   <View style={styles.item}>
                     <View style={styles.itemTop}>
                       <CategoryIcon name="calculator-variant-outline" color={accent} />
@@ -417,9 +418,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 8,
     borderRadius: 14,
-    backgroundColor: GLASS.fillStrong,
-    borderWidth: 1,
-    borderColor: GLASS.edge,
+    backgroundColor: theme.colors.tray,
+    boxShadow: `inset 0 0 0 1px ${theme.colors.inkHairline}`,
   },
   afterText: {
     flex: 1,

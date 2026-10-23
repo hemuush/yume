@@ -435,7 +435,7 @@ export default function ReportsScreen() {
   if (status === 'error' && (loadedKey !== requestKey || !comparison)) {
     return (
       <View style={styles.container}>
-        <HomeWallpaper accent={accent} secondary={secondary} />
+        <HomeWallpaper accent={accent} secondary={secondary} plain />
         {header}
         <ReportTabs value={tab} onChange={setTab} />
         <View style={styles.center}>

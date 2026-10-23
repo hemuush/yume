@@ -2,7 +2,8 @@ import { View, Pressable, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
 import { screenStyles as h } from '@/components/screenStyles';
 import { theme } from '@/constants/theme';
-import { withPressed } from '@/lib/pressed';
+import { withPressedTint } from '@/lib/pressed';
+import { useAccent } from '@/theme/AccentContext';
 
 function Guard({
   title,
@@ -22,9 +23,10 @@ function Guard({
   /** Set on a card that switches something in place: it reads as a switch, on or off. */
   checked?: boolean;
 }) {
+  const { accent } = useAccent();
   return (
     <Pressable
-      style={withPressed([styles.guard, bad && styles.guardBad])}
+      style={withPressedTint(accent, [styles.guard, bad && styles.guardBad])}
       onPress={onPress}
       accessibilityRole={checked === undefined ? 'button' : 'switch'}
       accessibilityState={checked === undefined ? undefined : { checked }}
@@ -75,7 +77,7 @@ export function SafetyCheck({
         ? 'Your data is looked after'
         : `${todo} thing${todo === 1 ? '' : 's'} to look at`;
   const good = theme.colors.slice.saved;
-  const muted = theme.colors.trayTrack;
+  const muted = 'rgba(18,19,15,0.28)';
   return (
     <View style={styles.card}>
       <Text style={styles.kicker}>Safety check</Text>

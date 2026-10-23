@@ -4,7 +4,7 @@ import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { dayMonth, weekdayDayMonth } from '@/lib/dateLabels';
 import { formatMoney } from '@/lib/money';
-import { withPressed } from '@/lib/pressed';
+import { withPressedTint } from '@/lib/pressed';
 import { selectedFill } from '@/theme/interactionColors';
 import { useAccent } from '@/theme/AccentContext';
 import type { Runway, RunwayDay } from './runway';
@@ -31,7 +31,10 @@ export function UpcomingDates({
             accessibilityRole="radio"
             accessibilityState={{ selected: mode === value }}
             onPress={() => setMode(value)}
-            style={withPressed([s.mode, mode === value && { backgroundColor: selectedFill(accent) }])}
+            style={withPressedTint(accent, [
+              s.mode,
+              mode === value && { backgroundColor: selectedFill(accent) },
+            ])}
           >
             <Text style={[s.dateLabel, mode === value && s.activeText]}>
               {value === 'outgoing' ? 'Money out' : 'Scheduled income'}
@@ -59,7 +62,7 @@ export function UpcomingDates({
                   accessibilityLabel={`${weekdayDayMonth(day.date)}, scheduled ${mode === 'income' ? 'income' : 'outgoing'} ${formatMoney(mode === 'income' ? day.inMinor : day.outMinor)}`}
                   accessibilityState={{ selected: active }}
                   onPress={() => setSelectedDate(day.date)}
-                  style={withPressed([
+                  style={withPressedTint(accent, [
                     s.date,
                     active && { backgroundColor: selectedFill(accent), borderColor: selectedFill(accent) },
                   ])}
@@ -156,6 +159,8 @@ const s = StyleSheet.create({
     gap: 5,
     backgroundColor: theme.colors.surface,
     borderRadius: 18,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
   },
   caption: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
 });

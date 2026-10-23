@@ -1,7 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
 import { View, StyleSheet, Linking, Pressable } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
-import { withPressed } from '@/lib/pressed';
+import { withPressedTint } from '@/lib/pressed';
 import { Text } from '@/components/Text';
 import { useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -169,7 +169,7 @@ export default function NotificationSettingsScreen() {
   if (!prefs) {
     return (
       <View style={styles.container}>
-        <HomeWallpaper accent={accent} secondary={secondary} />
+        <HomeWallpaper accent={accent} secondary={secondary} plain />
         <SkyHeader title="Notifications" showBack hideUser wallpaper />
         {loadError ? (
           <View style={listScreenStyles.errorBanner}>
@@ -217,7 +217,7 @@ export default function NotificationSettingsScreen() {
 
   return (
     <View style={styles.container}>
-      <HomeWallpaper accent={accent} secondary={secondary} />
+      <HomeWallpaper accent={accent} secondary={secondary} plain />
       <ReanimatedAnimated.ScrollView
         ref={scrollRef}
         onScroll={scrollHandler}
@@ -365,7 +365,7 @@ export default function NotificationSettingsScreen() {
           <View style={[h.card, cardSurface.neutral]}>
             <Pressable
               onPress={() => setTroubleOpen((v) => !v)}
-              style={withPressed(styles.troubleRow)}
+              style={withPressedTint(accent, styles.troubleRow)}
               accessibilityRole="button"
               accessibilityState={{ expanded: troubleOpen }}
               accessibilityLabel="Delivery check"

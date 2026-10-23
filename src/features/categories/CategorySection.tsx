@@ -2,12 +2,13 @@ import { ReactNode, useState } from 'react';
 import { View, Pressable, Animated, useWindowDimensions } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { theme } from '@/constants/theme';
-import { withPressed } from '@/lib/pressed';
+import { withPressedTint } from '@/lib/pressed';
 import { MovingRow } from '@/components/MovingRow';
 import { Text } from '@/components/Text';
 import { Category } from '@/types';
 import { topLevelOnly, childrenOf } from '@/lib/categoryTree';
 import { CategoryIcon } from '@/components/CategoryIcon';
+import { useAccent } from '@/theme/AccentContext';
 import { usePressScale } from '@/lib/usePressScale';
 import { styles, TILE_COLUMNS } from './categories.styles';
 
@@ -204,6 +205,7 @@ function PanelHeader({
   onPress: () => void;
   onLongPress: () => void;
 }) {
+  const { accent } = useAccent();
   return (
     <View style={styles.panelHeader}>
       <View style={styles.panelHeading}>
@@ -214,7 +216,7 @@ function PanelHeader({
       </View>
       <Pressable
         onPress={onPress}
-        style={withPressed(styles.parentEdit)}
+        style={withPressedTint(accent, styles.parentEdit)}
         accessibilityRole="button"
         accessibilityLabel={`Edit ${parent.name}`}
       >
@@ -223,7 +225,7 @@ function PanelHeader({
       </Pressable>
       <Pressable
         onPress={onLongPress}
-        style={withPressed(styles.parentMore)}
+        style={withPressedTint(accent, styles.parentMore)}
         accessibilityRole="button"
         accessibilityLabel={`More options for ${parent.name}`}
       >

@@ -9,7 +9,8 @@ import { useSwipeStep } from '@/lib/useSwipeStep';
 import { haptics } from '@/lib/haptics';
 import { styles } from './reports.styles';
 import { RangeSheet } from './RangeSheet';
-import { withPressed } from '@/lib/pressed';
+import { withPressedTint } from '@/lib/pressed';
+import { useAccent } from '@/theme/AccentContext';
 
 const GRANULARITIES = [
   { key: 'month', label: 'Month', menuLabel: 'Month' },
@@ -34,6 +35,7 @@ export function PeriodRow({
   style?: StyleProp<ViewStyle>;
   compact?: boolean;
 }) {
+  const { accent } = useAccent();
   const { width, fontScale } = useWindowDimensions();
   const stacked = compact && (width < 360 || fontScale > 1.2);
   const [rangeOpen, setRangeOpen] = useState(false);
@@ -63,7 +65,7 @@ export function PeriodRow({
         <Pressable
           onPress={() => change(stepWindow(cursor, -1))}
           hitSlop={4}
-          style={withPressed([styles.periodArrow, compact && { backgroundColor: 'transparent' }])}
+          style={withPressedTint(accent, [styles.periodArrow, compact && { backgroundColor: 'transparent' }])}
           accessibilityRole="button"
           accessibilityLabel="Previous period"
         >
@@ -76,7 +78,7 @@ export function PeriodRow({
           onPress={() => change(stepWindow(cursor, 1))}
           disabled={!fwd}
           hitSlop={4}
-          style={withPressed([
+          style={withPressedTint(accent, [
             styles.periodArrow,
             !fwd && styles.periodArrowOff,
             compact && { backgroundColor: 'transparent' },
@@ -94,7 +96,7 @@ export function PeriodRow({
           haptics.tap();
           setMenuOpen(true);
         }}
-        style={withPressed([styles.granChip, stacked && { justifyContent: 'center' }])}
+        style={withPressedTint(accent, [styles.granChip, stacked && { justifyContent: 'center' }])}
         accessibilityRole="button"
         accessibilityLabel={`Period type: ${granLabel}. Change`}
       >

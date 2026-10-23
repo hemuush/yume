@@ -7,7 +7,7 @@ import { CategoryIcon } from '@/components/CategoryIcon';
 import { MovingRow } from '@/components/MovingRow';
 import { styles } from '@/features/add/add.styles';
 import { Staged, dateChipLabel } from '@/features/add/addEntry';
-import { withPressed } from '@/lib/pressed';
+import { withPressedTint } from '@/lib/pressed';
 import { inParent } from '@/lib/categoryLabel';
 import { useAccent } from '@/theme/AccentContext';
 
@@ -24,7 +24,7 @@ export function StagedList({
   fadeStyle: React.ComponentProps<typeof Animated.View>['style'];
   onRemove: (id: string) => void;
 }) {
-  const { secondary } = useAccent();
+  const { accent, secondary } = useAccent();
   return (
     <Animated.View style={[styles.staged, fadeStyle]}>
       <View style={styles.stagedHeadRow}>
@@ -65,7 +65,7 @@ export function StagedList({
             <Pressable
               onPress={() => onRemove(r.id)}
               hitSlop={4}
-              style={withPressed(styles.removeBtn)}
+              style={withPressedTint(accent, styles.removeBtn)}
               accessibilityRole="button"
               accessibilityLabel="Remove this entry from the list"
             >

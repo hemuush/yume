@@ -2,10 +2,11 @@ import { View, StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
 import { GrowFill } from './GrowFill';
 import { useAccent } from '@/theme/AccentContext';
+import { shade } from '@/lib/color';
 
 export type LimitMeterTone = 'ok' | 'near' | 'over';
 
-// 'ok' follows the picked theme's secondary (read in the component).
+// 'ok' follows the picked theme's secondary, a deeper shade so it shows on the track (read in the component).
 const TONE_FILL: Record<Exclude<LimitMeterTone, 'ok'>, string> = {
   near: theme.colors.idGoldDeep,
   over: theme.colors.expense,
@@ -32,7 +33,10 @@ export function LimitMeter({
 }) {
   const { secondary } = useAccent();
   const clamped = Math.min(100, Math.max(0, pct));
-  const fillStyle = [styles.fill, { backgroundColor: tone === 'ok' ? secondary : TONE_FILL[tone] }];
+  const fillStyle = [
+    styles.fill,
+    { backgroundColor: tone === 'ok' ? shade(secondary, 66) : TONE_FILL[tone] },
+  ];
   return (
     <View style={styles.track}>
       {animKey ? (

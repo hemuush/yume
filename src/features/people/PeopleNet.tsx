@@ -1,6 +1,7 @@
 import { View, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
 import { Glass } from '@/components/Glass';
+import { cardSurface } from '@/components/CardSurface';
 import { Kicker, frost } from '@/components/Frost';
 import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
@@ -30,7 +31,7 @@ export function PeopleNet({
         : theme.colors.textPrimary;
   const total = owedToYouMinor + youOweMinor;
   return (
-    <Glass radius={28} tone="strong" style={[frost.hero, styles.card]}>
+    <Glass radius={28} tone="strong" style={[frost.hero, cardSurface.summary, styles.card]}>
       <Kicker icon="users">
         {netMinor > 0 ? 'Net, in your favour' : netMinor < 0 ? 'Net, against you' : 'Net, even'}
       </Kicker>

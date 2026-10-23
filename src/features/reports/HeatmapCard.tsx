@@ -147,5 +147,5 @@ const styles = StyleSheet.create({
   legendStep: { flex: 1 },
   legendText: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted },
   legendBig: { flexDirection: 'row', alignItems: 'center', gap: 4, marginLeft: 'auto' },
-  legendBigDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: theme.colors.ink },
+  legendBigDot: { width: 4, height: 4, borderRadius: 2, backgroundColor: theme.colors.textSecondary },
 });

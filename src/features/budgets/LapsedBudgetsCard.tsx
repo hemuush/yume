@@ -8,7 +8,7 @@ import { CategoryIcon } from '@/components/CategoryIcon';
 import { LapsedBudget } from '@/db/budgets';
 import { formatMoney } from '@/lib/money';
 import { theme } from '@/constants/theme';
-import { withPressed } from '@/lib/pressed';
+import { withPressed, withPressedTint } from '@/lib/pressed';
 import { categorySentence } from '@/lib/categoryLabel';
 import { styles } from './budgets.styles';
 
@@ -63,7 +63,7 @@ export function LapsedBudgetsCard({
           <Pressable
             onPress={() => setOpen((v) => !v)}
             hitSlop={10}
-            style={withPressed(styles.lapsedChevron)}
+            style={withPressedTint(accent, styles.lapsedChevron)}
             accessibilityRole="button"
             accessibilityLabel={open ? 'Hide the list' : 'Choose which to continue'}
             accessibilityState={{ expanded: open }}

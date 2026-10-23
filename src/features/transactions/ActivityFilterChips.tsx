@@ -7,7 +7,7 @@ import { theme } from '@/constants/theme';
 import { TransactionType } from '@/types';
 import { EmptyState } from '@/components/EmptyState';
 import { styles } from './transactions.styles';
-import { withPressed } from '@/lib/pressed';
+import { withPressed, withPressedTint } from '@/lib/pressed';
 import { shade } from '@/lib/color';
 import { useAccent } from '@/theme/AccentContext';
 
@@ -64,7 +64,7 @@ export function ActivityFilterChips({
               <Pressable
                 key={c.value}
                 onPress={() => onFilterType(c.value)}
-                style={withPressed([
+                style={withPressedTint(accent, [
                   styles.typeBtn,
                   wrapTabs && { flexBasis: '40%' },
                   on && { backgroundColor: selectedFill(accent) },
@@ -100,7 +100,7 @@ export function ActivityFilterChips({
             <Pressable
               key={id}
               onPress={() => onRemoveCategory(id)}
-              style={withPressed([styles.chip, { backgroundColor: chipBg }])}
+              style={withPressedTint(accent, [styles.chip, { backgroundColor: chipBg }])}
               accessibilityRole="button"
               accessibilityLabel={`Remove the ${categoryName(id)} filter`}
             >
@@ -112,7 +112,7 @@ export function ActivityFilterChips({
             <Pressable
               key={id}
               onPress={() => onRemoveAccount(id)}
-              style={withPressed([styles.chip, { backgroundColor: chipBg }])}
+              style={withPressedTint(accent, [styles.chip, { backgroundColor: chipBg }])}
               accessibilityRole="button"
               accessibilityLabel={`Remove the ${accountName(id)} filter`}
             >
@@ -124,7 +124,7 @@ export function ActivityFilterChips({
           {picked > 0 && (
             <Pressable
               onPress={onClearAll}
-              style={withPressed(styles.chip)}
+              style={withPressedTint(accent, styles.chip)}
               accessibilityRole="button"
               accessibilityLabel="Clear all Activity filters"
             >

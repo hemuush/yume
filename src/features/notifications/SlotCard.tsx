@@ -4,7 +4,8 @@ import { Text } from '@/components/Text';
 import { ToggleSwitch } from '@/components/ToggleSwitch';
 import { screenStyles as h } from '@/components/screenStyles';
 import { theme } from '@/constants/theme';
-import { withPressed } from '@/lib/pressed';
+import { withPressedTint } from '@/lib/pressed';
+import { useAccent } from '@/theme/AccentContext';
 import {
   TIME_RANGES,
   TIME_STEP_MINUTES,
@@ -34,6 +35,7 @@ export function SlotCard({
   onToggle: (on: boolean) => void;
   onChange: (minutes: number) => void;
 }) {
+  const { accent } = useAccent();
   const { min, max } = TIME_RANGES[kind];
   const name = NAMES[kind];
   const earlier = minutes <= min;
@@ -49,7 +51,7 @@ export function SlotCard({
       </View>
       <View style={[styles.time, !on && styles.off]}>
         <Pressable
-          style={withPressed(styles.step)}
+          style={withPressedTint(accent, styles.step)}
           disabled={earlier}
           onPress={() => onChange(minutes - TIME_STEP_MINUTES)}
           accessibilityRole="button"
@@ -62,7 +64,7 @@ export function SlotCard({
           {formatSlotTime(minutes)}
         </Text>
         <Pressable
-          style={withPressed(styles.step)}
+          style={withPressedTint(accent, styles.step)}
           disabled={later}
           onPress={() => onChange(minutes + TIME_STEP_MINUTES)}
           accessibilityRole="button"
@@ -92,7 +94,7 @@ const styles = StyleSheet.create({
   name: { fontFamily: theme.font.bodyBold, fontSize: theme.typeSize.row, color: theme.colors.textPrimary },
   sub: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textSecondary },
   time: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 4 },
-  off: { opacity: 0.4 },
+  off: { opacity: 0.55 },
   step: {
     width: 44,
     height: 44,
@@ -100,6 +102,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: theme.colors.tray,
+    boxShadow: `inset 0 0 0 1px ${theme.colors.inkHairline}`,
   },
   clock: {
     flexShrink: 1,

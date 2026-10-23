@@ -28,6 +28,7 @@ export function CategoryIcon({ name, color, size = 16, square = 34, round = fals
           height: square,
           borderRadius: round ? square / 2 : square * 0.32,
           backgroundColor: softTint(resolvedColor, 0.25),
+          boxShadow: `inset 0 0 0 1px ${theme.colors.inkHairline}`,
         },
       ]}
     >

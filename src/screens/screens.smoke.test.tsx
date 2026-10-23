@@ -21,6 +21,8 @@ jest.mock('@/lib/haptics', () => ({
 jest.mock('@/lib/notifications', () => ({ rebuildNotifications: async () => true }));
 
 jest.mock('react-native-keyboard-controller', () => ({
+  KeyboardAvoidingView: require('react-native').View,
+  useKeyboardState: () => false,
   KeyboardAwareScrollView: require('react-native').ScrollView,
   KeyboardStickyView: require('react-native').View,
   KeyboardProvider: ({ children }: { children: unknown }) => children,

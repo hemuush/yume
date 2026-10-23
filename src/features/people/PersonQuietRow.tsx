@@ -1,7 +1,8 @@
 import { View, Pressable } from 'react-native';
 import { Text } from '@/components/Text';
 import { PersonWithBalance } from '@/db/people';
-import { withPressed } from '@/lib/pressed';
+import { withPressedTint } from '@/lib/pressed';
+import { useAccent } from '@/theme/AccentContext';
 import { lastActivityShort, personInitials } from './people.helpers';
 import { styles } from './people.styles';
 
@@ -18,10 +19,11 @@ export function PersonQuietRow({
   divider?: boolean;
   onPress: () => void;
 }) {
+  const { accent } = useAccent();
   return (
     <Pressable
       onPress={onPress}
-      style={withPressed([styles.quietRow, divider && styles.quietDivider])}
+      style={withPressedTint(accent, [styles.quietRow, divider && styles.quietDivider])}
       accessibilityRole="button"
       accessibilityLabel={`${person.name}, settled`}
     >

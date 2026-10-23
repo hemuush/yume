@@ -45,7 +45,7 @@ const BAR_TONES: Record<string, string> = {
 
 /** The mid-tone a loan's thin bars are drawn in: still inside the pastel band, so it never reads as ink. */
 export function loanBarTone(hue: string): string {
-  return BAR_TONES[hue] ?? shade(hue, 70);
+  return BAR_TONES[hue] ?? shade(hue, 62);
 }
 
 /** The pale fill behind a loan's icon tile. */

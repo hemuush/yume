@@ -6,7 +6,8 @@ import { SkyHeader } from '@/features/home/SkyHeader';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { styles } from '@/features/add/add.styles';
 import { ADD_TYPES, EDIT_TYPES } from '@/features/add/addEntry';
-import { withPressed } from '@/lib/pressed';
+import { withPressedTint } from '@/lib/pressed';
+import { useAccent } from '@/theme/AccentContext';
 import type { AddEntryModel } from '@/features/add/types/addEntryModel';
 import type { ReactElement } from 'react';
 
@@ -29,6 +30,7 @@ type Props = {
   >;
 };
 export function AddEntryHeader({ model }: Props): ReactElement {
+  const { accent } = useAccent();
   const {
     title,
     editingId,
@@ -62,7 +64,7 @@ export function AddEntryHeader({ model }: Props): ReactElement {
               hitSlop={8}
               accessibilityRole="button"
               accessibilityLabel="Delete entry"
-              style={withPressed(styles.trashBtn)}
+              style={withPressedTint(accent, styles.trashBtn)}
             >
               <Feather name="trash-2" size={16} color={theme.colors.expense} />
             </Pressable>
@@ -75,7 +77,7 @@ export function AddEntryHeader({ model }: Props): ReactElement {
             hitSlop={8}
             accessibilityRole="button"
             accessibilityLabel="Repeat a recent entry"
-            style={withPressed(styles.repeatBtn)}
+            style={withPressedTint(accent, styles.repeatBtn)}
           >
             <Feather name="rotate-ccw" size={13} color={theme.colors.textPrimary} />
             <Text style={styles.repeatBtnText}>Repeat</Text>

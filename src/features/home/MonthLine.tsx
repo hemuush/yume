@@ -1,5 +1,4 @@
 import { View } from 'react-native';
-import { Text } from '@/components/Text';
 import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 import { theme } from '@/constants/theme';
 import { useDrawnValue } from '@/lib/useDrawnValue';
@@ -16,13 +15,10 @@ export function MonthLine({
   slices,
   hideSavings,
   periodKey,
-  marker,
 }: {
   slices: HeroSlices;
   hideSavings: boolean;
   periodKey: string;
-  /** Where today falls in the month, 0-1 and the date: a tick over the line (current month only). */
-  marker?: { at: number; day: number } | null;
 }) {
   const draw = useDrawnValue(`month-line:${periodKey}`, 1, DURATIONS.draw + 220);
   const drawStyle = useAnimatedStyle(() => ({ transform: [{ scaleX: draw.value }] }));
@@ -50,19 +46,5 @@ export function MonthLine({
       ))}
     </Animated.View>
   );
-  if (!marker) return <View style={styles.lineWrap}>{line}</View>;
-  // The tick sits outside the drawn (scaled) line so it never stretches while the line draws in.
-  return (
-    <View style={styles.lineWrap}>
-      {line}
-      <View
-        pointerEvents="none"
-        style={[styles.tick, { left: `${Math.round(marker.at * 100)}%` }]}
-        accessibilityElementsHidden
-        importantForAccessibility="no-hide-descendants"
-      >
-        <Text style={styles.tickDay}>{String(marker.day)}</Text>
-      </View>
-    </View>
-  );
+  return <View style={styles.lineWrap}>{line}</View>;
 }

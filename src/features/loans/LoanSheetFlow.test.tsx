@@ -10,6 +10,9 @@ jest.mock('react-native-safe-area-context', () => ({
   initialWindowMetrics: null,
 }));
 jest.mock('react-native-keyboard-controller', () => ({
+  KeyboardAvoidingView: require('react-native').View,
+  KeyboardProvider: ({ children }: { children: unknown }) => children,
+  useKeyboardState: () => false,
   KeyboardAwareScrollView: require('react').forwardRef((props: object, ref: unknown) =>
     require('react').createElement(require('react-native').ScrollView, { ...props, ref })
   ),

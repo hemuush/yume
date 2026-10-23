@@ -142,7 +142,6 @@ export const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
   },
   bigFootStrong: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
-  bigRowOn: { backgroundColor: 'rgba(18,19,15,0.05)' },
 
   // Categories: how the list is grouped (by category or by account).
   catSplitCaption: {
@@ -188,7 +187,6 @@ export const styles = StyleSheet.create({
   flowLegendText: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
   flowChart: { flexDirection: 'row', alignItems: 'flex-end', gap: 2, paddingTop: 6 },
   flowCol: { flex: 1, alignItems: 'center', gap: 6, paddingTop: 6, paddingBottom: 6, borderRadius: 12 },
-  flowColOn: { backgroundColor: theme.colors.inkWash },
   flowBars: { height: 100, flexDirection: 'row', alignItems: 'flex-end', gap: 2 },
   flowBar: { width: 10, borderTopLeftRadius: 4, borderTopRightRadius: 4 },
   flowBarEdge: {
@@ -285,7 +283,13 @@ export const styles = StyleSheet.create({
     borderRadius: 8,
     overflow: 'hidden',
   },
-  catBarSeg: { flexBasis: 0, minWidth: 3, borderRadius: 4 },
+  // A faint inner edge keeps the palest category colours (yellow, butter, mint) readable on the white card.
+  catBarSeg: {
+    flexBasis: 0,
+    minWidth: 3,
+    borderRadius: 4,
+    boxShadow: `inset 0px 0px 0px 1px ${theme.colors.inkHairline}`,
+  },
   // The card over "Where it went": its title and group menu, the total and the split as one bar.
   sumCard: { ...CARD, padding: 16, marginBottom: 12 },
   sumHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
@@ -361,7 +365,7 @@ export const styles = StyleSheet.create({
   catTrack: {
     height: 6,
     borderRadius: 3,
-    backgroundColor: theme.colors.inkWash,
+    backgroundColor: theme.colors.inkHairline,
     overflow: 'hidden',
   },
   catMore: {

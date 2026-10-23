@@ -8,7 +8,7 @@ import { usePressScale } from '@/lib/usePressScale';
 import { screenStyles as h, SCREEN } from '@/components/screenStyles';
 import type { NeedsYouItem } from './needsYou';
 import { NEEDS_TONE } from './needsTone';
-import { withPressed } from '@/lib/pressed';
+import { withPressedTint } from '@/lib/pressed';
 import { softTint } from '@/components/softTint';
 import { useAccent } from '@/theme/AccentContext';
 import { themeInk } from '@/theme/interactionColors';
@@ -88,7 +88,7 @@ export function NeedsYouRow({
             onPress={onDismiss}
             accessibilityRole="button"
             accessibilityLabel={`${dismissLabel}: ${item.title}`}
-            style={withPressed(styles.ghost)}
+            style={withPressedTint(accent, styles.ghost)}
           >
             <Text style={styles.ghostText}>{dismissLabel}</Text>
           </Pressable>
@@ -98,7 +98,7 @@ export function NeedsYouRow({
               onPress={onPress}
               accessibilityRole="button"
               accessibilityLabel={`${ACTION_VERB[item.action]}: ${item.title}`}
-              style={withPressed([styles.cta, { backgroundColor: softTint(accent, 0.42) }])}
+              style={withPressedTint(accent, [styles.cta, { backgroundColor: softTint(accent, 0.42) }])}
             >
               <Text style={[styles.ctaText, { color: ink }]}>{ACTION_VERB[item.action]}</Text>
             </Pressable>
@@ -107,7 +107,7 @@ export function NeedsYouRow({
               accessibilityRole="button"
               accessibilityState={{ expanded: menu }}
               accessibilityLabel={`More for ${item.title}`}
-              style={withPressed(styles.more)}
+              style={withPressedTint(accent, styles.more)}
             >
               <Feather name="more-horizontal" size={16} color={theme.colors.textSecondary} />
             </Pressable>
@@ -124,7 +124,7 @@ export function NeedsYouRow({
               }}
               accessibilityRole="button"
               accessibilityLabel="Remind me later"
-              style={withPressed(styles.ghost)}
+              style={withPressedTint(accent, styles.ghost)}
             >
               <Text style={styles.ghostText}>Later</Text>
             </Pressable>
@@ -137,7 +137,7 @@ export function NeedsYouRow({
               }}
               accessibilityRole="button"
               accessibilityLabel={`${dismissLabel}: ${item.title}`}
-              style={withPressed(styles.ghost)}
+              style={withPressedTint(accent, styles.ghost)}
             >
               <Text style={styles.ghostText}>Dismiss</Text>
             </Pressable>
@@ -174,6 +174,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: theme.colors.tray,
+    boxShadow: `inset 0 0 0 1px ${theme.colors.inkHairline}`,
   },
   ghostText: { fontFamily: theme.font.bodyMedium, fontSize: 12.5, color: theme.colors.textPrimary },
 });

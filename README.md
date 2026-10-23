@@ -45,7 +45,7 @@ and India-friendly dates.
 | **Planning insights**     | Pending refunds and partial receipts, reservation-aware purchase checks, annual-bill preparation goals, and matched-period spending explanations. |
 | **Friends & family**      | Money owed in either direction, settlement history, and a choice between balance adjustments and actual account movements.                        |
 | **Wrap & Suu**            | Weekly/monthly stories, selectable chapters, day and category exploration, replay, share cards and Suu's spending nudges.                         |
-| **Personalization**       | Twelve themes, app amount hiding, a separate widget-privacy setting, and app lock using the phone's authentication.                               |
+| **Personalization**       | Five themes, app amount hiding, a separate widget-privacy setting, and app lock using the phone's authentication.                               |
 | **Everyday housekeeping** | Needs you alerts, duplicate/starting-balance checks, undoable tidy-up actions and recently deleted entries.                                       |
 
 ### Android widgets

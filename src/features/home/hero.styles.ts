@@ -60,28 +60,6 @@ export const styles = StyleSheet.create({
   lineWrap: { marginTop: 16 },
   lineOrigin: { transformOrigin: 'left center' },
   lineSegment: { height: 10, borderRadius: 5, minWidth: 5 },
-  // Today's date pinned over the line, in the month's own proportion.
-  tick: {
-    position: 'absolute',
-    top: -6,
-    bottom: -6,
-    width: 2,
-    marginLeft: -1,
-    borderRadius: 1,
-    backgroundColor: theme.colors.textPrimary,
-    opacity: 0.55,
-    alignItems: 'center',
-  },
-  tickDay: {
-    position: 'absolute',
-    top: -14,
-    fontFamily: theme.font.bodyBold,
-    fontSize: 11,
-    lineHeight: 13,
-    color: theme.colors.textSecondary,
-    width: 24,
-    textAlign: 'center',
-  },
 
   // Three columns under the line: each dot is the line's colour, so the line is the legend.
 

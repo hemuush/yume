@@ -8,7 +8,7 @@ import type { McIconName } from '@/components/iconName';
 import { theme } from '@/constants/theme';
 import { accountHue, accountIcon, accountTypeLabel } from '@/lib/account';
 import { shade } from '@/lib/color';
-import { withPressed } from '@/lib/pressed';
+import { withPressed, withPressedTint } from '@/lib/pressed';
 import { useAccent } from '@/theme/AccentContext';
 import { Section } from '@/components/Section';
 import { screenStyles as h } from '@/components/screenStyles';
@@ -109,7 +109,7 @@ const AccountTile = memo(function AccountTile({
       onPress={() => onOpen(a)}
       accessibilityRole="button"
       accessibilityLabel={`${a.name}, ${accountTypeLabel(a)}. Open summary`}
-      style={withPressed([styles.tile, { width }])}
+      style={withPressedTint(accent, [styles.tile, { width }])}
     >
       <View style={[styles.icon, { backgroundColor: shade(hue, 88) }]}>
         <MaterialCommunityIcons
