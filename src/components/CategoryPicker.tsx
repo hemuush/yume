@@ -335,7 +335,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     paddingHorizontal: 12,
     borderRadius: theme.radius.pill,
-    backgroundColor: 'rgba(18,19,15,0.05)',
+    backgroundColor: theme.colors.inkWash,
   },
   searchInput: {
     flex: 1,

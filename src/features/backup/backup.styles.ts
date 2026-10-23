@@ -95,7 +95,7 @@ export const styles = StyleSheet.create({
   nodeDetails: { flexGrow: 1, flexBasis: 160 },
   linkAction: { minHeight: 48, justifyContent: 'center' },
   nodeCopy: {},
-  rail: { position: 'absolute', left: 22, width: 2, backgroundColor: 'rgba(18,19,15,0.16)' },
+  rail: { position: 'absolute', left: 22, width: 2, backgroundColor: theme.colors.inkLine },
   dot: {
     position: 'absolute',
     left: 17,
