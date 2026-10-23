@@ -12,6 +12,7 @@ import { themeInk } from '@/theme/interactionColors';
 import { formatMoney, toMinor } from '@/lib/money';
 import { errorMessage } from '@/lib/errorMessage';
 import { theme } from '@/constants/theme';
+import { shade } from '@/lib/color';
 import { useSaveOnce } from '@/lib/useSaveOnce';
 
 export function MonthlyPlanCheck({
@@ -144,7 +145,7 @@ export function MonthlyPlanCheck({
                 style={[
                   s.fill,
                   {
-                    backgroundColor: accent,
+                    backgroundColor: shade(accent, 68),
                     width: `${Math.min(100, (plan.totalMinor / Math.max(1, income)) * 100)}%`,
                   },
                 ]}
@@ -222,6 +223,8 @@ const s = StyleSheet.create({
     gap: 8,
     borderRadius: 24,
     backgroundColor: theme.colors.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
   },
   title: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.textPrimary, flex: 1 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 10 },

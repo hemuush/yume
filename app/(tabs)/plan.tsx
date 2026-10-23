@@ -79,7 +79,7 @@ import { listCardCycles } from '@/db/cardCycles';
 import { showAlert } from '@/components/AppDialog';
 import { errorMessage } from '@/lib/errorMessage';
 import { useTabScrollToTop } from '@/lib/useTabScrollToTop';
-import { withPressed } from '@/lib/pressed';
+import { withPressed, withPressedTint } from '@/lib/pressed';
 import { ModalSheet } from '@/components/ModalSheet';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { TransactionDetailModal } from '@/features/transactions/TransactionDetailModal';
@@ -379,7 +379,7 @@ export default function PlanScreen() {
 
   return (
     <View style={styles.container}>
-      <HomeWallpaper accent={accent} secondary={secondary} />
+      <HomeWallpaper accent={accent} secondary={secondary} plain />
       <ReanimatedAnimated.ScrollView
         ref={scrollRef}
         onScroll={scrollHandler}
@@ -640,7 +640,7 @@ export default function PlanScreen() {
             disabled={!scoped}
             accessibilityState={{ disabled: !scoped }}
             onPress={() => setCreationMenu(true)}
-            style={withPressed(styles.addPlan)}
+            style={withPressedTint(accent, styles.addPlan)}
           >
             <Feather name="plus" size={16} color={theme.colors.textPrimary} />
             <Text style={styles.headLinkText}>Add</Text>

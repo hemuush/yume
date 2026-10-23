@@ -4,7 +4,7 @@ import { SegmentedControl } from '@/components/SegmentedControl';
 import { GLASS } from '@/components/Glass';
 import { theme } from '@/constants/theme';
 import { haptics } from '@/lib/haptics';
-import { withPressed } from '@/lib/pressed';
+import { withPressedTint } from '@/lib/pressed';
 
 import { useAccent } from '@/theme/AccentContext';
 import { selectedFill } from '@/theme/interactionColors';
@@ -43,7 +43,7 @@ export function PlanNavigation({
                 haptics.tap();
                 onChange(tab.value);
               }}
-              style={withPressed([
+              style={withPressedTint(accent, [
                 styles.tab,
                 value === tab.value && { backgroundColor: selectedFill(accent) },
               ])}
