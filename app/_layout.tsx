@@ -1,6 +1,6 @@
 import { Stack, router, useRootNavigationState } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { View, ActivityIndicator, StyleSheet, AppState, AppStateStatus } from 'react-native';
 import { Text } from '@/components/Text';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -231,8 +231,17 @@ function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean;
     return () => sub.remove();
   }, [waitForThemePersistence]);
 
+  // Once the app is on screen, turning the lock on from Settings only re-checks protection in the background:
+  // swapping the tree for the capture screen would unmount the navigator and drop the user back on Home.
+  const contentShown = useRef(false);
+  useEffect(() => {
+    if (isLocked || showOnboarding) contentShown.current = false;
+    else if (!capture.isBlocked) contentShown.current = true;
+  }, [isLocked, showOnboarding, capture.isBlocked]);
+  const holdContent = capture.isBlocked && !(contentShown.current && capture.status === 'checking');
+
   // Public authentication stays mounted while protection recovers; financial/onboarding content does not.
-  if (capture.isBlocked && !(isLocked && !showOnboarding)) {
+  if (holdContent && !(isLocked && !showOnboarding)) {
     return (
       <ErrorBoundary>
         <StatusBar style="dark" />
