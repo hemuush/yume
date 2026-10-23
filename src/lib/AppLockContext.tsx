@@ -10,17 +10,19 @@ import {
 } from 'react';
 import { getAppLockEnabled, setAppLockEnabled } from '@/db/settings';
 import { onSettingsRestored } from '@/lib/dataEvents';
-import { showAlert } from '@/components/AppDialog';
-import { errorMessage } from '@/lib/errorMessage';
 
 interface AppLockContextValue {
   lockEnabled: boolean;
   setLockEnabled: (enabled: boolean) => void;
+  lockSaveError: { attempt: number; message: string } | null;
+  acknowledgeLockSaveError: (attempt: number) => void;
 }
 
 const AppLockContext = createContext<AppLockContextValue>({
   lockEnabled: false,
   setLockEnabled: () => {},
+  lockSaveError: null,
+  acknowledgeLockSaveError: () => {},
 });
 
 /**
@@ -35,6 +37,7 @@ export function AppLockProvider({
   initialLockEnabled?: boolean;
 }) {
   const [lockEnabled, setLockEnabledState] = useState(initialLockEnabled);
+  const [lockSaveError, setLockSaveError] = useState<AppLockContextValue['lockSaveError']>(null);
   const current = useRef(initialLockEnabled);
   const generation = useRef(0);
   const invalidateReads = useCallback(() => {
@@ -57,7 +60,10 @@ export function AppLockProvider({
     };
     void read();
     // A restore can bring the lock preference back (a new phone takes the backup's).
-    const unsubscribe = onSettingsRestored(() => void read());
+    const unsubscribe = onSettingsRestored(() => {
+      setLockSaveError(null);
+      void read();
+    });
     return () => {
       invalidateReads();
       unsubscribe();
@@ -68,17 +74,30 @@ export function AppLockProvider({
     (enabled: boolean) => {
       const previous = current.current;
       const call = ++generation.current;
+      setLockSaveError(null);
       apply(enabled);
       // A failed write would leave the switch on while the lock never applies on the next launch: undo and say.
       Promise.resolve(setAppLockEnabled(enabled)).catch((e) => {
-        if (call === generation.current) apply(previous);
-        showAlert("Couldn't change the app lock", errorMessage(e));
+        console.error('App lock preference could not be saved:', e);
+        if (call !== generation.current) return;
+        apply(previous);
+        // The capture guard may have unmounted the dialog host. Keep feedback until it returns.
+        setLockSaveError({
+          attempt: call,
+          message: 'Your previous app lock setting has been restored. Try again to save your choice.',
+        });
       });
     },
     [apply]
   );
 
-  const value = useMemo(() => ({ lockEnabled, setLockEnabled }), [lockEnabled, setLockEnabled]);
+  const acknowledgeLockSaveError = useCallback((attempt: number) => {
+    setLockSaveError((error) => (error?.attempt === attempt ? null : error));
+  }, []);
+  const value = useMemo(
+    () => ({ lockEnabled, setLockEnabled, lockSaveError, acknowledgeLockSaveError }),
+    [lockEnabled, setLockEnabled, lockSaveError, acknowledgeLockSaveError]
+  );
 
   return <AppLockContext.Provider value={value}>{children}</AppLockContext.Provider>;
 }

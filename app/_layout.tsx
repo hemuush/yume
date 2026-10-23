@@ -21,6 +21,7 @@ import { shouldRelock } from '@/lib/appLock';
 import { useScreenCaptureProtection } from '@/lib/useScreenCaptureProtection';
 import { CaptureProtectionScreen } from '@/components/CaptureProtectionScreen';
 import { CaptureReleaseFeedback } from '@/components/CaptureReleaseFeedback';
+import { AppLockSaveFeedback } from '@/components/AppLockSaveFeedback';
 import { getHasOnboarded, setHasOnboarded, getAppLockEnabled, getHideSensitiveAmounts } from '@/db/settings';
 import { listAccounts, listTransactions } from '@/db/ledger';
 import { runAppMaintenance } from '@/lib/runAppMaintenance';
@@ -270,6 +271,7 @@ function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean;
       {/* Yume's own confirm/notice dialog, shown by showAlert() anywhere in the app. Never over the lock
           screen: a dialog is its own window, so it would sit on top of it with working buttons. */}
       <AppDialogHost />
+      <AppLockSaveFeedback />
       <CaptureReleaseFeedback protection={capture} />
       <UndoToastProvider>
         <ThemeSaveFeedback />
