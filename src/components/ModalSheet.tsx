@@ -34,6 +34,12 @@ interface Props {
   backLabel?: string;
   /** A root page in a SheetFlow; child tasks with backLabel join the flow automatically. */
   flowPage?: boolean;
+  /**
+   * Pages in a SheetFlow are held to the tallest page seen so the sheet does not jump between them. 'own' takes a
+   * page out of that: it keeps its own height and does not lengthen the others. For a view that is far taller or
+   * shorter than the rest of its page (a long schedule, a short list of actions).
+   */
+  flowHeight?: 'shared' | 'own';
   /** Set false for short dialogs whose content should not scroll. */
   scrollable?: boolean;
   /** The ✕ that closes it, top-right. On by default — it's what replaced every Cancel button. */
@@ -271,10 +277,12 @@ function ModalSheetBody({
   dismissible = true,
   backLabel,
   flowPage,
+  flowHeight = 'shared',
   visible,
 }: Props) {
   const flow = useContext(SheetFlowContext);
   const inFlow = !!flow && (!!backLabel || flowPage);
+  const sharesHeight = inFlow && flowHeight === 'shared';
   const insets = useSafeAreaInsets();
   // With the keyboard up it already covers the nav bar, so the footer needs no extra bottom inset.
   const keyboardUp = useKeyboardState((state) => state.isVisible);
@@ -283,7 +291,7 @@ function ModalSheetBody({
     height < 640 || fontScale > 1.2 || size === 'expanded' ? '94%' : size === 'compact' ? '78%' : '90%';
   const isSheet = variant === 'sheet';
   const viewportHeight = flow?.viewportHeight ? Math.min(height, flow.viewportHeight) : height;
-  const flowFrame = inFlow
+  const flowFrame = sharesHeight
     ? {
         minHeight: Math.min(
           flow.minimumHeight,
@@ -378,7 +386,7 @@ function ModalSheetBody({
             <View
               testID="sheet-surface"
               onLayout={
-                inFlow && visible ? (event) => flow.measure(event.nativeEvent.layout.height) : undefined
+                sharesHeight && visible ? (event) => flow.measure(event.nativeEvent.layout.height) : undefined
               }
               style={[styles.framedSheet, { maxHeight }, flowFrame]}
             >

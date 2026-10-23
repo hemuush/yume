@@ -114,6 +114,45 @@ describe('related tasks in one native sheet', () => {
     act(() => tree.unmount());
   });
 
+  it("lets a page keep its own height: an 'own' view neither lengthens the other pages nor is stretched by them", () => {
+    jest
+      .spyOn(require('react-native'), 'useWindowDimensions')
+      .mockReturnValue({ height: 900, width: 360, fontScale: 1, scale: 3 });
+    const Pages = ({ tall, second }: { tall: boolean; second: boolean }) => (
+      <SheetFlow>
+        <ModalSheet
+          flowPage
+          flowHeight={tall ? 'own' : 'shared'}
+          visible={!second}
+          title="Details"
+          onClose={jest.fn()}
+        >
+          <Text>Details body</Text>
+        </ModalSheet>
+        {second && (
+          <ModalSheet flowPage visible title="Pay" onClose={jest.fn()}>
+            <Text>Pay body</Text>
+          </ModalSheet>
+        )}
+      </SheetFlow>
+    );
+    const surfaces = (tree: ReactTestRenderer) => tree.root.findAllByProps({ testID: 'sheet-surface' });
+    let tree!: ReactTestRenderer;
+    act(() => {
+      tree = create(<Pages tall={false} second={false} />);
+    });
+    // On its short view the page counts: 500.
+    act(() => surfaces(tree)[0].props.onLayout({ nativeEvent: { layout: { height: 500 } } }));
+    // Switched to its long view, it keeps its own height and says nothing to the flow.
+    act(() => tree.update(<Pages tall second={false} />));
+    expect(surfaces(tree)[0].props.onLayout).toBeUndefined();
+    expect(StyleSheet.flatten(surfaces(tree)[0].props.style).minHeight).toBeUndefined();
+    // The next page opens at the short view's 500, not at anything the long view might have measured.
+    act(() => tree.update(<Pages tall second />));
+    expect(StyleSheet.flatten(surfaces(tree).at(-1)!.props.style).minHeight).toBe(500);
+    act(() => tree.unmount());
+  });
+
   it('starts over once every page has closed, so a reopened lone page is not held to an old taller one', async () => {
     jest
       .spyOn(require('react-native'), 'useWindowDimensions')
