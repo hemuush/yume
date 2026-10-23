@@ -20,8 +20,6 @@ import { haptics } from '@/lib/haptics';
 import { Loan, LoanPayment, Account, Category } from '@/types';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { ModalSheet, SheetFooter } from '@/components/ModalSheet';
-import { InsightDisclosure } from '@/components/InsightCard';
-import { SheetCard } from '@/components/SheetCard';
 import { SettingsRow } from '@/components/SettingsRow';
 import { SheetTabs } from '@/components/SheetTabs';
 import { ActionList, ActionSheetItem } from '@/components/ActionSheet';
@@ -38,6 +36,7 @@ import { spendableAccountsOf, defaultCurrencyAccountsOf } from '@/lib/account';
 import { PayInstallmentSheet } from './PayInstallmentSheet';
 import { LoanSchedule } from './LoanSchedule';
 import { LoanStatGrid } from './LoanStatGrid';
+import { LoanHero } from './LoanHero';
 import { isOverdueInstallment, isUnpaidInstallment, nextUnpaidInstallment } from './installmentStatus';
 import Svg, { Path } from 'react-native-svg';
 import { loanPayoff, payoffMonth, balanceLinePath } from '@/lib/loanPayoff';
@@ -91,6 +90,7 @@ function LoanDetailContent({ loan, onClose, onChanged, startWithPay = false, hue
   const [busy, setBusy] = useState(false);
   const [moreActionsVisible, setMoreActionsVisible] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [forecastOpen, setForecastOpen] = useState(false);
   const [tab, setTab] = useState<'overview' | 'schedule'>('overview');
 
   // Re-fetches the loan row, not just derived props: payments/prepayments change outstandingPrincipalMinor
@@ -319,17 +319,34 @@ function LoanDetailContent({ loan, onClose, onChanged, startWithPay = false, hue
               </View>
             )}
 
-            <SheetCard
+            <LoanHero
               hue={
                 hue ?? (liveLoan.direction === 'borrowed' ? theme.colors.idCoralDeep : theme.colors.secondary)
               }
               icon={liveLoan.direction === 'borrowed' ? 'bank-outline' : 'hand-coin-outline'}
+              title={liveLoan.counterparty}
               kicker={`${(liveLoan.interestRateAnnualBp / 100).toFixed(2)}% · ${
                 liveLoan.rateType === 'floating' ? 'floating' : 'fixed'
-              }${liveLoan.status === 'active' ? '' : ` · ${liveLoan.status}`}`}
-              amount={formatMoney(dispOutstanding)}
-              title={liveLoan.counterparty}
-              meta={`EMI ${formatMoney(liveLoan.emiAmountMinor)} a month`}
+              }${liveLoan.status === 'active' ? '' : ` · ${liveLoan.status}`}${
+                // A closed loan has no Next EMI to show what it was.
+                detailsLoaded && !nextInstallment && !incompleteSchedule
+                  ? ` · EMI ${formatMoney(liveLoan.emiAmountMinor)} a month`
+                  : ''
+              }`}
+              outstanding={formatMoney(dispOutstanding)}
+              fraction={schedule.length ? paidCount / schedule.length : 0}
+              paid={
+                !detailsLoaded
+                  ? { message: loadError ? 'Unavailable' : 'Loading…' }
+                  : schedule.length > 0
+                    ? { figure: `${paidCount} of ${schedule.length}` }
+                    : { message: 'No schedule yet' }
+              }
+              ends={
+                payoff.lastDueDate
+                  ? `${liveLoan.direction === 'borrowed' ? 'Debt-free' : 'Paid back'} ${payoffMonth(payoff.lastDueDate)}`
+                  : undefined
+              }
             />
             <SheetTabs
               variant="pill"
@@ -361,16 +378,6 @@ function LoanDetailContent({ loan, onClose, onChanged, startWithPay = false, hue
                         : undefined,
                     },
                     {
-                      label: 'EMIs paid',
-                      value: !detailsLoaded
-                        ? loadError
-                          ? 'Unavailable'
-                          : 'Loading…'
-                        : schedule.length > 0
-                          ? `${paidCount} of ${schedule.length}`
-                          : '–',
-                    },
-                    {
                       label: liveLoan.direction === 'borrowed' ? 'Borrowed' : 'Lent',
                       value: formatMoney(liveLoan.principalMinor),
                       sub: `Since ${dayMonthYear(liveLoan.startDate)}`,
@@ -393,56 +400,44 @@ function LoanDetailContent({ loan, onClose, onChanged, startWithPay = false, hue
                     owed; review the loan data before relying on a payoff date.
                   </Text>
                 )}
-                {payoff.lastDueDate && (
-                  <View style={styles.payoffCard}>
-                    <Text style={styles.statLabel}>
-                      {liveLoan.direction === 'borrowed' ? 'Debt-free in' : 'Paid back in full by'}
-                    </Text>
-                    <View style={styles.payoffHeading}>
-                      <Text style={styles.payoffMonth}>{payoffMonth(payoff.lastDueDate)}</Text>
-                    </View>
-                    <View
-                      style={styles.repaymentTrack}
-                      accessible
-                      accessibilityLabel={`${paidCount} of ${schedule.length} installments paid`}
-                    >
-                      <View
-                        style={[
-                          styles.repaymentFill,
-                          {
-                            width: `${schedule.length ? Math.min(100, (paidCount / schedule.length) * 100) : 0}%`,
-                          },
-                        ]}
-                      />
-                    </View>
-                    <View style={styles.forecastDisclosure}>
-                      <InsightDisclosure title="Balance forecast">
-                        <Svg
-                          width="100%"
-                          height={PAYOFF_LINE_HEIGHT}
-                          viewBox={`0 0 ${PAYOFF_LINE_WIDTH} ${PAYOFF_LINE_HEIGHT}`}
-                          preserveAspectRatio="none"
-                        >
-                          <Path
-                            d={balanceLinePath(payoff.balances, PAYOFF_LINE_WIDTH, PAYOFF_LINE_HEIGHT - 4)}
-                            stroke={theme.colors.income}
-                            strokeWidth={2.5}
-                            fill="none"
-                            strokeLinecap="round"
-                          />
-                        </Svg>
-                        <View style={styles.payoffAxis}>
-                          <Text style={styles.rowSub}>Now · {formatMoney(dispOutstanding)} left</Text>
-                          <Text style={styles.rowSub}>{payoff.lastDueDate.slice(0, 4)}</Text>
-                        </View>
-                      </InsightDisclosure>
-                    </View>
-                  </View>
-                )}
-
                 <View style={[h.card, h.cardInSheet]}>
+                  {payoff.lastDueDate && (
+                    <>
+                      <SettingsRow
+                        round
+                        icon="chart-line-variant"
+                        label="Balance forecast"
+                        sub={`Now ${formatMoney(dispOutstanding)} · ${payoff.lastDueDate.slice(0, 4)}`}
+                        expanded={forecastOpen}
+                        onPress={() => setForecastOpen((v) => !v)}
+                      />
+                      {forecastOpen && (
+                        <View style={styles.forecast}>
+                          <Svg
+                            width="100%"
+                            height={PAYOFF_LINE_HEIGHT}
+                            viewBox={`0 0 ${PAYOFF_LINE_WIDTH} ${PAYOFF_LINE_HEIGHT}`}
+                            preserveAspectRatio="none"
+                          >
+                            <Path
+                              d={balanceLinePath(payoff.balances, PAYOFF_LINE_WIDTH, PAYOFF_LINE_HEIGHT - 4)}
+                              stroke={theme.colors.income}
+                              strokeWidth={2.5}
+                              fill="none"
+                              strokeLinecap="round"
+                            />
+                          </Svg>
+                          <View style={styles.payoffAxis}>
+                            <Text style={styles.rowSub}>Now · {formatMoney(dispOutstanding)} left</Text>
+                            <Text style={styles.rowSub}>{payoff.lastDueDate.slice(0, 4)}</Text>
+                          </View>
+                        </View>
+                      )}
+                    </>
+                  )}
                   <SettingsRow
                     round
+                    divider={!!payoff.lastDueDate}
                     icon="bank"
                     label={liveLoan.direction === 'lent' ? 'Receiving account' : 'EMI account'}
                     sub={
