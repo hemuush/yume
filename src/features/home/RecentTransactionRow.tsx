@@ -25,6 +25,8 @@ export function RecentTransactionRow({
   savingsTransfer = false,
   showDay = true,
   omitToday = false,
+  omitCategory = false,
+  dense = false,
   currency,
   onPress,
 }: {
@@ -41,6 +43,10 @@ export function RecentTransactionRow({
   showDay?: boolean;
   /** Home's list: today is the usual case, so only other days are named. */
   omitToday?: boolean;
+  /** Under one category's own screen the category is already known, so the sub line leaves it out. */
+  omitCategory?: boolean;
+  /** A tighter row for sheets: smaller mark and type, less padding. */
+  dense?: boolean;
   currency?: string;
   onPress?: () => void;
 }) {
@@ -55,7 +61,7 @@ export function RecentTransactionRow({
   const sub = isTransfer
     ? `${accountName ?? '—'} → ${toAccountName ?? '—'}`
     : joinSub([
-        note ? category && categoryPath(category.name, parentName) : parentName,
+        !omitCategory && (note ? category && categoryPath(category.name, parentName) : parentName),
         accountName,
         showDay && (!omitToday || tx.date !== toLocalIsoDate(new Date())) && dayLabel(tx.date),
       ]);
@@ -68,28 +74,34 @@ export function RecentTransactionRow({
       accessibilityHint={onPress ? 'Opens transaction details' : undefined}
       style={
         onPress
-          ? withPressedTint(accent, [styles.row, stacked && styles.stackedRow, divider && styles.divider])
-          : [styles.row, stacked && styles.stackedRow, divider && styles.divider]
+          ? withPressedTint(accent, [
+              styles.row,
+              dense && styles.denseRow,
+              stacked && styles.stackedRow,
+              divider && styles.divider,
+            ])
+          : [styles.row, dense && styles.denseRow, stacked && styles.stackedRow, divider && styles.divider]
       }
     >
       <JustAddedGlow ids={[tx.id]} surface="home" />
-      <View style={styles.lead}>
+      <View style={[styles.lead, dense && styles.denseLead]}>
         <CategoryIcon
           name={isTransfer ? 'swap-horizontal' : (category?.icon ?? 'tag')}
           color={isTransfer ? secondary : (category?.color ?? theme.colors.textMuted)}
-          square={SCREEN.mark}
+          square={dense ? DENSE_MARK : SCREEN.mark}
+          size={dense ? 14 : undefined}
           round
         />
       </View>
       <View style={[styles.mid, stacked && styles.stackedMid]}>
-        <Text style={styles.title}>{title}</Text>
-        <Text style={styles.sub}>
+        <Text style={[styles.title, dense && styles.denseTitle]}>{title}</Text>
+        <Text style={[styles.sub, dense && styles.denseSub]}>
           {tx.isRefund && <Text style={styles.refund}>Refund · </Text>}
           {sub}
         </Text>
       </View>
       {/* Spending reads in ink with its minus; only money in is coloured (green). */}
-      <Text style={[styles.amount, tx.type === 'income' && styles.income]}>
+      <Text style={[styles.amount, dense && styles.denseAmount, tx.type === 'income' && styles.income]}>
         {tx.type === 'expense' ? '−' : tx.type === 'income' ? '+' : ''}
         <Amount
           minor={tx.amountMinor}
@@ -101,8 +113,16 @@ export function RecentTransactionRow({
   );
 }
 
+/** The category disc in a dense row, and the slot it sits in. */
+const DENSE_MARK = 32;
+
 const styles = StyleSheet.create({
   row: { ...h.row, gap: 12 },
+  denseRow: { minHeight: 48, paddingVertical: 7, paddingHorizontal: 12, gap: 10 },
+  denseLead: { width: DENSE_MARK },
+  denseTitle: { fontFamily: theme.font.bodyMedium, fontSize: 13.5 },
+  denseSub: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, marginTop: 1 },
+  denseAmount: { fontFamily: theme.font.bodyMedium, fontSize: 13.5 },
   lead: { width: SCREEN.lead, alignItems: 'center', justifyContent: 'center' },
   stackedRow: { flexWrap: 'wrap', rowGap: 6 },
   stackedMid: { flexGrow: 1, flexBasis: '70%' },

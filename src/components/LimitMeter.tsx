@@ -21,6 +21,8 @@ export function LimitMeter({
   tone,
   marker,
   animKey,
+  trackColor = theme.colors.surfaceAlt,
+  height = 7,
 }: {
   pct: number;
   tone: LimitMeterTone;
@@ -30,6 +32,9 @@ export function LimitMeter({
    * Without it the fill is drawn plain.
    */
   animKey?: string;
+  /** The empty part of the bar; a lighter tone where the bar sits on a tinted card. */
+  trackColor?: string;
+  height?: number;
 }) {
   const { secondary } = useAccent();
   const clamped = Math.min(100, Math.max(0, pct));
@@ -38,7 +43,7 @@ export function LimitMeter({
     { backgroundColor: tone === 'ok' ? shade(secondary, 66) : TONE_FILL[tone] },
   ];
   return (
-    <View style={styles.track}>
+    <View style={[styles.track, { height, backgroundColor: trackColor }]}>
       {animKey ? (
         <GrowFill animKey={animKey} pct={clamped} style={fillStyle} />
       ) : (

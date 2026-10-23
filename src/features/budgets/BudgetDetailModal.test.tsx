@@ -17,9 +17,12 @@ jest.mock('@/theme/AccentContext', () => ({
 let mockHide = false;
 jest.mock('@/theme/PrivacyContext', () => ({ usePrivacy: () => ({ hideAmounts: mockHide }) }));
 jest.mock('@/db/ledger', () => ({ listTransactions: jest.fn() }));
+const mockRowProps: Record<string, unknown>[] = [];
 jest.mock('@/features/home/RecentTransactionRow', () => ({
-  RecentTransactionRow: ({ tx }: any) =>
-    require('react').createElement(require('react-native').Text, null, tx.note),
+  RecentTransactionRow: (props: any) => {
+    mockRowProps.push(props);
+    return require('react').createElement(require('react-native').Text, null, props.tx.note);
+  },
 }));
 jest.mock('./AddBudgetModal', () => ({
   AddBudgetModal: (props: object) =>
@@ -74,6 +77,7 @@ async function render() {
 }
 beforeEach(() => {
   jest.clearAllMocks();
+  mockRowProps.length = 0;
   mockHide = false;
   jest.mocked(listTransactions).mockResolvedValue([
     {
@@ -143,4 +147,42 @@ it('does not expose sensitive-category entries in privacy mode', async () => {
   const tree = await render();
   expect(words(tree)).not.toContain('Hidden purchase');
   expect(words(tree)).toContain('No visible spending entries this month.');
+});
+
+it('puts the spent-of-limit figures, month and status in the one header card', async () => {
+  const tree = await render();
+  const text = words(tree);
+  expect(text).toContain('₹300');
+  expect(text).toContain('spent of');
+  expect(text).toContain('₹1,000');
+  expect(text).toContain('Remaining for this month · Feb 2026');
+  expect(text).toContain('Monthly budget');
+  expect(text).not.toContain('Available limit');
+  expect(text).not.toContain('No rollover');
+});
+
+it('says when unspent money rolls over', async () => {
+  const rolling = { ...progress, budget: { ...progress.budget, rollover: true } };
+  let tree!: ReactTestRenderer;
+  await act(async () => {
+    tree = create(
+      <BudgetDetailModal
+        progress={rolling}
+        categories={categories}
+        accounts={[]}
+        currency="INR"
+        onClose={close}
+        onChanged={changed}
+      />
+    );
+  });
+  roots.push(tree);
+  expect(words(tree)).toContain('Monthly budget · Rolls over');
+});
+
+it('lists entries densely without repeating the budget category, and counts them', async () => {
+  const tree = await render();
+  expect(mockRowProps.length).toBeGreaterThan(0);
+  expect(mockRowProps.every((p) => p.dense === true && p.omitCategory === true)).toBe(true);
+  expect(words(tree)).toContain('1 this month');
 });
