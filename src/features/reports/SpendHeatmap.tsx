@@ -3,7 +3,7 @@ import { View, Pressable, StyleSheet, PanResponder, GestureResponderEvent, ViewI
 import Animated, { FadeIn, ReduceMotion } from 'react-native-reanimated';
 import { MAX_FONT_SCALE, Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
-import { spendHeatScale, hexToHsl } from '@/lib/color';
+import { spendHeatScale, hexToHsl, shade } from '@/lib/color';
 import { gridRows } from '@/lib/gridRows';
 import { haptics } from '@/lib/haptics';
 import { withPressed } from '@/lib/pressed';
@@ -70,6 +70,7 @@ function useHeatColors(hue: string) {
   const onTop = hexToHsl(hue)[2] > 55 ? theme.colors.ink : theme.colors.surface;
   return {
     scale,
+    ring: shade(hue, 42, 8),
     labels: [theme.colors.textMuted, theme.colors.ink, theme.colors.ink, theme.colors.ink, onTop],
   };
 }
@@ -89,7 +90,7 @@ function CalendarHeat({
   usualMinor: number;
   hue: string;
 }) {
-  const { scale, labels } = useHeatColors(hue);
+  const { scale, labels, ring } = useHeatColors(hue);
   const [width, setWidth] = useState(0);
   const [headHeight, setHeadHeight] = useState(HEAD_H);
   const rows = gridRows(model.days, model.leadingPad, 7);
@@ -123,6 +124,7 @@ function CalendarHeat({
             d.future && styles.cellFuture,
             selected && styles.cellSelected,
             { backgroundColor: scale[d.level] },
+            selected && { borderColor: ring },
           ])}
         >
           <Text style={[styles.cellLabel, d.level === 4 && styles.cellLabelTop, { color: labels[d.level] }]}>
@@ -281,25 +283,25 @@ const styles = StyleSheet.create({
   },
   cellEmpty: { borderWidth: StyleSheet.hairlineWidth, borderColor: theme.colors.borderSoft },
   cellFuture: { borderWidth: 0, opacity: 0.35 },
-  cellSelected: { borderWidth: 2.5, borderColor: theme.colors.ink },
+  cellSelected: { borderWidth: 2, borderColor: theme.colors.textSecondary },
   cellLabel: { fontFamily: theme.font.body, fontSize: 12 },
   cellLabelTop: { fontFamily: theme.font.bodyBold },
   todayDot: {
     position: 'absolute',
-    bottom: 4,
+    bottom: 5,
     width: 4,
     height: 4,
     borderRadius: 2,
-    backgroundColor: theme.colors.ink,
+    backgroundColor: theme.colors.textSecondary,
   },
   bigDot: {
     position: 'absolute',
-    top: 4,
-    right: 4,
-    width: 5,
-    height: 5,
-    borderRadius: 3,
-    backgroundColor: theme.colors.ink,
+    top: 6,
+    right: 6,
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: theme.colors.textSecondary,
   },
   matrix: { gap: DOT_GAP },
   matrixRow: { flexDirection: 'row', alignItems: 'center', height: DOT_H },
@@ -309,5 +311,5 @@ const styles = StyleSheet.create({
   dotSlot: { flex: 1, minWidth: 0, paddingHorizontal: 1 },
   dot: { height: DOT_H, borderRadius: 4 },
   dotFuture: { borderWidth: 0, opacity: 0.35 },
-  dotSelected: { borderWidth: 1.5, borderColor: theme.colors.ink },
+  dotSelected: { borderWidth: 1.5, borderColor: theme.colors.textSecondary },
 });
