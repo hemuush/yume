@@ -7,6 +7,8 @@ import { SavingsGoal } from '@/types';
 import { formatMoney, formatMaskableMoney } from '@/lib/money';
 import { theme } from '@/constants/theme';
 import { shade } from '@/lib/color';
+import { softTint } from '@/components/softTint';
+import { selectedFill } from '@/theme/interactionColors';
 import { goalProgress } from '@/lib/savingsGoalProgress';
 import { usePressScale } from '@/lib/usePressScale';
 import { usePrivacy } from '@/theme/PrivacyContext';
@@ -39,7 +41,7 @@ export function GoalCard({
   onContribute: () => void;
 }) {
   const { hideAmounts } = usePrivacy();
-  const { secondary } = useAccent();
+  const { accent, secondary } = useAccent();
   const following = goal.tracksAccount && !!goal.linkedAccountId;
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.98);
   const { percent, done } = goalProgress(goal.currentAmountMinor, goal.targetAmountMinor);
@@ -163,7 +165,11 @@ export function GoalCard({
               accessibilityRole="button"
               accessibilityLabel={`${following ? 'Move money to' : goal.reservesAccount ? 'Manage reservation for' : 'Add money to'} ${goal.name}`}
               hitSlop={8}
-              style={({ pressed }) => [styles.pill, pressed && styles.pillPressed]}
+              style={({ pressed }) => [
+                styles.pill,
+                // The light theme tint, so the card's main action reads as one; a held press deepens it.
+                { backgroundColor: pressed ? softTint(accent, 0.7) : selectedFill(accent) },
+              ]}
             >
               <Text style={styles.pillText}>
                 {following ? 'Move money' : goal.reservesAccount ? 'Reserve / release' : 'Add money'}
@@ -188,7 +194,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.surface,
     overflow: 'hidden',
   },
-  track: { height: 5, borderRadius: 3, backgroundColor: theme.colors.inkWash, overflow: 'hidden' },
+  track: { height: 5, borderRadius: 3, backgroundColor: theme.colors.inkHairline, overflow: 'hidden' },
   fill: { height: '100%', borderRadius: 3 },
   head: {
     flexDirection: 'row',
@@ -260,6 +266,5 @@ const styles = StyleSheet.create({
     borderRadius: theme.radius.pill,
     backgroundColor: theme.colors.surfaceAlt,
   },
-  pillPressed: { opacity: 0.8 },
   pillText: { fontFamily: theme.font.roundedBold, fontSize: 13, color: theme.colors.textPrimary },
 });

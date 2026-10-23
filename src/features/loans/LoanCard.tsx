@@ -196,7 +196,7 @@ const styles = StyleSheet.create({
   track: {
     height: 5,
     borderRadius: 4,
-    backgroundColor: theme.colors.inkWash,
+    backgroundColor: theme.colors.inkHairline,
     marginTop: 8,
     overflow: 'hidden',
   },

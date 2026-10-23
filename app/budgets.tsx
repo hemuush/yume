@@ -42,6 +42,7 @@ import { styles } from '@/features/budgets/budgets.styles';
 import { HomeWallpaper } from '@/features/home/HomeWallpaper';
 import { useAccent } from '@/theme/AccentContext';
 import { Glass } from '@/components/Glass';
+import { cardSurface } from '@/components/CardSurface';
 import { frost } from '@/components/Frost';
 import { errorMessage } from '@/lib/errorMessage';
 import { BudgetDetailModal } from '@/features/budgets/BudgetDetailModal';
@@ -244,7 +245,7 @@ export default function BudgetsScreen() {
   if (!loaded && !loadError) {
     return (
       <View style={styles.container}>
-        <HomeWallpaper accent={accent} secondary={secondary} />
+        <HomeWallpaper accent={accent} secondary={secondary} plain />
         <SkyHeader title="Budgets" showBack hideUser wallpaper />
         <View style={{ paddingTop: 14 }}>
           <Skeleton width={110} height={12} radius={4} style={{ marginHorizontal: SCREEN.gutter }} />
@@ -270,7 +271,7 @@ export default function BudgetsScreen() {
 
   return (
     <View style={styles.container}>
-      <HomeWallpaper accent={accent} secondary={secondary} />
+      <HomeWallpaper accent={accent} secondary={secondary} plain />
       <ReanimatedAnimated.ScrollView
         ref={scrollRef}
         onScroll={scrollHandler}
@@ -312,7 +313,7 @@ export default function BudgetsScreen() {
           budgets.length > 0 && (
             <>
               <Text style={styles.listTitle}>This month</Text>
-              <Glass style={frost.list}>
+              <Glass style={[frost.list, cardSurface.neutral]}>
                 {budgets.map((progress, i) => (
                   <MovingRow key={progress.budget.id}>
                     <BudgetRow
