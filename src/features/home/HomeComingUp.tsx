@@ -14,7 +14,7 @@ import { ROW_LAYOUT } from '@/lib/animation';
 import { screenStyles as h, SCREEN } from '@/components/screenStyles';
 import { categorySentence } from '@/lib/categoryLabel';
 import { formatMoney, formatMaskableMoney } from '@/lib/money';
-import { withPressed } from '@/lib/pressed';
+import { withPressed, withPressedTint } from '@/lib/pressed';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import { useAccent } from '@/theme/AccentContext';
 import { GOAL_PACE_LABEL } from '@/features/goals/goalPlan';
@@ -52,7 +52,7 @@ function FilterChip({
       accessibilityRole="button"
       accessibilityState={{ selected: active }}
       accessibilityLabel={attention ? `${label}, needs a look` : label}
-      style={withPressed([styles.chip, active && { backgroundColor: selectedFill(accent) }])}
+      style={withPressedTint(accent, [styles.chip, active && { backgroundColor: selectedFill(accent) }])}
     >
       <Text style={[styles.chipText, active && styles.chipTextOn]}>{label}</Text>
       {attention && !active && <View style={styles.chipDot} />}

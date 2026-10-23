@@ -17,7 +17,7 @@ export const widgetColor = {
   expense: '#E23F55',
   expenseText: '#BD3547',
   tray: '#F8F3EA',
-  slice: { spent: '#F6A88E', saved: '#7FDDB9', due: '#F0BC4E', free: '#7DB9F2' },
+  slice: { spent: '#F6A88E', saved: '#4FD09F', due: '#EDB02F', free: '#7DB9F2' },
   // Account hues, the same as Home's account cards (see accountHue in lib/account).
   flatLime: '#E0F0A8',
   idGoldDeep: '#E0AC3F',
