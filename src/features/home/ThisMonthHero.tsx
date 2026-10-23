@@ -19,7 +19,7 @@ import { useAccent } from '@/theme/AccentContext';
 import { CountUpAmount } from '@/components/CountUpAmount';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import { heroSlices, withoutSavings, heroPct } from './heroSlices';
-import { daysLeftInMonth, monthElapsed, dailyAllowance } from './allowance';
+import { daysLeftInMonth, dailyAllowance } from './allowance';
 import { HeroLegend, type LegendItem } from './HeroLegend';
 import { AllowanceTile } from './AllowanceTile';
 import { DURATIONS } from '@/lib/motionTimings';
@@ -455,7 +455,6 @@ export function ThisMonthHero({
               slices={slices}
               hideSavings={hideAmounts}
               periodKey={displayed.periodKey}
-              marker={isCurrentMonth ? { at: monthElapsed(now), day: now.getDate() } : null}
             />
           )}
 

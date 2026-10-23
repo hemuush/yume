@@ -464,9 +464,6 @@ describe('month card: what can be spent a day', () => {
     expect(texts(render())).toEqual(expect.arrayContaining(['₹88 a day']));
     expect(texts(render()).some((t) => t.endsWith('days left'))).toBe(true);
   });
-  it('pins today’s date on the month line', () => {
-    expect(texts(render())).toContain('22');
-  });
   it('is left out of a past month, a month over its income, and one with nothing free', () => {
     expect(texts(render({ periodKey: 'month:-1' })).some((t) => t.includes('a day'))).toBe(false);
     expect(texts(render({ periodKey: 'month:-1' }))).not.toContain('22');
