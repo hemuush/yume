@@ -65,6 +65,47 @@
       "expo-sharing",
       "./plugins/withAppShortcuts",
       [
+        "./plugins/withThemeAppIcons",
+        {
+          "defaultId": "yume",
+          "icons": [
+            {
+              "id": "yume"
+            },
+            {
+              "id": "corpsGreen",
+              "background": "#FEFBF1",
+              "icon": "./assets/theme-icons/corpsGreen.png",
+              "foreground": "./assets/theme-icons/corpsGreen-foreground.png"
+            },
+            {
+              "id": "hollowViolet",
+              "background": "#FEFBF1",
+              "icon": "./assets/theme-icons/hollowViolet.png",
+              "foreground": "./assets/theme-icons/hollowViolet-foreground.png"
+            },
+            {
+              "id": "winterEmber",
+              "background": "#FEFBF1",
+              "icon": "./assets/theme-icons/winterEmber.png",
+              "foreground": "./assets/theme-icons/winterEmber-foreground.png"
+            },
+            {
+              "id": "katawareDusk",
+              "background": "#FEFBF1",
+              "icon": "./assets/theme-icons/katawareDusk.png",
+              "foreground": "./assets/theme-icons/katawareDusk-foreground.png"
+            },
+            {
+              "id": "crimsonNight",
+              "background": "#FEFBF1",
+              "icon": "./assets/theme-icons/crimsonNight.png",
+              "foreground": "./assets/theme-icons/crimsonNight-foreground.png"
+            }
+          ]
+        }
+      ],
+      [
         "react-native-android-widget",
         {
           "fonts": [
