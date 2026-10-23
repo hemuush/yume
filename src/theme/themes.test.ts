@@ -27,8 +27,8 @@ const MIN_DELTA_E = 14;
 const colours = (p: (typeof THEMES)[number]) => [p.primary, p.secondary, ...(p.dot ? [p.dot] : [])];
 
 describe('theme packs', () => {
-  it('has twelve packs with unique ids and names, Yume first', () => {
-    expect(THEMES).toHaveLength(12);
+  it('has five packs with unique ids and names, Yume first', () => {
+    expect(THEMES).toHaveLength(5);
     expect(new Set(THEMES.map((p) => p.id)).size).toBe(THEMES.length);
     expect(new Set(THEMES.map((p) => p.name)).size).toBe(THEMES.length);
     expect(THEMES[0].id).toBe('yume');
@@ -41,11 +41,9 @@ describe('theme packs', () => {
         for (const x of colours(a)) {
           for (const y of colours(b)) {
             const d = deltaE(x, y);
-            // The six packs from before this check existed are grandfathered in.
+            // The packs from before this check existed are grandfathered in.
             const bothOriginal = [a, b].every((p) =>
-              ['yume', 'corpsGreen', 'hollowViolet', 'blueCrystal', 'winterEmber', 'neonStatic'].includes(
-                p.id
-              )
+              ['yume', 'corpsGreen', 'hollowViolet', 'winterEmber'].includes(p.id)
             );
             if (d < MIN_DELTA_E && !bothOriginal)
               clashes.push(`${a.name} ${x} ~ ${b.name} ${y} (${d.toFixed(1)})`);

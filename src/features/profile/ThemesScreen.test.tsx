@@ -68,14 +68,14 @@ describe('Theme page', () => {
 
   it('shows each theme by its name alone', async () => {
     const tree = await render();
-    expect(texts(tree)).toEqual(expect.arrayContaining(['Scout Cloak', 'Vibranium']));
-    expect(texts(tree)).not.toEqual(expect.arrayContaining(['Attack on Titan']));
+    expect(texts(tree)).toEqual(expect.arrayContaining(['Kataware Dusk', 'Winter Ember']));
+    expect(texts(tree)).not.toEqual(expect.arrayContaining(['Your Name']));
     expect(texts(tree)).not.toContain('Anime');
   });
 
   it('switches the app to a pack with one tap', async () => {
     const tree = await render();
-    await press(tree, 'Scout Cloak theme');
-    expect(mockSetTheme).toHaveBeenCalledWith('scoutCloak');
+    await press(tree, 'Kataware Dusk theme');
+    expect(mockSetTheme).toHaveBeenCalledWith('katawareDusk');
   });
 });
