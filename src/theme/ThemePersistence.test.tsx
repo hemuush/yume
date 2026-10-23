@@ -13,7 +13,6 @@ jest.mock('@/db/settings', () => ({
   getThemeId: jest.fn(async () => 'yume'),
   getAccentColor: jest.fn(async () => '#8FCBFF'),
   getCachedAccentColor: () => '#8FCBFF',
-  setThemeId: jest.fn(async () => undefined),
   setAccentColor: jest.fn(async () => undefined),
   setThemeSelection: jest.fn(async () => undefined),
 }));

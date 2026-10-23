@@ -10,11 +10,7 @@ import {
   summariseDayTotal,
   buildHeat,
   budgetCover,
-  cumulativeSpend,
   daySpendFacts,
-  weekdayRhythm,
-  weekdayReadLine,
-  WEEKDAY_MIN_DAYS,
   keptSummary,
   cashFlowReadLine,
   categoriesAgainstUsual,
@@ -224,7 +220,7 @@ describe('patternFacts', () => {
     expect(weekend.detail).toBeTruthy();
   });
 
-  it('counts spend-free days in the weekend read, the same basis as the weekday rhythm', () => {
+  it('counts spend-free days in the weekend read', () => {
     // Two weeks (Mon–Sun), spent every weekday and each Saturday, never on a Sunday. Over spend days alone
     // weekends would match weekdays (10,000 each); counting the quiet Sundays they run well below.
     const range = { start: '2026-09-07', end: '2026-09-20' };
@@ -232,12 +228,9 @@ describe('patternFacts', () => {
     const daily = days.map((d) => ({ date: `2026-09-${String(d).padStart(2, '0')}`, totalMinor: 10000 }));
     const weekend = patternFacts(daily, 14, range, '2026-10-20').find((f) => f.key === 'weekends')!;
     expect(weekend.big).toBe('Weekends −50%');
-    // The weekday rhythm agrees: Saturdays 10,000, Sundays nothing — weekends average 5,000 a day.
-    const rhythm = weekdayRhythm(daily, range, '2026-10-20')!;
-    expect((rhythm.avgMinor[6] + rhythm.avgMinor[0]) / 2).toBe(5000);
   });
 
-  it('leaves out days after today, as the weekday rhythm does', () => {
+  it('leaves out days after today in the weekend read', () => {
     // Today is Friday the 11th: Saturday and Sunday are not here yet, so there is no weekend to compare.
     const daily = ['2026-09-07', '2026-09-08', '2026-09-09', '2026-09-10'].map((date) => ({
       date,
@@ -456,20 +449,6 @@ describe('buildHeat', () => {
   });
 });
 
-describe('cumulativeSpend', () => {
-  it('keeps a running total per day and stops at today', () => {
-    const series = cumulativeSpend(
-      [
-        { date: '2026-09-01', totalMinor: 100 },
-        { date: '2026-09-03', totalMinor: 50 },
-      ],
-      { start: '2026-09-01', end: '2026-09-05' },
-      '2026-09-04'
-    );
-    expect(series).toEqual([100, 100, 150, 150, null]);
-  });
-});
-
 describe('daySpendFacts', () => {
   const sep = { start: '2026-09-01', end: '2026-09-30' };
 
@@ -513,76 +492,6 @@ describe('daySpendFacts', () => {
       laterMinor: 0,
       perDayMinor: 0,
     });
-  });
-});
-
-describe('weekdayRhythm', () => {
-  // October 2026 starts on a Thursday; the 20th is a Tuesday.
-  const range = { start: '2026-10-01', end: '2026-10-31' };
-  const day = (date: string, totalMinor: number) => ({ date, totalMinor });
-
-  it('is null before there are enough days to call a pattern', () => {
-    expect(weekdayRhythm([day('2026-10-03', 5000)], range, '2026-10-10')).toBeNull();
-    expect(WEEKDAY_MIN_DAYS).toBe(14);
-  });
-
-  it('is null when nothing was spent', () => {
-    expect(weekdayRhythm([], range, '2026-10-20')).toBeNull();
-  });
-
-  it('averages each weekday over every such day so far, spend-free days included', () => {
-    // Saturdays so far: 3rd, 10th, 17th (three), two with spending; Wednesday is seen only twice.
-    const r = weekdayRhythm([day('2026-10-03', 6000), day('2026-10-17', 3000)], range, '2026-10-20')!;
-    expect(r.countedDays).toBe(20);
-    expect(r.counts).toEqual([3, 3, 3, 2, 3, 3, 3]);
-    expect(r.avgMinor[6]).toBe(3000);
-    expect(r.peak).toBe(6);
-    expect(r.usualMinor).toBe(450);
-  });
-
-  it('leaves spending dated after today out of the days', () => {
-    const r = weekdayRhythm([day('2026-10-03', 6000), day('2026-10-25', 90000)], range, '2026-10-20')!;
-    expect(r.usualMinor).toBe(300);
-    expect(r.avgMinor.every((a) => a <= 2000)).toBe(true);
-  });
-
-  it('counts a whole past period in full', () => {
-    const r = weekdayRhythm(
-      [day('2026-09-02', 3000)],
-      { start: '2026-09-01', end: '2026-09-30' },
-      '2026-10-20'
-    )!;
-    expect(r.countedDays).toBe(30);
-  });
-});
-
-describe('weekdayReadLine', () => {
-  const rhythm = {
-    avgMinor: [0, 0, 0, 20000, 0, 0, 100000],
-    counts: [3, 3, 3, 1, 3, 3, 3],
-    usualMinor: 50000,
-    peak: 6,
-    countedDays: 20,
-  };
-
-  it('calls the busiest weekday out against the usual day', () => {
-    expect(weekdayReadLine(rhythm, 6)).toMatch(/^Saturdays run highest: .* 100% above your /);
-  });
-
-  it('reads another weekday below the usual and says how many it is over', () => {
-    expect(weekdayReadLine(rhythm, 3)).toMatch(/^Wednesday: .* a day over 1 Wednesday · 60% below your /);
-  });
-
-  it('says "about" when it is within a few percent', () => {
-    const r = { ...rhythm, avgMinor: [49000, 0, 0, 0, 0, 0, 100000] };
-    expect(weekdayReadLine(r, 0)).toMatch(/· about your /);
-  });
-
-  it('never divides by a zero usual day', () => {
-    const r = { ...rhythm, avgMinor: [0, 0, 0, 0, 0, 0, 0], usualMinor: 0, peak: 0 };
-    const line = weekdayReadLine(r, 3);
-    expect(line).not.toMatch(/NaN|Infinity/);
-    expect(line).toMatch(/· about your /);
   });
 });
 

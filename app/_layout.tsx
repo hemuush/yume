@@ -1,6 +1,6 @@
-import { Stack, router, useRootNavigationState } from 'expo-router';
+import { Stack, router, usePathname, useRootNavigationState } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { View, ActivityIndicator, StyleSheet, AppState, AppStateStatus } from 'react-native';
 import { Text } from '@/components/Text';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -103,12 +103,13 @@ export default function RootLayout() {
         });
 
         // Prime masking before mounting any financial screen, including an unlocked cold launch.
-        const [locked] = await Promise.all([getAppLockEnabled(), getHideSensitiveAmounts()]);
+        const [locked, , alreadyOnboarded] = await Promise.all([
+          getAppLockEnabled(),
+          getHideSensitiveAmounts(),
+          getHasOnboarded(),
+        ]);
         if (cancelled) return;
         setInitialLocked(locked);
-
-        const alreadyOnboarded = await getHasOnboarded();
-        if (cancelled) return;
         if (alreadyOnboarded) {
           setNeedsOnboarding(false);
           return;
@@ -200,6 +201,36 @@ function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean;
     }, 0);
     return () => clearTimeout(timer);
   }, [pendingRoute, isLocked, showOnboarding, navReady, capture.isBlocked]);
+
+  // Applying screen protection (turning the lock on from Settings) unmounts the navigator, so it would come
+  // back on Home. Remember the screen that was open and go back to it once the tree is mounted again.
+  const pathname = usePathname();
+  const contentUp = !capture.isBlocked && !isLocked && !showOnboarding;
+  const lastScreen = useRef<string | null>(null);
+  const [returnTo, setReturnTo] = useState<string | null>(null);
+  useEffect(() => {
+    if (contentUp) lastScreen.current = pathname;
+  }, [contentUp, pathname]);
+  useEffect(() => {
+    if (capture.isBlocked && lastScreen.current && lastScreen.current !== '/') {
+      const screen = lastScreen.current;
+      setReturnTo((previous) => previous ?? screen);
+    }
+  }, [capture.isBlocked]);
+  useEffect(() => {
+    if (!returnTo || !contentUp || !navReady) return;
+    // Next tick, like a tapped notification: the navigator is remounting. A notification's screen wins.
+    const timer = setTimeout(() => {
+      setReturnTo(null);
+      if (pendingRoute) return;
+      try {
+        router.navigate(returnTo);
+      } catch (e) {
+        console.warn("Couldn't go back to the screen that was open:", e);
+      }
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [returnTo, contentUp, navReady, pendingRoute]);
 
   // Re-arms the lock when the app returns after being away (shouldRelock: real backgrounding, ≥1 minute).
   // Reads `lockEnabled` from shared context so the Settings toggle applies next cycle.

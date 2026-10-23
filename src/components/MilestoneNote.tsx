@@ -117,21 +117,11 @@ async function findClosedBudgetMonth(
   return { copy: budgetMonthCopy(closed, budgets.length), key };
 }
 
-/** The month before `now`, once it has closed with every budget under its limit and not yet been celebrated. */
-export async function checkClosedBudgetMonth(
-  now: Date,
-  excludeSensitive: boolean
-): Promise<MilestoneCopy | null> {
-  const found = await findClosedBudgetMonth(now, excludeSensitive);
-  if (!found) return null;
-  await markMilestonesSeen([found.key]);
-  return found.copy;
-}
-
 /**
- * Like `checkClosedBudgetMonth`, but hands the note to `show` first and marks the month seen only once `show`
- * says it showed it (returns true), so a note that never reached the screen (the app was killed, the watcher
- * was torn down) is offered again next time.
+ * The month before `now`, once it has closed with every budget under its limit and not yet been celebrated:
+ * hands the note to `show` first and marks the month seen only once `show` says it showed it (returns true),
+ * so a note that never reached the screen (the app was killed, the watcher was torn down) is offered again
+ * next time.
  */
 export async function showClosedBudgetMonth(
   now: Date,

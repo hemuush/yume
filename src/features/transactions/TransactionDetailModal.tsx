@@ -18,15 +18,15 @@ import { Account, Category, Transaction } from '@/types';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { Amount } from '@/components/Amount';
 import { ModalSheet } from '@/components/ModalSheet';
-import { SheetCard } from '@/components/SheetCard';
 import { StatusBadge } from '@/components/StatusBadge';
+import { EntryHero } from './EntryHero';
 import { SettingsRow } from '@/components/SettingsRow';
 import { theme } from '@/constants/theme';
 import { screenStyles as h } from '@/components/screenStyles';
-import { accountIcon, savingsAccountIdsOf } from '@/lib/account';
+import { savingsAccountIdsOf } from '@/lib/account';
 import { isSavingsEntry } from '@/lib/privateSummary';
-import { hexToRgba, shade } from '@/lib/color';
-import { categorySentence, joinSub, parentNameOf } from '@/lib/categoryLabel';
+import { shade } from '@/lib/color';
+import { categorySentence, parentNameOf } from '@/lib/categoryLabel';
 import { weekdayDayMonth } from '@/lib/dateLabels';
 import { useUndoToast } from '@/components/UndoToast';
 import { haptics } from '@/lib/haptics';
@@ -334,6 +334,12 @@ export function TransactionDetailModal({
   ].filter((a) => !!a);
   const kind = transfer ? 'Transfer' : tx.isRefund ? 'Refund' : tx.type === 'income' ? 'Income' : 'Expense';
   const route = transfer ? `${accountName(tx.accountId)} → ${accountName(tx.toAccountId!)}` : null;
+  /** The category name on the card opens its page; from that page's own sheet, closing is enough. */
+  const openCategory = () => {
+    if (!cat) return;
+    onClose();
+    returnOrPush({ name: 'category/[id]', params: { id: cat.id } }, `/category/${cat.id}`);
+  };
 
   return (
     <SheetFlow key={tx.id}>
@@ -427,7 +433,7 @@ export function TransactionDetailModal({
           ) : undefined
         }
       >
-        <SheetCard
+        <EntryHero
           hue={transfer ? secondary : (cat?.color ?? theme.colors.textMuted)}
           icon={transfer ? 'swap-horizontal' : (cat?.icon ?? 'tag')}
           kicker={transfer || !parentName ? kind : `${kind} · ${parentName}`}
@@ -448,6 +454,8 @@ export function TransactionDetailModal({
           meta={
             route ? weekdayDayMonth(tx.date) : `${weekdayDayMonth(tx.date)} · ${accountName(tx.accountId)}`
           }
+          onPressTitle={cat && !transfer ? openCategory : undefined}
+          titleLabel={cat ? `Open ${cat.name} category` : undefined}
         />
 
         {(tx.splitId ||
@@ -490,48 +498,17 @@ export function TransactionDetailModal({
                 accessibilityHint={a.sub}
               >
                 <View style={[styles.quickIcon, { backgroundColor: shade(accent, 93) }]}>
-                  <Feather name={a.icon} size={20} color={theme.colors.ink} />
+                  <Feather name={a.icon} size={15} color={theme.colors.ink} />
                 </View>
                 <Text style={styles.quickText}>{a.short}</Text>
-                <Text style={styles.quickHint}>
-                  {a.icon === 'rotate-ccw'
-                    ? 'Same entry'
-                    : a.icon === 'repeat'
-                      ? 'Set schedule'
-                      : 'Track or receive'}
-                </Text>
               </Pressable>
             ))}
           </View>
         )}
 
         <>
-          <View style={[h.card, h.cardInSheet]}>
-            {cat && !transfer && (
-              <SettingsRow
-                round
-                icon={cat.icon}
-                iconBg={hexToRgba(cat.color, 0.25)}
-                field
-                label="Category"
-                sub={joinSub([cat.name, parentName])}
-                onPress={() => {
-                  onClose();
-                  // Opened from that category's own page? Then closing is enough.
-                  returnOrPush({ name: 'category/[id]', params: { id: cat.id } }, `/category/${cat.id}`);
-                }}
-              />
-            )}
-            <SettingsRow
-              round
-              icon={transfer ? 'swap-horizontal' : account ? accountIcon(account.type) : 'bank'}
-              iconBg={shade(accent, 95)}
-              field
-              label={transfer ? 'Accounts' : tx.type === 'income' ? 'Received in' : 'Paid from'}
-              sub={route ?? accountName(tx.accountId)}
-              divider={!!cat && !transfer}
-            />
-            {!!tx.note && (
+          {!!tx.note && (
+            <View style={[h.card, h.cardInSheet]}>
               <SettingsRow
                 round
                 icon="note-text-outline"
@@ -539,10 +516,9 @@ export function TransactionDetailModal({
                 field
                 label={tx.type === 'expense' || tx.isRefund ? 'Label' : 'Note'}
                 sub={tx.note}
-                divider
               />
-            )}
-          </View>
+            </View>
+          )}
 
           {tx.splitId && splitParts && splitParts.length > 0 && (
             <View style={styles.splitCard}>

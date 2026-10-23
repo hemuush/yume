@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useEffectEvent, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { ModalSheet } from '@/components/ModalSheet';
 import { Text } from '@/components/Text';
@@ -49,29 +49,32 @@ export function LoanComparison({
   const candidatesKey = loans.map((loan) => `${loan.id}:${loan.leftMinor}:${loan.nextDueDate}`).join('|');
   const date = toLocalIsoDate(new Date());
   const key = `${minor}|${candidatesKey}|${currency}|${date}|${retry}`;
+  // Candidate identity, balances and due dates are part of `key`, so the request reads the latest candidates
+  // through Effect Events and the effect re-runs only when `key` (or visibility) changes.
+  const compare = useEffectEvent(() =>
+    comparePrepayments(
+      loans.map((loan) => loan.id),
+      minor,
+      date
+    )
+  );
+  const failedRows = useEffectEvent((): Result[] =>
+    loans.map((loan) => ({
+      id: loan.id,
+      error: 'Could not load this loan. Retry the comparison.',
+    }))
+  );
   useEffect(() => {
     if (!visible || hidden || !Number.isSafeInteger(minor) || minor <= 0) return;
     let live = true;
     setResult(undefined);
     const timer = setTimeout(() => {
-      void comparePrepayments(
-        loans.map((loan) => loan.id),
-        minor,
-        date
-      ).then(
+      void compare().then(
         (rows) => {
           if (live) setResult({ key, rows, refreshToken });
         },
         () => {
-          if (live)
-            setResult({
-              key,
-              refreshToken,
-              rows: loans.map((loan) => ({
-                id: loan.id,
-                error: 'Could not load this loan. Retry the comparison.',
-              })),
-            });
+          if (live) setResult({ key, refreshToken, rows: failedRows() });
         }
       );
     }, 250);
@@ -79,9 +82,7 @@ export function LoanComparison({
       live = false;
       clearTimeout(timer);
     };
-    // Candidate identity, balances and due dates are part of the stable request key.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visible, hidden, key, refreshToken]);
+  }, [visible, hidden, minor, key, refreshToken]);
   const rows =
     result?.key === key && result.refreshToken === refreshToken
       ? [...result.rows].sort(

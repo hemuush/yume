@@ -7,8 +7,15 @@ import {
   Animated as RNAnimated,
   useWindowDimensions,
 } from 'react-native';
-import Animated, { LinearTransition } from 'react-native-reanimated';
-import { MOTION } from '@/lib/animation';
+import Animated, {
+  FadeIn,
+  LinearTransition,
+  interpolate,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
+import { MOTION, timing } from '@/lib/animation';
 import { LinearGradient } from 'expo-linear-gradient';
 import { hexToRgba } from '@/lib/color';
 import Feather from '@expo/vector-icons/Feather';
@@ -36,6 +43,9 @@ const ICONS: Record<string, typeof HomeIcon> = {
 /** The pill's height at the default font size, and its gap above the phone's bottom edge. */
 const PILL_BAR = { height: 60, bottomGap: 10, maxInlineScale: 1.15, narrowWidth: 360 } as const;
 
+/** How small the chosen tab's pill starts before it blooms to full size. */
+const FILL_START_SCALE = 0.82;
+
 function Tab({
   label,
   Icon,
@@ -59,6 +69,17 @@ function Tab({
   const { size, showLabel } = layout;
   const reduce = useReduceMotion();
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.92);
+  // 0 → 1 as this tab becomes the chosen one: its pill blooms in from the centre and fades up, and the one
+  // it leaves fades away, instead of both popping. Reduced motion jumps straight to the end.
+  const chosen = useSharedValue(focused ? 1 : 0);
+  useEffect(() => {
+    const target = focused ? 1 : 0;
+    chosen.set(reduce ? target : withTiming(target, timing(MOTION.standard)));
+  }, [focused, reduce, chosen]);
+  const fillStyle = useAnimatedStyle(() => ({
+    opacity: chosen.get(),
+    transform: [{ scale: interpolate(chosen.get(), [0, 1], [FILL_START_SCALE, 1]) }],
+  }));
   return (
     <Pressable
       onPress={onPress}
@@ -78,16 +99,30 @@ function Tab({
           style={[
             styles.tab,
             { height: size, minWidth: size, borderRadius: size / 2 },
-            focused && { backgroundColor: fill, paddingHorizontal: showLabel ? 12 : 0 },
+            focused && { paddingHorizontal: showLabel ? 12 : 0 },
           ]}
         >
+          <Animated.View
+            pointerEvents="none"
+            testID={`tab-fill-${label}`}
+            style={[StyleSheet.absoluteFill, { borderRadius: size / 2, backgroundColor: fill }, fillStyle]}
+          />
           <Icon color={focused ? theme.colors.ink : theme.colors.inkSoft} size={20} />
+          {/* No exit animation on purpose: a label that lingers while another opens would widen the row. */}
           {focused && showLabel && (
-            <View>
+            <Animated.View
+              entering={
+                reduce
+                  ? undefined
+                  : FadeIn.delay(MOTION.quick / 2)
+                      .duration(MOTION.standard)
+                      .easing(MOTION.ease)
+              }
+            >
               <Text style={styles.label} numberOfLines={1}>
                 {label}
               </Text>
-            </View>
+            </Animated.View>
           )}
         </Animated.View>
       </RNAnimated.View>

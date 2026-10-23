@@ -121,14 +121,13 @@ export default function PeopleScreen() {
                       <View style={[styles.groupDot, { backgroundColor: group.dot }]} />
                       <Text style={styles.groupTitle}>{group.title}</Text>
                     </View>
-                    {inRows(group.list, columns).map((row, r) => (
+                    {inRows(group.list, columns).map((row) => (
                       <View key={row[0].id} style={styles.tileRow}>
-                        {row.map((p, c) => (
+                        {row.map((p) => (
                           <PersonTile
                             key={p.id}
                             person={p}
                             color={colorOf(p)}
-                            index={r * columns + c}
                             onPress={() => setSelected(p)}
                           />
                         ))}

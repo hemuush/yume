@@ -16,7 +16,17 @@ import { createAccount, createCategory, createTransaction } from '@/db/ledger';
 import { createBudget } from '@/db/budgets';
 import { getMilestonesSeen, resetSettingsCache } from '@/db/settings';
 import type { MilestoneCopy } from '@/lib/milestones';
-import { checkClosedBudgetMonth, showClosedBudgetMonth } from './MilestoneNote';
+import { showClosedBudgetMonth } from './MilestoneNote';
+
+/** The note the month's decision would show now, or null; it counts as shown, so the month is marked seen. */
+async function checkClosedBudgetMonth(now: Date, excludeSensitive: boolean): Promise<MilestoneCopy | null> {
+  let copy: MilestoneCopy | null = null;
+  await showClosedBudgetMonth(now, excludeSensitive, (c) => {
+    copy = c;
+    return true;
+  });
+  return copy;
+}
 
 describe('checkClosedBudgetMonth', () => {
   const now = new Date(2026, 9, 3);

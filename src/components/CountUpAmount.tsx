@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import { Animated, Easing, StyleProp, TextProps, TextStyle } from 'react-native';
 import { Text } from '@/components/Text';
 import { formatMoney } from '@/lib/money';
@@ -44,6 +44,9 @@ export function CountUpAmount({
   const [t] = useState(() => new Animated.Value(1));
   const current = useRef(minor);
   const mounted = useRef(false);
+  // `countFromZero` only matters on the first run and `duration` is fixed per call site, so the effect reads
+  // both without depending on them.
+  const options = useEffectEvent(() => ({ fromZero: countFromZero, duration }));
 
   useEffect(() => {
     if (reduce) {
@@ -52,7 +55,7 @@ export function CountUpAmount({
       mounted.current = true;
       return;
     }
-    const from = mounted.current ? current.current : countFromZero ? 0 : minor;
+    const from = mounted.current ? current.current : options().fromZero ? 0 : minor;
     mounted.current = true;
     if (from === minor) {
       current.current = minor;
@@ -78,7 +81,7 @@ export function CountUpAmount({
     // Core Animated here, so the shared curve is spelled out with core Easing.
     const animation = Animated.timing(t, {
       toValue: 1,
-      duration,
+      duration: options().duration,
       easing: Easing.out(Easing.cubic),
       useNativeDriver: false,
     });
@@ -94,8 +97,6 @@ export function CountUpAmount({
       t.removeListener(id);
       animation.stop();
     };
-    // countFromZero only matters on the first run.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [minor, currency, reduce, t]);
 
   const text = formatMoney(display, currency);

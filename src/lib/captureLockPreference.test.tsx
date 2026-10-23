@@ -5,12 +5,14 @@ import { Text } from '@/components/Text';
 import { useAppLock } from '@/lib/AppLockContext';
 import { setAppLockEnabled } from '@/db/settings';
 import { preventScreenCaptureAsync } from 'expo-screen-capture';
+import { router } from 'expo-router';
 import RootLayout from '../../app/_layout';
 
 jest.mock('expo-font', () => ({ useFonts: () => [true, null] }));
 jest.mock('expo-router', () => ({
   Stack: Object.assign(() => <MockSettings />, { Screen: () => null }),
   useRootNavigationState: () => ({ key: 'ready' }),
+  usePathname: () => '/profile',
   router: { navigate: jest.fn() },
 }));
 jest.mock('expo-screen-capture', () => ({
@@ -130,4 +132,38 @@ it('shows a failed lock-save notice after capture gating unmounts and restores t
   expect(
     screen.getByText('Your previous app lock setting has been restored. Try again to save your choice.')
   ).toBeOnTheScreen();
+});
+
+it('takes you back to the screen you were on once protection is applied', async () => {
+  let finishProtection: () => void = () => {
+    throw new Error('Protection not requested');
+  };
+  jest.mocked(setAppLockEnabled).mockResolvedValue(undefined);
+  jest.mocked(preventScreenCaptureAsync).mockReturnValue(
+    new Promise((resolve) => {
+      finishProtection = resolve;
+    })
+  );
+  jest.mocked(router.navigate).mockClear();
+  await render(<RootLayout />);
+  await fireEvent.press(screen.getByRole('button', { name: 'Enable app lock' }));
+  // The navigator is unmounted while protection is applied, so nothing can be restored yet.
+  expect(screen.queryByText('Lock enabled')).toBeNull();
+  expect(router.navigate).not.toHaveBeenCalled();
+  await act(async () => {
+    finishProtection();
+  });
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  });
+  expect(router.navigate).toHaveBeenCalledWith('/profile');
+});
+
+it('does not restore a screen when protection was already applied before anything was open', async () => {
+  jest.mocked(router.navigate).mockClear();
+  await render(<RootLayout />);
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  });
+  expect(router.navigate).not.toHaveBeenCalled();
 });

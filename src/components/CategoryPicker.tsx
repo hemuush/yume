@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useEffectEvent, useState } from 'react';
 import { View, Pressable, Animated, StyleSheet, Keyboard, LayoutChangeEvent } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { Text, TextInput } from '@/components/Text';
@@ -68,17 +68,20 @@ export function CategoryPicker({
 
   // Keeps the right group expanded when `selectedId` changes from outside (editing a subcategory
   // transaction, or the host form resetting to null), not just on local taps.
-  useEffect(() => {
-    if (!selectedId) {
+  // An Effect Event reads the latest `categories` without re-running the effect: the caller re-creates the
+  // list every render, and the open group should follow the selection only.
+  const syncExpandedParent = useEffectEvent((id: string | null) => {
+    if (!id) {
       setExpandedParentId(null);
       return;
     }
-    const selected = categories.find((c) => c.id === selectedId);
+    const selected = categories.find((c) => c.id === id);
     if (!selected) return;
     if (selected.parentId) setExpandedParentId(selected.parentId);
     else setExpandedParentId(childrenOf(categories, selected.id).length ? selected.id : null);
-    // Re-derive only when the selection changes; the caller re-creates `categories` every render.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  });
+  useEffect(() => {
+    syncExpandedParent(selectedId);
   }, [selectedId]);
 
   // A light tick on every pick, the same one toggles and tabs give.
@@ -332,7 +335,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     paddingHorizontal: 12,
     borderRadius: theme.radius.pill,
-    backgroundColor: 'rgba(18,19,15,0.05)',
+    backgroundColor: theme.colors.inkWash,
   },
   searchInput: {
     flex: 1,
