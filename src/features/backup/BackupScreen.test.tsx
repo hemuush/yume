@@ -63,7 +63,6 @@ jest.mock('@/lib/backup', () => ({
   countEntriesSavedAfter: jest.fn(),
   isTooLargeForBackup: jest.fn(() => false),
 }));
-jest.mock('@/lib/exportExcel', () => ({ generateExportWorkbookBytes: jest.fn() }));
 const mockState = {
   folder: null as string | null,
   files: [] as unknown[],
@@ -230,9 +229,9 @@ describe('Backup & restore · restore points', () => {
 });
 
 describe('Backup & restore · save a copy', () => {
-  it('moves the two exports to their own tab', async () => {
+  it('moves the exports to their own tab', async () => {
     const tree = await render();
-    expect(texts(tree)).not.toContain('Excel workbook');
+    expect(texts(tree)).not.toContain('Reports & exports');
 
     const tabs = tree.root.find(
       (n) => n.props.options?.[0]?.value === 'points' && typeof n.props.onChange === 'function'
@@ -240,7 +239,7 @@ describe('Backup & restore · save a copy', () => {
     act(() => tabs.props.onChange('copy'));
     const shown = texts(tree);
     expect(shown).toContain('Full backup (JSON)');
-    expect(shown).toContain('Excel workbook');
+    expect(shown).toContain('Reports & exports');
     expect(shown).not.toContain('Restore from file');
   });
 });

@@ -334,6 +334,7 @@ function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean;
             <Stack.Screen name="categories" />
             <Stack.Screen name="profile" />
             <Stack.Screen name="backup" />
+            <Stack.Screen name="export" />
             <Stack.Screen name="notification-settings" />
             <Stack.Screen name="notifications" />
             <Stack.Screen name="add-transaction" />

@@ -149,6 +149,7 @@ describe('buildExportWorkbook', () => {
       'Transactions',
       'Accounts',
       'Categories',
+      'Months',
       'Loans',
       'Friends & Family',
     ]);
@@ -187,14 +188,14 @@ describe('buildExportWorkbook', () => {
 
   it('omits the Loans/Friends & Family sheets when there is nothing to show, without breaking anything else', () => {
     const wb = buildExportWorkbook({ ...data, loans: [], people: [] });
-    expect(wb.SheetNames).toEqual(['Summary', 'Transactions', 'Accounts', 'Categories']);
+    expect(wb.SheetNames).toEqual(['Summary', 'Transactions', 'Accounts', 'Categories', 'Months']);
   });
 
   it('writes real numeric amounts (not pre-formatted text) so Excel can sort/filter/sum them', () => {
     const wb = buildExportWorkbook(data);
     const ws = wb.Sheets['Transactions'];
     // Row 1 (0-indexed) is the most recent transaction after sorting desc: tx-4 (transfer, 2026-03-04).
-    const amountCell = ws['F2'];
+    const amountCell = ws['I2']; // the Transfer column
     expect(amountCell.t).toBe('n');
     expect(amountCell.v).toBe(200); // 20000 minor units -> 200 major
   });
@@ -221,7 +222,7 @@ describe('buildExportWorkbook', () => {
     const rows = XLSX.utils.sheet_to_json<any[]>(wb.Sheets['Categories'], { header: 1 });
     const foodRow = rows.find((r) => r[1] === 'Food & Dining');
     // 300 + 450 spent, 150 back: 600 across the two entries (the refund isn't an entry of its own).
-    expect(foodRow!.slice(2)).toEqual(['expense', 600, 2]);
+    expect(foodRow!.slice(2)).toEqual(['expense', 600, 2, 1]);
   });
 
   it('adds up only the default currency in the totals, while still listing every entry', () => {
@@ -245,10 +246,10 @@ describe('buildExportWorkbook', () => {
     const txs = XLSX.utils.sheet_to_json<any[]>(wb.Sheets['Transactions'], { header: 1 });
     expect(txs.some((r) => r[2] === 'Chase')).toBe(true);
     const foreignRow = txs.find((r) => r[2] === 'Chase')!;
-    expect(foreignRow[7]).toBe('USD');
+    expect(foreignRow[10]).toBe('USD');
     const rowIndex = txs.indexOf(foreignRow) + 1;
-    expect(wb.Sheets['Transactions'][`F${rowIndex}`].s.numFmt).toContain('$');
-    const total = wb.Sheets['Transactions'][`F${txs.length}`];
+    expect(wb.Sheets['Transactions'][`H${rowIndex}`].s.numFmt).toContain('$');
+    const total = wb.Sheets['Transactions'][`H${txs.length}`];
     expect(total.f).toBeUndefined();
     expect(total.v).toBe('');
   });
@@ -256,8 +257,10 @@ describe('buildExportWorkbook', () => {
   it('the Transactions total row is a SUBTOTAL formula, not a hardcoded value', () => {
     const wb = buildExportWorkbook(data);
     const ws = wb.Sheets['Transactions'];
-    const totalCell = ws['F6']; // header + 4 data rows -> total on row 6 (1-indexed)
-    expect(totalCell.f).toMatch(/^SUBTOTAL\(9,/);
+    // header + 4 data rows -> totals on row 6 (1-indexed): Money in, Money out and Transfer each sum their column.
+    expect(ws['G6'].f).toBe('SUBTOTAL(9,G2:G5)');
+    expect(ws['H6'].f).toBe('SUBTOTAL(9,H2:H5)');
+    expect(ws['I6'].f).toBe('SUBTOTAL(9,I2:I5)');
   });
 
   it('round-trips through XLSX.write -> XLSX.read without throwing, and preserves sheet structure', () => {
@@ -300,4 +303,68 @@ it('exports account-based transactions without a payment-method column', () => {
   const rows = XLSX.utils.sheet_to_json<string[]>(workbook.Sheets.Transactions, { header: 1 });
   expect(rows[0]).toContain('Account');
   expect(rows[0]).not.toContain('Payment Mode');
+});
+
+describe('a period export', () => {
+  const ledger: ExportData = {
+    currency: 'INR',
+    accounts: [account({ id: 'acc-1', name: 'SBI' })],
+    categories: [
+      category({ id: 'cat-1', name: 'Food & Dining' }),
+      category({ id: 'cat-2', name: 'Zomato', parentId: 'cat-1' }),
+    ],
+    transactions: [
+      transaction({ id: 'a', date: '2026-08-31', amountMinor: 11100 }),
+      transaction({ id: 'b', date: '2026-09-01', amountMinor: 20000, categoryId: 'cat-2', note: 'Pizza' }),
+      transaction({ id: 'c', date: '2026-09-30', amountMinor: 5000 }),
+      transaction({ id: 'r', date: '2026-09-15', amountMinor: 1000, type: 'income', isRefund: true }),
+      transaction({ id: 'd', date: '2025-09-10', amountMinor: 99900 }),
+    ],
+    loans: [],
+    people: [],
+  };
+  const sept = { kind: 'month', year: 2026, month: 9 } as const;
+
+  it('lists only that month, with the title naming it and no month-by-month sheet', () => {
+    const wb = buildExportWorkbook(ledger, sept);
+    expect(wb.SheetNames).not.toContain('Months');
+    const rows = XLSX.utils.sheet_to_json<any[]>(wb.Sheets['Transactions'], { header: 1 });
+    expect(rows).toHaveLength(1 + 3 + 1); // header, three September entries, totals
+    expect(wb.Sheets['Summary']['A1'].v).toBe('Yume — September 2026');
+  });
+
+  it('writes real dates and splits Category from Subcategory', () => {
+    const ws = buildExportWorkbook(ledger, sept).Sheets['Transactions'];
+    expect(ws['A2'].t).toBe('d');
+    expect(ws['A2'].z).toBe('yyyy-mm-dd');
+    const rows = XLSX.utils.sheet_to_json<any[]>(ws, { header: 1 });
+    const pizza = rows.find((r) => r[9] === 'Pizza')!;
+    expect(pizza[4]).toBe('Food & Dining');
+    expect(pizza[5]).toBe('Zomato');
+  });
+
+  it('keeps refunds as negative money out so the column adds up to spending', () => {
+    const ws = buildExportWorkbook(ledger, sept).Sheets['Transactions'];
+    const rows = XLSX.utils.sheet_to_json<any[]>(ws, { header: 1 });
+    const out = rows.slice(1, 4).map((r) => r[7]);
+    expect(out.reduce((a: number, b: number) => a + b, 0)).toBe(240); // 200 + 50 − 10
+    expect(ws['H5'].f).toBe('SUBTOTAL(9,H2:H4)');
+    expect(ws['H5'].v).toBe(240);
+  });
+
+  it('adds a month-by-month sheet for a year or all time', () => {
+    const wb = buildExportWorkbook(ledger, { kind: 'year', year: 2026 });
+    expect(wb.SheetNames).toContain('Months');
+    const rows = XLSX.utils.sheet_to_json<any[]>(wb.Sheets['Months'], { header: 1 });
+    expect(rows.map((r) => r[0])).toEqual(['Month', 'Aug 2026', 'Sep 2026']);
+    expect(rows[2].slice(1)).toEqual([0, 240, -240, 2]);
+    expect(buildExportWorkbook(ledger).SheetNames).toContain('Months');
+  });
+
+  it('survives a write and read with dates intact', () => {
+    const wb = buildExportWorkbook(ledger, sept);
+    const bytes = XLSX.write(wb, { bookType: 'xlsx', type: 'array', cellDates: true }) as ArrayBuffer;
+    const back = XLSX.read(new Uint8Array(bytes), { type: 'array', cellDates: true });
+    expect(back.Sheets['Transactions']['A2'].t).toBe('d');
+  });
 });
