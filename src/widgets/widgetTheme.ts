@@ -39,6 +39,15 @@ export const WIDGET_FONT = {
 /** Home's calm card corner (theme.radius.xl2). */
 export const WIDGET_RADIUS = 22;
 
+/** Space for four 44dp category targets plus shell padding/border and three action rows. */
+export const QUICK_ADD_LAYOUT = {
+  minWidth: 208,
+  minHeight: 184,
+  padding: 12,
+  actionHeight: 44,
+  categoryHeight: 48,
+} as const;
+
 /**
  * Trusts a database colour (accent, account/category colour) to already be a valid `#rrggbb` hex, as every
  * writer only stores that shape; a type-level cast, not a runtime check.

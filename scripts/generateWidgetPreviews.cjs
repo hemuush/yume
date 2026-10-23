@@ -39,6 +39,7 @@ const { AccountsWidget } = require('../src/widgets/AccountsWidget');
 const { QuickAddWidget } = require('../src/widgets/QuickAddWidget');
 const { SuuWidget } = require('../src/widgets/SuuWidget');
 const { NextDueWidget } = require('../src/widgets/NextDueWidget');
+const { QUICK_ADD_LAYOUT } = require('../src/widgets/widgetTheme');
 const primary = '#8FCBFF',
   secondary = '#8FE8C8';
 const month = {
@@ -92,8 +93,8 @@ const fixtures = [
   ],
   [
     'quick-add',
-    172,
-    172,
+    QUICK_ADD_LAYOUT.minWidth,
+    QUICK_ADD_LAYOUT.minHeight,
     QuickAddWidget({
       primary,
       categories: [
@@ -295,8 +296,8 @@ async function main() {
     const previews = minimum
       ? fixtures.map(([name, , , tree]) => [
           name,
-          ['quick-add', 'suu'].includes(name) ? 140 : 250,
-          name === 'next-due' ? 70 : 140,
+          name === 'quick-add' ? QUICK_ADD_LAYOUT.minWidth : name === 'suu' ? 140 : 250,
+          name === 'quick-add' ? QUICK_ADD_LAYOUT.minHeight : name === 'next-due' ? 70 : 140,
           tree,
         ])
       : fixtures;
@@ -343,13 +344,13 @@ async function main() {
     const tile = ([name, width, height, tree]) =>
       `<section><p style="margin:0 0 8px;color:#5B5748;font-size:12px">${name}</p><div style="width:${width}px;height:${height}px">${render(tree)}</div></section>`;
     const gallery = html(
-      `<div style="width:776px;padding:20px;background:#F4F0E7;box-sizing:border-box"><h2 style="font-family:Fredoka_600SemiBold;margin:0 0 18px">Yume widgets</h2><div style="display:flex;gap:16px">${tile(fixtures[0])}${tile(fixtures[1])}</div><div style="display:flex;gap:16px;margin-top:20px"><div style="display:flex;gap:16px;width:360px">${tile(fixtures[2])}${tile(fixtures[3])}</div>${tile(fixtures[4])}</div></div>`
+      `<div style="width:824px;padding:20px;background:#F4F0E7;box-sizing:border-box"><h2 style="font-family:Fredoka_600SemiBold;margin:0 0 18px">Yume widgets</h2><div style="display:flex;gap:16px">${tile(fixtures[0])}${tile(fixtures[1])}</div><div style="display:flex;gap:16px;margin-top:20px"><div style="display:flex;gap:16px;width:396px">${tile(fixtures[2])}${tile(fixtures[3])}</div>${tile(fixtures[4])}</div></div>`
     );
     const galleryPath = path.join(reviewDir, 'widgets.html');
     fs.writeFileSync(galleryPath, gallery);
     await call(
       'Emulation.setDeviceMetricsOverride',
-      { width: 776, height: 500, deviceScaleFactor: 2, mobile: false },
+      { width: 824, height: 500, deviceScaleFactor: 2, mobile: false },
       sessionId
     );
     await call('Page.navigate', { url: require('node:url').pathToFileURL(galleryPath).href }, sessionId);
@@ -357,7 +358,7 @@ async function main() {
     await waitForFonts();
     const overview = await call(
       'Page.captureScreenshot',
-      { format: 'png', clip: { x: 0, y: 0, width: 776, height: 500, scale: 1 } },
+      { format: 'png', clip: { x: 0, y: 0, width: 824, height: 500, scale: 1 } },
       sessionId
     );
     fs.writeFileSync(path.join(reviewDir, 'widgets.png'), Buffer.from(overview.data, 'base64'));

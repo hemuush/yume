@@ -91,10 +91,10 @@
               "label": "Quick Add",
               "description": "Add an expense in one tap, straight into your most-used categories, or add income.",
               "previewImage": "./assets/widget-preview/quick-add.png",
-              "minWidth": "140dp",
-              "minHeight": "140dp",
-              "targetCellWidth": 2,
-              "targetCellHeight": 2,
+              "minWidth": "208dp",
+              "minHeight": "184dp",
+              "targetCellWidth": 3,
+              "targetCellHeight": 3,
               "resizeMode": "horizontal|vertical"
             },
             {

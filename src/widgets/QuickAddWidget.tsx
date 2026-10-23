@@ -1,16 +1,16 @@
 import { FlexWidget, TextWidget, IconWidget, type ColorProp } from 'react-native-android-widget';
 import { WidgetShell, WidgetIcon, iconGlyph } from './WidgetShell';
-import { widgetColor, widgetAlpha, widgetInk, WIDGET_FONT } from './widgetTheme';
+import { widgetColor, widgetAlpha, widgetInk, WIDGET_FONT, QUICK_ADD_LAYOUT } from './widgetTheme';
 import type { QuickAddWidgetData } from './data';
 
 /**
- * "Quick Add" 2×2 widget: a dark theme-ink "Add expense" action, your four most-used expense categories
+ * "Quick Add" widget: a dark theme-ink "Add expense" action, your four most-used expense categories
  * (each opens Add with it picked), then Income and Move. All are deep links into `add-transaction`.
  */
 export function QuickAddWidget({ primary, categories }: QuickAddWidgetData) {
   const ink = widgetInk(primary);
   return (
-    <WidgetShell padding={12}>
+    <WidgetShell padding={QUICK_ADD_LAYOUT.padding}>
       <FlexWidget
         clickAction="OPEN_URI"
         clickActionData={{ uri: 'yume://add-transaction?type=expense' }}
@@ -19,8 +19,8 @@ export function QuickAddWidget({ primary, categories }: QuickAddWidgetData) {
           alignItems: 'center',
           justifyContent: 'center',
           width: 'match_parent',
-          height: 38,
-          borderRadius: 19,
+          height: QUICK_ADD_LAYOUT.actionHeight,
+          borderRadius: QUICK_ADD_LAYOUT.actionHeight / 2,
           backgroundColor: ink,
         }}
       >
@@ -57,7 +57,14 @@ export function QuickAddWidget({ primary, categories }: QuickAddWidgetData) {
               clickActionData={{
                 uri: `yume://add-transaction?type=expense&categoryId=${encodeURIComponent(c.id)}`,
               }}
-              style={{ flex: 1, width: 0, flexDirection: 'column', alignItems: 'center' }}
+              style={{
+                flex: 1,
+                width: 0,
+                height: QUICK_ADD_LAYOUT.categoryHeight,
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
             >
               <WidgetIcon name={c.icon} background={widgetAlpha(c.color, 0.25)} size={28} />
               <TextWidget
@@ -120,11 +127,11 @@ function SmallAction({
       style={{
         flex: 1,
         width: 0,
-        height: 28,
+        height: QUICK_ADD_LAYOUT.actionHeight,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        borderRadius: 14,
+        borderRadius: QUICK_ADD_LAYOUT.actionHeight / 2,
         backgroundColor: background,
       }}
     >
