@@ -10,7 +10,8 @@ import Feather from '@expo/vector-icons/Feather';
 import { theme } from '@/constants/theme';
 import { styles } from './budgets.styles';
 import { monthDayInfo } from './budgetsOverview';
-import { withPressed } from '@/lib/pressed';
+import { withPressedTint } from '@/lib/pressed';
+import { useAccent } from '@/theme/AccentContext';
 import { categorySentence, inParent } from '@/lib/categoryLabel';
 import { useCardGrow } from '@/lib/cardGrow';
 import { useToday } from './useToday';
@@ -37,6 +38,7 @@ export function BudgetRow({
   /** The page it opens expands out of this row (the caller marks that push with `growHref`). */
   grow?: boolean;
 }) {
+  const { accent } = useAccent();
   const { ref, growFrom } = useCardGrow();
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.98);
   const barPct = Math.min(100, progress.percentUsed);
@@ -73,7 +75,7 @@ export function BudgetRow({
         onMore();
       }}
       hitSlop={10}
-      style={withPressed(styles.moreBtn)}
+      style={withPressedTint(accent, styles.moreBtn)}
       accessibilityRole="button"
       accessibilityLabel={`More for ${categorySentence(progress.categoryName, progress.parentName)} budget`}
     >

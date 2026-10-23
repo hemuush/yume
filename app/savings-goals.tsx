@@ -158,7 +158,7 @@ export default function SavingsGoalsScreen() {
   if (!loaded && !loadError) {
     return (
       <View style={styles.container}>
-        <HomeWallpaper accent={accent} secondary={secondary} />
+        <HomeWallpaper accent={accent} secondary={secondary} plain />
         <SkyHeader title="Savings goals" showBack hideUser wallpaper />
         <View style={{ paddingTop: 24 }}>
           {[0, 1].map((i) => (
@@ -180,7 +180,7 @@ export default function SavingsGoalsScreen() {
 
   return (
     <View style={styles.container}>
-      <HomeWallpaper accent={accent} secondary={secondary} />
+      <HomeWallpaper accent={accent} secondary={secondary} plain />
       <ReanimatedAnimated.ScrollView
         ref={scrollRef}
         onScroll={scrollHandler}

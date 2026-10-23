@@ -2,6 +2,7 @@ import { View } from 'react-native';
 import { Text } from '@/components/Text';
 import { CountUpAmount } from '@/components/CountUpAmount';
 import { Glass } from '@/components/Glass';
+import { cardSurface } from '@/components/CardSurface';
 import { Kicker, FrostChip, PaceBar, frost } from '@/components/Frost';
 import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
@@ -23,7 +24,7 @@ export function BudgetsHero({ figures: h }: { figures: BudgetsHeroFigures }) {
   const daysLeft = h.daysLeft === 0 ? 'last day' : `${h.daysLeft} ${h.daysLeft === 1 ? 'day' : 'days'} left`;
 
   return (
-    <Glass radius={28} tone="strong" style={[frost.hero, { padding: 14, gap: 8 }]}>
+    <Glass radius={28} tone="strong" style={[frost.hero, cardSurface.summary, { padding: 14, gap: 8 }]}>
       <View style={[frost.heroRow, { flexWrap: 'wrap', gap: 8 }]}>
         <View style={frost.heroMain}>
           <Kicker icon="pie-chart">{over ? 'Over this month' : 'Left this month'}</Kicker>

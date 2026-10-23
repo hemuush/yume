@@ -14,6 +14,7 @@ import { isOverdueInstallment, nextUnpaidInstallment } from './installmentStatus
 import { toLocalIsoDate } from '@/lib/date';
 import { shade } from '@/lib/color';
 import { useAccent } from '@/theme/AccentContext';
+import { softTint } from '@/components/softTint';
 
 function Marker({ status, isNext }: { status: LoanPayment['status']; isNext: boolean }) {
   const { accent } = useAccent();
@@ -64,7 +65,7 @@ export function LoanSchedule({
               }}
               accessibilityRole="button"
               accessibilityState={{ expanded: open }}
-              style={({ pressed }) => [styles.yearHead, pressed && styles.pressed]}
+              style={({ pressed }) => [styles.yearHead, pressed && { backgroundColor: softTint(accent, 0.2) }]}
             >
               <Text style={styles.year}>{y.year}</Text>
               <Text style={styles.yearSub}>
@@ -149,7 +150,6 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: theme.colors.borderSoft,
   },
-  pressed: { opacity: 0.6 },
   year: { fontFamily: theme.font.roundedBold, fontSize: 14, color: theme.colors.textPrimary },
   yearSub: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted },
   row: { gap: 12 },
