@@ -1,5 +1,6 @@
 import { act, create, ReactTestRenderer } from 'react-test-renderer';
 import { Text } from 'react-native';
+import type { ReactNode } from 'react';
 import RootLayout from '../../app/_layout';
 import { getHideSensitiveAmounts } from '@/db/settings';
 
@@ -36,7 +37,10 @@ jest.mock('@/lib/notifications', () => ({
 }));
 jest.mock('@/widgets/notifyWidgets', () => ({ refreshAllWidgets: jest.fn() }));
 jest.mock('@/components/ErrorBoundary', () => ({ ErrorBoundary: ({ children }: any) => children }));
-jest.mock('@/theme/AccentContext', () => ({ AccentProvider: ({ children }: any) => children }));
+jest.mock('@/theme/AccentContext', () => ({
+  AccentProvider: ({ children }: { children: ReactNode }) => children,
+  useAccent: () => ({ themeSaveError: null, waitForThemePersistence: async () => undefined }),
+}));
 jest.mock('@/theme/PrivacyContext', () => ({ PrivacyProvider: ({ children }: any) => children }));
 jest.mock('@/lib/AppLockContext', () => ({
   AppLockProvider: ({ children }: any) => children,
