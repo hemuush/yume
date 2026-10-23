@@ -27,8 +27,8 @@ const MIN_DELTA_E = 14;
 const colours = (p: (typeof THEMES)[number]) => [p.primary, p.secondary, ...(p.dot ? [p.dot] : [])];
 
 describe('theme packs', () => {
-  it('has five packs with unique ids and names, Yume first', () => {
-    expect(THEMES).toHaveLength(5);
+  it('has six packs with unique ids and names, Yume first', () => {
+    expect(THEMES).toHaveLength(6);
     expect(new Set(THEMES.map((p) => p.id)).size).toBe(THEMES.length);
     expect(new Set(THEMES.map((p) => p.name)).size).toBe(THEMES.length);
     expect(THEMES[0].id).toBe('yume');
