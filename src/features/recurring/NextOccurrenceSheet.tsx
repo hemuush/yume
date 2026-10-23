@@ -91,10 +91,10 @@ export function NextOccurrenceSheet({
       />
       <Text style={styles.hint}>
         {action === 'skip'
-          ? 'Skip the next occurrence without recording money in or out. The regular schedule continues.'
+          ? 'Skip the next occurrence without recording anything. The regular schedule continues.'
           : action === 'confirm'
-            ? 'Record the actual amount and date once. This advances the schedule so it cannot be automatically recorded again.'
-            : 'Change this amount or postpone within this cycle. Later occurrences keep the regular amount and original cadence.'}
+            ? 'Record the actual amount and date once. The schedule moves on, so it is not recorded again automatically.'
+            : 'Change this amount or postpone within this cycle. Later occurrences keep the regular amount and cadence.'}
       </Text>
       {action !== 'skip' && (
         <>

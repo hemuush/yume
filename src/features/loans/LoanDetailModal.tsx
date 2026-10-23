@@ -266,6 +266,9 @@ function LoanDetailContent({ loan, onClose, onChanged, startWithPay = false, hue
     <>
       <ModalSheet
         flowPage
+        // The schedule is a long list and the action list a short one: neither should set the height that the
+        // pay, prepay and edit pages open at (they would open mostly empty).
+        flowHeight={moreActionsVisible || tab === 'schedule' ? 'own' : 'shared'}
         size="expanded"
         dismissible={!busy}
         visible={

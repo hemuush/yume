@@ -112,7 +112,6 @@ export const styles = StyleSheet.create({
     marginTop: 14,
     lineHeight: 17,
   },
-  sensitiveRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 14 },
   tile: { alignItems: 'center' },
   tileRing: { padding: 2, borderWidth: 2, borderColor: 'transparent', borderRadius: 999 },
   tileRingOn: { borderColor: theme.colors.textSecondary },

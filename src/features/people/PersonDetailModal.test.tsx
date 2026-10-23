@@ -13,8 +13,8 @@ jest.mock('@/components/ModalSheet', () => ({
     </>
   ),
 }));
-jest.mock('@/components/SheetCard', () => ({
-  SheetCard: (props: any) =>
+jest.mock('@/components/DraftCard', () => ({
+  DraftCard: (props: any) =>
     require('react').createElement(require('react-native').View, { testID: 'balance', ...props }),
 }));
 jest.mock('@/components/AmountField', () => ({
@@ -85,7 +85,7 @@ it('keeps the known balance while loading, and blocks settlement until details a
   );
   const tree = await render();
   expect(tree.root.findByProps({ testID: 'balance' }).props.kicker).toBe('Owes you');
-  expect(tree.root.findByProps({ testID: 'balance' }).props.amount).toContain('1,200');
+  expect(tree.root.findByProps({ testID: 'balance' }).props.figure).toContain('1,200');
   expect(button(tree, 'They repaid').props.disabled).toBe(true);
   await act(async () => {
     resolve(ledger);
@@ -96,7 +96,7 @@ it('keeps the known balance while loading, and blocks settlement until details a
 it('keeps the balance on a failed fetch and recovers through Retry', async () => {
   (getPersonLedger as jest.Mock).mockRejectedValueOnce(new Error('offline'));
   const tree = await render();
-  expect(tree.root.findByProps({ testID: 'balance' }).props.amount).toContain('1,200');
+  expect(tree.root.findByProps({ testID: 'balance' }).props.figure).toContain('1,200');
   expect(button(tree, 'They repaid').props.disabled).toBe(true);
   await act(async () => {
     await button(tree, 'Retry').props.onPress();

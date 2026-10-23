@@ -18,7 +18,7 @@ import { PrimaryButton } from '@/components/PrimaryButton';
 import { InsightRow } from '@/components/InsightCard';
 import { SheetTabs } from '@/components/SheetTabs';
 import { GoalLetterReveal } from './GoalLetterReveal';
-import { GoalSheetCard } from './GoalSheetCard';
+import { GoalDraftHero } from './GoalDraftHero';
 import { haptics } from '@/lib/haptics';
 import { styles } from './goals.styles';
 import { errorMessage } from '@/lib/errorMessage';
@@ -318,7 +318,7 @@ function ContributionForm({
           importantForAccessibility={saving || saved ? 'no-hide-descendants' : 'auto'}
         >
           {/* The goal as it'll stand once this goes in (or comes out). */}
-          <GoalSheetCard
+          <GoalDraftHero
             name={goal.name}
             savedMinor={Math.max(
               0,
@@ -326,7 +326,7 @@ function ContributionForm({
             )}
             targetMinor={goal.targetAmountMinor}
             targetDate={goal.targetDate}
-            kicker={inputMinor(amount) > 0 ? 'After this' : undefined}
+            after={inputMinor(amount) > 0}
           />
           {goal.reservesAccount && (
             <>
@@ -383,7 +383,6 @@ function ContributionForm({
               )}
             </View>
           )}
-          <View style={{ height: 14 }} />
           <AmountField
             label="Amount"
             editable={!saving && !saved}
@@ -394,8 +393,8 @@ function ContributionForm({
           />
           <Text style={styles.modalHint}>
             {goal.reservesAccount
-              ? 'Reservations stay in the linked account. Releasing or moving them does not create a transfer.'
-              : 'This updates goal progress only. No money moves between your accounts.'}
+              ? 'Stays in the linked account. Releasing or moving does not create a transfer.'
+              : 'This updates goal progress only. No money moves.'}
           </Text>
         </View>
       )}

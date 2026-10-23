@@ -281,9 +281,26 @@ it('shows loan actions inside the existing sheet and returns to its overview', a
   expect(actions.props.items.map((item: { label: string }) => item.label)).toContain('Delete loan');
   expect(tree.root.findAllByProps({ testID: 'card' })).toHaveLength(0);
   expect(payButton(tree).props.title).toBe('Back to loan');
+  // A short list of actions keeps its own height rather than stretching to the tallest page.
+  expect(tree.root.findByType(ModalSheet).props.flowHeight).toBe('own');
   await act(async () => payButton(tree).props.onPress());
+  expect(tree.root.findByType(ModalSheet).props.flowHeight).toBe('shared');
   expect(tree.root.findAllByProps({ testID: 'loan-actions' })).toHaveLength(0);
   expect(tree.root.findAllByProps({ testID: 'card' }).length).toBeGreaterThan(0);
+});
+
+it('takes the long schedule out of the height the other pages open at', async () => {
+  setup([installment(1, addDaysToIsoDate(todayIso, 10))]);
+  const tree = await render();
+  expect(tree.root.findByType(ModalSheet).props.flowHeight).toBe('shared');
+  const schedule = tree.root.find(
+    (n) =>
+      n.props.accessibilityRole === 'tab' &&
+      typeof n.props.onPress === 'function' &&
+      n.findAllByType(Text).some((t) => t.props.children === 'Schedule')
+  );
+  await act(async () => schedule.props.onPress());
+  expect(tree.root.findByType(ModalSheet).props.flowHeight).toBe('own');
 });
 
 it('shows only the payment popup and restores the loan when it closes', async () => {

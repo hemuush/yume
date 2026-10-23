@@ -75,7 +75,7 @@ export function AccountModal({
         {direction === 'lent'
           ? 'Choose the account future repayments arrive in.'
           : 'Choose the account future EMIs come out of.'}{' '}
-        This applies only to future entries; recorded transactions stay unchanged.
+        Recorded transactions stay unchanged.
       </Text>
       <View style={styles.chipRow}>
         {defaultCurrencyAccountsOf(spendableAccountsOf(accounts)).map((acc) => (

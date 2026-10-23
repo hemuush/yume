@@ -16,7 +16,7 @@ jest.mock('@/components/ModalSheet', () => ({
     </>
   ),
 }));
-jest.mock('@/components/SheetCard', () => ({ SheetCard: () => null }));
+jest.mock('@/components/DraftCard', () => ({ DraftCard: () => null }));
 jest.mock('@/components/AmountField', () => ({
   AmountField: () => null,
 }));

@@ -17,6 +17,7 @@ export function DraftCard({
   title,
   kicker,
   figure,
+  figureColor,
   per,
   meta,
 }: {
@@ -25,10 +26,12 @@ export function DraftCard({
   title: string;
   /** "9.5% · 20 years", empty until either is filled in. */
   kicker: string;
-  /** The formatted figure, or undefined until it can be worked out. */
+  /** The formatted figure, or undefined until it can be worked out. Shown with `per`. */
   figure?: string;
-  /** The small word under the figure: "a month", "target". */
-  per: string;
+  /** Overrides the figure's colour, for money that is owed (red). */
+  figureColor?: string;
+  /** The small word under the figure: "a month", "target". Leave out for a card with no figure at all. */
+  per?: string;
   /** The line under the card; omit when there is nothing to say yet. */
   meta?: string;
 }) {
@@ -52,10 +55,12 @@ export function DraftCard({
             <Text style={styles.kicker}>{kicker || ' '}</Text>
           </View>
         </View>
-        <View style={styles.emi}>
-          <Text style={styles.amount}>{figure ?? '–'}</Text>
-          <Text style={styles.per}>{per}</Text>
-        </View>
+        {per !== undefined && (
+          <View style={styles.emi}>
+            <Text style={[styles.amount, figureColor ? { color: figureColor } : null]}>{figure ?? '–'}</Text>
+            <Text style={styles.per}>{per}</Text>
+          </View>
+        )}
       </View>
       {!!meta && <Text style={styles.meta}>{meta}</Text>}
     </View>

@@ -49,7 +49,7 @@ jest.mock('@/components/AmountField', () => ({
     require('react').createElement(require('react-native').View, { testID: 'amount', onChangeText }),
 }));
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
-jest.mock('./GoalSheetCard', () => ({ GoalSheetCard: () => null }));
+jest.mock('./GoalDraftHero', () => ({ GoalDraftHero: () => null }));
 jest.mock('./GoalLetterReveal', () => ({ GoalLetterReveal: () => null }));
 
 import { ContributeModal } from './ContributeModal';
