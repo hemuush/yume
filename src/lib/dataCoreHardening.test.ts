@@ -132,15 +132,17 @@ describe('workbook export', () => {
     createdAt: '2026-03-01',
   });
 
-  it("the Transactions total's stored value equals the sum of the Amount column the formula adds up", () => {
+  it("each Transactions total's stored value equals the sum of the column its formula adds up", () => {
     const wb = buildExportWorkbook({
       ...base,
       transactions: [tx('1', 30000, 'expense'), tx('2', 50000, 'income')],
     });
     const ws = wb.Sheets['Transactions'];
-    expect(ws['F4'].f).toBe('SUBTOTAL(9,F2:F3)');
-    expect(ws['F4'].v).toBe(ws['F2'].v + ws['F3'].v);
-    expect(ws['F4'].v).toBe(800);
+    // Newest first and same day: income row 2 (Money in, G), expense row 3 (Money out, H).
+    expect(ws['G4'].f).toBe('SUBTOTAL(9,G2:G3)');
+    expect(ws['G4'].v).toBe(500);
+    expect(ws['H4'].f).toBe('SUBTOTAL(9,H2:H3)');
+    expect(ws['H4'].v).toBe(300);
   });
 
   it('refuses a ledger past the ceiling instead of silently cutting it short', async () => {

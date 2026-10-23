@@ -26,14 +26,17 @@ This document preserves earlier findings and validation. Statements inside the h
 
 ## What leaves the device
 
-By default: **nothing**. Yume's database lives entirely in local SQLite on the phone. The only way data leaves the device is if you explicitly export a JSON or Excel (.xlsx) file, or point Yume at a backup folder, and share/save it yourself. There is no cloud account, no server, and no network call anywhere in the backup path.
+By default: **nothing**. Yume's database lives entirely in local SQLite on the phone. The only way data leaves the device is if you explicitly export a JSON, PDF or Excel (.xlsx) file, or point Yume at a backup folder, and share/save it yourself. There is no cloud account, no server, and no network call anywhere in the backup path.
 
 ## Local export / restore
 
 From **Settings → Backup & Restore**:
 
 - **Export full backup (JSON)** — every table, serialized, shareable via any app (email, a cloud drive, a file manager). This is the complete source of truth for a restore.
-- **Export to Excel (.xlsx)** — a real, styled workbook matching Yume's own colors: Summary (key totals), Transactions (with an AutoFilter and a live SUBTOTAL total row), Accounts, Categories (rolled up the same way Reports does), Loans, and Friends & Family — each its own sheet, opens directly in Excel/Sheets/Numbers.
+- **Reports & exports** — a separate page (Backup & Restore › Reports & exports) for one **month**, one **year** or **all time**; only periods that have entries are offered, with a line saying how many entries and how much spending they hold. Choose a format:
+  - **PDF report** — A4 pages built on the phone in the selected theme's colours with the embedded Fredoka and Archivo fonts: a cover with money in, spent, net, daily average, busiest day and no-spend days (and the change against the period before), where it went with shares, a day-by-day (or month-by-month) chart, weekday pattern, biggest spends, most-repeated notes, accounts, income sources, a month table for a year or all time, category and subcategory detail, loans, friends and family, then every entry grouped by day. Pages and numbering ("Page 2 of 6") are laid out by Yume itself because Android's PDF maker ignores CSS page margins. A period is limited to 4,000 entries; a longer one asks for a shorter period or Excel.
+  - **Excel (.xlsx)** — a styled workbook for the same period: Summary, Transactions (real dates, Money in / Money out / Transfer columns that each carry a live SUBTOTAL, Category and Subcategory split, AutoFilter), Accounts, Categories with each one's share, Months (year or all time), Loans, and Friends & Family. Refunds are negative Money out, so that column adds up to spending as everywhere in the app. Balances, loans and people are as they stand today.
+  Totals count the default currency only; other currencies' entries are listed in their own currency and never added in. With app lock on, the phone's unlock is asked before anything is created, and the file is deleted from the app's cache once the share sheet closes.
 - **Restore from file** — pick a previously exported JSON file; this **replaces all current data** after the restore preview (see _Restore safety_).
 
 On a new phone, the first onboarding page has **I have a Yume backup**: pick the file, check the same preview, and Yume restores it and skips the rest of setup.
