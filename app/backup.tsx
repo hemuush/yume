@@ -64,7 +64,7 @@ import { theme } from '@/constants/theme';
 import { errorMessage } from '@/lib/errorMessage';
 import { screenStyles as h } from '@/components/screenStyles';
 import { SettingsRow } from '@/components/SettingsRow';
-import { withPressed } from '@/lib/pressed';
+import { withPressedTint } from '@/lib/pressed';
 import { useScreenLoad } from '@/lib/useScreenLoad';
 import { listScreenStyles } from '@/features/shared/listScreenStyles';
 import { showAlert } from '@/components/AppDialog';
@@ -485,7 +485,7 @@ Restore anyway? Your current data would be replaced with no way back.`,
 
   return (
     <View style={styles.container}>
-      <HomeWallpaper accent={accent} secondary={secondary} />
+      <HomeWallpaper accent={accent} secondary={secondary} plain />
       <ReanimatedAnimated.ScrollView
         ref={scrollRef}
         onScroll={scrollHandler}
@@ -550,7 +550,7 @@ Restore anyway? Your current data would be replaced with no way back.`,
                       disabled={!!busy}
                       hitSlop={8}
                       accessibilityRole="button"
-                      style={withPressed([styles.linkAction, busy && styles.linkDisabled])}
+                      style={withPressedTint(accent, [styles.linkAction, busy && styles.linkDisabled])}
                     >
                       <Text style={styles.link}>Forget folder</Text>
                     </Pressable>
@@ -575,7 +575,7 @@ Restore anyway? Your current data would be replaced with no way back.`,
                   hitSlop={8}
                   accessibilityRole="button"
                   accessibilityState={{ expanded: showAll }}
-                  style={withPressed(styles.linkAction)}
+                  style={withPressedTint(accent, styles.linkAction)}
                 >
                   <Text style={styles.seeAll}>{showAll ? 'Show less' : `See all ${files.length} →`}</Text>
                 </Pressable>
