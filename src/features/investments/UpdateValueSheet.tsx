@@ -1,5 +1,5 @@
 import { useSaveOnce } from '@/lib/useSaveOnce';
-import { useEffect, useState } from 'react';
+import { useEffect, useEffectEvent, useState } from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
 import { ModalSheet, SheetFooter } from '@/components/ModalSheet';
@@ -57,13 +57,15 @@ export function UpdateValueSheet({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!visible) return;
+  // The form starts fresh at each opening (or for another valuation); `today` only matters at open.
+  const resetForm = useEffectEvent(() => {
     setValue(valuation ? String(valuation.valueMinor / 100) : '');
     setDate(valuation ? valuation.date : today);
     setError(null);
-    // `today` only matters at open.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  });
+  useEffect(() => {
+    if (!visible) return;
+    resetForm();
   }, [visible, valuation?.id]);
 
   if (!inv) return null;

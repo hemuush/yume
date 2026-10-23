@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
 import { View, StyleSheet, Pressable } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
@@ -128,6 +128,8 @@ export function AccountSummarySheet({
       });
   }, [account]);
 
+  // `accounts` only names the source account of the next SIP, so it is read without re-running the load.
+  const accountName = useEffectEvent((id: string) => accounts.find((a) => a.id === id)?.name);
   useEffect(() => {
     if (!accountId || !valueKey) {
       setValuations(null);
@@ -154,7 +156,7 @@ export function AccountSummarySheet({
             ? {
                 amountMinor: next.amountMinor,
                 date: next.nextRunDate,
-                fromName: accounts.find((a) => a.id === next.accountId)?.name,
+                fromName: accountName(next.accountId),
               }
             : null
         );
@@ -165,8 +167,6 @@ export function AccountSummarySheet({
     return () => {
       cancelled = true;
     };
-    // `accounts` only names the source account of the next SIP.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accountId, valueKey]);
 
   if (!account) return null;
