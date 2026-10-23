@@ -228,6 +228,8 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     overflow: 'hidden',
     flexDirection: 'column-reverse',
+    // A faint edge keeps the palest category colours (yellow, butter, mint) readable on the white card.
+    boxShadow: `0px 0px 0px 1px ${theme.colors.inkHairline}`,
   },
   segment: { width: '100%' },
   baseline: { width: 18, height: 2, borderRadius: 1, backgroundColor: theme.colors.borderSoft },

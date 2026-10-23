@@ -14,13 +14,13 @@ import { formatMaskableMoney, formatMoney } from '@/lib/money';
 import { getCachedCurrency } from '@/db/settings';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import { useAccent } from '@/theme/AccentContext';
-import { shade } from '@/lib/color';
+import { softTint } from '@/components/softTint';
 import { haptics } from '@/lib/haptics';
 import { theme } from '@/constants/theme';
 import { buildDayLane, dropIndex, laneOrderIds, LaneLine, moveLine } from './transactions.helpers';
 import { isSavingsEntry } from '@/lib/privateSummary';
 import { DraggableLine } from './DraggableLine';
-import { withPressed } from '@/lib/pressed';
+import { withPressedTint } from '@/lib/pressed';
 import { categorySpoken, joinSub, parentNameOf } from '@/lib/categoryLabel';
 
 const NO_ACCOUNTS: ReadonlySet<string> = new Set();
@@ -100,7 +100,7 @@ function TimelineDayView({
   const { hideAmounts } = usePrivacy();
   const { width, fontScale } = useWindowDimensions();
   const stacked = width < 360 || fontScale > 1.2;
-  const { accent } = useAccent();
+  const { accent, secondary } = useAccent();
   const categoriesById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
   // Parent context for a subcategory; top-level categories need no extra label.
   const parentLine = (categoryId: string | null) => parentNameOf(categoryId, categoriesById);
@@ -239,7 +239,7 @@ function TimelineDayView({
           <Pressable
             onPress={() => onPressTx(tx)}
             {...reorderProps(i)}
-            style={withPressed([styles.line, stacked && styles.wrapLine])}
+            style={withPressedTint(accent, [styles.line, stacked && styles.wrapLine])}
             accessibilityRole="button"
             accessibilityLabel={`${categorySpoken(categoryName(tx.categoryId), parentNameOf(tx.categoryId, categoriesById))}${tx.isRefund ? ', refund' : ''}${tx.note ? `, ${tx.note}` : ''}, ${money(tx.amountMinor, hidden(tx), tx.accountId)}`}
           >
@@ -294,7 +294,7 @@ function TimelineDayView({
             onToggleStack(line.key);
           }}
           {...reorderProps(i)}
-          style={withPressed([styles.line, stacked && styles.wrapLine])}
+          style={withPressedTint(accent, [styles.line, stacked && styles.wrapLine])}
           accessibilityRole="button"
           accessibilityState={{ expanded: open }}
           accessibilityLabel={`${categorySpoken(name, stackParent)}${line.items.every((t) => t.isRefund) ? ', refunds' : ''}, ${line.items.length} entries, ${money(line.totalMinor, lineMasked, first.accountId)}. ${open ? 'Close' : 'Open'}`}
@@ -341,7 +341,7 @@ function TimelineDayView({
                 <MovingRow key={tx.id} style={styles.divider}>
                   <Pressable
                     onPress={() => onPressTx(tx)}
-                    style={withPressed([styles.subLine, stacked && styles.wrapLine])}
+                    style={withPressedTint(accent, [styles.subLine, stacked && styles.wrapLine])}
                     accessibilityRole="button"
                     accessibilityLabel={`${categorySpoken(name, stackParent)}${tx.isRefund ? ', refund' : ''}${tx.note ? `, ${tx.note}` : ''}, ${money(tx.amountMinor, hidden(tx), tx.accountId)}`}
                   >
@@ -404,7 +404,7 @@ function TimelineDayView({
           <Pressable
             key={tx.id}
             onPress={() => onPressTx(tx)}
-            style={withPressed([
+            style={withPressedTint(accent, [
               styles.line,
               stacked && styles.wrapLine,
               (lines.length > 0 || i > 0) && styles.divider,
@@ -414,7 +414,7 @@ function TimelineDayView({
           >
             <JustAddedGlow ids={[tx.id]} surface="activity" />
             <View style={styles.lead}>
-              <View style={[styles.transferIcon, { backgroundColor: shade(accent, 95) }]}>
+              <View style={[styles.transferIcon, { backgroundColor: softTint(secondary, 0.35) }]}>
                 <Feather name="repeat" size={16} color={theme.colors.ink} />
               </View>
             </View>
