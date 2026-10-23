@@ -495,6 +495,7 @@ export function resetSettingsCache(): void {
   setCurrencyCache(null);
   cachedAccent = null;
   cachedThemeId = undefined;
+  cachedThemeIcon = undefined;
   cachedDailySpendingGoal = undefined;
   cachedUserName = undefined;
   cachedLocalBackupFolder = undefined;
@@ -918,6 +919,26 @@ export async function setRecentSearches(queries: string[]): Promise<void> {
      ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
     [RECENT_SEARCHES_KEY, JSON.stringify(kept)]
   );
+}
+
+let cachedThemeIcon: boolean | undefined;
+/** Whether the launcher icon follows the selected theme; off by default. */
+export async function getThemeIconFollows(): Promise<boolean> {
+  if (cachedThemeIcon !== undefined) return cachedThemeIcon;
+  const db = await getDb();
+  const row = await db.getFirstAsync<{ value: string }>('SELECT value FROM settings WHERE key = ?', [
+    'theme_app_icon',
+  ]);
+  cachedThemeIcon = row?.value === '1';
+  return cachedThemeIcon;
+}
+export async function setThemeIconFollows(value: boolean): Promise<void> {
+  const db = await getDb();
+  await db.runAsync(
+    'INSERT INTO settings (key,value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value',
+    ['theme_app_icon', value ? '1' : '0']
+  );
+  cachedThemeIcon = value;
 }
 
 let cachedHideWidgetValues: boolean | undefined;
