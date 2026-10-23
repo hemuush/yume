@@ -8,7 +8,7 @@ import { dueDateLabel } from '@/lib/dueDate';
 import { withPressed } from '@/lib/pressed';
 import { formatMoney } from '@/lib/money';
 import { weekdayDayMonth } from '@/lib/dateLabels';
-import { hexToRgba } from '@/lib/color';
+import { hexToRgba, shade } from '@/lib/color';
 import { useAccent } from '@/theme/AccentContext';
 import { UpcomingRow } from '@/features/home/UpcomingRow';
 import { DueGroup, PlanDueItem, PlanRoute, dueTone } from './planOverview';
@@ -74,7 +74,7 @@ export function ComingUpSection({
           accessibilityRole="button"
           accessibilityLabel="Add a recurring entry"
         >
-          <View style={styles.dueIcon}>
+          <View style={[styles.dueIcon, { backgroundColor: shade(accent, 88), borderWidth: 0 }]}>
             <Feather name="repeat" size={16} color={theme.colors.ink} />
           </View>
           <View style={styles.dueMid}>

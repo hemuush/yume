@@ -28,7 +28,7 @@ export function DebtLoans({ loans, onLoan }: { loans: LoansSummary; onLoan: (id:
           <HomeRow
             key={r.id}
             leading={
-              <View style={local.mark}>
+              <View style={[local.mark, lent && { backgroundColor: theme.colors.incomeTint }]}>
                 <MaterialCommunityIcons
                   name={(r.icon ?? (lent ? 'hand-coin-outline' : 'bank-outline')) as McIconName}
                   size={20}

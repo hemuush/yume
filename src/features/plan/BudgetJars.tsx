@@ -110,7 +110,8 @@ function BudgetTile({ budget: b, onPress }: { budget: PlanBudgetInput; onPress: 
   const pct = Math.max(0, b.percentUsed);
   const tone = b.overBudget ? 'over' : pct >= NEAR ? 'near' : 'calm';
   const base = b.categoryColor ?? theme.colors.slice.saved;
-  const fill = base;
+  // The bar says how the budget is doing: red once over, amber when close, else the category colour.
+  const fill = tone === 'over' ? theme.colors.expense : tone === 'near' ? theme.colors.slice.due : base;
   const left = b.overBudget
     ? `${formatMoney(-b.remainingMinor)} over`
     : `${formatMoney(b.remainingMinor)} left`;

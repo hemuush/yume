@@ -3,7 +3,8 @@ import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { Section } from '@/components/Section';
-import { withPressed } from '@/lib/pressed';
+import { withPressedTint } from '@/lib/pressed';
+import { useAccent } from '@/theme/AccentContext';
 import { formatMoney } from '@/lib/money';
 import type { BudgetsSummary, DueGroup, LoansSummary } from './planOverview';
 import type { SavingsGoal } from '@/types';
@@ -20,6 +21,7 @@ type Row = {
   onPress: () => void;
 };
 function Rows({ rows }: { rows: Row[] }) {
+  const { accent } = useAccent();
   return (
     <View style={s.card}>
       {rows.map((row, index) => (
@@ -28,7 +30,7 @@ function Rows({ rows }: { rows: Row[] }) {
           accessibilityRole="button"
           accessibilityLabel={`${row.title}. ${row.detail}`}
           onPress={row.onPress}
-          style={withPressed([s.row, index > 0 && s.divider])}
+          style={withPressedTint(accent, [s.row, index > 0 && s.divider])}
         >
           <View style={[s.icon, row.warning && s.warning]}>
             <Feather
@@ -153,6 +155,8 @@ const s = StyleSheet.create({
     paddingHorizontal: 14,
     borderRadius: 22,
     backgroundColor: theme.colors.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
   },
   row: { minHeight: 68, paddingVertical: 12, flexDirection: 'row', alignItems: 'center', gap: 10 },
   divider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.divider },

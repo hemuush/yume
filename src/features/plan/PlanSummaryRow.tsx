@@ -4,7 +4,8 @@ import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import type { McIconName } from '@/components/iconName';
-import { withPressed } from '@/lib/pressed';
+import { withPressedTint } from '@/lib/pressed';
+import { useAccent } from '@/theme/AccentContext';
 
 /** Compact budget/goal row; large text moves its amount below the name instead of truncating it. */
 export function PlanSummaryRow({
@@ -28,12 +29,13 @@ export function PlanSummaryRow({
 }) {
   const { width, fontScale } = useWindowDimensions();
   const stacked = width < 360 || fontScale > 1.2;
+  const { accent } = useAccent();
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
       onPress={onPress}
-      style={withPressed(s.row)}
+      style={withPressedTint(accent, s.row)}
     >
       <View style={s.icon}>
         <MaterialCommunityIcons name={icon} size={18} color={color} />
@@ -61,12 +63,13 @@ export function PlanSummaryRow({
 
 /** Footer belongs to its list surface, with a full-height touch target and no extra pill. */
 export function PlanListAdd({ label, onPress }: { label: string; onPress: () => void }) {
+  const { accent } = useAccent();
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={label}
       onPress={onPress}
-      style={withPressed(s.add)}
+      style={withPressedTint(accent, s.add)}
     >
       <Feather name="plus" size={15} color={theme.colors.link} />
       <Text style={s.addText}>{label}</Text>
@@ -79,6 +82,8 @@ export const summaryListStyle = {
   paddingHorizontal: 14,
   borderRadius: 22,
   backgroundColor: theme.colors.surface,
+  borderWidth: StyleSheet.hairlineWidth,
+  borderColor: theme.colors.borderSoft,
 };
 const s = StyleSheet.create({
   add: {
