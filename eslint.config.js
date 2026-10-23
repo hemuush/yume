@@ -23,6 +23,11 @@ const configs = defineConfig([
     ignores: ['dist/*', 'node_modules/*', '.expo/*', 'android/*', 'ios/*', 'sites/**', 'design-preview/**'],
   },
   {
+    files: ['app/**/*.{ts,tsx}', 'src/**/*.{ts,tsx}'],
+    ignores: ['**/*.test.{ts,tsx}', '**/__tests__/**', 'src/test-support/**', 'src/perf/**'],
+    rules: { '@typescript-eslint/no-explicit-any': 'error' },
+  },
+  {
     // Rule calibration for the bundled react-hooks plugin, whose newer rules target the React Compiler (not used):
     // refs and immutability stay on as warnings; set-state-in-effect is off because re-initialising a form when
     // its sheet opens is the correct pattern here.

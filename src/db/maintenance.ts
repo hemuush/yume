@@ -101,6 +101,11 @@ export async function countFractionalLedgerAmounts(): Promise<RoundAmountsResult
   return result;
 }
 
+interface RoundableAmountRow {
+  id: string;
+  [column: string]: string | number | null;
+}
+
 /**
  * Rounds every stored ledger amount (not loan tables; see file header) to whole rupees in one transaction.
  * Returns per-table changed counts. Derived account balances may shift a few rupees; the user is warned first.
@@ -108,14 +113,14 @@ export async function countFractionalLedgerAmounts(): Promise<RoundAmountsResult
 export async function roundLedgerAmountsToWholeRupees(): Promise<RoundAmountsOutcome> {
   const db = await getDb();
   const before = await countFractionalLedgerAmounts();
-  const originals: { table: string; columns: string[]; rows: Record<string, number | null>[] }[] = [];
+  const originals: { table: string; columns: string[]; rows: RoundableAmountRow[] }[] = [];
   // What each rounded row holds right after rounding, by table then id — undo only reverts a value that is
   // still exactly this, so an amount edited since then is never overwritten by the stale original.
-  const rounded = new Map<string, Map<unknown, Record<string, number | null>>>();
+  const rounded = new Map<string, Map<string, RoundableAmountRow>>();
 
   await db.withTransactionAsync(async (tx) => {
     for (const { table, columns, where } of ROUNDED_ROWS) {
-      const rows = await tx.getAllAsync<Record<string, number | null>>(
+      const rows = await tx.getAllAsync<RoundableAmountRow>(
         `SELECT id, ${columns.join(', ')} FROM ${table} WHERE ${where}`
       );
       originals.push({ table, columns, rows });
@@ -159,12 +164,12 @@ export async function roundLedgerAmountsToWholeRupees(): Promise<RoundAmountsOut
        WHERE limit_amount_minor % 100 != 0`
     );
     for (const { table, columns, rows } of originals) {
-      const after = new Map<unknown, Record<string, number | null>>();
+      const after = new Map<string, RoundableAmountRow>();
       for (let i = 0; i < rows.length; i += 500) {
         const ids = rows.slice(i, i + 500).map((r) => r.id);
-        const current = await tx.getAllAsync<Record<string, number | null>>(
+        const current = await tx.getAllAsync<RoundableAmountRow>(
           `SELECT id, ${columns.join(', ')} FROM ${table} WHERE id IN (${ids.map(() => '?').join(', ')})`,
-          ids as any[]
+          ids
         );
         for (const r of current) after.set(r.id, r);
       }
