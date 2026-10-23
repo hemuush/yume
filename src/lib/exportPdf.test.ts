@@ -1,9 +1,6 @@
 /** The PDF pipeline around the layout: data in, one Print call with whole A4 pages, the temp file cleaned up. */
 const mockPrint = jest.fn();
 jest.mock('expo-print', () => ({ printToFileAsync: (...a: unknown[]) => mockPrint(...a) }));
-jest.mock('expo-asset', () => ({
-  Asset: { loadAsync: async () => [{ localUri: 'file://asset', uri: 'asset' }] },
-}));
 const mockFiles: { uri: string; deleted: boolean }[] = [];
 jest.mock('expo-file-system', () => ({
   File: class {
