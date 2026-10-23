@@ -18,6 +18,7 @@ import { formatMoney } from '@/lib/money';
 import { groupPeople, inRows, showPeopleSummary } from '@/features/people/people.helpers';
 import { PeopleNet } from '@/features/people/PeopleNet';
 import { Glass } from '@/components/Glass';
+import { cardSurface } from '@/components/CardSurface';
 import { HomeWallpaper } from '@/features/home/HomeWallpaper';
 import { useAccent } from '@/theme/AccentContext';
 import { PersonQuietRow } from '@/features/people/PersonQuietRow';
@@ -57,7 +58,7 @@ export default function PeopleScreen() {
 
   return (
     <View style={styles.container}>
-      <HomeWallpaper accent={accent} secondary={secondary} />
+      <HomeWallpaper accent={accent} secondary={secondary} plain />
       <ReanimatedAnimated.ScrollView
         ref={scrollRef}
         onScroll={scrollHandler}
@@ -78,7 +79,7 @@ export default function PeopleScreen() {
         {loading ? (
           <View style={styles.tileRow}>
             {[0, 1].map((i) => (
-              <Glass key={i} radius={22} style={[styles.tileCell, styles.personTile]}>
+              <Glass key={i} radius={22} style={[styles.tileCell, styles.personTile, cardSurface.neutral]}>
                 <Skeleton width={32} height={32} circle radius={16} />
                 <Skeleton width={80} height={18} radius={5} style={{ marginTop: 12 }} />
                 <Skeleton width={60} height={10} radius={4} style={{ marginTop: 8 }} />
@@ -102,11 +103,13 @@ export default function PeopleScreen() {
               {
                 key: 'owed',
                 title: 'Owes you',
+                dot: theme.colors.slice.saved,
                 list: owed,
               },
               {
                 key: 'owe',
                 title: 'You owe',
+                dot: theme.colors.slice.spent,
                 list: owe,
               },
             ].map(
@@ -114,6 +117,8 @@ export default function PeopleScreen() {
                 group.list.length > 0 && (
                   <View key={group.key}>
                     <View style={styles.groupHead}>
+                      {/* The same colour as that side of the net card's bar. */}
+                      <View style={[styles.groupDot, { backgroundColor: group.dot }]} />
                       <Text style={styles.groupTitle}>{group.title}</Text>
                     </View>
                     {inRows(group.list, columns).map((row, r) => (
@@ -136,7 +141,7 @@ export default function PeopleScreen() {
             {settled.length > 0 && (
               <>
                 <Text style={styles.settledTitle}>Settled</Text>
-                <Glass style={styles.settledCard}>
+                <Glass style={[styles.settledCard, cardSurface.neutral]}>
                   {settled.map((p, i) => (
                     <PersonQuietRow
                       key={p.id}
