@@ -10,7 +10,6 @@ import Feather from '@expo/vector-icons/Feather';
 import {
   KeyboardAvoidingView,
   KeyboardAwareScrollView,
-  KeyboardProvider,
   useKeyboardState,
 } from 'react-native-keyboard-controller';
 import { SafeAreaProvider, useSafeAreaInsets, initialWindowMetrics } from 'react-native-safe-area-context';
@@ -117,15 +116,13 @@ function StandaloneSheet(props: Props) {
           which the root provider in app/_layout.tsx doesn't measure — without
           this, useSafeAreaInsets() reads { bottom: 0 } inside here and every
           sheet's footer buttons end up clipped behind the system nav bar. */}
-      {/* A <Modal> is its own window, so the root KeyboardProvider never sees its keyboard: without a provider
-          here the sheet stays behind the keyboard and typing happens out of sight. */}
-      <KeyboardProvider statusBarTranslucent navigationBarTranslucent>
-        <SafeAreaProvider initialMetrics={initialWindowMetrics}>
-          <SheetSurfaceProvider value>
-            <ModalSheetBody {...props} onClose={close} />
-          </SheetSurfaceProvider>
-        </SafeAreaProvider>
-      </KeyboardProvider>
+      {/* No KeyboardProvider here: the root one already follows a Modal's window. A second provider shares the
+          Activity's window insets and, when it unmounts, leaves the screen underneath with a stale keyboard gap. */}
+      <SafeAreaProvider initialMetrics={initialWindowMetrics}>
+        <SheetSurfaceProvider value>
+          <ModalSheetBody {...props} onClose={close} />
+        </SheetSurfaceProvider>
+      </SafeAreaProvider>
     </Modal>
   );
 }
