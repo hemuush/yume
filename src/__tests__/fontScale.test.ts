@@ -1,5 +1,5 @@
 /**
- * Text follows the phone's font size only up to MAX_FONT_SCALE (130%; limit in src/components/Text.tsx), so
+ * Text supports the phone's font size up to MAX_FONT_SCALE (200%; limit in src/components/Text.tsx), so
  * screens must take Text and TextInput from there and animated text (no wrapper) must pass the limit itself.
  */
 import fs from 'fs';
