@@ -44,7 +44,8 @@ it('keeps all seven Quick Add links with at least 44dp bounds at its native mini
   expect(actions[0].props.style.height + categoryHeight + actions[5].props.style.height).toBeLessThanOrEqual(
     innerHeight
   );
-  expect(metadata.targetCellWidth).toBeGreaterThanOrEqual(3);
-  expect(metadata.targetCellHeight).toBeGreaterThanOrEqual(3);
+  // Android 12 uses cell hints instead of dp minima. A fixed cell count can undercut these bounds.
+  expect('targetCellWidth' in metadata).toBe(false);
+  expect('targetCellHeight' in metadata).toBe(false);
   act(() => tree?.unmount());
 });
