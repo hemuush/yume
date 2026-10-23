@@ -6,8 +6,8 @@ import { Text } from '@/components/Text';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
-import { File, Paths } from 'expo-file-system';
-import * as Sharing from 'expo-sharing';
+import { File } from 'expo-file-system';
+import { shareTempFile } from '@/lib/shareTempFile';
 import * as DocumentPicker from 'expo-document-picker';
 import {
   buildBackupSnapshot,
@@ -26,7 +26,6 @@ import {
   SafetyCopyError,
   SafetyCopyInfo,
 } from '@/lib/safetyCopy';
-import { generateExportWorkbookBytes } from '@/lib/exportExcel';
 import {
   pickBackupFolder,
   forgetBackupFolder,
@@ -87,31 +86,6 @@ const TABS: { label: string; value: 'points' | 'copy' }[] = [
 
 /** How many backups the timeline shows before "See all". */
 const COLLAPSED_FILES = 3;
-
-/**
- * Writes an export to a temporary file, opens the share sheet on it, and always deletes it afterwards: it is
- * the whole of someone's finances in plain text, and shouldn't be left in the app's storage once shared.
- */
-async function shareTempFile(
-  name: string,
-  content: string | Uint8Array,
-  options: { mimeType: string; dialogTitle?: string }
-): Promise<void> {
-  // The cache, not documents: if the app is killed mid-share, Android clears it rather than keeping it forever.
-  const file = new File(Paths.cache, name);
-  try {
-    file.create();
-    await file.write(content);
-    if (!(await Sharing.isAvailableAsync())) throw new Error("Sharing isn't available on this phone.");
-    await withoutRelock(() => Sharing.shareAsync(file.uri, options));
-  } finally {
-    try {
-      if (file.exists) file.delete();
-    } catch {
-      // Nothing more to do; the export itself already succeeded or failed on its own terms.
-    }
-  }
-}
 
 export default function BackupScreen() {
   const { lockEnabled } = useAppLock();
@@ -206,16 +180,6 @@ export default function BackupScreen() {
       const snapshot = await buildBackupSnapshot();
       await shareTempFile(`yume-backup-${Date.now()}.json`, JSON.stringify(snapshot, null, 2), {
         mimeType: 'application/json',
-      });
-    });
-
-  const exportExcelLocally = () =>
-    run('export-excel', async () => {
-      if (!(await unlockedForExport())) return;
-      const bytes = await generateExportWorkbookBytes();
-      await shareTempFile(`yume-export-${Date.now()}.xlsx`, bytes, {
-        mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        dialogTitle: 'Export Yume data',
       });
     });
 
@@ -675,20 +639,16 @@ Restore anyway? Your current data would be replaced with no way back.`,
               />
               <SettingsRow
                 divider
-                icon="file-excel-outline"
-                label="Excel workbook"
-                sub={
-                  busy === 'export-excel'
-                    ? 'Exporting…'
-                    : 'Transactions, accounts, category totals, loans and Friends & Family, one sheet each'
-                }
-                onPress={busy ? undefined : exportExcelLocally}
-                right={<Feather name="share" size={18} color={theme.colors.textMuted} />}
-                dimmed={!!busy && busy !== 'export-excel'}
+                icon="file-chart-outline"
+                label="Reports & exports"
+                sub="A PDF report or Excel file for a month, a year or everything"
+                onPress={busy ? undefined : () => router.push('/export')}
+                right={<Feather name="chevron-right" size={18} color={theme.colors.textMuted} />}
+                dimmed={!!busy}
               />
             </View>
             <Text style={styles.copyHint}>
-              Both open the share sheet, so you can save them anywhere or send them to yourself.
+              These open the share sheet, so you can save them anywhere or send them to yourself.
             </Text>
           </>
         )}

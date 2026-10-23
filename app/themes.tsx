@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
@@ -13,6 +14,10 @@ import { haptics } from '@/lib/haptics';
 import { withPressed } from '@/lib/pressed';
 import { Glass, GLASS } from '@/components/Glass';
 import { HomeWallpaper } from '@/features/home/HomeWallpaper';
+import { SwitchRow } from '@/components/SwitchRow';
+import { showAlert } from '@/components/AppDialog';
+import { appIconSupported } from '@/lib/appIcon';
+import { getThemeIconFollows, setThemeIconFollows } from '@/db/settings';
 
 /**
  * The pack you're on as a live phone at the top, then every pack as a small Home preview in its colours, two
@@ -25,6 +30,26 @@ export default function ThemesScreen() {
   const { collapse, headerHeight, scrollHandler, scrollRef } = useCollapsingHeader();
   const { themeId, setTheme, accent, secondary, themeSaveError } = useAccent();
   const current = THEMES.find((t) => t.id === themeId) ?? THEMES[0];
+  const iconSupported = appIconSupported();
+  const [iconFollows, setIconFollows] = useState(false);
+  useEffect(() => {
+    if (iconSupported) void getThemeIconFollows().then(setIconFollows);
+  }, [iconSupported]);
+  const saveIconFollows = (next: boolean) => {
+    const save = () =>
+      setThemeIconFollows(next)
+        .then(() => setIconFollows(next))
+        .catch(() => showAlert('Could not save', 'The app icon setting was not saved. Try again.'));
+    if (!next) return void save();
+    showAlert(
+      'Match the app icon to the theme?',
+      'The icon changes when you leave the app. Some launchers restart Yume while they refresh it, and a few drop a Yume icon you pinned, so you may need to pin it again.',
+      [
+        { text: 'Not now', style: 'cancel' },
+        { text: 'Match icon', onPress: () => void save() },
+      ]
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -73,6 +98,14 @@ export default function ThemesScreen() {
             </View>
           </View>
         </Glass>
+        {iconSupported && (
+          <SwitchRow
+            title="Match the app icon"
+            hint="The launcher icon takes the theme's colours."
+            value={iconFollows}
+            onChange={saveIconFollows}
+          />
+        )}
         <View style={styles.grid}>
           {THEMES.map((pack) => {
             const active = pack.id === themeId;

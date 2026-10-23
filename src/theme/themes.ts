@@ -50,6 +50,15 @@ export const THEMES: ThemePack[] = [
     primary: '#E2A6D8',
     secondary: '#FDD9A0',
   },
+  // A red signal glowing through fog over a dark tower: the glow's red lifted into the pastel band, with the
+  // night sky's slate as the second colour. Transfers and picked chips take the primary, so it stays clear
+  // of the expense red (#BD3547) in the ink and the minus sign rather than in hue alone.
+  {
+    id: 'crimsonNight',
+    name: 'Crimson Night',
+    primary: '#EE6B73',
+    secondary: '#8EA3AE',
+  },
 ];
 
 export const DEFAULT_THEME_ID = THEMES[0].id;

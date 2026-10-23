@@ -43,6 +43,7 @@ import { MilestoneNoteProvider, BudgetMonthWatcher } from '@/components/Mileston
 import { CardGrowHost } from '@/components/CardGrowHost';
 import { isGrowRoute } from '@/lib/cardGrow';
 import { AppDialogHost } from '@/components/AppDialog';
+import { syncAppIcon } from '@/lib/appIcon';
 import { ThemeSaveFeedback } from '@/theme/ThemeSaveFeedback';
 import { LockScreen } from '@/components/LockScreen';
 import { Onboarding } from '@/features/onboarding/Onboarding';
@@ -252,7 +253,11 @@ function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean;
   // repeating entries that fell due while away (Android can keep Yume alive for days without a cold start).
   useEffect(() => {
     const sub = AppState.addEventListener('change', (next: AppStateStatus) => {
-      if (next === 'background') void waitForThemePersistence().then(refreshAllWidgets);
+      if (next === 'background') {
+        void waitForThemePersistence().then(refreshAllWidgets);
+        // Swapped only once the app is out of sight: some launchers restart the app while they refresh it.
+        void waitForThemePersistence().then(() => syncAppIcon());
+      }
       if (next === 'active') {
         runWhenIdle(() => {
           void runAppMaintenance().catch((err) => console.error('App maintenance failed:', err));
@@ -329,6 +334,7 @@ function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean;
             <Stack.Screen name="categories" />
             <Stack.Screen name="profile" />
             <Stack.Screen name="backup" />
+            <Stack.Screen name="export" />
             <Stack.Screen name="notification-settings" />
             <Stack.Screen name="notifications" />
             <Stack.Screen name="add-transaction" />

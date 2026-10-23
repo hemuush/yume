@@ -78,4 +78,12 @@ describe('Theme page', () => {
     await press(tree, 'Kataware Dusk theme');
     expect(mockSetTheme).toHaveBeenCalledWith('katawareDusk');
   });
+
+  it('offers Crimson Night as the last pack and switches to it', async () => {
+    const tree = await render();
+    expect(texts(tree)).toContain('Crimson Night');
+    expect(THEMES.at(-1)?.id).toBe('crimsonNight');
+    await press(tree, 'Crimson Night theme');
+    expect(mockSetTheme).toHaveBeenCalledWith('crimsonNight');
+  });
 });
