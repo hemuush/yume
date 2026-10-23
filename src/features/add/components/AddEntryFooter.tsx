@@ -7,7 +7,8 @@ import { PrimaryButton } from '@/components/PrimaryButton';
 import { styles } from '@/features/add/add.styles';
 import { AmountPad } from '@/components/AmountPad';
 import { AddDetailRow } from '@/features/add/AddDetailRow';
-import { withPressed } from '@/lib/pressed';
+import { withPressedTint } from '@/lib/pressed';
+import { useAccent } from '@/theme/AccentContext';
 import type { AddEntryModel } from '@/features/add/types/addEntryModel';
 import type { ReactElement } from 'react';
 
@@ -56,6 +57,7 @@ type Props = {
   >;
 };
 export function AddEntryFooter({ model }: Props): ReactElement {
+  const { accent } = useAccent();
   const {
     saveTitle,
     saveDone,
@@ -116,7 +118,7 @@ export function AddEntryFooter({ model }: Props): ReactElement {
     <Pressable
       onPress={addRow}
       disabled={addToListDisabled}
-      style={withPressed([styles.addToList, addToListDisabled && styles.actionDisabled])}
+      style={withPressedTint(accent, [styles.addToList, addToListDisabled && styles.actionDisabled])}
       accessibilityRole="button"
       accessibilityState={{ disabled: addToListDisabled }}
       accessibilityHint="Keeps this entry on a list and starts the next one; Save saves them all"

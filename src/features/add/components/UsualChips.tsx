@@ -7,7 +7,7 @@ import { haptics } from '@/lib/haptics';
 import type { RepeatEntry } from '@/db/ledger';
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { styles } from '@/features/add/add.styles';
-import { withPressed } from '@/lib/pressed';
+import { withPressedTint } from '@/lib/pressed';
 import { categorySpoken } from '@/lib/categoryLabel';
 import { useAccent } from '@/theme/AccentContext';
 
@@ -53,7 +53,7 @@ export function UsualChips({
                 onPick(u);
               }}
               hitSlop={{ top: 2, bottom: 2 }}
-              style={withPressed([
+              style={withPressedTint(accent, [
                 styles.recentChip,
                 { maxWidth: Math.min(300, 220 * Math.max(1, fontScale)) },
                 active && { backgroundColor: selectedFill(accent), borderColor: selectedFill(accent) },
