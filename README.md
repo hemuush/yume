@@ -74,6 +74,7 @@ account or a hosted backend to track your money.
 - **Restore preview:** review the backup's contents and the current data before replacing it.
 - **Recovery:** a safety copy is retained before a restore, with an option to put it back.
 - **App lock:** use the phone's supported authentication to protect access to the app.
+- **Reports & exports:** a themed PDF report or an Excel workbook for a month, a year or everything, made on the phone and handed to Android's share sheet.
 - **Sharing:** backup and report exports go to the destination you choose through Android's sharing UI.
 
 Backups belong to you. Keep a copy outside the app's private storage before uninstalling or clearing

@@ -1,10 +1,10 @@
 import * as XLSX from 'xlsx-js-style';
-import { listAccounts, listCategories, listTransactions } from '@/db/ledger';
-import { listLoans } from '@/db/loans';
-import { listPeople, PersonWithBalance } from '@/db/people';
-import { getDefaultCurrency } from '@/db/settings';
+import type { PersonWithBalance } from '@/db/people';
 import { getCurrencySymbol, toMajor } from './money';
 import { Account, Category, Loan, Transaction } from '@/types';
+import { ReportPeriod, inPeriod, periodLabel } from './report/period';
+import { computeReport } from './report/reportData';
+import { loadReportInput, MAX_EXPORT_TRANSACTIONS } from './report/loadReportInput';
 
 /**
  * Yume's palette as plain 6-digit RGB hex (xlsx-js-style takes "RRGGBB", no alpha), mirroring
@@ -159,20 +159,23 @@ export interface ExportData {
  * Builds the actual styled workbook from already-fetched data — kept pure
  * (no db/file-system calls) so it's straightforward to unit test.
  */
-export function buildExportWorkbook(data: ExportData): XLSX.WorkBook {
-  const { currency, accounts, categories, transactions, loans, people } = data;
+export function buildExportWorkbook(data: ExportData, period: ReportPeriod = { kind: 'all' }): XLSX.WorkBook {
+  const { currency, accounts, categories, loans, people } = data;
+  // Only the chosen month, year or everything; accounts, loans and people are as they stand today.
+  const transactions = data.transactions.filter((t) => inPeriod(t.date, period));
   const symbol = getCurrencySymbol(currency);
   const moneyStyle = moneyFmt(symbol);
 
   const accountName = new Map(accounts.map((a) => [a.id, a.name]));
   const categoryById = new Map(categories.map((c) => [c.id, c]));
-  const categoryLabel = (id: string | null) => {
-    if (!id) return 'Transfer';
+  // Category and Subcategory as two columns, so a filter on either works.
+  const categoryParts = (id: string | null): [string, string] => {
+    if (!id) return ['Transfer', ''];
     const cat = categoryById.get(id);
-    if (!cat) return 'Deleted category';
-    if (!cat.parentId) return cat.name;
+    if (!cat) return ['Deleted category', ''];
+    if (!cat.parentId) return [cat.name, ''];
     const parent = categoryById.get(cat.parentId);
-    return parent ? `${parent.name} — ${cat.name}` : cat.name;
+    return parent ? [parent.name, cat.name] : [cat.name, ''];
   };
 
   const sorted = [...transactions].sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
@@ -210,7 +213,7 @@ export function buildExportWorkbook(data: ExportData): XLSX.WorkBook {
     extendRef(summary, ref);
   };
   const SUMMARY_COLS = 6; // 3 tiles across, 2 columns wide each
-  put('A1', 'Yume — Financial Export', titleStyle);
+  put('A1', period.kind === 'all' ? 'Yume — Financial Export' : `Yume — ${periodLabel(period)}`, titleStyle);
   put('A2', `Generated ${new Date().toLocaleString()}`, subtitleStyle);
   summary['!merges'] = [
     { s: { r: 0, c: 0 }, e: { r: 0, c: SUMMARY_COLS - 1 } },
@@ -299,34 +302,73 @@ export function buildExportWorkbook(data: ExportData): XLSX.WorkBook {
   XLSX.utils.book_append_sheet(wb, summary, 'Summary');
 
   // ----------------------------------------------------------- Transactions
-  const txHeaders = ['Date', 'Type', 'Account', 'To Account', 'Category', 'Amount', 'Note', 'Currency'];
+  // Money in, Money out and Transfer are separate columns so Excel can sum each. A refund is negative
+  // money out, so the Money out total is the spending the Summary shows, as everywhere in the app.
+  const txHeaders = [
+    'Date',
+    'Type',
+    'Account',
+    'To Account',
+    'Category',
+    'Subcategory',
+    'Money in',
+    'Money out',
+    'Transfer',
+    'Note',
+    'Currency',
+  ];
+  const IN = 6;
+  const OUT = 7;
+  const MOVE = 8;
   const transactionCurrencies = new Set(sorted.map((t) => currencyOf.get(t.accountId) ?? currency));
   const mixedCurrencies = transactionCurrencies.size > 1;
   const transactionMoneyStyle = moneyFmt(getCurrencySymbol([...transactionCurrencies][0] ?? currency));
-  const txRows = sorted.map((t) => [
-    t.date,
-    t.isRefund ? 'Refund' : t.type[0].toUpperCase() + t.type.slice(1),
-    accountName.get(t.accountId) ?? 'Deleted account',
-    t.toAccountId ? (accountName.get(t.toAccountId) ?? 'Deleted account') : '',
-    categoryLabel(t.categoryId),
-    toMajor(t.amountMinor),
-    t.note ?? '',
-    currencyOf.get(t.accountId) ?? currency,
-  ]);
-  const txSheet = XLSX.utils.aoa_to_sheet([txHeaders, ...txRows]);
+  const toDate = (iso: string) => {
+    const [y, m, d] = iso.slice(0, 10).split('-').map(Number);
+    return new Date(Date.UTC(y, m - 1, d));
+  };
+  const txRows: (string | number | Date)[][] = sorted.map((t) => {
+    const [cat, sub] = categoryParts(t.categoryId);
+    const major = toMajor(t.amountMinor);
+    return [
+      toDate(t.date),
+      t.isRefund ? 'Refund' : t.type[0].toUpperCase() + t.type.slice(1),
+      accountName.get(t.accountId) ?? 'Deleted account',
+      t.toAccountId ? (accountName.get(t.toAccountId) ?? 'Deleted account') : '',
+      cat,
+      sub,
+      t.type === 'income' && !t.isRefund ? major : '',
+      t.type === 'expense' ? major : t.isRefund ? -major : '',
+      t.type === 'transfer' ? major : '',
+      t.note ?? '',
+      currencyOf.get(t.accountId) ?? currency,
+    ];
+  });
+  const txSheet = XLSX.utils.aoa_to_sheet([txHeaders, ...txRows], { cellDates: true });
   for (let c = 0; c < txHeaders.length; c++) {
     txSheet[XLSX.utils.encode_cell({ r: 0, c })].s = headerStyle();
   }
   txRows.forEach((row, i) => {
     const shaded = i % 2 === 1;
-    const type = sorted[i].type;
-    const amountColor = type === 'income' ? C.income : type === 'expense' ? C.expense : C.ink;
     for (let c = 0; c < row.length; c++) {
       const ref = XLSX.utils.encode_cell({ r: i + 1, c });
-      if (c === 5) {
+      if (c === 0) {
+        txSheet[ref] = {
+          t: 'd',
+          v: row[0] as Date,
+          z: 'yyyy-mm-dd',
+          s: bodyStyle(shaded, { numFmt: 'yyyy-mm-dd' }),
+        };
+      } else if (c === IN || c === OUT || c === MOVE) {
+        if (row[c] === '') {
+          // A blank cell, not a zero, so empty columns stay quiet and still sum.
+          txSheet[ref] = { t: 's', v: '', s: bodyStyle(shaded) };
+          continue;
+        }
+        const color = c === IN ? C.income : c === OUT ? C.expense : C.ink;
         txSheet[ref].s = bodyStyle(shaded, {
           numFmt: moneyFmt(getCurrencySymbol(currencyOf.get(sorted[i].accountId) ?? currency)),
-          font: { color: { rgb: amountColor }, bold: true },
+          font: { color: { rgb: color }, bold: true },
           alignment: { horizontal: 'right' },
         });
       } else {
@@ -341,34 +383,25 @@ export function buildExportWorkbook(data: ExportData): XLSX.WorkBook {
     XLSX.utils.encode_cell({ r: totalRowIdx, c: 0 }),
     mixedCurrencies
       ? 'Mixed currencies — no combined total'
-      : 'Sum of amounts listed (income, expenses and transfers all count as positive; respects any filter)',
+      : 'Totals of the entries listed (follows any filter)',
     totalRowStyle()
   );
-  for (let c = 1; c < 5; c++) {
+  for (let c = 1; c < txHeaders.length; c++) {
     setCell(txSheet, XLSX.utils.encode_cell({ r: totalRowIdx, c }), '', totalRowStyle());
   }
-  if (mixedCurrencies) {
-    setCell(txSheet, XLSX.utils.encode_cell({ r: totalRowIdx, c: 5 }), '', totalRowStyle());
-  } else if (txRows.length > 0) {
-    setFormula(
-      txSheet,
-      XLSX.utils.encode_cell({ r: totalRowIdx, c: 5 }),
-      `SUBTOTAL(9,F2:F${lastDataRow + 1})`,
-      // The cached value must be what the formula itself yields (the sum of the Amount column), or a viewer that
-      // doesn't recalculate shows a different total than Excel does.
-      txRows.reduce((sum, row) => sum + (row[5] as number), 0),
-      totalRowStyle({ numFmt: transactionMoneyStyle, alignment: { horizontal: 'right' } })
-    );
-  } else {
-    setCell(
-      txSheet,
-      XLSX.utils.encode_cell({ r: totalRowIdx, c: 5 }),
-      0,
-      totalRowStyle({ numFmt: moneyStyle, alignment: { horizontal: 'right' } })
-    );
-  }
-  for (let c = 6; c < txHeaders.length; c++) {
-    setCell(txSheet, XLSX.utils.encode_cell({ r: totalRowIdx, c }), '', totalRowStyle());
+  if (!mixedCurrencies && txRows.length > 0) {
+    for (const col of [IN, OUT, MOVE]) {
+      const letter = XLSX.utils.encode_col(col);
+      setFormula(
+        txSheet,
+        XLSX.utils.encode_cell({ r: totalRowIdx, c: col }),
+        `SUBTOTAL(9,${letter}2:${letter}${lastDataRow + 1})`,
+        // The cached value must be what the formula itself yields, or a viewer that doesn't recalculate shows
+        // a different total than Excel does.
+        txRows.reduce((sum, row) => sum + (typeof row[col] === 'number' ? (row[col] as number) : 0), 0),
+        totalRowStyle({ numFmt: transactionMoneyStyle, alignment: { horizontal: 'right' } })
+      );
+    }
   }
   txSheet['!ref'] = XLSX.utils.encode_range({
     s: { r: 0, c: 0 },
@@ -385,11 +418,14 @@ export function buildExportWorkbook(data: ExportData): XLSX.WorkBook {
     { wch: 10 },
     { wch: 16 },
     { wch: 16 },
-    { wch: 26 },
+    { wch: 20 },
+    { wch: 18 },
+    { wch: 14 },
+    { wch: 14 },
     { wch: 14 },
     { wch: 32 },
+    { wch: 10 },
   ];
-  txSheet['!cols'].push({ wch: 10 });
   XLSX.utils.book_append_sheet(wb, txSheet, 'Transactions');
 
   // --------------------------------------------------------------- Accounts
@@ -471,16 +507,18 @@ export function buildExportWorkbook(data: ExportData): XLSX.WorkBook {
     .sort((a, b) => (a.kind === b.kind ? b.total - a.total : a.kind === 'expense' ? -1 : 1));
   // A leading colour-swatch column using each category's stored `color`, the same hex as its chips and icon
   // badges in the app, so the sheet ties back to how the category looks in Yume.
-  const catHeaders = ['', 'Category', 'Kind', 'Total', 'Transactions'];
+  const kindTotal = (kind: string) =>
+    catRowsData.filter((c) => c.kind === kind).reduce((n, c) => n + c.total, 0);
+  const catHeaders = ['', 'Category', 'Kind', 'Total', 'Transactions', 'Share'];
   const catSheet = XLSX.utils.aoa_to_sheet([
     catHeaders,
-    ...catRowsData.map((c) => ['', c.name, c.kind, toMajor(c.total), c.count]),
+    ...catRowsData.map((c) => ['', c.name, c.kind, toMajor(c.total), c.count, c.total / kindTotal(c.kind)]),
   ]);
   for (let c = 0; c < catHeaders.length; c++) catSheet[XLSX.utils.encode_cell({ r: 0, c })].s = headerStyle();
   catRowsData.forEach((c, i) => {
     const shaded = i % 2 === 1;
     const amountColor = c.kind === 'income' ? C.income : C.expense;
-    for (let col = 0; col < 5; col++) {
+    for (let col = 0; col < 6; col++) {
       const ref = XLSX.utils.encode_cell({ r: i + 1, c: col });
       if (col === 0) {
         catSheet[ref].s = {
@@ -493,6 +531,8 @@ export function buildExportWorkbook(data: ExportData): XLSX.WorkBook {
           font: { color: { rgb: amountColor }, bold: true },
           alignment: { horizontal: 'right' },
         });
+      } else if (col === 5) {
+        catSheet[ref].s = bodyStyle(shaded, { numFmt: '0%', alignment: { horizontal: 'right' } });
       } else {
         catSheet[ref].s = bodyStyle(shaded, col === 4 ? { alignment: { horizontal: 'right' } } : undefined);
       }
@@ -504,8 +544,50 @@ export function buildExportWorkbook(data: ExportData): XLSX.WorkBook {
       e: { r: Math.max(catRowsData.length, 1), c: catHeaders.length - 1 },
     }),
   };
-  catSheet['!cols'] = [{ wch: 3 }, { wch: 24 }, { wch: 10 }, { wch: 16 }, { wch: 14 }];
+  catSheet['!cols'] = [{ wch: 3 }, { wch: 24 }, { wch: 10 }, { wch: 16 }, { wch: 14 }, { wch: 9 }];
   XLSX.utils.book_append_sheet(wb, catSheet, 'Categories');
+
+  // ----------------------------------------------------------------- Months
+  // A year or everything, month by month: the same figures the PDF's table shows.
+  if (period.kind !== 'month') {
+    const months = computeReport({ ...data, period, today: '9999-12-31' }).months;
+    if (months.length > 0) {
+      const monthHeaders = ['Month', 'Money in', 'Spent', 'Net', 'Entries'];
+      const monthSheet = XLSX.utils.aoa_to_sheet([
+        monthHeaders,
+        ...months.map((m) => [
+          m.label,
+          toMajor(m.incomeMinor),
+          toMajor(m.spentMinor),
+          toMajor(m.netMinor),
+          m.count,
+        ]),
+      ]);
+      for (let c = 0; c < monthHeaders.length; c++)
+        monthSheet[XLSX.utils.encode_cell({ r: 0, c })].s = headerStyle();
+      months.forEach((m, i) => {
+        const shaded = i % 2 === 1;
+        for (let c = 0; c < monthHeaders.length; c++) {
+          const ref = XLSX.utils.encode_cell({ r: i + 1, c });
+          monthSheet[ref].s =
+            c === 0
+              ? bodyStyle(shaded)
+              : c === 4
+                ? bodyStyle(shaded, { alignment: { horizontal: 'right' } })
+                : bodyStyle(shaded, {
+                    numFmt: moneyStyle,
+                    font: {
+                      color: { rgb: c === 3 ? (m.netMinor >= 0 ? C.income : C.expense) : C.ink },
+                      bold: c === 3,
+                    },
+                    alignment: { horizontal: 'right' },
+                  });
+        }
+      });
+      monthSheet['!cols'] = [{ wch: 14 }, { wch: 16 }, { wch: 16 }, { wch: 16 }, { wch: 10 }];
+      XLSX.utils.book_append_sheet(wb, monthSheet, 'Months');
+    }
+  }
 
   // ----------------------------------------------------------------- Loans
   if (loans.length > 0) {
@@ -598,26 +680,13 @@ export function buildExportWorkbook(data: ExportData): XLSX.WorkBook {
   return wb;
 }
 
-/** The most entries one workbook export holds. */
-export const MAX_EXPORT_TRANSACTIONS = 200000;
+export { MAX_EXPORT_TRANSACTIONS };
 
-/** Fetches everything the workbook needs, builds it, and returns the raw bytes ready to write to a file. */
-export async function generateExportWorkbookBytes(): Promise<Uint8Array> {
-  const [currency, accounts, categories, transactions, loans, people] = await Promise.all([
-    getDefaultCurrency(),
-    listAccounts(true),
-    listCategories(true),
-    listTransactions({ limit: MAX_EXPORT_TRANSACTIONS + 1 }),
-    listLoans(),
-    listPeople(),
-  ]);
-  // Fetched one past the ceiling so a ledger that exceeds it is refused, not silently cut short.
-  if (transactions.length > MAX_EXPORT_TRANSACTIONS) {
-    throw new Error(
-      `Your ledger has more than ${MAX_EXPORT_TRANSACTIONS.toLocaleString('en-US')} entries, too many for one spreadsheet. Use Backup instead.`
-    );
-  }
-  const wb = buildExportWorkbook({ currency, accounts, categories, transactions, loans, people });
-  const out = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+/** Fetches everything the workbook needs, builds it for the period, and returns the raw bytes ready to write. */
+export async function generateExportWorkbookBytes(
+  period: ReportPeriod = { kind: 'all' }
+): Promise<Uint8Array> {
+  const wb = buildExportWorkbook(await loadReportInput(), period);
+  const out = XLSX.write(wb, { bookType: 'xlsx', type: 'array', cellDates: true });
   return out instanceof Uint8Array ? out : new Uint8Array(out);
 }
