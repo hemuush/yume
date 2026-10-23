@@ -6,6 +6,10 @@ import { SCREEN } from '@/components/screenStyles';
 // Shared by Profile (shell, YouSection, SettingsSection) and the account modals. Cards, rows and headings
 // come from Home's visual system (screenStyles, Section); these are only what Profile adds.
 export const styles = StyleSheet.create({
+  // Two fields side by side, wrapping to separate rows on a narrow screen or at large text.
+  pairRow: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 10 },
+  pairCell: { flexGrow: 1, flexBasis: 150, minWidth: 0 },
+
   container: { flex: 1, backgroundColor: theme.colors.background },
   errorBanner: {
     marginHorizontal: SCREEN.gutter,

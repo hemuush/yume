@@ -42,9 +42,7 @@ export function CardCycleFields({
           />
         </View>
       </View>
-      <Text style={styles.hint}>
-        Both are on your card statement. Leave them empty if you don&rsquo;t want bill tracking.
-      </Text>
+      <Text style={styles.hint}>Both are on your card statement. Leave empty to skip bill tracking.</Text>
     </View>
   );
 }

@@ -4,10 +4,11 @@ import { View } from 'react-native';
 import { Text } from '@/components/Text';
 import { createAccount } from '@/db/ledger';
 import { getCachedCurrency, getDefaultCurrency, SUPPORTED_CURRENCIES } from '@/db/settings';
-import { toMinor, formatMoney } from '@/lib/money';
+import { toMinor } from '@/lib/money';
 import { AccountType } from '@/types';
 import { ModalSheet } from '@/components/ModalSheet';
-import { SheetCard } from '@/components/SheetCard';
+import { DraftCard } from '@/components/DraftCard';
+import { SwitchRow } from '@/components/SwitchRow';
 import { useAccent } from '@/theme/AccentContext';
 import { accountHue, accountIcon } from '@/lib/account';
 import { modalFooterStyles as f } from '@/constants/theme';
@@ -15,7 +16,6 @@ import { FormInput } from '@/components/FormInput';
 import { AmountField } from '@/components/AmountField';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { Chip } from '@/components/Chip';
-import { ToggleSwitch } from '@/components/ToggleSwitch';
 import { addValuation } from '@/db/valuations';
 import { toLocalIsoDate } from '@/lib/date';
 import { styles } from './profile.styles';
@@ -172,17 +172,11 @@ export function AddAccountModal({
         </View>
       }
     >
-      <SheetCard
-        compact
+      <DraftCard
         hue={accountHue(type, accent)}
         icon={accountIcon(type)}
-        kicker={ACCOUNT_TYPES.find((t) => t.value === type)?.label}
-        amount={formatMoney(
-          toMinor(parseFloat((trackingNow && worth.trim() ? worth : opening) || '0')) || 0,
-          currency
-        )}
         title={name.trim() || 'New account'}
-        meta={trackingNow ? (worth.trim() ? 'Worth today' : 'Invested so far') : 'Opening balance'}
+        kicker={ACCOUNT_TYPES.find((t) => t.value === type)?.label ?? ''}
       />
       <FormInput label="Name" value={name} onChangeText={setName} placeholder="e.g. HDFC Savings" />
       <Text style={styles.fieldLabel}>Type</Text>
@@ -193,8 +187,7 @@ export function AddAccountModal({
       </View>
       {type === 'savings' && (
         <Text style={styles.hintText}>
-          Use this for a savings pot, SIP, or PF — move money in with a transfer, and any withdrawal is just a
-          transfer back out.
+          Move money in with a transfer; a withdrawal is a transfer back out.
         </Text>
       )}
       <Text style={styles.fieldLabel}>Currency</Text>
@@ -211,33 +204,39 @@ export function AddAccountModal({
           />
         ))}
       </View>
-      <Text style={styles.hintText}>Can't be changed once this account has any transactions.</Text>
+      <Text style={styles.hintText}>Fixed once the account has transactions.</Text>
       {type === 'savings' && (
-        <>
-          <View style={styles.toggleRow}>
-            <Text style={styles.fieldLabel}>Track its value</Text>
-            <ToggleSwitch accessibilityLabel="Track its value" value={tracked} onChange={setTracked} />
-          </View>
-          <Text style={styles.hintText}>
-            For an index fund, stocks or gold: you update what it's worth now and then, and Yume shows the
-            gain.
-          </Text>
-        </>
-      )}
-      <AmountField
-        label={trackingNow ? 'Invested so far' : 'Opening balance'}
-        value={opening}
-        onChangeText={setOpening}
-        placeholder="0"
-      />
-      {trackingNow && (
-        <AmountField
-          label="Worth today (optional)"
-          value={worth}
-          onChangeText={setWorth}
-          placeholder="Leave empty to add it later"
+        <SwitchRow
+          title="Track its value"
+          hint={
+            tracked
+              ? 'Its balance is what you say it is worth; update it from the account sheet.'
+              : "For an index fund, stocks or gold: you update what it's worth."
+          }
+          value={tracked}
+          onChange={setTracked}
         />
       )}
+      <View style={styles.pairRow}>
+        <View style={styles.pairCell}>
+          <AmountField
+            label={trackingNow ? 'Invested so far' : 'Opening balance'}
+            value={opening}
+            onChangeText={setOpening}
+            placeholder="0"
+          />
+        </View>
+        {trackingNow && (
+          <View style={styles.pairCell}>
+            <AmountField
+              label="Worth today (optional)"
+              value={worth}
+              onChangeText={setWorth}
+              placeholder="Add it later"
+            />
+          </View>
+        )}
+      </View>
       {type === 'credit_card' && (
         <>
           <AmountField

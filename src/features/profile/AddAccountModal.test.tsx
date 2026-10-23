@@ -17,7 +17,7 @@ jest.mock('@/components/ModalSheet', () => ({
       footer
     ),
 }));
-jest.mock('@/components/SheetCard', () => ({ SheetCard: () => null }));
+jest.mock('@/components/DraftCard', () => ({ DraftCard: () => null }));
 jest.mock('@/components/FormInput', () => ({ FormInput: () => null }));
 jest.mock('@/components/Chip', () => ({ Chip: () => null }));
 jest.mock('@/components/PrimaryButton', () => ({ PrimaryButton: () => null }));

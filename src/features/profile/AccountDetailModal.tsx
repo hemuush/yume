@@ -14,7 +14,8 @@ import { toMinor, toMajor, formatMoney, formatMaskableMoney } from '@/lib/money'
 import { usePrivacy } from '@/theme/PrivacyContext';
 import { Account, AccountType } from '@/types';
 import { ModalSheet, SheetLink } from '@/components/ModalSheet';
-import { SheetCard } from '@/components/SheetCard';
+import { DraftCard } from '@/components/DraftCard';
+import { SwitchRow } from '@/components/SwitchRow';
 import { modalFooterStyles as f } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
 import { accountHue, accountIcon } from '@/lib/account';
@@ -23,7 +24,6 @@ import { AmountField } from '@/components/AmountField';
 import { AccountReservations } from '@/features/goals/AccountReservations';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { Chip } from '@/components/Chip';
-import { ToggleSwitch } from '@/components/ToggleSwitch';
 import { useUndoToast } from '@/components/UndoToast';
 import { haptics } from '@/lib/haptics';
 import { styles } from './profile.styles';
@@ -222,23 +222,22 @@ export function AccountDetailModal({
         </View>
       }
     >
-      <SheetCard
+      <DraftCard
         hue={accountHue(type, accent)}
         icon={accountIcon(type)}
-        kicker={ACCOUNT_TYPES.find((t) => t.value === type)?.label}
-        amount={formatMaskableMoney(account.currentBalanceMinor, {
+        title={name.trim() || account.name}
+        kicker={ACCOUNT_TYPES.find((t) => t.value === type)?.label ?? ''}
+        figure={formatMaskableMoney(account.currentBalanceMinor, {
           currency: account.currency,
           masked: hideSavings,
         })}
-        title={name.trim() || account.name}
+        per={account.investment ? 'value' : 'balance'}
         meta={
           hideSavings
-            ? account.investment
-              ? 'Value now'
-              : 'Balance now'
+            ? undefined
             : account.investment
-              ? `Value now · invested ${formatMoney(account.investment.investedMinor, account.currency)}`
-              : `Balance now · opened with ${formatMoney(toMinor(parseFloat(opening || '0')) || 0, account.currency)}`
+              ? `Invested ${formatMoney(account.investment.investedMinor, account.currency)}`
+              : `Opened with ${formatMoney(toMinor(parseFloat(opening || '0')) || 0, account.currency)}`
         }
       />
       <AccountReservations account={account} onNavigate={onClose} />
@@ -250,17 +249,16 @@ export function AccountDetailModal({
         ))}
       </View>
       {type === 'savings' && (
-        <>
-          <View style={styles.toggleRow}>
-            <Text style={styles.fieldLabel}>Track its value</Text>
-            <ToggleSwitch accessibilityLabel="Track its value" value={tracked} onChange={setTracked} />
-          </View>
-          <Text style={styles.hintText}>
-            {tracked
-              ? 'Its balance becomes what you say it is worth; update it from the account sheet.'
-              : "For an index fund, stocks or gold: you update what it's worth now and then, and Yume shows the gain."}
-          </Text>
-        </>
+        <SwitchRow
+          title="Track its value"
+          hint={
+            tracked
+              ? 'Its balance is what you say it is worth; update it from the account sheet.'
+              : "For an index fund, stocks or gold: you update what it's worth."
+          }
+          value={tracked}
+          onChange={setTracked}
+        />
       )}
       <AmountField
         label={trackingNow ? 'Invested so far' : 'Opening balance'}
