@@ -7,16 +7,17 @@ import { theme } from '@/constants/theme';
 import { shade } from '@/lib/color';
 
 /**
- * The loan being set up, as a slim card: who it is with and its rate and tenure on the left, the monthly EMI
- * worked out as you type on the right, and one line under it for the interest. The principal is not repeated
- * here; it is in the field below.
+ * The thing being set up (a loan, a goal), as a slim card: its name and a line of detail on the left, one worked-out
+ * figure on the right (a loan's monthly EMI, a goal's target), and one line under it. Whatever was typed into a
+ * field below is not repeated here.
  */
-export function LoanDraftCard({
+export function DraftCard({
   hue,
   icon,
   title,
   kicker,
-  emi,
+  figure,
+  per,
   meta,
 }: {
   hue: string;
@@ -24,9 +25,12 @@ export function LoanDraftCard({
   title: string;
   /** "9.5% · 20 years", empty until either is filled in. */
   kicker: string;
-  /** The formatted monthly EMI, or undefined until it can be worked out. */
-  emi?: string;
-  meta: string;
+  /** The formatted figure, or undefined until it can be worked out. */
+  figure?: string;
+  /** The small word under the figure: "a month", "target". */
+  per: string;
+  /** The line under the card; omit when there is nothing to say yet. */
+  meta?: string;
 }) {
   return (
     <View style={styles.card}>
@@ -49,11 +53,11 @@ export function LoanDraftCard({
           </View>
         </View>
         <View style={styles.emi}>
-          <Text style={styles.amount}>{emi ?? '–'}</Text>
-          <Text style={styles.per}>a month</Text>
+          <Text style={styles.amount}>{figure ?? '–'}</Text>
+          <Text style={styles.per}>{per}</Text>
         </View>
       </View>
-      <Text style={styles.meta}>{meta}</Text>
+      {!!meta && <Text style={styles.meta}>{meta}</Text>}
     </View>
   );
 }

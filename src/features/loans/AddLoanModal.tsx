@@ -14,12 +14,12 @@ import { SheetTabs } from '@/components/SheetTabs';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { Chip } from '@/components/Chip';
 import { ModalSheet } from '@/components/ModalSheet';
+import { DraftCard } from '@/components/DraftCard';
 import { modalFooterStyles as f, theme } from '@/constants/theme';
 import { toLocalIsoDate, monthsBetweenIsoDates, addMonthsToIsoDate } from '@/lib/date';
 import { DateField } from '@/components/DateField';
 import { ToggleSwitch } from '@/components/ToggleSwitch';
 import { OptionCards, CountStepper, Option } from './AddLoanParts';
-import { LoanDraftCard } from './LoanDraftCard';
 import { styles } from './loans.styles';
 import { errorMessage } from '@/lib/errorMessage';
 import { DURATIONS } from '@/lib/motionTimings';
@@ -393,14 +393,15 @@ export function AddLoanModal({
       {/* The calm-sheets sign-off (Direction C): the loan as a live card —
           coral for money you borrow, mint for money you lend — with its EMI
           worked out as you type, in place of a separate estimate box. */}
-      <LoanDraftCard
+      <DraftCard
         hue={direction === 'borrowed' ? theme.colors.idCoralDeep : theme.colors.secondary}
         icon={direction === 'borrowed' ? 'bank-outline' : 'hand-coin-outline'}
         title={counterparty.trim() || (direction === 'borrowed' ? 'New loan' : 'Money you lent')}
         kicker={[rate ? `${rate}%` : null, tenureMonths > 0 ? tenureLabel(tenureMonths) : null]
           .filter(Boolean)
           .join(' · ')}
-        emi={previewEmi > 0 ? formatMoney(previewEmi) : undefined}
+        figure={previewEmi > 0 ? formatMoney(previewEmi) : undefined}
+        per="a month"
         meta={
           previewEmi > 0
             ? `${formatMoney(Math.max(0, previewEmi * tenureMonths - principalMinor))} interest over the term`

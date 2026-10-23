@@ -9,6 +9,8 @@ import { usePrivacy } from '@/theme/PrivacyContext';
 import { goalsFollowingAccount } from '@/db/savingsGoals';
 import { styles } from './goals.styles';
 import { withPressed } from '@/lib/pressed';
+import { useAccent } from '@/theme/AccentContext';
+import { selectedFill } from '@/theme/interactionColors';
 
 /**
  * Where a goal's money sits: following an account's balance, or added by hand. Shared by new-goal and detail.
@@ -57,6 +59,12 @@ export function GoalAccountField({
   }, [accountId, tracks, goalId]);
 
   if (accounts.length === 0) return null;
+  const showReserve =
+    !!onChangeReserves &&
+    !!account &&
+    account.type !== 'credit_card' &&
+    !account.investment &&
+    !account.archived;
 
   return (
     <>
@@ -76,36 +84,40 @@ export function GoalAccountField({
       </View>
 
       {account && (
-        <View style={styles.followGroup}>
-          {onChangeReserves && account.type !== 'credit_card' && !account.investment && !account.archived && (
+        <>
+          <View style={styles.followGroup}>
+            {showReserve && (
+              <FollowOption
+                first
+                on={reserves}
+                title={`Reserve from ${account.name}`}
+                sub="Set aside a share for this goal. Reserve money after saving."
+                onPress={() => {
+                  onChangeTracks(false);
+                  onChangeReserves(true);
+                }}
+              />
+            )}
             <FollowOption
-              on={reserves}
-              title={`Reserve from ${account.name}`}
-              sub="Set aside a share for this goal. Reserve money after saving."
+              first={!showReserve}
+              on={tracks && !reserves}
+              title={`Follow ${account.name}`}
+              sub="Progress is this account's balance and updates by itself."
               onPress={() => {
-                onChangeTracks(false);
-                onChangeReserves(true);
+                onChangeReserves?.(false);
+                onChangeTracks(true);
               }}
             />
-          )}
-          <FollowOption
-            on={tracks && !reserves}
-            title={`Follow ${account.name}`}
-            sub="Progress is this account's balance and updates by itself."
-            onPress={() => {
-              onChangeReserves?.(false);
-              onChangeTracks(true);
-            }}
-          />
-          <FollowOption
-            on={!tracks && !reserves}
-            title="I'll add money myself"
-            sub="Tap + Add money as you save. The account is just a label."
-            onPress={() => {
-              onChangeReserves?.(false);
-              onChangeTracks(false);
-            }}
-          />
+            <FollowOption
+              on={!tracks && !reserves}
+              title="I'll add money myself"
+              sub="Tap + Add money as you save. The account is just a label."
+              onPress={() => {
+                onChangeReserves?.(false);
+                onChangeTracks(false);
+              }}
+            />
+          </View>
           {tracks && othersFollowing.length > 0 && (
             <Text style={styles.followWarn}>
               {othersFollowing[0]}
@@ -119,26 +131,33 @@ export function GoalAccountField({
               and comes back if you switch back.
             </Text>
           )}
-        </View>
+        </>
       )}
     </>
   );
 }
 
 function FollowOption({
+  first,
   on,
   title,
   sub,
   onPress,
 }: {
+  first?: boolean;
   on: boolean;
   title: string;
   sub: string;
   onPress: () => void;
 }) {
+  const { accent } = useAccent();
   return (
     <Pressable
-      style={withPressed([styles.followOpt, on && styles.followOptOn])}
+      style={withPressed([
+        styles.followOpt,
+        first && styles.followOptFirst,
+        on && { backgroundColor: selectedFill(accent) },
+      ])}
       onPress={onPress}
       accessibilityRole="radio"
       accessibilityState={{ checked: on }}
