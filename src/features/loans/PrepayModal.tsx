@@ -276,16 +276,16 @@ export function PrepayModal({
         </View>
       }
     >
-      <Text style={styles.cardSub}>
-        Outstanding: {formatMoney(roundedMinor(loan.outstandingPrincipalMinor))}
-      </Text>
       <AmountField
         label={lent ? 'Amount they paid' : 'Amount'}
         value={amount}
         onChangeText={setAmount}
         placeholder="0.00"
       />
-      <Text style={styles.hintText}>EMI stays the same; the remaining tenure shortens.</Text>
+      <Text style={styles.hintText}>
+        Outstanding {formatMoney(roundedMinor(loan.outstandingPrincipalMinor))} · EMI stays the same; the
+        remaining tenure shortens.
+      </Text>
       {preview && <PrepaymentPreview preview={preview} lent={lent} />}
 
       <AmountField
@@ -297,7 +297,7 @@ export function PrepayModal({
       <Text style={styles.hintText}>
         {lent
           ? 'Only if your agreement with them asks for one. Leave at 0% if none applies.'
-          : "Whether this applies — and how much — depends on your loan's own terms and local rules on variable- vs fixed-rate consumer loans; check your agreement or latest statement. Leave at 0% if none applies."}
+          : 'Check your loan agreement for a prepayment charge. Leave at 0% if none applies.'}
       </Text>
       {!lent && parseFloat(chargePercent || '0') > 0 && (
         <>
@@ -321,8 +321,8 @@ export function PrepayModal({
       {chargeMinor > 0 && (
         <Text style={styles.hintText}>
           {lent
-            ? `Charge: ${formatMoney(chargeMinor)} — recorded as income, separate from the ${formatMoney(amountMinor)} coming back toward the loan itself. Total received in ${account.name}: `
-            : `Charge: ${formatMoney(chargeMinor)} — recorded as its own expense, separate from the ${formatMoney(amountMinor)} going toward the loan itself. Total debited from ${account.name}: `}
+            ? `Charge ${formatMoney(chargeMinor)} is recorded as income. Total received in ${account.name}: `
+            : `Charge ${formatMoney(chargeMinor)} is recorded as its own expense. Total debited from ${account.name}: `}
           {formatMoney(amountMinor + chargeMinor)}.
         </Text>
       )}
