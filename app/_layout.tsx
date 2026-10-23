@@ -103,12 +103,13 @@ export default function RootLayout() {
         });
 
         // Prime masking before mounting any financial screen, including an unlocked cold launch.
-        const [locked] = await Promise.all([getAppLockEnabled(), getHideSensitiveAmounts()]);
+        const [locked, , alreadyOnboarded] = await Promise.all([
+          getAppLockEnabled(),
+          getHideSensitiveAmounts(),
+          getHasOnboarded(),
+        ]);
         if (cancelled) return;
         setInitialLocked(locked);
-
-        const alreadyOnboarded = await getHasOnboarded();
-        if (cancelled) return;
         if (alreadyOnboarded) {
           setNeedsOnboarding(false);
           return;
