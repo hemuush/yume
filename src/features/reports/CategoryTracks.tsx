@@ -6,7 +6,8 @@ import { CategoryIcon } from '@/components/CategoryIcon';
 import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
 import { roundedMinor } from '@/lib/round';
-import { withPressed } from '@/lib/pressed';
+import { withPressedTint } from '@/lib/pressed';
+import { useAccent } from '@/theme/AccentContext';
 import { useCardGrow } from '@/lib/cardGrow';
 import { useGrowFrom } from '@/lib/useGrowFrom';
 import type { Category } from '@/types';
@@ -103,6 +104,7 @@ function TrackRow({
   inProgress: boolean;
   onOpen: (categoryId: string) => void;
 }) {
+  const { accent } = useAccent();
   const { ref, growFrom } = useCardGrow();
   const now = formatMoney(roundedMinor(r.nowMinor));
   const usual = formatMoney(roundedMinor(r.usualMinor));
@@ -111,7 +113,7 @@ function TrackRow({
       ref={ref}
       collapsable={false}
       onPress={() => growFrom(() => onOpen(r.categoryId))}
-      style={withPressed([styles.trackRow, first && { borderTopWidth: 0 }])}
+      style={withPressedTint(accent, [styles.trackRow, first && { borderTopWidth: 0 }])}
       accessibilityRole="button"
       accessibilityLabel={`${r.name}, ${now}${inProgress ? ' so far' : ''}, ${r.pct}% of your usual ${usual}. Open`}
     >
@@ -158,6 +160,7 @@ export function CategoryTracks({
   inProgress: boolean;
   onOpen: (categoryId: string) => void;
 }) {
+  const { accent } = useAccent();
   const [expanded, setExpanded] = useState(false);
   if (rows.length === 0) return null;
   const shown = expanded ? rows : rows.slice(0, TRACKS_SHOWN);
@@ -184,7 +187,7 @@ export function CategoryTracks({
         {hidden > 0 && (
           <Pressable
             onPress={() => setExpanded((v) => !v)}
-            style={withPressed(styles.trackFoot)}
+            style={withPressedTint(accent, styles.trackFoot)}
             accessibilityRole="button"
           >
             <Text style={styles.trackFootText}>

@@ -8,7 +8,8 @@ import { roundedMinor } from '@/lib/round';
 import { haptics } from '@/lib/haptics';
 import { CountUpAmount } from '@/components/CountUpAmount';
 import { useGrowFrom } from '@/lib/useGrowFrom';
-import { withPressed } from '@/lib/pressed';
+import { withPressed, withPressedTint } from '@/lib/pressed';
+import { softTint } from '@/components/softTint';
 import { MIN_TREND_POINTS } from './TrendChart';
 import { cashFlowReadLine, keptOf, keptSummary } from './reportsInsights';
 import { styles } from './reports.styles';
@@ -124,10 +125,10 @@ export function CashFlowCard({
                 key={i}
                 disabled={p.recorded === false}
                 onPress={() => pick(i)}
-                style={withPressed([
+                style={withPressedTint(accent, [
                   styles.flowCol,
                   { minWidth: 44, opacity: p.recorded === false ? 0.35 : 1 },
-                  on && styles.flowColOn,
+                  on && { backgroundColor: softTint(accent, 0.16) },
                 ])}
                 accessibilityRole="button"
                 accessibilityLabel={

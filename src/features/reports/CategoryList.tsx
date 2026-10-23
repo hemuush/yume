@@ -13,7 +13,8 @@ import { theme } from '@/constants/theme';
 import { AnimatedCategoryFill } from './AnimatedCategoryFill';
 import { styles } from './reports.styles';
 import { shade } from '@/lib/color';
-import { withPressed } from '@/lib/pressed';
+import { withPressed, withPressedTint } from '@/lib/pressed';
+import { useAccent } from '@/theme/AccentContext';
 
 const COLLAPSED_COUNT = 5;
 const DELTA_MIN_PCT = 10;
@@ -56,6 +57,7 @@ export function CategoryList({
   currentRange?: DateRange;
   previousRange?: DateRange;
 }) {
+  const { accent } = useAccent();
   const shown = expanded ? breakdown : breakdown.slice(0, COLLAPSED_COUNT);
   const rounded = allocateRoundedMinor(
     breakdown.map((row) => row.totalMinor),
@@ -76,7 +78,7 @@ export function CategoryList({
             <Pressable
               key={row.categoryId}
               onPress={() => onSelect(row)}
-              style={withPressed(styles.catRow)}
+              style={withPressedTint(accent, styles.catRow)}
               accessibilityRole="button"
               accessibilityLabel={`${row.name}. Open breakdown`}
               accessibilityState={{ selected: selectedId === row.categoryId }}
@@ -133,7 +135,7 @@ export function CategoryList({
         {breakdown.length > COLLAPSED_COUNT && (
           <Pressable
             onPress={onToggleExpanded}
-            style={withPressed(styles.catMore)}
+            style={withPressedTint(accent, styles.catMore)}
             accessibilityRole="button"
             accessibilityLabel={
               expanded

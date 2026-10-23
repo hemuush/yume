@@ -1,12 +1,13 @@
 import { themeInk } from '@/theme/interactionColors';
 import { useState } from 'react';
 import { Animated, View, Pressable } from 'react-native';
-import Svg, { Circle, Line, Polyline, Text as SvgText } from 'react-native-svg';
+import Svg, { Circle, Line, Polygon, Polyline, Text as SvgText } from 'react-native-svg';
 import { Text } from '@/components/Text';
 import { ModalSheet } from '@/components/ModalSheet';
 import type { NetWorthPoint, TrendPoint } from '@/db/reports';
 import { formatMoney } from '@/lib/money';
 import { roundedMinor } from '@/lib/round';
+import { hexToRgba } from '@/lib/color';
 import { theme } from '@/constants/theme';
 import { haptics } from '@/lib/haptics';
 import { styles } from './reports.styles';
@@ -226,6 +227,17 @@ export function TrendChart({
                   </SvgText>
                 )}
               </>
+            )}
+            {/* A faint area of the theme colour under the line gives the chart weight. */}
+            {solidSegments.map(
+              (coords, i) =>
+                coords.length > 1 && (
+                  <Polygon
+                    key={`area-${i}`}
+                    points={`${coords[0].x},${PLOT_BOTTOM} ${coords.map((c) => `${c.x},${c.y}`).join(' ')} ${coords[coords.length - 1].x},${PLOT_BOTTOM}`}
+                    fill={hexToRgba(accent, 0.18)}
+                  />
+                )
             )}
             {solidSegments.map((coords, i) => (
               <DrawnLine key={i} animKey={`trend:${showing}:${points.length}:${i}`} coords={coords} />
