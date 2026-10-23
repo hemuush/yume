@@ -74,6 +74,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test:security": "node --test scripts/uriDecoder.test.cjs scripts/widgetPrivacy.test.cjs",
+    "widgets:previews": "node scripts/generateWidgetPreviews.cjs",
     "test:perf": "node scripts/runPerf.cjs"
   },
   "private": true,

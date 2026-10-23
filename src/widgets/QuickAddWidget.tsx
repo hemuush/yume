@@ -1,13 +1,14 @@
 import { FlexWidget, TextWidget, IconWidget, type ColorProp } from 'react-native-android-widget';
 import { WidgetShell, WidgetIcon, iconGlyph } from './WidgetShell';
-import { widgetColor, widgetAlpha, asWidgetColor, WIDGET_FONT } from './widgetTheme';
+import { widgetColor, widgetAlpha, widgetInk, WIDGET_FONT } from './widgetTheme';
 import type { QuickAddWidgetData } from './data';
 
 /**
- * "Quick Add" 2×2 widget: a big "Add expense" in the pack colour, your four most-used expense categories
+ * "Quick Add" 2×2 widget: a dark theme-ink "Add expense" action, your four most-used expense categories
  * (each opens Add with it picked), then Income and Move. All are deep links into `add-transaction`.
  */
 export function QuickAddWidget({ primary, categories }: QuickAddWidgetData) {
+  const ink = widgetInk(primary);
   return (
     <WidgetShell padding={12}>
       <FlexWidget
@@ -18,9 +19,9 @@ export function QuickAddWidget({ primary, categories }: QuickAddWidgetData) {
           alignItems: 'center',
           justifyContent: 'center',
           width: 'match_parent',
-          height: 36,
-          borderRadius: 14,
-          backgroundColor: asWidgetColor(primary),
+          height: 38,
+          borderRadius: 19,
+          backgroundColor: ink,
         }}
       >
         <FlexWidget
@@ -28,7 +29,7 @@ export function QuickAddWidget({ primary, categories }: QuickAddWidgetData) {
             width: 20,
             height: 20,
             borderRadius: 10,
-            backgroundColor: widgetAlpha(widgetColor.white, 0.75),
+            backgroundColor: widgetAlpha(widgetColor.white, 0.15),
             alignItems: 'center',
             justifyContent: 'center',
           }}
@@ -37,12 +38,12 @@ export function QuickAddWidget({ primary, categories }: QuickAddWidgetData) {
             icon={iconGlyph('plus')}
             font={WIDGET_FONT.icons}
             size={13}
-            style={{ color: widgetColor.ink }}
+            style={{ color: widgetColor.cream }}
           />
         </FlexWidget>
         <TextWidget
           text="Add expense"
-          style={{ fontFamily: WIDGET_FONT.rounded, fontSize: 13.5, color: widgetColor.ink, marginLeft: 7 }}
+          style={{ fontFamily: WIDGET_FONT.rounded, fontSize: 13, color: widgetColor.cream, marginLeft: 7 }}
         />
       </FlexWidget>
 
@@ -64,6 +65,8 @@ export function QuickAddWidget({ primary, categories }: QuickAddWidgetData) {
                 maxLines={1}
                 truncate="END"
                 style={{
+                  width: 'match_parent',
+                  textAlign: 'center',
                   fontFamily: WIDGET_FONT.body,
                   fontSize: 9,
                   color: widgetColor.inkSoft,
@@ -80,16 +83,16 @@ export function QuickAddWidget({ primary, categories }: QuickAddWidgetData) {
         <SmallAction
           label="Income"
           icon="plus"
-          color={widgetColor.income}
-          background={widgetColor.idSage}
+          color={ink}
+          background={widgetColor.tray}
           uri="yume://add-transaction?type=income"
         />
         <FlexWidget style={{ width: 6, height: 1 }} />
         <SmallAction
           label="Move"
           icon="swap-horizontal"
-          color={widgetColor.ink}
-          background={widgetColor.surfaceAlt}
+          color={ink}
+          background={widgetColor.tray}
           uri="yume://add-transaction?type=transfer"
         />
       </FlexWidget>
@@ -121,7 +124,7 @@ function SmallAction({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        borderRadius: 10,
+        borderRadius: 14,
         backgroundColor: background,
       }}
     >
