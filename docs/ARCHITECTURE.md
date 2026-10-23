@@ -4,6 +4,8 @@ Module and behavior map, maintained through the targeted cleanup, [follow-up rec
 
 ## Ownership and data flow
 
+Theme selection writes `theme_id` and `accent_color` in one atomic SQLite statement and updates both caches only after success. The [accent provider](../src/theme/AccentContext.tsx) keeps the immediate preview, orders queued choices and restores the last committed choice on failure. Restore invalidates obsolete queued choices. The picker and Settings show an accessible error, and a single [feedback component](../src/theme/ThemeSaveFeedback.tsx) beside the unlocked dialog host keeps off-screen failures visible. Background widget refresh waits for queued theme persistence.
+
 Reports' calendar uses at least 44dp day controls. Its dense year matrix remains a visual/scrubbable overview; individual tiny cells/month labels are no longer separate buttons. [HeatmapDayPicker](../src/features/reports/HeatmapDayPicker.tsx) provides searchable full-width day and month actions in one native sheet, with virtualized rows. Future days are excluded; month navigation remains available where the report window supports it. Grid hit testing follows the measured weekday header and scaled matrix labels.
 
 Shared [Text/TextInput](../src/components/Text.tsx) support OS text scaling through 200%. Above the reflow breakpoint, single-line labels wrap instead of shrinking, inputs reserve scaled line/padding/border space, number-pad keys grow, and navigation puts the active label below its icon row. [useFontScale](../src/lib/useFontScale.ts) shares one OS subscription and removes it when unused. This is the implemented policy; visual/TalkBack acceptance at 200% on Android remains a separate device check.

@@ -23,7 +23,7 @@ export default function ThemesScreen() {
   const insets = useSafeAreaInsets();
   // The header sits over the page and shrinks as it scrolls.
   const { collapse, headerHeight, scrollHandler, scrollRef } = useCollapsingHeader();
-  const { themeId, setTheme, accent, secondary } = useAccent();
+  const { themeId, setTheme, accent, secondary, themeSaveError } = useAccent();
   const current = THEMES.find((t) => t.id === themeId) ?? THEMES[0];
 
   return (
@@ -42,6 +42,15 @@ export default function ThemesScreen() {
           },
         ]}
       >
+        {themeSaveError && (
+          <Text
+            accessibilityRole="alert"
+            accessibilityLiveRegion="polite"
+            style={{ color: theme.colors.expenseText, padding: theme.space.md }}
+          >
+            {themeSaveError.message}
+          </Text>
+        )}
         <Glass radius={28} tone="strong" style={styles.live}>
           <View style={styles.phone}>
             <ThemePreview pack={current} height={200} detailed />

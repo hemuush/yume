@@ -8,7 +8,7 @@ import {
   useRef,
   ReactNode,
 } from 'react';
-import { getAccentColor, setAccentColor, getCachedAccentColor, getThemeId, setThemeId } from '@/db/settings';
+import { getAccentColor, getCachedAccentColor, getThemeId, setThemeSelection } from '@/db/settings';
 import { THEMES, DEFAULT_THEME_ID, themeById } from './themes';
 import { theme } from '@/constants/theme';
 import { onSettingsRestored } from '@/lib/dataEvents';
@@ -39,6 +39,9 @@ interface AccentContextValue {
   dot: string;
   onAccent: string;
   setTheme: (id: string) => void;
+  themeSaveError: { message: string; attempt: number } | null;
+  /** Waits for choices already queued, so background widget reads see the final persisted accent. */
+  waitForThemePersistence: () => Promise<void>;
 }
 
 const cachedInitial = themeById(DEFAULT_THEME_ID)!;
@@ -50,11 +53,17 @@ const AccentContext = createContext<AccentContextValue>({
   dot: cachedInitial.dot ?? cachedInitial.secondary,
   onAccent: contrastColor(getCachedAccentColor()),
   setTheme: () => {},
+  themeSaveError: null,
+  waitForThemePersistence: async () => {},
 });
 
 export function AccentProvider({ children }: { children: ReactNode }) {
   const [themeId, setThemeIdState] = useState(DEFAULT_THEME_ID);
   const [accent, setAccentState] = useState(getCachedAccentColor());
+  const [themeSaveError, setThemeSaveError] = useState<AccentContextValue['themeSaveError']>(null);
+  const committed = useRef({ id: DEFAULT_THEME_ID, accent: getCachedAccentColor() });
+  const writes = useRef<Promise<void>>(Promise.resolve());
+  const restoreEpoch = useRef(0);
   const generation = useRef(0);
 
   useEffect(() => {
@@ -67,12 +76,17 @@ export function AccentProvider({ children }: { children: ReactNode }) {
           if (call !== generation.current) return;
           setAccentState(hex);
           setThemeIdState(id ?? DEFAULT_THEME_ID);
+          committed.current = { id: id ?? DEFAULT_THEME_ID, accent: hex };
+          setThemeSaveError(null);
         })
         .catch(() => {});
     };
     void read();
     // A restore brings back the backup's theme.
-    const unsubscribe = onSettingsRestored(() => void read());
+    const unsubscribe = onSettingsRestored(() => {
+      restoreEpoch.current += 1;
+      void read();
+    });
     return () => {
       generation.current += 1;
       unsubscribe();
@@ -82,12 +96,26 @@ export function AccentProvider({ children }: { children: ReactNode }) {
   const setTheme = useCallback((id: string) => {
     const pack = themeById(id);
     if (!pack) return;
-    generation.current += 1;
+    const call = ++generation.current;
+    const epoch = restoreEpoch.current;
     setThemeIdState(id);
     setAccentState(pack.primary);
-    // A failed write only costs the choice on the next launch; the theme still applies this session.
-    Promise.resolve(setThemeId(id)).catch(() => {});
-    Promise.resolve(setAccentColor(pack.primary)).catch(() => {});
+    setThemeSaveError(null);
+    writes.current = writes.current.then(async () => {
+      // Superseded or restored choices that haven't started no longer need a disk write.
+      if (call !== generation.current) return;
+      try {
+        await setThemeSelection(id, pack.primary);
+        if (epoch === restoreEpoch.current) committed.current = { id, accent: pack.primary };
+      } catch (error) {
+        // Local diagnostics match ErrorBoundary's offline reporting policy; no financial values are involved.
+        console.error('Theme preference could not be saved:', error);
+        if (call !== generation.current) return;
+        setThemeIdState(committed.current.id);
+        setAccentState(committed.current.accent);
+        setThemeSaveError({ message: 'Couldn’t save this theme. Choose it again to retry.', attempt: call });
+      }
+    });
   }, []);
 
   // A pack this install hasn't selected (the pre-theme fallback above) gets the default pack's
@@ -95,10 +123,20 @@ export function AccentProvider({ children }: { children: ReactNode }) {
   const activePack = themeById(themeId) ?? cachedInitial;
   const secondary = activePack.secondary;
   const dot = activePack.dot ?? activePack.secondary;
+  const waitForThemePersistence = useCallback(() => writes.current, []);
 
   const value = useMemo(
-    () => ({ themeId, accent, secondary, dot, onAccent: contrastColor(accent), setTheme }),
-    [themeId, accent, secondary, dot, setTheme]
+    () => ({
+      themeId,
+      accent,
+      secondary,
+      dot,
+      onAccent: contrastColor(accent),
+      setTheme,
+      themeSaveError,
+      waitForThemePersistence,
+    }),
+    [themeId, accent, secondary, dot, setTheme, themeSaveError, waitForThemePersistence]
   );
 
   return <AccentContext.Provider value={value}>{children}</AccentContext.Provider>;

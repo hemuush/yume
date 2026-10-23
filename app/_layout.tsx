@@ -32,7 +32,7 @@ import {
 } from '@/lib/notifications';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { refreshAllWidgets } from '@/widgets/notifyWidgets';
-import { AccentProvider } from '@/theme/AccentContext';
+import { AccentProvider, useAccent } from '@/theme/AccentContext';
 import { PrivacyProvider } from '@/theme/PrivacyContext';
 import { AppLockProvider, useAppLock } from '@/lib/AppLockContext';
 import { UndoToastProvider } from '@/components/UndoToast';
@@ -40,6 +40,7 @@ import { MilestoneNoteProvider, BudgetMonthWatcher } from '@/components/Mileston
 import { CardGrowHost } from '@/components/CardGrowHost';
 import { isGrowRoute } from '@/lib/cardGrow';
 import { AppDialogHost } from '@/components/AppDialog';
+import { ThemeSaveFeedback } from '@/theme/ThemeSaveFeedback';
 import { LockScreen } from '@/components/LockScreen';
 import { Onboarding } from '@/features/onboarding/Onboarding';
 import { theme } from '@/constants/theme';
@@ -169,6 +170,7 @@ export default function RootLayout() {
 }
 
 function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean; initialLocked: boolean }) {
+  const { waitForThemePersistence } = useAccent();
   const { lockEnabled } = useAppLock();
   const [isLocked, setIsLocked] = useState(initialLocked);
   const [showOnboarding, setShowOnboarding] = useState(needsOnboarding);
@@ -221,7 +223,7 @@ function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean;
   // repeating entries that fell due while away (Android can keep Yume alive for days without a cold start).
   useEffect(() => {
     const sub = AppState.addEventListener('change', (next: AppStateStatus) => {
-      if (next === 'background') refreshAllWidgets();
+      if (next === 'background') void waitForThemePersistence().then(refreshAllWidgets);
       if (next === 'active') {
         runWhenIdle(() => {
           void runAppMaintenance().catch((err) => console.error('App maintenance failed:', err));
@@ -229,7 +231,7 @@ function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean;
       }
     });
     return () => sub.remove();
-  }, []);
+  }, [waitForThemePersistence]);
 
   if (showOnboarding) {
     return (
@@ -259,6 +261,7 @@ function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean;
           screen: a dialog is its own window, so it would sit on top of it with working buttons. */}
       <AppDialogHost />
       <UndoToastProvider>
+        <ThemeSaveFeedback />
         <MilestoneNoteProvider>
           {/* freezeOnBlur is left OFF: with it on (the navigator default), a
             blurred screen's React tree is suspended and can miss context
