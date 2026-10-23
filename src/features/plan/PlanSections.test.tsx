@@ -4,6 +4,7 @@
  */
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
 import { Text, StyleSheet, View } from 'react-native';
+import { theme } from '@/constants/theme';
 
 jest.setTimeout(30000);
 jest.mock('@/components/ModalSheet', () => ({
@@ -686,7 +687,7 @@ it.each([false, true])('keeps integrated Add loan separate from opening Loans (h
   act(() => tree.unmount());
 });
 
-it('keeps the selected category colour on an over-budget progress card', () => {
+it('turns an over-budget progress card red', () => {
   const summary = buildBudgetsSummary([
     {
       id: 'coloured',
@@ -705,7 +706,7 @@ it('keeps the selected category colour on an over-budget progress card', () => {
     .find(
       (n) =>
         StyleSheet.flatten(n.props.style)?.width === '100%' &&
-        StyleSheet.flatten(n.props.style)?.backgroundColor === '#A56ABC'
+        StyleSheet.flatten(n.props.style)?.backgroundColor === theme.colors.expense
     );
   expect(progress).toBeDefined();
   expect(texts(tree).join(' ')).toContain('over');
