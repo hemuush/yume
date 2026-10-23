@@ -137,7 +137,7 @@ const s = StyleSheet.create({
   tabs: { marginHorizontal: 16, marginTop: theme.layout.screenTopGap, marginBottom: 6 },
   flow: { marginBottom: 12 },
   group: {
-    minHeight: 44,
+    minHeight: 36,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
@@ -146,7 +146,7 @@ const s = StyleSheet.create({
     backgroundColor: theme.colors.tray,
   },
   groupText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
-  comparison: { minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 },
+  comparison: { minHeight: 40, flexDirection: 'row', alignItems: 'center', gap: 8 },
   note: { flex: 1, fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textMuted },
   explanation: {
     fontFamily: theme.font.body,
