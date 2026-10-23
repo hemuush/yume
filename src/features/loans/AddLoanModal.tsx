@@ -14,12 +14,12 @@ import { SheetTabs } from '@/components/SheetTabs';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { Chip } from '@/components/Chip';
 import { ModalSheet } from '@/components/ModalSheet';
-import { SheetCard } from '@/components/SheetCard';
 import { modalFooterStyles as f, theme } from '@/constants/theme';
 import { toLocalIsoDate, monthsBetweenIsoDates, addMonthsToIsoDate } from '@/lib/date';
 import { DateField } from '@/components/DateField';
 import { ToggleSwitch } from '@/components/ToggleSwitch';
 import { OptionCards, CountStepper, Option } from './AddLoanParts';
+import { LoanDraftCard } from './LoanDraftCard';
 import { styles } from './loans.styles';
 import { errorMessage } from '@/lib/errorMessage';
 import { DURATIONS } from '@/lib/motionTimings';
@@ -393,19 +393,17 @@ export function AddLoanModal({
       {/* The calm-sheets sign-off (Direction C): the loan as a live card —
           coral for money you borrow, mint for money you lend — with its EMI
           worked out as you type, in place of a separate estimate box. */}
-      <SheetCard
+      <LoanDraftCard
         hue={direction === 'borrowed' ? theme.colors.idCoralDeep : theme.colors.secondary}
         icon={direction === 'borrowed' ? 'bank-outline' : 'hand-coin-outline'}
+        title={counterparty.trim() || (direction === 'borrowed' ? 'New loan' : 'Money you lent')}
         kicker={[rate ? `${rate}%` : null, tenureMonths > 0 ? tenureLabel(tenureMonths) : null]
           .filter(Boolean)
           .join(' · ')}
-        amount={formatMoney(Number.isFinite(principalMinor) && principalMinor > 0 ? principalMinor : 0)}
-        title={counterparty.trim() || (direction === 'borrowed' ? 'New loan' : 'Money you lent')}
+        emi={previewEmi > 0 ? formatMoney(previewEmi) : undefined}
         meta={
           previewEmi > 0
-            ? `EMI ${formatMoney(previewEmi)}/month · ${formatMoney(
-                Math.max(0, previewEmi * tenureMonths - principalMinor)
-              )} interest`
+            ? `${formatMoney(Math.max(0, previewEmi * tenureMonths - principalMinor))} interest over the term`
             : 'EMI shows once the amount, rate and tenure are in'
         }
       />
@@ -443,14 +441,20 @@ export function AddLoanModal({
             onChangeText={setPrincipal}
             placeholder="e.g. 500000"
           />
-          <AmountField
-            label="Annual interest rate (%)"
-            value={rate}
-            onChangeText={setRate}
-            placeholder="e.g. 9.5"
-          />
-          <Text style={styles.fieldLabel}>Rate type</Text>
-          <SheetTabs options={RATE_TYPES} value={rateType} onChange={setRateType} />
+          <View style={styles.pairRow}>
+            <View style={styles.pairCell}>
+              <AmountField
+                label="Annual interest rate (%)"
+                value={rate}
+                onChangeText={setRate}
+                placeholder="e.g. 9.5"
+              />
+            </View>
+            <View style={styles.pairCell}>
+              <Text style={styles.fieldLabel}>Rate type</Text>
+              <SheetTabs options={RATE_TYPES} value={rateType} onChange={setRateType} />
+            </View>
+          </View>
           {rateType === 'floating' && (
             <Text style={styles.hintText}>When the rate changes, update it from the loan's menu.</Text>
           )}
@@ -477,39 +481,40 @@ export function AddLoanModal({
               onChangeText={setTenure}
               placeholder="e.g. 60"
             />
-          ) : (
-            tenureMonths > 0 && <Text style={styles.hintText}>{tenureMonths} monthly EMIs</Text>
-          )}
+          ) : null}
 
           {direction === 'borrowed' && (
             <>
-              <View style={styles.endDateRow}>
-                <Text style={styles.fieldLabel}>This loan financed something worth tracking</Text>
+              <View style={styles.assetRow}>
+                <View style={styles.assetCopy}>
+                  <Text style={styles.assetTitle}>Track what it paid for</Text>
+                  <Text style={styles.assetHint}>
+                    {trackAsset
+                      ? "Its value minus what's still owed counts toward your net worth."
+                      : 'Leave off for a personal loan or card: it counts as plain debt.'}
+                  </Text>
+                </View>
                 <ToggleSwitch value={trackAsset} onChange={setTrackAsset} />
               </View>
-              {trackAsset ? (
-                <>
-                  <FormInput
-                    label="What is it?"
-                    value={assetLabel}
-                    onChangeText={setAssetLabel}
-                    placeholder="e.g. Home, Car"
-                  />
-                  <AmountField
-                    label="Current estimated value (optional)"
-                    value={assetValue}
-                    onChangeText={setAssetValue}
-                    placeholder="e.g. 3500000"
-                  />
-                  <Text style={styles.hintText}>
-                    Its value minus what's still owed counts toward your net worth. Add the value later if you
-                    don't have it yet.
-                  </Text>
-                </>
-              ) : (
-                <Text style={styles.hintText}>
-                  Leave off for a personal loan or card: it counts as plain debt.
-                </Text>
+              {trackAsset && (
+                <View style={styles.pairRow}>
+                  <View style={styles.pairCell}>
+                    <FormInput
+                      label="What is it?"
+                      value={assetLabel}
+                      onChangeText={setAssetLabel}
+                      placeholder="e.g. Home, Car"
+                    />
+                  </View>
+                  <View style={styles.pairCell}>
+                    <AmountField
+                      label="Current estimated value (optional)"
+                      value={assetValue}
+                      onChangeText={setAssetValue}
+                      placeholder="e.g. 3500000"
+                    />
+                  </View>
+                </View>
               )}
             </>
           )}
@@ -521,20 +526,35 @@ export function AddLoanModal({
           <Text style={styles.fieldLabel}>Should Yume record the money moving?</Text>
           <OptionCards options={TIMINGS} value={loanTiming} onChange={setLoanTiming} />
 
-          <DateField
-            label={loanTiming === 'new' ? 'Disbursement date' : 'First EMI period started on'}
-            value={startDate}
-            onChange={(iso) => {
-              startDateTouched.current = true;
-              setStartDate(iso);
-            }}
-          />
-          <Text style={styles.hintText}>
-            The day the money was paid out. Change it if you're catching up.
-          </Text>
-
           {loanTiming === 'new' ? (
             <>
+              <View style={styles.pairRow}>
+                <View style={styles.pairCell}>
+                  <DateField
+                    label="Disbursement date"
+                    value={startDate}
+                    onChange={(iso) => {
+                      startDateTouched.current = true;
+                      setStartDate(iso);
+                    }}
+                  />
+                </View>
+                <View style={styles.pairCell}>
+                  <DateField
+                    label="First EMI due date"
+                    value={emiStartDate}
+                    onChange={(iso) => {
+                      setEmiTouched(true);
+                      setEmiStartDate(iso);
+                    }}
+                    minDate={startDate}
+                  />
+                </View>
+              </View>
+              <Text style={styles.hintText}>
+                Change the dates if you're catching up. The first EMI is usually a month after the money is
+                paid out.
+              </Text>
               <Text style={styles.fieldLabel}>
                 {direction === 'borrowed' ? 'Deposit into' : 'Pay from'} account
               </Text>
@@ -556,32 +576,33 @@ export function AddLoanModal({
                     onChangeText={setDisbFee}
                     placeholder="0"
                   />
-                  <Text style={styles.hintText}>
-                    Saved as its own expense on the same day. Leave at 0 if none.
-                  </Text>
+                  <Text style={styles.hintText}>Saved as its own expense on the same day.</Text>
                 </>
               )}
-
-              <DateField
-                label="First EMI due date"
-                value={emiStartDate}
-                onChange={(iso) => {
-                  setEmiTouched(true);
-                  setEmiStartDate(iso);
-                }}
-                minDate={startDate}
-              />
-              <Text style={styles.hintText}>Usually a month after the money is paid out.</Text>
             </>
           ) : (
             <>
-              <Text style={styles.fieldLabel}>EMIs already paid</Text>
-              <CountStepper
-                label="EMIs paid"
-                value={Number.isFinite(alreadyPaidCount) ? alreadyPaidCount : 0}
-                max={tenureMonths > 0 ? tenureMonths : 600}
-                onChange={(n) => setAlreadyPaid(String(n))}
-              />
+              <View style={styles.pairRow}>
+                <View style={styles.pairCell}>
+                  <DateField
+                    label="First EMI period started on"
+                    value={startDate}
+                    onChange={(iso) => {
+                      startDateTouched.current = true;
+                      setStartDate(iso);
+                    }}
+                  />
+                </View>
+                <View style={styles.pairCell}>
+                  <Text style={styles.fieldLabel}>EMIs already paid</Text>
+                  <CountStepper
+                    label="EMIs paid"
+                    value={Number.isFinite(alreadyPaidCount) ? alreadyPaidCount : 0}
+                    max={tenureMonths > 0 ? tenureMonths : 600}
+                    onChange={(n) => setAlreadyPaid(String(n))}
+                  />
+                </View>
+              </View>
               <Text style={styles.fieldLabel}>
                 {direction === 'lent' ? 'Future repayments arrive in' : 'Future EMIs come out of'}
               </Text>
