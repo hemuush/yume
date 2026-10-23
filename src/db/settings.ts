@@ -238,6 +238,19 @@ export async function setThemeId(id: string): Promise<void> {
   cachedThemeId = id;
 }
 
+/** One SQLite statement keeps the pack and its compatibility accent atomic, including their caches. */
+export async function setThemeSelection(id: string, hex: string): Promise<void> {
+  if (!id.trim() || !/^#[0-9a-f]{6}$/i.test(hex)) throw new Error('Choose a valid theme.');
+  const db = await getDb();
+  await db.runAsync(
+    `INSERT INTO settings (key, value) VALUES (?, ?), (?, ?)
+     ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
+    [THEME_ID_KEY, id, ACCENT_COLOR_KEY, hex]
+  );
+  cachedThemeId = id;
+  cachedAccent = hex;
+}
+
 const DAILY_SPENDING_GOAL_KEY = 'daily_spending_goal_minor';
 let cachedDailySpendingGoal: number | null | undefined; // undefined = not yet read; null = read, nothing stored (feature off)
 

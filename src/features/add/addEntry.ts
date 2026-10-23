@@ -3,6 +3,7 @@ import { theme } from '@/constants/theme';
 import { shade } from '@/lib/color';
 import { parseLocalIsoDate } from '@/lib/date';
 import { parentNameOf } from '@/lib/categoryLabel';
+import { themeInk } from '@/theme/interactionColors';
 
 export type EntryType = TransactionType | 'friend';
 
@@ -14,17 +15,17 @@ export const ADD_TYPES: { label: string; value: EntryType }[] = [
 ];
 export const EDIT_TYPES = ADD_TYPES.slice(0, 3);
 
-// Same trick as QuickActionsRow: the pale sky-blue/lavender accents are too light as text on cream.
-const TRANSFER_TEXT = shade(theme.colors.primary, 45, 8);
-const FRIEND_TEXT = shade(theme.colors.accent, 45, 8);
+// Text needs the deep theme ink; a fixed mid-lightness hue fails for green and gold theme packs.
+const TRANSFER_TEXT = themeInk(theme.colors.primary);
+const FRIEND_TEXT = themeInk(theme.colors.accent);
 
 /**
  * A wash colour + readable accent per entry type (four existing theme tokens), so the type reads from the
  * top of the screen, as colour already does for Income/Spent on Home.
  */
 export const TYPE_WASH: Record<EntryType, { bg: string; accent: string }> = {
-  expense: { bg: theme.colors.idCoral, accent: theme.colors.idCoralDeep },
-  income: { bg: theme.colors.incomeTint, accent: theme.colors.income },
+  expense: { bg: theme.colors.idCoral, accent: theme.colors.expenseText },
+  income: { bg: theme.colors.incomeTint, accent: theme.colors.incomeText },
   transfer: { bg: theme.colors.primaryTint, accent: TRANSFER_TEXT },
   friend: { bg: theme.colors.accentTint, accent: FRIEND_TEXT },
 };
@@ -32,7 +33,7 @@ export const TYPE_WASH: Record<EntryType, { bg: string; accent: string }> = {
 /** TYPE_WASH, with Transfer's sky wash following the picked theme's accent when one is given. */
 export function typeWash(type: EntryType, accent?: string): { bg: string; accent: string } {
   if (type !== 'transfer' || !accent) return TYPE_WASH[type];
-  return { bg: shade(accent, 95), accent: shade(accent, 45, 8) };
+  return { bg: shade(accent, 95), accent: themeInk(accent) };
 }
 
 interface StagedTx {

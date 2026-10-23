@@ -141,7 +141,7 @@ const styles = StyleSheet.create({
     color: theme.colors.textPrimary,
   },
   chipDot: { width: 8, height: 8, borderRadius: 4 },
-  grid: { paddingHorizontal: 14, paddingTop: 4 },
+  grid: { paddingHorizontal: theme.space.xs, paddingTop: 4 },
   legend: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 18, paddingTop: 8 },
   legendBar: { width: 72, flexDirection: 'row', height: 8, borderRadius: 4, overflow: 'hidden' },
   legendStep: { flex: 1 },

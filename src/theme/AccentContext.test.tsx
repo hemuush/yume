@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { act, create, ReactTestRenderer } from 'react-test-renderer';
 import { AccentProvider, useAccent } from './AccentContext';
-import { getAccentColor, getThemeId, setAccentColor, setThemeId } from '@/db/settings';
+import { getAccentColor, getThemeId, setThemeSelection } from '@/db/settings';
 import { emitSettingsRestored } from '@/lib/dataEvents';
 import { themeById } from './themes';
 
@@ -9,8 +9,7 @@ jest.mock('@/db/settings', () => ({
   getAccentColor: jest.fn(),
   getThemeId: jest.fn(),
   getCachedAccentColor: () => '#8FCBFF',
-  setAccentColor: jest.fn(async () => {}),
-  setThemeId: jest.fn(async () => {}),
+  setThemeSelection: jest.fn(async () => {}),
 }));
 let value!: ReturnType<typeof useAccent>;
 let tree: ReactTestRenderer;
@@ -53,8 +52,7 @@ it('does not replace a newly selected theme with a slow startup read', async () 
   });
   expect(value.themeId).toBe('hollowViolet');
   expect(value.accent).toBe(themeById('hollowViolet')!.primary);
-  expect(setThemeId).toHaveBeenCalledWith('hollowViolet');
-  expect(setAccentColor).toHaveBeenCalledWith(themeById('hollowViolet')!.primary);
+  expect(setThemeSelection).toHaveBeenCalledWith('hollowViolet', themeById('hollowViolet')!.primary);
 });
 
 it('keeps the newest restored theme when older reads finish later', async () => {

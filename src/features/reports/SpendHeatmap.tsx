@@ -1,21 +1,26 @@
 import { useEffect, useRef, useState } from 'react';
 import { View, Pressable, StyleSheet, PanResponder, GestureResponderEvent, ViewInstance } from 'react-native';
 import Animated, { FadeIn, ReduceMotion } from 'react-native-reanimated';
-import { Text } from '@/components/Text';
+import { MAX_FONT_SCALE, Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { spendHeatScale, hexToHsl } from '@/lib/color';
 import { gridRows } from '@/lib/gridRows';
 import { haptics } from '@/lib/haptics';
 import { withPressed } from '@/lib/pressed';
 import { BIG_DAY_FACTOR, HeatDay, HeatModel, heatDayLabel } from './reportsInsights';
+import { HeatmapDayPicker } from './HeatmapDayPicker';
+import { useFontScale } from '@/lib/useFontScale';
 
 const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 const CELL_GAP = 4;
-const CELL_H = 40;
+const CELL_H = theme.accessibility.minTouchTarget;
+// Seven 44dp controls and six 1dp gutters fit a 360dp phone's card.
+const COLUMN_GAP = 1;
 const HEAD_H = 22;
 const LABEL_W = 34;
 const DOT_H = 16;
 const DOT_GAP = 3;
+const MATRIX_LABEL_SIZE = 11;
 
 /**
  * Finger-over-grid: a horizontal drag across the heatmap picks the day under it as it goes, a tap is left to
@@ -86,12 +91,13 @@ function CalendarHeat({
 }) {
   const { scale, labels } = useHeatColors(hue);
   const [width, setWidth] = useState(0);
+  const [headHeight, setHeadHeight] = useState(HEAD_H);
   const rows = gridRows(model.days, model.leadingPad, 7);
-  const cellW = width / 7;
+  const cellW = (width - COLUMN_GAP * 6) / 7;
   const { box, handlers } = useGridScrub((x, y) => {
     if (width <= 0) return null;
-    const col = Math.floor(x / cellW);
-    const row = Math.floor((y - HEAD_H) / (CELL_H + CELL_GAP));
+    const col = Math.floor(x / (cellW + COLUMN_GAP));
+    const row = Math.floor((y - headHeight) / (CELL_H + CELL_GAP));
     if (col < 0 || col > 6 || row < 0 || row >= rows.length) return null;
     const d = rows[row][col];
     return d && !d.future ? d.iso : null;
@@ -130,7 +136,7 @@ function CalendarHeat({
   };
   return (
     <View ref={box} onLayout={(e) => setWidth(e.nativeEvent.layout.width)} {...handlers}>
-      <View style={styles.weekRow}>
+      <View style={styles.weekRow} onLayout={(e) => setHeadHeight(e.nativeEvent.layout.height + CELL_GAP)}>
         {WEEKDAYS.map((w, i) => (
           <Text key={i} style={[styles.slot, styles.weekday]}>
             {w}
@@ -150,22 +156,26 @@ function MatrixHeat({
   model,
   selectedIso,
   onSelect,
-  onOpenMonth,
   hue,
 }: {
   model: Extract<HeatModel, { kind: 'matrix' }>;
   selectedIso: string | null;
   onSelect: (iso: string) => void;
-  onOpenMonth?: (monthKey: string) => void;
   hue: string;
 }) {
   const { scale } = useHeatColors(hue);
+  const fontScale = Math.max(1, Math.min(useFontScale(), MAX_FONT_SCALE));
+  const labelWidth = LABEL_W * fontScale;
+  const rowHeight = Math.max(
+    DOT_H,
+    Math.ceil(MATRIX_LABEL_SIZE * fontScale * theme.accessibility.lineHeightRatio)
+  );
   const [width, setWidth] = useState(0);
-  const colW = (width - LABEL_W) / 31;
+  const colW = (width - labelWidth) / 31;
   const { box, handlers } = useGridScrub((x, y) => {
-    if (width <= 0) return null;
-    const col = Math.floor((x - LABEL_W) / colW);
-    const row = Math.floor(y / (DOT_H + DOT_GAP));
+    if (width <= labelWidth) return null;
+    const col = Math.floor((x - labelWidth) / colW);
+    const row = Math.floor(y / (rowHeight + DOT_GAP));
     if (col < 0 || col > 30 || row < 0 || row >= model.rows.length) return null;
     const d = model.rows[row].days[col];
     return d && !d.future ? d.iso : null;
@@ -177,30 +187,21 @@ function MatrixHeat({
       onLayout={(e) => setWidth(e.nativeEvent.layout.width)}
       {...handlers}
       style={styles.matrix}
+      accessible
+      accessibilityRole="image"
+      accessibilityLabel="Spending overview. Use Choose day or month for details."
     >
       {model.rows.map((row, r) => (
-        <View key={row.key} style={styles.matrixRow}>
-          <Pressable
-            onPress={onOpenMonth ? () => onOpenMonth(row.key) : undefined}
-            disabled={!onOpenMonth}
-            hitSlop={{ top: 2, bottom: 2 }}
-            accessibilityRole="button"
-            accessibilityLabel={`Open ${row.label}`}
-            style={styles.matrixLabelWrap}
-          >
+        <View key={row.key} style={[styles.matrixRow, { height: rowHeight }]}>
+          <View style={[styles.matrixLabelWrap, { width: labelWidth }]}>
             <Text style={[styles.matrixLabel, row.key === selectedMonth && styles.matrixLabelOn]}>
               {row.label}
             </Text>
-          </Pressable>
+          </View>
           {row.days.map((d, c) =>
             d ? (
               <Animated.View key={d.iso} entering={enter(r * 28 + c * 4)} style={styles.dotSlot}>
-                <Pressable
-                  disabled={d.future}
-                  onPress={() => onSelect(d.iso)}
-                  accessibilityRole="button"
-                  accessibilityLabel={heatDayLabel(d)}
-                  accessibilityState={{ selected: d.iso === selectedIso, disabled: d.future }}
+                <View
                   style={[
                     styles.dot,
                     d.level === 0 && styles.cellEmpty,
@@ -249,27 +250,35 @@ export function SpendHeatmap({
       hue={hue}
     />
   ) : (
-    <MatrixHeat
-      model={model}
-      selectedIso={selectedIso}
-      onSelect={onSelect}
-      onOpenMonth={onOpenMonth}
-      hue={hue}
-    />
+    <>
+      <MatrixHeat model={model} selectedIso={selectedIso} onSelect={onSelect} hue={hue} />
+      <HeatmapDayPicker
+        rows={model.rows}
+        selectedIso={selectedIso}
+        onSelect={onSelect}
+        onOpenMonth={onOpenMonth}
+      />
+    </>
   );
 }
 
 const styles = StyleSheet.create({
-  weekRow: { flexDirection: 'row', alignItems: 'center', marginBottom: CELL_GAP },
-  slot: { flex: 1, minWidth: 0, paddingHorizontal: 2 },
+  weekRow: { flexDirection: 'row', alignItems: 'center', marginBottom: CELL_GAP, gap: COLUMN_GAP },
+  slot: { flex: 1, minWidth: theme.accessibility.minTouchTarget },
   weekday: {
-    height: HEAD_H - CELL_GAP,
+    minHeight: HEAD_H - CELL_GAP,
     textAlign: 'center',
     fontFamily: theme.font.body,
     fontSize: 11,
     color: theme.colors.textMuted,
   },
-  cell: { height: CELL_H, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
+  cell: {
+    minWidth: theme.accessibility.minTouchTarget,
+    minHeight: CELL_H,
+    borderRadius: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   cellEmpty: { borderWidth: StyleSheet.hairlineWidth, borderColor: theme.colors.borderSoft },
   cellFuture: { borderWidth: 0, opacity: 0.35 },
   cellSelected: { borderWidth: 2.5, borderColor: theme.colors.ink },
@@ -294,8 +303,8 @@ const styles = StyleSheet.create({
   },
   matrix: { gap: DOT_GAP },
   matrixRow: { flexDirection: 'row', alignItems: 'center', height: DOT_H },
-  matrixLabelWrap: { width: LABEL_W, justifyContent: 'center', height: DOT_H },
-  matrixLabel: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted },
+  matrixLabelWrap: { width: LABEL_W, justifyContent: 'center' },
+  matrixLabel: { fontFamily: theme.font.body, fontSize: MATRIX_LABEL_SIZE, color: theme.colors.textMuted },
   matrixLabelOn: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
   dotSlot: { flex: 1, minWidth: 0, paddingHorizontal: 1 },
   dot: { height: DOT_H, borderRadius: 4 },

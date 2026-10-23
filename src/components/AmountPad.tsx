@@ -8,6 +8,7 @@ import { PadKey } from '@/lib/padMath';
 import { shade } from '@/lib/color';
 import { themeInk } from '@/theme/interactionColors';
 import { useAccent } from '@/theme/AccentContext';
+import { useUiScale } from '@/lib/uiScale';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -83,6 +84,7 @@ export function PadButton({
   tone?: { bg: string; ink: string };
 }) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.97);
+  const uiScale = useUiScale();
   const operator = padKey === '÷' || padKey === '×' || padKey === '−' || padKey === '+';
   // The sum keys sit on a pale theme tint, so they stand apart from the digits.
   const { accent } = useAccent();
@@ -93,6 +95,7 @@ export function PadButton({
         styles.key,
         surface && { backgroundColor: surface },
         compact && styles.keyCompact,
+        { minHeight: Math.max(theme.accessibility.minTouchTarget, Math.ceil((compact ? 42 : 46) * uiScale)) },
         operator && { backgroundColor: opTone.bg, borderColor: opTone.bg },
         animatedStyle,
       ]}
@@ -129,7 +132,7 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', gap: 8 },
   key: {
     flex: 1,
-    height: 46,
+    minHeight: 46,
     borderRadius: theme.radius.md,
     alignItems: 'center',
     justifyContent: 'center',
@@ -139,7 +142,7 @@ const styles = StyleSheet.create({
   },
   // The docked pad sits on a sheet's own cream, so its keys are the lighter surface with a hairline.
   keyCompact: {
-    height: 42,
+    minHeight: 44,
     backgroundColor: theme.colors.surface,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,

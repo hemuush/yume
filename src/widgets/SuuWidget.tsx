@@ -1,16 +1,16 @@
 import { FlexWidget, ImageWidget, OverlapWidget, TextWidget } from 'react-native-android-widget';
 import { WidgetShell, WidgetLabel } from './WidgetShell';
-import { widgetColor, widgetTint, asWidgetColor, WIDGET_FONT, WIDGET_RADIUS } from './widgetTheme';
+import { widgetColor, widgetInk, asWidgetColor, WIDGET_FONT, WIDGET_RADIUS } from './widgetTheme';
 import type { SuuWidgetData } from './data';
 
-const SUU = 30;
+const SUU = 26;
 const DOT = Math.round(SUU * 0.33);
 
 /**
  * "Suu Check-in" 2×2 widget: the app's ring image with one theme-coloured dot (see SuuIllustration), "Suu says"
- * beside it, `suuLine()` across the full width (beside Suu it fit a word or two), pack-colour footer.
+ * beside it, `suuLine()` across the full width (beside Suu it fit a word or two), theme-ink footer.
  */
-export function SuuWidget({ line, dot, secondary }: SuuWidgetData) {
+export function SuuWidget({ line, dot, primary }: SuuWidgetData) {
   return (
     <WidgetShell clickAction="OPEN_APP" padding={0}>
       <FlexWidget
@@ -19,8 +19,8 @@ export function SuuWidget({ line, dot, secondary }: SuuWidgetData) {
           height: 0,
           width: 'match_parent',
           flexDirection: 'column',
-          padding: 14,
-          paddingBottom: 8,
+          padding: 12,
+          paddingBottom: 6,
         }}
       >
         <FlexWidget style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -45,11 +45,11 @@ export function SuuWidget({ line, dot, secondary }: SuuWidgetData) {
           maxLines={4}
           truncate="END"
           style={{
-            fontFamily: WIDGET_FONT.roundedMedium,
-            fontSize: 12.5,
-            lineHeight: 16,
+            fontFamily: WIDGET_FONT.bodyMedium,
+            fontSize: 12,
+            lineHeight: 14,
             color: widgetColor.ink,
-            marginTop: 8,
+            marginTop: 6,
           }}
         />
       </FlexWidget>
@@ -60,13 +60,13 @@ export function SuuWidget({ line, dot, secondary }: SuuWidgetData) {
           justifyContent: 'flex-end',
           alignItems: 'center',
           paddingHorizontal: 14,
-          paddingVertical: 8,
-          backgroundColor: widgetTint(secondary, 90),
+          paddingVertical: 7,
+          backgroundColor: widgetInk(primary),
           borderBottomLeftRadius: WIDGET_RADIUS - 1,
           borderBottomRightRadius: WIDGET_RADIUS - 1,
         }}
       >
-        <WidgetLabel text="Open Yume ›" color={widgetColor.inkSoft} />
+        <WidgetLabel text="Open Yume ›" color={widgetColor.cream} />
       </FlexWidget>
     </WidgetShell>
   );

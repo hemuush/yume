@@ -1,6 +1,6 @@
 /**
  * The This Month widget follows Home's month card: while "hide savings & investment amounts" is on, nothing
- * about savings reaches the widget (no figure, no arc, no Saved tile).
+ * about savings reaches the widget (no Saved figure or segment).
  */
 import type React from 'react';
 import { createRealDataTestDb } from '@/test-support/realDataTestDb';
@@ -14,6 +14,7 @@ jest.mock('@/lib/notifications', () => ({ rebuildNotifications: async () => {} }
 import { CREATE_TABLES_SQL } from '@/db/schema';
 import { createAccount, createCategory, createTransaction } from '@/db/ledger';
 import { setDefaultCurrency, setHideSensitiveAmounts } from '@/db/settings';
+import { formatMoney } from '@/lib/money';
 import { toLocalIsoDate } from '@/lib/date';
 import { getThisMonthWidgetData, getSuuWidgetData } from './data';
 import { ThisMonthWidget } from './ThisMonthWidget';
@@ -50,10 +51,12 @@ it('excludes sensitive spending and future repeating bills from hidden widget pr
   const hidden = await getThisMonthWidgetData(now);
   expect(hidden.spentMinor).toBe(0);
   expect(hidden.slices.due ?? 0).toBe(0);
+  expect(hidden.dueMinor).toBe(0);
   expect(hidden.pace?.projectedMinor ?? 0).toBe(0);
   await setHideSensitiveAmounts(false);
   const visible = await getThisMonthWidgetData(now);
   expect(visible.spentMinor).toBe(999900);
+  expect(visible.dueMinor).toBe(123400);
   expect(visible.freeMinor).toBeLessThan(hidden.freeMinor);
   expect(visible.pace?.projectedMinor ?? 0).toBeGreaterThan(0);
 });
@@ -116,7 +119,7 @@ describe('the This Month widget with savings hidden', () => {
     });
   });
 
-  it('carries the savings figure and arc while hiding is off', async () => {
+  it('carries the savings figure and segment while hiding is off', async () => {
     await setHideSensitiveAmounts(false);
     const data = await getThisMonthWidgetData();
     expect(data.hideSavings).toBe(false);
@@ -125,7 +128,7 @@ describe('the This Month widget with savings hidden', () => {
     expect(texts(ThisMonthWidget(data))).toContain('Saved');
   });
 
-  it('drops the figure, the arc and the Saved tile while hiding is on, keeping Free honest', async () => {
+  it('drops the figure, the segment and the Saved figure while hiding is on, keeping Free honest', async () => {
     await setHideSensitiveAmounts(true);
     const data = await getThisMonthWidgetData();
     expect(data.hideSavings).toBe(true);
@@ -137,9 +140,9 @@ describe('the This Month widget with savings hidden', () => {
     expect(data.freeMinor).toBe(3000000 - 5000000);
     const shown = texts(ThisMonthWidget(data));
     expect(shown).not.toContain('Saved');
-    expect(shown).toContain('Free');
-    expect(shown).toContain('30%');
-    expect(shown).toContain('FREE');
+    expect(shown).toContain('Short by');
+    expect(shown).toContain(formatMoney(Math.abs(data.freeMinor)));
+    expect(shown).not.toContain(formatMoney(6000000));
   });
 
   it('builds the month it is given, not always the real current one', async () => {

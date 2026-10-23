@@ -93,7 +93,7 @@ function AboutFact({ icon, text }: { icon: string; text: string }) {
  * each row with its icon on a soft tint.
  */
 export function SettingsSection() {
-  const { themeId, setTheme } = useAccent();
+  const { themeId, setTheme, themeSaveError } = useAccent();
   const { lockEnabled, setLockEnabled } = useAppLock();
   const { hideAmounts, toggleHideAmounts } = usePrivacy();
   const [hideWidgets, setHideWidgets] = useState<boolean | null>(null);
@@ -492,6 +492,15 @@ export function SettingsSection() {
       </Section>
 
       <Section compact title="Appearance">
+        {themeSaveError && (
+          <Text
+            accessibilityRole="alert"
+            accessibilityLiveRegion="polite"
+            style={{ color: theme.colors.expenseText, padding: theme.space.md }}
+          >
+            {themeSaveError.message}
+          </Text>
+        )}
         <View style={[h.card, cardSurface.neutral]}>
           <Pressable
             onPress={() => router.push('/themes')}
