@@ -1,23 +1,16 @@
 import fs from 'fs';
 import path from 'path';
+import { REPORT_ASSETS } from './embeddedAssets';
 import { buildReportHtml, esc, paginate, ReportStyle } from './pdfHtml';
 import { computeReport } from './reportData';
 import { sampleLedger } from '@/test-support/reportFixture';
 
-const root = path.resolve(__dirname, '../../..');
-const b64 = (file: string) => fs.readFileSync(path.join(root, file)).toString('base64');
 const style: ReportStyle = {
   primary: '#8FCBFF',
   secondary: '#8FE8C8',
   dot: '#F0876A',
   today: '2026-10-23',
-  assets: {
-    fredoka: b64('node_modules/@expo-google-fonts/fredoka/600SemiBold/Fredoka_600SemiBold.ttf'),
-    archivo: b64('node_modules/@expo-google-fonts/archivo/400Regular/Archivo_400Regular.ttf'),
-    archivoBold: b64('node_modules/@expo-google-fonts/archivo/600SemiBold/Archivo_600SemiBold.ttf'),
-    markCrescent: b64('assets/report-mark-crescent.png'),
-    markDot: b64('assets/report-mark-dot.png'),
-  },
+  assets: REPORT_ASSETS,
 };
 const ledger = sampleLedger();
 const report = (period: Parameters<typeof computeReport>[0]['period']) =>
