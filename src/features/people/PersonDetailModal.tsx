@@ -23,7 +23,7 @@ import { FormInput } from '@/components/FormInput';
 import { AmountField } from '@/components/AmountField';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { ModalSheet } from '@/components/ModalSheet';
-import { SheetCard } from '@/components/SheetCard';
+import { DraftCard } from '@/components/DraftCard';
 import { SheetTabs } from '@/components/SheetTabs';
 import { dayMonthYear } from '@/lib/dateLabels';
 import { Chip } from '@/components/Chip';
@@ -319,7 +319,7 @@ export function PersonDetailModal({
       {/* The calm-sheets sign-off (Direction C): the balance as a card —
           mint when they owe you, coral when you owe them — then two pages:
           record money either way, and the history. */}
-      <SheetCard
+      <DraftCard
         hue={
           dispBalanceMinor > 0
             ? theme.colors.secondary
@@ -329,8 +329,9 @@ export function PersonDetailModal({
         }
         icon="account-outline"
         kicker={dispBalanceMinor > 0 ? 'Owes you' : dispBalanceMinor < 0 ? 'You owe' : 'All square'}
-        amount={formatMoney(Math.abs(dispBalanceMinor))}
-        amountColor={dispBalanceMinor < 0 ? theme.colors.expenseText : theme.colors.textPrimary}
+        figure={formatMoney(Math.abs(dispBalanceMinor))}
+        figureColor={dispBalanceMinor < 0 ? theme.colors.expenseText : undefined}
+        per="balance"
         title={person.name}
         meta={
           !detailsLoaded
@@ -378,8 +379,7 @@ export function PersonDetailModal({
             </Pressable>
           ))}
           <Text style={styles.hintText}>
-            Separate from the balance above — tracked as a formal loan with its own schedule. Tap one to see
-            it in Loans.
+            Tracked separately as a loan, not in the balance above. Tap one to open Loans.
           </Text>
         </>
       )}
@@ -425,9 +425,9 @@ export function PersonDetailModal({
           <Text style={styles.hintText}>
             {accountId
               ? dispBalanceMinor < 0
-                ? '“I owe more” records money in. “I paid them back” records money out of the selected account.'
-                : '“They owe more” records money out. “They repaid” records money into the selected account.'
-              : 'Balance only adjusts what’s owed. Choose an account if money actually moved.'}
+                ? '“I owe more” adds money to the account; “I paid them back” takes it out.'
+                : '“They owe more” takes money from the account; “They repaid” adds it.'
+              : 'Balance only adjusts what’s owed. Choose an account if money moved.'}
           </Text>
 
           {error && <Text style={styles.errorText}>{error}</Text>}

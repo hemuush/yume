@@ -17,7 +17,7 @@ import { haptics } from '@/lib/haptics';
 import { Account, Category, RecurringRule, RecurrenceFrequency, TransactionType } from '@/types';
 import { ModalSheet, SheetLink } from '@/components/ModalSheet';
 import { InsightDisclosure } from '@/components/InsightCard';
-import { SheetCard } from '@/components/SheetCard';
+import { DraftCard } from '@/components/DraftCard';
 import { SettingsRow } from '@/components/SettingsRow';
 import { theme, modalFooterStyles as f } from '@/constants/theme';
 import { screenStyles as h } from '@/components/screenStyles';
@@ -374,15 +374,16 @@ export function RuleModal({
           </View>
         }
       >
-        <SheetCard
-          compact
+        <DraftCard
           hue={type === 'transfer' ? secondary : (cat?.color ?? accent)}
           icon={type === 'transfer' ? 'swap-horizontal' : (cat?.icon ?? 'repeat')}
           kicker={cadenceLabel(frequency, interval)}
-          amount={formatMoney(
-            inputMinor(amount),
-            accounts.find((a) => a.id === effectiveAccountId)?.currency
-          )}
+          figure={
+            inputMinor(amount) > 0
+              ? formatMoney(inputMinor(amount), accounts.find((a) => a.id === effectiveAccountId)?.currency)
+              : undefined
+          }
+          per="each time"
           title={
             note ||
             (type === 'transfer'
@@ -420,7 +421,6 @@ export function RuleModal({
         {tab === 'setup' ? (
           <>
             {!editing && <SheetTabs options={TX_TYPES} value={type} onChange={onTypeChange} />}
-            <View style={styles.gap} />
             <AmountField label="Amount" value={amount} onChangeText={setAmount} placeholder="0.00" />
             <View style={[h.card, h.cardInSheet]}>
               <SettingsRow
@@ -551,7 +551,6 @@ export function RuleModal({
                 : 'Due entries are recorded when Yume runs its catch-up.'}
             </Text>
             <SheetTabs options={FREQUENCIES} value={frequency} onChange={setFrequency} />
-            <View style={styles.gap} />
             <AmountField
               decimal={false}
               label={`Every how many ${frequencyNoun(frequency, 2)}`}
