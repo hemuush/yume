@@ -19,7 +19,7 @@ jest.mock('@/components/ModalSheet', () => ({
   ModalSheet: ({ children, footer }: { children: unknown; footer?: unknown }) =>
     require('react').createElement(require('react').Fragment, null, children, footer),
 }));
-jest.mock('@/components/SheetCard', () => ({ SheetCard: () => null }));
+jest.mock('@/components/DraftCard', () => ({ DraftCard: () => null }));
 jest.mock('@/components/DateField', () => ({
   DateField: (p: { value: string }) =>
     require('react').createElement(require('react-native').View, { testID: 'paid-on', value: p.value }),
@@ -28,7 +28,7 @@ jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMoc
 
 import { PayInstallmentSheet } from './PayInstallmentSheet';
 import { PrimaryButton } from '@/components/PrimaryButton';
-import { SheetCard } from '@/components/SheetCard';
+import { DraftCard } from '@/components/DraftCard';
 import { DateField } from '@/components/DateField';
 import { toLocalIsoDate, addDaysToIsoDate } from '@/lib/date';
 import type { LoanPayment } from '@/types';
@@ -214,13 +214,9 @@ describe('pay installment sheet', () => {
         />
       );
     });
-    expect(tree.root.findByType(SheetCard).props.title).toBe('Into Main');
+    expect(tree.root.findByType(DraftCard).props.title).toBe('Into Main');
     expect(tree.root.findByType(PrimaryButton).props.title).toBe('Record receipt');
-    const labels = tree.root
-      .findAllByType(Text)
-      .map((n) => [n.props.children].flat().join(''))
-      .join(' ');
-    expect(labels).toContain('Main after receiving: ₹6,000');
+    expect(tree.root.findByType(DraftCard).props.meta).toBe('Main after receiving: ₹6,000');
     await press(tree);
     expect(mockShowUndo).toHaveBeenCalledWith('Recorded EMI #3 received', expect.any(Function));
     act(() => tree.unmount());

@@ -6,7 +6,7 @@ import { createBudget, updateBudget, BudgetProgress } from '@/db/budgets';
 import { toMinor, formatMoney, inputMinor } from '@/lib/money';
 import { Category } from '@/types';
 import { ModalSheet } from '@/components/ModalSheet';
-import { SheetCard } from '@/components/SheetCard';
+import { DraftCard } from '@/components/DraftCard';
 import { modalFooterStyles as f } from '@/constants/theme';
 import { longMonthYear } from '@/lib/dateLabels';
 import { AmountField } from '@/components/AmountField';
@@ -111,12 +111,12 @@ function BudgetForm({
         accessibilityElementsHidden={saving || saved}
         importantForAccessibility={saving || saved ? 'no-hide-descendants' : 'auto'}
       >
-        <SheetCard
-          compact
+        <DraftCard
           hue={cat?.color ?? editing?.categoryColor ?? accent}
           icon={cat?.icon ?? editing?.categoryIcon ?? 'wallet-outline'}
           kicker={rollover ? 'Monthly · rolls over' : 'Monthly'}
-          amount={formatMoney(inputMinor(limit))}
+          figure={inputMinor(limit) > 0 ? formatMoney(inputMinor(limit)) : undefined}
+          per="a month"
           title={
             editing
               ? categorySentence(editing.categoryName, editing.parentName)
@@ -125,7 +125,7 @@ function BudgetForm({
           meta={
             editing
               ? `${longMonthYear(`${editing.budget.periodMonth}-01`)} · category and month are fixed`
-              : 'A limit for this month'
+              : undefined
           }
         />
         {!editing &&

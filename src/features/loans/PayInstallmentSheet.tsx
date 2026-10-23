@@ -11,7 +11,7 @@ import { PrimaryButton } from '@/components/PrimaryButton';
 import { DateField } from '@/components/DateField';
 import { useUndoToast } from '@/components/UndoToast';
 import { theme } from '@/constants/theme';
-import { SheetCard } from '@/components/SheetCard';
+import { DraftCard } from '@/components/DraftCard';
 import { dayMonthYear, weekdayDayMonth } from '@/lib/dateLabels';
 import { styles } from './loans.styles';
 import { errorMessage } from '@/lib/errorMessage';
@@ -161,20 +161,19 @@ export function PayInstallmentSheet({
         </View>
       }
     >
-      <SheetCard
+      <DraftCard
         hue={lent ? theme.colors.secondary : theme.colors.idCoralDeep}
         icon="calendar-check"
-        kicker={`EMI #${installment.installmentNumber}`}
-        amount={formatMoney(installment.emiAmountMinor)}
         title={`${lent ? 'Into' : 'From'} ${account?.name ?? '—'}`}
-        meta={`Due ${weekdayDayMonth(installment.dueDate)}`}
+        kicker={`EMI #${installment.installmentNumber} · due ${weekdayDayMonth(installment.dueDate)}`}
+        figure={formatMoney(installment.emiAmountMinor)}
+        per="this EMI"
+        meta={
+          account && balanceBefore != null
+            ? `${account.name} after ${lent ? 'receiving' : 'paying'}: ${formatMoney(balanceBefore + (lent ? 1 : -1) * installment.emiAmountMinor)}`
+            : undefined
+        }
       />
-      {account && balanceBefore != null && (
-        <Text style={styles.hintText}>
-          {account.name} after {lent ? 'receiving' : 'paying'}:{' '}
-          {formatMoney(balanceBefore + (lent ? 1 : -1) * installment.emiAmountMinor)}
-        </Text>
-      )}
       {!account && (
         <Text style={styles.hintText}>Add an account first to record payments against this loan.</Text>
       )}
@@ -186,8 +185,8 @@ export function PayInstallmentSheet({
       )}
       {early && (
         <Text style={styles.hintText}>
-          This EMI isn't due until {dayMonthYear(installment.dueDate)}. Recording it now completes this
-          installment early. Use Prepay on the loan for an extra principal payment instead.
+          Paying ahead of schedule completes this installment early. For an extra principal payment, use
+          Prepay on the loan.
         </Text>
       )}
       {busy ? (
@@ -203,7 +202,7 @@ export function PayInstallmentSheet({
           pastFacing
         />
       )}
-      <Text style={styles.hintText}>Choose when the money actually moved. The due date stays unchanged.</Text>
+      <Text style={styles.hintText}>The due date stays unchanged.</Text>
     </ModalSheet>
   );
 }

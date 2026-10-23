@@ -97,9 +97,8 @@ export function AssetModal({
         placeholder="e.g. 3500000"
       />
       <Text style={styles.hintText}>
-        Leave it blank if you don't have an estimate yet — you can add one later. Once set, value minus what's
-        still owed ({formatMoney(loan.outstandingPrincipalMinor)}) counts toward Tracked Balance/Net Worth.
-        Yume doesn't estimate it for you, so update it whenever the real value changes.
+        Value minus what's still owed ({formatMoney(loan.outstandingPrincipalMinor)}) counts toward Net Worth.
+        Leave the value blank if you don't have one yet, and update it when it changes.
       </Text>
       {(!!loan.assetLabel || loan.assetValueMinor != null) && (
         <SheetLink label="Stop tracking this asset" onPress={stopTracking} disabled={saving} />
