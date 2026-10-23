@@ -7,10 +7,10 @@ import { createCategory, updateCategory } from '@/db/ledger';
 import { Category, CategoryKind } from '@/types';
 import { FormInput } from '@/components/FormInput';
 import { SheetTabs } from '@/components/SheetTabs';
-import { ToggleSwitch } from '@/components/ToggleSwitch';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { ModalSheet, SheetLink } from '@/components/ModalSheet';
-import { SheetCard } from '@/components/SheetCard';
+import { DraftCard } from '@/components/DraftCard';
+import { SwitchRow } from '@/components/SwitchRow';
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { CATEGORY_COLOR_PALETTE, modalFooterStyles as f, theme } from '@/constants/theme';
 import { CATEGORY_ICON_CHOICES } from '@/constants/categories';
@@ -145,8 +145,7 @@ export function AddCategoryModal({
         </View>
       }
     >
-      <SheetCard
-        compact
+      <DraftCard
         hue={color}
         icon={icon}
         kicker={kind === 'income' ? 'Income' : 'Expense'}
@@ -165,7 +164,7 @@ export function AddCategoryModal({
       {isSystem ? (
         <Text style={styles.modalHint}>
           Built-in category — its name, type and parent are fixed because Yume files loan and Friends & Family
-          transactions under it automatically. Colour, icon and sensitivity can still be changed.
+          entries under it. Colour, icon and sensitivity can still be changed.
         </Text>
       ) : category ? (
         <Text style={styles.modalHint}>
@@ -219,7 +218,7 @@ export function AddCategoryModal({
             <Text style={styles.modalHint}>
               {category?.parentId && parentId !== category.parentId ? 'Will move to' : 'A subcategory of'}{' '}
               {allCategories.find((c) => c.id === parentId)?.name} — its spend rolls up into that category's
-              total in Reports, with its own split visible on drill-down.
+              total in Reports.
             </Text>
           )}
         </>
@@ -264,22 +263,17 @@ export function AddCategoryModal({
             </Pressable>
           ))}
       </View>
-      <View style={styles.sensitiveRow}>
-        <View style={{ flex: 1, marginRight: 10 }}>
-          <Text style={styles.fieldLabel}>Treat as sensitive</Text>
-          <Text style={styles.modalHint}>
-            {hiddenWithParent
-              ? `Hidden along with ${parentName}, which is marked sensitive. Change it there.`
-              : `When "Hide savings & investment amounts" is on (Settings, or the eye icon on any screen), this category's amounts show masked wherever they appear.`}
-          </Text>
-        </View>
-        <ToggleSwitch
-          accessibilityLabel="Treat as sensitive"
-          value={isSensitive || hiddenWithParent}
-          onChange={setIsSensitive}
-          disabled={hiddenWithParent}
-        />
-      </View>
+      <SwitchRow
+        title="Treat as sensitive"
+        hint={
+          hiddenWithParent
+            ? `Hidden along with ${parentName}, which is marked sensitive. Change it there.`
+            : 'Amounts show masked while "Hide savings & investment amounts" is on (Settings, or the eye icon).'
+        }
+        value={isSensitive || hiddenWithParent}
+        onChange={setIsSensitive}
+        disabled={hiddenWithParent}
+      />
       {category && !category.isSystem && onManage && (
         <SheetLink label="Archive or delete" onPress={onManage} disabled={saving} />
       )}
