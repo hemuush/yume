@@ -1,5 +1,7 @@
 # Documentation index
 
+The [23 October Android audit verification](ANDROID_AUDIT_VERIFICATION_2026_10_23.md) tracks implemented fixes, fresh checks and remaining product/device decisions. The [original audit](ANDROID_PRODUCTION_AUDIT_2026_10_23.md) preserves the architecture, scores, baseline source references and fault reproduction before those fixes. Historical widget-validation results remain distinct from fresh verification and Android acceptance.
+
 Start with the [README](../README.md), [architecture and logic](ARCHITECTURE.md), [data model](../DATA_MODEL.md), [backup and restore](../BACKUP.md) and [build/release guide](../BUILD.md).
 
 The [22 October Reports redesign](REPORTS_REDESIGN_2026_10_22.md) records the scrubbable hero, rebuilt heatmap and day inspector, highlight cards, tile breakdown and projected trend. The [22 October Profile and Settings redesign](PROFILE_REDESIGN_2026_10_22.md) records the flat identity row, money card, stat strip, Safety check and inline theme swatches. The [22 October Home redesign](HOME_REDESIGN_2026_10_22.md) records Coming up (payments, budgets and goals in one list), the month line and the other Home changes. The [22 October full-code review](CODE_REVIEW_2026_10_22.md) records the bugs fixed after every source file was read, the reviewer claims that proved wrong and what was deliberately left. The [21 October Expo SDK 58 upgrade](SDK_58_UPGRADE_2026_10_21.md) records the version moves, the code the upgrade required, packages held back, test-tooling workarounds and validation limits. The [21 October performance, database, motion and link audit](AUDIT_PLAN_REVIEW_2026_10_21.md) records fresh query plans, fixture timings and the items deliberately left unchanged, plus the report-only CI performance step. The [21 October related-sheet navigation fix](SHEET_FLOW_REVIEW_2026_10_21.md) replaces detached child popups with one persistent native sheet for loan, goal, budget, valuation, transaction-to-recurring and next-occurrence tasks. Native phone acceptance remains separate from automated checks.
@@ -92,3 +94,7 @@ See [interaction and recovery refinement](INTERACTION_RECOVERY_2026_10_20.md) fo
 Payment-method entry/filter/detail/report UI was removed at the owner's request; see the current architecture guide. Account-based entry and filtering remain. Older implementation reports describe the previous feature state.
 
 See [current flow audit](CURRENT_FLOW_AUDIT_2026_10_20.md) for the latest cross-screen review, reproduced flow corrections and fresh validation limits.
+
+Widget presentation and picker-preview regeneration are documented in the [Android widget presentation section](ARCHITECTURE.md#android-widget-presentation).
+
+See [widget validation and native renderer corrections](WIDGET_VALIDATION_2026_10_23.md) for the fresh widget recheck, fixes and remaining device checks.
