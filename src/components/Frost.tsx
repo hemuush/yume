@@ -182,9 +182,8 @@ export const frost = StyleSheet.create({
   paceTrack: {
     height: 10,
     borderRadius: 5,
-    backgroundColor: 'rgba(255,255,255,0.75)',
-    borderWidth: 1,
-    borderColor: GLASS.edge,
+    // The heroes are solid cream cards now, so the track is the soft tray tone (a white track vanished on them).
+    backgroundColor: theme.colors.trayTrack,
     overflow: 'hidden',
   },
   paceFill: { height: '100%', borderRadius: 5 },
