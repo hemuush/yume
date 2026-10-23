@@ -224,7 +224,7 @@ export default function CategoriesScreen() {
   if (!loaded && !loadError) {
     return (
       <View style={styles.container}>
-        <HomeWallpaper accent={accent} secondary={secondary} />
+        <HomeWallpaper accent={accent} secondary={secondary} plain />
         <SkyHeader title="Categories" showBack hideUser wallpaper />
         <View style={{ paddingTop: 20 }}>
           <Skeleton
@@ -252,7 +252,7 @@ export default function CategoriesScreen() {
 
   return (
     <View style={styles.container}>
-      <HomeWallpaper accent={accent} secondary={secondary} />
+      <HomeWallpaper accent={accent} secondary={secondary} plain />
       <ReanimatedAnimated.ScrollView
         ref={scrollRef}
         onScroll={scrollHandler}

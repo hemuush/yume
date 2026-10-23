@@ -14,7 +14,7 @@ const HEIGHT = 112;
 const BASE = 92;
 const RISE = 54;
 const MARK = 15;
-const SUN = '#E0A23A';
+const SUN = '#C98A1E';
 /** Half the Noon label's box, so it centres on noon's place on the arc (not the middle of the row). */
 const NOON_HALF = 30;
 
@@ -54,8 +54,8 @@ export function DayArc({ morning, evening }: { morning: Slot; evening: Slot }) {
         {width > 0 && (
           <>
             <Svg width={width} height={HEIGHT}>
-              <Line x1={4} x2={width - 4} y1={BASE + 8} y2={BASE + 8} stroke="rgba(16,32,51,0.12)" />
-              <Path d={arc} fill="none" stroke="rgba(16,32,51,0.2)" strokeWidth={1.5} strokeDasharray="4 4" />
+              <Line x1={4} x2={width - 4} y1={BASE + 8} y2={BASE + 8} stroke="rgba(18,19,15,0.14)" />
+              <Path d={arc} fill="none" stroke="rgba(18,19,15,0.28)" strokeWidth={1.5} strokeDasharray="4 4" />
               {marks.map((s) => (
                 <Line
                   key={s.key}
