@@ -36,7 +36,6 @@ export function PersonTile({
 }: {
   person: PersonWithBalance;
   color: string;
-  index: number;
   onPress: () => void;
 }) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.98);

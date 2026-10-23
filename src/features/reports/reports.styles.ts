@@ -266,8 +266,6 @@ export const styles = StyleSheet.create({
   },
   tidyNudgeLink: { fontFamily: theme.font.bodyBold, textDecorationLine: 'underline' },
   blockTitle: { ...SECTION_TITLE, marginBottom: SECTION_GAP.bottom },
-  legend: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  legendText: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted },
 
   catCard: {
     ...CARD,
