@@ -5,7 +5,7 @@ import { ModalSheet } from '@/components/ModalSheet';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { BackupSummary } from '@/lib/backup';
 import { theme } from '@/constants/theme';
-import { SheetCard } from '@/components/SheetCard';
+import { DraftCard } from '@/components/DraftCard';
 import { dayMonthYear } from '@/lib/dateLabels';
 import { useAccent } from '@/theme/AccentContext';
 
@@ -74,7 +74,7 @@ export function RestorePreviewSheet({
     >
       {/* The calm-sheets sign-off (Direction C): the backup as a card — when
           it was made and what's in it — then what's on the phone now. */}
-      <SheetCard
+      <DraftCard
         hue={accent}
         icon="backup-restore"
         kicker="Restore"

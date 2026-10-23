@@ -22,7 +22,7 @@ function mockStub(testID: string) {
 jest.mock('@/components/FormInput', () => ({ FormInput: mockStub('name') }));
 jest.mock('@/components/SheetTabs', () => ({ SheetTabs: mockStub('kind') }));
 jest.mock('@/components/ToggleSwitch', () => ({ ToggleSwitch: mockStub('sensitive') }));
-jest.mock('@/components/SheetCard', () => ({ SheetCard: mockStub('card') }));
+jest.mock('@/components/DraftCard', () => ({ DraftCard: mockStub('card') }));
 jest.mock('@/components/CategoryIcon', () => ({ CategoryIcon: () => null }));
 
 import { AddCategoryModal } from './AddCategoryModal';
