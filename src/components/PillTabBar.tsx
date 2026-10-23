@@ -1,5 +1,12 @@
 import { useEffect, useState } from 'react';
-import { View, Pressable, StyleSheet, Keyboard, Animated as RNAnimated } from 'react-native';
+import {
+  View,
+  Pressable,
+  StyleSheet,
+  Keyboard,
+  Animated as RNAnimated,
+  useWindowDimensions,
+} from 'react-native';
 import Animated, { LinearTransition } from 'react-native-reanimated';
 import { MOTION } from '@/lib/animation';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -27,14 +34,14 @@ const ICONS: Record<string, typeof HomeIcon> = {
 };
 
 /** The pill's height at the default font size, and its gap above the phone's bottom edge. */
-const PILL_BAR = { height: 60, bottomGap: 10 } as const;
+const PILL_BAR = { height: 60, bottomGap: 10, maxInlineScale: 1.15, narrowWidth: 360 } as const;
 
 function Tab({
   label,
   Icon,
   focused,
   fill,
-  size,
+  layout,
   onPress,
   onLongPress,
   logAgain = false,
@@ -44,11 +51,12 @@ function Tab({
   focused: boolean;
   /** The chosen tab's pill: the theme colour itself, with ink on it. The Add button keeps the dark ink. */
   fill: string;
-  size: number;
+  layout: { size: number; showLabel: boolean };
   onPress: () => void;
   onLongPress: () => void;
   logAgain?: boolean;
 }) {
+  const { size, showLabel } = layout;
   const reduce = useReduceMotion();
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.92);
   return (
@@ -70,13 +78,13 @@ function Tab({
           style={[
             styles.tab,
             { height: size, minWidth: size, borderRadius: size / 2 },
-            focused && { backgroundColor: fill, paddingHorizontal: 16 },
+            focused && { backgroundColor: fill, paddingHorizontal: showLabel ? 12 : 0 },
           ]}
         >
           <Icon color={focused ? theme.colors.ink : theme.colors.inkSoft} size={20} />
-          {focused && (
+          {focused && showLabel && (
             <View>
-              <Text style={styles.label} numberOfLines={1} maxFontSizeMultiplier={1.15}>
+              <Text style={styles.label} numberOfLines={1}>
                 {label}
               </Text>
             </View>
@@ -104,8 +112,12 @@ export function PillTabBar({
   const { accent } = useAccent();
   const ink = themeInk(accent);
   const scale = useUiScale();
+  const { width, fontScale } = useWindowDimensions();
+  const stackedLabel = fontScale > PILL_BAR.maxInlineScale || width < PILL_BAR.narrowWidth;
   const height = Math.round(PILL_BAR.height * scale);
-  const inner = height - 12;
+  const inner = stackedLabel ? theme.accessibility.minTouchTarget : height - 12;
+  const active = state.routes[state.index];
+  const activeLabel = active ? (descriptors[active.key].options.title ?? active.name) : '';
   const isHome = state.routes[state.index]?.name === 'index';
   const add = usePressScale(0.92);
   const [keyboard, setKeyboard] = useState(false);
@@ -130,39 +142,53 @@ export function PillTabBar({
           { height: height + insets.bottom + 38, bottom: -insets.bottom - PILL_BAR.bottomGap },
         ]}
       />
-      <View style={[styles.pill, { height, borderRadius: height / 2 }]} accessibilityRole="tablist">
-        {state.routes.map((route, index) => {
-          const Icon = ICONS[route.name];
-          if (!Icon) return null;
-          const focused = state.index === index;
-          const label = descriptors[route.key].options.title ?? route.name;
-          return (
-            <Tab
-              key={route.key}
-              label={label}
-              Icon={Icon}
-              focused={focused}
-              fill={selectedFill(accent)}
-              size={inner}
-              logAgain={isHome}
-              onPress={() => {
-                const event = emitter.emit({
-                  type: 'tabPress',
-                  target: route.key,
-                  canPreventDefault: true,
-                });
-                if (!focused && !event.defaultPrevented) {
-                  haptics.tap();
-                  navigateToTab(route.key);
-                }
-              }}
-              onLongPress={() => {
-                if (isHome && focused) onAddLongPress();
-                else emitter.emit({ type: 'tabLongPress', target: route.key });
-              }}
-            />
-          );
-        })}
+      <View
+        style={[
+          styles.pill,
+          { minHeight: height, borderRadius: height / 2 },
+          stackedLabel && styles.pillStacked,
+        ]}
+        accessibilityRole="tablist"
+      >
+        <View style={styles.tabs}>
+          {state.routes.map((route, index) => {
+            const Icon = ICONS[route.name];
+            if (!Icon) return null;
+            const focused = state.index === index;
+            const label = descriptors[route.key].options.title ?? route.name;
+            return (
+              <Tab
+                key={route.key}
+                label={label}
+                Icon={Icon}
+                focused={focused}
+                fill={selectedFill(accent)}
+                layout={{ size: inner, showLabel: !stackedLabel }}
+                logAgain={isHome}
+                onPress={() => {
+                  const event = emitter.emit({
+                    type: 'tabPress',
+                    target: route.key,
+                    canPreventDefault: true,
+                  });
+                  if (!focused && !event.defaultPrevented) {
+                    haptics.tap();
+                    navigateToTab(route.key);
+                  }
+                }}
+                onLongPress={() => {
+                  if (isHome && focused) onAddLongPress();
+                  else emitter.emit({ type: 'tabLongPress', target: route.key });
+                }}
+              />
+            );
+          })}
+        </View>
+        {stackedLabel && (
+          <Text style={styles.activeLabel} accessible={false}>
+            {activeLabel}
+          </Text>
+        )}
       </View>
       <Pressable
         onPress={onAdd}
@@ -195,14 +221,22 @@ const styles = StyleSheet.create({
   fade: { position: 'absolute', left: -16, right: -16 },
   pill: {
     flex: 1,
-    flexDirection: 'row',
+    flexDirection: 'column',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     paddingHorizontal: 6,
     backgroundColor: 'rgba(255,255,255,0.86)',
     borderWidth: 1,
     borderColor: GLASS.edge,
     boxShadow: '0px 10px 28px rgba(16,32,51,0.12)',
+  },
+  tabs: { width: '100%', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  pillStacked: { paddingVertical: theme.space.sm, gap: theme.space.xs },
+  activeLabel: {
+    fontFamily: theme.font.bodyBold,
+    fontSize: 13,
+    color: theme.colors.ink,
+    textAlign: 'center',
   },
   tab: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7 },
   label: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.ink },

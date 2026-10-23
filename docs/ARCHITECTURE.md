@@ -4,6 +4,8 @@ Module and behavior map, maintained through the targeted cleanup, [follow-up rec
 
 ## Ownership and data flow
 
+Shared [Text/TextInput](../src/components/Text.tsx) support OS text scaling through 200%. Above the reflow breakpoint, single-line labels wrap instead of shrinking, inputs reserve scaled line/padding/border space, number-pad keys grow, and navigation puts the active label below its icon row. [useFontScale](../src/lib/useFontScale.ts) shares one OS subscription and removes it when unused. This is the implemented policy; visual/TalkBack acceptance at 200% on Android remains a separate device check.
+
 [app/](../app) owns Expo Router routes. [src/features/](../src/features) owns screen presentation; [src/components/](../src/components) provides reusable controls. [src/db/](../src/db) owns persisted records and transactional queries. [src/lib/](../src/lib) owns independent calculations and platform workflows. Themes and widgets have separate directories.
 
 The [root layout](../app/_layout.tsx) initializes application services and providers. Screen loads use [useScreenLoad](../src/lib/useScreenLoad.ts); stale requests must not replace a newer scope. Mutations use database transactions and, where appropriate, [useSaveOnce](../src/lib/useSaveOnce.ts) to prevent repeated submissions. [Client](../src/db/client.ts) serializes database operations; callbacks must use the supplied transaction/exclusive handle rather than reopening the database inside that operation.
