@@ -93,8 +93,6 @@
               "previewImage": "./assets/widget-preview/quick-add.png",
               "minWidth": "208dp",
               "minHeight": "184dp",
-              "targetCellWidth": 3,
-              "targetCellHeight": 3,
               "resizeMode": "horizontal|vertical"
             },
             {
