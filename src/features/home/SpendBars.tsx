@@ -18,7 +18,7 @@ import { haptics } from '@/lib/haptics';
 import { timing, PANEL_ENTER, ROW_EXIT } from '@/lib/animation';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 import { useAccent } from '@/theme/AccentContext';
-import { hexToRgba } from '@/lib/color';
+import { hexToRgba, hexToHsl, shade } from '@/lib/color';
 import { withPressed } from '@/lib/pressed';
 import { parseLocalIsoDate } from '@/lib/date';
 import { defaultBar, monthBars, weekBars, SpendBar } from './spendBarData';
@@ -30,6 +30,8 @@ type Range = 'week' | 'month';
 /** The tallest a capsule's fill gets, and the least a day with any spending shows. */
 const TRACK_H = 60;
 const FILL_MIN = 14;
+/** The lightest the capsule fill's second colour gets, so it still reads against the track in every theme. */
+const FILL_END_MAX_L = 72;
 /** Past this font scale the amounts over the capsules would collide, so only the picked day's is read (above). */
 const VALUES_UP_TO = 1.15;
 /** A day this many times the daily goal is a one-off, not a slip: said calmly. */
@@ -63,6 +65,8 @@ function Capsule({
   const reduce = useReduceMotion();
   const { accent, secondary } = useAccent();
   const target = fillHeight(bar.totalMinor, maxMinor);
+  // A very light second colour would vanish into the track, so its lightness is capped.
+  const fillEnd = hexToHsl(secondary)[2] > FILL_END_MAX_L ? shade(secondary, FILL_END_MAX_L) : secondary;
   const growth = useSharedValue(reduce ? 1 : 0);
   useEffect(() => {
     growth.value = reduce ? 1 : withDelay(delay, withTiming(1, timing(320)));
@@ -91,7 +95,7 @@ function Capsule({
       </Text>
       <View style={[styles.track, { backgroundColor: hexToRgba(accent, 0.2) }, selected && styles.trackOn]}>
         <Animated.View style={[styles.fill, { height: target, transformOrigin: 'bottom' }, fillStyle]}>
-          <LinearGradient colors={[accent, secondary]} style={StyleSheet.absoluteFill} />
+          <LinearGradient colors={[accent, fillEnd]} style={StyleSheet.absoluteFill} />
         </Animated.View>
         {goalH != null && <View pointerEvents="none" style={[styles.goalTick, { bottom: goalH }]} />}
       </View>

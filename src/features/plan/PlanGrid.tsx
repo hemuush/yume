@@ -2,7 +2,9 @@ import { View, Pressable, useWindowDimensions } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
-import { withPressed } from '@/lib/pressed';
+import { withPressedTint } from '@/lib/pressed';
+import { shade } from '@/lib/color';
+import { useAccent } from '@/theme/AccentContext';
 import { styles } from './plan.styles';
 
 /** Budgets and goals use three columns normally, two on narrow screens and one with enlarged text. */
@@ -31,16 +33,17 @@ export function AddSlot({
   accessibilityLabel: string;
   onPress: () => void;
 }) {
+  const { accent } = useAccent();
   if (count >= limit) return null;
   const slim = count % columns === 0;
   return (
     <Pressable
       onPress={onPress}
-      style={withPressed([styles.gridTile, styles.tileAdd, slim && styles.tileSlim])}
+      style={withPressedTint(accent, [styles.gridTile, styles.tileAdd, slim && styles.tileSlim])}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
     >
-      <View style={[styles.addDisc, slim && styles.addDiscSmall]}>
+      <View style={[styles.addDisc, slim && styles.addDiscSmall, { backgroundColor: shade(accent, 88) }]}>
         <Feather name="plus" size={17} color={theme.colors.ink} />
       </View>
       <Text style={styles.addText}>{label}</Text>

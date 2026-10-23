@@ -10,7 +10,7 @@ import { theme } from '@/constants/theme';
 import { haptics } from '@/lib/haptics';
 import { Account } from '@/types';
 import { styles } from '@/features/add/add.styles';
-import { withPressed } from '@/lib/pressed';
+import { withPressedTint } from '@/lib/pressed';
 import { useAccent } from '@/theme/AccentContext';
 
 /** Accounts as rows with their kind and balance, the picked one outlined: Add's account sheets. */
@@ -35,7 +35,7 @@ export function AccountPickList({
               haptics.tap();
               onPick(a.id);
             }}
-            style={withPressed([
+            style={withPressedTint(accent, [
               styles.pickRow,
               on && { backgroundColor: selectedFill(accent), borderColor: selectedFill(accent) },
             ])}

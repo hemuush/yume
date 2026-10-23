@@ -52,7 +52,8 @@ import { themeInk, selectedFill } from '@/theme/interactionColors';
 import { haptics } from '@/lib/haptics';
 import { errorMessage } from '@/lib/errorMessage';
 import { DURATIONS } from '@/lib/motionTimings';
-import { withPressed } from '@/lib/pressed';
+import { withPressed, withPressedTint } from '@/lib/pressed';
+import { shade } from '@/lib/color';
 import { categoryPath, parentNameOf } from '@/lib/categoryLabel';
 import { EmptyState } from '@/components/EmptyState';
 import { useReduceMotion } from '@/lib/useReduceMotion';
@@ -631,7 +632,7 @@ export default function TransactionsScreen() {
 
   return (
     <View style={styles.container}>
-      <HomeWallpaper accent={accent} secondary={secondary} />
+      <HomeWallpaper accent={accent} secondary={secondary} plain />
       <PeriodPicker
         visible={monthPickerVisible}
         onClose={() => setMonthPickerVisible(false)}
@@ -777,9 +778,18 @@ export default function TransactionsScreen() {
                       accessibilityRole="button"
                       accessibilityLabel="Remove expense label filter"
                       onPress={() => setFilterLabel(undefined)}
-                      style={{ minHeight: 44, paddingHorizontal: 16, justifyContent: 'center' }}
+                      style={withPressedTint(accent, [
+                        styles.chip,
+                        {
+                          alignSelf: 'flex-start',
+                          marginHorizontal: 16,
+                          marginTop: 8,
+                          backgroundColor: shade(accent, 95),
+                        },
+                      ])}
                     >
-                      <Text style={{ color: theme.colors.link }}>Label: {filterLabel} ×</Text>
+                      <Text style={styles.chipText}>Label: {filterLabel}</Text>
+                      <Feather name="x" size={12} color={theme.colors.textSecondary} />
                     </Pressable>
                   )}
                   <ActivityFilterChips
@@ -973,7 +983,7 @@ export default function TransactionsScreen() {
                     key={o.value}
                     onPress={() => onChangeViewScope(o.value)}
                     hitSlop={2}
-                    style={withPressed([
+                    style={withPressedTint(accent, [
                       styles.scopeBtn,
                       stackPeriod && styles.scopeBtnStacked,
                       on && { backgroundColor: selectedFill(accent) },

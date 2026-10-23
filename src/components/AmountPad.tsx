@@ -136,14 +136,15 @@ const styles = StyleSheet.create({
     borderRadius: theme.radius.md,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: theme.colors.surface,
+    // The soft tray, so a key reads as a key on the cream panel it sits on.
+    backgroundColor: theme.colors.tray,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
   },
   // The docked pad sits on a sheet's own cream, so its keys are the lighter surface with a hairline.
   keyCompact: {
     minHeight: 44,
-    backgroundColor: theme.colors.surface,
+    backgroundColor: theme.colors.tray,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
   },

@@ -7,7 +7,8 @@ import { formatMoney, getCurrencySymbol } from '@/lib/money';
 import { haptics } from '@/lib/haptics';
 import { styles } from '@/features/add/add.styles';
 import { EntryType, TYPE_WASH, typeWash } from '@/features/add/addEntry';
-import { withPressed } from '@/lib/pressed';
+import { withPressedTint } from '@/lib/pressed';
+import { softTint } from '@/components/softTint';
 import { useAccent } from '@/theme/AccentContext';
 
 /**
@@ -53,7 +54,13 @@ export function AmountCard({
   const { width, fontScale } = useWindowDimensions();
   const stacked = width < 380 || fontScale > 1.15;
   return (
-    <View style={styles.heroCard}>
+    <View
+      style={[
+        styles.heroCard,
+        // While the pad is up, the card's edge takes the entry type's colour at low strength.
+        padVisible && { borderColor: softTint(wash.accent, 0.35) },
+      ]}
+    >
       <View style={[styles.amountHeader, stacked && styles.amountHeaderStacked]}>
         <View style={styles.heroLabelRow}>
           <View style={[styles.heroDot, { backgroundColor: wash.accent }]} />
@@ -61,7 +68,7 @@ export function AmountCard({
           {onTogglePad && !isLinked && !padVisible && (
             <Pressable
               onPress={onTogglePad}
-              style={withPressed(styles.padToggle)}
+              style={withPressedTint(accent, styles.padToggle)}
               accessibilityRole="button"
               accessibilityLabel={padVisible ? 'Hide number pad' : 'Show number pad'}
             >
@@ -77,7 +84,7 @@ export function AmountCard({
         <Pressable
           onPress={onOpenPad}
           disabled={isLinked}
-          style={withPressed([styles.amountRow, stacked && styles.amountRowStacked])}
+          style={withPressedTint(accent, [styles.amountRow, stacked && styles.amountRowStacked])}
           accessibilityRole="button"
           accessibilityLabel={`Amount, ${expr === '' ? 'empty' : shownAmount}`}
           accessibilityHint={padVisible ? undefined : 'Opens the number pad'}
@@ -114,7 +121,7 @@ export function AmountCard({
                   haptics.tap();
                   onPickAmount(minor);
                 }}
-                style={withPressed([
+                style={withPressedTint(accent, [
                   styles.frequentChip,
                   active && [{ backgroundColor: selectedFill(accent), borderColor: selectedFill(accent) }],
                 ])}

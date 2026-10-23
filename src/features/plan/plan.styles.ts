@@ -163,7 +163,7 @@ export const styles = StyleSheet.create({
   tileTrack: {
     height: 5,
     borderRadius: 3,
-    backgroundColor: theme.colors.inkWash,
+    backgroundColor: theme.colors.inkHairline,
     marginTop: 'auto',
     overflow: 'hidden',
   },

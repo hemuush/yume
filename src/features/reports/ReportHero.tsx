@@ -6,7 +6,7 @@ import { screenStyles as h } from '@/components/screenStyles';
 import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
 import { roundedMinor } from '@/lib/round';
-import { hexToRgba } from '@/lib/color';
+import { hexToRgba, shade } from '@/lib/color';
 import { useAccent } from '@/theme/AccentContext';
 import { themeInk } from '@/theme/interactionColors';
 import type { BudgetCover } from './reportsInsights';
@@ -48,7 +48,8 @@ export function ReportHero({
   const used = budget ? budget.spentMinor / budget.limitMinor : 0;
   const over = budget != null && used > 1;
   const near = budget != null && !over && used >= NEAR_BUDGET;
-  const barColor = over ? theme.colors.expense : near ? theme.colors.slice.due : accent;
+  // Calm is a deeper shade of the theme colour: the plain pastel barely shows on the track.
+  const barColor = over ? theme.colors.expense : near ? theme.colors.slice.due : shade(accent, 68);
   const kept = incomeMinor - spentMinor;
   const keptPct = incomeMinor > 0 ? Math.round((kept / incomeMinor) * 100) : null;
   const incomeChange =

@@ -37,7 +37,7 @@ import {
   snoozeBackupReminder,
   unsnoozeBackupReminder,
 } from '@/features/home/needsYouData';
-import { withPressed } from '@/lib/pressed';
+import { withPressedTint } from '@/lib/pressed';
 import { errorMessage } from '@/lib/errorMessage';
 import { showAlert } from '@/components/AppDialog';
 import { payCardRoute } from '@/lib/payCard';
@@ -159,7 +159,7 @@ export default function NeedsYouScreen() {
 
   return (
     <View style={styles.container}>
-      <HomeWallpaper accent={accent} secondary={secondary} />
+      <HomeWallpaper accent={accent} secondary={secondary} plain />
       <ReanimatedAnimated.ScrollView
         ref={scrollRef}
         onScroll={scrollHandler}
@@ -274,7 +274,7 @@ export default function NeedsYouScreen() {
           <>
             <Pressable
               onPress={() => setShowDismissed((v) => !v)}
-              style={withPressed(styles.dismissedToggle)}
+              style={withPressedTint(accent, styles.dismissedToggle)}
               accessibilityRole="button"
               accessibilityState={{ expanded: showDismissed }}
             >

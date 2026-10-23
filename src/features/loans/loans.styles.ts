@@ -9,7 +9,7 @@ export const styles = StyleSheet.create({
     height: 5,
     borderRadius: 3,
     overflow: 'hidden',
-    backgroundColor: theme.colors.inkWash,
+    backgroundColor: theme.colors.inkHairline,
     marginVertical: 10,
   },
   repaymentFill: { height: '100%', backgroundColor: theme.colors.incomeText },

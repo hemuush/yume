@@ -36,7 +36,7 @@ import { TrackedCard } from './TrackedCard';
 import { LinkTiles } from './LinkTiles';
 import { AddAccountModal } from './AddAccountModal';
 import { AccountDetailModal } from './AccountDetailModal';
-import { withPressed } from '@/lib/pressed';
+import { withPressedTint } from '@/lib/pressed';
 import { cardSurface } from '@/components/CardSurface';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -247,7 +247,7 @@ export function YouSection() {
         {archivedAccounts.length > 0 && (
           <View style={[h.card, cardSurface.neutral, styles.archivedCard]}>
             <Pressable
-              style={withPressed(h.row)}
+              style={withPressedTint(accent, h.row)}
               onPress={() => setArchivedOpen((v) => !v)}
               accessibilityRole="button"
               accessibilityState={{ expanded: archivedOpen }}
@@ -292,7 +292,7 @@ export function YouSection() {
           points there for anyone used to finding them on Profile. */}
       <Pressable
         onPress={() => router.navigate('/plan')}
-        style={withPressed(styles.planLink)}
+        style={withPressedTint(accent, styles.planLink)}
         accessibilityRole="button"
         accessibilityLabel="Budgets, goals and recurring are in Plan"
       >

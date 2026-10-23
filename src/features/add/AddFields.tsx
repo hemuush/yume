@@ -10,7 +10,7 @@ import { useAccent } from '@/theme/AccentContext';
 import { haptics } from '@/lib/haptics';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { styles } from './add.styles';
-import { withPressed } from '@/lib/pressed';
+import { withPressedTint } from '@/lib/pressed';
 import { shade } from '@/lib/color';
 import { formatMoney } from '@/lib/money';
 import { hueFor } from '@/lib/hueFor';
@@ -23,7 +23,7 @@ function Chip({ label, active, onPress }: { label: string; active: boolean; onPr
         haptics.tap();
         onPress();
       }}
-      style={withPressed([
+      style={withPressedTint(accent, [
         styles.chip,
         active && { borderColor: selectedFill(accent), backgroundColor: selectedFill(accent) },
       ])}
@@ -84,7 +84,7 @@ export function DetailChip({
         onPress();
       }}
       disabled={disabled}
-      style={withPressed([
+      style={withPressedTint(accent, [
         styles.detailChip,
         active && [{ backgroundColor: selectedFill(accent), borderColor: selectedFill(accent) }],
         disabled && styles.detailChipDisabled,
@@ -163,7 +163,7 @@ export function FriendFields({
                   haptics.tap();
                   setPersonId(p.id);
                 }}
-                style={withPressed(styles.person)}
+                style={withPressedTint(accent, styles.person)}
                 accessibilityRole="button"
                 accessibilityState={{ selected: on }}
               >
@@ -180,7 +180,7 @@ export function FriendFields({
           })}
           <Pressable
             onPress={onAddPerson}
-            style={withPressed(styles.person)}
+            style={withPressedTint(accent, styles.person)}
             accessibilityRole="button"
             accessibilityLabel="Add a person"
           >

@@ -41,7 +41,7 @@ import { SafetyCheck } from './SafetyCheck';
 import { cardSurface } from '@/components/CardSurface';
 import { errorMessage } from '@/lib/errorMessage';
 import type { McIconName } from '@/components/iconName';
-import { withPressed } from '@/lib/pressed';
+import { withPressedTint } from '@/lib/pressed';
 import { haptics } from '@/lib/haptics';
 import { refreshAllWidgets } from '@/widgets/notifyWidgets';
 import { showAlert } from '@/components/AppDialog';
@@ -93,7 +93,7 @@ function AboutFact({ icon, text }: { icon: string; text: string }) {
  * each row with its icon on a soft tint.
  */
 export function SettingsSection() {
-  const { themeId, setTheme, themeSaveError } = useAccent();
+  const { accent, themeId, setTheme, themeSaveError } = useAccent();
   const { lockEnabled, setLockEnabled } = useAppLock();
   const { hideAmounts, toggleHideAmounts } = usePrivacy();
   const [hideWidgets, setHideWidgets] = useState<boolean | null>(null);
@@ -322,7 +322,7 @@ export function SettingsSection() {
               {SUPPORTED_CURRENCIES.map((c, i) => (
                 <Pressable
                   key={c.code}
-                  style={withPressed([styles.pickerRow, i > 0 && h.divider])}
+                  style={withPressedTint(accent, [styles.pickerRow, i > 0 && h.divider])}
                   onPress={() => onSelectCurrency(c.code)}
                   accessibilityRole="button"
                   accessibilityLabel={`${c.label}, ${c.code}`}
@@ -504,7 +504,7 @@ export function SettingsSection() {
         <View style={[h.card, cardSurface.neutral]}>
           <Pressable
             onPress={() => router.push('/themes')}
-            style={withPressed(h.row)}
+            style={withPressedTint(accent, h.row)}
             accessibilityRole="button"
             accessibilityLabel={`Theme: ${activeTheme.name}. Change theme`}
           >
@@ -525,7 +525,7 @@ export function SettingsSection() {
                     if (!active) haptics.tap();
                     setTheme(pack.id);
                   }}
-                  style={withPressed([styles.swatchHit, active && styles.swatchActive])}
+                  style={withPressedTint(accent, [styles.swatchHit, active && styles.swatchActive])}
                   accessibilityRole="button"
                   accessibilityLabel={`${pack.name} theme`}
                   accessibilityState={{ selected: active }}
@@ -547,7 +547,7 @@ export function SettingsSection() {
         <Pressable
           onPress={() => setAboutOpen((v) => !v)}
           hitSlop={8}
-          style={withPressed(styles.footerLink)}
+          style={withPressedTint(accent, styles.footerLink)}
           accessibilityRole="button"
           accessibilityState={{ expanded: aboutOpen }}
           accessibilityLabel="About Yume"

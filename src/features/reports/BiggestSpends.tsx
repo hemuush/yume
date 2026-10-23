@@ -6,7 +6,9 @@ import { CategoryIcon } from '@/components/CategoryIcon';
 import { parseLocalIsoDate } from '@/lib/date';
 import { inParent, joinSub, parentNameOf } from '@/lib/categoryLabel';
 import { theme } from '@/constants/theme';
-import { withPressed } from '@/lib/pressed';
+import { withPressed, withPressedTint } from '@/lib/pressed';
+import { softTint } from '@/components/softTint';
+import { useAccent } from '@/theme/AccentContext';
 import type { LargestExpense } from '@/db/reports';
 import type { Category } from '@/types';
 import { styles } from './reports.styles';
@@ -38,6 +40,7 @@ export function BiggestSpends({
   /** The category the heatmap is narrowed to, when it is. */
   scopeName?: string;
 }) {
+  const { accent } = useAccent();
   const [expanded, setExpanded] = useState(false);
   const shown = expanded ? items : items.slice(0, 3);
   if (items.length < BIGGEST_MIN_ENTRIES) return null;
@@ -77,10 +80,10 @@ export function BiggestSpends({
             <Pressable
               key={e.id}
               onPress={() => onOpenDay(e.date)}
-              style={withPressed([
+              style={withPressedTint(accent, [
                 styles.dayRow,
                 i === 0 && { borderTopWidth: 0 },
-                openIso === e.date && styles.bigRowOn,
+                openIso === e.date && { backgroundColor: softTint(accent, 0.16) },
               ])}
               accessibilityRole="button"
               accessibilityLabel={`${note ?? catName}, ${day}. Show this day`}

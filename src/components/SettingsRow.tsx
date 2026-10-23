@@ -3,6 +3,8 @@ import Feather from '@expo/vector-icons/Feather';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
+import { shade } from '@/lib/color';
+import { useAccent } from '@/theme/AccentContext';
 import { usePressScale } from '@/lib/usePressScale';
 import { screenStyles as h } from '@/components/screenStyles';
 import { useSheetSurface } from './SheetSurface';
@@ -16,7 +18,7 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
  */
 export function SettingsRow({
   icon,
-  iconBg = theme.colors.surfaceAlt,
+  iconBg,
   label,
   sub,
   subColor,
@@ -51,12 +53,14 @@ export function SettingsRow({
   field?: boolean;
 }) {
   const inSheet = useSheetSurface();
+  const { accent } = useAccent();
+  const tileBg = iconBg ?? (inSheet ? theme.colors.surfaceAlt : shade(accent, 92));
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.99);
   const chevron = expanded === undefined ? 'chevron-right' : expanded ? 'chevron-up' : 'chevron-down';
   const content = (
     <>
       <View
-        style={[h.iconTile, round && styles.round, inSheet && styles.sheetIcon, { backgroundColor: iconBg }]}
+        style={[h.iconTile, round && styles.round, inSheet && styles.sheetIcon, { backgroundColor: tileBg }]}
       >
         <MaterialCommunityIcons name={icon as McIconName} size={17} color={theme.colors.ink} />
       </View>

@@ -5,7 +5,7 @@ import { StyleSheet } from 'react-native';
 
 export const theme = {
   colors: {
-    background: '#F4F0E7',
+    background: '#F1EDE2',
     surface: '#FFFDF8',
     surfaceAlt: '#F3ECE0',
     border: '#12130F', // ink, for a deliberate emphasis edge only; cards and rows use the `borderSoft` hairline
@@ -70,8 +70,8 @@ export const theme = {
     // Equal-lightness pastels so no slice shouts over another; they are fills only, never text.
     slice: {
       spent: '#F6A88E',
-      saved: '#7FDDB9',
-      due: '#F0BC4E',
+      saved: '#4FD09F',
+      due: '#EDB02F',
       free: '#7DB9F2',
       debt: '#BBA9F7',
     },

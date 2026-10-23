@@ -5,6 +5,8 @@ import { GLASS } from '@/components/Glass';
 import { GrowFill } from '@/components/GrowFill';
 import { theme } from '@/constants/theme';
 import { SCREEN } from '@/components/screenStyles';
+import { shade } from '@/lib/color';
+import { useAccent } from '@/theme/AccentContext';
 
 /**
  * The pieces every Frost screen shares (Plan and the screens it opens): a card's topic as an icon disc and a
@@ -25,9 +27,11 @@ export function Kicker({
   inTile?: boolean;
   children: React.ReactNode;
 }) {
+  const { accent } = useAccent();
   return (
     <View style={[frost.kickerRow, inTile && frost.kickerInTile]}>
-      <View style={frost.kickerBadge}>
+      {/* Tinted with the theme: a white disc on a cream card is invisible. */}
+      <View style={[frost.kickerBadge, { backgroundColor: shade(accent, 88), borderWidth: 0 }]}>
         {typeof icon === 'string' ? <Feather name={icon} size={14} color={theme.colors.ink} /> : icon}
       </View>
       <Text style={frost.kicker} numberOfLines={2}>

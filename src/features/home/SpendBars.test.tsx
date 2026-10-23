@@ -2,7 +2,7 @@ import { Text, StyleSheet } from 'react-native';
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
 import { LinearGradient } from 'expo-linear-gradient';
 import { THEMES } from '@/theme/themes';
-import { hexToRgba } from '@/lib/color';
+import { hexToRgba, hexToHsl, shade } from '@/lib/color';
 import { haptics } from '@/lib/haptics';
 
 let mockPack = { primary: '#8FCBFF', secondary: '#8FE8C8' };
@@ -53,6 +53,9 @@ const heights = (r: ReactTestRenderer) =>
 const FULL = 60;
 const smaller = (ratio: number) => 14 + Math.sqrt(ratio) * (FULL - 14);
 
+// The fill's second colour is capped in lightness so it still reads against the track.
+const fillEnd = (hex: string) => (hexToHsl(hex)[2] > 72 ? shade(hex, 72) : hex);
+
 it.each(THEMES)(
   'uses the selected $name palette for the capsules, without changing spending heights',
   (pack) => {
@@ -61,7 +64,9 @@ it.each(THEMES)(
     const gradients = tree.root.findAllByType(LinearGradient);
     expect(gradients).toHaveLength(7);
     expect(
-      gradients.every((g) => g.props.colors[0] === pack.primary && g.props.colors[1] === pack.secondary)
+      gradients.every(
+        (g) => g.props.colors[0] === pack.primary && g.props.colors[1] === fillEnd(pack.secondary)
+      )
     ).toBe(true);
     const tracks = tree.root.findAll(
       (n) => String(n.type) === 'View' && StyleSheet.flatten(n.props.style)?.maxWidth === 28

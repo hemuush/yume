@@ -22,7 +22,7 @@ export const HomeWallpaper = memo(function HomeWallpaper({
 }: {
   accent: string;
   secondary: string;
-  /** Home's own: the wash alone, without the two light blobs the other screens keep behind their glass. */
+  /** Home's own: the wash and one soft glow of the second colour, without the blobs the other screens keep behind their glass. */
   plain?: boolean;
 }) {
   const top = wallpaperTop(accent);
@@ -36,6 +36,17 @@ export const HomeWallpaper = memo(function HomeWallpaper({
         locations={[0, 0.4, 1]}
         style={StyleSheet.absoluteFill}
       />
+      {plain && (
+        <Svg style={StyleSheet.absoluteFill}>
+          <Defs>
+            <RadialGradient id="wpGlow" cx="50%" cy="50%" r="50%">
+              <Stop offset="0" stopColor={secondary} stopOpacity={0.3} />
+              <Stop offset="1" stopColor={secondary} stopOpacity={0} />
+            </RadialGradient>
+          </Defs>
+          <Circle cx="105%" cy="58%" r="230" fill="url(#wpGlow)" />
+        </Svg>
+      )}
       {!plain && (
         <Svg style={StyleSheet.absoluteFill}>
           <Defs>

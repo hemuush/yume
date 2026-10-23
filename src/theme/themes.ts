@@ -34,14 +34,6 @@ export const THEMES: ThemePack[] = [
     primary: '#A6B4F2',
     secondary: '#F0B79A',
   },
-  // Breaking Bad: the crystal-blue product and the money-green that consumes Walt, lifted from their toxic
-  // saturation into a pale aqua and a soft chartreuse.
-  {
-    id: 'blueCrystal',
-    name: 'Blue Crystal',
-    primary: '#96E6E3',
-    secondary: '#E0E696',
-  },
   // Game of Thrones: rather than one house's colours, the show's own
   // ice/fire duality — a glacier grey-blue against a dragon-fire ember.
   {
@@ -50,22 +42,6 @@ export const THEMES: ThemePack[] = [
     primary: '#BEC8D4',
     secondary: '#F09E86',
   },
-  // Stranger Things: the cold teal of the desaturated Upside Down against the one saturated colour the
-  // show lets through, neon red (Christmas lights, the arcade sign).
-  {
-    id: 'neonStatic',
-    name: 'Neon Static',
-    primary: '#8CCED6',
-    secondary: '#F27E8C',
-  },
-  // Attack on Titan: the Survey Corps' olive cloak and the slate blue of
-  // the Wings of Freedom on its back.
-  {
-    id: 'scoutCloak',
-    name: 'Scout Cloak',
-    primary: '#D2CE9C',
-    secondary: '#9AA9C9',
-  },
   // Your Name: kataware-doki, the twilight hour when the two meet — an
   // orchid sky fading into the last gold of sunset. A dream story, like Yume.
   {
@@ -73,38 +49,6 @@ export const THEMES: ThemePack[] = [
     name: 'Kataware Dusk',
     primary: '#E2A6D8',
     secondary: '#FDD9A0',
-  },
-  // Dark: Jonas's yellow raincoat against the wet grey-green of Winden's
-  // forest, where the cave is.
-  {
-    id: 'sicMundus',
-    name: 'Sic Mundus',
-    primary: '#F4D67A',
-    secondary: '#9DB3A6',
-  },
-  // Harry Potter: Gryffindor's scarlet softened to a wine, and the worn gold
-  // of the house crest and the Great Hall's candlelight.
-  {
-    id: 'scarletCrest',
-    name: 'Scarlet Crest',
-    primary: '#C78A9E',
-    secondary: '#CFAE78',
-  },
-  // The Marvel Cinematic Universe: two of the six stones — the Time Stone's
-  // green in the Eye of Agamotto, and the Soul Stone's orange from Vormir.
-  {
-    id: 'infinityGlow',
-    name: 'Infinity Glow',
-    primary: '#9DDC8E',
-    secondary: '#F7A96F',
-  },
-  // Black Panther: the violet glow of vibranium and the heart-shaped herb,
-  // beside the Dora Milaje's red, softened to a rose.
-  {
-    id: 'vibranium',
-    name: 'Vibranium',
-    primary: '#BCA2F2',
-    secondary: '#E27FA6',
   },
 ];
 
