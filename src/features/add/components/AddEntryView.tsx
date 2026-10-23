@@ -14,7 +14,7 @@ export function AddEntryView({ model }: Props): ReactElement {
 
   return (
     <View style={styles.container}>
-      <HomeWallpaper accent={accent} secondary={secondary} />
+      <HomeWallpaper accent={accent} secondary={secondary} plain />
       <AddEntryHeader model={model} />
       <AddEntryBody model={model} />
       <AddEntryFooter model={model} />

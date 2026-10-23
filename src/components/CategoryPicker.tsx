@@ -10,6 +10,8 @@ import { topLevelOnly, childrenOf, searchCategories } from '@/lib/categoryTree';
 import { usePressScale } from '@/lib/usePressScale';
 import { haptics } from '@/lib/haptics';
 import { withPressed } from '@/lib/pressed';
+import { softTint } from './softTint';
+import { useAccent } from '@/theme/AccentContext';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 /** The narrowest a medal column gets: the 48px tile, its ring, and room for a short name. */
@@ -257,6 +259,7 @@ function MedalTile({
   dimmed?: boolean;
 }) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.92);
+  const { accent } = useAccent();
   return (
     <AnimatedPressable
       style={[sub ? styles.medalItemSub : styles.medalItem, width != null && { width }, animatedStyle]}
@@ -268,11 +271,17 @@ function MedalTile({
       accessibilityState={{ selected: active }}
     >
       {/* The fade sits on the contents, not the pressable: the press animation drives the pressable's own opacity. */}
-      <View style={[styles.medalBody, dimmed && styles.medalDimmed]}>
+      <View
+        style={[
+          styles.medalBody,
+          active && [styles.medalBodyActive, { backgroundColor: softTint(accent, 0.22) }],
+          dimmed && styles.medalDimmed,
+        ]}
+      >
         <View style={[styles.medalRing, sub && styles.medalRingSub, active && styles.medalRingActive]}>
           <CategoryIcon name={icon} color={color} size={sub ? 16 : 20} square={sub ? 38 : 48} round />
         </View>
-        <Text style={styles.medalName} numberOfLines={2}>
+        <Text style={[styles.medalName, active && styles.medalNameActive]} numberOfLines={2}>
           {name}
         </Text>
         {hint && (
@@ -291,6 +300,8 @@ const styles = StyleSheet.create({
   medalGrid: { flexDirection: 'row', flexWrap: 'wrap', rowGap: 14 },
   medalBody: { alignItems: 'center', alignSelf: 'stretch' },
   medalDimmed: { opacity: 0.35 },
+  // The picked tile: a light theme tint behind the whole tile, not only a ring.
+  medalBodyActive: { borderRadius: 16, paddingVertical: 4 },
   medalItem: { width: 64, alignItems: 'center' },
   medalItemSub: { width: 56, alignItems: 'center' },
   medalRing: { borderRadius: 30, borderWidth: 2, borderColor: 'transparent', padding: 2 },
@@ -307,6 +318,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     paddingHorizontal: 2,
   },
+  medalNameActive: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
   medalHint: {
     fontFamily: theme.font.body,
     fontSize: 11,

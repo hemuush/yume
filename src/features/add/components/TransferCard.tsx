@@ -8,7 +8,7 @@ import Feather from '@expo/vector-icons/Feather';
 import { theme } from '@/constants/theme';
 import { Account } from '@/types';
 import { styles } from '@/features/add/add.styles';
-import { withPressed } from '@/lib/pressed';
+import { withPressedTint } from '@/lib/pressed';
 import { useAccent } from '@/theme/AccentContext';
 
 export function TransferCard({
@@ -24,7 +24,7 @@ export function TransferCard({
   return (
     <Pressable
       onPress={onPress}
-      style={withPressed(styles.transferCard)}
+      style={withPressedTint(accent, styles.transferCard)}
       accessibilityRole="button"
       accessibilityLabel={`${label}, ${account ? account.name : 'pick an account'}. Change`}
     >

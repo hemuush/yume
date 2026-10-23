@@ -1,6 +1,7 @@
 import { View, Pressable } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
-import { withPressed } from '@/lib/pressed';
+import { withPressedTint } from '@/lib/pressed';
+import { useAccent } from '@/theme/AccentContext';
 import { ExpenseLabelSheet } from './ExpenseLabelSheet';
 import { TextInput } from '@/components/Text';
 import { theme } from '@/constants/theme';
@@ -55,6 +56,7 @@ export function AddDetailRow({
   /** The number pad is up: a button at the end of the row folds it away. */
   onHidePad?: () => void;
 }) {
+  const { accent } = useAccent();
   if (noteEditing && type !== 'expense') {
     return (
       <TextInput
@@ -130,7 +132,7 @@ export function AddDetailRow({
         {onHidePad && (
           <Pressable
             onPress={onHidePad}
-            style={withPressed(styles.hidePadBtn)}
+            style={withPressedTint(accent, styles.hidePadBtn)}
             hitSlop={4}
             accessibilityRole="button"
             accessibilityLabel="Hide pad"
