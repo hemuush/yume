@@ -33,7 +33,10 @@ export function LimitMeter({
 }) {
   const { secondary } = useAccent();
   const clamped = Math.min(100, Math.max(0, pct));
-  const fillStyle = [styles.fill, { backgroundColor: tone === 'ok' ? shade(secondary, 66) : TONE_FILL[tone] }];
+  const fillStyle = [
+    styles.fill,
+    { backgroundColor: tone === 'ok' ? shade(secondary, 66) : TONE_FILL[tone] },
+  ];
   return (
     <View style={styles.track}>
       {animKey ? (

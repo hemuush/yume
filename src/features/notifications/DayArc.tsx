@@ -55,7 +55,13 @@ export function DayArc({ morning, evening }: { morning: Slot; evening: Slot }) {
           <>
             <Svg width={width} height={HEIGHT}>
               <Line x1={4} x2={width - 4} y1={BASE + 8} y2={BASE + 8} stroke="rgba(18,19,15,0.14)" />
-              <Path d={arc} fill="none" stroke="rgba(18,19,15,0.28)" strokeWidth={1.5} strokeDasharray="4 4" />
+              <Path
+                d={arc}
+                fill="none"
+                stroke="rgba(18,19,15,0.28)"
+                strokeWidth={1.5}
+                strokeDasharray="4 4"
+              />
               {marks.map((s) => (
                 <Line
                   key={s.key}

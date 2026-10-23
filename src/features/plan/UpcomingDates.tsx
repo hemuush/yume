@@ -31,7 +31,10 @@ export function UpcomingDates({
             accessibilityRole="radio"
             accessibilityState={{ selected: mode === value }}
             onPress={() => setMode(value)}
-            style={withPressedTint(accent, [s.mode, mode === value && { backgroundColor: selectedFill(accent) }])}
+            style={withPressedTint(accent, [
+              s.mode,
+              mode === value && { backgroundColor: selectedFill(accent) },
+            ])}
           >
             <Text style={[s.dateLabel, mode === value && s.activeText]}>
               {value === 'outgoing' ? 'Money out' : 'Scheduled income'}

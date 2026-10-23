@@ -451,11 +451,7 @@ export function ThisMonthHero({
           </Text>
 
           {slices.hasIncome && (
-            <MonthLine
-              slices={slices}
-              hideSavings={hideAmounts}
-              periodKey={displayed.periodKey}
-            />
+            <MonthLine slices={slices} hideSavings={hideAmounts} periodKey={displayed.periodKey} />
           )}
 
           {/* The legend describes this period; total debt belongs in Plan. */}

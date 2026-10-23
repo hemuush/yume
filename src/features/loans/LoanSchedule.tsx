@@ -65,7 +65,10 @@ export function LoanSchedule({
               }}
               accessibilityRole="button"
               accessibilityState={{ expanded: open }}
-              style={({ pressed }) => [styles.yearHead, pressed && { backgroundColor: softTint(accent, 0.2) }]}
+              style={({ pressed }) => [
+                styles.yearHead,
+                pressed && { backgroundColor: softTint(accent, 0.2) },
+              ]}
             >
               <Text style={styles.year}>{y.year}</Text>
               <Text style={styles.yearSub}>
