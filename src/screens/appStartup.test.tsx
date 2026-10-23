@@ -21,6 +21,7 @@ jest.mock('@/lib/notifications', () => ({
   subscribeToNotificationTaps: () => () => {},
 }));
 jest.mock('react-native-keyboard-controller', () => ({
+  useKeyboardState: () => false,
   KeyboardAwareScrollView: require('react-native').ScrollView,
   KeyboardStickyView: require('react-native').View,
   KeyboardAvoidingView: require('react-native').View,
