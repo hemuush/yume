@@ -153,6 +153,43 @@ describe('related tasks in one native sheet', () => {
     act(() => tree.unmount());
   });
 
+  it('holds a short page only a little above its own content, so it is not left mostly empty after a tall one', () => {
+    jest
+      .spyOn(require('react-native'), 'useWindowDimensions')
+      .mockReturnValue({ height: 900, width: 360, fontScale: 1, scale: 3 });
+    const Pages = ({ second }: { second: boolean }) => (
+      <SheetFlow>
+        <ModalSheet flowPage visible={!second} title="Details" onClose={jest.fn()}>
+          <Text>Details body</Text>
+        </ModalSheet>
+        {second && (
+          <ModalSheet flowPage visible title="Pay" onClose={jest.fn()} footer={<Text>Pay</Text>}>
+            <Text>Pay body</Text>
+          </ModalSheet>
+        )}
+      </SheetFlow>
+    );
+    const surfaces = (tree: ReactTestRenderer) => tree.root.findAllByProps({ testID: 'sheet-surface' });
+    let tree!: ReactTestRenderer;
+    act(() => {
+      tree = create(<Pages second={false} />);
+    });
+    act(() => surfaces(tree)[0].props.onLayout({ nativeEvent: { layout: { height: 700 } } }));
+    act(() => tree.update(<Pages second />));
+    const pay = surfaces(tree).at(-1)!;
+    // Before the page has measured itself it is held to the remembered 700.
+    expect(StyleSheet.flatten(pay.props.style).minHeight).toBe(700);
+    const bands = pay.findAll(
+      (n) => typeof n.props.onLayout === 'function' && n.props.testID !== 'sheet-surface'
+    );
+    act(() => bands[0].props.onLayout({ nativeEvent: { layout: { height: 80 } } }));
+    act(() => pay.findByType(KeyboardAwareScrollView).props.onContentSizeChange(0, 300));
+    act(() => bands[bands.length - 1].props.onLayout({ nativeEvent: { layout: { height: 90 } } }));
+    // 80 + 300 + 90 of its own, plus the 120 it may be held above that.
+    expect(StyleSheet.flatten(surfaces(tree).at(-1)!.props.style).minHeight).toBe(590);
+    act(() => tree.unmount());
+  });
+
   it('starts over once every page has closed, so a reopened lone page is not held to an old taller one', async () => {
     jest
       .spyOn(require('react-native'), 'useWindowDimensions')
