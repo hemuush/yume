@@ -5,13 +5,15 @@ import { View, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
 import { ModalSheet } from '@/components/ModalSheet';
 import { PrimaryButton } from '@/components/PrimaryButton';
-import { GoalSheetCard } from './GoalSheetCard';
+import { GoalHero } from './GoalHero';
 import { GoalDetailModal } from './GoalDetailModal';
 import { ContributeModal } from './ContributeModal';
 import { goalPlan, GOAL_PACE_LABEL } from './goalPlan';
 import { goalProgress } from '@/lib/savingsGoalProgress';
 import { toLocalIsoDate } from '@/lib/date';
 import { formatMoney, formatMaskableMoney } from '@/lib/money';
+import { dayMonthYear } from '@/lib/dateLabels';
+import { useAccent } from '@/theme/AccentContext';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import { theme } from '@/constants/theme';
 import type { Account, SavingsGoal } from '@/types';
@@ -32,9 +34,10 @@ export function GoalOverviewModal({
 }) {
   const [page, setPage] = useState<'overview' | 'edit' | 'contribute'>('overview');
   const { hideAmounts } = usePrivacy();
+  const { secondary } = useAccent();
   const moving = useRef(false);
   const plan = goalPlan(goal, toLocalIsoDate(new Date()));
-  const { done } = goalProgress(goal.currentAmountMinor, goal.targetAmountMinor);
+  const { done, percent } = goalProgress(goal.currentAmountMinor, goal.targetAmountMinor);
   const following = goal.tracksAccount;
   const account = accounts.find((a) => a.id === goal.linkedAccountId && !a.archived);
   const changed = async () => {
@@ -50,41 +53,57 @@ export function GoalOverviewModal({
         onClose={onClose}
         footer={
           <View style={styles.actions}>
-            <PrimaryButton title="Edit goal" variant="secondary" onPress={() => setPage('edit')} />
+            <View style={styles.edit}>
+              <PrimaryButton title="Edit goal" variant="secondary" onPress={() => setPage('edit')} />
+            </View>
             {!goal.archived && (
-              <PrimaryButton
-                title={following ? 'Move money' : goal.reservesAccount ? 'Reserve / release' : 'Add money'}
-                disabled={following && !account}
-                onPress={() => {
-                  if (following) {
-                    if (account && !moving.current) {
-                      moving.current = true;
-                      onMoveMoney(account.id);
-                    }
-                  } else setPage('contribute');
-                }}
-              />
+              <View style={styles.main}>
+                <PrimaryButton
+                  title={following ? 'Move money' : goal.reservesAccount ? 'Reserve / release' : 'Add money'}
+                  disabled={following && !account}
+                  onPress={() => {
+                    if (following) {
+                      if (account && !moving.current) {
+                        moving.current = true;
+                        onMoveMoney(account.id);
+                      }
+                    } else setPage('contribute');
+                  }}
+                />
+              </View>
             )}
           </View>
         }
       >
-        <GoalSheetCard
+        <GoalHero
+          hue={done && !hideAmounts ? theme.colors.flatLime : secondary}
+          icon={done && !hideAmounts ? 'flag-checkered' : 'piggy-bank-outline'}
           name={goal.name}
-          savedMinor={goal.currentAmountMinor}
-          targetMinor={goal.targetAmountMinor}
-          targetDate={goal.targetDate}
+          kicker={
+            hideAmounts
+              ? `Savings goal · of ${formatMoney(goal.targetAmountMinor)}`
+              : done
+                ? 'Savings goal · Reached'
+                : `Savings goal · ${Math.round(percent)}% of ${formatMoney(goal.targetAmountMinor)}`
+          }
+          saved={formatMaskableMoney(goal.currentAmountMinor, { masked: hideAmounts })}
+          fraction={hideAmounts ? 0 : percent / 100}
+          toGo={hideAmounts ? undefined : done ? { reached: true } : { figure: formatMoney(plan.toGoMinor) }}
+          date={!hideAmounts && goal.targetDate ? dayMonthYear(goal.targetDate) : undefined}
+          status={
+            hideAmounts
+              ? undefined
+              : [plan.pace && GOAL_PACE_LABEL[plan.pace], plan.pastDue && 'Past its date']
+                  .filter(Boolean)
+                  .join(' · ') || undefined
+          }
+          perMonth={
+            !hideAmounts && plan.perMonthMinor != null
+              ? `${formatMoney(plan.perMonthMinor)} a month to stay on pace`
+              : undefined
+          }
         />
-        <View style={styles.card}>
-          <Text style={styles.caption}>Remaining</Text>
-          <Text style={styles.value}>{formatMaskableMoney(plan.toGoMinor, { masked: hideAmounts })}</Text>
-          {!hideAmounts && done && <Text style={styles.caption}>Target reached</Text>}
-          {!hideAmounts && plan.pace && <Text style={styles.caption}>{GOAL_PACE_LABEL[plan.pace]}</Text>}
-          {!hideAmounts && plan.perMonthMinor != null && (
-            <Text style={styles.caption}>{formatMoney(plan.perMonthMinor)} a month to stay on pace</Text>
-          )}
-          {!hideAmounts && plan.pastDue && <Text style={styles.caption}>Past its target date</Text>}
-        </View>
-        <View style={styles.card}>
+        <View style={styles.note}>
           <Text style={styles.caption}>
             {following
               ? 'Following account'
@@ -111,7 +130,7 @@ export function GoalOverviewModal({
           refreshToken={goal}
         />
         {!hideAmounts && goal.letterRevealed && goal.noteToSelf && (
-          <View style={styles.card}>
+          <View style={styles.note}>
             <Text style={styles.caption}>Why you started this</Text>
             <Text style={styles.caption}>{goal.noteToSelf}</Text>
           </View>
@@ -139,20 +158,10 @@ export function GoalOverviewModal({
   );
 }
 const styles = StyleSheet.create({
-  actions: { gap: 8 },
-  card: {
-    paddingVertical: 14,
-    gap: 6,
-    backgroundColor: theme.colors.surface,
-    borderRadius: 22,
-    marginBottom: 12,
-  },
-  caption: { fontFamily: theme.font.body, fontSize: 13, lineHeight: 19, color: theme.colors.textSecondary },
+  actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  edit: { flexGrow: 1, flexBasis: 100 },
+  main: { flexGrow: 1.6, flexBasis: 160 },
+  note: { paddingHorizontal: 2, paddingVertical: 8, gap: 4, marginBottom: 6 },
+  caption: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textSecondary },
   account: { fontFamily: theme.font.bodyMedium, fontSize: 14, color: theme.colors.textPrimary },
-  value: {
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 24,
-    fontVariant: ['tabular-nums'],
-    color: theme.colors.textPrimary,
-  },
 });
