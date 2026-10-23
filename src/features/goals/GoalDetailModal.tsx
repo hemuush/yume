@@ -17,7 +17,7 @@ import { Account, SavingsGoal } from '@/types';
 import { ModalSheet, SheetLink } from '@/components/ModalSheet';
 import { InsightDisclosure } from '@/components/InsightCard';
 import { modalFooterStyles as f } from '@/constants/theme';
-import { GoalSheetCard } from './GoalSheetCard';
+import { GoalDraftHero } from './GoalDraftHero';
 import { FormInput } from '@/components/FormInput';
 import { AmountField } from '@/components/AmountField';
 import { PrimaryButton } from '@/components/PrimaryButton';
@@ -168,7 +168,7 @@ function GoalDetailForm({
           accessibilityElementsHidden={busy}
           importantForAccessibility={busy ? 'no-hide-descendants' : 'auto'}
         >
-          <GoalSheetCard
+          <GoalDraftHero
             name={name.trim() || goal.name}
             savedMinor={draftSavedMinor}
             targetMinor={inputMinor(target) || goal.targetAmountMinor}
@@ -215,8 +215,8 @@ function GoalDetailForm({
           {goal.reservesAccount && (
             <>
               <Text style={styles.modalHint}>
-                Changing account or tracking mode requires releasing this reservation first. Manual progress
-                from before reservation mode is kept separately.
+                Release this reservation before changing the account or tracking mode. Earlier manual progress
+                is kept separately.
               </Text>
               <PrimaryButton
                 variant="secondary"

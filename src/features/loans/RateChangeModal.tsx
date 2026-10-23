@@ -116,21 +116,19 @@ export function RateChangeModal({
         pastFacing
       />
       <Text style={styles.hintText}>
-        Defaults to today — change it if your bank actually applied this rate change earlier and you're only
-        entering it now. This doesn't rewrite already-paid installments; it only affects which ones are still
-        pending.
+        Change it if your bank applied the change earlier. Paid installments are not rewritten.
       </Text>
-      <Text style={styles.fieldLabel}>When the rate changes, your bank lets you choose:</Text>
+      <Text style={styles.fieldLabel}>What should change?</Text>
       <SheetTabs options={RATE_CHANGE_MODES} value={mode} onChange={setMode} />
       {mode === 'keepEmi' ? (
         <Text style={styles.hintText}>
-          EMI stays {formatMoney(loan.emiAmountMinor)}; the remaining schedule recalculates at the new rate
-          from your next unpaid installment — tenure gets shorter or longer instead.
+          EMI stays {formatMoney(loan.emiAmountMinor)}; the tenure gets shorter or longer from your next
+          unpaid installment.
         </Text>
       ) : (
         <Text style={styles.hintText}>
           Tenure stays at {remainingMonths} more installment{remainingMonths === 1 ? '' : 's'}; the EMI
-          recalculates to still pay off exactly on schedule
+          recalculates
           {previewNewEmi != null ? ` — new EMI would be ${formatMoney(previewNewEmi)}` : ''}.
         </Text>
       )}

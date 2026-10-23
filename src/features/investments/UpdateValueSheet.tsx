@@ -3,7 +3,7 @@ import { useEffect, useEffectEvent, useState } from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
 import { ModalSheet, SheetFooter } from '@/components/ModalSheet';
-import { SheetCard } from '@/components/SheetCard';
+import { DraftCard } from '@/components/DraftCard';
 import { AmountField } from '@/components/AmountField';
 import { DateField } from '@/components/DateField';
 import { PrimaryButton } from '@/components/PrimaryButton';
@@ -12,7 +12,7 @@ import { theme, modalFooterStyles as f } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import { accountHue, accountIcon } from '@/lib/account';
-import { formatMoney, formatMaskableMoney, inputMinor, toMinor } from '@/lib/money';
+import { formatMaskableMoney, inputMinor, toMinor } from '@/lib/money';
 import { toLocalIsoDate } from '@/lib/date';
 import { shade } from '@/lib/color';
 import { errorMessage } from '@/lib/errorMessage';
@@ -153,17 +153,14 @@ export function UpdateValueSheet({
         </View>
       }
     >
-      <SheetCard
+      <DraftCard
         hue={accountHue(account.type, accent)}
         icon={accountIcon(account.type)}
-        kicker={valuation ? 'edit value' : 'update value'}
-        amount={
-          masked
-            ? money(0)
-            : formatMoney(typed || valuation?.valueMinor || account.currentBalanceMinor, account.currency)
-        }
         title={account.name}
-        meta={typed > 0 ? 'Worth' : `Invested ${money(inv.investedMinor)}`}
+        kicker="Tracked savings"
+        figure={money(account.currentBalanceMinor)}
+        per="value now"
+        meta={`Invested ${money(inv.investedMinor)}`}
       />
       <AmountField
         label="What is it worth today?"

@@ -103,8 +103,8 @@ export function LoanComparison({
         <>
           <AmountField label={`Extra payment (${currency})`} value={amount} onChangeText={setAmount} />
           <Text style={s.hint}>
-            One payment today, keeping each loan’s EMI unchanged. Estimates assume unchanged rates and exclude
-            lender charges. Compare affordability separately before paying.
+            One payment today, each loan’s EMI unchanged. Assumes unchanged rates and excludes lender charges.
+            Compare affordability separately before paying.
           </Text>
           {loans.length < 2 && (
             <Text style={s.hint}>Add at least two active borrowed loans to compare alternatives.</Text>
@@ -168,13 +168,13 @@ const s = StyleSheet.create({
     marginBottom: 8,
   },
   card: {
-    gap: 10,
-    paddingVertical: 16,
+    gap: 8,
+    paddingVertical: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: theme.colors.divider,
   },
   title: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.textPrimary },
-  amount: { fontFamily: theme.font.bodyBold, fontSize: 20 },
+  amount: { fontFamily: theme.font.bodyMedium, fontSize: 20 },
   track: { height: 5, backgroundColor: theme.colors.surfaceAlt, borderRadius: 4, overflow: 'hidden' },
   fill: { height: '100%', borderRadius: 4 },
 });

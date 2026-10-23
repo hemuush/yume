@@ -29,7 +29,7 @@ jest.mock('@/components/ModalSheet', () => {
   };
 });
 jest.mock('@/components/DateField', () => ({ DateField: () => null }));
-jest.mock('@/components/SheetCard', () => ({ SheetCard: () => null }));
+jest.mock('@/components/DraftCard', () => ({ DraftCard: () => null }));
 jest.mock('@/lib/haptics', () => ({ haptics: { confirm: jest.fn(), tap: jest.fn(), warn: jest.fn() } }));
 const mockShowUndo = jest.fn();
 jest.mock('@/components/UndoToast', () => ({ useUndoToast: () => ({ show: mockShowUndo }) }));
