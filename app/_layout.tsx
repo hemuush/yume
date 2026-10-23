@@ -1,5 +1,4 @@
 import { Stack, router, useRootNavigationState } from 'expo-router';
-import { preventScreenCaptureAsync, allowScreenCaptureAsync } from 'expo-screen-capture';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import { View, ActivityIndicator, StyleSheet, AppState, AppStateStatus } from 'react-native';
@@ -19,6 +18,9 @@ import { Fredoka_500Medium } from '@expo-google-fonts/fredoka/500Medium';
 import { Fredoka_600SemiBold } from '@expo-google-fonts/fredoka/600SemiBold';
 import { getDb } from '@/db/client';
 import { shouldRelock } from '@/lib/appLock';
+import { useScreenCaptureProtection } from '@/lib/useScreenCaptureProtection';
+import { CaptureProtectionScreen } from '@/components/CaptureProtectionScreen';
+import { CaptureReleaseFeedback } from '@/components/CaptureReleaseFeedback';
 import { getHasOnboarded, setHasOnboarded, getAppLockEnabled, getHideSensitiveAmounts } from '@/db/settings';
 import { listAccounts, listTransactions } from '@/db/ledger';
 import { runAppMaintenance } from '@/lib/runAppMaintenance';
@@ -174,6 +176,7 @@ function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean;
   const { lockEnabled } = useAppLock();
   const [isLocked, setIsLocked] = useState(initialLocked);
   const [showOnboarding, setShowOnboarding] = useState(needsOnboarding);
+  const capture = useScreenCaptureProtection(lockEnabled);
 
   // A tapped notification's screen (NOTIFICATION_ROUTES) waits until it can show: unlocked, past
   // onboarding, navigator mounted (not while the lock screen replaces the tree); earlier is lost or hidden.
@@ -182,7 +185,7 @@ function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean;
   const [pendingRoute, setPendingRoute] = useState<NotificationRoute | null>(null);
   useEffect(() => subscribeToNotificationTaps(setPendingRoute), []);
   useEffect(() => {
-    if (!pendingRoute || isLocked || showOnboarding || !navReady) return;
+    if (!pendingRoute || isLocked || showOnboarding || !navReady || capture.isBlocked) return;
     // Next tick, not this render: right after unlocking the navigator is remounting. If opening still
     // fails, the app simply stays where it opened.
     const timer = setTimeout(() => {
@@ -195,13 +198,7 @@ function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean;
       }
     }, 0);
     return () => clearTimeout(timer);
-  }, [pendingRoute, isLocked, showOnboarding, navReady]);
-
-  // With the lock on, Android hides Yume from screenshots and blanks it in the recent-apps switcher.
-  useEffect(() => {
-    const change = lockEnabled ? preventScreenCaptureAsync('app-lock') : allowScreenCaptureAsync('app-lock');
-    change.catch(() => {});
-  }, [lockEnabled]);
+  }, [pendingRoute, isLocked, showOnboarding, navReady, capture.isBlocked]);
 
   // Re-arms the lock when the app returns after being away (shouldRelock: real backgrounding, ≥1 minute).
   // Reads `lockEnabled` from shared context so the Settings toggle applies next cycle.
@@ -233,6 +230,19 @@ function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean;
     return () => sub.remove();
   }, [waitForThemePersistence]);
 
+  // Public authentication stays mounted while protection recovers; financial/onboarding content does not.
+  if (capture.isBlocked && !(isLocked && !showOnboarding)) {
+    return (
+      <ErrorBoundary>
+        <StatusBar style="dark" />
+        <CaptureProtectionScreen
+          status={capture.status === 'failed' ? 'failed' : 'checking'}
+          onRetry={capture.retry}
+        />
+      </ErrorBoundary>
+    );
+  }
+
   if (showOnboarding) {
     return (
       <ErrorBoundary>
@@ -260,6 +270,7 @@ function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean;
       {/* Yume's own confirm/notice dialog, shown by showAlert() anywhere in the app. Never over the lock
           screen: a dialog is its own window, so it would sit on top of it with working buttons. */}
       <AppDialogHost />
+      <CaptureReleaseFeedback protection={capture} />
       <UndoToastProvider>
         <ThemeSaveFeedback />
         <MilestoneNoteProvider>
