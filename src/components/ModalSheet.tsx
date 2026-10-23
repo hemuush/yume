@@ -18,6 +18,12 @@ import { usePressScale } from '@/lib/usePressScale';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 import { AmountPadHostProvider, useAmountPadHost } from '@/components/AmountField';
 
+/**
+ * How much taller than its own content a page in a flow may be held, so it does not jump to the height of a taller
+ * page. Beyond this the page shrinks to fit rather than sit mostly empty.
+ */
+const FLOW_STRETCH = 120;
+
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 interface Props {
@@ -291,11 +297,24 @@ function ModalSheetBody({
     height < 640 || fontScale > 1.2 || size === 'expanded' ? '94%' : size === 'compact' ? '78%' : '90%';
   const isSheet = variant === 'sheet';
   const viewportHeight = flow?.viewportHeight ? Math.min(height, flow.viewportHeight) : height;
+  // What this page needs on its own: header, content and footer as laid out. A page shared with a flow is held at
+  // most FLOW_STRETCH above it, so a short page after a tall one is not left mostly empty.
+  const [bands, setBands] = useState({ header: 0, content: 0, footer: 0 });
+  const setBand = useCallback((band: 'header' | 'content' | 'footer', size: number) => {
+    const rounded = Math.round(size);
+    setBands((previous) => (previous[band] === rounded ? previous : { ...previous, [band]: rounded }));
+  }, []);
+  const footerHeight = footer !== undefined ? bands.footer : keyboardUp ? 0 : insets.bottom;
+  const naturalHeight =
+    bands.header > 0 && bands.content > 0 && (footer === undefined || bands.footer > 0)
+      ? bands.header + bands.content + footerHeight
+      : 0;
   const flowFrame = sharesHeight
     ? {
         minHeight: Math.min(
           flow.minimumHeight,
-          Math.max(0, ((viewportHeight - insets.top - 8) * parseFloat(maxHeight)) / 100)
+          Math.max(0, ((viewportHeight - insets.top - 8) * parseFloat(maxHeight)) / 100),
+          naturalHeight > 0 ? naturalHeight + FLOW_STRETCH : Infinity
         ),
       }
     : undefined;
@@ -391,9 +410,19 @@ function ModalSheetBody({
               style={[styles.framedSheet, { maxHeight }, flowFrame]}
             >
               <SheetWash />
-              <View style={styles.framedPad}>{header}</View>
+              <View
+                style={styles.framedPad}
+                onLayout={
+                  sharesHeight ? (event) => setBand('header', event.nativeEvent.layout.height) : undefined
+                }
+              >
+                {header}
+              </View>
               <KeyboardAwareScrollView
                 {...scrollTracking}
+                onContentSizeChange={
+                  sharesHeight ? (_, contentHeight) => setBand('content', contentHeight) : undefined
+                }
                 style={[styles.framedBody, inFlow && styles.flowBody]}
                 contentContainerStyle={styles.framedSheetContent}
                 bottomOffset={24}
@@ -404,6 +433,9 @@ function ModalSheetBody({
               </KeyboardAwareScrollView>
               {footer !== undefined ? (
                 <View
+                  onLayout={
+                    sharesHeight ? (event) => setBand('footer', event.nativeEvent.layout.height) : undefined
+                  }
                   style={[
                     styles.framedSheetFooter,
                     { paddingBottom: pad ? 10 : 12 + (keyboardUp ? 0 : insets.bottom) },
