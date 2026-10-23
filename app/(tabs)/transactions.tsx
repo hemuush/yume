@@ -780,7 +780,12 @@ export default function TransactionsScreen() {
                       onPress={() => setFilterLabel(undefined)}
                       style={withPressedTint(accent, [
                         styles.chip,
-                        { alignSelf: 'flex-start', marginHorizontal: 16, marginTop: 8, backgroundColor: shade(accent, 95) },
+                        {
+                          alignSelf: 'flex-start',
+                          marginHorizontal: 16,
+                          marginTop: 8,
+                          backgroundColor: shade(accent, 95),
+                        },
                       ])}
                     >
                       <Text style={styles.chipText}>Label: {filterLabel}</Text>

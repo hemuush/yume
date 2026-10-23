@@ -398,7 +398,12 @@ function ModalSheetBody({
                 {children}
               </KeyboardAwareScrollView>
               {footer !== undefined ? (
-                <View style={[styles.framedSheetFooter, { paddingBottom: pad ? 10 : 12 + (keyboardUp ? 0 : insets.bottom) }]}>
+                <View
+                  style={[
+                    styles.framedSheetFooter,
+                    { paddingBottom: pad ? 10 : 12 + (keyboardUp ? 0 : insets.bottom) },
+                  ]}
+                >
                   {footer}
                 </View>
               ) : pad ? null : (

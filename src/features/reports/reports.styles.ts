@@ -284,7 +284,12 @@ export const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   // A faint inner edge keeps the palest category colours (yellow, butter, mint) readable on the white card.
-  catBarSeg: { flexBasis: 0, minWidth: 3, borderRadius: 4, boxShadow: `inset 0px 0px 0px 1px ${theme.colors.inkHairline}` },
+  catBarSeg: {
+    flexBasis: 0,
+    minWidth: 3,
+    borderRadius: 4,
+    boxShadow: `inset 0px 0px 0px 1px ${theme.colors.inkHairline}`,
+  },
   // The card over "Where it went": its title and group menu, the total and the split as one bar.
   sumCard: { ...CARD, padding: 16, marginBottom: 12 },
   sumHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
