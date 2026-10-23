@@ -14,6 +14,7 @@ export function WidgetShell({
   alignItems,
   justifyContent,
   padding = 14,
+  backgroundColor = widgetColor.cream,
 }: {
   children?: React.ReactNode;
   clickAction?: string;
@@ -22,6 +23,7 @@ export function WidgetShell({
   alignItems?: 'flex-start' | 'center' | 'flex-end';
   justifyContent?: 'flex-start' | 'center' | 'flex-end' | 'space-between';
   padding?: number;
+  backgroundColor?: ColorProp;
 }) {
   return (
     <FlexWidget
@@ -33,7 +35,7 @@ export function WidgetShell({
         flexDirection,
         alignItems,
         justifyContent,
-        backgroundColor: widgetColor.cream,
+        backgroundColor,
         borderRadius: WIDGET_RADIUS,
         borderWidth: 1,
         borderColor: widgetColor.borderSoft,

@@ -19,7 +19,7 @@ import { isSavingsEntry, privateComparison } from '@/lib/privateSummary';
 import { savingsRatePct } from '@/lib/savingsRate';
 import { dueDateLabel } from '@/lib/dueDate';
 import { accountIcon, savingsAccountIdsOf } from '@/lib/account';
-import { toLocalIsoDate, parseLocalIsoDate } from '@/lib/date';
+import { toLocalIsoDate } from '@/lib/date';
 import { monthPace } from '@/lib/pace';
 import { suuLine, SuuLine } from '@/features/home/suuLine';
 import { heroSlices, withoutSavings, HeroSlices } from '@/features/home/heroSlices';
@@ -73,10 +73,12 @@ export interface ThisMonthWidgetData {
   spentMinor: number;
   /** Moved to savings; 0 and unused while `hideSavings` (the figure never reaches the widget). */
   savedMinor: number;
-  /** "Hide savings & investment amounts" is on: no Saved tile, no savings arc. */
+  /** "Hide savings & investment amounts" is on: no Saved figure, no savings segment. */
   hideSavings: boolean;
   /** Home's "after bills": carried over + income − spent − moved to savings − bills still due; can be negative. */
   freeMinor: number;
+  /** Actual outstanding bills, before the month line caps their share. */
+  dueMinor: number;
   slices: HeroSlices;
   /** Home's "On pace for about … by …" line, from the 5th on. */
   pace: { projectedMinor: number; byLabel: string } | null;
@@ -115,6 +117,7 @@ export async function getThisMonthWidgetData(now: Date = new Date()): Promise<Th
     savedMinor: hideSavings ? 0 : savedMinor,
     hideSavings,
     // Home's "after bills": what's free to use (carried over + income − spent − saved) less bills still due.
+    dueMinor,
     freeMinor: carryMinor + incomeMinor - spentMinor - savedMinor - dueMinor,
     slices: hideSavings
       ? withoutSavings(heroSlices(incomeMinor + Math.max(0, carryMinor), spentMinor, savedMinor, dueMinor))
@@ -165,8 +168,8 @@ export interface SuuWidgetData {
   line: SuuLine;
   /** The active pack's mascot-dot colour — Suu's one dot follows the theme, as in the app. */
   dot: string;
-  /** The pack's second colour, for the footer under the line. */
-  secondary: string;
+  /** The pack's primary colour, for the same deep action ink used in the app. */
+  primary: string;
 }
 
 export async function getSuuWidgetData(now: Date = new Date()): Promise<SuuWidgetData> {
@@ -187,7 +190,7 @@ export async function getSuuWidgetData(now: Date = new Date()): Promise<SuuWidge
     undefined,
     hideSavings
   );
-  return { line, dot: theme.dot, secondary: theme.secondary };
+  return { line, dot: theme.dot, primary: theme.primary };
 }
 
 export interface NextDueWidgetData {
@@ -264,14 +267,7 @@ export async function getNextDueWidgetData(): Promise<NextDueWidgetData | null> 
   return item;
 }
 
-/** "01" and "OCT" for a date tile, like Home's Upcoming rows. */
-export function dateTileParts(iso: string): { day: string; month: string } {
-  const d = parseLocalIsoDate(iso);
-  return {
-    day: String(d.getDate()).padStart(2, '0'),
-    month: d.toLocaleDateString(undefined, { month: 'short' }).slice(0, 3).toUpperCase(),
-  };
-}
+export { dateTileParts } from './dateTileParts';
 
 interface AccountWidgetRow {
   name: string;

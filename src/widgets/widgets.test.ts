@@ -1,8 +1,9 @@
 /**
- * The Home A widgets: the month ring drawing, date tile, icons, Quick Add's most-used categories, and that
+ * The widgets: month layout, date tile, icons, Quick Add's most-used categories, and that
  * each widget builds from plain widget pieces (a React fragment would leave it blank on the home screen).
  */
 import type React from 'react';
+import { FlexWidget, type FlexWidgetProps } from 'react-native-android-widget';
 import { createRealDataTestDb } from '@/test-support/realDataTestDb';
 
 const mockTestDb = createRealDataTestDb();
@@ -14,7 +15,6 @@ jest.mock('@/lib/notifications', () => ({ rebuildNotifications: async () => {} }
 import { CREATE_TABLES_SQL } from '@/db/schema';
 import { createAccount, createCategory, listMostUsedExpenseCategories } from '@/db/ledger';
 import { heroSlices } from '@/features/home/heroSlices';
-import { ringSvg } from './ringSvg';
 import { iconGlyph } from './WidgetShell';
 import { dateTileParts, accountWidgetHue } from './data';
 import { ThisMonthWidget } from './ThisMonthWidget';
@@ -22,46 +22,6 @@ import { QuickAddWidget } from './QuickAddWidget';
 import { SuuWidget } from './SuuWidget';
 import { NextDueWidget } from './NextDueWidget';
 import { AccountsWidget } from './AccountsWidget';
-
-const COLORS = {
-  spent: '#FFC9B3',
-  saved: '#8FE8C8',
-  due: '#E0AC3F',
-  free: '#8FCBFF',
-  track: '#F3ECE0',
-  face: '#FBF3DA',
-};
-const arcs = (svg: string) => svg.match(/stroke-dasharray="[^"]+"/g) ?? [];
-
-describe('ringSvg', () => {
-  it('draws one slice per share, each starting where the last ended', () => {
-    const svg = ringSvg(heroSlices(100000, 50000, 20000), COLORS, 92);
-    expect(arcs(svg)).toHaveLength(3);
-    expect(svg).toContain(`stroke="${COLORS.spent}"`);
-    expect(svg).toContain(`stroke="${COLORS.saved}"`);
-    expect(svg).toContain(`stroke="${COLORS.free}"`);
-    expect(svg).toContain('stroke-dashoffset="0.00"');
-  });
-
-  it("draws bills still due as their own slice, between saved and free, as Home's ring does", () => {
-    const svg = ringSvg(heroSlices(100000, 50000, 20000, 10000), COLORS, 92);
-    expect(arcs(svg)).toHaveLength(4);
-    const order = [COLORS.spent, COLORS.saved, COLORS.due, COLORS.free].map((c) =>
-      svg.indexOf(`stroke="${c}"`)
-    );
-    expect([...order].sort((a, b) => a - b)).toEqual(order);
-  });
-
-  it('draws only the track and face with no income', () => {
-    expect(arcs(ringSvg(heroSlices(0, 5000, 0), COLORS, 92))).toHaveLength(0);
-  });
-
-  it('fills the whole ring with spending when overspent', () => {
-    const svg = ringSvg(heroSlices(10000, 15000, 0), COLORS, 92);
-    expect(arcs(svg)).toHaveLength(1);
-    expect(svg).toContain(`stroke="${COLORS.spent}"`);
-  });
-});
 
 describe('widget helpers', () => {
   it('splits a due date into the date tile', () => {
@@ -146,13 +106,54 @@ describe('the five widgets', () => {
           savedMinor: 0,
           hideSavings: false,
           freeMinor: income - spent,
+          dueMinor: 0,
           slices: heroSlices(income, spent, 0),
           pace: { projectedMinor: 60000, byLabel: '30 Sept' },
           ...pack,
         })
       );
-      expect(tree).toContain('SvgWidget');
+      expect(tree).toContain('LinearLayoutWidget');
     }
+  });
+
+  it('preserves positive proportional weights through Android integer conversion', () => {
+    const widget = ThisMonthWidget({
+      monthLabel: 'October',
+      daysLeft: 9,
+      spentMinor: 1,
+      savedMinor: 200000,
+      hideSavings: false,
+      freeMinor: 699999,
+      dueMinor: 100000,
+      slices: heroSlices(1000000, 1, 200000, 100000),
+      pace: null,
+      ...pack,
+    });
+    const primitives: React.ReactElement<FlexWidgetProps>[] = [];
+    function visit(node: unknown): void {
+      if (node == null || node === false) return;
+      if (Array.isArray(node)) {
+        node.forEach(visit);
+        return;
+      }
+      const el = node as React.ReactElement<FlexWidgetProps>;
+      const fn = el.type as ((props: FlexWidgetProps) => unknown) & { __name__?: string };
+      if (fn.__name__) {
+        primitives.push(el);
+        visit(el.props.children);
+      } else visit(fn(el.props));
+    }
+    visit(widget);
+    const segments = primitives.filter((el) => el.props.style?.height === 7 && el.props.style?.width === 0);
+    expect(segments).toHaveLength(4);
+    const nativeWeights = segments.map((el) => FlexWidget.convertProps(el.props).weight!);
+    expect(nativeWeights.every((weight) => Number.isInteger(weight) && weight > 0)).toBe(true);
+    // Mirrors BaseWidget.java's getInt: even a sub-basis-point share must keep a nonzero native weight.
+    expect(nativeWeights.map(Math.trunc)).toEqual(nativeWeights);
+    expect(nativeWeights[3] / nativeWeights.reduce((sum, weight) => sum + weight, 0)).toBeCloseTo(0.7, 3);
+    const shell = primitives[0].props.style!;
+    expect(shell.backgroundGradient).toBeUndefined();
+    expect(shell.borderWidth).toBe(1);
   });
 
   it('Quick Add builds with and without categories', () => {

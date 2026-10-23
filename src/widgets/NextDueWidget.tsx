@@ -2,7 +2,8 @@ import { FlexWidget, TextWidget } from 'react-native-android-widget';
 import { formatMoney } from '@/lib/money';
 import { WidgetShell } from './WidgetShell';
 import { widgetColor, widgetAlpha, WIDGET_FONT } from './widgetTheme';
-import { dateTileParts, type NextDueWidgetData } from './data';
+import type { NextDueWidgetData } from './data';
+import { dateTileParts } from './dateTileParts';
 
 /**
  * "Next Due" 4×1 widget: one of Home's Upcoming rows (same loan-EMI-or-recurring merge): date tile in the
@@ -66,14 +67,19 @@ export function NextDueWidget({ data }: { data: NextDueWidgetData | null }) {
         <TextWidget
           text={subtitle}
           maxLines={1}
+          truncate="END"
           style={{ fontFamily: WIDGET_FONT.body, fontSize: 11, color: widgetColor.inkSoft, marginTop: 1 }}
         />
       </FlexWidget>
       <TextWidget
+        maxLines={1}
         text={`${sign === '+' ? '+' : ''}${formatMoney(amountMinor)}`}
         style={{
-          fontFamily: WIDGET_FONT.mono,
-          fontSize: 13.5,
+          width: 80,
+          textAlign: 'right',
+          fontFamily: WIDGET_FONT.amount,
+          fontSize: 15,
+          adjustsFontSizeToFit: true,
           color: sign === '+' ? widgetColor.incomeText : widgetColor.ink,
         }}
       />
