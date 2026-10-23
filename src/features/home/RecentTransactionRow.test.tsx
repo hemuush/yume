@@ -29,7 +29,7 @@ const tx = (note: string, date = today): Transaction => ({
   createdAt: '2026-09-27T10:00:00.000Z',
 });
 
-function texts(note: string, date?: string, parentName?: string, omitToday = false) {
+function texts(note: string, date?: string, parentName?: string, omitToday = false, omitCategory = false) {
   let r!: ReactTestRenderer;
   act(() => {
     r = create(
@@ -41,6 +41,7 @@ function texts(note: string, date?: string, parentName?: string, omitToday = fal
         divider={false}
         parentName={parentName}
         omitToday={omitToday}
+        omitCategory={omitCategory}
       />
     );
   });
@@ -76,5 +77,16 @@ describe('RecentTransactionRow', () => {
   it('names the parent of a subcategory, as a path under a note and directly without one', () => {
     expect(texts('', undefined, 'Groceries')).toContain('Groceries · SBI · Today');
     expect(texts('Lunch', undefined, 'Groceries')).toContain('Groceries › Food & Dining · SBI · Today');
+  });
+
+  it('leaves the category out of the sub line when the screen is already that category', () => {
+    const labelled = texts('Bistro', undefined, undefined, false, true);
+    expect(labelled).toContain('Bistro');
+    expect(labelled).toContain('SBI · Today');
+    expect(labelled.join(' ')).not.toContain('Food & Dining');
+    const bare = texts('', undefined, 'Dining', false, true);
+    expect(bare).toContain('Food & Dining');
+    expect(bare).toContain('SBI · Today');
+    expect(bare.join(' ')).not.toContain('Dining ·');
   });
 });

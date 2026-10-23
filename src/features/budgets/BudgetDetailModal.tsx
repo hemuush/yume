@@ -3,10 +3,9 @@ import { View, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
 import { ModalSheet } from '@/components/ModalSheet';
 import { SheetFlow } from '@/components/SheetFlow';
-import { SheetCard } from '@/components/SheetCard';
 import { PrimaryButton } from '@/components/PrimaryButton';
-import { LimitMeter } from '@/components/LimitMeter';
 import { RecentTransactionRow } from '@/features/home/RecentTransactionRow';
+import { BudgetHero } from './BudgetHero';
 import { AddBudgetModal } from './AddBudgetModal';
 import type { BudgetProgress } from '@/db/budgets';
 import { listTransactions } from '@/db/ledger';
@@ -17,7 +16,7 @@ import { savingsAccountIdsOf } from '@/lib/account';
 import { categorySentence, parentNameOf } from '@/lib/categoryLabel';
 import { formatMoney } from '@/lib/money';
 import { toLocalIsoDate } from '@/lib/date';
-import { longMonthYear } from '@/lib/dateLabels';
+import { shortMonthYear } from '@/lib/dateLabels';
 import { budgetPace, BUDGET_PACE_LABEL } from '@/lib/pace';
 import { errorMessage } from '@/lib/errorMessage';
 import { theme } from '@/constants/theme';
@@ -107,45 +106,37 @@ export function BudgetDetailModal({
         onClose={onClose}
         footer={<PrimaryButton title="Edit limit" variant="secondary" onPress={() => setEditing(true)} />}
       >
-        <SheetCard
+        <BudgetHero
           hue={progress.categoryColor}
           icon={progress.categoryIcon}
           title={categorySentence(progress.categoryName, progress.parentName)}
-          kicker={
+          kicker={`${
             progress.overBudget
               ? 'Over limit'
               : periodMonth === today.slice(0, 7)
                 ? 'Remaining this month'
                 : 'Remaining for this month'
-          }
-          amount={formatMoney(Math.abs(progress.remainingMinor), currency)}
-          meta={longMonthYear(`${periodMonth}-01`)}
+          } · ${shortMonthYear(`${periodMonth}-01`)}`}
+          remaining={formatMoney(Math.abs(progress.remainingMinor), currency)}
+          over={progress.overBudget}
+          pct={Math.min(100, Math.max(0, progress.percentUsed))}
+          tone={progress.overBudget ? 'over' : pace?.state === 'ahead' ? 'near' : 'ok'}
+          marker={pace ? pace.expectedFraction * 100 : undefined}
+          animKey={`budget-detail:${progress.budget.id}`}
+          spent={formatMoney(progress.spentMinor, currency)}
+          limit={formatMoney(progress.effectiveLimitMinor, currency)}
+          status={`${progress.overBudget ? 'Over budget' : pace ? BUDGET_PACE_LABEL[pace.state] : 'Monthly budget'}${
+            progress.budget.rollover ? ' · Rolls over' : ''
+          }`}
         />
-        <View style={styles.summary}>
-          <View style={styles.figures}>
-            <View style={styles.figure}>
-              <Text style={styles.caption}>Spent</Text>
-              <Text style={styles.value}>{formatMoney(progress.spentMinor, currency)}</Text>
-            </View>
-            <View style={styles.figure}>
-              <Text style={styles.caption}>Available limit</Text>
-              <Text style={styles.value}>{formatMoney(progress.effectiveLimitMinor, currency)}</Text>
-            </View>
-          </View>
-          <LimitMeter
-            pct={Math.min(100, Math.max(0, progress.percentUsed))}
-            tone={progress.overBudget ? 'over' : pace?.state === 'ahead' ? 'near' : 'ok'}
-            marker={pace ? pace.expectedFraction * 100 : undefined}
-            animKey={`budget-detail:${progress.budget.id}`}
-          />
-          <Text style={styles.caption}>
-            {progress.overBudget ? 'Over budget' : pace ? BUDGET_PACE_LABEL[pace.state] : 'Monthly budget'} ·{' '}
-            {progress.budget.rollover ? 'Unspent money rolls over' : 'No rollover'}
-          </Text>
+        <View style={styles.headingRow}>
+          <Text style={styles.heading}>Recent entries</Text>
+          {loaded && loadedScope === scope && visibleEntries.length > 0 && (
+            <Text style={styles.count}>{visibleEntries.length} this month</Text>
+          )}
         </View>
-        <Text style={styles.heading}>Recent entries</Text>
         {error ? (
-          <View style={styles.summary}>
+          <View style={styles.errorBox}>
             <Text style={styles.caption}>Couldn’t load recent entries: {error}</Text>
             <PrimaryButton title="Retry" compact variant="secondary" onPress={() => setRetry((v) => v + 1)} />
           </View>
@@ -164,6 +155,8 @@ export function BudgetDetailModal({
                 accountName={accounts.find((a) => a.id === tx.accountId)?.name}
                 toAccountName={undefined}
                 divider={index > 0}
+                omitCategory
+                dense
                 currency={currency}
               />
             ))}
@@ -187,27 +180,19 @@ export function BudgetDetailModal({
   );
 }
 const styles = StyleSheet.create({
-  summary: {
-    paddingVertical: 14,
-    gap: 12,
-    borderRadius: 22,
-    backgroundColor: theme.colors.surface,
-    marginBottom: 12,
-  },
-  figures: { flexDirection: 'row', flexWrap: 'wrap', gap: 16 },
-  figure: { flexGrow: 1, flexBasis: 120, gap: 4 },
+  errorBox: { paddingVertical: 4, gap: 12, marginBottom: 10 },
   caption: { fontFamily: theme.font.body, fontSize: 13, lineHeight: 19, color: theme.colors.textSecondary },
-  value: {
-    fontFamily: theme.font.bodyBold,
-    fontSize: 15,
-    fontVariant: ['tabular-nums'],
-    color: theme.colors.textPrimary,
+  headingRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+    gap: 8,
+    marginTop: 6,
+    marginBottom: 8,
+    marginHorizontal: 2,
   },
-  heading: {
-    fontFamily: theme.font.roundedBold,
-    fontSize: 15,
-    color: theme.colors.textPrimary,
-    marginVertical: 10,
-  },
-  entries: { borderRadius: 22, backgroundColor: theme.colors.surface, overflow: 'hidden' },
+  heading: { fontFamily: theme.font.roundedBold, fontSize: 14, color: theme.colors.textPrimary },
+  count: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
+  entries: { borderRadius: 20, backgroundColor: theme.colors.surface, overflow: 'hidden' },
 });
