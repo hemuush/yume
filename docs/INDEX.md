@@ -1,6 +1,6 @@
 # Documentation index
 
-The [23 October Android audit verification](ANDROID_AUDIT_VERIFICATION_2026_10_23.md) tracks implemented fixes, fresh checks and remaining product/device decisions. The [original audit](ANDROID_PRODUCTION_AUDIT_2026_10_23.md) preserves the architecture, scores, baseline source references and fault reproduction before those fixes. Historical widget-validation results remain distinct from fresh verification and Android acceptance.
+The [23 October Android audit verification](ANDROID_AUDIT_VERIFICATION_2026_10_23.md) tracks implemented fixes, fresh checks, the final installable APK and remaining phone acceptance. The [original audit](ANDROID_PRODUCTION_AUDIT_2026_10_23.md) preserves the architecture, scores, baseline source references and fault reproduction before those fixes. Historical widget-validation results remain distinct from fresh verification and Android acceptance.
 
 Start with the [README](../README.md), [architecture and logic](ARCHITECTURE.md), [data model](../DATA_MODEL.md), [backup and restore](../BACKUP.md) and [build/release guide](../BUILD.md).
 
@@ -20,32 +20,32 @@ See [14 October release readiness](RELEASE_READINESS_2026_10_14.md) for the late
 
 Reports retain previous evidence in an expandable historical section. Their dates, test counts and old UI descriptions belong to the recorded revision. Current behavior summaries link back to implementation; changing a contract requires updating its guide and meaningful tests.
 
-| Document                                                                          | Purpose                                              |
-| --------------------------------------------------------------------------------- | ---------------------------------------------------- |
-| [ACTIVITY_FIX_REPORT.md](archive/ACTIVITY_FIX_REPORT.md)                          | Historical implementation and validation record      |
-| [AGENTS.md](../AGENTS.md)                                                         | Current guide / project instructions                 |
-| [APP_AUDIT.md](archive/APP_AUDIT.md)                                              | Historical implementation and validation record      |
-| [AUDIT.md](archive/AUDIT.md)                                                      | Historical implementation and validation record      |
-| [BACKUP.md](../BACKUP.md)                                                         | Backup behavior and historical implementation record |
-| [BUILD.md](../BUILD.md)                                                           | Current guide / project instructions                 |
-| [CLAUDE.md](../CLAUDE.md)                                                         | Current guide / project instructions                 |
-| [CODE_CLEANUP_REPORT.md](archive/CODE_CLEANUP_REPORT.md)                          | Historical implementation and validation record      |
-| [DATA_MODEL.md](../DATA_MODEL.md)                                                 | Current guide / project instructions                 |
-| [FIX_REPORT.md](archive/FIX_REPORT.md)                                            | Historical implementation and validation record      |
-| [FOLLOWUP_CODE_AUDIT.md](../FOLLOWUP_CODE_AUDIT.md)                               | Historical implementation and validation record      |
-| [HOME_FIX_REPORT.md](archive/HOME_FIX_REPORT.md)                                  | Historical implementation and validation record      |
-| [HOME_PLAN_SECTION_FIXES.md](archive/HOME_PLAN_SECTION_FIXES.md)                  | Historical implementation and validation record      |
-| [PERFORMANCE_FIX_REPORT.md](archive/PERFORMANCE_FIX_REPORT.md)                    | Historical implementation and validation record      |
-| [PLAN_FIX_REPORT.md](archive/PLAN_FIX_REPORT.md)                                  | Historical implementation and validation record      |
-| [POPUP_REFINEMENT_REPORT.md](archive/POPUP_REFINEMENT_REPORT.md)                  | Historical implementation and validation record      |
-| [README.md](../README.md)                                                         | Current guide / project instructions                 |
-| [REPORTS_FIX_REPORT.md](archive/REPORTS_FIX_REPORT.md)                            | Historical implementation and validation record      |
-| [REPORTS_REDESIGN_IMPLEMENTATION.md](archive/REPORTS_REDESIGN_IMPLEMENTATION.md)  | Historical implementation and validation record      |
-| [SECURITY_FOLLOWUP_REPORT.md](archive/SECURITY_FOLLOWUP_REPORT.md)                | Historical implementation and validation record      |
-| [SECURITY_PRODUCT_REVIEW.md](../SECURITY_PRODUCT_REVIEW.md)                       | Historical implementation and validation record      |
-| [TRANSACTION_FIX_REPORT.md](archive/TRANSACTION_FIX_REPORT.md)                    | Historical implementation and validation record      |
-| [UI_REFINEMENT_REPORT.md](archive/UI_REFINEMENT_REPORT.md)                        | Historical implementation and validation record      |
-| [UI_UX_REFINEMENT_REPORT.md](archive/UI_UX_REFINEMENT_REPORT.md)                  | Historical implementation and validation record      |
+| Document                                                                         | Purpose                                              |
+| -------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| [ACTIVITY_FIX_REPORT.md](archive/ACTIVITY_FIX_REPORT.md)                         | Historical implementation and validation record      |
+| [AGENTS.md](../AGENTS.md)                                                        | Current guide / project instructions                 |
+| [APP_AUDIT.md](archive/APP_AUDIT.md)                                             | Historical implementation and validation record      |
+| [AUDIT.md](archive/AUDIT.md)                                                     | Historical implementation and validation record      |
+| [BACKUP.md](../BACKUP.md)                                                        | Backup behavior and historical implementation record |
+| [BUILD.md](../BUILD.md)                                                          | Current guide / project instructions                 |
+| [CLAUDE.md](../CLAUDE.md)                                                        | Current guide / project instructions                 |
+| [CODE_CLEANUP_REPORT.md](archive/CODE_CLEANUP_REPORT.md)                         | Historical implementation and validation record      |
+| [DATA_MODEL.md](../DATA_MODEL.md)                                                | Current guide / project instructions                 |
+| [FIX_REPORT.md](archive/FIX_REPORT.md)                                           | Historical implementation and validation record      |
+| [FOLLOWUP_CODE_AUDIT.md](../FOLLOWUP_CODE_AUDIT.md)                              | Historical implementation and validation record      |
+| [HOME_FIX_REPORT.md](archive/HOME_FIX_REPORT.md)                                 | Historical implementation and validation record      |
+| [HOME_PLAN_SECTION_FIXES.md](archive/HOME_PLAN_SECTION_FIXES.md)                 | Historical implementation and validation record      |
+| [PERFORMANCE_FIX_REPORT.md](archive/PERFORMANCE_FIX_REPORT.md)                   | Historical implementation and validation record      |
+| [PLAN_FIX_REPORT.md](archive/PLAN_FIX_REPORT.md)                                 | Historical implementation and validation record      |
+| [POPUP_REFINEMENT_REPORT.md](archive/POPUP_REFINEMENT_REPORT.md)                 | Historical implementation and validation record      |
+| [README.md](../README.md)                                                        | Current guide / project instructions                 |
+| [REPORTS_FIX_REPORT.md](archive/REPORTS_FIX_REPORT.md)                           | Historical implementation and validation record      |
+| [REPORTS_REDESIGN_IMPLEMENTATION.md](archive/REPORTS_REDESIGN_IMPLEMENTATION.md) | Historical implementation and validation record      |
+| [SECURITY_FOLLOWUP_REPORT.md](archive/SECURITY_FOLLOWUP_REPORT.md)               | Historical implementation and validation record      |
+| [SECURITY_PRODUCT_REVIEW.md](../SECURITY_PRODUCT_REVIEW.md)                      | Historical implementation and validation record      |
+| [TRANSACTION_FIX_REPORT.md](archive/TRANSACTION_FIX_REPORT.md)                   | Historical implementation and validation record      |
+| [UI_REFINEMENT_REPORT.md](archive/UI_REFINEMENT_REPORT.md)                       | Historical implementation and validation record      |
+| [UI_UX_REFINEMENT_REPORT.md](archive/UI_UX_REFINEMENT_REPORT.md)                 | Historical implementation and validation record      |
 
 See the [11 October cleanup record](CLEANUP.md) for that revision's removal decisions and validation.
 
