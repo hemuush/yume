@@ -7,6 +7,8 @@ import fs from 'fs';
 import path from 'path';
 import { theme } from '@/constants/theme';
 import { AVATAR_COLORS } from '@/lib/hueFor';
+import { TYPE_WASH, typeWash } from '@/features/add/addEntry';
+import { THEMES } from '@/theme/themes';
 
 const channel = (v: number) => {
   const s = v / 255;
@@ -53,6 +55,20 @@ describe('text contrast', () => {
       'utf8'
     );
     expect(src).not.toMatch(/subColor=\{[^}]*idCoralDeep/);
+  });
+
+  it.each(Object.entries(TYPE_WASH))(
+    'keeps %s entry labels readable on their keypad and card',
+    (_type, wash) => {
+      expect(contrast(wash.accent, wash.bg)).toBeGreaterThanOrEqual(4.5);
+      expect(contrast(wash.accent, c.surface)).toBeGreaterThanOrEqual(4.5);
+    }
+  );
+
+  it.each(THEMES)('keeps transfer labels readable in $name', (pack) => {
+    const wash = typeWash('transfer', pack.primary);
+    expect(contrast(wash.accent, wash.bg)).toBeGreaterThanOrEqual(4.5);
+    expect(contrast(wash.accent, c.surface)).toBeGreaterThanOrEqual(4.5);
   });
 });
 
