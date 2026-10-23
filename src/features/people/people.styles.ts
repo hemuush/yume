@@ -42,6 +42,7 @@ export const styles = StyleSheet.create({
     marginBottom: 8,
   },
   groupTitle: SECTION_TITLE,
+  groupDot: { width: 8, height: 8, borderRadius: 4, alignSelf: 'center' },
   tileRow: { flexDirection: 'row', gap: 10, marginHorizontal: SCREEN.gutter, marginBottom: 10 },
   tileCell: { flex: 1, minWidth: 0 },
   // A white tile (StripCard) whose top strip says which way the money goes: mint they owe you, coral you owe.
@@ -51,7 +52,8 @@ export const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    borderWidth: StyleSheet.hairlineWidth,
+    // A full pixel: the palest avatars (lime, mint) melt into the card with a half-pixel edge.
+    borderWidth: 1,
     borderColor: theme.colors.inkHairline,
     alignItems: 'center',
     justifyContent: 'center',
@@ -86,8 +88,8 @@ export const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
+    borderWidth: 1,
+    borderColor: theme.colors.inkHairline,
     alignItems: 'center',
     justifyContent: 'center',
   },
