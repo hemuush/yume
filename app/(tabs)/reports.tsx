@@ -823,7 +823,11 @@ export default function ReportsScreen() {
                     )}
                 {!byAccount && shownBreakdown.length > 0 && (
                   <ComparisonNote
-                    label={`${range.end >= todayIso ? 'So far vs full ' : 'Vs '}${custom ? 'previous period' : previousPeriodLabel(cursor)}`}
+                    label={
+                      range.end >= todayIso
+                        ? `So far vs ${custom ? 'the whole previous period' : cursor.granularity === 'year' ? 'all of last year' : 'the whole month before'}`
+                        : `Vs ${custom ? 'previous period' : previousPeriodLabel(cursor)}`
+                    }
                     partial={range.end >= todayIso}
                   />
                 )}

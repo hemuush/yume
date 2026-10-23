@@ -81,6 +81,8 @@ export const theme = {
     // The soft tray under the month card's figures (Today, pace) and its meter track.
     tray: '#F8F3EA',
     trayTrack: '#ECE4D4',
+    // The one grey segment that joins the thin categories in the Reports breakdown bar.
+    otherSlice: '#CFC8B6',
     // Readable sky for links and the transfer icon: 5.6:1 on the card, 5:1 on the page.
     link: '#2A69A6',
 
