@@ -73,7 +73,7 @@ export default function ProfileScreen() {
   if (!loaded && !loadError) {
     return (
       <View style={styles.container}>
-        <HomeWallpaper accent={accent} secondary={secondary} />
+        <HomeWallpaper accent={accent} secondary={secondary} plain />
         <SkyHeader title="Profile" showBack hideUser wallpaper />
         {/* The identity card's shape while it loads. */}
         <Glass radius={28} tone="strong" style={styles.skeletonCard}>
@@ -91,7 +91,7 @@ export default function ProfileScreen() {
 
   return (
     <View style={styles.container}>
-      <HomeWallpaper accent={accent} secondary={secondary} />
+      <HomeWallpaper accent={accent} secondary={secondary} plain />
       <AmountPadDock>
         {(scrollProps) => (
           <>
