@@ -7,7 +7,12 @@ import { useAccent } from '@/theme/AccentContext';
 import { shade } from '@/lib/color';
 import { SheetSurfaceProvider } from './SheetSurface';
 import Feather from '@expo/vector-icons/Feather';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
+import {
+  KeyboardAvoidingView,
+  KeyboardAwareScrollView,
+  KeyboardProvider,
+  useKeyboardState,
+} from 'react-native-keyboard-controller';
 import { SafeAreaProvider, useSafeAreaInsets, initialWindowMetrics } from 'react-native-safe-area-context';
 import { theme } from '@/constants/theme';
 import { usePressScale } from '@/lib/usePressScale';
@@ -112,11 +117,15 @@ function StandaloneSheet(props: Props) {
           which the root provider in app/_layout.tsx doesn't measure — without
           this, useSafeAreaInsets() reads { bottom: 0 } inside here and every
           sheet's footer buttons end up clipped behind the system nav bar. */}
-      <SafeAreaProvider initialMetrics={initialWindowMetrics}>
-        <SheetSurfaceProvider value>
-          <ModalSheetBody {...props} onClose={close} />
-        </SheetSurfaceProvider>
-      </SafeAreaProvider>
+      {/* A <Modal> is its own window, so the root KeyboardProvider never sees its keyboard: without a provider
+          here the sheet stays behind the keyboard and typing happens out of sight. */}
+      <KeyboardProvider statusBarTranslucent navigationBarTranslucent>
+        <SafeAreaProvider initialMetrics={initialWindowMetrics}>
+          <SheetSurfaceProvider value>
+            <ModalSheetBody {...props} onClose={close} />
+          </SheetSurfaceProvider>
+        </SafeAreaProvider>
+      </KeyboardProvider>
     </Modal>
   );
 }
@@ -270,6 +279,8 @@ function ModalSheetBody({
   const flow = useContext(SheetFlowContext);
   const inFlow = !!flow && (!!backLabel || flowPage);
   const insets = useSafeAreaInsets();
+  // With the keyboard up it already covers the nav bar, so the footer needs no extra bottom inset.
+  const keyboardUp = useKeyboardState((state) => state.isVisible);
   const { height, fontScale } = useWindowDimensions();
   const maxHeight =
     height < 640 || fontScale > 1.2 || size === 'expanded' ? '94%' : size === 'compact' ? '78%' : '90%';
@@ -317,11 +328,12 @@ function ModalSheetBody({
             accessibilityRole="button"
             accessibilityLabel="Close"
           />
-          <View
+          <KeyboardAvoidingView
+            behavior="padding"
             style={[
               styles.flex,
               styles.alignCenter,
-              { paddingTop: insets.top + 12, paddingBottom: insets.bottom + 12 },
+              { paddingTop: insets.top + 12, paddingBottom: (keyboardUp ? 0 : insets.bottom) + 12 },
             ]}
             pointerEvents="box-none"
           >
@@ -342,7 +354,7 @@ function ModalSheetBody({
               <View style={[styles.framedDialogFooter, { paddingBottom: pad ? 10 : 16 }]}>{footer}</View>
               {pad && <View style={styles.dialogDock}>{pad}</View>}
             </View>
-          </View>
+          </KeyboardAvoidingView>
         </View>
       </AmountPadHostProvider>
     );
@@ -361,7 +373,8 @@ function ModalSheetBody({
             accessibilityRole="button"
             accessibilityLabel="Close"
           />
-          <View
+          <KeyboardAvoidingView
+            behavior="padding"
             style={[styles.flex, styles.alignBottom, { paddingTop: insets.top + 8 }]}
             pointerEvents="box-none"
           >
@@ -385,15 +398,15 @@ function ModalSheetBody({
                 {children}
               </KeyboardAwareScrollView>
               {footer !== undefined ? (
-                <View style={[styles.framedSheetFooter, { paddingBottom: pad ? 10 : 12 + insets.bottom }]}>
+                <View style={[styles.framedSheetFooter, { paddingBottom: pad ? 10 : 12 + (keyboardUp ? 0 : insets.bottom) }]}>
                   {footer}
                 </View>
               ) : pad ? null : (
-                <View style={{ height: insets.bottom }} />
+                <View style={{ height: keyboardUp ? 0 : insets.bottom }} />
               )}
               {pad && <View style={[styles.sheetDock, { paddingBottom: 12 + insets.bottom }]}>{pad}</View>}
             </View>
-          </View>
+          </KeyboardAvoidingView>
         </View>
       </AmountPadHostProvider>
     );
