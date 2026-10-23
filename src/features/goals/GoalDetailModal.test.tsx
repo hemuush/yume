@@ -32,8 +32,8 @@ jest.mock('@/components/ModalSheet', () => ({
   SheetLink: (p: { label: string; onPress: () => void }) =>
     require('react').createElement(require('react-native').View, { testID: 'sheet-link', ...p }),
 }));
-jest.mock('./GoalSheetCard', () => ({
-  GoalSheetCard: (p: { name: string }) =>
+jest.mock('./GoalDraftHero', () => ({
+  GoalDraftHero: (p: { name: string }) =>
     require('react').createElement(require('react-native').View, { testID: 'card', ...p }),
 }));
 jest.mock('@/components/FormInput', () => ({
