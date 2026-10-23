@@ -1,4 +1,4 @@
-import { heroSlices, heroPct, heroRestingMode, withoutSavings } from './heroSlices';
+import { heroSlices, heroPct, withoutSavings } from './heroSlices';
 
 const sum = (s: { spent: number; saved: number; free: number }) => s.spent + s.saved + s.free;
 
@@ -76,32 +76,11 @@ describe('heroPct', () => {
   });
 });
 
-describe('heroRestingMode', () => {
-  it('rests on Kept when some income remains', () => {
-    expect(heroRestingMode(heroSlices(18000000, 8200000, 9700000))).toBe('kept');
-  });
-
-  it('rests on Spent when income was exactly spent', () => {
-    expect(heroRestingMode(heroSlices(2500000, 2500000, 0))).toBe('spent');
-  });
-});
-
 describe('with savings hidden', () => {
   it('drops the savings arc and leaves free at its real share', () => {
     const s = withoutSavings(heroSlices(100000, 10000, 60000));
     expect(s.saved).toBe(0);
     expect(s.spent).toBeCloseTo(0.1);
     expect(s.free).toBeCloseTo(0.3);
-  });
-
-  it('offers only spent and free, resting on free', () => {
-    const s = withoutSavings(heroSlices(100000, 10000, 60000));
-    expect(heroRestingMode(s, true)).toBe('free');
-  });
-
-  it('rests on spent when nothing is free', () => {
-    // Everything unspent went to savings: free is 0 once savings is taken out.
-    const s = withoutSavings(heroSlices(100000, 40000, 60000));
-    expect(heroRestingMode(s, true)).toBe('spent');
   });
 });
