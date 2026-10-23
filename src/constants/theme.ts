@@ -90,6 +90,10 @@ export const theme = {
     inkWash: 'rgba(18,19,15,0.05)',
     // Ink at a little more opacity — a hairline on a translucent chip.
     inkHairline: 'rgba(18,19,15,0.1)',
+    // A clearer ink line for rails and rings that must read on cream (a timeline rail, a dot's ring), ~1.9:1.
+    inkLine: 'rgba(18,19,15,0.16)',
+    // Ink for an "off" state or a faint chart line that still has to be seen (~1.9:1 on the card).
+    inkOff: 'rgba(18,19,15,0.28)',
     // White at partial opacity — a frosted chip or figure sitting on a
     // pastel card, letting the card's colour show through.
     glass: 'rgba(255,255,255,0.6)',

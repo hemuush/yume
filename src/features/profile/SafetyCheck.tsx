@@ -77,7 +77,7 @@ export function SafetyCheck({
         ? 'Your data is looked after'
         : `${todo} thing${todo === 1 ? '' : 's'} to look at`;
   const good = theme.colors.slice.saved;
-  const muted = 'rgba(18,19,15,0.28)';
+  const muted = theme.colors.inkOff;
   return (
     <View style={styles.card}>
       <Text style={styles.kicker}>Safety check</Text>

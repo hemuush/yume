@@ -97,7 +97,7 @@ export const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
   },
-  pillDot: { width: 8, height: 8, borderRadius: 4, boxShadow: '0 0 0 1px rgba(18,19,15,0.16)' },
+  pillDot: { width: 8, height: 8, borderRadius: 4, boxShadow: `0 0 0 1px ${theme.colors.inkLine}` },
   pillText: {
     flexShrink: 1,
     fontSize: 12,

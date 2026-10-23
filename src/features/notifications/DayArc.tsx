@@ -54,11 +54,11 @@ export function DayArc({ morning, evening }: { morning: Slot; evening: Slot }) {
         {width > 0 && (
           <>
             <Svg width={width} height={HEIGHT}>
-              <Line x1={4} x2={width - 4} y1={BASE + 8} y2={BASE + 8} stroke="rgba(18,19,15,0.14)" />
+              <Line x1={4} x2={width - 4} y1={BASE + 8} y2={BASE + 8} stroke={theme.colors.inkLine} />
               <Path
                 d={arc}
                 fill="none"
-                stroke="rgba(18,19,15,0.28)"
+                stroke={theme.colors.inkOff}
                 strokeWidth={1.5}
                 strokeDasharray="4 4"
               />

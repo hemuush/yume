@@ -165,7 +165,7 @@ export const frost = StyleSheet.create({
     paddingHorizontal: 10,
     borderRadius: theme.radius.pill,
     borderWidth: 1,
-    borderColor: 'rgba(18,19,15,0.1)',
+    borderColor: theme.colors.inkHairline,
     maxWidth: '100%',
   },
   chipText: {
