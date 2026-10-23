@@ -4,9 +4,12 @@ import { haptics } from '@/lib/haptics';
 import { RepeatEntrySheet } from '@/features/home/RepeatEntrySheet';
 import { PillTabBar } from '@/components/PillTabBar';
 import { pushOnce } from '@/lib/pushOnce';
+import { DURATIONS } from '@/lib/motionTimings';
+import { useReduceMotion } from '@/lib/useReduceMotion';
 
 export default function TabsLayout() {
   const [repeatSheetVisible, setRepeatSheetVisible] = useState(false);
+  const reduce = useReduceMotion();
 
   return (
     <>
@@ -24,7 +27,13 @@ export default function TabsLayout() {
             onAddLongPress={() => setRepeatSheetVisible(true)}
           />
         )}
-        screenOptions={{ headerShown: false }}
+        // Switching tabs cross-fades the screens (quickly, so it never feels like waiting); with reduced motion
+        // it is instant.
+        screenOptions={{
+          headerShown: false,
+          animation: reduce ? 'none' : 'fade',
+          transitionSpec: { animation: 'timing', config: { duration: DURATIONS.quick } },
+        }}
       >
         <Tabs.Screen name="index" options={{ title: 'Home' }} />
         <Tabs.Screen name="transactions" options={{ title: 'Activity' }} />

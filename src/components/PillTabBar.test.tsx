@@ -1,3 +1,4 @@
+import { StyleSheet } from 'react-native';
 import { act, create, ReactTestRenderer } from 'react-test-renderer';
 import { PillTabBar } from './PillTabBar';
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
@@ -90,5 +91,15 @@ it('retains Add on other screens', () => {
       .props.onPress()
   );
   expect(add).toHaveBeenCalledTimes(1);
+  act(() => tree.unmount());
+});
+it("shows the chosen tab's fill and hides the others", () => {
+  const { tree } = render(1);
+  const opacityOf = (label: string) =>
+    StyleSheet.flatten(tree.root.findByProps({ testID: `tab-fill-${label}` }).props.style).opacity;
+  expect(opacityOf('Activity')).toBe(1);
+  expect(opacityOf('Home')).toBe(0);
+  expect(opacityOf('Plan')).toBe(0);
+  expect(opacityOf('Reports')).toBe(0);
   act(() => tree.unmount());
 });
