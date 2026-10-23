@@ -1,4 +1,4 @@
-import { withPressed } from '@/lib/pressed';
+import { withPressedTint } from '@/lib/pressed';
 import { View, Pressable, StyleSheet, useWindowDimensions } from 'react-native';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
@@ -44,7 +44,7 @@ export function RecentTransactionRow({
   currency?: string;
   onPress?: () => void;
 }) {
-  const { secondary } = useAccent();
+  const { accent, secondary } = useAccent();
   const { width, fontScale } = useWindowDimensions();
   const stacked = width < 360 || fontScale > 1.2;
   const isTransfer = tx.type === 'transfer';
@@ -68,7 +68,7 @@ export function RecentTransactionRow({
       accessibilityHint={onPress ? 'Opens transaction details' : undefined}
       style={
         onPress
-          ? withPressed([styles.row, stacked && styles.stackedRow, divider && styles.divider])
+          ? withPressedTint(accent, [styles.row, stacked && styles.stackedRow, divider && styles.divider])
           : [styles.row, stacked && styles.stackedRow, divider && styles.divider]
       }
     >
