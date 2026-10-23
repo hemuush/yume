@@ -211,7 +211,7 @@ describe('entry detail', () => {
     mockStack.routes = [{ name: '(tabs)' }, { name: 'category/[id]', params: { id: 'food' } }];
     try {
       const tree = await render();
-      const link = rows(tree, 'Category')[0];
+      const link = rows(tree, 'Open Food category')[0];
       (router.push as jest.Mock).mockClear();
       act(() => link.props.onPress());
       expect(router.push).not.toHaveBeenCalled();
@@ -223,7 +223,7 @@ describe('entry detail', () => {
 
   it("opens the entry's category page", async () => {
     const tree = await render();
-    const link = rows(tree, 'Category')[0];
+    const link = rows(tree, 'Open Food category')[0];
     act(() => link.props.onPress());
     expect(router.push).toHaveBeenCalledWith('/category/food');
   });
@@ -235,6 +235,54 @@ describe('entry detail', () => {
     expect(tree.root.findAll((n) => n.props.value === 'details' && n.props.onChange)).toHaveLength(0);
     expect(rows(tree, 'Log again today')).toHaveLength(0);
     expect(rows(tree, 'Make it recurring')).toHaveLength(0);
+  });
+});
+
+const shownText = (tree: ReactTestRenderer) =>
+  tree.root.findAllByType(Text).map((t) => [t.props.children].flat(Infinity).join(''));
+
+describe('the entry card', () => {
+  it('shows the category once, at the top, and no separate Category or Paid-from rows', async () => {
+    const tree = await render();
+    const text = shownText(tree);
+    expect(text.filter((t) => t === 'Food')).toHaveLength(1);
+    expect(text).not.toContain('Category');
+    expect(text).not.toContain('Paid from');
+  });
+
+  it('puts the account beside the date on the card', async () => {
+    const tree = await render();
+    expect(shownText(tree).some((t) => t.includes('Bank') && t.includes('15'))).toBe(true);
+  });
+
+  it('keeps the label as its own row only when the entry has one', async () => {
+    const withLabel = await render();
+    expect(shownText(withLabel)).toContain('Label');
+    expect(shownText(withLabel)).toContain('Lunch');
+    const without = await render({ ...lunch, note: '' });
+    expect(shownText(without)).not.toContain('Label');
+  });
+
+  it('makes the category name the link to its page, but not on a transfer', async () => {
+    const tree = await render();
+    expect(rows(tree, 'Open Food category')).toHaveLength(1);
+    const transfer = await render({ ...lunch, type: 'transfer', toAccountId: 'bank', categoryId: null });
+    expect(
+      transfer.root.findAll(
+        (n) =>
+          typeof n.props.accessibilityLabel === 'string' && n.props.accessibilityLabel.startsWith('Open ')
+      )
+    ).toHaveLength(0);
+  });
+
+  it('describes each action for screen readers without showing a hint line', async () => {
+    const tree = await render();
+    const log = rows(tree, 'Log again today')[0];
+    expect(log.props.accessibilityHint).toBe('Same amount, account and label');
+    const text = shownText(tree);
+    expect(text).not.toContain('Same entry');
+    expect(text).not.toContain('Set schedule');
+    expect(text).not.toContain('Track or receive');
   });
 });
 
