@@ -5,7 +5,8 @@ import { Text } from '@/components/Text';
 import { ActionSheet } from '@/components/ActionSheet';
 import { ModalSheet } from '@/components/ModalSheet';
 import { theme } from '@/constants/theme';
-import { withPressed } from '@/lib/pressed';
+import { withPressedTint } from '@/lib/pressed';
+import { useAccent } from '@/theme/AccentContext';
 
 import { SegmentedControl } from '@/components/SegmentedControl';
 
@@ -65,6 +66,7 @@ export function GroupPicker({
   onGroup: (value: 'category' | 'account') => void;
   onLabels?: () => void;
 }) {
+  const { accent } = useAccent();
   const [open, setOpen] = useState(false);
   return (
     <>
@@ -72,7 +74,7 @@ export function GroupPicker({
         onPress={() => setOpen(true)}
         accessibilityRole="button"
         accessibilityLabel={`Group breakdown: By ${group}. Change`}
-        style={withPressed(s.group)}
+        style={withPressedTint(accent, s.group)}
       >
         <Text style={s.groupText}>{group === 'category' ? 'By category' : 'By account'}</Text>
         <Feather name="chevron-down" size={14} color={theme.colors.textSecondary} />
@@ -98,6 +100,7 @@ export function GroupPicker({
 }
 
 export function ComparisonNote({ label, partial }: { label: string; partial: boolean }) {
+  const { accent } = useAccent();
   const [open, setOpen] = useState(false);
   return (
     <>
@@ -105,7 +108,7 @@ export function ComparisonNote({ label, partial }: { label: string; partial: boo
         onPress={() => setOpen(true)}
         accessibilityRole="button"
         accessibilityLabel={`${label}. About comparisons`}
-        style={withPressed(s.comparison)}
+        style={withPressedTint(accent, s.comparison)}
       >
         <Text style={s.note}>{label}</Text>
         <Feather name="info" size={14} color={theme.colors.textMuted} />

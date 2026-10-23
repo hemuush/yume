@@ -6,7 +6,8 @@ import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
 import { roundedMinor } from '@/lib/round';
-import { withPressed } from '@/lib/pressed';
+import { withPressedTint } from '@/lib/pressed';
+import { useAccent } from '@/theme/AccentContext';
 import { weekdayDayMonth } from '@/lib/dateLabels';
 import type { Category, Transaction } from '@/types';
 
@@ -64,6 +65,7 @@ export function DayInspector({
   catById: Map<string, Category>;
   onOpen: () => void;
 }) {
+  const { accent } = useAccent();
   const parts = useMemo(() => (txs ? dayMix(txs, catById) : []), [txs, catById]);
   const total = parts.reduce((s, p) => s + p.minor, 0);
   const ratio = usualMinor > 0 ? spentMinor / usualMinor : 0;
@@ -96,7 +98,7 @@ export function DayInspector({
             onPress={onOpen}
             accessibilityRole="button"
             accessibilityLabel={`Open ${date}`}
-            style={withPressed(styles.open)}
+            style={withPressedTint(accent, styles.open)}
           >
             <Text style={styles.openText}>Open day</Text>
             <Feather name="chevron-right" size={14} color={theme.colors.link} />
@@ -161,7 +163,12 @@ const styles = StyleSheet.create({
   },
   openText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.link },
   mixBar: { flexDirection: 'row', gap: 2, height: 8, marginTop: 12, borderRadius: 4, overflow: 'hidden' },
-  mixSeg: { flexBasis: 0, minWidth: 3, borderRadius: 2 },
+  mixSeg: {
+    flexBasis: 0,
+    minWidth: 3,
+    borderRadius: 2,
+    boxShadow: `inset 0px 0px 0px 1px ${theme.colors.inkHairline}`,
+  },
   mixText: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 12, rowGap: 2, marginTop: 8 },
   mixItem: { flexDirection: 'row', alignItems: 'center', gap: 5, maxWidth: '100%' },
   mixDot: { width: 8, height: 8, borderRadius: 4 },

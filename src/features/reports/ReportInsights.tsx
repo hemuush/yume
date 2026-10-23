@@ -4,7 +4,7 @@ import { Text } from '@/components/Text';
 import { screenStyles as h, SCREEN } from '@/components/screenStyles';
 import { theme } from '@/constants/theme';
 import { softTint } from '@/components/softTint';
-import { withPressed } from '@/lib/pressed';
+import { withPressedTint } from '@/lib/pressed';
 import { useAccent } from '@/theme/AccentContext';
 import { MoonPhase } from './MoonPhase';
 import type { StoryAction, StoryCard } from './reportsInsights';
@@ -76,7 +76,7 @@ export function ReportInsights({
               onPress={() => onAction(card.action!)}
               accessibilityRole="button"
               accessibilityLabel={`${card.kicker}. ${headline}. ${card.cta ?? ''}`}
-              style={withPressed(style)}
+              style={withPressedTint(accent, style)}
             >
               {body}
             </Pressable>
