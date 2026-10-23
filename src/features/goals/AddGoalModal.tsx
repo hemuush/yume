@@ -2,18 +2,20 @@ import { useState } from 'react';
 import { View } from 'react-native';
 import { Text } from '@/components/Text';
 import { createSavingsGoal } from '@/db/savingsGoals';
-import { toMinor, inputMinor } from '@/lib/money';
+import { toMinor, inputMinor, formatMoney } from '@/lib/money';
+import { dayMonthYear } from '@/lib/dateLabels';
+import { goalPlan } from './goalPlan';
 import { toLocalIsoDate, addMonthsToIsoDate } from '@/lib/date';
 import { DateField } from '@/components/DateField';
 import { Account } from '@/types';
 import { ModalSheet } from '@/components/ModalSheet';
-import { modalFooterStyles as f } from '@/constants/theme';
+import { DraftCard } from '@/components/DraftCard';
+import { modalFooterStyles as f, theme } from '@/constants/theme';
 import { FormInput } from '@/components/FormInput';
 import { AmountField } from '@/components/AmountField';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { ToggleSwitch } from '@/components/ToggleSwitch';
 import { GoalAccountField } from './GoalAccountField';
-import { GoalSheetCard } from './GoalSheetCard';
 import { styles } from './goals.styles';
 import { useSheetMutation } from '@/lib/useSheetMutation';
 
@@ -47,6 +49,21 @@ function AddGoalForm({ visible, accounts, onClose, onCreated }: AddGoalProps) {
     setReservesAccount(false);
     setTracksAccount(accounts.find((a) => a.id === id)?.type === 'savings');
   };
+
+  const targetMinor = inputMinor(target);
+  // The same monthly figure the goal screens show, worked out as if nothing were saved yet.
+  const pace =
+    hasTargetDate && targetMinor > 0
+      ? goalPlan(
+          {
+            currentAmountMinor: 0,
+            targetAmountMinor: targetMinor,
+            targetDate: targetDateValue,
+            createdAt: today,
+          },
+          today
+        ).perMonthMinor
+      : null;
 
   const submit = async () => {
     setError(null);
@@ -102,12 +119,18 @@ function AddGoalForm({ visible, accounts, onClose, onCreated }: AddGoalProps) {
         accessibilityElementsHidden={saving || saved}
         importantForAccessibility={saving || saved ? 'no-hide-descendants' : 'auto'}
       >
-        <GoalSheetCard
-          compact
-          name={name.trim() || 'New goal'}
-          savedMinor={0}
-          targetMinor={inputMinor(target)}
-          targetDate={hasTargetDate ? targetDateValue : null}
+        <DraftCard
+          hue={theme.colors.secondary}
+          icon="piggy-bank-outline"
+          title={name.trim() || 'New goal'}
+          kicker={hasTargetDate ? `Savings goal · by ${dayMonthYear(targetDateValue)}` : 'Savings goal'}
+          figure={targetMinor > 0 ? formatMoney(targetMinor) : undefined}
+          per="target"
+          meta={
+            pace != null
+              ? `${formatMoney(pace)} a month to get there by ${dayMonthYear(targetDateValue)}`
+              : undefined
+          }
         />
         <FormInput
           label="Goal name"

@@ -21,12 +21,12 @@ jest.mock('@/components/ModalSheet', () => ({
   ModalSheet: ({ children, footer }: { children: unknown; footer?: unknown }) =>
     require('react').createElement(require('react').Fragment, null, children, footer),
 }));
-jest.mock('./LoanDraftCard', () => ({
-  LoanDraftCard: (p: { title: string; emi?: string; meta: string }) =>
+jest.mock('@/components/DraftCard', () => ({
+  DraftCard: (p: { title: string; figure?: string; meta: string }) =>
     require('react').createElement(require('react-native').View, {
       testID: 'card',
       title: p.title,
-      emi: p.emi,
+      emi: p.figure,
       meta: p.meta,
     }),
 }));
