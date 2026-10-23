@@ -46,8 +46,10 @@ export function OptionCards<T extends string>({
               size={20}
               color={active ? theme.colors.textPrimary : theme.colors.textMuted}
             />
-            <Text style={[styles.title, active && styles.titleActive]}>{o.title}</Text>
-            <Text style={styles.sub}>{o.sub}</Text>
+            <View style={styles.copy}>
+              <Text style={[styles.title, active && styles.titleActive]}>{o.title}</Text>
+              <Text style={styles.sub}>{o.sub}</Text>
+            </View>
           </Pressable>
         );
       })}
@@ -100,22 +102,25 @@ export function CountStepper({
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', gap: 10, marginBottom: 14 },
+  row: { flexDirection: 'row', gap: 8, marginBottom: 12 },
   card: {
     flex: 1,
-    gap: 4,
-    padding: 12,
-    borderRadius: theme.radius.xl,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 18,
     borderWidth: 1,
     borderColor: theme.colors.borderSoft,
     backgroundColor: theme.colors.surface,
   },
   pressed: { opacity: 0.7 },
+  copy: { flex: 1, minWidth: 0 },
   title: {
     fontFamily: theme.font.roundedMedium,
     fontSize: 13,
     color: theme.colors.textSecondary,
-    marginTop: 4,
   },
   titleActive: { fontFamily: theme.font.roundedBold, color: theme.colors.textPrimary },
   sub: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 15, color: theme.colors.textMuted },
