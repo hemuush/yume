@@ -1,5 +1,7 @@
 # Documentation index
 
+The [23 October recreated Expo account setup](EAS_ACCOUNT_SETUP_2026_10_23.md) records the current EAS project, approved fresh Android signing key, version-code 1 baseline and configuration verification. Earlier account/build records refer to their historical project identities.
+
 The [23 October Android audit verification](ANDROID_AUDIT_VERIFICATION_2026_10_23.md) tracks implemented fixes, fresh checks, the final installable APK and remaining phone acceptance. The [original audit](ANDROID_PRODUCTION_AUDIT_2026_10_23.md) preserves the architecture, scores, baseline source references and fault reproduction before those fixes. Historical widget-validation results remain distinct from fresh verification and Android acceptance.
 
 Start with the [README](../README.md), [architecture and logic](ARCHITECTURE.md), [data model](../DATA_MODEL.md), [backup and restore](../BACKUP.md) and [build/release guide](../BUILD.md).
