@@ -38,10 +38,12 @@ export async function renderWidgetByName(name: WidgetName): Promise<React.JSX.El
           text="Widget details hidden"
           style={{ fontFamily: WIDGET_FONT.bodyMedium, fontSize: 12, color: widgetColor.textMuted }}
         />
-        <TextWidget
-          text="Open Yume to view your finances"
-          style={{ fontFamily: WIDGET_FONT.bodyMedium, fontSize: 11, color: widgetColor.textMuted }}
-        />
+        {name !== 'NextDue' && (
+          <TextWidget
+            text="Open Yume to view your finances"
+            style={{ fontFamily: WIDGET_FONT.bodyMedium, fontSize: 11, color: widgetColor.textMuted }}
+          />
+        )}
       </WidgetShell>
     );
   }

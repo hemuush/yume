@@ -4,78 +4,99 @@ import { WidgetShell, WidgetTitle, WidgetIcon } from './WidgetShell';
 import { widgetColor, widgetTint, asWidgetColor, WIDGET_FONT } from './widgetTheme';
 import type { AccountsWidgetData } from './data';
 
-/**
- * "Accounts" 4×2 widget: your first three accounts in Home's strip order, each with a type-tinted round icon,
- * type under the name, Space Mono balance; the total sits by the title when sensible. Opens the app.
- */
+/** Three centred account columns, matching Home; balances keep their currency and privacy mask. */
 export function AccountsWidget({ accounts, totalText }: AccountsWidgetData) {
   return (
-    <WidgetShell clickAction="OPEN_APP">
+    <WidgetShell clickAction="OPEN_APP" justifyContent="space-between">
       <FlexWidget
         style={{
           flexDirection: 'row',
-          justifyContent: 'space-between',
           alignItems: 'center',
+          justifyContent: 'space-between',
           width: 'match_parent',
         }}
       >
-        <WidgetTitle text="Your accounts" />
+        <WidgetTitle text="Accounts" />
         {totalText != null && (
           <TextWidget
             text={totalText}
-            style={{ fontFamily: WIDGET_FONT.mono, fontSize: 11.5, color: widgetColor.inkSoft }}
+            maxLines={1}
+            style={{
+              fontFamily: WIDGET_FONT.amount,
+              fontSize: 11,
+              color: widgetColor.inkSoft,
+              width: 100,
+              textAlign: 'right',
+              adjustsFontSizeToFit: true,
+            }}
           />
         )}
       </FlexWidget>
-      <FlexWidget style={{ height: 4, width: 'match_parent' }} />
       {accounts.length === 0 ? (
         <TextWidget
-          text="No accounts yet"
-          style={{ fontFamily: WIDGET_FONT.body, fontSize: 12.5, color: widgetColor.textMuted, marginTop: 6 }}
+          text="Add your first account in Yume"
+          style={{ fontFamily: WIDGET_FONT.body, fontSize: 12, color: widgetColor.textMuted }}
         />
       ) : (
-        accounts.map((acc, i) => (
-          <FlexWidget
-            key={`${acc.name}-${i}`}
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              width: 'match_parent',
-              paddingVertical: 5,
-              borderTopWidth: i === 0 ? 0 : 1,
-              borderTopColor: widgetColor.borderSoft,
-            }}
-          >
-            <WidgetIcon
-              name={acc.icon}
-              background={widgetTint(acc.hue, 88)}
-              color={asWidgetColor(shade(acc.hue, 38, 10))}
-              size={28}
-            />
-            <FlexWidget style={{ width: 10, height: 1 }} />
-            <FlexWidget style={{ flex: 1, width: 0, flexDirection: 'column' }}>
+        <FlexWidget style={{ flexDirection: 'row', width: 'match_parent', marginTop: 10 }}>
+          {accounts.map((acc, i) => (
+            <FlexWidget
+              key={`${acc.name}-${i}`}
+              style={{
+                flex: 1,
+                width: 0,
+                flexDirection: 'column',
+                alignItems: 'center',
+                paddingHorizontal: 3,
+              }}
+            >
+              <WidgetIcon
+                name={acc.icon}
+                background={widgetTint(acc.hue, 88)}
+                color={asWidgetColor(shade(acc.hue, 30, 10))}
+                size={30}
+              />
               <TextWidget
                 text={acc.name}
-                truncate="END"
                 maxLines={1}
-                style={{ fontFamily: WIDGET_FONT.bodyMedium, fontSize: 12.5, color: widgetColor.ink }}
+                truncate="END"
+                style={{
+                  width: 'match_parent',
+                  textAlign: 'center',
+                  fontFamily: WIDGET_FONT.bodyMedium,
+                  fontSize: 12,
+                  color: widgetColor.ink,
+                  marginTop: 6,
+                }}
               />
               <TextWidget
                 text={acc.typeLabel}
                 maxLines={1}
-                style={{ fontFamily: WIDGET_FONT.body, fontSize: 10, color: widgetColor.textMuted }}
+                style={{
+                  width: 'match_parent',
+                  textAlign: 'center',
+                  fontFamily: WIDGET_FONT.body,
+                  fontSize: 10,
+                  color: widgetColor.textMuted,
+                  marginTop: 2,
+                }}
+              />
+              <TextWidget
+                text={acc.balanceText}
+                maxLines={1}
+                style={{
+                  width: 'match_parent',
+                  textAlign: 'center',
+                  fontFamily: WIDGET_FONT.amount,
+                  fontSize: 14,
+                  adjustsFontSizeToFit: true,
+                  color: acc.negative ? widgetColor.expenseText : widgetColor.ink,
+                  marginTop: 4,
+                }}
               />
             </FlexWidget>
-            <TextWidget
-              text={acc.balanceText}
-              style={{
-                fontFamily: WIDGET_FONT.mono,
-                fontSize: 12.5,
-                color: acc.negative ? widgetColor.expenseText : widgetColor.ink,
-              }}
-            />
-          </FlexWidget>
-        ))
+          ))}
+        </FlexWidget>
       )}
     </WidgetShell>
   );

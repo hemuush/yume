@@ -122,6 +122,7 @@ export const theme = {
   // Compact sizing keeps Yume's existing fonts and hierarchy. Text elsewhere follows the same ladder: 11 for axis
   // and legend text, 12 captions, 13 body and row titles, 14-15 emphasis, then these.
   typeSize: { hero: 34, headline: 30, inputAmount: 40, title: 18, greeting: 16, section: 15, row: 13 },
+  accessibility: { maxFontScale: 2, reflowFontScale: 1.3, minTouchTarget: 44, lineHeightRatio: 1.4 },
   // Tab bar metrics shared with screens that scroll clear of it. A tab screen needs `tabScreenScrollPad`
   // bottom padding (bar height + margin), a pushed screen `screenScrollPad`; callers add `insets.bottom`.
   layout: {

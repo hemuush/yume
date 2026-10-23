@@ -196,12 +196,18 @@ export async function checkOverspendForNewTransaction(input: CreateTransactionIn
 }
 
 export async function createTransaction(input: CreateTransactionInput): Promise<Transaction> {
-  await assertValidTransactionInput(input);
   const db = await getDb();
-  const id = await insertTransactionRow(db, input);
-  const row = await db.getFirstAsync<TransactionRow>('SELECT * FROM transactions WHERE id = ?', [id]);
+  let created: Transaction | null = null;
+  // A failed result read must roll back the INSERT, otherwise retrying a rejected save duplicates it.
+  await db.withTransactionAsync(async (tx) => {
+    await assertValidTransactionInput(input, tx);
+    const id = await insertTransactionRow(tx, input);
+    const row = await tx.getFirstAsync<TransactionRow>('SELECT * FROM transactions WHERE id = ?', [id]);
+    created = rowToTransaction(found(row, 'entry'));
+  });
+  const result = found<Transaction>(created, 'entry');
   await checkOverspendForNewTransaction(input);
-  return rowToTransaction(found(row, 'entry'));
+  return result;
 }
 
 export async function listTransactions(filters?: {
