@@ -1,15 +1,7 @@
 import { MonthlyPlanCheck } from '@/features/plan/MonthlyPlanCheck';
 import { investRole, investRuleTitle, investmentIdsOf } from '@/lib/investment';
 import { InvestmentsCard } from '@/features/investments/InvestmentsCard';
-import { listInvestmentHistory } from '@/db/investmentHistory';
-import {
-  buildPortfolio,
-  buildSeries,
-  monthlySipTotal,
-  sipsOf,
-  type Portfolio,
-  type SeriesPoint,
-} from '@/lib/portfolio';
+import { buildPortfolio, type Portfolio } from '@/lib/portfolio';
 import { LoanComparison } from '@/features/loans/LoanComparison';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { View, Pressable, StyleSheet, useWindowDimensions } from 'react-native';
@@ -125,9 +117,7 @@ interface PlanData {
   habit: HabitState | null;
   dailyGoalMinor: number | null;
   investments: Portfolio;
-  investmentSeries: SeriesPoint[];
   /** What the active SIPs add up to a month, in the default currency. */
-  sipMonthlyMinor: number;
 }
 
 /** Plan previews open item sheets directly; collection links keep the full-screen routes. */
@@ -197,7 +187,6 @@ export default function PlanScreen() {
       allCardCycles,
       streak,
       currency,
-      investmentHistory,
     ] = await Promise.all([
       listBudgetsForMonth(undefined, hideAmounts),
       listSavingsGoals(),
@@ -213,7 +202,6 @@ export default function PlanScreen() {
       // The streak only needs the goal value, so it chains off the same read instead of waiting for the batch.
       dailyGoalRead.then((goal) => (goal != null ? getDailyGoalStreakSeries(goal, 5) : null)),
       getDefaultCurrency(),
-      listInvestmentHistory(),
     ]);
 
     if (call !== request.current) return;
@@ -302,8 +290,6 @@ export default function PlanScreen() {
     const investments = buildPortfolio(accounts, currency, today);
     setData({
       investments,
-      investmentSeries: buildSeries(investments, investmentHistory, today),
-      sipMonthlyMinor: monthlySipTotal(sipsOf(rules, accounts), accounts, currency),
       hideAmounts,
       currency,
       accounts,
@@ -613,15 +599,10 @@ export default function PlanScreen() {
                   <Section
                     compact
                     title="Investments"
-                    actionLabel="Open"
+                    actionLabel="Manage investments"
                     onSeeAll={() => open('/investments')}
                   >
-                    <InvestmentsCard
-                      portfolio={data.investments}
-                      series={data.investmentSeries}
-                      monthlySipMinor={data.sipMonthlyMinor}
-                      onOpen={() => open('/investments')}
-                    />
+                    <InvestmentsCard portfolio={data.investments} onOpen={() => open('/investments')} />
                   </Section>
                   <Section compact title="Ideas">
                     <WhatIfCard

@@ -119,7 +119,7 @@ export function RunwayCard({
               {none ? (
                 <Text style={styles.forecastFact}>{note}</Text>
               ) : (
-                <View style={local.facts}>
+                <View style={styles.forecastFacts}>
                   <Fact label="Going out" value={formatMoney(outgoingMinor)} />
                   <Fact label="Coming in" value={`+${formatMoney(runway.inMinor)}`} />
                   <Fact
@@ -231,33 +231,20 @@ export function RunwayCard({
 
 function Fact({ label, value, sub, bad }: { label: string; value: string; sub?: string; bad?: boolean }) {
   return (
-    <View style={[local.fact, bad && local.factBad]}>
-      <Text style={local.factLabel}>{label}</Text>
+    <View style={styles.forecastMetric}>
+      <Text style={styles.forecastFact}>{sub ? `${label} · ${sub}` : label}</Text>
       <Text
-        style={[local.factValue, bad && { color: theme.colors.expenseText }]}
+        style={[styles.forecastMetricValue, bad && { color: theme.colors.expenseText }]}
         numberOfLines={1}
         adjustsFontSizeToFit
       >
         {value}
       </Text>
-      {sub && <Text style={local.factLabel}>{sub}</Text>}
     </View>
   );
 }
 
 const local = StyleSheet.create({
-  facts: { flexDirection: 'row', gap: 8 },
-  fact: {
-    flex: 1,
-    minWidth: 0,
-    paddingVertical: 8,
-    paddingHorizontal: 10,
-    borderRadius: 14,
-    backgroundColor: theme.colors.tray,
-  },
-  factBad: { backgroundColor: theme.colors.expenseTint },
-  factLabel: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted },
-  factValue: { fontFamily: theme.font.bodyBold, fontSize: 14, color: theme.colors.textPrimary },
   card: { padding: 16, marginTop: 4, gap: 4 },
   verdictRow: { flexDirection: 'row', marginTop: 2, marginBottom: 4 },
   chip: {

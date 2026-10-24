@@ -1,5 +1,4 @@
 /** The pieces around the Investments page: Plan's card, the chart, and the Update values list. */
-import { Polyline } from 'react-native-svg';
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
 import { Text } from 'react-native';
 
@@ -85,66 +84,51 @@ beforeEach(() => {
 });
 
 describe('InvestmentsCard', () => {
-  it('invites a first investment when there are none', () => {
+  it('invites a first investment with the dashed add tile when there are none', () => {
     const open = jest.fn();
-    const tree = render(
-      <InvestmentsCard
-        portfolio={buildPortfolio([], 'INR', TODAY)}
-        series={[]}
-        monthlySipMinor={0}
-        onOpen={open}
-      />
+    const tree = render(<InvestmentsCard portfolio={buildPortfolio([], 'INR', TODAY)} onOpen={open} />);
+    act(() =>
+      tree.root
+        .findAll(
+          (n) => n.props.accessibilityLabel === 'Track an investment' && typeof n.props.onPress === 'function'
+        )[0]
+        .props.onPress()
     );
-    expect(texts(tree)).toContain('Track an investment');
-    act(() => tree.root.find((n) => n.props.accessibilityRole === 'button').props.onPress());
     expect(open).toHaveBeenCalled();
   });
 
-  it('shows worth, gain, the monthly SIPs and how many values are due', () => {
+  it('is one tile with the worth, the return and how many values are due', () => {
+    const open = jest.fn();
     const tree = render(
-      <InvestmentsCard
-        portfolio={buildPortfolio([fund, gold], 'INR', TODAY)}
-        series={[]}
-        monthlySipMinor={10_000_00}
-        onOpen={jest.fn()}
-      />
+      <InvestmentsCard portfolio={buildPortfolio([fund, gold], 'INR', TODAY)} onOpen={open} />
+    );
+    const shown = texts(tree);
+    expect(shown).toContain('Investments');
+    expect(shown).toContain('₹5.4L');
+    expect(shown).toContain('1 value due');
+    act(() =>
+      tree.root.find((n) => n.props.accessibilityLabel?.startsWith('Investments, worth')).props.onPress()
+    );
+    expect(open).toHaveBeenCalled();
+  });
+
+  it('says the return when every value is up to date', () => {
+    const shown = texts(
+      render(<InvestmentsCard portfolio={buildPortfolio([fund], 'INR', TODAY)} onOpen={jest.fn()} />)
+    ).join(' ');
+    expect(shown).toContain('return');
+    expect(shown).not.toContain('due');
+  });
+
+  it('hides the figure while savings are hidden', () => {
+    mockHide = true;
+    const tree = render(
+      <InvestmentsCard portfolio={buildPortfolio([fund], 'INR', TODAY)} onOpen={jest.fn()} />
     );
     const shown = texts(tree).join(' ');
-    expect(shown).toContain(inr(538_000_00));
-    expect(shown).toContain('SIPs / month');
-    expect(shown).toContain(inr(10_000_00));
-    expect(shown).toContain('1 due');
-  });
-
-  it('draws a trend line only once there are two points', () => {
-    const portfolio = buildPortfolio([fund], 'INR', TODAY);
-    const lines = (series: { date: string; valueMinor: number; putInMinor: number }[]) =>
-      render(
-        <InvestmentsCard portfolio={portfolio} series={series} monthlySipMinor={0} onOpen={jest.fn()} />
-      ).root.findAllByType(Polyline).length;
-    expect(lines([{ date: '2026-10-01', valueMinor: 1, putInMinor: 1 }])).toBe(0);
-    expect(
-      lines([
-        { date: '2026-04-01', valueMinor: 1, putInMinor: 1 },
-        { date: '2026-10-01', valueMinor: 2, putInMinor: 1 },
-      ])
-    ).toBe(1);
-  });
-
-  it('masks the figures while savings are hidden', () => {
-    mockHide = true;
-    const shown = texts(
-      render(
-        <InvestmentsCard
-          portfolio={buildPortfolio([fund], 'INR', TODAY)}
-          series={[]}
-          monthlySipMinor={5_000_00}
-          onOpen={jest.fn()}
-        />
-      )
-    ).join(' ');
-    expect(shown).not.toContain(inr(438_000_00));
-    expect(shown).toContain('••••');
+    expect(shown).not.toContain('4.4L');
+    expect(shown).not.toContain('return');
+    expect(shown).toContain('Amounts hidden');
   });
 });
 
