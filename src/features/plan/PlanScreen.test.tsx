@@ -346,11 +346,8 @@ describe('Plan tab', () => {
     try {
       const shown = texts(await render());
       expect(shown).not.toContain('Covered');
-      const short = new Date(`${mockDay(3)}T00:00:00`).toLocaleDateString(undefined, {
-        day: 'numeric',
-        month: 'short',
-      });
-      expect(shown.some((t) => t.includes(`first shortfall ${short}`))).toBe(true);
+      expect(shown).toEqual(expect.arrayContaining(['Going out', 'Coming in', 'Lowest']));
+      expect(shown.some((t) => t.includes('15,450') && !t.includes('more needed'))).toBe(true);
       expect(shown).toContain('₹15,450 more needed');
     } finally {
       mockBank = 3000000;
