@@ -88,7 +88,7 @@ export async function addValuation(
     accountId,
   ]);
   if (!account) throw new Error('Account not found');
-  if (!account.tracked) throw new Error('Turn on "Track its value" for this account first.');
+  if (!account.tracked) throw new Error('Make this account an investment first.');
   // Check-then-write in one transaction, so two quick saves for the same day can't both insert.
   let savedId = '';
   await db.withTransactionAsync(async (tx) => {

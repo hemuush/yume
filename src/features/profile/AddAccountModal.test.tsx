@@ -29,7 +29,11 @@ jest.mock('@/theme/AccentContext', () => ({ useAccent: () => ({ accent: '#8FCBFF
 const mockCreateAccount = jest.fn();
 const mockAddValuation = jest.fn();
 const mockGetDefaultCurrency = jest.fn();
-jest.mock('@/db/ledger', () => ({ createAccount: (...a: unknown[]) => mockCreateAccount(...a) }));
+const mockListAccounts = jest.fn();
+jest.mock('@/db/ledger', () => ({
+  createAccount: (...a: unknown[]) => mockCreateAccount(...a),
+  listAccounts: () => mockListAccounts(),
+}));
 jest.mock('@/db/valuations', () => ({ addValuation: (...a: unknown[]) => mockAddValuation(...a) }));
 jest.mock('@/db/settings', () => ({
   SUPPORTED_CURRENCIES: [
@@ -62,10 +66,7 @@ async function render(onCreated = jest.fn(), onClose = jest.fn()) {
 /** A tracked savings account with a "worth today" figure, ready to Save. */
 async function fillTrackedSavings(tree: ReactTestRenderer) {
   await act(async () => byProps(tree, { label: 'Name' }).props.onChangeText('Gold pot'));
-  await act(async () => byProps(tree, { label: 'Savings' }).props.onPress());
-  await act(async () =>
-    tree.root.find((n) => typeof n.type === 'function' && 'onChange' in n.props).props.onChange(true)
-  );
+  await act(async () => byProps(tree, { label: 'Investment' }).props.onPress());
   await act(async () => byProps(tree, { label: 'Worth today (optional)' }).props.onChangeText('12000'));
 }
 
@@ -77,6 +78,7 @@ const save = (tree: ReactTestRenderer) =>
   });
 
 beforeEach(() => {
+  mockListAccounts.mockReset().mockResolvedValue([]);
   mockCreateAccount.mockReset().mockResolvedValue({ id: 'acc-1' });
   mockAddValuation.mockReset().mockResolvedValue(undefined);
   mockGetDefaultCurrency.mockReset().mockResolvedValue('INR');
@@ -141,5 +143,85 @@ describe('AddAccountModal retry after a failed valuation', () => {
     expect(onCreated).toHaveBeenCalledTimes(1);
     expect(onClose).toHaveBeenCalledTimes(1);
     expect(texts(tree)).not.toContain('disk full');
+  });
+});
+
+describe('Investment account type', () => {
+  const bank = {
+    id: 'bank-1',
+    name: 'HDFC',
+    type: 'bank',
+    currency: 'INR',
+    archived: false,
+    investment: undefined,
+  };
+  const card = { id: 'card-1', name: 'Card', type: 'credit_card', currency: 'INR', archived: false };
+  const usd = { id: 'usd-1', name: 'Wise', type: 'bank', currency: 'USD', archived: false };
+  const fund = {
+    id: 'f-1',
+    name: 'Old fund',
+    type: 'savings',
+    currency: 'INR',
+    archived: false,
+    investment: {},
+  };
+
+  it('replaces the track-its-value switch: Investment is a type and there is no switch', async () => {
+    const { tree } = await render();
+    expect(byProps(tree, { label: 'Investment' })).toBeDefined();
+    expect(
+      tree.root.findAll((n) => typeof n.type === 'function' && n.props.title === 'Track its value')
+    ).toHaveLength(0);
+  });
+
+  it('shows kind and money-comes-from only for an investment, offering plain accounts in its currency', async () => {
+    mockListAccounts.mockResolvedValue([bank, card, usd, fund]);
+    const { tree } = await render();
+    expect(texts(tree)).not.toContain('Money comes from');
+    await act(async () => byProps(tree, { label: 'Investment' }).props.onPress());
+    expect(texts(tree)).toContain('Money comes from');
+    expect(byProps(tree, { label: 'Mutual fund' })).toBeDefined();
+    expect(byProps(tree, { label: 'HDFC' })).toBeDefined();
+    for (const name of ['Card', 'Wise', 'Old fund']) {
+      expect(tree.root.findAll((n) => typeof n.type === 'function' && n.props.label === name)).toHaveLength(
+        0
+      );
+    }
+  });
+
+  it('saves an investment as a tracked savings account with its kind and funding account', async () => {
+    mockListAccounts.mockResolvedValue([bank]);
+    const { tree } = await render();
+    await act(async () => byProps(tree, { label: 'Name' }).props.onChangeText('Nifty 50'));
+    await act(async () => byProps(tree, { label: 'Investment' }).props.onPress());
+    await act(async () => byProps(tree, { label: 'Mutual fund' }).props.onPress());
+    await act(async () => byProps(tree, { label: 'HDFC' }).props.onPress());
+    await save(tree);
+    expect(mockCreateAccount).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'savings',
+        tracked: true,
+        investmentKind: 'mutual_fund',
+        fundingAccountId: 'bank-1',
+      })
+    );
+  });
+
+  it('drops a chosen funding account when the type changes away from Investment', async () => {
+    mockListAccounts.mockResolvedValue([bank]);
+    const { tree } = await render();
+    await act(async () => byProps(tree, { label: 'Name' }).props.onChangeText('Pot'));
+    await act(async () => byProps(tree, { label: 'Investment' }).props.onPress());
+    await act(async () => byProps(tree, { label: 'HDFC' }).props.onPress());
+    await act(async () => byProps(tree, { label: 'Savings' }).props.onPress());
+    await save(tree);
+    expect(mockCreateAccount).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'savings',
+        tracked: false,
+        fundingAccountId: null,
+        investmentKind: null,
+      })
+    );
   });
 });
