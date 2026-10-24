@@ -147,6 +147,7 @@ export function RangeSheet({
           onPress={() => stepMonth(-1)}
           hitSlop={10}
           style={withPressed(styles.navBtn)}
+          accessibilityRole="button"
           accessibilityLabel="Previous month"
         >
           <Feather name="chevron-left" size={20} color={theme.colors.ink} />
@@ -157,6 +158,7 @@ export function RangeSheet({
           disabled={!canNext}
           hitSlop={10}
           style={withPressed([styles.navBtn, !canNext && { opacity: 0.25 }])}
+          accessibilityRole="button"
           accessibilityLabel="Next month"
         >
           <Feather name="chevron-right" size={20} color={theme.colors.ink} />
