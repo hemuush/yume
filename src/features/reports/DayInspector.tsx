@@ -11,7 +11,7 @@ import { useAccent } from '@/theme/AccentContext';
 import { weekdayDayMonth } from '@/lib/dateLabels';
 import type { Category, Transaction } from '@/types';
 
-export interface DayMixPart {
+interface DayMixPart {
   id: string;
   name: string;
   color: string;

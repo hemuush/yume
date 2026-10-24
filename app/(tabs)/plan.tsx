@@ -1,6 +1,6 @@
 import { MonthlyPlanCheck } from '@/features/plan/MonthlyPlanCheck';
 import { investRole, investRuleTitle, investmentIdsOf } from '@/lib/investment';
-import { InvestmentsCard } from '@/features/investments/InvestmentsCard';
+import { InvestmentsCard } from '@/features/plan/InvestmentsCard';
 import { buildPortfolio, type Portfolio } from '@/lib/portfolio';
 import { LoanComparison } from '@/features/loans/LoanComparison';
 import { useCallback, useEffect, useRef, useState } from 'react';

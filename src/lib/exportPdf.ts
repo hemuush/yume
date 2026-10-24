@@ -13,7 +13,7 @@ export const MAX_PDF_ENTRIES = 4000;
 /** A4 in PDF points: Android's PDF maker takes points and ignores CSS page margins, so pages carry their own. */
 const A4 = { width: 595, height: 842 };
 
-export interface ThemeColors {
+interface ThemeColors {
   primary: string;
   secondary: string;
   dot: string;

@@ -100,7 +100,7 @@ const spendEffect = (t: Transaction) =>
   t.type === 'expense' ? t.amountMinor : t.type === 'income' && t.isRefund ? -t.amountMinor : 0;
 const incomeEffect = (t: Transaction) => (t.type === 'income' && !t.isRefund ? t.amountMinor : 0);
 
-export function categoryLabel(categories: Map<string, Category>, id: string | null): string {
+function categoryLabel(categories: Map<string, Category>, id: string | null): string {
   if (!id) return 'Transfer';
   const cat = categories.get(id);
   if (!cat) return 'Deleted category';

@@ -7,7 +7,7 @@ export type ReportPeriod =
   | { kind: 'year'; year: number }
   | { kind: 'all' };
 
-export const MONTH_NAMES = [
+const MONTH_NAMES = [
   'January',
   'February',
   'March',
@@ -91,14 +91,6 @@ export function periodLabel(period: ReportPeriod): string {
   if (period.kind === 'month') return `${MONTH_NAMES[period.month - 1]} ${period.year}`;
   if (period.kind === 'year') return String(period.year);
   return 'All time';
-}
-
-/** A short label for comparing against: "Aug" within a year, "Aug 2025" across years, "2025" for a year. */
-export function previousLabel(period: ReportPeriod): string {
-  const prev = previousPeriod(period);
-  if (!prev) return '';
-  if (prev.kind === 'month') return `${MONTH_SHORT[prev.month - 1]} ${prev.year}`;
-  return periodLabel(prev);
 }
 
 /** File-name stem: yume-2026-09, yume-2026, yume-all. */

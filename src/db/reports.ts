@@ -26,7 +26,6 @@ import {
 type ReportPeriod = 'day' | 'week' | 'month' | 'year';
 
 // Defined in @/types (so src/lib can use it without importing the db layer); re-exported here for existing callers.
-export type { DateRange };
 
 const toIso = toLocalIsoDate;
 
