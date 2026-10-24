@@ -194,3 +194,22 @@ describe('a day with investing on it', () => {
     expect(shown).not.toContain('since');
   });
 });
+
+describe('a value update line', () => {
+  it('opens the investments when tapped, and is plain text when nothing handles it', () => {
+    const note: ValueNote = {
+      id: 'n',
+      accountId: 'fund',
+      date: DATE,
+      valueMinor: 100,
+      previousMinor: null,
+      previousDate: null,
+    };
+    const press = jest.fn();
+    const live = render({ items: [], notes: [note], onPressNote: press });
+    act(() => live.root.find((n) => n.props.accessibilityRole === 'button').props.onPress());
+    expect(press).toHaveBeenCalledWith(note);
+    const quiet = render({ items: [], notes: [note] });
+    expect(quiet.root.findAll((n) => n.props.accessibilityRole === 'button')).toHaveLength(0);
+  });
+});

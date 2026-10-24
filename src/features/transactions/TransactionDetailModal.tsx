@@ -1,4 +1,5 @@
 import { useSaveOnce } from '@/lib/useSaveOnce';
+import { investRole, investmentIdsOf } from '@/lib/investment';
 import { SheetFlow } from '@/components/SheetFlow';
 import { useEffect, useMemo, useState } from 'react';
 import { View, Pressable } from 'react-native';
@@ -332,7 +333,22 @@ export function TransactionDetailModal({
           ]),
       },
   ].filter((a) => !!a);
-  const kind = transfer ? 'Transfer' : tx.isRefund ? 'Refund' : tx.type === 'income' ? 'Income' : 'Expense';
+  const role = investRole(tx, investmentIdsOf(accounts));
+  const kind = role
+    ? role === 'invest'
+      ? tx.ruleId
+        ? 'SIP'
+        : 'Invested'
+      : role === 'withdraw'
+        ? 'Withdrawn'
+        : 'Moved'
+    : transfer
+      ? 'Transfer'
+      : tx.isRefund
+        ? 'Refund'
+        : tx.type === 'income'
+          ? 'Income'
+          : 'Expense';
   const route = transfer ? `${accountName(tx.accountId)} → ${accountName(tx.toAccountId!)}` : null;
   /** The category name on the card opens its page; from that page's own sheet, closing is enough. */
   const openCategory = () => {
@@ -435,7 +451,7 @@ export function TransactionDetailModal({
       >
         <EntryHero
           hue={transfer ? secondary : (cat?.color ?? theme.colors.textMuted)}
-          icon={transfer ? 'swap-horizontal' : (cat?.icon ?? 'tag')}
+          icon={role === 'invest' ? 'trending-up' : transfer ? 'swap-horizontal' : (cat?.icon ?? 'tag')}
           kicker={transfer || !parentName ? kind : `${kind} · ${parentName}`}
           amount={
             <>
