@@ -1,4 +1,5 @@
 import { View, Pressable, useWindowDimensions } from 'react-native';
+import { investRuleTitle, type InvestRole } from '@/lib/investment';
 import { Text } from '@/components/Text';
 import Animated from 'react-native-reanimated';
 import { Category, RecurringRule } from '@/types';
@@ -27,6 +28,7 @@ export function RuleRow({
   onTogglePause,
   muted,
   masked,
+  investRole = null,
   busy,
   currency,
 }: {
@@ -42,6 +44,8 @@ export function RuleRow({
   muted?: boolean;
   /** A savings or investment rule while those amounts are hidden. */
   masked?: boolean;
+  /** A recurring transfer into, out of or between investments: listed as a SIP, a withdrawal or a move. */
+  investRole?: InvestRole | null;
   busy?: boolean;
   currency?: string;
 }) {
@@ -49,9 +53,15 @@ export function RuleRow({
   const { width, fontScale } = useWindowDimensions();
   const stacked = width < 360 || fontScale > 1.2;
   const transfer = rule.type === 'transfer';
-  const name = transfer
-    ? `${accountName(rule.accountId)} → ${rule.toAccountId ? accountName(rule.toAccountId) : '—'}`
-    : (category?.name ?? '—');
+  const name = investRole
+    ? investRuleTitle(
+        investRole,
+        accountName(rule.accountId) ?? '—',
+        rule.toAccountId ? (accountName(rule.toAccountId) ?? '—') : '—'
+      )
+    : transfer
+      ? `${accountName(rule.accountId)} → ${rule.toAccountId ? accountName(rule.toAccountId) : '—'}`
+      : (category?.name ?? '—');
   const title = !transfer && rule.note ? rule.note : name;
   const when = `${ruleCadenceLabel(rule)} · Next ${weekdayDayMonth(rule.nextRunDate)}${rule.postingMode === 'confirm' ? ' · Confirm first' : ''}${rule.nextAmountMinor != null ? ' · One-off amount' : ''}`;
   return (
@@ -73,14 +83,22 @@ export function RuleRow({
         accessibilityLabel={`${title}. ${when}. ${formatMaskableMoney(rule.nextAmountMinor ?? rule.amountMinor, { masked, currency })}. Open recurring entry`}
       >
         <CategoryIcon
-          name={transfer ? 'swap-horizontal' : (category?.icon ?? 'repeat')}
+          name={
+            investRole === 'invest'
+              ? 'trending-up'
+              : transfer
+                ? 'swap-horizontal'
+                : (category?.icon ?? 'repeat')
+          }
           color={transfer ? secondary : category?.color}
         />
         <View style={styles.ruleCopy}>
           <Text style={styles.rowTitle}>{title}</Text>
           <Text style={styles.rowSub}>
             {transfer
-              ? `${when} · Transfer`
+              ? investRole
+                ? `${when} · ${investRole === 'invest' ? `From ${accountName(rule.accountId)}` : 'Investment'}`
+                : `${when} · Transfer`
               : joinSub([
                   when,
                   rule.note && name,

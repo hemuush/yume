@@ -119,3 +119,22 @@ export function investLines(
   if (role === 'withdraw') return { title: `Withdrawn from ${from}`, sub: `${lead}to ${to}` };
   return { title: `Moved ${from} → ${to}`, sub: `${lead}Between investments` };
 }
+
+/** What a recurring transfer that touches an investment is called: a SIP when money goes in. */
+export function investRuleTitle(role: InvestRole, fromName: string, toName: string): string {
+  return role === 'invest'
+    ? `SIP · ${toName}`
+    : role === 'withdraw'
+      ? `Withdraw · ${fromName}`
+      : `Move · ${fromName} → ${toName}`;
+}
+
+/** The Type column for an entry: Invested, SIP, Withdrawn or Moved for investing transfers, else null. */
+export function investTypeLabel(
+  tx: Pick<Transaction, 'type' | 'accountId' | 'toAccountId' | 'ruleId'>,
+  investmentIds: ReadonlySet<string>
+): string | null {
+  const role = investRole(tx, investmentIds);
+  if (!role) return null;
+  return role === 'invest' ? (tx.ruleId ? 'SIP' : 'Invested') : role === 'withdraw' ? 'Withdrawn' : 'Moved';
+}

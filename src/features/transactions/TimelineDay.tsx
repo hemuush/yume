@@ -85,6 +85,7 @@ function TimelineDayView({
   savingsAccountIds = NO_ACCOUNTS,
   investmentIds = NO_ACCOUNTS,
   notes = NO_NOTES,
+  onPressNote,
   accountCurrency = () => getCachedCurrency(),
 }: {
   date: string;
@@ -111,6 +112,8 @@ function TimelineDayView({
   investmentIds?: ReadonlySet<string>;
   /** Value updates dated this day, listed under the Invest chip. */
   notes?: ValueNote[];
+  /** Tapping a value update (opens the investments page). */
+  onPressNote?: (note: ValueNote) => void;
   accountCurrency?: (id: string) => string;
 }) {
   const { hideAmounts } = usePrivacy();
@@ -469,14 +472,17 @@ function TimelineDayView({
           const change = note.previousMinor == null ? null : note.valueMinor - note.previousMinor;
           const cur = accountCurrency(note.accountId);
           return (
-            <View
+            <Pressable
               key={note.id}
+              onPress={onPressNote ? () => onPressNote(note) : undefined}
+              disabled={!onPressNote}
+              accessibilityRole={onPressNote ? 'button' : undefined}
+              accessibilityHint={onPressNote ? 'Opens your investments' : undefined}
               style={[
                 styles.line,
                 stacked && styles.wrapLine,
                 (lines.length > 0 || transfers.length > 0 || i > 0) && styles.divider,
               ]}
-              accessible
               accessibilityLabel={`${accountName(note.accountId)} value updated to ${formatMaskableMoney(note.valueMinor, { masked, currency: cur })}`}
             >
               <View style={styles.lead}>
@@ -496,7 +502,7 @@ function TimelineDayView({
                     : ''}
                 </Text>
               </View>
-            </View>
+            </Pressable>
           );
         })}
       </View>

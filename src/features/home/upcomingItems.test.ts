@@ -162,3 +162,26 @@ describe('buildUpcomingItems', () => {
     expect(buildUpcomingItems(base)).toEqual({ all: [], items: [], next: null });
   });
 });
+
+describe('recurring transfers into investments', () => {
+  const transfer = rule({ id: 'sip', type: 'transfer', toAccountId: 'pot', categoryId: null });
+  it('are listed as a SIP with the holding named', () => {
+    const { items } = buildUpcomingItems({ ...base, rules: [transfer], investmentIds: new Set(['pot']) });
+    expect(items[0]).toMatchObject({ title: 'SIP · Pot', icon: 'trending-up' });
+  });
+  it('stay a plain transfer when no investments are known', () => {
+    const { items } = buildUpcomingItems({ ...base, rules: [transfer] });
+    expect(items[0]).toMatchObject({ title: 'Bank → Pot', icon: 'repeat' });
+  });
+  it('read as a withdrawal when money leaves the investment', () => {
+    const out = rule({
+      id: 'swp',
+      type: 'transfer',
+      accountId: 'pot',
+      toAccountId: 'bank',
+      categoryId: null,
+    });
+    const { items } = buildUpcomingItems({ ...base, rules: [out], investmentIds: new Set(['pot']) });
+    expect(items[0].title).toBe('Withdraw · Pot');
+  });
+});

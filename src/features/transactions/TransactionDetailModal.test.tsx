@@ -354,3 +354,45 @@ it('does not offer recurring income for a refund with an expense category', asyn
   expect(rows(tree, 'Make it recurring')).toHaveLength(0);
   expect(rows(tree, 'Log again today').length).toBeGreaterThan(0);
 });
+
+describe('an entry that moves money into or out of an investment', () => {
+  const accounts = [
+    { id: 'bank', name: 'Bank' },
+    { id: 'fund', name: 'Nifty 50', investment: {} },
+  ] as any[];
+  const transfer = (over: object) => ({
+    ...lunch,
+    type: 'transfer' as const,
+    categoryId: null,
+    note: '',
+    ...over,
+  });
+  async function kickerOf(entry: object) {
+    let tree!: ReactTestRenderer;
+    await act(async () => {
+      tree = create(
+        <TransactionDetailModal
+          tx={entry as any}
+          accounts={accounts}
+          categories={[]}
+          onClose={jest.fn()}
+          onEdit={jest.fn()}
+          onChanged={jest.fn()}
+        />
+      );
+    });
+    mounted.push(tree);
+    return tree.root.find((n) => typeof n.props.kicker === 'string').props.kicker;
+  }
+
+  it('is called Invested, or SIP when a recurring rule posted it', async () => {
+    expect(await kickerOf(transfer({ accountId: 'bank', toAccountId: 'fund' }))).toBe('Invested');
+    expect(await kickerOf(transfer({ accountId: 'bank', toAccountId: 'fund', ruleId: 'r1' }))).toBe('SIP');
+  });
+  it('is called Withdrawn when it leaves the investment', async () => {
+    expect(await kickerOf(transfer({ accountId: 'fund', toAccountId: 'bank' }))).toBe('Withdrawn');
+  });
+  it('stays a Transfer between ordinary accounts', async () => {
+    expect(await kickerOf(transfer({ accountId: 'bank', toAccountId: 'cash' }))).toBe('Transfer');
+  });
+});

@@ -1,11 +1,10 @@
-import type { ActivityFilter } from './activityFilter';
+import type { ActivityFilter, ActivityType } from './activityFilter';
 import { listExpenseLabels } from '@/db/expenseLabels';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import { useEffect, useMemo, useState } from 'react';
 import { View, Keyboard } from 'react-native';
 import { Text, TextInput } from '@/components/Text';
 import type { Account, Category } from '@/types';
-import type { ActivityType } from './activityFilter';
 import { SheetTabs } from '@/components/SheetTabs';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { Chip } from '@/components/Chip';

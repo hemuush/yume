@@ -488,6 +488,7 @@ export default function DashboardScreen() {
   const upcoming = useMemo(() => {
     const cat = (id: string | null) => (id ? categoriesById.get(id) : undefined);
     return buildUpcomingItems({
+      investmentIds: investmentIdsOf(historyAccounts),
       loans: buildLoansSummary(loans, loanProgress).rows.flatMap((row) =>
         row.direction === 'borrowed' && row.nextDueDate && row.nextEmiMinor != null
           ? [{ id: row.id, name: row.name, nextDueDate: row.nextDueDate, nextEmiMinor: row.nextEmiMinor }]

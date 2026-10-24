@@ -5,6 +5,7 @@ import { Account, Category, Loan, Transaction } from '@/types';
 import { ReportPeriod, inPeriod, periodLabel } from './report/period';
 import { computeReport } from './report/reportData';
 import { loadReportInput, MAX_EXPORT_TRANSACTIONS } from './report/loadReportInput';
+import { INVESTMENT_KIND_LABEL, investTypeLabel, investmentIdsOf } from './investment';
 
 /**
  * Yume's palette as plain 6-digit RGB hex (xlsx-js-style takes "RRGGBB", no alpha), mirroring
@@ -178,6 +179,7 @@ export function buildExportWorkbook(data: ExportData, period: ReportPeriod = { k
     return parent ? [parent.name, cat.name] : [cat.name, ''];
   };
 
+  const investmentIds = investmentIdsOf(accounts);
   const sorted = [...transactions].sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
   // Totals add up the default currency only, as every total in the app does: other currencies' amounts have
   // no conversion, so adding them would sum face values. Archived accounts are loaded too so history keeps
@@ -332,7 +334,9 @@ export function buildExportWorkbook(data: ExportData, period: ReportPeriod = { k
     const major = toMajor(t.amountMinor);
     return [
       toDate(t.date),
-      t.isRefund ? 'Refund' : t.type[0].toUpperCase() + t.type.slice(1),
+      t.isRefund
+        ? 'Refund'
+        : (investTypeLabel(t, investmentIds) ?? t.type[0].toUpperCase() + t.type.slice(1)),
       accountName.get(t.accountId) ?? 'Deleted account',
       t.toAccountId ? (accountName.get(t.toAccountId) ?? 'Deleted account') : '',
       cat,
@@ -431,16 +435,24 @@ export function buildExportWorkbook(data: ExportData, period: ReportPeriod = { k
   // --------------------------------------------------------------- Accounts
   // Tracked (investment) accounts add what was put in and the gain; the balance column is then their value.
   const hasTracked = accounts.some((a) => a.investment);
-  const accHeaders = ['Account', 'Type', 'Balance', 'Currency', ...(hasTracked ? ['Invested', 'Gain'] : [])];
+  const accHeaders = [
+    'Account',
+    'Type',
+    'Balance',
+    'Currency',
+    ...(hasTracked ? ['Invested', 'Gain', 'Kind', 'Money comes from'] : []),
+  ];
   const accRows = accounts.map((a) => [
     a.name,
-    a.type.replace('_', ' '),
+    a.investment ? 'investment' : a.type.replace('_', ' '),
     toMajor(a.currentBalanceMinor),
     a.currency,
     ...(hasTracked
       ? [
           a.investment ? toMajor(a.investment.investedMinor) : '',
           a.investment?.gainMinor != null ? toMajor(a.investment.gainMinor) : '',
+          a.investment?.kind ? INVESTMENT_KIND_LABEL[a.investment.kind] : '',
+          (a.investment?.fundingAccountId && accountName.get(a.investment.fundingAccountId)) || '',
         ]
       : []),
   ]);
@@ -452,7 +464,7 @@ export function buildExportWorkbook(data: ExportData, period: ReportPeriod = { k
     for (let c = 0; c < row.length; c++) {
       const ref = XLSX.utils.encode_cell({ r: i + 1, c });
       accSheet[ref].s =
-        c === 2 || c >= 4
+        c === 2 || c === 4 || c === 5
           ? bodyStyle(shaded, {
               numFmt: moneyFmt(getCurrencySymbol(accounts[i].currency)),
               font: { color: { rgb: c === 2 && negative ? C.expense : C.ink }, bold: c === 2 },
@@ -472,7 +484,7 @@ export function buildExportWorkbook(data: ExportData, period: ReportPeriod = { k
     { wch: 14 },
     { wch: 16 },
     { wch: 10 },
-    ...(hasTracked ? [{ wch: 14 }, { wch: 14 }] : []),
+    ...(hasTracked ? [{ wch: 14 }, { wch: 14 }, { wch: 16 }, { wch: 18 }] : []),
   ];
   XLSX.utils.book_append_sheet(wb, accSheet, 'Accounts');
 

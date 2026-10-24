@@ -261,6 +261,7 @@ export default function TransactionsScreen() {
   }, [anchor]);
   const visibleRange = viewScope === 'month' ? monthRange : { fromDate: week.start, toDate: week.end };
   const investmentIds = useMemo(() => investmentIdsOf(accounts), [accounts]);
+  const openInvestments = useCallback(() => router.push('/investments'), []);
   // Under the Invest chip, value updates of the holdings in view are listed beside the money moved.
   const [valueNotes, setValueNotes] = useState<ValueNote[]>([]);
   const wantsNotes = filterType === 'invest' && !searching;
@@ -903,6 +904,7 @@ export default function TransactionsScreen() {
                 savingsAccountIds={savingsAccountIds}
                 investmentIds={investmentIds}
                 notes={group.notes}
+                onPressNote={openInvestments}
                 openStacks={openStacks}
                 onToggleStack={toggleStack}
                 onReorder={canReorder ? reorderDay : undefined}

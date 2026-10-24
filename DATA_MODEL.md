@@ -12,6 +12,8 @@ Every rupee/dollar the app knows about lives in an account: `bank`, `cash`, `wal
 - Withdrawing from savings is a transfer the other way.
 - The savings account's balance follows the same derivation as other account balances: opening balance + signed transactions, with the latest valuation adjustment for tracked accounts.
 
+An **investment** is a savings account with `tracked = 1`; the account forms show it as its own Investment type. It may carry `investment_kind` (mutual fund, stocks, gold, fixed deposit, PPF/EPF, other) and `funding_account_id`, the bank, cash or wallet account its money normally comes from (cleared if that account is deleted). Money goes in or out by ordinary transfers: a transfer into an investment is read as Invested (SIP when `transactions.rule_id` shows a recurring rule posted it), out of one as Withdrawn, between two as Moved. Nothing about an entry is stored for this; it is derived from the accounts.
+
 An account's `currentBalanceMinor` is **never stored** — it's computed on every read from `opening_balance_minor` plus the sum of every transaction that touches that account (see [accounts.ts](src/db/accounts.ts) and [valuationSql.ts](src/db/valuationSql.ts)). There is no independently stored current-balance field to update. Tracked valuations are a separate source of balance adjustments; review them alongside transaction history.
 
 ## Categories (`categories`)

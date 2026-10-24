@@ -1,4 +1,5 @@
 import { MonthlyPlanCheck } from '@/features/plan/MonthlyPlanCheck';
+import { investRole, investRuleTitle, investmentIdsOf } from '@/lib/investment';
 import { InvestmentsCard } from '@/features/investments/InvestmentsCard';
 import { buildPortfolio, monthlySipTotal, sipsOf, type Portfolio } from '@/lib/portfolio';
 import { LoanComparison } from '@/features/loans/LoanComparison';
@@ -217,6 +218,14 @@ export default function PlanScreen() {
     const accountName = (id: string | null) => (id ? accountsById.get(id)?.name : undefined) ?? '—';
     const loansSummary = buildLoansSummary(loans, progress);
     // Same label Home's Upcoming list uses for a rule.
+    const investIds = investmentIdsOf(accounts);
+    const ruleLabel = (r: (typeof rules)[number]) => {
+      const role = investRole(r, investIds);
+      if (role) return investRuleTitle(role, accountName(r.accountId), accountName(r.toAccountId));
+      return r.type === 'transfer'
+        ? `${accountName(r.accountId)} → ${accountName(r.toAccountId)}`
+        : r.note || categoryLabelOf(r.categoryId) || 'Recurring';
+    };
     const toRuleInput = (r: (typeof rules)[number], type: 'income' | 'expense' | 'transfer' = r.type) => ({
       id: r.id,
       type,
@@ -229,10 +238,7 @@ export default function PlanScreen() {
       scheduledDate: r.scheduledDate,
       endDate: r.endDate,
       amountMinor: r.amountMinor,
-      label:
-        r.type === 'transfer'
-          ? `${accountName(r.accountId)} → ${accountName(r.toAccountId)}`
-          : r.note || categoryLabelOf(r.categoryId) || 'Recurring',
+      label: ruleLabel(r),
     });
     const visibleRules = recurringRulesInCurrency(
       rules.filter((r) => !hideAmounts || !isSavingsEntry(r, categoriesById, savingsIds)),
