@@ -356,7 +356,7 @@ describe('AccountSummarySheet — tracked account', () => {
       },
     ]);
     const tree = await render({ account: tracked, accounts: [tracked] });
-    expect(byId(tree, 'card').props.kicker).toBe('Savings · tracked');
+    expect(byId(tree, 'card').props.kicker).toBe('Investment');
     expect(has(tree, 'panel')).toBe(true);
     expect(byId(tree, 'panel').props.valuations).toEqual([{ id: 'v1' }]);
     expect(byId(tree, 'panel').props.nextSip).toEqual({

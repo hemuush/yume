@@ -1,4 +1,4 @@
-import type { Account, AccountInvestment } from '@/types';
+import type { Account, AccountInvestment, InvestmentKind } from '@/types';
 import { parseLocalIsoDate } from '@/lib/date';
 import { formatMoney } from '@/lib/money';
 
@@ -68,4 +68,18 @@ export function valueReminderLine(accounts: Account[], today: string): string | 
   return stale.length === 1
     ? `New month — what is ${stale[0].name} worth now? A quick update keeps its gain honest.`
     : `New month — ${stale.length} of your investments are due a value update.`;
+}
+
+export const INVESTMENT_KIND_LABEL: Record<InvestmentKind, string> = {
+  mutual_fund: 'Mutual fund',
+  stocks: 'Stocks',
+  gold: 'Gold',
+  fixed_deposit: 'Fixed deposit',
+  ppf_epf: 'PPF / EPF',
+  other: 'Other',
+};
+
+/** "Investment" or "Investment · Mutual fund": what an investment account is called wherever its type shows. */
+export function investmentLabel(inv: Pick<AccountInvestment, 'kind'>): string {
+  return inv.kind ? `Investment · ${INVESTMENT_KIND_LABEL[inv.kind]}` : 'Investment';
 }

@@ -27,6 +27,7 @@ import { useScreenLoad } from '@/lib/useScreenLoad';
 import { usePressScale } from '@/lib/usePressScale';
 import { accountBadgeColor, accountIcon } from '@/lib/account';
 import { GainPill } from '@/features/investments/GainPill';
+import { investmentLabel } from '@/lib/investment';
 import { Section } from '@/components/Section';
 import { screenStyles as h } from '@/components/screenStyles';
 import { styles } from './profile.styles';
@@ -339,7 +340,7 @@ function AccountRow({
   const { accent } = useAccent();
   const { hideAmounts } = usePrivacy();
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.98);
-  const kind = account.investment ? 'Savings, tracked' : ACCOUNT_TYPE_LABEL[account.type];
+  const kind = account.investment ? investmentLabel(account.investment) : ACCOUNT_TYPE_LABEL[account.type];
   const balance = formatMaskableMoney(minor, {
     currency: account.currency,
     masked: hideAmounts && account.type === 'savings',
@@ -354,13 +355,16 @@ function AccountRow({
       accessibilityLabel={`${account.name}, ${kind}${archived ? ', archived' : ''}, ${balance}`}
       accessibilityHint="Edit account"
     >
-      <CategoryIcon name={accountIcon(account.type)} color={accountBadgeColor(account.type, accent)} />
+      <CategoryIcon
+        name={accountIcon(account.type, !!account.investment)}
+        color={accountBadgeColor(account.type, accent)}
+      />
       <View style={h.mid}>
         <Text style={h.title} numberOfLines={2}>
           {account.name}
         </Text>
         <Text style={h.sub} numberOfLines={2}>
-          {account.investment ? 'Savings · tracked' : ACCOUNT_TYPE_LABEL[account.type]}
+          {kind}
           {archived ? ' · archived' : ''}
         </Text>
       </View>

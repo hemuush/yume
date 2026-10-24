@@ -169,7 +169,7 @@ describe('tracked accounts', () => {
     await expect(addValuation(fund.id, { date: '2026-09-28', valueMinor: -1 })).rejects.toThrow();
     await expect(addValuation(fund.id, { date: 'yesterday', valueMinor: 100 })).rejects.toThrow();
     const plain = await createAccount({ name: 'Plain', type: 'savings' });
-    await expect(addValuation(plain.id, { date: '2026-09-28', valueMinor: 100 })).rejects.toThrow(/Track/);
+    await expect(addValuation(plain.id, { date: '2026-09-28', valueMinor: 100 })).rejects.toThrow(/investment/);
   });
 
   it('can be switched off and on again, keeping its updates', async () => {
