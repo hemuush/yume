@@ -28,17 +28,20 @@ export function AddAccountModal({
   visible,
   onClose,
   onCreated,
+  initialChoice = 'bank',
 }: {
   visible: boolean;
   onClose: () => void;
   onCreated: () => void;
+  /** The type the form opens on (the Investments page opens it on Investment). */
+  initialChoice?: AccountChoice;
 }) {
   const { accent } = useAccent();
   const runAction = useSaveOnce(async (action: () => Promise<void>) => {
     await action();
   });
   const [name, setName] = useState('');
-  const [choice, setChoice] = useState<AccountChoice>('bank');
+  const [choice, setChoice] = useState<AccountChoice>(initialChoice);
   const type = typeOfChoice(choice);
   const tracked = choice === 'investment';
   const [kind, setKind] = useState<InvestmentKind | null>(null);
@@ -63,6 +66,7 @@ export function AddAccountModal({
     if (!visible) return;
     let live = true;
     currencyChosen.current = false;
+    setChoice(initialChoice);
     getDefaultCurrency()
       .then((value) => {
         if (live && !currencyChosen.current) setCurrency(value);
@@ -77,11 +81,11 @@ export function AddAccountModal({
     return () => {
       live = false;
     };
-  }, [visible]);
+  }, [visible, initialChoice]);
 
   const reset = () => {
     setName('');
-    setChoice('bank');
+    setChoice(initialChoice);
     setKind(null);
     setFundingId(null);
     setOpening('0');

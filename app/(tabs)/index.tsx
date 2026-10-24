@@ -1,4 +1,5 @@
 import { useLocalDayRefresh } from '@/lib/useLocalDayRefresh';
+import { investHref, withdrawHref } from '@/lib/investRoutes';
 import { investRole, investmentIdsOf } from '@/lib/investment';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, StyleSheet, RefreshControl } from 'react-native';
@@ -742,6 +743,14 @@ export default function DashboardScreen() {
           setEditAccount(acc);
         }}
         onChanged={() => load(cursor)}
+        onInvest={(acc) => {
+          setSummaryAccount(null);
+          router.push(investHref(acc));
+        }}
+        onWithdraw={(acc) => {
+          setSummaryAccount(null);
+          router.push(withdrawHref(acc));
+        }}
         onPayBill={(acc, amountMinor) => {
           setSummaryAccount(null);
           router.push(payCardRoute(acc.id, amountMinor));
