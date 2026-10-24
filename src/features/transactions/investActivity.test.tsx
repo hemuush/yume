@@ -13,6 +13,7 @@ import { TimelineDay } from './TimelineDay';
 import { filterActivity, groupWithNotes, type ValueNote } from './transactions.helpers';
 import type { Category, Transaction } from '@/types';
 import { dayMonth } from '@/lib/dateLabels';
+import { formatMoney } from '@/lib/money';
 
 const DATE = '2026-10-05';
 const tx = (id: string, over: Partial<Transaction>): Transaction => ({
@@ -190,7 +191,7 @@ describe('a day with investing on it', () => {
       previousDate: '2026-09-12',
     };
     const shown = texts(render({ items: [], notes: [note] })).join(' ');
-    expect(shown).not.toContain('4,38,000');
+    expect(shown).not.toContain(formatMoney(438_000_00, 'INR'));
     expect(shown).not.toContain('since');
   });
 });

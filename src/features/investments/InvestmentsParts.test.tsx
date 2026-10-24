@@ -32,6 +32,10 @@ import { UpdateValuesSheet } from './UpdateValuesSheet';
 import { InvestmentPanel } from './InvestmentPanel';
 import { buildPortfolio } from '@/lib/portfolio';
 import type { Account } from '@/types';
+import { formatMoney } from '@/lib/money';
+
+// Amounts are written in the device's own grouping, so expectations are built the same way.
+const inr = (minor: number) => formatMoney(minor, 'INR');
 
 const TODAY = '2026-10-24';
 const inv = (
@@ -98,7 +102,7 @@ describe('InvestmentsCard', () => {
       />
     );
     const shown = texts(tree).join(' ');
-    expect(shown).toContain('538,000');
+    expect(shown).toContain(inr(538_000_00));
     expect(shown).toContain('SIPs');
     expect(shown).toContain('1 value is due an update');
   });
@@ -114,7 +118,7 @@ describe('InvestmentsCard', () => {
         />
       )
     ).join(' ');
-    expect(shown).not.toContain('438,000');
+    expect(shown).not.toContain(inr(438_000_00));
     expect(shown).toContain('••••');
   });
 });
@@ -133,11 +137,11 @@ describe('PortfolioChart', () => {
   it('describes itself in words, and hides the figures when masked', () => {
     const open = render(<PortfolioChart points={points} currency="INR" masked={false} color="#000" />);
     const label = open.root.find((n) => n.props.accessibilityRole === 'image').props.accessibilityLabel;
-    expect(label).toContain('120,000');
+    expect(label).toContain(inr(120_000_00));
     const hidden = render(<PortfolioChart points={points} currency="INR" masked color="#000" />);
     expect(
       hidden.root.find((n) => n.props.accessibilityRole === 'image').props.accessibilityLabel
-    ).not.toContain('120,000');
+    ).not.toContain(inr(120_000_00));
   });
 });
 
