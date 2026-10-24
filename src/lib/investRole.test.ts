@@ -89,6 +89,15 @@ describe('estimatedValue', () => {
     const e = estimatedValue(fd({ kind: 'ppf_epf' }), '2027-01-01')!;
     expect(e.valueMinor).toBe(1_070_000_00);
   });
+  it('adds simple interest for the part of a period that has not ended yet', () => {
+    // Half a year of PPF at 7%: not yet credited, so simple interest, 3.5%.
+    const ppf = estimatedValue(fd({ kind: 'ppf_epf' }), '2026-07-03')!;
+    expect(ppf.days).toBe(183);
+    expect(ppf.valueMinor).toBe(Math.round(1_000_000_00 * (1 + (0.07 * 183) / 365)));
+    // A year and a half: one full year compounded, then half a year of simple interest on that.
+    const long = estimatedValue(fd({ kind: 'ppf_epf' }), '2027-07-02')!;
+    expect(long.valueMinor).toBe(Math.round(1_000_000_00 * 1.07 * (1 + (0.07 * 182) / 365)));
+  });
   it('adds what moved since the last update', () => {
     const base = fd();
     const moved = { ...base, currentBalanceMinor: 1_050_000_00 };

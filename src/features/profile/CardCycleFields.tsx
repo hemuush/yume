@@ -79,7 +79,8 @@ export function MinDueFields({
         </View>
       </View>
       <Text style={styles.hint}>
-        From your card's terms. Shown on the bill as the least to pay. Leave empty to skip.
+        An estimate from your card's terms (often about 5%). Your statement shows the exact minimum. Leave
+        empty to skip.
       </Text>
     </View>
   );

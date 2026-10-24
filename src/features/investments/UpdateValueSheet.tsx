@@ -221,7 +221,7 @@ export function UpdateValueSheet({
                 label="Units held"
                 value={units}
                 onChangeText={setUnits}
-                placeholder="e.g. 123.456"
+                placeholder="e.g. 123.4567"
               />
             </View>
             <View style={styles.unitsHalf}>
