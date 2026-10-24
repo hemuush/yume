@@ -240,7 +240,7 @@ export function AddAccountModal({
       <View style={styles.pairRow}>
         <View style={styles.pairCell}>
           <AmountField
-            label={trackingNow ? 'Invested so far' : 'Opening balance'}
+            label={trackingNow ? 'Invested before Yume' : 'Opening balance'}
             value={opening}
             onChangeText={setOpening}
             placeholder="0"

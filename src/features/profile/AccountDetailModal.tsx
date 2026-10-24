@@ -292,11 +292,19 @@ export function AccountDetailModal({
         />
       )}
       <AmountField
-        label={trackingNow ? 'Invested so far' : 'Opening balance'}
+        label={trackingNow ? 'Invested before Yume' : 'Opening balance'}
         value={opening}
         onChangeText={setOpening}
         placeholder="0"
       />
+      {trackingNow && (
+        <Text style={styles.hintText}>
+          Only money put in earlier. Transfers you make in Yume are added on their own.
+          {account.investment && !hideSavings
+            ? ` Total invested: ${formatMoney(account.investment.investedMinor, account.currency)} (${formatMoney(account.openingBalanceMinor, account.currency)} earlier + ${formatMoney(account.investment.investedMinor - account.openingBalanceMinor, account.currency)} transferred in).`
+            : ''}
+        </Text>
+      )}
       {type === 'credit_card' && (
         <>
           <AmountField
