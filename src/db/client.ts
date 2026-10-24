@@ -222,6 +222,10 @@ async function applyIdempotentMigrations(db: AppDb): Promise<void> {
     'funding_account_id',
     'funding_account_id TEXT REFERENCES accounts(id) ON DELETE SET NULL'
   );
+  await ensureColumn(db, 'accounts', 'min_due_bp', 'min_due_bp INTEGER');
+  await ensureColumn(db, 'accounts', 'min_due_floor_minor', 'min_due_floor_minor INTEGER');
+  await ensureColumn(db, 'accounts', 'units', 'units REAL');
+  await ensureColumn(db, 'accounts', 'maturity_date', 'maturity_date TEXT');
   await ensureColumn(db, 'transactions', 'rule_id', 'rule_id TEXT');
   await ensureColumn(db, 'loans', 'rate_type', `rate_type TEXT NOT NULL DEFAULT 'fixed'`);
   await ensureColumn(db, 'loans', 'person_id', `person_id TEXT REFERENCES people(id) ON DELETE SET NULL`);

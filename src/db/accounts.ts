@@ -95,6 +95,8 @@ function rowToAccount(row: AccountRow & BalanceColumns): Account {
     statementDay: row.statement_day,
     dueDay: row.due_day,
     interestRateAnnualBp: row.interest_rate_annual_bp,
+    minDueBp: row.min_due_bp ?? null,
+    minDueFloorMinor: row.min_due_floor_minor ?? null,
     archived: !!row.archived,
     createdAt: row.created_at,
   };
@@ -109,6 +111,8 @@ function rowToAccount(row: AccountRow & BalanceColumns): Account {
       lastValueMinor: valuedAt ? (row.inv_last_value ?? null) : null,
       kind: (row.investment_kind as InvestmentKind | null) ?? null,
       fundingAccountId: row.funding_account_id ?? null,
+      units: row.units ?? null,
+      maturityDate: row.maturity_date ?? null,
     };
   }
   return account;
@@ -185,6 +189,25 @@ function assertCycleDays(statementDay?: number | null, dueDay?: number | null): 
   }
 }
 
+function assertMinDue(bp: number | null | undefined, floor: number | null | undefined) {
+  if (bp != null && (!Number.isSafeInteger(bp) || bp < 0 || bp > 10000))
+    throw new Error('Minimum due must be between 0% and 100% of the statement');
+  if (floor != null && (!Number.isSafeInteger(floor) || floor < 0))
+    throw new Error('Minimum due floor must be a valid, non-negative whole number');
+}
+
+function assertHolding(
+  units: number | null | undefined,
+  rateBp: number | null | undefined,
+  maturityDate: string | null | undefined
+) {
+  if (units != null && (!Number.isFinite(units) || units < 0)) throw new Error('Units must be zero or more');
+  if (rateBp != null && (!Number.isSafeInteger(rateBp) || rateBp < 0 || rateBp > 10000))
+    throw new Error('Yearly rate must be between 0% and 100%');
+  if (maturityDate != null && !/^\d{4}-\d{2}-\d{2}$/.test(maturityDate))
+    throw new Error('Maturity date must be a date');
+}
+
 export async function createAccount(input: {
   name: string;
   type: Account['type'];
@@ -200,6 +223,13 @@ export async function createAccount(input: {
   investmentKind?: InvestmentKind | null;
   /** The account an investment's money normally comes from; ignored unless tracked. */
   fundingAccountId?: string | null;
+  /** A credit card's minimum due: basis points of the statement, and the least it can be. */
+  minDueBp?: number | null;
+  minDueFloorMinor?: number | null;
+  /** A tracked account's units, yearly rate (basis points) and maturity date. */
+  units?: number | null;
+  rateBp?: number | null;
+  maturityDate?: string | null;
 }): Promise<Account> {
   if (!input.name.trim()) {
     throw new Error('Account name is required');
@@ -212,6 +242,8 @@ export async function createAccount(input: {
   )
     throw new Error('Credit limit must be a valid, non-negative whole number');
   assertCycleDays(input.statementDay, input.dueDay);
+  assertMinDue(input.minDueBp, input.minDueFloorMinor);
+  assertHolding(input.units, input.rateBp, input.maturityDate);
   const db = await getDb();
   const id = newId();
   const currency = input.currency ?? (await getDefaultCurrency());
@@ -226,8 +258,8 @@ export async function createAccount(input: {
   );
   await db.runAsync(
     `INSERT INTO accounts
-      (id, name, type, currency, opening_balance_minor, credit_limit_minor, statement_day, due_day, interest_rate_annual_bp, tracked, investment_kind, funding_account_id)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      (id, name, type, currency, opening_balance_minor, credit_limit_minor, statement_day, due_day, interest_rate_annual_bp, tracked, investment_kind, funding_account_id, min_due_bp, min_due_floor_minor, units, maturity_date)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       id,
       input.name.trim(),
@@ -237,10 +269,14 @@ export async function createAccount(input: {
       input.creditLimitMinor ?? null,
       input.statementDay ?? null,
       input.dueDay ?? null,
-      input.interestRateAnnualBp ?? null,
+      (isInvestment ? input.rateBp : input.interestRateAnnualBp) ?? null,
       isInvestment ? 1 : 0,
       links.kind,
       links.fundingAccountId,
+      input.type === 'credit_card' ? (input.minDueBp ?? null) : null,
+      input.type === 'credit_card' ? (input.minDueFloorMinor ?? null) : null,
+      isInvestment ? (input.units ?? null) : null,
+      isInvestment ? (input.maturityDate ?? null) : null,
     ]
   );
   const row = await db.getFirstAsync<AccountRow>('SELECT * FROM accounts WHERE id = ?', [id]);
@@ -261,6 +297,13 @@ interface UpdateAccountInput {
   investmentKind?: InvestmentKind | null;
   /** The account its money normally comes from. Omitted keeps the current one; null clears it. */
   fundingAccountId?: string | null;
+  /** A credit card's minimum due (basis points of the statement, and its floor). Cleared for any other type. */
+  minDueBp?: number | null;
+  minDueFloorMinor?: number | null;
+  /** A tracked account's units, yearly rate (basis points) and maturity. Omitted keeps the current value. */
+  units?: number | null;
+  rateBp?: number | null;
+  maturityDate?: string | null;
 }
 
 /**
@@ -275,6 +318,8 @@ export async function updateAccount(id: string, input: UpdateAccountInput): Prom
     throw new Error('Opening balance must be a valid number');
   }
   assertCycleDays(input.statementDay, input.dueDay);
+  assertMinDue(input.minDueBp, input.minDueFloorMinor);
+  assertHolding(input.units, input.rateBp, input.maturityDate);
   if (
     input.creditLimitMinor != null &&
     (!Number.isSafeInteger(input.creditLimitMinor) || input.creditLimitMinor < 0)
@@ -316,7 +361,13 @@ export async function updateAccount(id: string, input: UpdateAccountInput): Prom
     currency: string;
     investment_kind: string | null;
     funding_account_id: string | null;
-  }>('SELECT tracked, currency, investment_kind, funding_account_id FROM accounts WHERE id = ?', [id]);
+    units: number | null;
+    maturity_date: string | null;
+    interest_rate_annual_bp: number | null;
+  }>(
+    'SELECT tracked, currency, investment_kind, funding_account_id, units, maturity_date, interest_rate_annual_bp FROM accounts WHERE id = ?',
+    [id]
+  );
   const tracked =
     input.type !== 'savings'
       ? 0
@@ -347,7 +398,7 @@ export async function updateAccount(id: string, input: UpdateAccountInput): Prom
         );
     }
     await tx.runAsync(
-      `UPDATE accounts SET name = ?, type = ?, opening_balance_minor = ?, credit_limit_minor = ?, statement_day = ?, due_day = ?, tracked = ?, investment_kind = ?, funding_account_id = ? WHERE id = ?`,
+      `UPDATE accounts SET name = ?, type = ?, opening_balance_minor = ?, credit_limit_minor = ?, statement_day = ?, due_day = ?, tracked = ?, investment_kind = ?, funding_account_id = ?, min_due_bp = ?, min_due_floor_minor = ?, units = ?, maturity_date = ?, interest_rate_annual_bp = ? WHERE id = ?`,
       [
         input.name.trim(),
         input.type,
@@ -358,6 +409,20 @@ export async function updateAccount(id: string, input: UpdateAccountInput): Prom
         tracked,
         links.kind,
         links.fundingAccountId,
+        isCard ? (input.minDueBp ?? null) : null,
+        isCard ? (input.minDueFloorMinor ?? null) : null,
+        tracked ? (input.units === undefined ? (current?.units ?? null) : input.units) : null,
+        tracked
+          ? input.maturityDate === undefined
+            ? (current?.maturity_date ?? null)
+            : input.maturityDate
+          : null,
+        // A card keeps the rate it was created with; a holding's rate is edited here.
+        tracked
+          ? input.rateBp === undefined
+            ? (current?.interest_rate_annual_bp ?? null)
+            : input.rateBp
+          : (current?.interest_rate_annual_bp ?? null),
         id,
       ]
     );
@@ -366,6 +431,13 @@ export async function updateAccount(id: string, input: UpdateAccountInput): Prom
   const account = (await listAccounts(true)).find((a) => a.id === id);
   if (!account) throw new Error('Account not found');
   return account;
+}
+
+/** Remembers the units held by a tracked account (set by a units x price update), or clears them with null. */
+export async function setHoldingUnits(id: string, units: number | null): Promise<void> {
+  if (units != null && (!Number.isFinite(units) || units < 0)) throw new Error('Units must be zero or more');
+  const db = await getDb();
+  await db.runAsync('UPDATE accounts SET units = ? WHERE id = ? AND tracked = 1', [units, id]);
 }
 
 export interface AccountFlow {

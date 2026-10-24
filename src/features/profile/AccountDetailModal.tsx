@@ -30,8 +30,9 @@ import { styles } from './profile.styles';
 import { ACCOUNT_CHOICES, choiceOf, typeOfChoice, type AccountChoice } from './profile.constants';
 import { InvestmentFields, fundingChoices } from './InvestmentFields';
 import { errorMessage } from '@/lib/errorMessage';
-import { CardCycleFields } from './CardCycleFields';
-import { parseCycleDays } from '@/lib/cardCycle';
+import { earnsKnownRate, parseYearlyRate } from '@/lib/investment';
+import { CardCycleFields, MinDueFields } from './CardCycleFields';
+import { parseCycleDays, parseMinDue } from '@/lib/cardCycle';
 import { showAlert } from '@/components/AppDialog';
 
 /**
@@ -65,6 +66,10 @@ export function AccountDetailModal({
   const [creditLimit, setCreditLimit] = useState('');
   const [statementDay, setStatementDay] = useState('');
   const [dueDay, setDueDay] = useState('');
+  const [rate, setRate] = useState('');
+  const [maturity, setMaturity] = useState('');
+  const [minDuePct, setMinDuePct] = useState('');
+  const [minDueFloor, setMinDueFloor] = useState('');
   const [txCount, setTxCount] = useState<number | null>(null);
   // The usage check failed: we can't tell whether the account has history, so only the safe action
   // (archive) is offered, never delete.
@@ -83,6 +88,14 @@ export function AccountDetailModal({
     setCreditLimit(account.creditLimitMinor != null ? toMajor(account.creditLimitMinor).toString() : '');
     setStatementDay(account.statementDay != null ? String(account.statementDay) : '');
     setDueDay(account.dueDay != null ? String(account.dueDay) : '');
+    setRate(
+      account.investment && account.interestRateAnnualBp != null
+        ? String(account.interestRateAnnualBp / 100)
+        : ''
+    );
+    setMaturity(account.investment?.maturityDate ?? '');
+    setMinDuePct(account.minDueBp != null ? String(account.minDueBp / 100) : '');
+    setMinDueFloor(account.minDueFloorMinor != null ? String(toMajor(account.minDueFloorMinor)) : '');
     setError(null);
     setTxCount(null);
     setTxCheckFailed(false);
@@ -129,6 +142,20 @@ export function AccountDetailModal({
         setError(days.error);
         return;
       }
+      const minDue =
+        type === 'credit_card'
+          ? parseMinDue(minDuePct, minDueFloor)
+          : { minDueBp: null, minDueFloorMinor: null };
+      if ('error' in minDue) {
+        setError(minDue.error);
+        return;
+      }
+      const knownRate = tracked && earnsKnownRate(kind);
+      const parsedRate = knownRate ? parseYearlyRate(rate) : { rateBp: null };
+      if ('error' in parsedRate) {
+        setError(parsedRate.error);
+        return;
+      }
       if (account.investment && !tracked) {
         const proceed = await new Promise<boolean>((resolve) =>
           showAlert(
@@ -151,6 +178,10 @@ export function AccountDetailModal({
           creditLimitMinor,
           statementDay: days.statementDay,
           dueDay: days.dueDay,
+          minDueBp: minDue.minDueBp,
+          minDueFloorMinor: minDue.minDueFloorMinor,
+          rateBp: parsedRate.rateBp,
+          maturityDate: knownRate && kind === 'fixed_deposit' && maturity ? maturity : null,
           tracked,
           investmentKind: tracked ? kind : null,
           fundingAccountId: tracked ? fundingId : null,
@@ -288,6 +319,10 @@ export function AccountDetailModal({
           onKind={setKind}
           fundingId={fundingId}
           onFunding={setFundingId}
+          rate={rate}
+          onRate={setRate}
+          maturity={maturity}
+          onMaturity={setMaturity}
           choices={fundingChoices(allAccounts, account.currency, account.id)}
         />
       )}
@@ -318,6 +353,12 @@ export function AccountDetailModal({
             dueDay={dueDay}
             onChangeStatementDay={setStatementDay}
             onChangeDueDay={setDueDay}
+          />
+          <MinDueFields
+            pct={minDuePct}
+            floor={minDueFloor}
+            onChangePct={setMinDuePct}
+            onChangeFloor={setMinDueFloor}
           />
         </>
       )}

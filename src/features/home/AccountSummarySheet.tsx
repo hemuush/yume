@@ -24,6 +24,8 @@ import { RecentTransactionRow } from './RecentTransactionRow';
 import { parentNameOf } from '@/lib/categoryLabel';
 import { withPressed } from '@/lib/pressed';
 import { getCardCycle, AccountCardCycle } from '@/db/cardCycles';
+import { cardUsage, HIGH_USE_PCT } from '@/lib/cardUsage';
+import { PaceBar } from '@/components/Frost';
 import { dayMonth } from '@/lib/dateLabels';
 import { EYEBROW } from '@/constants/textStyles';
 import { listValuations, Valuation } from '@/db/valuations';
@@ -46,6 +48,7 @@ export function AccountSummarySheet({
   onEdit,
   onSeeAll,
   onPayBill,
+  onAddCharge,
   onChanged,
   onInvest,
   onWithdraw,
@@ -63,6 +66,8 @@ export function AccountSummarySheet({
   onSeeAll: (account: Account) => void;
   /** A credit card's "Pay bill": opens Add as a transfer into the card for what's left to pay. */
   onPayBill?: (account: Account, amountMinor: number) => void;
+  /** A credit card's "Add a card charge": opens Add as an expense on the card, in Fees & Charges when it exists. */
+  onAddCharge?: (account: Account, categoryId: string | null) => void;
   /** A value update was saved or deleted — the caller reloads its accounts. */
   onChanged?: () => void;
   /** An investment's "Invest": Add opened as a transfer into it. Without it the footer keeps its old action. */
@@ -205,6 +210,9 @@ export function AccountSummarySheet({
         : net > 0
           ? 'more came in than went out'
           : 'more went out than came in';
+  const usage = cardUsage(account);
+  const feesCategoryId =
+    categories.find((c) => c.kind === 'expense' && !c.archived && c.name === 'Fees & Charges')?.id ?? null;
   const typeLabel = ((t) => t.charAt(0).toUpperCase() + t.slice(1))(accountTypeLabel(account));
 
   return (
@@ -250,6 +258,35 @@ export function AccountSummarySheet({
               : undefined
           }
         />
+        {usage && (
+          <View style={styles.usage}>
+            <PaceBar
+              animKey={`card:${account.id}`}
+              pct={Math.min(100, usage.pct)}
+              color={
+                usage.availableMinor < 0
+                  ? theme.colors.expense
+                  : usage.high
+                    ? theme.colors.slice.due
+                    : theme.colors.slice.saved
+              }
+              accessibilityLabel={`${Math.round(usage.pct)} percent of the credit limit used`}
+            />
+            <Text style={styles.usageLine}>
+              <Text style={styles.usageBold}>{Math.round(usage.pct)}%</Text> of {money(usage.limitMinor)} used
+              ·{' '}
+              {usage.availableMinor < 0
+                ? `${money(-usage.availableMinor)} over the limit`
+                : `${money(usage.availableMinor)} available`}
+            </Text>
+            {usage.high && (
+              <Text style={styles.empty}>
+                Keeping use under about {HIGH_USE_PCT}% of the limit is a common guide for a healthy credit
+                score.
+              </Text>
+            )}
+          </View>
+        )}
         <AccountReservations account={account} onNavigate={onClose} />
         <SheetTabs
           options={[
@@ -289,6 +326,9 @@ export function AccountSummarySheet({
                 label={`Last statement · ${dayMonth(cycle.statementDate)}`}
                 value={money(cycle.statementMinor)}
               />
+              {cycle.minimumMinor != null && (
+                <BillLine divider label="Minimum due" value={money(cycle.minimumMinor)} />
+              )}
               <BillLine
                 divider
                 label="Paid since"
@@ -319,7 +359,34 @@ export function AccountSummarySheet({
                 style={styles.payBill}
               />
             )}
+            {cycle.leftToPayMinor > 0 &&
+              onPayBill &&
+              cycle.leftMinimumMinor != null &&
+              cycle.leftMinimumMinor > 0 &&
+              cycle.leftMinimumMinor < cycle.leftToPayMinor && (
+                <>
+                  <PrimaryButton
+                    title={`Pay minimum · ${money(cycle.leftMinimumMinor)}`}
+                    variant="secondary"
+                    onPress={() => onPayBill(account, cycle.leftMinimumMinor!)}
+                    style={styles.payBill}
+                  />
+                  <Text style={styles.empty}>
+                    Paying only the minimum avoids a late fee, but interest starts on the rest and the
+                    interest-free days are lost.
+                  </Text>
+                </>
+              )}
           </>
+        )}
+
+        {tab === 'flow' && account.type === 'credit_card' && onAddCharge && (
+          <PrimaryButton
+            title="Add a card charge"
+            variant="secondary"
+            onPress={() => onAddCharge(account, feesCategoryId)}
+            style={styles.payBill}
+          />
         )}
 
         {tab === 'flow' && loadError && (
@@ -535,6 +602,9 @@ const styles = StyleSheet.create({
     color: theme.colors.textPrimary,
   },
   payBill: { marginTop: 10 },
+  usage: { gap: 6, marginTop: 4 },
+  usageLine: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textSecondary },
+  usageBold: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
   sectionGap: { marginTop: 18 },
   flows: { gap: 8, marginTop: 8 },
   flowRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },

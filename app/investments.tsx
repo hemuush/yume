@@ -5,6 +5,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import ReanimatedAnimated from 'react-native-reanimated';
 import { Text } from '@/components/Text';
 import { Glass } from '@/components/Glass';
+import { CountUpAmount } from '@/components/CountUpAmount';
+import { Kicker, FrostChip, frost } from '@/components/Frost';
 import { AddButton } from '@/components/AddButton';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { SegmentedControl } from '@/components/SegmentedControl';
@@ -12,7 +14,7 @@ import { SettingsRow } from '@/components/SettingsRow';
 import { ScreenLoadError } from '@/components/ScreenLoadError';
 import { Section } from '@/components/Section';
 import { cardSurface } from '@/components/CardSurface';
-import { screenStyles as h } from '@/components/screenStyles';
+import { screenStyles as h, SCREEN } from '@/components/screenStyles';
 import { SkyHeader } from '@/features/home/SkyHeader';
 import { HomeWallpaper } from '@/features/home/HomeWallpaper';
 import { AccountSummarySheet } from '@/features/home/AccountSummarySheet';
@@ -31,8 +33,8 @@ import { useCollapsingHeader } from '@/lib/useCollapsingHeader';
 import { useScreenLoad } from '@/lib/useScreenLoad';
 import { toLocalIsoDate, addMonthsToIsoDate } from '@/lib/date';
 import { formatMaskableMoney } from '@/lib/money';
-import { weekdayDayMonth } from '@/lib/dateLabels';
-import { formatReturnPct, ageLabel, INVESTMENT_KIND_LABEL } from '@/lib/investment';
+import { weekdayDayMonth, dayMonthYear } from '@/lib/dateLabels';
+import { formatReturnPct, ageLabel, estimatedValue, INVESTMENT_KIND_LABEL } from '@/lib/investment';
 import { investHref, withdrawHref } from '@/lib/investRoutes';
 import { CURRENT_PERIOD } from '@/lib/period';
 import {
@@ -172,78 +174,122 @@ export default function InvestmentsScreen() {
         ref={scrollRef}
         onScroll={scrollHandler}
         scrollEventThrottle={16}
-        contentContainerStyle={[
-          styles.content,
-          {
-            paddingTop: headerHeight + theme.layout.screenTopGap,
-            paddingBottom: theme.layout.screenScrollPad + insets.bottom,
-          },
-        ]}
+        contentContainerStyle={{
+          paddingTop: headerHeight + theme.layout.screenTopGap,
+          paddingBottom: theme.layout.screenScrollPad + insets.bottom,
+        }}
       >
         {none ? (
-          <Glass radius={28} tone="strong" style={styles.card}>
-            <Text style={styles.title}>Start tracking in 3 steps</Text>
+          <Glass radius={22} tone="strong" style={[frost.hero, cardSurface.summary, styles.block]}>
+            <Kicker icon="trending-up">Start tracking in 3 steps</Kicker>
             {[
               'Add an investment: a fund, stocks, gold or a deposit.',
               'Invest money into it from a bank account.',
               'Update its value now and then to see the gain.',
             ].map((line, i) => (
-              <View key={line} style={styles.stepRow}>
-                <View style={styles.stepNum}>
-                  <Text style={styles.stepNumText}>{i + 1}</Text>
-                </View>
-                <Text style={styles.stepText}>{line}</Text>
-              </View>
+              <Text key={line} style={frost.sub}>
+                <Text style={frost.subBold}>{i + 1}. </Text>
+                {line}
+              </Text>
             ))}
             <PrimaryButton title="Add your first investment" onPress={() => setAdding(true)} />
           </Glass>
         ) : (
           loaded && (
             <>
-              <Glass radius={28} tone="strong" style={styles.card}>
-                <Text style={styles.kicker}>Worth now</Text>
-                <Text style={styles.figure} accessibilityLabel={`Worth now ${money(portfolio.valueMinor)}`}>
-                  {money(portfolio.valueMinor)}
+              <Glass radius={22} tone="strong" style={[frost.hero, cardSurface.summary, styles.block]}>
+                <View style={frost.heroRow}>
+                  <View style={[frost.heroMain, { gap: 2 }]}>
+                    <Kicker icon="trending-up">Worth now</Kicker>
+                    {hideAmounts ? (
+                      <Text style={[frost.bigValue, styles.bigFigure]}>
+                        {formatMaskableMoney(portfolio.valueMinor, { currency, masked: true })}
+                      </Text>
+                    ) : (
+                      <CountUpAmount
+                        minor={portfolio.valueMinor}
+                        currency={currency}
+                        countFromZero={false}
+                        symbolStyle={frost.bigSymbol}
+                        style={[frost.bigValue, styles.bigFigure]}
+                        numberOfLines={1}
+                        adjustsFontSizeToFit
+                      />
+                    )}
+                  </View>
+                  {portfolio.returnPct != null && (
+                    <View style={frost.side}>
+                      <Text style={frost.sideLabel}>Return</Text>
+                      <Text style={[frost.sideValue, !hideAmounts && { color: gainColor }]}>
+                        {hideAmounts ? '••%' : formatReturnPct(portfolio.returnPct)}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+                <View style={frost.chips}>
+                  {gain != null && (
+                    <FrostChip
+                      icon={gain < 0 ? 'trending-down' : 'trending-up'}
+                      tone={hideAmounts || gain === 0 ? undefined : gain > 0 ? 'ok' : 'bad'}
+                    >
+                      {hideAmounts
+                        ? '••••'
+                        : `${gain < 0 ? '−' : gain > 0 ? '+' : ''}${money(Math.abs(gain))}`}
+                    </FrostChip>
+                  )}
+                  {rate && (
+                    <FrostChip icon="calendar">
+                      {hideAmounts
+                        ? '••% a year'
+                        : `${formatReturnPct(rate.rate * 100).replace('+', '')} a year over ${years(rate.days)}`}
+                    </FrostChip>
+                  )}
+                </View>
+                <Text style={frost.sub}>
+                  Put in <Text style={frost.subBold}>{money(portfolio.investedMinor)}</Text>
+                  {portfolio.takenOutMinor > 0 && (
+                    <>
+                      {' · taken out '}
+                      <Text style={frost.subBold}>{money(portfolio.takenOutMinor)}</Text>
+                    </>
+                  )}
+                  {sipMonthly > 0 && (
+                    <>
+                      {' · SIPs '}
+                      <Text style={frost.subBold}>{money(sipMonthly)}</Text> a month
+                    </>
+                  )}
                 </Text>
-                {gain != null && (
-                  <Text
-                    style={[styles.gainLine, { color: hideAmounts ? theme.colors.textPrimary : gainColor }]}
-                    accessibilityLabel={
-                      hideAmounts
-                        ? 'Gain hidden'
-                        : `Gain ${money(Math.abs(gain))}${
-                            portfolio.returnPct == null ? '' : `, ${formatReturnPct(portfolio.returnPct)}`
-                          }`
-                    }
-                  >
-                    {hideAmounts
-                      ? '••'
-                      : `${gain < 0 ? '▼ −' : gain > 0 ? '▲ ' : ''}${money(Math.abs(gain))}${
-                          portfolio.returnPct == null ? '' : ` · ${formatReturnPct(portfolio.returnPct)}`
-                        }`}
+                {(gain == null || (!rate && !hideAmounts) || portfolio.unvaluedCount > 0) && (
+                  <Text style={styles.hint}>
+                    {gain == null
+                      ? 'Update a value to see the gain.'
+                      : !rate
+                        ? 'A yearly rate needs three months of history.'
+                        : ''}
+                    {portfolio.unvaluedCount > 0 && gain != null
+                      ? ` ${portfolio.unvaluedCount} ${portfolio.unvaluedCount === 1 ? 'holding has' : 'holdings have'} no value yet.`
+                      : ''}
                   </Text>
                 )}
-                <View style={styles.trio}>
-                  <Stat label="Put in" value={money(portfolio.investedMinor)} />
-                  <Stat label="Taken out" value={money(portfolio.takenOutMinor)} />
-                  <Stat label="SIPs / month" value={money(sipMonthly)} />
-                </View>
-                <Text style={styles.hint}>
-                  {rate
-                    ? hideAmounts
-                      ? 'About ••% a year'
-                      : `About ${formatReturnPct(rate.rate * 100).replace('+', '')} a year, over ${years(rate.days)}`
-                    : gain == null
-                      ? 'Update a value to see the gain.'
-                      : 'A yearly rate needs three months of history.'}
-                  {portfolio.unvaluedCount > 0 && gain != null
-                    ? ` ${portfolio.unvaluedCount} ${portfolio.unvaluedCount === 1 ? 'holding has' : 'holdings have'} no value yet.`
-                    : ''}
-                </Text>
               </Glass>
 
+              <View style={styles.mainActions}>
+                <PrimaryButton
+                  title="Invest money"
+                  style={styles.mainAction}
+                  onPress={() => choose('invest')}
+                />
+                <PrimaryButton
+                  title="Update values"
+                  variant="secondary"
+                  style={styles.mainAction}
+                  onPress={() => setUpdating(true)}
+                />
+              </View>
+
               {shown.length >= 2 && (
-                <Glass radius={28} tone="strong" style={styles.card}>
+                <Glass radius={22} tone="strong" style={[styles.card, cardSurface.neutral, styles.block]}>
                   <SegmentedControl
                     options={[
                       { label: '6 months', value: '6m' },
@@ -262,22 +308,8 @@ export default function InvestmentsScreen() {
                 </Glass>
               )}
 
-              <View style={styles.mainActions}>
-                <PrimaryButton
-                  title="Invest money"
-                  style={styles.mainAction}
-                  onPress={() => choose('invest')}
-                />
-                <PrimaryButton
-                  title="Update values"
-                  variant="secondary"
-                  style={styles.mainAction}
-                  onPress={() => setUpdating(true)}
-                />
-              </View>
-
               {split.length > 1 && (
-                <Glass radius={28} tone="strong" style={styles.card}>
+                <Glass radius={22} tone="strong" style={[styles.card, cardSurface.neutral, styles.block]}>
                   <Text style={styles.label}>Where it sits</Text>
                   <View
                     style={styles.bar}
@@ -313,22 +345,13 @@ export default function InvestmentsScreen() {
                 </Glass>
               )}
 
-              <Section
-                compact
-                title="Holdings"
-                right={
-                  <AddButton
-                    label="+ Add"
-                    onPress={() => setAdding(true)}
-                    accessibilityLabel="Add an investment"
-                  />
-                }
-              >
+              <Section compact title="Holdings">
                 <View style={[h.card, cardSurface.neutral]}>
                   {portfolio.holdings.map((holding, i) => (
                     <HoldingRow
                       key={holding.id}
                       holding={holding}
+                      today={today}
                       masked={hideAmounts}
                       onPress={() => setSummary(holding.account)}
                       divider={i > 0}
@@ -344,36 +367,44 @@ export default function InvestmentsScreen() {
                       <HoldingRow
                         key={holding.id}
                         holding={holding}
+                        today={today}
                         masked={hideAmounts}
                         onPress={() => setSummary(holding.account)}
                         divider={i > 0}
                       />
                     ))}
                   </View>
-                  <Text style={styles.hint}>Not added into the totals above.</Text>
+                  <Text style={[styles.hint, styles.hintPad]}>Not added into the totals above.</Text>
                 </Section>
               )}
 
-              <Section
-                compact
-                title="Monthly SIPs"
-                right={
-                  <AddButton label="+ Add" onPress={() => choose('sip')} accessibilityLabel="Add a SIP" />
-                }
-              >
-                {sips.length === 0 ? (
-                  <Text style={styles.hint}>
-                    A SIP puts the same amount into an investment every month. Tap + Add to set one up.
-                  </Text>
-                ) : (
-                  <View style={[h.card, cardSurface.neutral]}>{sips.map(sipRow)}</View>
-                )}
+              <Section compact title="Monthly SIPs">
+                <View style={[h.card, cardSurface.neutral]}>
+                  {sips.map(sipRow)}
+                  <SettingsRow
+                    icon="plus"
+                    round
+                    label="Add a SIP"
+                    sub="The same amount into an investment every month"
+                    onPress={() => choose('sip')}
+                    divider={sips.length > 0}
+                  />
+                </View>
               </Section>
             </>
           )
         )}
       </ReanimatedAnimated.ScrollView>
-      <SkyHeader collapse={collapse} title="Investments" showBack hideUser wallpaper />
+      <SkyHeader
+        collapse={collapse}
+        title="Investments"
+        showBack
+        hideUser
+        wallpaper
+        actions={
+          <AddButton label="+ Add" onPress={() => setAdding(true)} accessibilityLabel="Add an investment" />
+        }
+      />
 
       <AccountSummarySheet
         account={summary}
@@ -464,32 +495,29 @@ const years = (days: number) => {
   return y >= 2 ? `${Math.round(y * 10) / 10} years` : `${Math.max(1, Math.round(days / 30.44))} months`;
 };
 
-function Stat({ label, value, color }: { label: string; value: string; color?: string }) {
-  return (
-    <View style={styles.stat}>
-      <Text style={[styles.statValue, color ? { color } : null]} numberOfLines={1} adjustsFontSizeToFit>
-        {value}
-      </Text>
-      <Text style={styles.statLabel}>{label}</Text>
-    </View>
-  );
-}
-
 function HoldingRow({
   holding,
+  today,
   masked,
   onPress,
   divider,
 }: {
   holding: Holding;
+  today: string;
   masked: boolean;
   onPress: () => void;
   divider: boolean;
 }) {
   const cur = holding.account.currency;
+  const estimate = estimatedValue(holding.account, today);
+  const maturity = holding.account.investment?.maturityDate;
   const sub = [
     holding.kind ? INVESTMENT_KIND_LABEL[holding.kind] : null,
     holding.ageDays == null ? 'No value yet' : ageLabel(holding.ageDays),
+    estimate
+      ? `≈ ${formatMaskableMoney(estimate.valueMinor, { currency: cur, masked })} at ${estimate.rateBp / 100}%`
+      : null,
+    maturity ? `${maturity <= today ? 'Matured' : 'Matures'} ${dayMonthYear(maturity)}` : null,
   ]
     .filter(Boolean)
     .join(' · ');
@@ -523,26 +551,13 @@ function HoldingRow({
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
-  content: { paddingHorizontal: 16, gap: 12 },
-  card: { padding: 14, gap: 10 },
-  title: { fontFamily: theme.font.roundedBold, fontSize: 20, color: theme.colors.textPrimary },
-  kicker: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textSecondary },
-  figure: { fontFamily: theme.font.roundedBold, fontSize: 34, color: theme.colors.textPrimary },
+  // Cards sit on the screen gutter like every other screen's; the sections below bring their own.
+  block: { marginTop: 0, marginBottom: 12 },
+  card: { marginHorizontal: SCREEN.gutter, padding: 14, gap: 10 },
+  bigFigure: { fontFamily: theme.font.bodyLight, fontSize: 30, lineHeight: 36 },
   label: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textSecondary },
   hint: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textMuted },
-  trio: { flexDirection: 'row', gap: 8 },
-  stat: {
-    flex: 1,
-    minWidth: 0,
-    paddingVertical: 8,
-    paddingHorizontal: 10,
-    borderRadius: 14,
-    backgroundColor: theme.colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-  },
-  statValue: { fontFamily: theme.font.bodyBold, fontSize: 15, color: theme.colors.textPrimary },
-  statLabel: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted },
+  hintPad: { marginHorizontal: SCREEN.gutter, marginTop: 6 },
   bar: { flexDirection: 'row', height: 10, borderRadius: 5, overflow: 'hidden', gap: 2 },
   legendRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   dot: { width: 10, height: 10, borderRadius: 5 },
@@ -556,18 +571,6 @@ const styles = StyleSheet.create({
   legendShare: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textSecondary },
   rowRight: { alignItems: 'flex-end', gap: 3, flexShrink: 1 },
   rowValue: { fontFamily: theme.font.bodyBold, fontSize: 14, color: theme.colors.textPrimary },
-  stepRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  stepNum: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: theme.colors.primary,
-  },
-  stepNumText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.onFlat },
-  stepText: { flex: 1, fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textPrimary },
-  mainActions: { flexDirection: 'row', gap: 8 },
+  mainActions: { flexDirection: 'row', gap: 8, marginHorizontal: SCREEN.gutter, marginBottom: 12 },
   mainAction: { flex: 1 },
-  gainLine: { fontFamily: theme.font.bodyBold, fontSize: 14 },
 });
