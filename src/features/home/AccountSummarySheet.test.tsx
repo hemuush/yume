@@ -331,7 +331,7 @@ describe('AccountSummarySheet — credit card bill', () => {
     const t = texts(await render({ account: limited, accounts: [limited] }));
     expect(t).toContain('35%');
     expect(t.some((s) => s.includes('available') && s.includes(formatMoney(780_000)))).toBe(true);
-    expect(t.some((s) => s.includes('can lower your credit score'))).toBe(true);
+    expect(t.some((s) => s.includes('common guide for a healthy credit score'))).toBe(true);
   });
 
   it('shows no warning at a low use, and says so when over the limit', async () => {

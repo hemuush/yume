@@ -281,7 +281,8 @@ export function AccountSummarySheet({
             </Text>
             {usage.high && (
               <Text style={styles.empty}>
-                Using more than {HIGH_USE_PCT}% of the limit can lower your credit score.
+                Keeping use under about {HIGH_USE_PCT}% of the limit is a common guide for a healthy credit
+                score.
               </Text>
             )}
           </View>

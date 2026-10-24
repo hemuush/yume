@@ -36,9 +36,9 @@ export interface GrowthEstimate {
 }
 
 /**
- * An estimate of today's value for a fixed deposit (interest added quarterly, as banks do) or a PPF/EPF
- * account (added yearly): the last value you entered, grown at the rate for the days since, plus the money
- * that has moved in or out since. Null for any other kind, with no rate or no update yet, or when no day has
+ * An estimate of today's value for a fixed deposit (interest added each quarter, as banks do) or a PPF/EPF
+ * account (added each year): the last value you entered, grown at the rate for the days since, plus the
+ * money that has moved in or out since. Null for any other kind, with no rate or no update yet, or when no day has
  * passed. It is an estimate only: the real figure is what your bank says, and entering it is always right.
  */
 export function estimatedValue(
@@ -53,9 +53,14 @@ export function estimatedValue(
   const end = matured ? inv.maturityDate! : today;
   const days = daysBetween(inv.valuedAt, end);
   if (days === 0) return null;
-  const years = days / 365;
-  const rate = rateBp / 10000;
-  const factor = inv.kind === 'fixed_deposit' ? Math.pow(1 + rate / 4, 4 * years) : Math.pow(1 + rate, years);
+  // Interest joins the balance at the end of each quarter (deposit) or year (provident fund); in between it
+  // builds up as simple interest, as banks and the provident fund office do.
+  const perYear = inv.kind === 'fixed_deposit' ? 4 : 1;
+  const periodDays = 365 / perYear;
+  const periodRate = rateBp / 10000 / perYear;
+  const whole = Math.floor(days / periodDays + 1e-9);
+  const part = Math.max(0, days - whole * periodDays) / periodDays;
+  const factor = Math.pow(1 + periodRate, whole) * (1 + periodRate * part);
   const moved = account.currentBalanceMinor - inv.lastValueMinor;
   const valueMinor = Math.round(inv.lastValueMinor * factor) + moved;
   return { valueMinor, days, rateBp, matured };
