@@ -1,4 +1,5 @@
 /** The pieces around the Investments page: Plan's card, the chart, and the Update values list. */
+import { Polyline } from 'react-native-svg';
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
 import { Text } from 'react-native';
 
@@ -27,6 +28,7 @@ jest.mock('./UpdateValueSheet', () => ({
 }));
 
 import { InvestmentsCard } from './InvestmentsCard';
+import { PlanOverviewPanels } from '@/features/plan/PlanOverviewPanels';
 import { PortfolioChart } from './PortfolioChart';
 import { UpdateValuesSheet } from './UpdateValuesSheet';
 import { InvestmentPanel } from './InvestmentPanel';
@@ -86,7 +88,12 @@ describe('InvestmentsCard', () => {
   it('invites a first investment when there are none', () => {
     const open = jest.fn();
     const tree = render(
-      <InvestmentsCard portfolio={buildPortfolio([], 'INR', TODAY)} monthlySipMinor={0} onOpen={open} />
+      <InvestmentsCard
+        portfolio={buildPortfolio([], 'INR', TODAY)}
+        series={[]}
+        monthlySipMinor={0}
+        onOpen={open}
+      />
     );
     expect(texts(tree)).toContain('Track an investment');
     act(() => tree.root.find((n) => n.props.accessibilityRole === 'button').props.onPress());
@@ -97,14 +104,31 @@ describe('InvestmentsCard', () => {
     const tree = render(
       <InvestmentsCard
         portfolio={buildPortfolio([fund, gold], 'INR', TODAY)}
+        series={[]}
         monthlySipMinor={10_000_00}
         onOpen={jest.fn()}
       />
     );
     const shown = texts(tree).join(' ');
     expect(shown).toContain(inr(538_000_00));
-    expect(shown).toContain('SIPs');
-    expect(shown).toContain('1 value is due an update');
+    expect(shown).toContain('SIPs / month');
+    expect(shown).toContain(inr(10_000_00));
+    expect(shown).toContain('1 due');
+  });
+
+  it('draws a trend line only once there are two points', () => {
+    const portfolio = buildPortfolio([fund], 'INR', TODAY);
+    const lines = (series: { date: string; valueMinor: number; putInMinor: number }[]) =>
+      render(
+        <InvestmentsCard portfolio={portfolio} series={series} monthlySipMinor={0} onOpen={jest.fn()} />
+      ).root.findAllByType(Polyline).length;
+    expect(lines([{ date: '2026-10-01', valueMinor: 1, putInMinor: 1 }])).toBe(0);
+    expect(
+      lines([
+        { date: '2026-04-01', valueMinor: 1, putInMinor: 1 },
+        { date: '2026-10-01', valueMinor: 2, putInMinor: 1 },
+      ])
+    ).toBe(1);
   });
 
   it('masks the figures while savings are hidden', () => {
@@ -113,6 +137,7 @@ describe('InvestmentsCard', () => {
       render(
         <InvestmentsCard
           portfolio={buildPortfolio([fund], 'INR', TODAY)}
+          series={[]}
           monthlySipMinor={5_000_00}
           onOpen={jest.fn()}
         />
@@ -120,6 +145,37 @@ describe('InvestmentsCard', () => {
     ).join(' ');
     expect(shown).not.toContain(inr(438_000_00));
     expect(shown).toContain('••••');
+  });
+});
+
+describe('Plan Overview Investments row', () => {
+  const panel = (portfolio: ReturnType<typeof buildPortfolio>, onInvestments = jest.fn()) =>
+    render(
+      <PlanOverviewPanels
+        budgets={{ rows: [] } as never}
+        groups={[]}
+        loans={{ rows: [] } as never}
+        goals={[]}
+        today={TODAY}
+        hideAmounts={mockHide}
+        investments={portfolio}
+        onInvestments={onInvestments}
+        onTab={jest.fn()}
+        onBudget={jest.fn()}
+      />
+    );
+  it('invites tracking when there are none, and opens the page', () => {
+    const open = jest.fn();
+    const tree = panel(buildPortfolio([], 'INR', TODAY), open);
+    expect(texts(tree)).toContain("Track what you've invested");
+    act(() => tree.root.find((n) => n.props.accessibilityLabel?.startsWith('Investments.')).props.onPress());
+    expect(open).toHaveBeenCalled();
+  });
+  it('shows the worth and gain, and masks them while savings are hidden', () => {
+    const shown = texts(panel(buildPortfolio([fund], 'INR', TODAY))).join(' ');
+    expect(shown).toContain(inr(438_000_00));
+    mockHide = true;
+    expect(texts(panel(buildPortfolio([fund], 'INR', TODAY))).join(' ')).not.toContain(inr(438_000_00));
   });
 });
 
