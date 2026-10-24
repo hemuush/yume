@@ -11,8 +11,8 @@ import { compactMoney } from '@/lib/compactMoney';
 import { formatMaskableMoney } from '@/lib/money';
 import { formatReturnPct } from '@/lib/investment';
 import { usePrivacy } from '@/theme/PrivacyContext';
-import { TileGrid } from '@/features/plan/PlanGrid';
-import { styles } from '@/features/plan/plan.styles';
+import { TileGrid } from './PlanGrid';
+import { styles } from './plan.styles';
 import type { Portfolio } from '@/lib/portfolio';
 
 /**

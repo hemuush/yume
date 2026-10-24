@@ -24,8 +24,7 @@ import { RecentTransactionRow } from './RecentTransactionRow';
 import { parentNameOf } from '@/lib/categoryLabel';
 import { withPressed } from '@/lib/pressed';
 import { getCardCycle, AccountCardCycle } from '@/db/cardCycles';
-import { cardUsage, HIGH_USE_PCT } from '@/lib/cardUsage';
-import { PaceBar } from '@/components/Frost';
+import { CardBill, CardUsageBar } from './CardPanels';
 import { dayMonth } from '@/lib/dateLabels';
 import { EYEBROW } from '@/constants/textStyles';
 import { listValuations, Valuation } from '@/db/valuations';
@@ -210,7 +209,6 @@ export function AccountSummarySheet({
         : net > 0
           ? 'more came in than went out'
           : 'more went out than came in';
-  const usage = cardUsage(account);
   const feesCategoryId =
     categories.find((c) => c.kind === 'expense' && !c.archived && c.name === 'Fees & Charges')?.id ?? null;
   const typeLabel = ((t) => t.charAt(0).toUpperCase() + t.slice(1))(accountTypeLabel(account));
@@ -258,35 +256,7 @@ export function AccountSummarySheet({
               : undefined
           }
         />
-        {usage && (
-          <View style={styles.usage}>
-            <PaceBar
-              animKey={`card:${account.id}`}
-              pct={Math.min(100, usage.pct)}
-              color={
-                usage.availableMinor < 0
-                  ? theme.colors.expense
-                  : usage.high
-                    ? theme.colors.slice.due
-                    : theme.colors.slice.saved
-              }
-              accessibilityLabel={`${Math.round(usage.pct)} percent of the credit limit used`}
-            />
-            <Text style={styles.usageLine}>
-              <Text style={styles.usageBold}>{Math.round(usage.pct)}%</Text> of {money(usage.limitMinor)} used
-              ·{' '}
-              {usage.availableMinor < 0
-                ? `${money(-usage.availableMinor)} over the limit`
-                : `${money(usage.availableMinor)} available`}
-            </Text>
-            {usage.high && (
-              <Text style={styles.empty}>
-                Keeping use under about {HIGH_USE_PCT}% of the limit is a common guide for a healthy credit
-                score.
-              </Text>
-            )}
-          </View>
-        )}
+        <CardUsageBar account={account} money={money} />
         <AccountReservations account={account} onNavigate={onClose} />
         <SheetTabs
           options={[
@@ -311,81 +281,15 @@ export function AccountSummarySheet({
           />
         )}
 
-        {tab === 'flow' && cycleError && <Text style={styles.empty}>Couldn't load this card's bill.</Text>}
-
-        {tab === 'flow' && cycle && (
-          <>
-            <Text style={styles.label}>Bill</Text>
-            <View style={styles.latest}>
-              <BillLine
-                label={`This cycle · ${dayMonth(cycle.cycleStart)} – ${dayMonth(cycle.cycleEnd)}`}
-                value={money(cycle.spentThisCycleMinor)}
-              />
-              <BillLine
-                divider
-                label={`Last statement · ${dayMonth(cycle.statementDate)}`}
-                value={money(cycle.statementMinor)}
-              />
-              {cycle.minimumMinor != null && (
-                <BillLine divider label="Minimum due" value={money(cycle.minimumMinor)} />
-              )}
-              <BillLine
-                divider
-                label="Paid since"
-                value={money(cycle.paidSinceMinor)}
-                valueColor={theme.colors.incomeText}
-              />
-              <BillLine
-                divider
-                label={
-                  cycle.leftToPayMinor === 0
-                    ? 'Paid in full'
-                    : cycle.daysUntilDue < 0
-                      ? `Left to pay · was due ${dayMonth(cycle.dueDate)}`
-                      : `Left to pay by ${dayMonth(cycle.dueDate)}`
-                }
-                value={money(cycle.leftToPayMinor)}
-                strong
-                valueColor={
-                  cycle.daysUntilDue < 0 && cycle.leftToPayMinor > 0 ? theme.colors.expenseText : undefined
-                }
-              />
-            </View>
-            {cycle.leftToPayMinor > 0 && onPayBill && (
-              <PrimaryButton
-                title={`Pay bill · ${money(cycle.leftToPayMinor)}`}
-                variant="secondary"
-                onPress={() => onPayBill(account, cycle.leftToPayMinor)}
-                style={styles.payBill}
-              />
-            )}
-            {cycle.leftToPayMinor > 0 &&
-              onPayBill &&
-              cycle.leftMinimumMinor != null &&
-              cycle.leftMinimumMinor > 0 &&
-              cycle.leftMinimumMinor < cycle.leftToPayMinor && (
-                <>
-                  <PrimaryButton
-                    title={`Pay minimum · ${money(cycle.leftMinimumMinor)}`}
-                    variant="secondary"
-                    onPress={() => onPayBill(account, cycle.leftMinimumMinor!)}
-                    style={styles.payBill}
-                  />
-                  <Text style={styles.empty}>
-                    Paying only the minimum avoids a late fee, but interest starts on the rest and the
-                    interest-free days are lost.
-                  </Text>
-                </>
-              )}
-          </>
-        )}
-
-        {tab === 'flow' && account.type === 'credit_card' && onAddCharge && (
-          <PrimaryButton
-            title="Add a card charge"
-            variant="secondary"
-            onPress={() => onAddCharge(account, feesCategoryId)}
-            style={styles.payBill}
+        {tab === 'flow' && account.type === 'credit_card' && (
+          <CardBill
+            account={account}
+            cycle={cycle}
+            failed={cycleError}
+            money={money}
+            feesCategoryId={feesCategoryId}
+            onPayBill={onPayBill}
+            onAddCharge={onAddCharge}
           />
         )}
 
@@ -502,29 +406,6 @@ export function AccountSummarySheet({
   );
 }
 
-/** One line of a card's bill: what it is on the left, the amount on the right. */
-function BillLine({
-  label,
-  value,
-  strong,
-  valueColor,
-  divider,
-}: {
-  label: string;
-  value: string;
-  strong?: boolean;
-  valueColor?: string;
-  /** A hairline above — every line but the first. */
-  divider?: boolean;
-}) {
-  return (
-    <View style={[styles.billLine, divider && styles.billDivider]}>
-      <Text style={[styles.billLabel, strong && styles.billLabelStrong]}>{label}</Text>
-      <Text style={[styles.billValue, valueColor ? { color: valueColor } : null]}>{value}</Text>
-    </View>
-  );
-}
-
 /**
  * One in/out line: label, bar sized against the larger of the two sides, amount, and what it was made of.
  * Bar is full colour for real income/spending, pale for transfers between your own accounts (pass-through).
@@ -577,34 +458,6 @@ const styles = StyleSheet.create({
   footerRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   footerBtn: { flexGrow: 1, flexBasis: 140 },
   label: EYEBROW,
-  billLine: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 9,
-  },
-  billDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.borderSoft },
-  billLabel: {
-    flexGrow: 1,
-    flexBasis: 140,
-    fontFamily: theme.font.body,
-    fontSize: 13,
-    color: theme.colors.textSecondary,
-  },
-  billLabelStrong: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
-  billValue: {
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 13,
-    fontVariant: ['tabular-nums'],
-    color: theme.colors.textPrimary,
-  },
-  payBill: { marginTop: 10 },
-  usage: { gap: 6, marginTop: 4 },
-  usageLine: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textSecondary },
-  usageBold: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
   sectionGap: { marginTop: 18 },
   flows: { gap: 8, marginTop: 8 },
   flowRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },

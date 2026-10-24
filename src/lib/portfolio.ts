@@ -141,7 +141,7 @@ export function xirr(flows: { date: string; amountMinor: number }[]): number | n
 }
 
 /** The shortest history that gives a yearly rate worth showing. */
-export const MIN_RATE_DAYS = 90;
+const MIN_RATE_DAYS = 90;
 
 /**
  * About how much the portfolio grows a year, from when each holding started to today. Null until at least one

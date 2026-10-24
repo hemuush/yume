@@ -3,7 +3,7 @@ import type { Account } from '@/types';
 /** Past this share of the limit a card is flagged: a common guide for keeping a credit score healthy. */
 export const HIGH_USE_PCT = 30;
 
-export interface CardUsage {
+interface CardUsage {
   limitMinor: number;
   /** What the card owes now, billed or not: a card's balance is what is in it, so negative while owed. */
   usedMinor: number;
