@@ -25,7 +25,7 @@ export function daysBetween(from: string, to: string): number {
 }
 
 /** What a deposit or provident fund has grown to since its last update, from its yearly rate. */
-export interface GrowthEstimate {
+interface GrowthEstimate {
   valueMinor: number;
   /** Days of growth counted: from the last update to today, or to maturity if that came first. */
   days: number;

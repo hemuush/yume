@@ -56,3 +56,9 @@ jobs:
       # Bundles the app's JavaScript for Android, so a broken import or a
       # missing asset fails here instead of in a release build.
       - run: npx expo export --platform android
+      # Generates the Android project from app.json and the config plugins (no Android SDK needed), then checks
+      # the manifest they wrote: one enabled launcher icon alias, MainActivity left enabled for shortcuts, widgets
+      # and links, no storage permissions, backups off, and the app-icon module autolinked. A broken plugin
+      # fails here instead of in a release build.
+      - run: npx expo prebuild --platform android --no-install
+      - run: npm run check:native
