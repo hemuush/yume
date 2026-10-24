@@ -81,6 +81,9 @@
   },
   "private": true,
   "overrides": {
+    "@expo/cli": {
+      "zod": "4.6.7"
+    },
     "eslint-plugin-react": {
       "eslint": "$eslint"
     },
