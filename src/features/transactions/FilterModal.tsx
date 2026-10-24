@@ -4,7 +4,8 @@ import { usePrivacy } from '@/theme/PrivacyContext';
 import { useEffect, useMemo, useState } from 'react';
 import { View, Keyboard } from 'react-native';
 import { Text, TextInput } from '@/components/Text';
-import { Account, Category, TransactionType } from '@/types';
+import type { Account, Category } from '@/types';
+import type { ActivityType } from './activityFilter';
 import { SheetTabs } from '@/components/SheetTabs';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { Chip } from '@/components/Chip';
@@ -16,12 +17,16 @@ import { accountHue, accountIcon } from '@/lib/account';
 import { shade } from '@/lib/color';
 import { useAccent } from '@/theme/AccentContext';
 
-const FILTER_TYPES: { label: string; value: TransactionType | 'all' }[] = [
+const FILTER_TYPES: { label: string; value: ActivityType }[] = [
   { label: 'All', value: 'all' },
   { label: 'Expense', value: 'expense' },
   { label: 'Income', value: 'income' },
   { label: 'Transfer', value: 'transfer' },
+  { label: 'Invest', value: 'invest' },
 ];
+
+/** Types with no category or label of their own to filter by. */
+const categoryless = (type: ActivityType) => type === 'transfer' || type === 'invest';
 
 /**
  * Type, category and account filters applied client-side on top of the active date range: the range is small,
@@ -54,7 +59,7 @@ export function FilterModal({
   const [draftCategoryIds, setDraftCategoryIds] = useState<string[]>(categoryIds);
   const [draftAccountIds, setDraftAccountIds] = useState<string[]>(accountIds);
   useEffect(() => {
-    if (!visible || draftType === 'income' || draftType === 'transfer') return;
+    if (!visible || draftType === 'income' || categoryless(draftType)) return;
     let live = true;
     setLabels([]);
     void listExpenseLabels('', hideAmounts).then(
@@ -121,13 +126,13 @@ export function FilterModal({
     setExpandedParentId(kids.length ? cat.id : null);
   };
 
-  const onTypeChange = (next: TransactionType | 'all') => {
+  const onTypeChange = (next: ActivityType) => {
     setDraftType(next);
-    if (next === 'income' || next === 'transfer') setDraftLabel('');
+    if (next === 'income' || categoryless(next)) setDraftLabel('');
     setExpandedParentId(null);
     // Drop selected categories that no longer match the chosen type: keeping them would silently filter out
     // everything, since a transaction can never match a category of the wrong kind.
-    if (next === 'transfer') setDraftCategoryIds([]);
+    if (categoryless(next)) setDraftCategoryIds([]);
     if (next === 'income' || next === 'expense') {
       setDraftCategoryIds((prev) => prev.filter((id) => categories.find((c) => c.id === id)?.kind === next));
     }
@@ -200,7 +205,7 @@ export function FilterModal({
         </>
       )}
 
-      {draftType !== 'transfer' && (
+      {!categoryless(draftType) && (
         <>
           <Text style={styles.fieldLabel}>Categories · choose any</Text>
           <View style={styles.chipRow}>

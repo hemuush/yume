@@ -1,4 +1,5 @@
 import { useLocalDayRefresh } from '@/lib/useLocalDayRefresh';
+import { investRole, investmentIdsOf } from '@/lib/investment';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, StyleSheet, RefreshControl } from 'react-native';
 import { Text } from '@/components/Text';
@@ -458,6 +459,7 @@ export default function DashboardScreen() {
   };
   const accountName = (id: string | null | undefined) => (id ? accountsById.get(id)?.name : undefined);
   const savingsIds = savingsAccountIdsOf(historyAccounts);
+  const investIds = investmentIdsOf(historyAccounts);
   const isSavingsTransfer = (tx: Transaction) =>
     tx.type === 'transfer' &&
     (savingsIds.has(tx.accountId) || (!!tx.toAccountId && savingsIds.has(tx.toAccountId)));
@@ -700,6 +702,7 @@ export default function DashboardScreen() {
                         accountName={accountName(tx.accountId)}
                         toAccountName={accountName(tx.toAccountId)}
                         savingsTransfer={isSavingsTransfer(tx)}
+                        investRole={investRole(tx, investIds)}
                         divider={i > 0}
                       />
                     </Animated.View>

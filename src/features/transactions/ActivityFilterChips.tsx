@@ -4,7 +4,7 @@ import { HeaderIconButton } from '@/components/AppHeader';
 import { Text } from '@/components/Text';
 import Feather from '@expo/vector-icons/Feather';
 import { theme } from '@/constants/theme';
-import { TransactionType } from '@/types';
+import type { ActivityType } from './activityFilter';
 import { EmptyState } from '@/components/EmptyState';
 import { styles } from './transactions.styles';
 import { withPressed, withPressedTint } from '@/lib/pressed';
@@ -13,11 +13,12 @@ import { useAccent } from '@/theme/AccentContext';
 
 // The one-tap type choices above the list — the same `filterType` the filter
 // sheet sets, just without opening it.
-const TYPE_CHIPS: { label: string; value: TransactionType | 'all' }[] = [
+const TYPE_CHIPS: { label: string; value: ActivityType }[] = [
   { label: 'All', value: 'all' },
   { label: 'Spent', value: 'expense' },
   { label: 'Income', value: 'income' },
   { label: 'Transfers', value: 'transfer' },
+  { label: 'Invest', value: 'invest' },
 ];
 
 /**
@@ -37,8 +38,8 @@ export function ActivityFilterChips({
   onOpenFilters,
   filterCount = 0,
 }: {
-  filterType: TransactionType | 'all';
-  onFilterType: (type: TransactionType | 'all') => void;
+  filterType: ActivityType;
+  onFilterType: (type: ActivityType) => void;
   categoryIds: string[];
   accountIds: string[];
   categoryName: (id: string) => string;

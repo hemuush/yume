@@ -1,4 +1,5 @@
 import { withPressedTint } from '@/lib/pressed';
+import { investLines, type InvestRole } from '@/lib/investment';
 import { View, Pressable, StyleSheet, useWindowDimensions } from 'react-native';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
@@ -23,6 +24,7 @@ export function RecentTransactionRow({
   toAccountName,
   divider,
   savingsTransfer = false,
+  investRole = null,
   showDay = true,
   omitToday = false,
   omitCategory = false,
@@ -39,6 +41,8 @@ export function RecentTransactionRow({
   divider: boolean;
   /** A transfer into or out of a savings account — masked with "hide savings & investment amounts". */
   savingsTransfer?: boolean;
+  /** A transfer into, out of or between investments: worded as Invested, Withdrawn or Moved. */
+  investRole?: InvestRole | null;
   /** Off when the rows sit under a day heading (Home), so the day isn't said twice. */
   showDay?: boolean;
   /** Home's list: today is the usual case, so only other days are named. */
@@ -55,16 +59,23 @@ export function RecentTransactionRow({
   const stacked = width < 360 || fontScale > 1.2;
   const isTransfer = tx.type === 'transfer';
   const note = tx.note?.trim();
-  const title = isTransfer ? 'Transfer' : note || category?.name || tx.type;
+  const invest = investRole
+    ? investLines(tx, investRole, (id) =>
+        id === tx.accountId ? (accountName ?? '—') : (toAccountName ?? '—')
+      )
+    : null;
+  const title = invest ? invest.title : isTransfer ? 'Transfer' : note || category?.name || tx.type;
   // The category goes under a note ("Lunch" / "Food & Dining › Zomato · SBI");
   // A subcategory without a label shows its parent alongside the account.
-  const sub = isTransfer
-    ? `${accountName ?? '—'} → ${toAccountName ?? '—'}`
-    : joinSub([
-        !omitCategory && (note ? category && categoryPath(category.name, parentName) : parentName),
-        accountName,
-        showDay && (!omitToday || tx.date !== toLocalIsoDate(new Date())) && dayLabel(tx.date),
-      ]);
+  const sub = invest
+    ? invest.sub
+    : isTransfer
+      ? `${accountName ?? '—'} → ${toAccountName ?? '—'}`
+      : joinSub([
+          !omitCategory && (note ? category && categoryPath(category.name, parentName) : parentName),
+          accountName,
+          showDay && (!omitToday || tx.date !== toLocalIsoDate(new Date())) && dayLabel(tx.date),
+        ]);
 
   const Container = onPress ? Pressable : View;
   return (
@@ -86,7 +97,15 @@ export function RecentTransactionRow({
       <JustAddedGlow ids={[tx.id]} surface="home" />
       <View style={[styles.lead, dense && styles.denseLead]}>
         <CategoryIcon
-          name={isTransfer ? 'swap-horizontal' : (category?.icon ?? 'tag')}
+          name={
+            investRole === 'invest'
+              ? 'trending-up'
+              : investRole === 'withdraw'
+                ? 'trending-down'
+                : isTransfer
+                  ? 'swap-horizontal'
+                  : (category?.icon ?? 'tag')
+          }
           color={isTransfer ? secondary : (category?.color ?? theme.colors.textMuted)}
           square={dense ? DENSE_MARK : SCREEN.mark}
           size={dense ? 14 : undefined}

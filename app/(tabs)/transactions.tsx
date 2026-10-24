@@ -12,7 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { listAccounts, listCategories, listTransactions, searchTransactions, setDayOrder } from '@/db/ledger';
 import { getRecentSearches, setRecentSearches, RECENT_SEARCHES_KEPT, getCachedCurrency } from '@/db/settings';
 import { getRangeComparison, PeriodComparison } from '@/db/reports';
-import { Account, Category, Transaction, TransactionType } from '@/types';
+import { Account, Category, Transaction } from '@/types';
 import { HeaderIconButton } from '@/components/AppHeader';
 import { SkyHeader } from '@/features/home/SkyHeader';
 import { useCollapsingHeader } from '@/lib/useCollapsingHeader';
@@ -43,7 +43,12 @@ import {
   periodHeading,
   filterActivity,
   chartTransactionsFor,
+  groupWithNotes,
+  type ValueNote,
 } from '@/features/transactions/transactions.helpers';
+import type { ActivityType } from '@/features/transactions/activityFilter';
+import { listValuationEvents } from '@/db/valuations';
+import { investmentIdsOf } from '@/lib/investment';
 import { savingsAccountIdsOf } from '@/lib/account';
 import { privateComparison, isSavingsEntry } from '@/lib/privateSummary';
 import { usePrivacy } from '@/theme/PrivacyContext';
@@ -92,7 +97,7 @@ export default function TransactionsScreen() {
   const [viewScope, setViewScope] = useState<'week' | 'month'>('week');
   const [monthPickerVisible, setMonthPickerVisible] = useState(false);
   const [filterVisible, setFilterVisible] = useState(false);
-  const [filterType, setFilterType] = useState<TransactionType | 'all'>('all');
+  const [filterType, setFilterType] = useState<ActivityType>('all');
   const [filterCategoryIds, setFilterCategoryIds] = useState<string[]>([]);
   const [filterLabel, setFilterLabel] = useState<string | undefined>();
   const [filterAccountIds, setFilterAccountIds] = useState<string[]>([]);
@@ -255,6 +260,29 @@ export default function TransactionsScreen() {
     return { fromDate: toLocalIsoDate(new Date(y, m, 1)), toDate: toLocalIsoDate(new Date(y, m + 1, 0)) };
   }, [anchor]);
   const visibleRange = viewScope === 'month' ? monthRange : { fromDate: week.start, toDate: week.end };
+  const investmentIds = useMemo(() => investmentIdsOf(accounts), [accounts]);
+  // Under the Invest chip, value updates of the holdings in view are listed beside the money moved.
+  const [valueNotes, setValueNotes] = useState<ValueNote[]>([]);
+  const wantsNotes = filterType === 'invest' && !searching;
+  const notesFrom = viewScope === 'month' ? monthRange.fromDate : week.start;
+  const notesTo = viewScope === 'month' ? monthRange.toDate : week.end;
+  useEffect(() => {
+    if (!wantsNotes) {
+      setValueNotes([]);
+      return;
+    }
+    let live = true;
+    listValuationEvents(notesFrom, notesTo)
+      .then((events) => {
+        if (live) setValueNotes(events);
+      })
+      .catch(() => {
+        if (live) setValueNotes([]);
+      });
+    return () => {
+      live = false;
+    };
+  }, [wantsNotes, notesFrom, notesTo, transactions]);
   const filteredTransactions = useMemo(
     () =>
       filterActivity(
@@ -265,9 +293,10 @@ export default function TransactionsScreen() {
           accountIds: filterAccountIds,
           expenseLabel: filterLabel,
         },
-        categories
+        categories,
+        investmentIds
       ),
-    [transactions, filterType, filterCategoryIds, filterAccountIds, filterLabel, categories]
+    [transactions, filterType, filterCategoryIds, filterAccountIds, filterLabel, categories, investmentIds]
   );
 
   // Chart/headline show the real unfiltered period (only the rows follow Filter; hidden savings &
@@ -280,7 +309,17 @@ export default function TransactionsScreen() {
   );
 
   const requestedHeading = periodHeading({ scope: viewScope, week, anchor, today: todayDate });
-  const groupedDays = useMemo(() => groupByDate(filteredTransactions), [filteredTransactions]);
+  const shownNotes = useMemo(
+    () =>
+      wantsNotes
+        ? valueNotes.filter((n) => filterAccountIds.length === 0 || filterAccountIds.includes(n.accountId))
+        : [],
+    [wantsNotes, valueNotes, filterAccountIds]
+  );
+  const groupedDays = useMemo<{ date: string; items: Transaction[]; notes?: ValueNote[] }[]>(() => {
+    const days = groupByDate(filteredTransactions);
+    return wantsNotes ? groupWithNotes(days, shownNotes) : days;
+  }, [filteredTransactions, wantsNotes, shownNotes]);
 
   // Only the most recent load may write state — paging week/month quickly
   // starts overlapping loads, and an earlier one can finish last.
@@ -507,7 +546,9 @@ export default function TransactionsScreen() {
   );
 
   const searchGroupedDays = useMemo(() => groupByDate(searchResults), [searchResults]);
-  const displayedGroups = searching ? searchGroupedDays : groupedDays;
+  const displayedGroups: { date: string; items: Transaction[]; notes?: ValueNote[] }[] = searching
+    ? searchGroupedDays
+    : groupedDays;
 
   // Days can be arranged by hand, but only on the plain list: a search or filter shows
   // part of a day, and its order would be saved over the whole day.
@@ -824,7 +865,7 @@ export default function TransactionsScreen() {
                   {accounts.length === 0 && !loadError && (
                     <EmptyState title="No accounts yet" subtitle="Add an account before recording entries." />
                   )}
-                  {accounts.length > 0 && transactions.length > 0 && filteredTransactions.length === 0 && (
+                  {accounts.length > 0 && transactions.length > 0 && groupedDays.length === 0 && (
                     <EmptyState title="Nothing matches" subtitle="Try removing a filter above." />
                   )}
                   {accounts.length > 0 && transactions.length === 0 && (
@@ -860,6 +901,8 @@ export default function TransactionsScreen() {
                 categoryName={categoryName}
                 onPressTx={searching ? openFromSearch : setDetailTx}
                 savingsAccountIds={savingsAccountIds}
+                investmentIds={investmentIds}
+                notes={group.notes}
                 openStacks={openStacks}
                 onToggleStack={toggleStack}
                 onReorder={canReorder ? reorderDay : undefined}

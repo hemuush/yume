@@ -90,3 +90,46 @@ describe('RecentTransactionRow', () => {
     expect(bare.join(' ')).not.toContain('Dining ·');
   });
 });
+
+describe('an investing transfer', () => {
+  const transfer = {
+    ...tx(''),
+    type: 'transfer' as const,
+    toAccountId: 'fund',
+    categoryId: null,
+    ruleId: 'r1',
+  };
+  const rendered = (investRole: 'invest' | 'withdraw' | null) => {
+    let r!: ReactTestRenderer;
+    act(() => {
+      r = create(
+        <RecentTransactionRow
+          tx={transfer}
+          category={undefined}
+          accountName="HDFC"
+          toAccountName="Nifty 50"
+          divider={false}
+          investRole={investRole}
+        />
+      );
+    });
+    return r.root.findAllByType(Text).map((t) =>
+      [t.props.children]
+        .flat(Infinity)
+        .filter((c) => typeof c === 'string')
+        .join('')
+    );
+  };
+
+  it('reads as Invested in, with SIP and where it came from', () => {
+    const shown = rendered('invest');
+    expect(shown).toContain('Invested in Nifty 50');
+    expect(shown.join(' ')).toContain('SIP · from HDFC');
+  });
+
+  it('reads as a plain transfer when it touches no investment', () => {
+    const shown = rendered(null);
+    expect(shown).toContain('Transfer');
+    expect(shown.join(' ')).toContain('HDFC → Nifty 50');
+  });
+});

@@ -1,4 +1,5 @@
 import { useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
+import { investRole, investmentIdsOf } from '@/lib/investment';
 import { View, StyleSheet, Pressable } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
@@ -384,6 +385,7 @@ export function AccountSummarySheet({
                       (id) => accounts.find((a) => a.id === id)?.type === 'savings'
                     )
                   }
+                  investRole={investRole(tx, investmentIdsOf(accounts))}
                   divider={i > 0}
                 />
               ))}
