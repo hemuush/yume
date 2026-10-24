@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, useWindowDimensions } from 'react-native';
 import Svg, { Circle, Defs, Line, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
-import { Text } from '@/components/Text';
+import { Text, MAX_FONT_SCALE } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
 import { compactMoney } from '@/lib/compactMoney';
@@ -10,13 +10,26 @@ import { useScrub } from '@/features/reports/useScrub';
 import { guideValues, smoothPath } from '@/lib/chartPath';
 import type { Runway } from './runway';
 
-const H = 176;
 const TOP = 30;
-const BASE = H - 36;
-const EVENTS_Y = H - 22;
-const GUTTER = 36;
 const PAD = 8;
-const LABEL_W = 44;
+
+/**
+ * The chart's fixed layout, grown with the text size: its axis labels are placed by hand, so at a larger font
+ * the side gutter, the date row and the day label need more room or they wrap into each other.
+ */
+function metrics(scale: number) {
+  const H = Math.round(176 + (scale - 1) * 26);
+  return {
+    H,
+    BASE: H - Math.round(36 * scale),
+    EVENTS_Y: H - Math.round(22 * scale),
+    TICK_TOP: H - Math.round(14 * scale),
+    GUTTER: Math.round(36 * scale),
+    LABEL_W: Math.round(44 * scale),
+    PILL_H: Math.round(20 * scale),
+    CHAR_W: 6.4 * scale,
+  };
+}
 const TICK_GAP = 26;
 
 /**
@@ -27,6 +40,9 @@ const TICK_GAP = 26;
  */
 export function RunwayChart({ runway }: { runway: Runway }) {
   const [width, setWidth] = useState(0);
+  const { fontScale } = useWindowDimensions();
+  const scale = Math.min(MAX_FONT_SCALE, Math.max(1, fontScale));
+  const { H, BASE, EVENTS_Y, TICK_TOP, GUTTER, LABEL_W, PILL_H, CHAR_W } = metrics(scale);
   const days = runway.days;
   const n = days.length;
   const home = runway.short
@@ -60,13 +76,13 @@ export function RunwayChart({ runway }: { runway: Runway }) {
     const ticks: number[] = [0];
     for (let i = 7; i <= n - 4; i += 7) ticks.push(i);
     return { x, y, line, zero: y(0), guides, ticks, below: lo < 0 };
-  }, [days, n, runway.startMinor, width]);
+  }, [days, n, runway.startMinor, width, BASE, GUTTER]);
 
   const plot = Math.max(0, width - GUTTER);
   const day = days[sel];
   const negative = day.afterMinor < 0;
   const pill = `${dayMonth(day.date)} · ${formatMoney(day.afterMinor)}`;
-  const pillW = pill.length * 6.4 + 18;
+  const pillW = pill.length * CHAR_W + 18;
   const pillLeft = Math.max(2, Math.min(width - pillW - 2, x(sel) - pillW / 2));
   const moved = day.items.map(
     (it) => `${it.title} ${it.kind === 'income' ? '+' : '−'}${formatMoney(it.amountMinor)}`
@@ -75,7 +91,7 @@ export function RunwayChart({ runway }: { runway: Runway }) {
   return (
     <View>
       <View
-        style={styles.chart}
+        style={[styles.chart, { height: H }]}
         onLayout={(e) => setWidth(e.nativeEvent.layout.width)}
         accessible
         accessibilityRole="adjustable"
@@ -159,7 +175,10 @@ export function RunwayChart({ runway }: { runway: Runway }) {
               />
             </Svg>
             {guides.map((v) => (
-              <Text key={`g${v}`} style={[styles.axis, styles.guide, { top: y(v) - 7 }]}>
+              <Text
+                key={`g${v}`}
+                style={[styles.axis, styles.guide, { top: y(v) - 7 * scale, width: GUTTER - 6 }]}
+              >
                 {compactMoney(v)}
               </Text>
             ))}
@@ -169,14 +188,22 @@ export function RunwayChart({ runway }: { runway: Runway }) {
                 style={[
                   styles.axis,
                   styles.tick,
-                  { left: Math.max(0, Math.min(width - LABEL_W, x(i) - LABEL_W / 2)) },
+                  {
+                    top: TICK_TOP,
+                    width: LABEL_W,
+                    left: Math.max(0, Math.min(width - LABEL_W, x(i) - LABEL_W / 2)),
+                  },
                 ]}
               >
                 {i === 0 ? 'Today' : dayMonth(days[i].date)}
               </Text>
             ))}
             <View
-              style={[styles.pill, negative && styles.pillShort, { left: pillLeft, width: pillW }]}
+              style={[
+                styles.pill,
+                negative && styles.pillShort,
+                { left: pillLeft, width: pillW, height: PILL_H },
+              ]}
               pointerEvents="none"
             >
               <Text style={styles.pillText} numberOfLines={1}>
@@ -184,7 +211,7 @@ export function RunwayChart({ runway }: { runway: Runway }) {
               </Text>
             </View>
             <View
-              style={[styles.touch, { left: GUTTER }]}
+              style={[styles.touch, { left: GUTTER, height: H }]}
               onLayout={(e) => scrub.onLayout(e.nativeEvent.layout.width)}
               {...scrub.panHandlers}
             />
@@ -205,16 +232,15 @@ export function RunwayChart({ runway }: { runway: Runway }) {
 }
 
 const styles = StyleSheet.create({
-  chart: { height: H, marginTop: 12 },
-  touch: { position: 'absolute', top: 0, right: 0, height: H },
+  chart: { marginTop: 12 },
+  touch: { position: 'absolute', top: 0, right: 0 },
   axis: { position: 'absolute', fontFamily: theme.font.body, fontSize: 10, color: theme.colors.textMuted },
-  guide: { left: 0, width: GUTTER - 6, textAlign: 'right' },
-  tick: { top: H - 14, width: LABEL_W, textAlign: 'center' },
+  guide: { left: 0, textAlign: 'right' },
+  tick: { textAlign: 'center' },
   pill: {
     position: 'absolute',
     top: 0,
-    height: 20,
-    borderRadius: 10,
+    borderRadius: 14,
     backgroundColor: theme.colors.ink,
     alignItems: 'center',
     justifyContent: 'center',
