@@ -1,47 +1,119 @@
 import { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
-import Svg, { Line, Polygon, Polyline, Circle } from 'react-native-svg';
+import Svg, { Circle, Defs, Line, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
-import { hexToRgba } from '@/lib/color';
-import { weekdayDayMonth } from '@/lib/dateLabels';
-import { useAccent } from '@/theme/AccentContext';
-import { themeInk } from '@/theme/interactionColors';
+import { compactMoney } from '@/lib/compactMoney';
+import { dayMonth, weekdayDayMonth } from '@/lib/dateLabels';
 import { useScrub } from '@/features/reports/useScrub';
 import type { Runway } from './runway';
 
-const H = 96;
-const TOP = 10;
-const BOTTOM = H - 8;
+const H = 176;
+const TOP = 30;
+const BASE = H - 36;
+const EVENTS_Y = H - 22;
+const GUTTER = 36;
+const PAD = 8;
+const LABEL_W = 44;
+const TICK_GAP = 26;
+
+/** A smooth curve through the points that never overshoots between them (monotone cubic). */
+function smoothPath(pts: { x: number; y: number }[]): string {
+  const n = pts.length;
+  if (n === 0) return '';
+  if (n === 1) return `M${pts[0].x.toFixed(1)},${pts[0].y.toFixed(1)}`;
+  const slope = pts.slice(1).map((p, i) => (p.y - pts[i].y) / (p.x - pts[i].x));
+  const m = pts.map((_, i) =>
+    i === 0
+      ? slope[0]
+      : i === n - 1
+        ? slope[n - 2]
+        : slope[i - 1] * slope[i] <= 0
+          ? 0
+          : (slope[i - 1] + slope[i]) / 2
+  );
+  for (let i = 0; i < n - 1; i++) {
+    if (slope[i] === 0) {
+      m[i] = 0;
+      m[i + 1] = 0;
+      continue;
+    }
+    const a = m[i] / slope[i];
+    const b = m[i + 1] / slope[i];
+    const s = a * a + b * b;
+    if (s > 9) {
+      const t = 3 / Math.sqrt(s);
+      m[i] = t * a * slope[i];
+      m[i + 1] = t * b * slope[i];
+    }
+  }
+  let d = `M${pts[0].x.toFixed(1)},${pts[0].y.toFixed(1)}`;
+  for (let i = 0; i < n - 1; i++) {
+    const h = pts[i + 1].x - pts[i].x;
+    d += ` C${(pts[i].x + h / 3).toFixed(1)},${(pts[i].y + (m[i] * h) / 3).toFixed(1)} ${(pts[i + 1].x - h / 3).toFixed(1)},${(pts[i + 1].y - (m[i + 1] * h) / 3).toFixed(1)} ${pts[i + 1].x.toFixed(1)},${pts[i + 1].y.toFixed(1)}`;
+  }
+  return d;
+}
+
+/** Round guide values (…₹20k, ₹40k) between lo and hi, minor units; zero is included whenever it is in range. */
+export function guideValues(lo: number, hi: number): number[] {
+  const span = (hi - lo) / 100;
+  if (span <= 0) return [0];
+  const raw = span / 4;
+  const pow = Math.pow(10, Math.floor(Math.log10(raw)));
+  const step = ([1, 2, 2.5, 5, 10].find((m) => m * pow >= raw) ?? 10) * pow * 100;
+  const out: number[] = [];
+  for (let v = Math.ceil(lo / step) * step; v <= hi; v += step) out.push(Math.round(v));
+  return out;
+}
 
 /**
- * The runway as a step line: the balance holds until something moves it, then steps. Touch and drag to read
- * any day (its balance after what moved that day); the readout under it names the payments.
+ * The runway as a smooth balance line over the days ahead: a faint ₹0 line and round guides to read it by, a
+ * dot under every day money moves (green in, coral out), and a label on the day being read. It opens on the
+ * first day the balance runs short, or the lowest day; touch and drag to read any other. Below zero the area
+ * tints coral. The readout under it names the payments.
  */
 export function RunwayChart({ runway }: { runway: Runway }) {
-  const { accent } = useAccent();
-  const ink = themeInk(accent);
   const [width, setWidth] = useState(0);
   const days = runway.days;
   const n = days.length;
-  const home = runway.short ? days.findIndex((d) => d.date === runway.short!.date) : -1;
+  const home = runway.short
+    ? days.findIndex((d) => d.date === runway.short!.date)
+    : days.findIndex((d) => d.date === runway.lowDate);
   const [picked, setPicked] = useState<number | null>(null);
   const sel = Math.max(0, Math.min(n - 1, picked ?? (home >= 0 ? home : 0)));
-  const scrub = useScrub({ count: n, onPick: setPicked });
+  const scrub = useScrub({ count: n, inset: PAD, onPick: setPicked });
 
-  const values = [runway.startMinor, ...days.map((d) => d.afterMinor)];
-  const hi = Math.max(1, ...values);
-  const lo = Math.min(0, ...values);
-  const y = (v: number) => TOP + (1 - (v - lo) / Math.max(1, hi - lo)) * (BOTTOM - TOP);
-  const x = (i: number) => (n <= 1 ? 0 : (i / (n - 1)) * width);
-  const pts: string[] = [];
-  let prev = runway.startMinor;
-  days.forEach((d, i) => {
-    pts.push(`${x(i).toFixed(1)},${y(prev).toFixed(1)}`, `${x(i).toFixed(1)},${y(d.afterMinor).toFixed(1)}`);
-    prev = d.afterMinor;
-  });
+  const balances = days.map((d) => d.afterMinor);
+  const hi0 = Math.max(0, ...balances, runway.startMinor);
+  const lo0 = Math.min(0, ...balances, runway.startMinor);
+  const margin = Math.max(1, (hi0 - lo0) * 0.08);
+  const hi = hi0 + margin;
+  const lo = lo0 < 0 ? lo0 - margin : lo0;
+  const y = (v: number) => TOP + (1 - (v - lo) / Math.max(1, hi - lo)) * (BASE - TOP);
+  const plot = Math.max(0, width - GUTTER);
+  const x = (i: number) => GUTTER + PAD + (n <= 1 ? 0 : (i / (n - 1)) * Math.max(0, plot - 2 * PAD));
+  const pts = days.map((d, i) => ({ x: x(i), y: y(d.afterMinor) }));
+  const line = smoothPath(pts);
+  const zero = y(0);
+
+  const guides: number[] = [];
+  let lastY = Infinity;
+  for (const v of guideValues(lo, hi).reverse()) {
+    if (Math.abs(y(v) - lastY) < TICK_GAP) continue;
+    guides.push(v);
+    lastY = y(v);
+  }
+
+  const ticks: number[] = [0];
+  for (let i = 7; i <= n - 4; i += 7) ticks.push(i);
+
   const day = days[sel];
+  const negative = day.afterMinor < 0;
+  const pill = `${dayMonth(day.date)} · ${formatMoney(day.afterMinor)}`;
+  const pillW = pill.length * 6.4 + 18;
+  const pillLeft = Math.max(2, Math.min(width - pillW - 2, x(sel) - pillW / 2));
   const moved = day.items.map(
     (it) => `${it.title} ${it.kind === 'income' ? '+' : '−'}${formatMoney(it.amountMinor)}`
   );
@@ -50,11 +122,7 @@ export function RunwayChart({ runway }: { runway: Runway }) {
     <View>
       <View
         style={styles.chart}
-        onLayout={(e) => {
-          setWidth(e.nativeEvent.layout.width);
-          scrub.onLayout(e.nativeEvent.layout.width);
-        }}
-        {...scrub.panHandlers}
+        onLayout={(e) => setWidth(e.nativeEvent.layout.width)}
         accessible
         accessibilityRole="adjustable"
         accessibilityLabel={`Balance on ${weekdayDayMonth(day.date)}: ${formatMoney(day.afterMinor)}. Swipe to change day`}
@@ -64,46 +132,115 @@ export function RunwayChart({ runway }: { runway: Runway }) {
         }
       >
         {width > 0 && n > 0 && (
-          <Svg width={width} height={H} pointerEvents="none">
-            <Polygon
-              points={`0,${BOTTOM + 8} ${pts.join(' ')} ${width},${BOTTOM + 8}`}
-              fill={hexToRgba(accent, 0.22)}
-            />
-            {lo < 0 && (
-              <Line
-                x1={0}
-                x2={width}
-                y1={y(0)}
-                y2={y(0)}
-                stroke={theme.colors.expenseText}
-                strokeOpacity={0.6}
-                strokeDasharray="3 4"
+          <>
+            <Svg width={width} height={H} pointerEvents="none">
+              <Defs>
+                <LinearGradient id="runwayFill" x1="0" y1="0" x2="0" y2="1">
+                  <Stop offset="0" stopColor={theme.colors.slice.saved} stopOpacity={0.38} />
+                  <Stop offset="1" stopColor={theme.colors.slice.saved} stopOpacity={0.02} />
+                </LinearGradient>
+              </Defs>
+              {lo < 0 && (
+                <Rect
+                  x={GUTTER}
+                  y={zero}
+                  width={plot}
+                  height={BASE - zero}
+                  fill={theme.colors.expenseTint}
+                  opacity={0.7}
+                />
+              )}
+              {guides.map((v) => (
+                <Line
+                  key={v}
+                  x1={GUTTER}
+                  x2={width}
+                  y1={y(v)}
+                  y2={y(v)}
+                  stroke={v === 0 ? theme.colors.otherSlice : theme.colors.divider}
+                  strokeWidth={1}
+                />
+              ))}
+              {n > 1 && (
+                <Path
+                  d={`${line} L${x(n - 1).toFixed(1)},${zero.toFixed(1)} L${x(0).toFixed(1)},${zero.toFixed(1)} Z`}
+                  fill="url(#runwayFill)"
+                />
+              )}
+              <Path
+                d={line}
+                fill="none"
+                stroke={theme.colors.ink}
+                strokeWidth={2.4}
+                strokeLinejoin="round"
+                strokeLinecap="round"
               />
-            )}
-            <Polyline
-              points={pts.join(' ')}
-              fill="none"
-              stroke={ink}
-              strokeWidth={2.2}
-              strokeLinejoin="round"
-              strokeLinecap="round"
+              {days.map(
+                (d, i) =>
+                  d.items.length > 0 && (
+                    <Circle
+                      key={d.date}
+                      cx={x(i)}
+                      cy={EVENTS_Y}
+                      r={3.2}
+                      fill={d.outMinor > 0 ? theme.colors.idCoralDeep : theme.colors.slice.saved}
+                    />
+                  )
+              )}
+              <Line
+                x1={x(sel)}
+                x2={x(sel)}
+                y1={TOP - 6}
+                y2={EVENTS_Y - 8}
+                stroke={theme.colors.inkLine}
+                strokeDasharray="2 3"
+              />
+              <Circle
+                cx={x(sel)}
+                cy={y(day.afterMinor)}
+                r={5.5}
+                fill={theme.colors.ink}
+                stroke={theme.colors.surface}
+                strokeWidth={2.5}
+              />
+            </Svg>
+            {guides.map((v) => (
+              <Text key={`g${v}`} style={[styles.axis, styles.guide, { top: y(v) - 7 }]}>
+                {compactMoney(v)}
+              </Text>
+            ))}
+            {ticks.map((i) => (
+              <Text
+                key={`t${i}`}
+                style={[
+                  styles.axis,
+                  styles.tick,
+                  { left: Math.max(0, Math.min(width - LABEL_W, x(i) - LABEL_W / 2)) },
+                ]}
+              >
+                {i === 0 ? 'Today' : dayMonth(days[i].date)}
+              </Text>
+            ))}
+            <View
+              style={[styles.pill, negative && styles.pillShort, { left: pillLeft, width: pillW }]}
+              pointerEvents="none"
+            >
+              <Text style={styles.pillText} numberOfLines={1}>
+                {pill}
+              </Text>
+            </View>
+            <View
+              style={[styles.touch, { left: GUTTER }]}
+              onLayout={(e) => scrub.onLayout(e.nativeEvent.layout.width)}
+              {...scrub.panHandlers}
             />
-            <Line x1={x(sel)} x2={x(sel)} y1={0} y2={H} stroke={theme.colors.textMuted} strokeOpacity={0.5} />
-            <Circle
-              cx={x(sel)}
-              cy={y(day.afterMinor)}
-              r={6}
-              fill={theme.colors.ink}
-              stroke={theme.colors.surface}
-              strokeWidth={2.5}
-            />
-          </Svg>
+          </>
         )}
       </View>
       <View style={styles.read}>
         <View style={styles.readHead}>
           <Text style={styles.date}>{weekdayDayMonth(day.date)}</Text>
-          <Text style={[styles.bal, day.afterMinor < 0 && { color: theme.colors.expenseText }]}>
+          <Text style={[styles.bal, negative && { color: theme.colors.expenseText }]}>
             {formatMoney(day.afterMinor)}
           </Text>
         </View>
@@ -115,6 +252,21 @@ export function RunwayChart({ runway }: { runway: Runway }) {
 
 const styles = StyleSheet.create({
   chart: { height: H, marginTop: 12 },
+  touch: { position: 'absolute', top: 0, right: 0, height: H },
+  axis: { position: 'absolute', fontFamily: theme.font.body, fontSize: 10, color: theme.colors.textMuted },
+  guide: { left: 0, width: GUTTER - 6, textAlign: 'right' },
+  tick: { top: H - 14, width: LABEL_W, textAlign: 'center' },
+  pill: {
+    position: 'absolute',
+    top: 0,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: theme.colors.ink,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pillShort: { backgroundColor: theme.colors.expenseText },
+  pillText: { fontFamily: theme.font.bodyBold, fontSize: 10, color: theme.colors.surface },
   read: {
     marginTop: 10,
     borderRadius: 14,

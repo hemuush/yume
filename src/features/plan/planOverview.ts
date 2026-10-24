@@ -145,6 +145,16 @@ export interface PlanRuleInput {
   /** Original month-day, retained when the next run was clamped by a shorter month. */
   anchorDay?: number | null;
   endDate?: string | null;
+  /** A transfer that moves your spendable money (see transferFlow): which way, and how its row reads. */
+  transfer?: DueTransfer;
+}
+
+/** What a scheduled transfer does to the money you can spend, and how its row describes it. */
+export interface DueTransfer {
+  flow: 'out' | 'in';
+  /** The row's second line: "SIP", "To savings", "From Groww". */
+  sub: string;
+  invest: boolean;
 }
 
 type DueKind = 'emi' | 'bill' | 'income' | 'transfer';
@@ -159,6 +169,8 @@ export interface PlanDueItem {
   /** Set on an EMI — Coming up's Paid button records that loan's next installment. */
   loanId?: string;
   ruleId?: string;
+  /** Set on a transfer that leaves or re-enters your spending accounts. */
+  transfer?: DueTransfer;
 }
 
 /** A credit card's bill still to pay (from listCardCycles). */
@@ -206,6 +218,7 @@ export function buildDueItems(
         amountMinor: n === 0 ? (r.nextAmountMinor ?? r.amountMinor) : r.amountMinor,
         route: '/recurring',
         ruleId: r.id,
+        ...(r.transfer ? { transfer: r.transfer } : {}),
       });
       if (!r.frequency || !untilDate) break;
       date = advanceOccurrence({ ...r, frequency: r.frequency, intervalCount: r.intervalCount ?? 1 }, date);
@@ -305,7 +318,7 @@ export function groupDueItems(
       groups.push(g);
     }
     g.items.push(it);
-    if (it.kind === 'emi' || it.kind === 'bill') g.outMinor += it.amountMinor;
+    if (it.kind === 'emi' || it.kind === 'bill' || it.transfer?.flow === 'out') g.outMinor += it.amountMinor;
   }
   return groups;
 }
