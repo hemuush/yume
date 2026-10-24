@@ -18,7 +18,11 @@ CREATE TABLE IF NOT EXISTS accounts (
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   -- A savings account whose value you update by hand (an index fund, a stock
   -- basket): its balance is the latest valuation plus what moved since.
-  tracked INTEGER NOT NULL DEFAULT 0
+  tracked INTEGER NOT NULL DEFAULT 0,
+  -- Only for a tracked account (an investment): what sort of holding it is, and the account its money
+  -- normally comes from (Invest and SIPs default to it). The link clears if that account is deleted.
+  investment_kind TEXT CHECK (investment_kind IN ('mutual_fund','stocks','gold','fixed_deposit','ppf_epf','other')),
+  funding_account_id TEXT REFERENCES accounts(id) ON DELETE SET NULL
 );
 
 -- What a tracked account was worth on a date, as you entered it. The balance
@@ -131,6 +135,8 @@ CREATE TABLE IF NOT EXISTS transactions (
   -- The parts of one split payment share this id: one bill, several categories.
   -- (Its index is created in runMigrations, after the column exists on older installs.)
   split_id TEXT,
+  -- The recurring rule that posted this entry (a SIP shows as one in Activity); NULL when typed in by hand.
+  rule_id TEXT,
   -- 1 on money back for a purchase: an income-type row against an expense
   -- category that lowers its spending instead of counting as income (see db/spendSql.ts).
   is_refund INTEGER NOT NULL DEFAULT 0,
