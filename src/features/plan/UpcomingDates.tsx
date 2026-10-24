@@ -90,7 +90,9 @@ export function UpcomingDates({
               <Text style={s.caption}>
                 {selected.items
                   .filter((item) =>
-                    mode === 'income' ? item.kind === 'income' : item.kind === 'bill' || item.kind === 'emi'
+                    mode === 'income'
+                      ? item.kind === 'income' || item.transfer?.flow === 'in'
+                      : item.kind === 'bill' || item.kind === 'emi' || item.transfer?.flow === 'out'
                   )
                   .map((item) => item.title)
                   .join(' · ')}
