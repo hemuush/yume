@@ -177,9 +177,9 @@ describe('Investment account type', () => {
   it('shows kind and money-comes-from only for an investment, offering plain accounts in its currency', async () => {
     mockListAccounts.mockResolvedValue([bank, card, usd, fund]);
     const { tree } = await render();
-    expect(texts(tree)).not.toContain('Money comes from');
+    expect(texts(tree)).not.toContain('Usually funded from (optional)');
     await act(async () => byProps(tree, { label: 'Investment' }).props.onPress());
-    expect(texts(tree)).toContain('Money comes from');
+    expect(texts(tree)).toContain('Usually funded from (optional)');
     expect(byProps(tree, { label: 'Mutual fund' })).toBeDefined();
     expect(byProps(tree, { label: 'HDFC' })).toBeDefined();
     for (const name of ['Card', 'Wise', 'Old fund']) {

@@ -57,6 +57,9 @@ jest.mock('@/db/budgets', () => ({
   ],
 }));
 let mockGoals: import('@/types').SavingsGoal[] = [];
+jest.mock('@/db/investmentHistory', () => ({
+  listInvestmentHistory: async () => ({ flows: [], valuations: [] }),
+}));
 jest.mock('@/db/savingsGoals', () => ({ listSavingsGoals: async () => mockGoals }));
 jest.mock('@/db/recurring', () => ({
   listRecurringRules: async () => [

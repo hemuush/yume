@@ -5,12 +5,14 @@ import { theme } from '@/constants/theme';
 import { Section } from '@/components/Section';
 import { withPressedTint } from '@/lib/pressed';
 import { useAccent } from '@/theme/AccentContext';
-import { formatMoney } from '@/lib/money';
+import { formatMaskableMoney, formatMoney } from '@/lib/money';
 import type { BudgetsSummary, DueGroup, LoansSummary } from './planOverview';
 import type { SavingsGoal } from '@/types';
 import type { PlanTab } from './PlanNavigation';
 import type { Runway } from './runway';
 import { dayMonth } from '@/lib/dateLabels';
+import { gainLabel } from '@/lib/investment';
+import type { Portfolio } from '@/lib/portfolio';
 
 type Row = {
   key: string;
@@ -49,6 +51,21 @@ function Rows({ rows }: { rows: Row[] }) {
     </View>
   );
 }
+function investmentsDetail(p: Portfolio, masked: boolean): string {
+  if (p.holdings.length === 0 && p.otherCurrency.length === 0) return "Track what you've invested";
+  const value = formatMaskableMoney(p.valueMinor, { currency: p.currency, masked });
+  const gain =
+    p.gainMinor == null
+      ? null
+      : gainLabel(
+          { gainMinor: p.gainMinor, investedMinor: p.investedMinor },
+          { currency: p.currency, masked }
+        );
+  const due = p.holdings.filter((x) => x.stale).length;
+  return [value, gain, due > 0 ? `${due} value${due === 1 ? '' : 's'} due` : null]
+    .filter(Boolean)
+    .join(' · ');
+}
 export function PlanOverviewPanels({
   budgets,
   groups,
@@ -57,6 +74,8 @@ export function PlanOverviewPanels({
   today,
   hideAmounts,
   runway,
+  investments,
+  onInvestments,
   onTab,
   onBudget,
 }: {
@@ -68,6 +87,8 @@ export function PlanOverviewPanels({
   hideAmounts: boolean;
   /** When its balance dips below zero, the shortfall is the first thing needing attention. */
   runway?: Runway;
+  investments: Portfolio;
+  onInvestments: () => void;
   onTab: (tab: PlanTab) => void;
   onBudget: (id: string) => void;
 }) {
@@ -134,6 +155,13 @@ export function PlanOverviewPanels({
         : 'Start a savings goal',
       icon: 'flag',
       onPress: () => onTab('money'),
+    },
+    {
+      key: 'investments',
+      title: 'Investments',
+      detail: investmentsDetail(investments, hideAmounts),
+      icon: 'trending-up',
+      onPress: onInvestments,
     },
   ];
   return (

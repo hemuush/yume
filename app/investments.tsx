@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import ReanimatedAnimated from 'react-native-reanimated';
 import { Text } from '@/components/Text';
 import { Glass } from '@/components/Glass';
+import { AddButton } from '@/components/AddButton';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { SettingsRow } from '@/components/SettingsRow';
@@ -181,12 +182,20 @@ export default function InvestmentsScreen() {
       >
         {none ? (
           <Glass radius={28} tone="strong" style={styles.card}>
-            <Text style={styles.title}>Watch what you have grown</Text>
-            <Text style={styles.hint}>
-              Add an index fund, stocks, gold or a fixed deposit. Money moves in with a transfer or a SIP, you
-              say what it is worth now, and Yume keeps the gain, the trend and the yearly rate.
-            </Text>
-            <PrimaryButton title="Add an investment" onPress={() => setAdding(true)} />
+            <Text style={styles.title}>Start tracking in 3 steps</Text>
+            {[
+              'Add an investment: a fund, stocks, gold or a deposit.',
+              'Invest money into it from a bank account.',
+              'Update its value now and then to see the gain.',
+            ].map((line, i) => (
+              <View key={line} style={styles.stepRow}>
+                <View style={styles.stepNum}>
+                  <Text style={styles.stepNumText}>{i + 1}</Text>
+                </View>
+                <Text style={styles.stepText}>{line}</Text>
+              </View>
+            ))}
+            <PrimaryButton title="Add your first investment" onPress={() => setAdding(true)} />
           </Glass>
         ) : (
           loaded && (
@@ -196,30 +205,28 @@ export default function InvestmentsScreen() {
                 <Text style={styles.figure} accessibilityLabel={`Worth now ${money(portfolio.valueMinor)}`}>
                   {money(portfolio.valueMinor)}
                 </Text>
+                {gain != null && (
+                  <Text
+                    style={[styles.gainLine, { color: hideAmounts ? theme.colors.textPrimary : gainColor }]}
+                    accessibilityLabel={
+                      hideAmounts
+                        ? 'Gain hidden'
+                        : `Gain ${money(Math.abs(gain))}${
+                            portfolio.returnPct == null ? '' : `, ${formatReturnPct(portfolio.returnPct)}`
+                          }`
+                    }
+                  >
+                    {hideAmounts
+                      ? '••'
+                      : `${gain < 0 ? '▼ −' : gain > 0 ? '▲ ' : ''}${money(Math.abs(gain))}${
+                          portfolio.returnPct == null ? '' : ` · ${formatReturnPct(portfolio.returnPct)}`
+                        }`}
+                  </Text>
+                )}
                 <View style={styles.trio}>
-                  <Stat label="Invested" value={money(portfolio.investedMinor)} />
-                  <Stat
-                    label="Gain"
-                    value={
-                      gain == null
-                        ? '—'
-                        : hideAmounts
-                          ? money(0)
-                          : `${gain < 0 ? '−' : gain > 0 ? '+' : ''}${money(Math.abs(gain))}`
-                    }
-                    color={hideAmounts ? undefined : gainColor}
-                  />
-                  <Stat
-                    label="Return"
-                    value={
-                      portfolio.returnPct == null
-                        ? '—'
-                        : hideAmounts
-                          ? '••%'
-                          : formatReturnPct(portfolio.returnPct)
-                    }
-                    color={hideAmounts ? undefined : gainColor}
-                  />
+                  <Stat label="Put in" value={money(portfolio.investedMinor)} />
+                  <Stat label="Taken out" value={money(portfolio.takenOutMinor)} />
+                  <Stat label="SIPs / month" value={money(sipMonthly)} />
                 </View>
                 <Text style={styles.hint}>
                   {rate
@@ -235,25 +242,41 @@ export default function InvestmentsScreen() {
                 </Text>
               </Glass>
 
-              <Glass radius={28} tone="strong" style={styles.card}>
-                <SegmentedControl
-                  options={[
-                    { label: '6 months', value: '6m' },
-                    { label: '1 year', value: '1y' },
-                    { label: 'All', value: 'all' },
-                  ]}
-                  value={range}
-                  onChange={setRange}
-                />
-                <PortfolioChart
-                  points={shown}
-                  currency={currency}
-                  masked={hideAmounts}
-                  color={theme.colors.ink}
-                />
-              </Glass>
+              {shown.length >= 2 && (
+                <Glass radius={28} tone="strong" style={styles.card}>
+                  <SegmentedControl
+                    options={[
+                      { label: '6 months', value: '6m' },
+                      { label: '1 year', value: '1y' },
+                      { label: 'All', value: 'all' },
+                    ]}
+                    value={range}
+                    onChange={setRange}
+                  />
+                  <PortfolioChart
+                    points={shown}
+                    currency={currency}
+                    masked={hideAmounts}
+                    color={theme.colors.ink}
+                  />
+                </Glass>
+              )}
 
-              {split.length > 0 && (
+              <View style={styles.mainActions}>
+                <PrimaryButton
+                  title="Invest money"
+                  style={styles.mainAction}
+                  onPress={() => choose('invest')}
+                />
+                <PrimaryButton
+                  title="Update values"
+                  variant="secondary"
+                  style={styles.mainAction}
+                  onPress={() => setUpdating(true)}
+                />
+              </View>
+
+              {split.length > 1 && (
                 <Glass radius={28} tone="strong" style={styles.card}>
                   <Text style={styles.label}>Where it sits</Text>
                   <View
@@ -290,7 +313,17 @@ export default function InvestmentsScreen() {
                 </Glass>
               )}
 
-              <Section compact title="Holdings">
+              <Section
+                compact
+                title="Holdings"
+                right={
+                  <AddButton
+                    label="+ Add"
+                    onPress={() => setAdding(true)}
+                    accessibilityLabel="Add an investment"
+                  />
+                }
+              >
                 <View style={[h.card, cardSurface.neutral]}>
                   {portfolio.holdings.map((holding, i) => (
                     <HoldingRow
@@ -321,31 +354,21 @@ export default function InvestmentsScreen() {
                 </Section>
               )}
 
-              <Section compact title="SIPs">
+              <Section
+                compact
+                title="Monthly SIPs"
+                right={
+                  <AddButton label="+ Add" onPress={() => choose('sip')} accessibilityLabel="Add a SIP" />
+                }
+              >
                 {sips.length === 0 ? (
                   <Text style={styles.hint}>
-                    No SIPs yet. A SIP puts the same amount into an investment on a schedule.
+                    A SIP puts the same amount into an investment every month. Tap + Add to set one up.
                   </Text>
                 ) : (
-                  <>
-                    <View style={[h.card, cardSurface.neutral]}>{sips.map(sipRow)}</View>
-                    {sipMonthly > 0 && (
-                      <Text style={styles.hint}>{money(sipMonthly)} a month goes in by SIP.</Text>
-                    )}
-                  </>
+                  <View style={[h.card, cardSurface.neutral]}>{sips.map(sipRow)}</View>
                 )}
               </Section>
-
-              <View style={styles.actions}>
-                <PrimaryButton title="Invest" onPress={() => choose('invest')} />
-                <PrimaryButton title="Add a SIP" variant="secondary" onPress={() => choose('sip')} />
-                <PrimaryButton title="Update values" variant="secondary" onPress={() => setUpdating(true)} />
-                <PrimaryButton
-                  title="Add an investment"
-                  variant="secondary"
-                  onPress={() => setAdding(true)}
-                />
-              </View>
             </>
           )
         )}
@@ -533,5 +556,18 @@ const styles = StyleSheet.create({
   legendShare: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textSecondary },
   rowRight: { alignItems: 'flex-end', gap: 3, flexShrink: 1 },
   rowValue: { fontFamily: theme.font.bodyBold, fontSize: 14, color: theme.colors.textPrimary },
-  actions: { gap: 8 },
+  stepRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  stepNum: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.primary,
+  },
+  stepNumText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.onFlat },
+  stepText: { flex: 1, fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textPrimary },
+  mainActions: { flexDirection: 'row', gap: 8 },
+  mainAction: { flex: 1 },
+  gainLine: { fontFamily: theme.font.bodyBold, fontSize: 14 },
 });

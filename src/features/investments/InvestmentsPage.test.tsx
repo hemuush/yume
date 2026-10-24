@@ -146,7 +146,13 @@ const texts = (tree: ReactTestRenderer) =>
   tree.root.findAllByType(Text).map((t) => [].concat(t.props.children).join(''));
 const press = async (tree: ReactTestRenderer, title: string) =>
   act(async () => {
-    tree.root.find((n) => n.props.title === title && typeof n.props.onPress === 'function').props.onPress();
+    tree.root
+      .find(
+        (n) =>
+          (n.props.title === title || n.props.accessibilityLabel === title) &&
+          typeof n.props.onPress === 'function'
+      )
+      .props.onPress();
   });
 
 beforeEach(() => {
@@ -175,7 +181,8 @@ describe('Investments page', () => {
   it('lists the SIPs with where each comes from and the month’s total', async () => {
     const shown = texts(await render());
     expect(shown.some((t) => / · from HDFC · next /.test(t))).toBe(true);
-    expect(shown.some((t) => t.includes(`${inr(10_000_00)} a month goes in by SIP`))).toBe(true);
+    expect(shown).toContain('SIPs / month');
+    expect(shown).toContain(inr(10_000_00));
   });
 
   it('masks every figure while savings are hidden', async () => {
@@ -188,7 +195,7 @@ describe('Investments page', () => {
 
   it('opens Add as a transfer into the holding from its funding account, once a holding is picked', async () => {
     const tree = await render();
-    await press(tree, 'Invest');
+    await press(tree, 'Invest money');
     // Two holdings: it asks which one first.
     expect(mockPush).not.toHaveBeenCalled();
     const picker = tree.root.find((n) => n.props.title === 'Invest in which one?');
@@ -199,7 +206,7 @@ describe('Investments page', () => {
   it('goes straight to Add when there is a single holding', async () => {
     mockAccounts.mockResolvedValue([bank, fund]);
     const tree = await render();
-    await press(tree, 'Invest');
+    await press(tree, 'Invest money');
     expect(mockPush).toHaveBeenCalledWith('/add-transaction?type=transfer&accountId=bank&toAccountId=fund');
   });
 
@@ -238,13 +245,21 @@ describe('Investments page', () => {
     expect(texts(tree)).toContain('add-investment');
   });
 
+  it('hides the trend and the split until there is something to show', async () => {
+    mockAccounts.mockResolvedValue([bank, fund]);
+    mockHistory.mockResolvedValue({ flows: [], valuations: [] });
+    const shown = texts(await render());
+    expect(shown).not.toContain('Where it sits');
+    expect(shown).not.toContain('6 months');
+  });
+
   it('invites a first investment when there are none', async () => {
     mockAccounts.mockResolvedValue([bank]);
     mockRules.mockResolvedValue([]);
     mockHistory.mockResolvedValue({ flows: [], valuations: [] });
     const tree = await render();
-    expect(texts(tree)).toContain('Watch what you have grown');
-    await press(tree, 'Add an investment');
+    expect(texts(tree)).toContain('Start tracking in 3 steps');
+    await press(tree, 'Add your first investment');
     expect(texts(tree)).toContain('add-investment');
   });
 });
