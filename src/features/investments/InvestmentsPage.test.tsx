@@ -73,6 +73,10 @@ jest.mock('@/db/investmentHistory', () => ({ listInvestmentHistory: () => mockHi
 
 import InvestmentsScreen from '../../../app/investments';
 import type { Account, RecurringRule } from '@/types';
+import { formatMoney } from '@/lib/money';
+
+// Amounts are written in the device's own grouping, so expectations are built the same way.
+const inr = (minor: number) => formatMoney(minor, 'INR');
 
 const today = new Date();
 const iso = (d: Date) => d.toISOString().slice(0, 10);
@@ -161,8 +165,8 @@ describe('Investments page', () => {
   it('shows what the holdings add up to, with the gain from the ones that have a value', async () => {
     const shown = texts(await render());
     expect(shown).toContain('Worth now');
-    expect(shown.some((t) => t.includes('538,000'))).toBe(true); // 4,38,000 + 1,00,000
-    expect(shown.some((t) => t.includes('500,000'))).toBe(true); // invested
+    expect(shown.some((t) => t.includes(inr(538_000_00)))).toBe(true); // 4,38,000 + 1,00,000
+    expect(shown.some((t) => t.includes(inr(500_000_00)))).toBe(true); // invested
     expect(shown).toContain('Nifty 50');
     expect(shown).toContain('Digital gold');
     expect(shown.some((t) => /1 holding has no value yet/.test(t))).toBe(true);
@@ -171,14 +175,14 @@ describe('Investments page', () => {
   it('lists the SIPs with where each comes from and the month’s total', async () => {
     const shown = texts(await render());
     expect(shown.some((t) => / · from HDFC · next /.test(t))).toBe(true);
-    expect(shown.some((t) => /10,000 a month goes in by SIP/.test(t))).toBe(true);
+    expect(shown.some((t) => t.includes(`${inr(10_000_00)} a month goes in by SIP`))).toBe(true);
   });
 
   it('masks every figure while savings are hidden', async () => {
     mockHide = true;
     const shown = texts(await render()).join(' ');
-    expect(shown).not.toContain('538,000');
-    expect(shown).not.toContain('438,000');
+    expect(shown).not.toContain(inr(538_000_00));
+    expect(shown).not.toContain(inr(438_000_00));
     expect(shown).toContain('••••');
   });
 
