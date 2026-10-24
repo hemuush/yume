@@ -1,4 +1,4 @@
-import type { Account, AccountInvestment, InvestmentKind } from '@/types';
+import type { Account, AccountInvestment, InvestmentKind, Transaction } from '@/types';
 import { parseLocalIsoDate } from '@/lib/date';
 import { formatMoney } from '@/lib/money';
 
@@ -82,4 +82,40 @@ export const INVESTMENT_KIND_LABEL: Record<InvestmentKind, string> = {
 /** "Investment" or "Investment · Mutual fund": what an investment account is called wherever its type shows. */
 export function investmentLabel(inv: Pick<AccountInvestment, 'kind'>): string {
   return inv.kind ? `Investment · ${INVESTMENT_KIND_LABEL[inv.kind]}` : 'Investment';
+}
+
+/** The ids of the accounts that are investments. */
+export function investmentIdsOf(accounts: Pick<Account, 'id' | 'investment'>[]): Set<string> {
+  return new Set(accounts.filter((a) => a.investment).map((a) => a.id));
+}
+
+/** What a transfer is to an investor: money put in, taken out, or moved from one holding to another. */
+export type InvestRole = 'invest' | 'withdraw' | 'move';
+
+/** The role of a transfer that touches an investment, or null for any other entry. */
+export function investRole(
+  tx: Pick<Transaction, 'type' | 'accountId' | 'toAccountId'>,
+  investmentIds: ReadonlySet<string>
+): InvestRole | null {
+  if (tx.type !== 'transfer' || !tx.toAccountId) return null;
+  const from = investmentIds.has(tx.accountId);
+  const to = investmentIds.has(tx.toAccountId);
+  return from && to ? 'move' : to ? 'invest' : from ? 'withdraw' : null;
+}
+
+/** The two lines an investing entry reads as in Activity: "Invested in Nifty 50" / "SIP · from HDFC". */
+export function investLines(
+  tx: Pick<Transaction, 'accountId' | 'toAccountId' | 'note' | 'ruleId'>,
+  role: InvestRole,
+  accountName: (id: string) => string
+): { title: string; sub: string } {
+  const from = accountName(tx.accountId);
+  const to = accountName(tx.toAccountId!);
+  const note = tx.note?.trim();
+  const lead = note ? `${note} · ` : '';
+  if (role === 'invest') {
+    return { title: `Invested in ${to}`, sub: `${lead}${tx.ruleId ? 'SIP · ' : ''}from ${from}` };
+  }
+  if (role === 'withdraw') return { title: `Withdrawn from ${from}`, sub: `${lead}to ${to}` };
+  return { title: `Moved ${from} → ${to}`, sub: `${lead}Between investments` };
 }

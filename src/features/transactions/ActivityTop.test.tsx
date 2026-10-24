@@ -115,7 +115,7 @@ describe('Activity filter bar', () => {
 
   it('is one bar of types, with no second line when nothing is picked', () => {
     const all = texts(bar([]));
-    expect(all).toEqual(['All', 'Spent', 'Income', 'Transfers']);
+    expect(all).toEqual(['All', 'Spent', 'Income', 'Transfers', 'Invest']);
   });
 
   it('opens Filters beside the type group and retains its active count', () => {

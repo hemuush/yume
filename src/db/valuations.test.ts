@@ -26,6 +26,7 @@ import {
   deleteValuation,
   restoreValuation,
   listValuations,
+  listValuationEvents,
 } from '@/db/valuations';
 import { buildBackupSnapshot, restoreFromSnapshot } from '@/lib/backup';
 
@@ -169,7 +170,9 @@ describe('tracked accounts', () => {
     await expect(addValuation(fund.id, { date: '2026-09-28', valueMinor: -1 })).rejects.toThrow();
     await expect(addValuation(fund.id, { date: 'yesterday', valueMinor: 100 })).rejects.toThrow();
     const plain = await createAccount({ name: 'Plain', type: 'savings' });
-    await expect(addValuation(plain.id, { date: '2026-09-28', valueMinor: 100 })).rejects.toThrow(/investment/);
+    await expect(addValuation(plain.id, { date: '2026-09-28', valueMinor: 100 })).rejects.toThrow(
+      /investment/
+    );
   });
 
   it('can be switched off and on again, keeping its updates', async () => {
@@ -252,5 +255,36 @@ describe('tracked accounts', () => {
     const account = (await listAccounts()).find((a) => a.id === fund.id);
     expect(account?.investment).toBeUndefined();
     expect(account?.currentBalanceMinor).toBe(4_050_000);
+  });
+});
+
+describe('listValuationEvents', () => {
+  it('lists updates in a range, newest first, each with the one before it', async () => {
+    const { fund } = await indexFund();
+    await addValuation(fund.id, { date: '2031-09-12', valueMinor: 400_000_00 });
+    await addValuation(fund.id, { date: '2031-10-24', valueMinor: 438_000_00 });
+    const events = await listValuationEvents('2031-10-01', '2031-10-31');
+    expect(events).toHaveLength(1);
+    expect(events[0]).toMatchObject({
+      accountId: fund.id,
+      valueMinor: 438_000_00,
+      previousMinor: 400_000_00,
+      previousDate: '2031-09-12',
+    });
+    const both = await listValuationEvents('2031-09-01', '2031-10-31');
+    expect(both.map((e) => e.date)).toEqual(['2031-10-24', '2031-09-12']);
+    expect(both[1].previousMinor).toBeNull();
+  });
+
+  it('ignores accounts that are no longer tracked', async () => {
+    const { fund } = await indexFund();
+    await addValuation(fund.id, { date: '2032-09-12', valueMinor: 100 });
+    await updateAccount(fund.id, {
+      name: fund.name,
+      type: 'savings',
+      openingBalanceMinor: 0,
+      tracked: false,
+    });
+    expect(await listValuationEvents('2032-09-01', '2032-09-30')).toEqual([]);
   });
 });

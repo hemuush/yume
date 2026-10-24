@@ -10,6 +10,7 @@ import { StatusBadge } from '@/components/StatusBadge';
 import { MovingRow } from '@/components/MovingRow';
 import { JustAddedGlow } from '@/components/JustAddedGlow';
 import { Category, Transaction } from '@/types';
+import { dayMonth } from '@/lib/dateLabels';
 import { formatMaskableMoney, formatMoney } from '@/lib/money';
 import { getCachedCurrency } from '@/db/settings';
 import { usePrivacy } from '@/theme/PrivacyContext';
@@ -17,13 +18,22 @@ import { useAccent } from '@/theme/AccentContext';
 import { softTint } from '@/components/softTint';
 import { haptics } from '@/lib/haptics';
 import { theme } from '@/constants/theme';
-import { buildDayLane, dropIndex, laneOrderIds, LaneLine, moveLine } from './transactions.helpers';
+import {
+  buildDayLane,
+  dropIndex,
+  laneOrderIds,
+  LaneLine,
+  moveLine,
+  type ValueNote,
+} from './transactions.helpers';
+import { investLines, investRole } from '@/lib/investment';
 import { isSavingsEntry } from '@/lib/privateSummary';
 import { DraggableLine } from './DraggableLine';
 import { withPressedTint } from '@/lib/pressed';
 import { categorySpoken, joinSub, parentNameOf } from '@/lib/categoryLabel';
 
 const NO_ACCOUNTS: ReadonlySet<string> = new Set();
+const NO_NOTES: ValueNote[] = [];
 
 const laneKey = (line: LaneLine) => (line.kind === 'single' ? line.tx.id : line.key);
 
@@ -73,6 +83,8 @@ function TimelineDayView({
   onReorder,
   onDragActive,
   savingsAccountIds = NO_ACCOUNTS,
+  investmentIds = NO_ACCOUNTS,
+  notes = NO_NOTES,
   accountCurrency = () => getCachedCurrency(),
 }: {
   date: string;
@@ -95,6 +107,10 @@ function TimelineDayView({
    * amounts".
    */
   savingsAccountIds?: ReadonlySet<string>;
+  /** Accounts that are investments: a transfer into or out of one reads as Invested or Withdrawn. */
+  investmentIds?: ReadonlySet<string>;
+  /** Value updates dated this day, listed under the Invest chip. */
+  notes?: ValueNote[];
   accountCurrency?: (id: string) => string;
 }) {
   const { hideAmounts } = usePrivacy();
@@ -400,35 +416,89 @@ function TimelineDayView({
             {renderLine(line, i)}
           </DraggableLine>
         ))}
-        {transfers.map((tx, i) => (
-          <Pressable
-            key={tx.id}
-            onPress={() => onPressTx(tx)}
-            style={withPressedTint(accent, [
-              styles.line,
-              stacked && styles.wrapLine,
-              (lines.length > 0 || i > 0) && styles.divider,
-            ])}
-            accessibilityRole="button"
-            accessibilityLabel={`${money(tx.amountMinor, hidden(tx), tx.accountId)} moved from ${accountName(tx.accountId)} to ${accountName(tx.toAccountId!)}`}
-          >
-            <JustAddedGlow ids={[tx.id]} surface="activity" />
-            <View style={styles.lead}>
-              <View style={[styles.transferIcon, { backgroundColor: softTint(secondary, 0.35) }]}>
-                <Feather name="repeat" size={16} color={theme.colors.ink} />
+        {transfers.map((tx, i) => {
+          const role = investRole(tx, investmentIds);
+          const text = role
+            ? investLines(tx, role, accountName)
+            : {
+                title: `${accountName(tx.accountId)} → ${accountName(tx.toAccountId!)}`,
+                sub: `${tx.note ? `${tx.note} · ` : ''}Transfer`,
+              };
+          return (
+            <Pressable
+              key={tx.id}
+              onPress={() => onPressTx(tx)}
+              style={withPressedTint(accent, [
+                styles.line,
+                stacked && styles.wrapLine,
+                (lines.length > 0 || i > 0) && styles.divider,
+              ])}
+              accessibilityRole="button"
+              accessibilityLabel={`${money(tx.amountMinor, hidden(tx), tx.accountId)} ${
+                role === 'invest'
+                  ? `invested in ${accountName(tx.toAccountId!)}${tx.ruleId ? ' by SIP' : ''}, from ${accountName(tx.accountId)}`
+                  : role === 'withdraw'
+                    ? `withdrawn from ${accountName(tx.accountId)} to ${accountName(tx.toAccountId!)}`
+                    : `moved from ${accountName(tx.accountId)} to ${accountName(tx.toAccountId!)}`
+              }`}
+            >
+              <JustAddedGlow ids={[tx.id]} surface="activity" />
+              <View style={styles.lead}>
+                <View style={[styles.transferIcon, { backgroundColor: softTint(secondary, 0.35) }]}>
+                  <Feather
+                    name={
+                      role === 'invest' ? 'trending-up' : role === 'withdraw' ? 'trending-down' : 'repeat'
+                    }
+                    size={16}
+                    color={theme.colors.ink}
+                  />
+                </View>
+              </View>
+              <View style={[styles.mid, stacked && styles.wideMid]}>
+                <Text style={[styles.name, styles.transferName]}>{text.title}</Text>
+                <Text style={styles.sub}>{text.sub}</Text>
+              </View>
+              <Text style={[styles.amount, styles.transferAmount]} numberOfLines={1}>
+                {money(tx.amountMinor, hidden(tx), tx.accountId)}
+              </Text>
+            </Pressable>
+          );
+        })}
+        {notes.map((note, i) => {
+          const masked = hideAmounts && savingsAccountIds.has(note.accountId);
+          const change = note.previousMinor == null ? null : note.valueMinor - note.previousMinor;
+          const cur = accountCurrency(note.accountId);
+          return (
+            <View
+              key={note.id}
+              style={[
+                styles.line,
+                stacked && styles.wrapLine,
+                (lines.length > 0 || transfers.length > 0 || i > 0) && styles.divider,
+              ]}
+              accessible
+              accessibilityLabel={`${accountName(note.accountId)} value updated to ${formatMaskableMoney(note.valueMinor, { masked, currency: cur })}`}
+            >
+              <View style={styles.lead}>
+                <View style={[styles.transferIcon, { backgroundColor: softTint(theme.colors.idGold, 0.35) }]}>
+                  <Feather name="edit-3" size={15} color={theme.colors.ink} />
+                </View>
+              </View>
+              <View style={[styles.mid, stacked && styles.wideMid]}>
+                <Text style={[styles.name, styles.transferName]}>
+                  {accountName(note.accountId)} now worth{' '}
+                  {formatMaskableMoney(note.valueMinor, { masked, currency: cur })}
+                </Text>
+                <Text style={styles.sub}>
+                  Value update
+                  {change != null && !masked
+                    ? ` · ${change < 0 ? '−' : '+'}${formatMoney(Math.abs(change), cur)} since ${dayMonth(note.previousDate!)}`
+                    : ''}
+                </Text>
               </View>
             </View>
-            <View style={[styles.mid, stacked && styles.wideMid]}>
-              <Text style={[styles.name, styles.transferName]}>
-                {accountName(tx.accountId)} → {accountName(tx.toAccountId!)}
-              </Text>
-              <Text style={styles.sub}>{tx.note ? `${tx.note} · ` : ''}Transfer</Text>
-            </View>
-            <Text style={[styles.amount, styles.transferAmount]} numberOfLines={1}>
-              {money(tx.amountMinor, hidden(tx), tx.accountId)}
-            </Text>
-          </Pressable>
-        ))}
+          );
+        })}
       </View>
     </ReanimatedAnimated.View>
   );
