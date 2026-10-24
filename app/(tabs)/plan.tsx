@@ -1,4 +1,6 @@
 import { MonthlyPlanCheck } from '@/features/plan/MonthlyPlanCheck';
+import { InvestmentsCard } from '@/features/investments/InvestmentsCard';
+import { buildPortfolio, monthlySipTotal, sipsOf, type Portfolio } from '@/lib/portfolio';
 import { LoanComparison } from '@/features/loans/LoanComparison';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { View, Pressable, StyleSheet, useWindowDimensions } from 'react-native';
@@ -113,6 +115,9 @@ interface PlanData {
   whatIf: { categoryId: string; categoryName: string; avgMonthlyMinor: number } | null;
   habit: HabitState | null;
   dailyGoalMinor: number | null;
+  investments: Portfolio;
+  /** What the active SIPs add up to a month, in the default currency. */
+  sipMonthlyMinor: number;
 }
 
 /** Plan previews open item sheets directly; collection links keep the full-screen routes. */
@@ -263,6 +268,8 @@ export default function PlanScreen() {
     );
 
     setData({
+      investments: buildPortfolio(accounts, currency, today),
+      sipMonthlyMinor: monthlySipTotal(sipsOf(rules, accounts), accounts, currency),
       hideAmounts,
       currency,
       accounts,
@@ -565,6 +572,18 @@ export default function PlanScreen() {
                       onGoal={(id) => openDetail('goal', id)}
                       onAdd={() => openDetail('new-goal', '')}
                       limit={data.goals.length + 1}
+                    />
+                  </Section>
+                  <Section
+                    compact
+                    title="Investments"
+                    actionLabel="Open investments"
+                    onSeeAll={() => open('/investments')}
+                  >
+                    <InvestmentsCard
+                      portfolio={data.investments}
+                      monthlySipMinor={data.sipMonthlyMinor}
+                      onOpen={() => open('/investments')}
                     />
                   </Section>
                   <Section compact title="Ideas">

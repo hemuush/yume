@@ -491,6 +491,18 @@ export function SettingsSection() {
         </View>
       </Section>
 
+      <Section compact title="Money">
+        <View style={[h.card, cardSurface.neutral]}>
+          <SettingsRow
+            icon="trending-up"
+            round
+            label="Investments"
+            sub="Portfolio, SIPs and value updates"
+            onPress={() => router.push('/investments')}
+          />
+        </View>
+      </Section>
+
       <Section compact title="Appearance">
         {themeSaveError && (
           <Text
