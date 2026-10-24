@@ -99,7 +99,8 @@ describe('transferFlow', () => {
         type: 'savings',
         investment: { investedMinor: 0, takenOutMinor: 0, gainMinor: null, valuedAt: null } as never,
       }),
-      account({ id: 'card', type: 'credit_card' }),
+      account({ id: 'card', type: 'credit_card', statementDay: 5, dueDay: 25 }),
+      account({ id: 'card2', type: 'credit_card' }),
       account({ id: 'usd', currency: 'USD' }),
     ].map((a) => [a.id, a])
   );
@@ -118,8 +119,9 @@ describe('transferFlow', () => {
     expect(flow('sbi', 'cash')).toBeNull();
     expect(flow('sav', 'groww')).toBeNull();
   });
-  it('leaves credit cards to their own bill; money sent to another currency still leaves', () => {
+  it('leaves a tracked card to its own bill, counts paying an untracked one; other currencies still leave', () => {
     expect(flow('sbi', 'card')).toBeNull();
+    expect(flow('sbi', 'card2')).toBe('out');
     expect(flow('card', 'sbi')).toBeNull();
     expect(flow('sbi', 'usd')).toBe('out');
     expect(flow('sbi', null)).toBeNull();

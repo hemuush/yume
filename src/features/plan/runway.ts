@@ -29,7 +29,7 @@ export function runwayStartMinor(accounts: Account[], currency: string): number 
  * Which way a scheduled transfer moves the spending balance, so the runway and the Upcoming lists agree:
  * `out` when it leaves bank, cash and wallets (a SIP, a move to savings), `in` when it comes back into them (a
  * withdrawal, a sweep from savings), null when it changes nothing you can spend (between two spending
- * accounts, between two savings/investments) or touches a credit card, whose own bill is already counted.
+ * accounts, between two savings/investments) or pays a credit card whose own bill is already counted.
  */
 export function transferFlow(
   rule: { accountId: string; toAccountId?: string | null },
@@ -38,7 +38,10 @@ export function transferFlow(
 ): 'out' | 'in' | null {
   const from = accounts.get(rule.accountId);
   const to = rule.toAccountId ? accounts.get(rule.toAccountId) : undefined;
-  if (!from || !to || from.type === 'credit_card' || to.type === 'credit_card') return null;
+  if (!from || !to || from.type === 'credit_card') return null;
+  // Paying a card whose bill is tracked is already counted as that bill; paying one that is not tracked is
+  // plain money out, or an automatic payment would vanish from the runway.
+  if (to.type === 'credit_card' && to.statementDay != null && to.dueDay != null) return null;
   const fromSpend = isRunwayAccount(from, currency);
   const toSpend = isRunwayAccount(to, currency);
   return fromSpend && !toSpend ? 'out' : !fromSpend && toSpend ? 'in' : null;
