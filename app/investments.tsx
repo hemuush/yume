@@ -5,8 +5,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import ReanimatedAnimated from 'react-native-reanimated';
 import { Text } from '@/components/Text';
 import { Glass } from '@/components/Glass';
-import { CountUpAmount } from '@/components/CountUpAmount';
-import { Kicker, FrostChip, frost } from '@/components/Frost';
 import { AddButton } from '@/components/AddButton';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { SegmentedControl } from '@/components/SegmentedControl';
@@ -22,7 +20,9 @@ import { AccountDetailModal } from '@/features/profile/AccountDetailModal';
 import { AddAccountModal } from '@/features/profile/AddAccountModal';
 import { RuleModal } from '@/features/recurring/RuleModal';
 import { ruleCadenceLabel } from '@/features/recurring/recurring.helpers';
-import { GainBadge } from '@/features/investments/GainPill';
+import { HoldingRow } from '@/features/investments/HoldingRow';
+import { InvestmentsHero, StartTracking } from '@/features/investments/InvestmentsHero';
+import { SplitCard } from '@/features/investments/SplitCard';
 import { PortfolioChart } from '@/features/investments/PortfolioChart';
 import { HoldingPickerSheet } from '@/features/investments/HoldingPickerSheet';
 import { UpdateValuesSheet } from '@/features/investments/UpdateValuesSheet';
@@ -33,8 +33,7 @@ import { useCollapsingHeader } from '@/lib/useCollapsingHeader';
 import { useScreenLoad } from '@/lib/useScreenLoad';
 import { toLocalIsoDate, addMonthsToIsoDate } from '@/lib/date';
 import { formatMaskableMoney } from '@/lib/money';
-import { weekdayDayMonth, dayMonthYear } from '@/lib/dateLabels';
-import { formatReturnPct, ageLabel, estimatedValue, INVESTMENT_KIND_LABEL } from '@/lib/investment';
+import { weekdayDayMonth } from '@/lib/dateLabels';
 import { investHref, withdrawHref } from '@/lib/investRoutes';
 import { CURRENT_PERIOD } from '@/lib/period';
 import {
@@ -117,14 +116,6 @@ export default function InvestmentsScreen() {
 
   const all = [...portfolio.holdings, ...portfolio.otherCurrency];
   const none = loaded && all.length === 0;
-  const gain = portfolio.gainMinor;
-  const gainColor =
-    gain == null || gain === 0
-      ? theme.colors.textPrimary
-      : gain > 0
-        ? theme.colors.incomeText
-        : theme.colors.expenseText;
-
   const invest = (holding: Holding) => router.push(investHref(holding.account));
   const startSip = (holding: Account) => setRule({ editing: null, holding });
   const pick = (holding: Holding) => {
@@ -180,99 +171,16 @@ export default function InvestmentsScreen() {
         }}
       >
         {none ? (
-          <Glass radius={22} tone="strong" style={[frost.hero, cardSurface.summary, styles.block]}>
-            <Kicker icon="trending-up">Start tracking in 3 steps</Kicker>
-            {[
-              'Add an investment: a fund, stocks, gold or a deposit.',
-              'Invest money into it from a bank account.',
-              'Update its value now and then to see the gain.',
-            ].map((line, i) => (
-              <Text key={line} style={frost.sub}>
-                <Text style={frost.subBold}>{i + 1}. </Text>
-                {line}
-              </Text>
-            ))}
-            <PrimaryButton title="Add your first investment" onPress={() => setAdding(true)} />
-          </Glass>
+          <StartTracking onAdd={() => setAdding(true)} />
         ) : (
           loaded && (
             <>
-              <Glass radius={22} tone="strong" style={[frost.hero, cardSurface.summary, styles.block]}>
-                <View style={frost.heroRow}>
-                  <View style={[frost.heroMain, { gap: 2 }]}>
-                    <Kicker icon="trending-up">Worth now</Kicker>
-                    {hideAmounts ? (
-                      <Text style={[frost.bigValue, styles.bigFigure]}>
-                        {formatMaskableMoney(portfolio.valueMinor, { currency, masked: true })}
-                      </Text>
-                    ) : (
-                      <CountUpAmount
-                        minor={portfolio.valueMinor}
-                        currency={currency}
-                        countFromZero={false}
-                        symbolStyle={frost.bigSymbol}
-                        style={[frost.bigValue, styles.bigFigure]}
-                        numberOfLines={1}
-                        adjustsFontSizeToFit
-                      />
-                    )}
-                  </View>
-                  {portfolio.returnPct != null && (
-                    <View style={frost.side}>
-                      <Text style={frost.sideLabel}>Return</Text>
-                      <Text style={[frost.sideValue, !hideAmounts && { color: gainColor }]}>
-                        {hideAmounts ? '••%' : formatReturnPct(portfolio.returnPct)}
-                      </Text>
-                    </View>
-                  )}
-                </View>
-                <View style={frost.chips}>
-                  {gain != null && (
-                    <FrostChip
-                      icon={gain < 0 ? 'trending-down' : 'trending-up'}
-                      tone={hideAmounts || gain === 0 ? undefined : gain > 0 ? 'ok' : 'bad'}
-                    >
-                      {hideAmounts
-                        ? '••••'
-                        : `${gain < 0 ? '−' : gain > 0 ? '+' : ''}${money(Math.abs(gain))}`}
-                    </FrostChip>
-                  )}
-                  {rate && (
-                    <FrostChip icon="calendar">
-                      {hideAmounts
-                        ? '••% a year'
-                        : `${formatReturnPct(rate.rate * 100).replace('+', '')} a year over ${years(rate.days)}`}
-                    </FrostChip>
-                  )}
-                </View>
-                <Text style={frost.sub}>
-                  Put in <Text style={frost.subBold}>{money(portfolio.investedMinor)}</Text>
-                  {portfolio.takenOutMinor > 0 && (
-                    <>
-                      {' · taken out '}
-                      <Text style={frost.subBold}>{money(portfolio.takenOutMinor)}</Text>
-                    </>
-                  )}
-                  {sipMonthly > 0 && (
-                    <>
-                      {' · SIPs '}
-                      <Text style={frost.subBold}>{money(sipMonthly)}</Text> a month
-                    </>
-                  )}
-                </Text>
-                {(gain == null || (!rate && !hideAmounts) || portfolio.unvaluedCount > 0) && (
-                  <Text style={styles.hint}>
-                    {gain == null
-                      ? 'Update a value to see the gain.'
-                      : !rate
-                        ? 'A yearly rate needs three months of history.'
-                        : ''}
-                    {portfolio.unvaluedCount > 0 && gain != null
-                      ? ` ${portfolio.unvaluedCount} ${portfolio.unvaluedCount === 1 ? 'holding has' : 'holdings have'} no value yet.`
-                      : ''}
-                  </Text>
-                )}
-              </Glass>
+              <InvestmentsHero
+                portfolio={portfolio}
+                rate={rate}
+                currency={currency}
+                sipMonthly={sipMonthly}
+              />
 
               <View style={styles.mainActions}>
                 <PrimaryButton
@@ -308,42 +216,7 @@ export default function InvestmentsScreen() {
                 </Glass>
               )}
 
-              {split.length > 1 && (
-                <Glass radius={22} tone="strong" style={[styles.card, cardSurface.neutral, styles.block]}>
-                  <Text style={styles.label}>Where it sits</Text>
-                  <View
-                    style={styles.bar}
-                    accessibilityElementsHidden
-                    importantForAccessibility="no-hide-descendants"
-                  >
-                    {split.map((p, i) => (
-                      <View
-                        key={p.key}
-                        style={{
-                          flex: Math.max(p.share, 0.01),
-                          backgroundColor: SPLIT_COLORS[i % SPLIT_COLORS.length],
-                        }}
-                      />
-                    ))}
-                  </View>
-                  {split.map((p, i) => (
-                    <View
-                      key={p.key}
-                      style={styles.legendRow}
-                      accessible
-                      accessibilityLabel={`${p.label}, ${Math.round(p.share * 100)} percent`}
-                    >
-                      <View
-                        style={[styles.dot, { backgroundColor: SPLIT_COLORS[i % SPLIT_COLORS.length] }]}
-                      />
-                      <Text style={styles.legendName} numberOfLines={1}>
-                        {p.label}
-                      </Text>
-                      <Text style={styles.legendShare}>{Math.round(p.share * 100)}%</Text>
-                    </View>
-                  ))}
-                </Glass>
-              )}
+              {split.length > 1 && <SplitCard parts={split} />}
 
               <Section compact title="Holdings">
                 <View style={[h.card, cardSurface.neutral]}>
@@ -488,89 +361,13 @@ export default function InvestmentsScreen() {
   );
 }
 
-const SPLIT_COLORS = ['#8FCBFF', '#F0E1A8', '#8FE8C8', '#E2A6D8', '#F6BFD3', '#BEC8D4'];
-
-const years = (days: number) => {
-  const y = days / 365;
-  return y >= 2 ? `${Math.round(y * 10) / 10} years` : `${Math.max(1, Math.round(days / 30.44))} months`;
-};
-
-function HoldingRow({
-  holding,
-  today,
-  masked,
-  onPress,
-  divider,
-}: {
-  holding: Holding;
-  today: string;
-  masked: boolean;
-  onPress: () => void;
-  divider: boolean;
-}) {
-  const cur = holding.account.currency;
-  const estimate = estimatedValue(holding.account, today);
-  const maturity = holding.account.investment?.maturityDate;
-  const sub = [
-    holding.kind ? INVESTMENT_KIND_LABEL[holding.kind] : null,
-    holding.ageDays == null ? 'No value yet' : ageLabel(holding.ageDays),
-    estimate
-      ? `≈ ${formatMaskableMoney(estimate.valueMinor, { currency: cur, masked })} at ${estimate.rateBp / 100}%`
-      : null,
-    maturity ? `${maturity <= today ? 'Matured' : 'Matures'} ${dayMonthYear(maturity)}` : null,
-  ]
-    .filter(Boolean)
-    .join(' · ');
-  return (
-    <SettingsRow
-      icon="trending-up"
-      round
-      label={holding.name}
-      sub={sub}
-      subColor={holding.stale ? theme.colors.warnInk : undefined}
-      onPress={onPress}
-      divider={divider}
-      right={
-        <View style={styles.rowRight}>
-          <Text style={styles.rowValue} numberOfLines={1}>
-            {formatMaskableMoney(holding.valueMinor, { currency: cur, masked })}
-          </Text>
-          {holding.gainMinor != null && (
-            <GainBadge
-              gainMinor={holding.gainMinor}
-              investedMinor={holding.investedMinor}
-              currency={cur}
-              moneyOnly
-            />
-          )}
-        </View>
-      }
-    />
-  );
-}
-
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
   // Cards sit on the screen gutter like every other screen's; the sections below bring their own.
   block: { marginTop: 0, marginBottom: 12 },
   card: { marginHorizontal: SCREEN.gutter, padding: 14, gap: 10 },
-  bigFigure: { fontFamily: theme.font.bodyLight, fontSize: 30, lineHeight: 36 },
-  label: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textSecondary },
   hint: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textMuted },
   hintPad: { marginHorizontal: SCREEN.gutter, marginTop: 6 },
-  bar: { flexDirection: 'row', height: 10, borderRadius: 5, overflow: 'hidden', gap: 2 },
-  legendRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  dot: { width: 10, height: 10, borderRadius: 5 },
-  legendName: {
-    flex: 1,
-    minWidth: 0,
-    fontFamily: theme.font.body,
-    fontSize: 13,
-    color: theme.colors.textPrimary,
-  },
-  legendShare: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textSecondary },
-  rowRight: { alignItems: 'flex-end', gap: 3, flexShrink: 1 },
-  rowValue: { fontFamily: theme.font.bodyBold, fontSize: 14, color: theme.colors.textPrimary },
   mainActions: { flexDirection: 'row', gap: 8, marginHorizontal: SCREEN.gutter, marginBottom: 12 },
   mainAction: { flex: 1 },
 });

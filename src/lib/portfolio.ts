@@ -85,7 +85,7 @@ export function buildPortfolio(accounts: Account[], currency: string, today: str
   };
 }
 
-interface SplitPart {
+export interface SplitPart {
   key: string;
   label: string;
   valueMinor: number;

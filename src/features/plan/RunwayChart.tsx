@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import Svg, { Circle, Defs, Line, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
 import { Text } from '@/components/Text';
@@ -7,6 +7,7 @@ import { formatMoney } from '@/lib/money';
 import { compactMoney } from '@/lib/compactMoney';
 import { dayMonth, weekdayDayMonth } from '@/lib/dateLabels';
 import { useScrub } from '@/features/reports/useScrub';
+import { guideValues, smoothPath } from '@/lib/chartPath';
 import type { Runway } from './runway';
 
 const H = 176;
@@ -17,56 +18,6 @@ const GUTTER = 36;
 const PAD = 8;
 const LABEL_W = 44;
 const TICK_GAP = 26;
-
-/** A smooth curve through the points that never overshoots between them (monotone cubic). */
-function smoothPath(pts: { x: number; y: number }[]): string {
-  const n = pts.length;
-  if (n === 0) return '';
-  if (n === 1) return `M${pts[0].x.toFixed(1)},${pts[0].y.toFixed(1)}`;
-  const slope = pts.slice(1).map((p, i) => (p.y - pts[i].y) / (p.x - pts[i].x));
-  const m = pts.map((_, i) =>
-    i === 0
-      ? slope[0]
-      : i === n - 1
-        ? slope[n - 2]
-        : slope[i - 1] * slope[i] <= 0
-          ? 0
-          : (slope[i - 1] + slope[i]) / 2
-  );
-  for (let i = 0; i < n - 1; i++) {
-    if (slope[i] === 0) {
-      m[i] = 0;
-      m[i + 1] = 0;
-      continue;
-    }
-    const a = m[i] / slope[i];
-    const b = m[i + 1] / slope[i];
-    const s = a * a + b * b;
-    if (s > 9) {
-      const t = 3 / Math.sqrt(s);
-      m[i] = t * a * slope[i];
-      m[i + 1] = t * b * slope[i];
-    }
-  }
-  let d = `M${pts[0].x.toFixed(1)},${pts[0].y.toFixed(1)}`;
-  for (let i = 0; i < n - 1; i++) {
-    const h = pts[i + 1].x - pts[i].x;
-    d += ` C${(pts[i].x + h / 3).toFixed(1)},${(pts[i].y + (m[i] * h) / 3).toFixed(1)} ${(pts[i + 1].x - h / 3).toFixed(1)},${(pts[i + 1].y - (m[i + 1] * h) / 3).toFixed(1)} ${pts[i + 1].x.toFixed(1)},${pts[i + 1].y.toFixed(1)}`;
-  }
-  return d;
-}
-
-/** Round guide values (…₹20k, ₹40k) between lo and hi, minor units; zero is included whenever it is in range. */
-export function guideValues(lo: number, hi: number): number[] {
-  const span = (hi - lo) / 100;
-  if (span <= 0) return [0];
-  const raw = span / 4;
-  const pow = Math.pow(10, Math.floor(Math.log10(raw)));
-  const step = ([1, 2, 2.5, 5, 10].find((m) => m * pow >= raw) ?? 10) * pow * 100;
-  const out: number[] = [];
-  for (let v = Math.ceil(lo / step) * step; v <= hi; v += step) out.push(Math.round(v));
-  return out;
-}
 
 /**
  * The runway as a smooth balance line over the days ahead: a faint ₹0 line and round guides to read it by, a
@@ -85,30 +36,33 @@ export function RunwayChart({ runway }: { runway: Runway }) {
   const sel = Math.max(0, Math.min(n - 1, picked ?? (home >= 0 ? home : 0)));
   const scrub = useScrub({ count: n, inset: PAD, onPick: setPicked });
 
-  const balances = days.map((d) => d.afterMinor);
-  const hi0 = Math.max(0, ...balances, runway.startMinor);
-  const lo0 = Math.min(0, ...balances, runway.startMinor);
-  const margin = Math.max(1, (hi0 - lo0) * 0.08);
-  const hi = hi0 + margin;
-  const lo = lo0 < 0 ? lo0 - margin : lo0;
-  const y = (v: number) => TOP + (1 - (v - lo) / Math.max(1, hi - lo)) * (BASE - TOP);
+  // The curve, guides and scale depend only on the runway and the width, not on the day being read, so a drag
+  // (which re-renders on every move) reuses them.
+  const { x, y, line, zero, guides, ticks, below } = useMemo(() => {
+    const balances = days.map((d) => d.afterMinor);
+    const hi0 = Math.max(0, ...balances, runway.startMinor);
+    const lo0 = Math.min(0, ...balances, runway.startMinor);
+    const margin = Math.max(1, (hi0 - lo0) * 0.08);
+    const hi = hi0 + margin;
+    const lo = lo0 < 0 ? lo0 - margin : lo0;
+    const y = (v: number) => TOP + (1 - (v - lo) / Math.max(1, hi - lo)) * (BASE - TOP);
+    const plot = Math.max(0, width - GUTTER);
+    const x = (i: number) => GUTTER + PAD + (n <= 1 ? 0 : (i / (n - 1)) * Math.max(0, plot - 2 * PAD));
+    const line = smoothPath(days.map((d, i) => ({ x: x(i), y: y(d.afterMinor) })));
+
+    const guides: number[] = [];
+    let lastY = Infinity;
+    for (const v of guideValues(lo, hi).reverse()) {
+      if (Math.abs(y(v) - lastY) < TICK_GAP) continue;
+      guides.push(v);
+      lastY = y(v);
+    }
+    const ticks: number[] = [0];
+    for (let i = 7; i <= n - 4; i += 7) ticks.push(i);
+    return { x, y, line, zero: y(0), guides, ticks, below: lo < 0 };
+  }, [days, n, runway.startMinor, width]);
+
   const plot = Math.max(0, width - GUTTER);
-  const x = (i: number) => GUTTER + PAD + (n <= 1 ? 0 : (i / (n - 1)) * Math.max(0, plot - 2 * PAD));
-  const pts = days.map((d, i) => ({ x: x(i), y: y(d.afterMinor) }));
-  const line = smoothPath(pts);
-  const zero = y(0);
-
-  const guides: number[] = [];
-  let lastY = Infinity;
-  for (const v of guideValues(lo, hi).reverse()) {
-    if (Math.abs(y(v) - lastY) < TICK_GAP) continue;
-    guides.push(v);
-    lastY = y(v);
-  }
-
-  const ticks: number[] = [0];
-  for (let i = 7; i <= n - 4; i += 7) ticks.push(i);
-
   const day = days[sel];
   const negative = day.afterMinor < 0;
   const pill = `${dayMonth(day.date)} · ${formatMoney(day.afterMinor)}`;
@@ -140,7 +94,7 @@ export function RunwayChart({ runway }: { runway: Runway }) {
                   <Stop offset="1" stopColor={theme.colors.slice.saved} stopOpacity={0.02} />
                 </LinearGradient>
               </Defs>
-              {lo < 0 && (
+              {below && (
                 <Rect
                   x={GUTTER}
                   y={zero}

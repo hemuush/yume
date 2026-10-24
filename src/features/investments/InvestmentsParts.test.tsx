@@ -26,7 +26,7 @@ jest.mock('./UpdateValueSheet', () => ({
     }),
 }));
 
-import { InvestmentsCard } from './InvestmentsCard';
+import { InvestmentsCard } from '@/features/plan/InvestmentsCard';
 import { PlanOverviewPanels } from '@/features/plan/PlanOverviewPanels';
 import { PortfolioChart } from './PortfolioChart';
 import { UpdateValuesSheet } from './UpdateValuesSheet';
