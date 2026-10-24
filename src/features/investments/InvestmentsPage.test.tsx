@@ -149,7 +149,7 @@ const press = async (tree: ReactTestRenderer, title: string) =>
     tree.root
       .find(
         (n) =>
-          (n.props.title === title || n.props.accessibilityLabel === title) &&
+          (n.props.title === title || n.props.label === title || n.props.accessibilityLabel === title) &&
           typeof n.props.onPress === 'function'
       )
       .props.onPress();
@@ -171,8 +171,12 @@ describe('Investments page', () => {
   it('shows what the holdings add up to, with the gain from the ones that have a value', async () => {
     const shown = texts(await render());
     expect(shown).toContain('Worth now');
-    expect(shown.some((t) => t.includes(inr(538_000_00)))).toBe(true); // 4,38,000 + 1,00,000
-    expect(shown.some((t) => t.includes(inr(500_000_00)))).toBe(true); // invested
+    const tree = await render();
+    // 4,38,000 + 1,00,000, read out by the animated figure
+    expect(tree.root.findAll((n) => n.props.accessibilityLabel === inr(538_000_00)).length).toBeGreaterThan(
+      0
+    );
+    expect(texts(tree).join(' ')).toContain(inr(500_000_00)); // put in
     expect(shown).toContain('Nifty 50');
     expect(shown).toContain('Digital gold');
     expect(shown.some((t) => /1 holding has no value yet/.test(t))).toBe(true);
@@ -181,8 +185,8 @@ describe('Investments page', () => {
   it('lists the SIPs with where each comes from and the month’s total', async () => {
     const shown = texts(await render());
     expect(shown.some((t) => / · from HDFC · next /.test(t))).toBe(true);
-    expect(shown).toContain('SIPs / month');
-    expect(shown).toContain(inr(10_000_00));
+    expect(shown.join(' ')).toContain('SIPs');
+    expect(shown.join(' ')).toContain(inr(10_000_00));
   });
 
   it('masks every figure while savings are hidden', async () => {

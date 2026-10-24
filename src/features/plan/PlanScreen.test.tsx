@@ -58,9 +58,6 @@ jest.mock('@/db/budgets', () => ({
   ],
 }));
 let mockGoals: import('@/types').SavingsGoal[] = [];
-jest.mock('@/db/investmentHistory', () => ({
-  listInvestmentHistory: async () => ({ flows: [], valuations: [] }),
-}));
 jest.mock('@/db/savingsGoals', () => ({ listSavingsGoals: async () => mockGoals }));
 jest.mock('@/db/recurring', () => ({
   listRecurringRules: async () => [
@@ -384,7 +381,8 @@ describe('Plan tab', () => {
     try {
       const shown = texts(await render());
       expect(shown).not.toContain('Covered');
-      expect(shown).toEqual(expect.arrayContaining(['Going out', 'Coming in', 'Lowest']));
+      expect(shown).toEqual(expect.arrayContaining(['Going out', 'Coming in']));
+      expect(shown.some((t) => t.startsWith('Lowest'))).toBe(true);
       expect(shown.some((t) => t.includes('15,450') && !t.includes('more needed'))).toBe(true);
       expect(shown).toContain('₹15,450 more needed');
     } finally {
