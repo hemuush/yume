@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { View, Pressable, StyleSheet, Animated, Easing } from 'react-native';
-import { Text } from '@/components/Text';
+import { View, Pressable, StyleSheet, Animated, Easing, useWindowDimensions } from 'react-native';
+import { Text, MAX_FONT_SCALE } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 import { formatMoney } from '@/lib/money';
@@ -86,9 +86,16 @@ export function SpendBarChart({
   const { accent } = useAccent();
   const ink = themeInk(accent);
   const maxTotal = Math.max(1, ...bars.map((b) => b.totalMinor));
+  // The day labels and the today pill have fixed line heights; they grow with the text size so a larger font
+  // is not clipped, and the row grows by the same amount so the bars keep their room.
+  const { fontScale } = useWindowDimensions();
+  const k = Math.min(MAX_FONT_SCALE, Math.max(1, fontScale));
+  const labelLine = Math.ceil(15 * k);
+  const labelBox = { lineHeight: labelLine, minHeight: labelLine };
+  const pillBox = { height: labelLine };
 
   return (
-    <View style={[styles.row, { paddingHorizontal: inset }]}>
+    <View style={[styles.row, { paddingHorizontal: inset, height: MAX_BAR_HEIGHT + Math.ceil(22 * k) }]}>
       {bars.map((bar, i) => {
         const barPx =
           bar.totalMinor > 0 ? Math.max(MIN_BAR_HEIGHT, (bar.totalMinor / maxTotal) * MAX_BAR_HEIGHT) : 0;
@@ -103,7 +110,7 @@ export function SpendBarChart({
               <View style={styles.barTrack}>
                 <View style={bar.state === 'outside' ? styles.outsideDay : styles.futureDay} />
               </View>
-              <Text style={[styles.label, styles.labelAway]}>{bar.label}</Text>
+              <Text style={[styles.label, labelBox, styles.labelAway]}>{bar.label}</Text>
             </View>
           );
         }
@@ -153,11 +160,11 @@ export function SpendBarChart({
               )}
             </View>
             {bar.isCurrent ? (
-              <View style={[styles.todayPill, { backgroundColor: accent }]}>
-                <Text style={styles.todayText}>{bar.label}</Text>
+              <View style={[styles.todayPill, pillBox, { backgroundColor: accent }]}>
+                <Text style={[styles.todayText, { lineHeight: Math.ceil(13 * k) }]}>{bar.label}</Text>
               </View>
             ) : (
-              <Text style={styles.label}>{bar.label}</Text>
+              <Text style={[styles.label, labelBox]}>{bar.label}</Text>
             )}
           </Pressable>
         );

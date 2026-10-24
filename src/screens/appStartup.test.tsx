@@ -13,8 +13,10 @@ jest.mock('@/db/client', () => ({ ...jest.requireActual('@/db/client'), getDb: a
 jest.mock('@/lib/haptics', () => ({
   haptics: { tap: jest.fn(), confirm: jest.fn(), warn: jest.fn(), select: jest.fn() },
 }));
+const mockAskPermission = jest.fn(async () => false);
 jest.mock('@/lib/notifications', () => ({
   ...jest.requireActual('@/lib/notificationPlan'),
+  askNotificationPermissionOnce: () => mockAskPermission(),
   rebuildNotifications: async () => true,
   ensureAndroidChannel: async () => {},
   cancelLegacyScheduledNotifications: async () => {},
@@ -92,15 +94,18 @@ async function start(seed: (db: AsyncDb) => Promise<void> = async () => {}) {
   return { path: view.getPathname(), text, errors };
 }
 
-it('opens on the welcome screen on a fresh install', async () => {
+it('opens on the welcome screen on a fresh install, without asking for notifications behind it', async () => {
+  mockAskPermission.mockClear();
   const { path, text, errors } = await start();
+  expect(mockAskPermission).not.toHaveBeenCalled();
   expect(path).toBe('/');
   expect(text).toContain('Welcome');
   expect(text).not.toContain('Something went wrong');
   expect(errors).toEqual([]);
 });
 
-it('opens on Home inside the tabs on a phone that is already set up', async () => {
+it('opens on Home inside the tabs on a phone that is already set up, asking once for notifications', async () => {
+  mockAskPermission.mockClear();
   const { path, text, errors } = await start(async (db) => {
     await db.runAsync("INSERT INTO settings (key, value) VALUES ('has_onboarded', '1')");
   });
@@ -108,4 +113,5 @@ it('opens on Home inside the tabs on a phone that is already set up', async () =
   expect(text).toContain('Home');
   expect(text).not.toContain('Something went wrong');
   expect(errors).toEqual([]);
+  expect(mockAskPermission).toHaveBeenCalledTimes(1);
 });

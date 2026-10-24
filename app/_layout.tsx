@@ -27,6 +27,7 @@ import { listAccounts, listTransactions } from '@/db/ledger';
 import { runAppMaintenance } from '@/lib/runAppMaintenance';
 import { runWhenIdle } from '@/lib/runWhenIdle';
 import {
+  askNotificationPermissionOnce,
   ensureAndroidChannel,
   rebuildNotifications,
   cancelLegacyScheduledNotifications,
@@ -202,6 +203,17 @@ function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean;
     }, 0);
     return () => clearTimeout(timer);
   }, [pendingRoute, isLocked, showOnboarding, navReady, capture.isBlocked]);
+
+  // Android asks nothing of its own for notifications, so ask once, in the first moment the app is actually
+  // showing (past onboarding and the lock). Kept off the cold-start path: it is a system dialog.
+  const askedPermission = useRef(false);
+  useEffect(() => {
+    if (askedPermission.current || isLocked || showOnboarding || capture.isBlocked) return;
+    askedPermission.current = true;
+    void askNotificationPermissionOnce().catch((err) =>
+      console.warn('Asking for notification permission failed:', err)
+    );
+  }, [isLocked, showOnboarding, capture.isBlocked]);
 
   // Applying screen protection (turning the lock on from Settings) unmounts the navigator, so it would come
   // back on Home. Remember the screen that was open and go back to it once the tree is mounted again.

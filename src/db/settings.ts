@@ -296,6 +296,26 @@ export async function setHasOnboarded(value: boolean): Promise<void> {
   );
 }
 
+const NOTIFICATION_PERMISSION_ASKED_KEY = 'notification_permission_asked';
+
+/** Whether Yume has already asked this phone for notification permission (it asks once, on its own). */
+export async function getNotificationPermissionAsked(): Promise<boolean> {
+  const db = await getDb();
+  const row = await db.getFirstAsync<{ value: string }>('SELECT value FROM settings WHERE key = ?', [
+    NOTIFICATION_PERMISSION_ASKED_KEY,
+  ]);
+  return row?.value === '1';
+}
+
+export async function setNotificationPermissionAsked(): Promise<void> {
+  const db = await getDb();
+  await db.runAsync(
+    `INSERT INTO settings (key, value) VALUES (?, '1')
+     ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
+    [NOTIFICATION_PERMISSION_ASKED_KEY]
+  );
+}
+
 const USER_NAME_KEY = 'user_name';
 let cachedUserName: string | null | undefined; // undefined = not yet loaded, null = loaded but unset
 
