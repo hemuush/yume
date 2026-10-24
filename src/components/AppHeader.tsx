@@ -172,8 +172,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -4,
     right: -4,
+    // Grows with the text size instead of clipping a larger count inside a fixed circle.
     minWidth: 17,
-    height: 17,
+    minHeight: 17,
     paddingHorizontal: 4,
     borderRadius: 9,
     backgroundColor: theme.colors.ink,

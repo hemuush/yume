@@ -148,6 +148,15 @@ export default function NotificationSettingsScreen() {
     return granted;
   };
 
+  /** The phone's battery optimisation list, else Yume's own settings page. */
+  const openBatterySettings = async () => {
+    try {
+      await Linking.sendIntent('android.settings.IGNORE_BATTERY_OPTIMIZATION_SETTINGS');
+    } catch {
+      await Linking.openSettings().catch(() => {});
+    }
+  };
+
   const toggle = async (key: SwitchKey, enabled: boolean) => {
     if (!latest.current) return;
     if (enabled && !(await ensurePermission())) return;
@@ -416,7 +425,17 @@ export default function NotificationSettingsScreen() {
                     disabled={deliveryBusy}
                     onPress={() => void checkDelivery(false)}
                   />
+                  <PrimaryButton
+                    compact
+                    variant="secondary"
+                    title="Battery settings"
+                    onPress={() => void openBatterySettings()}
+                  />
                 </View>
+                <Text style={styles.deliveryHint}>
+                  On some phones (Xiaomi, Oppo, Vivo, Samsung) battery saving stops reminders. Set Yume to
+                  unrestricted or no restrictions, and allow it to start by itself if the phone offers it.
+                </Text>
               </View>
             )}
           </View>

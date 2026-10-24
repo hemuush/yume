@@ -9,7 +9,13 @@ import { repairTrackedRefundLabels } from '@/db/refundLabels';
  * Phone-owned settings: always the current phone's values, never the backup's. The folder URI is a storage
  * grant valid only on the install that made it, and the last-backup status describes this phone's backups.
  */
-const DEVICE_BOUND_SETTINGS = ['local_backup_folder_uri', 'last_local_backup_at', 'last_local_backup_result'];
+const DEVICE_BOUND_SETTINGS = [
+  'local_backup_folder_uri',
+  'last_local_backup_at',
+  'last_local_backup_result',
+  // Whether this phone has been asked for notification permission: a new phone must be asked again.
+  'notification_permission_asked',
+];
 
 /**
  * Preferences where the phone's value wins if set, else the backup's returns: an older backup must not

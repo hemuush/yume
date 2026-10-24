@@ -141,6 +141,7 @@ export function CalendarSheet({
             onPressOut={prevBtn.onPressOut}
             hitSlop={10}
             style={[styles.navBtn, prevBtn.animatedStyle]}
+            accessibilityRole="button"
             accessibilityLabel={pickingMonth ? 'Previous year' : 'Previous month'}
           >
             <Feather name="chevron-left" size={20} color={theme.colors.ink} />
@@ -165,6 +166,7 @@ export function CalendarSheet({
             onPressOut={nextBtn.onPressOut}
             hitSlop={10}
             style={[styles.navBtn, nextBtn.animatedStyle]}
+            accessibilityRole="button"
             accessibilityLabel={pickingMonth ? 'Next year' : 'Next month'}
           >
             <Feather name="chevron-right" size={20} color={theme.colors.ink} />

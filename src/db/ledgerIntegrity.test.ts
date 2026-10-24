@@ -331,6 +331,19 @@ describe('ledger integrity', () => {
       expect(await setting('local_backup_folder_uri')).toBeUndefined();
     });
 
+    it('never carries the notification-permission flag to another phone: it is asked again there', async () => {
+      await mockTestDb.runAsync(
+        `INSERT OR REPLACE INTO settings (key, value) VALUES ('notification_permission_asked', '1')`
+      );
+      const fromOldPhone = await buildBackupSnapshot();
+      await mockTestDb.runAsync(`DELETE FROM settings WHERE key = 'notification_permission_asked'`);
+      await restoreFromSnapshot(fromOldPhone);
+      const row = await mockTestDb.getFirstAsync<{ value: string }>(
+        `SELECT value FROM settings WHERE key = 'notification_permission_asked'`
+      );
+      expect(row).toBeNull();
+    });
+
     it('a valid snapshot still round-trips completely', async () => {
       const snapshot = await buildBackupSnapshot();
       const before = await countRows();

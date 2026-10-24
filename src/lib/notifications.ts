@@ -1,6 +1,12 @@
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
-import { getAlertQueue, getNotificationPrefs, setAlertQueue } from '@/db/settings';
+import {
+  getAlertQueue,
+  getNotificationPermissionAsked,
+  getNotificationPrefs,
+  setAlertQueue,
+  setNotificationPermissionAsked,
+} from '@/db/settings';
 import { hasLoggedOn, listLoansDue, listReminderAttention } from '@/db/notificationData';
 import { resolveQueuedSpendAlerts } from '@/db/queuedSpendAlerts';
 import { theme } from '@/constants/theme';
@@ -45,6 +51,26 @@ export async function requestNotificationPermission(): Promise<boolean> {
   if (existing.granted) return true;
   const result = await Notifications.requestPermissionsAsync();
   return result.granted;
+}
+
+/**
+ * Asks for notification permission once, on its own, when reminders are on but the phone has never been asked.
+ * Android 13 and later grant nothing until an app asks, and the morning reminder is on from the start, so
+ * without this a new install schedules reminders the phone silently drops until the person finds Settings.
+ * Asks at most once per phone (the system only shows the prompt twice anyway); later, Notifications settings
+ * explains how to turn it on. Returns whether permission is now granted.
+ */
+export async function askNotificationPermissionOnce(): Promise<boolean> {
+  if (Platform.OS !== 'android') return false;
+  const current = await Notifications.getPermissionsAsync();
+  if (current.granted) return true;
+  if (!current.canAskAgain || (await getNotificationPermissionAsked())) return false;
+  const prefs = await getNotificationPrefs();
+  if (!prefs.morningEnabled && !prefs.eveningEnabled) return false;
+  await setNotificationPermissionAsked();
+  const granted = await requestNotificationPermission();
+  if (granted) await rebuildNotifications();
+  return granted;
 }
 
 export interface NotificationDeliveryStatus {
