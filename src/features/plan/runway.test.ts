@@ -1,4 +1,5 @@
-import { buildRunway, runwayStartMinor } from './runway';
+import { buildRunway, runwayStartMinor, transferFlow } from './runway';
+import { buildDueItems, groupDueItems } from './planOverview';
 import type { PlanDueItem } from './planOverview';
 import type { Account } from '@/types';
 
@@ -83,5 +84,79 @@ describe('buildRunway', () => {
     );
     expect(r.short).toEqual({ date: '2026-10-11', minor: 3000 });
     expect(r.lowMinor).toBe(-4000);
+  });
+});
+
+describe('transferFlow', () => {
+  const accounts = new Map(
+    [
+      account({ id: 'sbi' }),
+      account({ id: 'hdfc' }),
+      account({ id: 'cash', type: 'cash' }),
+      account({ id: 'sav', type: 'savings' }),
+      account({
+        id: 'groww',
+        type: 'savings',
+        investment: { investedMinor: 0, takenOutMinor: 0, gainMinor: null, valuedAt: null } as never,
+      }),
+      account({ id: 'card', type: 'credit_card' }),
+      account({ id: 'usd', currency: 'USD' }),
+    ].map((a) => [a.id, a])
+  );
+  const flow = (from: string, to: string | null) =>
+    transferFlow({ accountId: from, toAccountId: to }, accounts, 'INR');
+  it('a SIP or a move to savings leaves your spending accounts', () => {
+    expect(flow('sbi', 'groww')).toBe('out');
+    expect(flow('sbi', 'sav')).toBe('out');
+  });
+  it('a withdrawal or a sweep from savings comes back in', () => {
+    expect(flow('groww', 'sbi')).toBe('in');
+    expect(flow('sav', 'cash')).toBe('in');
+  });
+  it('moves that change nothing you can spend are ignored', () => {
+    expect(flow('sbi', 'hdfc')).toBeNull();
+    expect(flow('sbi', 'cash')).toBeNull();
+    expect(flow('sav', 'groww')).toBeNull();
+  });
+  it('leaves credit cards to their own bill; money sent to another currency still leaves', () => {
+    expect(flow('sbi', 'card')).toBeNull();
+    expect(flow('card', 'sbi')).toBeNull();
+    expect(flow('sbi', 'usd')).toBe('out');
+    expect(flow('sbi', null)).toBeNull();
+    expect(flow('sbi', 'missing')).toBeNull();
+  });
+});
+
+describe('scheduled transfers in the runway and Upcoming', () => {
+  const sip = {
+    id: 'sip',
+    type: 'transfer' as const,
+    active: true,
+    nextRunDate: '2026-11-01',
+    amountMinor: 500000,
+    label: 'SIP · Groww',
+    transfer: { flow: 'out' as const, sub: 'from SBI', invest: true },
+  };
+  const sweep = {
+    ...sip,
+    id: 'sweep',
+    label: 'HDFC Savings → SBI',
+    amountMinor: 200000,
+    transfer: { flow: 'in' as const, sub: 'Coming back from HDFC Savings', invest: false },
+  };
+  const plain = { ...sip, id: 'plain', transfer: undefined };
+  const items = buildDueItems([], [sip, sweep, plain]);
+  it('counts a SIP as money out and a sweep as money in, on the day they are due', () => {
+    const runway = buildRunway(1000000, items, '2026-11-01', 3);
+    expect(runway.days[0].outMinor).toBe(500000);
+    expect(runway.days[0].inMinor).toBe(200000);
+    expect(runway.days[0].afterMinor).toBe(700000);
+  });
+  it('ignores a transfer that moves no spendable money', () => {
+    expect(buildRunway(0, buildDueItems([], [plain]), '2026-11-01', 3).days[0].items).toEqual([]);
+  });
+  it('totals a SIP in the day heading but not a sweep', () => {
+    const [day] = groupDueItems(items, '2026-11-01', 3);
+    expect(day.outMinor).toBe(500000);
   });
 });

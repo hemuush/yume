@@ -26,6 +26,7 @@ type FeatherName = React.ComponentProps<typeof Feather>['name'];
 function kindIcon(item: PlanDueItem): FeatherName {
   if (item.kind === 'emi' || item.key.startsWith('card-')) return 'credit-card';
   if (item.kind === 'income') return 'arrow-down-left';
+  if (item.transfer?.invest) return 'trending-up';
   if (item.kind === 'transfer') return 'repeat';
   return 'file-text';
 }
@@ -100,7 +101,7 @@ export function ComingUpSection({
                   iconBg={
                     item.kind === 'emi'
                       ? hexToRgba(accent, 0.18)
-                      : item.kind === 'income'
+                      : item.kind === 'income' || item.transfer?.flow === 'in'
                         ? theme.colors.incomeTint
                         : item.key.startsWith('card-')
                           ? theme.colors.idGold
@@ -108,11 +109,15 @@ export function ComingUpSection({
                   }
                   title={item.title}
                   subtitle={
-                    tone ? `${KIND_LABEL[item.kind]} · ${dueDateLabel(item.dueDate)}` : KIND_LABEL[item.kind]
+                    item.transfer
+                      ? item.transfer.sub
+                      : tone
+                        ? `${KIND_LABEL[item.kind]} · ${dueDateLabel(item.dueDate)}`
+                        : KIND_LABEL[item.kind]
                   }
                   dueDate={item.dueDate}
                   amountMinor={item.amountMinor}
-                  sign={item.kind === 'income' ? '+' : item.kind === 'transfer' ? '' : '-'}
+                  sign={item.kind === 'income' || item.transfer?.flow === 'in' ? '+' : '-'}
                   urgent={tone === 'urgent'}
                   soon={tone === 'soon'}
                   actionLabel={payable ? 'Pay' : undefined}

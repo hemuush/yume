@@ -83,7 +83,7 @@ import { PlanNavigation, PLAN_TABS as TABS, PlanTab } from '@/features/plan/Plan
 import { GoalOverviewModal } from '@/features/goals/GoalOverviewModal';
 import { AddGoalModal } from '@/features/goals/AddGoalModal';
 import { GoalsStrip, WhatIfCard } from '@/features/plan/PlanGoals';
-import { buildRunway, isRunwayAccount, runwayStartMinor, Runway } from '@/features/plan/runway';
+import { buildRunway, isRunwayAccount, runwayStartMinor, transferFlow, Runway } from '@/features/plan/runway';
 import { styles as planStyles } from '@/features/plan/plan.styles';
 import { ComingUpSection } from '@/features/plan/ComingUpSection';
 import { listCardCycles } from '@/db/cardCycles';
@@ -237,6 +237,21 @@ export default function PlanScreen() {
         ? `${accountName(r.accountId)} → ${accountName(r.toAccountId)}`
         : r.note || categoryLabelOf(r.categoryId) || 'Recurring';
     };
+    // A transfer is listed (and counted in the runway) only when it moves money you can spend.
+    const transferOf = (r: (typeof rules)[number]) => {
+      const flow = transferFlow(r, accountsById, currency);
+      if (!flow) return undefined;
+      const role = investRole(r, investIds);
+      const sub =
+        role === 'invest'
+          ? `from ${accountName(r.accountId)}`
+          : role === 'withdraw'
+            ? `to ${accountName(r.toAccountId)}`
+            : flow === 'out'
+              ? `Moving to ${accountName(r.toAccountId)}`
+              : `Coming back from ${accountName(r.accountId)}`;
+      return { flow, sub, invest: role === 'invest' || role === 'withdraw' };
+    };
     const toRuleInput = (r: (typeof rules)[number], type: 'income' | 'expense' | 'transfer' = r.type) => ({
       id: r.id,
       type,
@@ -250,6 +265,7 @@ export default function PlanScreen() {
       endDate: r.endDate,
       amountMinor: r.amountMinor,
       label: ruleLabel(r),
+      ...(r.type === 'transfer' ? { transfer: transferOf(r) } : {}),
     });
     const visibleRules = recurringRulesInCurrency(
       rules.filter((r) => !hideAmounts || !isSavingsEntry(r, categoriesById, savingsIds)),
@@ -269,12 +285,11 @@ export default function PlanScreen() {
     // investment account goes out; a sweep from savings comes in).
     const runwayIds = new Set(accounts.filter((a) => isRunwayAccount(a, currency)).map((a) => a.id));
     const runwayRules = visibleRules.flatMap((r) => {
-      const from = runwayIds.has(r.accountId);
-      if (r.type !== 'transfer') return from ? [toRuleInput(r)] : [];
-      const to = r.toAccountId != null && runwayIds.has(r.toAccountId);
-      if (from && !to) return [toRuleInput(r, 'expense')];
-      if (!from && to) return [toRuleInput(r, 'income')];
-      return [];
+      if (r.type === 'transfer') {
+        const flow = transferFlow(r, accountsById, currency);
+        return flow ? [toRuleInput(r, flow === 'out' ? 'expense' : 'income')] : [];
+      }
+      return runwayIds.has(r.accountId) ? [toRuleInput(r)] : [];
     });
     const runwayItems = buildDueItems(loansSummary.rows, runwayRules, cardCycles, until);
     // The top-spend category (sorted biggest first) a cut could apply to: not a built-in like Loan EMI,
@@ -508,7 +523,7 @@ export default function PlanScreen() {
                       color: theme.colors.textSecondary,
                     }}
                   >
-                    Bills, EMIs and income · next {PLAN_DAYS} days
+                    Bills, EMIs, SIPs and income · next {PLAN_DAYS} days
                   </Text>
                   <UpcomingDates
                     runway={data.schedule}
@@ -520,8 +535,8 @@ export default function PlanScreen() {
                             outMinor: 0,
                             items: day.items.filter((item) =>
                               mode === 'income'
-                                ? item.kind === 'income'
-                                : item.kind === 'emi' || item.kind === 'bill'
+                                ? item.kind === 'income' || item.transfer?.flow === 'in'
+                                : item.kind === 'emi' || item.kind === 'bill' || item.transfer?.flow === 'out'
                             ),
                           },
                         ]}
