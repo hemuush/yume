@@ -22,7 +22,15 @@ CREATE TABLE IF NOT EXISTS accounts (
   -- Only for a tracked account (an investment): what sort of holding it is, and the account its money
   -- normally comes from (Invest and SIPs default to it). The link clears if that account is deleted.
   investment_kind TEXT CHECK (investment_kind IN ('mutual_fund','stocks','gold','fixed_deposit','ppf_epf','other')),
-  funding_account_id TEXT REFERENCES accounts(id) ON DELETE SET NULL
+  funding_account_id TEXT REFERENCES accounts(id) ON DELETE SET NULL,
+  -- A credit card's minimum due: a share of the statement (basis points) and the least it can be. Both
+  -- optional; banks differ, so the card says what its own statement says.
+  min_due_bp INTEGER,
+  min_due_floor_minor INTEGER,
+  -- Only for a tracked account: the units you hold (for units x price updates) and, for a deposit or provident
+  -- fund, when it matures. Its yearly rate is interest_rate_annual_bp.
+  units REAL,
+  maturity_date TEXT
 );
 
 -- What a tracked account was worth on a date, as you entered it. The balance

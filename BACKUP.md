@@ -72,3 +72,5 @@ New exports use backup format 4 to preserve goal reservations, expected refunds,
 Format 5 adds an investment's kind (`accounts.investment_kind`), the account its money normally comes from (`accounts.funding_account_id`) and the recurring rule that posted an entry (`transactions.rule_id`). Older backups restore with those empty; an earlier app version refuses a format-5 file.
 
 Format 4 also preserves goal activity and one-off recurring overrides, including confirm-first recording. Older backups restore with empty goal history and automatic recurring recording. Historical goal activity is not reconstructed.
+
+Format 6 adds a credit card's minimum due (`accounts.min_due_bp`, `accounts.min_due_floor_minor`) and, for a tracked investment, the units held (`accounts.units`) and a deposit's or provident fund's maturity date (`accounts.maturity_date`; its yearly rate is the existing `interest_rate_annual_bp`). Older backups restore with those empty; an earlier app version refuses a format-6 file.

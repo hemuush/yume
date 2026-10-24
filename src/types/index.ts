@@ -13,7 +13,9 @@ export interface Account {
   creditLimitMinor: number | null; // credit_card only
   statementDay: number | null; // credit_card only, 1-31 (a short month uses its last day)
   dueDay: number | null; // credit_card only, 1-31 (a short month uses its last day)
-  interestRateAnnualBp: number | null; // credit_card only, basis points
+  interestRateAnnualBp: number | null; // credit card's rate, or a deposit's / provident fund's yearly rate; basis points
+  minDueBp?: number | null; // credit_card only: minimum due as a share of the statement, basis points
+  minDueFloorMinor?: number | null; // credit_card only: the least the minimum due can be
   archived: boolean;
   createdAt: string;
   /** Present only on a tracked account (value updated by hand); its currentBalanceMinor is then the value. */
@@ -34,6 +36,10 @@ export interface AccountInvestment {
   kind?: InvestmentKind | null;
   /** The account money normally comes from (Invest and SIPs default to it); null when never set. */
   fundingAccountId?: string | null;
+  /** Units held, for the units x price update. Null when never entered. */
+  units?: number | null;
+  /** For a deposit or provident fund: when it matures (YYYY-MM-DD). */
+  maturityDate?: string | null;
 }
 
 export type InvestmentKind = 'mutual_fund' | 'stocks' | 'gold' | 'fixed_deposit' | 'ppf_epf' | 'other';

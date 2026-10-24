@@ -39,6 +39,8 @@ export async function getCardCycle(
     owedAtStatementMinor: -balanceAtStatement,
     paidSinceMinor: since.inMinor,
     spentThisCycleMinor: since.expenseMinor,
+    minDueBp: account.minDueBp,
+    minDueFloorMinor: account.minDueFloorMinor,
   });
   return { ...cycle, accountId: account.id, accountName: account.name };
 }
