@@ -40,6 +40,7 @@ jest.mock('@/db/settings', () => ({
 jest.mock('@/db/ledger', () => ({ listAccounts: jest.fn(), listTransactions: jest.fn() }));
 jest.mock('@/lib/runAppMaintenance', () => ({ runAppMaintenance: async () => {} }));
 jest.mock('@/lib/notifications', () => ({
+  askNotificationPermissionOnce: async () => false,
   ensureAndroidChannel: async () => {},
   rebuildNotifications: async () => {},
   cancelLegacyScheduledNotifications: async () => {},

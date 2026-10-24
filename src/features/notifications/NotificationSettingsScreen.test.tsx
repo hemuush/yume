@@ -107,4 +107,23 @@ describe('Notification settings', () => {
     });
     expect(texts(tree)).toContain('Test notification');
   });
+
+  it('opens the phone’s battery settings from the delivery check, or Yume’s own page if it cannot', async () => {
+    const send = jest.spyOn(Linking, 'sendIntent').mockResolvedValue();
+    const open = jest.spyOn(Linking, 'openSettings').mockResolvedValue();
+    const tree = await render();
+    await act(async () => {
+      tree.root
+        .find((n) => n.props.accessibilityLabel === 'Delivery check' && typeof n.props.onPress === 'function')
+        .props.onPress();
+    });
+    const battery = () =>
+      tree.root.find((n) => n.props.title === 'Battery settings' && typeof n.props.onPress === 'function');
+    await act(async () => battery().props.onPress());
+    expect(send).toHaveBeenCalledWith('android.settings.IGNORE_BATTERY_OPTIMIZATION_SETTINGS');
+    expect(open).not.toHaveBeenCalled();
+    send.mockRejectedValue(new Error('no such screen'));
+    await act(async () => battery().props.onPress());
+    expect(open).toHaveBeenCalledTimes(1);
+  });
 });
