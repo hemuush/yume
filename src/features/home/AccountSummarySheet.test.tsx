@@ -80,6 +80,8 @@ const cycle = (over: object = {}) => ({
   dueDate: '2026-06-20',
   leftToPayMinor: 600_000,
   daysUntilDue: 5,
+  minimumMinor: null,
+  leftMinimumMinor: null,
   ...over,
 });
 
@@ -277,6 +279,69 @@ describe('AccountSummarySheet — credit card bill', () => {
     const pay = button(tree, `Pay bill · ${formatMoney(600_000)}`)!;
     act(() => pay.props.onPress());
     expect(onPayBill).toHaveBeenCalledWith(expect.objectContaining({ id: 'a1' }), 600_000);
+  });
+
+  it('shows the minimum due and offers to pay just that, with what it costs to', async () => {
+    mockCycle.mockResolvedValue(cycle({ minimumMinor: 45_000, leftMinimumMinor: 20_000 }));
+    const onPayBill = jest.fn();
+    const tree = await render({ account: card, accounts: [card], onPayBill });
+    const t = texts(tree);
+    expect(t).toContain('Minimum due');
+    expect(t).toContain(formatMoney(45_000));
+    expect(t.some((s) => s.includes('interest starts on the rest'))).toBe(true);
+    act(() => button(tree, `Pay minimum · ${formatMoney(20_000)}`)!.props.onPress());
+    expect(onPayBill).toHaveBeenCalledWith(expect.objectContaining({ id: 'a1' }), 20_000);
+  });
+
+  it('offers no Pay minimum when none is set, it is met, or it is the whole bill', async () => {
+    for (const over of [
+      {},
+      { minimumMinor: 45_000, leftMinimumMinor: 0 },
+      { minimumMinor: 600_000, leftMinimumMinor: 600_000 },
+    ]) {
+      mockCycle.mockResolvedValue(cycle(over));
+      const tree = await render({ account: card, accounts: [card], onPayBill: jest.fn() });
+      expect(
+        tree.root.findAllByType(PrimaryButton).some((b) => String(b.props.title).startsWith('Pay minimum'))
+      ).toBe(false);
+    }
+  });
+
+  it('adds a card charge in Fees & Charges when that category exists', async () => {
+    mockCycle.mockResolvedValue(cycle());
+    const onAddCharge = jest.fn();
+    const tree = await render({
+      account: card,
+      accounts: [card],
+      onAddCharge,
+      categories: [{ id: 'fees', name: 'Fees & Charges', kind: 'expense', archived: false } as Category],
+    });
+    act(() => button(tree, 'Add a card charge')!.props.onPress());
+    expect(onAddCharge).toHaveBeenCalledWith(expect.objectContaining({ id: 'a1' }), 'fees');
+  });
+
+  it('offers no card charge on an ordinary account', async () => {
+    const tree = await render({ onAddCharge: jest.fn() });
+    expect(button(tree, 'Add a card charge')).toBeUndefined();
+  });
+
+  it('says how much of the limit is used and what is left, and warns above 30%', async () => {
+    mockCycle.mockResolvedValue(cycle());
+    const limited = { ...card, creditLimitMinor: 1_200_000, currentBalanceMinor: -420_000 };
+    const t = texts(await render({ account: limited, accounts: [limited] }));
+    expect(t).toContain('35%');
+    expect(t.some((s) => s.includes('available') && s.includes(formatMoney(780_000)))).toBe(true);
+    expect(t.some((s) => s.includes('can lower your credit score'))).toBe(true);
+  });
+
+  it('shows no warning at a low use, and says so when over the limit', async () => {
+    mockCycle.mockResolvedValue(cycle());
+    const low = { ...card, creditLimitMinor: 1_200_000, currentBalanceMinor: -100_000 };
+    expect(texts(await render({ account: low, accounts: [low] })).join(' ')).not.toContain('credit score');
+    const over = { ...card, creditLimitMinor: 100_000, currentBalanceMinor: -120_000 };
+    expect(
+      texts(await render({ account: over, accounts: [over] })).some((s) => s.includes('over the limit'))
+    ).toBe(true);
   });
 
   it('says Paid in full and offers no Pay bill once nothing is left', async () => {

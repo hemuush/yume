@@ -23,7 +23,10 @@ jest.mock('@/components/Chip', () => ({ Chip: () => null }));
 jest.mock('@/components/PrimaryButton', () => ({ PrimaryButton: () => null }));
 jest.mock('@/components/ToggleSwitch', () => ({ ToggleSwitch: () => null }));
 jest.mock('@/components/AmountField', () => ({ AmountField: () => null }));
-jest.mock('./CardCycleFields', () => ({ CardCycleFields: () => null }));
+jest.mock('./CardCycleFields', () => ({
+  ...jest.requireActual('./CardCycleFields'),
+  CardCycleFields: () => null,
+}));
 jest.mock('@/theme/AccentContext', () => ({ useAccent: () => ({ accent: '#8FCBFF' }) }));
 
 const mockCreateAccount = jest.fn();
@@ -223,5 +226,105 @@ describe('Investment account type', () => {
         investmentKind: null,
       })
     );
+  });
+});
+
+describe('Credit card minimum due', () => {
+  const fillCard = async (tree: ReactTestRenderer) => {
+    await act(async () => byProps(tree, { label: 'Name' }).props.onChangeText('Regalia'));
+    await act(async () => byProps(tree, { label: 'Credit card' }).props.onPress());
+  };
+
+  it('saves the minimum due share and floor with the card', async () => {
+    const { tree } = await render();
+    await fillCard(tree);
+    await act(async () => byProps(tree, { label: 'Minimum due (%)' }).props.onChangeText('5'));
+    await act(async () => byProps(tree, { label: 'At least' }).props.onChangeText('200'));
+    await save(tree);
+    expect(mockCreateAccount).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'credit_card', minDueBp: 500, minDueFloorMinor: 20_000 })
+    );
+    act(() => tree.unmount());
+  });
+
+  it('saves no minimum when both are left empty', async () => {
+    const { tree } = await render();
+    await fillCard(tree);
+    await save(tree);
+    expect(mockCreateAccount).toHaveBeenCalledWith(
+      expect.objectContaining({ minDueBp: null, minDueFloorMinor: null })
+    );
+    act(() => tree.unmount());
+  });
+
+  it('refuses a share over 100%', async () => {
+    const { tree } = await render();
+    await fillCard(tree);
+    await act(async () => byProps(tree, { label: 'Minimum due (%)' }).props.onChangeText('150'));
+    await save(tree);
+    expect(mockCreateAccount).not.toHaveBeenCalled();
+    act(() => tree.unmount());
+  });
+
+  it('is not offered for any other type', async () => {
+    const { tree } = await render();
+    expect(
+      tree.root.findAll((n) => typeof n.type === 'function' && n.props.label === 'Minimum due (%)')
+    ).toHaveLength(0);
+    act(() => tree.unmount());
+  });
+});
+
+describe('Deposit and provident fund details', () => {
+  const pickKind = async (tree: ReactTestRenderer, kind: string) => {
+    await act(async () => byProps(tree, { label: 'Name' }).props.onChangeText('Bank FD'));
+    await act(async () => byProps(tree, { label: 'Investment' }).props.onPress());
+    await act(async () => byProps(tree, { label: kind }).props.onPress());
+  };
+  const has = (tree: ReactTestRenderer, label: string) =>
+    tree.root.findAll((n) => n.props.label === label).length > 0;
+
+  it('saves a fixed deposit with its yearly rate and maturity date', async () => {
+    const { tree } = await render();
+    await pickKind(tree, 'Fixed deposit');
+    await act(async () => byProps(tree, { label: 'Interest rate (% a year)' }).props.onChangeText('7.1'));
+    await act(async () => byProps(tree, { label: 'Set a maturity date' }).props.onPress());
+    await save(tree);
+    expect(mockCreateAccount).toHaveBeenCalledWith(
+      expect.objectContaining({
+        investmentKind: 'fixed_deposit',
+        rateBp: 710,
+        maturityDate: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
+      })
+    );
+    act(() => tree.unmount());
+  });
+
+  it('offers a rate but no maturity date for PPF / EPF', async () => {
+    const { tree } = await render();
+    await pickKind(tree, 'PPF / EPF');
+    expect(has(tree, 'Interest rate (% a year)')).toBe(true);
+    expect(has(tree, 'Set a maturity date')).toBe(false);
+    act(() => tree.unmount());
+  });
+
+  it('offers neither for a mutual fund and saves no rate', async () => {
+    const { tree } = await render();
+    await pickKind(tree, 'Mutual fund');
+    expect(has(tree, 'Interest rate (% a year)')).toBe(false);
+    await save(tree);
+    expect(mockCreateAccount).toHaveBeenCalledWith(
+      expect.objectContaining({ rateBp: null, maturityDate: null })
+    );
+    act(() => tree.unmount());
+  });
+
+  it('refuses a rate over 100%', async () => {
+    const { tree } = await render();
+    await pickKind(tree, 'Fixed deposit');
+    await act(async () => byProps(tree, { label: 'Interest rate (% a year)' }).props.onChangeText('710'));
+    await save(tree);
+    expect(mockCreateAccount).not.toHaveBeenCalled();
+    act(() => tree.unmount());
   });
 });

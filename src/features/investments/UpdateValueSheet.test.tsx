@@ -37,6 +37,8 @@ jest.mock('@/theme/PrivacyContext', () => ({
   usePrivacy: () => ({ hideAmounts: false, toggleHideAmounts: jest.fn() }),
 }));
 jest.mock('@/theme/AccentContext', () => ({ useAccent: () => ({ accent: '#8CCED6', dot: '#8CCED6' }) }));
+const mockSetUnits = jest.fn(async () => undefined);
+jest.mock('@/db/accounts', () => ({ setHoldingUnits: (...a: unknown[]) => mockSetUnits(...(a as [])) }));
 jest.mock('@/db/valuations', () => ({
   addValuation: jest.fn(async () => ({})),
   updateValuation: jest.fn(async () => ({})),
@@ -104,7 +106,7 @@ const save = async (r: ReactTestRenderer) => {
 };
 const type = (r: ReactTestRenderer, text: string) =>
   act(() => {
-    r.root.findByType(TextInput).props.onChangeText(text);
+    r.root.findAllByType(TextInput)[0].props.onChangeText(text);
   });
 
 describe('UpdateValueSheet', () => {
@@ -113,7 +115,7 @@ describe('UpdateValueSheet', () => {
     expect(shown(r)).toContain('Use ₹44,560');
     expect(shown(r)).toContain("Your last update plus the ₹1,500 you've put in since.");
     press(r, 'Use the estimate ₹44,560');
-    expect(r.root.findByType(TextInput).props.value).toBe('44560');
+    expect(r.root.findAllByType(TextInput)[0].props.value).toBe('44560');
   });
 
   it('shows how the gain changes once a value is typed', () => {
@@ -149,7 +151,7 @@ describe('UpdateValueSheet', () => {
       gainMinor: 256_000,
     };
     const { r, onSaved } = render({ valuation });
-    expect(r.root.findByType(TextInput).props.value).toBe('43060');
+    expect(r.root.findAllByType(TextInput)[0].props.value).toBe('43060');
     type(r, '43500');
     await save(r);
     expect(updateValuation).toHaveBeenCalledWith('v1', { date: '2026-09-28', valueMinor: 4_350_000 });
@@ -179,5 +181,68 @@ describe('UpdateValueSheet', () => {
     });
     expect(restoreValuation).toHaveBeenCalled();
     expect(onSaved).toHaveBeenCalled();
+  });
+});
+
+describe('units times price', () => {
+  const labelled = (r: ReactTestRenderer, label: string) =>
+    r.root.findAll((n) => n.props.label === label && typeof n.props.onChangeText === 'function')[0];
+
+  it('works out the value from the units and the price, and fills it on one tap', () => {
+    const { r } = render();
+    act(() => labelled(r, 'Units held').props.onChangeText('100'));
+    act(() => labelled(r, 'Price per unit').props.onChangeText('445.6'));
+    expect(shown(r)).toContain('Use ₹44,560');
+    press(r, 'Use units times price, ₹44,560');
+    expect(r.root.findAllByType(TextInput)[0].props.value).toBe('44560');
+  });
+
+  it('remembers the units when the value is saved', async () => {
+    const { r } = render();
+    act(() => labelled(r, 'Units held').props.onChangeText('123.456'));
+    type(r, '44560');
+    await save(r);
+    expect(mockSetUnits).toHaveBeenCalledWith('fund', 123.456);
+  });
+
+  it('starts with the remembered units and does not save them again unchanged', async () => {
+    const withUnits = {
+      ...account,
+      investment: { ...account.investment!, units: 100 },
+    } as Account;
+    const { r } = render({ account: withUnits });
+    expect(labelled(r, 'Units held').props.value).toBe('100');
+    type(r, '44560');
+    await save(r);
+    expect(mockSetUnits).not.toHaveBeenCalled();
+  });
+
+  it('is not offered for a fixed deposit', () => {
+    const fd = { ...account, investment: { ...account.investment!, kind: 'fixed_deposit' } } as Account;
+    const { r } = render({ account: fd });
+    expect(r.root.findAll((n) => n.props.label === 'Units held')).toHaveLength(0);
+  });
+});
+
+describe('deposit estimate', () => {
+  it('offers the grown value as the estimate, and says how it was worked out', () => {
+    const fd = {
+      ...account,
+      currentBalanceMinor: 1_000_000_00,
+      interestRateAnnualBp: 700,
+      investment: {
+        investedMinor: 1_000_000_00,
+        takenOutMinor: 0,
+        gainMinor: 0,
+        valuedAt: '2020-01-01',
+        lastValueMinor: 1_000_000_00,
+        kind: 'fixed_deposit',
+        maturityDate: null,
+      },
+    } as unknown as Account;
+    const { r } = render({ account: fd });
+    expect(shown(r)).toContain('grown at 7% a year');
+    expect(shown(r)).toContain("An estimate: use your bank's figure when you have it.");
+    expect(shown(r)).not.toContain('Use ₹10,00,000');
   });
 });

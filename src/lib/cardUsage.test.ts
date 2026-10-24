@@ -1,5 +1,5 @@
 import { cardUsage } from './cardUsage';
-import { buildCardCycle, minimumDue } from './cardCycle';
+import { buildCardCycle, minimumDue, parseMinDue } from './cardCycle';
 
 const card = (balance: number, limit: number | null) => ({
   type: 'credit_card' as const,
@@ -70,5 +70,21 @@ describe('buildCardCycle minimum', () => {
     const cycle = buildCardCycle({ ...base, minDueBp: null, paidSinceMinor: 0 });
     expect(cycle.minimumMinor).toBeNull();
     expect(cycle.leftMinimumMinor).toBeNull();
+  });
+});
+
+describe('parseMinDue', () => {
+  it('reads a share and a floor', () => {
+    expect(parseMinDue('5', '200')).toEqual({ minDueBp: 500, minDueFloorMinor: 20_000 });
+    expect(parseMinDue('3.5', '')).toEqual({ minDueBp: 350, minDueFloorMinor: null });
+  });
+  it('allows both to be empty', () => {
+    expect(parseMinDue('', ' ')).toEqual({ minDueBp: null, minDueFloorMinor: null });
+  });
+  it('rejects a share outside 0-100 and anything that is not a number', () => {
+    expect(parseMinDue('101', '')).toHaveProperty('error');
+    expect(parseMinDue('-1', '')).toHaveProperty('error');
+    expect(parseMinDue('abc', '')).toHaveProperty('error');
+    expect(parseMinDue('', 'abc')).toHaveProperty('error');
   });
 });

@@ -1,5 +1,12 @@
-import { investLines, investRole, investmentIdsOf } from './investment';
-import type { Account } from '@/types';
+import {
+  investLines,
+  investRole,
+  investmentIdsOf,
+  estimatedValue,
+  parseYearlyRate,
+  earnsKnownRate,
+} from './investment';
+import type { Account, AccountInvestment } from '@/types';
 
 const ids = investmentIdsOf([
   { id: 'fund', investment: {} },
@@ -49,5 +56,74 @@ describe('investLines', () => {
       title: 'Moved Digital gold → Nifty 50',
       sub: 'Between investments',
     });
+  });
+});
+
+describe('estimatedValue', () => {
+  const fd = (
+    over: object = {}
+  ): { currentBalanceMinor: number; interestRateAnnualBp: number | null; investment: AccountInvestment } =>
+    ({
+      currentBalanceMinor: 1_000_000_00,
+      interestRateAnnualBp: 700,
+      investment: {
+        investedMinor: 1_000_000_00,
+        takenOutMinor: 0,
+        gainMinor: 0,
+        valuedAt: '2026-01-01',
+        lastValueMinor: 1_000_000_00,
+        kind: 'fixed_deposit',
+        maturityDate: null,
+        ...over,
+      },
+    }) as never;
+
+  it('grows a deposit quarterly at its yearly rate', () => {
+    // One year at 7% added quarterly is 7.1859%.
+    const e = estimatedValue(fd(), '2027-01-01')!;
+    expect(e.days).toBe(365);
+    expect(e.valueMinor).toBeGreaterThan(1_071_800_00);
+    expect(e.valueMinor).toBeLessThan(1_071_900_00);
+  });
+  it('grows a PPF or EPF account once a year', () => {
+    const e = estimatedValue(fd({ kind: 'ppf_epf' }), '2027-01-01')!;
+    expect(e.valueMinor).toBe(1_070_000_00);
+  });
+  it('adds what moved since the last update', () => {
+    const base = fd();
+    const moved = { ...base, currentBalanceMinor: 1_050_000_00 };
+    expect(estimatedValue(moved, '2027-01-01')!.valueMinor).toBe(
+      estimatedValue(base, '2027-01-01')!.valueMinor + 50_000_00
+    );
+  });
+  it('stops growing at maturity', () => {
+    const e = estimatedValue(fd({ maturityDate: '2026-07-01' }), '2027-01-01')!;
+    expect(e.matured).toBe(true);
+    expect(e.days).toBe(181);
+  });
+  it('is null for other kinds, with no rate, no update, or no time passed', () => {
+    expect(estimatedValue(fd({ kind: 'mutual_fund' }), '2027-01-01')).toBeNull();
+    expect(estimatedValue({ ...fd(), interestRateAnnualBp: null }, '2027-01-01')).toBeNull();
+    expect(estimatedValue(fd({ valuedAt: null }), '2027-01-01')).toBeNull();
+    expect(estimatedValue(fd({ lastValueMinor: null }), '2027-01-01')).toBeNull();
+    expect(estimatedValue(fd(), '2026-01-01')).toBeNull();
+  });
+});
+
+describe('parseYearlyRate', () => {
+  it('reads percent as basis points, and empty as none', () => {
+    expect(parseYearlyRate('7.1')).toEqual({ rateBp: 710 });
+    expect(parseYearlyRate('')).toEqual({ rateBp: null });
+  });
+  it('rejects a rate outside 0-100 or that is not a number', () => {
+    expect(parseYearlyRate('101')).toHaveProperty('error');
+    expect(parseYearlyRate('-1')).toHaveProperty('error');
+    expect(parseYearlyRate('x')).toHaveProperty('error');
+  });
+  it('only deposits and provident funds earn a known rate', () => {
+    expect(earnsKnownRate('fixed_deposit')).toBe(true);
+    expect(earnsKnownRate('ppf_epf')).toBe(true);
+    expect(earnsKnownRate('mutual_fund')).toBe(false);
+    expect(earnsKnownRate(null)).toBe(false);
   });
 });

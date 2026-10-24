@@ -21,8 +21,9 @@ import { styles } from './profile.styles';
 import { ACCOUNT_CHOICES, typeOfChoice, type AccountChoice } from './profile.constants';
 import { InvestmentFields, fundingChoices } from './InvestmentFields';
 import { errorMessage } from '@/lib/errorMessage';
-import { CardCycleFields } from './CardCycleFields';
-import { parseCycleDays } from '@/lib/cardCycle';
+import { earnsKnownRate, parseYearlyRate } from '@/lib/investment';
+import { CardCycleFields, MinDueFields } from './CardCycleFields';
+import { parseCycleDays, parseMinDue } from '@/lib/cardCycle';
 
 export function AddAccountModal({
   visible,
@@ -51,6 +52,10 @@ export function AddAccountModal({
   const [creditLimit, setCreditLimit] = useState('');
   const [statementDay, setStatementDay] = useState('');
   const [dueDay, setDueDay] = useState('');
+  const [rate, setRate] = useState('');
+  const [maturity, setMaturity] = useState('');
+  const [minDuePct, setMinDuePct] = useState('');
+  const [minDueFloor, setMinDueFloor] = useState('');
   const [worth, setWorth] = useState('');
   const [currency, setCurrency] = useState(getCachedCurrency);
   const currencyChosen = useRef(false);
@@ -132,7 +137,21 @@ export function AddAccountModal({
         setError(days.error);
         return;
       }
+      const minDue =
+        type === 'credit_card'
+          ? parseMinDue(minDuePct, minDueFloor)
+          : { minDueBp: null, minDueFloorMinor: null };
+      if ('error' in minDue) {
+        setError(minDue.error);
+        return;
+      }
       const tracking = tracked;
+      const knownRate = tracking && earnsKnownRate(kind);
+      const parsedRate = knownRate ? parseYearlyRate(rate) : { rateBp: null };
+      if ('error' in parsedRate) {
+        setError(parsedRate.error);
+        return;
+      }
       const worthMinor = tracking && worth.trim() ? toMinor(parseFloat(worth)) : null;
       if (worthMinor !== null && (!Number.isFinite(worthMinor) || worthMinor < 0)) {
         setError('Enter what it is worth today');
@@ -149,6 +168,10 @@ export function AddAccountModal({
             creditLimitMinor,
             statementDay: days.statementDay,
             dueDay: days.dueDay,
+            minDueBp: minDue.minDueBp,
+            minDueFloorMinor: minDue.minDueFloorMinor,
+            rateBp: parsedRate.rateBp,
+            maturityDate: knownRate && kind === 'fixed_deposit' && maturity ? maturity : null,
             tracked: tracking,
             investmentKind: tracking ? kind : null,
             fundingAccountId: tracking ? fundingId : null,
@@ -263,6 +286,10 @@ export function AddAccountModal({
           onKind={setKind}
           fundingId={fundingId}
           onFunding={setFundingId}
+          rate={rate}
+          onRate={setRate}
+          maturity={maturity}
+          onMaturity={setMaturity}
           choices={fundingOptions}
         />
       )}
@@ -279,6 +306,12 @@ export function AddAccountModal({
             dueDay={dueDay}
             onChangeStatementDay={setStatementDay}
             onChangeDueDay={setDueDay}
+          />
+          <MinDueFields
+            pct={minDuePct}
+            floor={minDueFloor}
+            onChangePct={setMinDuePct}
+            onChangeFloor={setMinDueFloor}
           />
         </>
       )}
