@@ -50,6 +50,7 @@ export async function changeNextOccurrence(
       date: change.date,
       note: rule.note,
       paymentMode: rule.payment_mode as CreateTransactionInput['paymentMode'],
+      ruleId: rule.id,
     };
     await assertValidTransactionInput(input);
   }
