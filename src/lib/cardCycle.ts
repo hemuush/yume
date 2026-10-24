@@ -41,6 +41,9 @@ interface CardCycleInput {
   paidSinceMinor: number;
   /** Spending on the card since the statement, up to today. */
   spentThisCycleMinor: number;
+  /** The card's minimum due: a share of the statement in basis points, and the least it can be. Optional. */
+  minDueBp?: number | null;
+  minDueFloorMinor?: number | null;
 }
 
 export interface CardCycle {
@@ -56,6 +59,24 @@ export interface CardCycle {
   leftToPayMinor: number;
   /** Days until it's due: 0 on the day, negative once it's late. */
   daysUntilDue: number;
+  /** The minimum the bank asks for, when the card has a minimum due set; null otherwise. */
+  minimumMinor: number | null;
+  /** What is still owed of that minimum after payments since the statement; null with no minimum. */
+  leftMinimumMinor: number | null;
+}
+
+/**
+ * The minimum due on a statement: its share, but at least the floor, and never more than the statement. Null
+ * when the card has neither a share nor a floor, so no minimum is shown for it.
+ */
+export function minimumDue(
+  statementMinor: number,
+  minDueBp?: number | null,
+  minDueFloorMinor?: number | null
+): number | null {
+  if (minDueBp == null && minDueFloorMinor == null) return null;
+  const share = Math.round((statementMinor * (minDueBp ?? 0)) / 10000);
+  return Math.min(statementMinor, Math.max(minDueFloorMinor ?? 0, share));
 }
 
 /** The dates a cycle needs, before any money is looked up. */
@@ -74,16 +95,45 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 export function buildCardCycle(input: CardCycleInput): CardCycle {
   const d = cycleDates(input.statementDay, input.dueDay, input.today);
   const statementMinor = Math.max(0, input.owedAtStatementMinor);
+  const minimumMinor = minimumDue(statementMinor, input.minDueBp, input.minDueFloorMinor);
   return {
     ...d,
     spentThisCycleMinor: input.spentThisCycleMinor,
     statementMinor,
     paidSinceMinor: input.paidSinceMinor,
     leftToPayMinor: Math.max(0, statementMinor - input.paidSinceMinor),
+    minimumMinor,
+    leftMinimumMinor: minimumMinor == null ? null : Math.max(0, minimumMinor - input.paidSinceMinor),
     daysUntilDue: Math.round(
       (parseLocalIsoDate(d.dueDate).getTime() - parseLocalIsoDate(input.today).getTime()) / DAY_MS
     ),
   };
+}
+
+/**
+ * Reads the minimum-due fields from a form: a share of the statement in percent (0-100) and the least it can
+ * be, either or both empty. Anything invalid returns the message to show under the form.
+ */
+export function parseMinDue(
+  pctText: string,
+  floorText: string
+): { minDueBp: number | null; minDueFloorMinor: number | null } | { error: string } {
+  const p = pctText.trim();
+  const f = floorText.trim();
+  let minDueBp: number | null = null;
+  let minDueFloorMinor: number | null = null;
+  if (p) {
+    const pct = Number(p);
+    if (!Number.isFinite(pct) || pct < 0 || pct > 100)
+      return { error: 'Minimum due is a share of the statement, from 0 to 100%' };
+    minDueBp = Math.round(pct * 100);
+  }
+  if (f) {
+    const floor = Math.round(Number(f) * 100);
+    if (!Number.isFinite(floor) || floor < 0) return { error: 'Enter the least the minimum due can be' };
+    minDueFloorMinor = floor;
+  }
+  return { minDueBp, minDueFloorMinor };
 }
 
 /** Whether a day of the month is a valid statement or due day. */

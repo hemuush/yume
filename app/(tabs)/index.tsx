@@ -756,6 +756,12 @@ export default function DashboardScreen() {
           setSummaryAccount(null);
           router.push(payCardRoute(acc.id, amountMinor));
         }}
+        onAddCharge={(acc, categoryId) => {
+          setSummaryAccount(null);
+          router.push(
+            `/add-transaction?type=expense&accountId=${acc.id}${categoryId ? `&categoryId=${categoryId}` : ''}`
+          );
+        }}
         onSeeAll={(acc) => {
           setSummaryAccount(null);
           const month =

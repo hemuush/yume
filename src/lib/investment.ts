@@ -24,6 +24,62 @@ export function daysBetween(from: string, to: string): number {
   return Math.max(0, Math.round(ms / 86400000));
 }
 
+/** What a deposit or provident fund has grown to since its last update, from its yearly rate. */
+export interface GrowthEstimate {
+  valueMinor: number;
+  /** Days of growth counted: from the last update to today, or to maturity if that came first. */
+  days: number;
+  /** The yearly rate used, in basis points. */
+  rateBp: number;
+  /** Maturity has passed: the estimate stopped growing there. */
+  matured: boolean;
+}
+
+/**
+ * An estimate of today's value for a fixed deposit (interest added each quarter, as banks do) or a PPF/EPF
+ * account (added each year): the last value you entered, grown at the rate for the days since, plus the
+ * money that has moved in or out since. Null for any other kind, with no rate or no update yet, or when no day has
+ * passed. It is an estimate only: the real figure is what your bank says, and entering it is always right.
+ */
+export function estimatedValue(
+  account: Pick<Account, 'currentBalanceMinor' | 'interestRateAnnualBp'> & { investment?: AccountInvestment },
+  today: string
+): GrowthEstimate | null {
+  const inv = account.investment;
+  const rateBp = account.interestRateAnnualBp;
+  if (!inv || rateBp == null || rateBp <= 0 || !inv.valuedAt || inv.lastValueMinor == null) return null;
+  if (inv.kind !== 'fixed_deposit' && inv.kind !== 'ppf_epf') return null;
+  const matured = !!inv.maturityDate && inv.maturityDate <= today;
+  const end = matured ? inv.maturityDate! : today;
+  const days = daysBetween(inv.valuedAt, end);
+  if (days === 0) return null;
+  // Interest joins the balance at the end of each quarter (deposit) or year (provident fund); in between it
+  // builds up as simple interest, as banks and the provident fund office do.
+  const perYear = inv.kind === 'fixed_deposit' ? 4 : 1;
+  const periodDays = 365 / perYear;
+  const periodRate = rateBp / 10000 / perYear;
+  const whole = Math.floor(days / periodDays + 1e-9);
+  const part = Math.max(0, days - whole * periodDays) / periodDays;
+  const factor = Math.pow(1 + periodRate, whole) * (1 + periodRate * part);
+  const moved = account.currentBalanceMinor - inv.lastValueMinor;
+  const valueMinor = Math.round(inv.lastValueMinor * factor) + moved;
+  return { valueMinor, days, rateBp, matured };
+}
+
+/** A yearly rate typed in percent ("7.1") as basis points; empty is none, anything else must be 0-100. */
+export function parseYearlyRate(text: string): { rateBp: number | null } | { error: string } {
+  const t = text.trim();
+  if (!t) return { rateBp: null };
+  const pct = Number(t);
+  if (!Number.isFinite(pct) || pct < 0 || pct > 100)
+    return { error: 'The yearly rate is a percentage, from 0 to 100' };
+  return { rateBp: Math.round(pct * 100) };
+}
+
+/** Whether a kind earns a known rate: a fixed deposit or a PPF/EPF account. */
+export const earnsKnownRate = (kind: InvestmentKind | null | undefined) =>
+  kind === 'fixed_deposit' || kind === 'ppf_epf';
+
 /** Days since the latest update, or null when there is none yet. */
 export function valueAgeDays(inv: Pick<AccountInvestment, 'valuedAt'>, today: string): number | null {
   return inv.valuedAt ? daysBetween(inv.valuedAt, today) : null;

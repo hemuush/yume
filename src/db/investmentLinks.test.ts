@@ -162,10 +162,10 @@ describe('older installs and backups', () => {
     expect(await cols('transactions')).toContain('rule_id');
   });
 
-  it('round-trips the links and the marker through a backup, now format 5', async () => {
-    expect(BACKUP_FORMAT_VERSION).toBe(5);
+  it('round-trips the links and the marker through a backup, now format 6', async () => {
+    expect(BACKUP_FORMAT_VERSION).toBe(6);
     const snapshot = await buildBackupSnapshot();
-    expect(snapshot.formatVersion).toBe(5);
+    expect(snapshot.formatVersion).toBe(6);
     const withFund = snapshot.tables.accounts.find((a) => a.investment_kind === 'mutual_fund');
     expect(withFund).toBeDefined();
     await restoreFromSnapshot(snapshot);

@@ -19,6 +19,10 @@ export interface AccountRow {
   tracked: number;
   investment_kind: string | null;
   funding_account_id: string | null;
+  min_due_bp: number | null;
+  min_due_floor_minor: number | null;
+  units: number | null;
+  maturity_date: string | null;
 }
 
 /** A row of `categories`. */

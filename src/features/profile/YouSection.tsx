@@ -1,3 +1,4 @@
+import { cardUsage } from '@/lib/cardUsage';
 import { ScreenLoadError } from '@/components/ScreenLoadError';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { useCallback, useState } from 'react';
@@ -341,6 +342,7 @@ function AccountRow({
   const { hideAmounts } = usePrivacy();
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.98);
   const kind = account.investment ? investmentLabel(account.investment) : ACCOUNT_TYPE_LABEL[account.type];
+  const usage = cardUsage(account);
   const balance = formatMaskableMoney(minor, {
     currency: account.currency,
     masked: hideAmounts && account.type === 'savings',
@@ -365,6 +367,7 @@ function AccountRow({
         </Text>
         <Text style={h.sub} numberOfLines={2}>
           {kind}
+          {usage && !archived ? ` · ${Math.round(usage.pct)}% of limit used` : ''}
           {archived ? ' · archived' : ''}
         </Text>
       </View>

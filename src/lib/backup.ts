@@ -19,7 +19,7 @@ const CURRENT_WINS_SETTINGS = ['app_lock_enabled', 'hide_widget_values'];
 
 const PHONE_SETTINGS = [...DEVICE_BOUND_SETTINGS, ...CURRENT_WINS_SETTINGS];
 
-export const BACKUP_FORMAT_VERSION = 5;
+export const BACKUP_FORMAT_VERSION = 6;
 
 const TABLES = [
   'accounts',

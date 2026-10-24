@@ -47,6 +47,45 @@ export function CardCycleFields({
   );
 }
 
+/**
+ * A card's minimum due as its statement states it: a share of the bill and the least it can be. Optional; with
+ * neither, the card shows no minimum.
+ */
+export function MinDueFields({
+  pct,
+  floor,
+  onChangePct,
+  onChangeFloor,
+}: {
+  pct: string;
+  floor: string;
+  onChangePct: (v: string) => void;
+  onChangeFloor: (v: string) => void;
+}) {
+  return (
+    <View>
+      <View style={styles.row}>
+        <View style={styles.half}>
+          <AmountField
+            label="Minimum due (%)"
+            value={pct}
+            onChangeText={onChangePct}
+            placeholder="e.g. 5"
+            maxLength={5}
+          />
+        </View>
+        <View style={styles.half}>
+          <AmountField label="At least" value={floor} onChangeText={onChangeFloor} placeholder="e.g. 200" />
+        </View>
+      </View>
+      <Text style={styles.hint}>
+        An estimate from your card's terms (often about 5%). Your statement shows the exact minimum. Leave
+        empty to skip.
+      </Text>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', gap: 10 },
   half: { flex: 1 },

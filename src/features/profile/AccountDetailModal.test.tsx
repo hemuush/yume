@@ -23,7 +23,10 @@ jest.mock('@/components/AmountField', () => ({
   AmountField: ({ label, value }: { label: string; value: string }) =>
     require('react').createElement(require('react-native').Text, null, `field:${label}=${value}`),
 }));
-jest.mock('./CardCycleFields', () => ({ CardCycleFields: () => null }));
+jest.mock('./CardCycleFields', () => ({
+  ...jest.requireActual('./CardCycleFields'),
+  CardCycleFields: () => null,
+}));
 jest.mock('@/components/UndoToast', () => ({ useUndoToast: () => ({ show: jest.fn() }) }));
 jest.mock('@/components/AppDialog', () => ({ showAlert: jest.fn() }));
 jest.mock('@/theme/AccentContext', () => ({ useAccent: () => ({ accent: '#8FCBFF' }) }));
