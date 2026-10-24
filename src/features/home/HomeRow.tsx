@@ -14,7 +14,7 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 /** One shape for the rows of Home's Upcoming, Budgets and Goals pages, so the three read as one list. */
 const HOME_ROW_HEIGHT = 64;
 
-export type HomeRowChipTone = 'neutral' | 'due' | 'warning' | 'complete';
+type HomeRowChipTone = 'neutral' | 'due' | 'warning' | 'complete';
 
 /**
  * A leading mark (date tile or progress ring), a title with one grey line under it, and the value on the right

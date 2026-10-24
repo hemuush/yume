@@ -15,7 +15,7 @@ export const APP_ICON_IDS = THEMES.map((t) => t.id);
 export const appIconSupported = (): boolean => native != null;
 
 /** The icon the launcher shows now, or null if unknown or unsupported. */
-export function currentAppIcon(): string | null {
+function currentAppIcon(): string | null {
   try {
     return native?.getIcon(APP_ICON_IDS) ?? null;
   } catch {

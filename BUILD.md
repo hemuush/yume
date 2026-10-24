@@ -67,7 +67,11 @@ npm run test:security
 npm run test:perf
 npx expo-doctor
 npx expo export --platform android
+npx expo prebuild --platform android --no-install
+npm run check:native
 ```
+
+`check:native` reads the manifest that prebuild just generated (no Android SDK needed) and fails if the launcher icon aliases, MainActivity, shortcuts, link scheme, permissions or backup setting are not as expected, or if the local app-icon module is not autolinked. Prebuild writes an ignored `android/` folder and changes the `android` script in package.json; do not commit that change. It cannot show that the Kotlin module compiles or that icon switching works on a phone: that still needs a real build.
 
 Inspect [.github/workflows](.github/workflows) and [scripts](scripts) for CI and dependency-audit policy. Markdown is excluded by the default Prettier ignore file; explicitly format documentation with an empty ignore file when editing it. Tests cover database, component and screen interactions. Export success does not establish native installation or frame-rate performance.
 

@@ -75,7 +75,8 @@
     "check:cycles": "node scripts/checkCycles.cjs",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "test:security": "node --test scripts/uriDecoder.test.cjs scripts/widgetPrivacy.test.cjs",
+    "test:security": "node --test scripts/uriDecoder.test.cjs scripts/widgetPrivacy.test.cjs scripts/checkNative.test.cjs",
+    "check:native": "node scripts/checkNative.cjs",
     "widgets:previews": "node scripts/generateWidgetPreviews.cjs",
     "test:perf": "node scripts/runPerf.cjs"
   },
