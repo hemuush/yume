@@ -100,3 +100,33 @@ describe('SpendBarChart week', () => {
     expect(onPressDay).toHaveBeenCalledWith('2026-10-01');
   });
 });
+
+describe('large text', () => {
+  const flat = (n: { props: { style?: unknown } }) =>
+    StyleSheet.flatten(n.props.style as never) as Record<string, number>;
+  const metrics = (fontScale: number) => {
+    const spy = jest
+      .spyOn(require('react-native'), 'useWindowDimensions')
+      .mockReturnValue({ width: 360, height: 800, scale: 2, fontScale });
+    let tree!: ReactTestRenderer;
+    act(() => {
+      tree = create(<SpendBarChart bars={bars} onPressDay={jest.fn()} />);
+    });
+    const row = tree.root.findAll((n) => n.props.style && flat(n).paddingHorizontal != null)[0];
+    const label = tree.root.findAllByType(Text).find((t) => t.props.style && flat(t).minHeight != null)!;
+    const out = { row: flat(row).height, line: flat(label).lineHeight };
+    spy.mockRestore();
+    return out;
+  };
+
+  it('grows the row and the day labels with the text size, so nothing is clipped', () => {
+    const normal = metrics(1);
+    const large = metrics(2);
+    expect(large.row).toBeGreaterThan(normal.row);
+    expect(large.line).toBeGreaterThan(normal.line);
+  });
+
+  it('stops growing at the supported text scale', () => {
+    expect(metrics(4)).toEqual(metrics(2));
+  });
+});
