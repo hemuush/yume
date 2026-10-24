@@ -25,6 +25,25 @@ export function runwayStartMinor(accounts: Account[], currency: string): number 
     .reduce((sum, a) => sum + a.currentBalanceMinor, 0);
 }
 
+/**
+ * Which way a scheduled transfer moves the spending balance, so the runway and the Upcoming lists agree:
+ * `out` when it leaves bank, cash and wallets (a SIP, a move to savings), `in` when it comes back into them (a
+ * withdrawal, a sweep from savings), null when it changes nothing you can spend (between two spending
+ * accounts, between two savings/investments) or touches a credit card, whose own bill is already counted.
+ */
+export function transferFlow(
+  rule: { accountId: string; toAccountId?: string | null },
+  accounts: Map<string, Account>,
+  currency: string
+): 'out' | 'in' | null {
+  const from = accounts.get(rule.accountId);
+  const to = rule.toAccountId ? accounts.get(rule.toAccountId) : undefined;
+  if (!from || !to || from.type === 'credit_card' || to.type === 'credit_card') return null;
+  const fromSpend = isRunwayAccount(from, currency);
+  const toSpend = isRunwayAccount(to, currency);
+  return fromSpend && !toSpend ? 'out' : !fromSpend && toSpend ? 'in' : null;
+}
+
 export interface RunwayDay {
   date: string;
   /** The balance going into the day, and after its items. */
@@ -48,7 +67,10 @@ export interface Runway {
   inMinor: number;
 }
 
-const moves = (it: PlanDueItem) => it.kind === 'emi' || it.kind === 'bill' || it.kind === 'income';
+const moves = (it: PlanDueItem) =>
+  it.kind === 'emi' || it.kind === 'bill' || it.kind === 'income' || it.transfer !== undefined;
+/** Money coming in: income, or a transfer back into spending accounts. */
+const isIn = (it: PlanDueItem) => it.kind === 'income' || it.transfer?.flow === 'in';
 
 export function buildRunway(startMinor: number, items: PlanDueItem[], today: string, count: number): Runway {
   let balance = startMinor;
@@ -60,8 +82,8 @@ export function buildRunway(startMinor: number, items: PlanDueItem[], today: str
   for (let i = 0; i < count; i++) {
     const date = addDaysToIsoDate(today, i);
     const dayItems = items.filter((it) => moves(it) && (i === 0 ? it.dueDate <= date : it.dueDate === date));
-    const outMinor = dayItems.filter((it) => it.kind !== 'income').reduce((s, it) => s + it.amountMinor, 0);
-    const inMinor = dayItems.filter((it) => it.kind === 'income').reduce((s, it) => s + it.amountMinor, 0);
+    const outMinor = dayItems.filter((it) => !isIn(it)).reduce((s, it) => s + it.amountMinor, 0);
+    const inMinor = dayItems.filter(isIn).reduce((s, it) => s + it.amountMinor, 0);
     const beforeMinor = balance;
     balance = balance - outMinor + inMinor;
     inTotal += inMinor;

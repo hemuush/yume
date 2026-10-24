@@ -3,6 +3,7 @@
  * real figures in order and open their screens, Coming up lists 30 days grouped by day with Pay on EMIs.
  * Wording rules are in planOverview.test.ts and runway.test.ts.
  */
+import { formatMoney } from '@/lib/money';
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
 
 // The first render loads React Native's component tree; on a cold parallel run (CI) that can exceed Jest's
@@ -74,6 +75,21 @@ jest.mock('@/db/recurring', () => ({
       accountId: 'bank',
       toAccountId: null,
     },
+    ...(mockSip
+      ? [
+          {
+            id: 'sip1',
+            type: 'transfer',
+            active: true,
+            nextRunDate: mockDay(1),
+            amountMinor: 500000,
+            note: 'SIP',
+            categoryId: null,
+            accountId: 'bank',
+            toAccountId: 'groww',
+          },
+        ]
+      : []),
   ],
 }));
 jest.mock('@/db/loans', () => ({
@@ -118,8 +134,30 @@ jest.mock('@/db/people', () => ({
 }));
 /** What the bank account holds — a test lowers it to run the runway short. */
 let mockBank = 3000000;
+/** A test turns this on to add a monthly SIP from the bank into an investment account. */
+let mockSip = false;
 jest.mock('@/db/ledger', () => ({
   listAccounts: async () => [
+    ...(mockSip
+      ? [
+          {
+            id: 'groww',
+            name: 'Groww',
+            type: 'savings',
+            currency: 'INR',
+            archived: false,
+            currentBalanceMinor: 4000000,
+            createdAt: '2025-01-01 10:00:00',
+            investment: {
+              investedMinor: 4000000,
+              takenOutMinor: 0,
+              gainMinor: null,
+              valuedAt: null,
+              lastValueMinor: null,
+            },
+          },
+        ]
+      : []),
     {
       id: 'pot',
       name: 'Pot',
@@ -346,14 +384,26 @@ describe('Plan tab', () => {
     try {
       const shown = texts(await render());
       expect(shown).not.toContain('Covered');
-      const short = new Date(`${mockDay(3)}T00:00:00`).toLocaleDateString(undefined, {
-        day: 'numeric',
-        month: 'short',
-      });
-      expect(shown.some((t) => t.includes(`first shortfall ${short}`))).toBe(true);
+      expect(shown).toEqual(expect.arrayContaining(['Going out', 'Coming in', 'Lowest']));
+      expect(shown.some((t) => t.includes('15,450') && !t.includes('more needed'))).toBe(true);
       expect(shown).toContain('₹15,450 more needed');
     } finally {
       mockBank = 3000000;
+    }
+  });
+
+  it('lists a SIP under Money out and counts it in the day total', async () => {
+    mockSip = true;
+    try {
+      const tree = await render();
+      await openTabAndSettle(tree, 'upcoming');
+      const shown = texts(tree);
+      expect(shown).toContain('SIP · Groww');
+      expect(shown).toContain('from Bank');
+      // Streaming ₹450 plus the ₹5,000 SIP, the day's chip and heading.
+      expect(shown).toContain(formatMoney(545000));
+    } finally {
+      mockSip = false;
     }
   });
 
