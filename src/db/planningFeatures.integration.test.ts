@@ -118,7 +118,7 @@ it('records manual progress atomically, preserves history at zero and round-trip
   expect((await listGoalActivity(goal.id)).map((r) => r.balance_after_minor)).toEqual([0, 50000]);
   await expect(deleteSavingsGoal(goal.id)).rejects.toThrow('history');
   const backup = await buildBackupSnapshot();
-  expect(backup.formatVersion).toBe(5);
+  expect(backup.formatVersion).toBe(6);
   expect(backup.tables.goal_activity).toHaveLength(2);
   await restoreFromSnapshot(backup);
   expect(await listGoalActivity(goal.id)).toHaveLength(2);
