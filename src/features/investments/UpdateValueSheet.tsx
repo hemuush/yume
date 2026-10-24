@@ -17,8 +17,9 @@ import { toLocalIsoDate } from '@/lib/date';
 import { shade } from '@/lib/color';
 import { errorMessage } from '@/lib/errorMessage';
 import { haptics } from '@/lib/haptics';
-import { gainLabel } from '@/lib/investment';
+import { gainLabel, estimatedValue } from '@/lib/investment';
 import { addValuation, updateValuation, deleteValuation, restoreValuation, Valuation } from '@/db/valuations';
+import { setHoldingUnits } from '@/db/accounts';
 import type { Account } from '@/types';
 
 /**
@@ -54,6 +55,8 @@ export function UpdateValueSheet({
   });
   const [value, setValue] = useState('');
   const [date, setDate] = useState(today);
+  const [units, setUnits] = useState('');
+  const [price, setPrice] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -61,6 +64,8 @@ export function UpdateValueSheet({
   const resetForm = useEffectEvent(() => {
     setValue(valuation ? String(valuation.valueMinor / 100) : '');
     setDate(valuation ? valuation.date : today);
+    setUnits(account.investment?.units != null ? String(account.investment.units) : '');
+    setPrice('');
     setError(null);
   });
   useEffect(() => {
@@ -72,7 +77,17 @@ export function UpdateValueSheet({
   const masked = hideAmounts;
   const money = (minor: number) => formatMaskableMoney(minor, { currency: account.currency, masked });
   const typed = inputMinor(value);
-  const estimate = !valuation && inv.valuedAt && date === today ? account.currentBalanceMinor : null;
+  const growth = !valuation && date === today ? estimatedValue(account, today) : null;
+  const estimate =
+    !valuation && inv.valuedAt && date === today ? (growth?.valueMinor ?? account.currentBalanceMinor) : null;
+  // Funds and shares: units you hold times today's price. Deposits and provident funds have the estimate instead.
+  const priced = inv.kind !== 'fixed_deposit' && inv.kind !== 'ppf_epf';
+  const unitsNum = parseFloat(units);
+  const priceNum = parseFloat(price);
+  const byPrice =
+    priced && unitsNum > 0 && priceNum > 0 && Number.isFinite(unitsNum * priceNum)
+      ? Math.round(unitsNum * priceNum * 100)
+      : null;
   const sinceMinor = inv.lastValueMinor != null ? account.currentBalanceMinor - inv.lastValueMinor : 0;
 
   // The gain after this value, for a value as of today: what it is worth now,
@@ -99,6 +114,10 @@ export function UpdateValueSheet({
       try {
         if (valuation) await updateValuation(valuation.id, { date, valueMinor });
         else await addValuation(account.id, { date, valueMinor });
+        // Remember the units for next time; they change only when a SIP buys more or you sell some.
+        if (priced && Number.isFinite(unitsNum) && unitsNum > 0 && unitsNum !== inv.units) {
+          await setHoldingUnits(account.id, unitsNum);
+        }
         haptics.confirm();
         onSaved();
       } catch (e) {
@@ -184,12 +203,55 @@ export function UpdateValueSheet({
             <Text style={styles.estimateText}>Use {money(estimate)}</Text>
           </Pressable>
           <Text style={styles.estimateHint}>
-            {sinceMinor > 0
-              ? `Your last update plus the ${money(sinceMinor)} you've put in since.`
-              : sinceMinor < 0
-                ? `Your last update minus the ${money(-sinceMinor)} you've taken out since.`
-                : 'Your last update, nothing has moved since.'}
+            {growth
+              ? `Your last update grown at ${growth.rateBp / 100}% a year for ${growth.days} days${growth.matured ? ', to its maturity date' : ''}${sinceMinor > 0 ? `, plus the ${money(sinceMinor)} you've put in since` : sinceMinor < 0 ? `, minus the ${money(-sinceMinor)} you've taken out since` : ''}. An estimate: use your bank's figure when you have it.`
+              : sinceMinor > 0
+                ? `Your last update plus the ${money(sinceMinor)} you've put in since.`
+                : sinceMinor < 0
+                  ? `Your last update minus the ${money(-sinceMinor)} you've taken out since.`
+                  : 'Your last update, nothing has moved since.'}
           </Text>
+        </View>
+      )}
+      {priced && (
+        <View style={styles.unitsBlock}>
+          <View style={styles.unitsRow}>
+            <View style={styles.unitsHalf}>
+              <AmountField
+                label="Units held"
+                value={units}
+                onChangeText={setUnits}
+                placeholder="e.g. 123.456"
+              />
+            </View>
+            <View style={styles.unitsHalf}>
+              <AmountField
+                label="Price per unit"
+                value={price}
+                onChangeText={setPrice}
+                placeholder="e.g. 362.45"
+              />
+            </View>
+          </View>
+          {byPrice != null ? (
+            <Pressable
+              onPress={() => setValue(String(byPrice / 100))}
+              style={({ pressed }) => [
+                styles.estimateChip,
+                { backgroundColor: shade(accent, 95) },
+                pressed && styles.pressed,
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel={`Use units times price, ${money(byPrice)}`}
+            >
+              <Text style={styles.estimateText}>Use {money(byPrice)}</Text>
+            </Pressable>
+          ) : (
+            <Text style={styles.estimateHint}>
+              Optional. Enter today's price and Yume works out the value. Your units are remembered; change
+              them when a SIP buys more or you sell some.
+            </Text>
+          )}
         </View>
       )}
       <DateField label="As of" value={date} onChange={setDate} maxDate={today} pastFacing />
@@ -216,6 +278,9 @@ const styles = StyleSheet.create({
   pressed: { opacity: 0.7 },
   estimateText: { fontFamily: theme.font.monoBold, fontSize: 12, color: theme.colors.textPrimary },
   estimateHint: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, lineHeight: 17 },
+  unitsBlock: { gap: 8, marginBottom: 6 },
+  unitsRow: { flexDirection: 'row', gap: 10 },
+  unitsHalf: { flex: 1 },
   strip: {
     backgroundColor: theme.colors.inkWash,
     borderRadius: theme.radius.lg,

@@ -249,6 +249,25 @@ describe('Investments page', () => {
     expect(texts(tree)).toContain('add-investment');
   });
 
+  it('shows a deposit’s estimate and maturity under its name', async () => {
+    const deposit = {
+      ...fund,
+      id: 'fd',
+      name: 'SBI FD',
+      interestRateAnnualBp: 700,
+      investment: {
+        ...fund.investment,
+        kind: 'fixed_deposit',
+        valuedAt: daysAgo(200),
+        maturityDate: '2099-03-01',
+      },
+    } as Account;
+    mockAccounts.mockResolvedValue([bank, deposit]);
+    const shown = texts(await render());
+    expect(shown.some((t) => t.includes('≈ ') && t.includes('at 7%'))).toBe(true);
+    expect(shown.some((t) => t.includes('Matures 1 Mar 2099'))).toBe(true);
+  });
+
   it('hides the trend and the split until there is something to show', async () => {
     mockAccounts.mockResolvedValue([bank, fund]);
     mockHistory.mockResolvedValue({ flows: [], valuations: [] });

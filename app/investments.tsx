@@ -33,8 +33,8 @@ import { useCollapsingHeader } from '@/lib/useCollapsingHeader';
 import { useScreenLoad } from '@/lib/useScreenLoad';
 import { toLocalIsoDate, addMonthsToIsoDate } from '@/lib/date';
 import { formatMaskableMoney } from '@/lib/money';
-import { weekdayDayMonth } from '@/lib/dateLabels';
-import { formatReturnPct, ageLabel, INVESTMENT_KIND_LABEL } from '@/lib/investment';
+import { weekdayDayMonth, dayMonthYear } from '@/lib/dateLabels';
+import { formatReturnPct, ageLabel, estimatedValue, INVESTMENT_KIND_LABEL } from '@/lib/investment';
 import { investHref, withdrawHref } from '@/lib/investRoutes';
 import { CURRENT_PERIOD } from '@/lib/period';
 import {
@@ -351,6 +351,7 @@ export default function InvestmentsScreen() {
                     <HoldingRow
                       key={holding.id}
                       holding={holding}
+                      today={today}
                       masked={hideAmounts}
                       onPress={() => setSummary(holding.account)}
                       divider={i > 0}
@@ -366,6 +367,7 @@ export default function InvestmentsScreen() {
                       <HoldingRow
                         key={holding.id}
                         holding={holding}
+                        today={today}
                         masked={hideAmounts}
                         onPress={() => setSummary(holding.account)}
                         divider={i > 0}
@@ -495,19 +497,27 @@ const years = (days: number) => {
 
 function HoldingRow({
   holding,
+  today,
   masked,
   onPress,
   divider,
 }: {
   holding: Holding;
+  today: string;
   masked: boolean;
   onPress: () => void;
   divider: boolean;
 }) {
   const cur = holding.account.currency;
+  const estimate = estimatedValue(holding.account, today);
+  const maturity = holding.account.investment?.maturityDate;
   const sub = [
     holding.kind ? INVESTMENT_KIND_LABEL[holding.kind] : null,
     holding.ageDays == null ? 'No value yet' : ageLabel(holding.ageDays),
+    estimate
+      ? `≈ ${formatMaskableMoney(estimate.valueMinor, { currency: cur, masked })} at ${estimate.rateBp / 100}%`
+      : null,
+    maturity ? `${maturity <= today ? 'Matured' : 'Matures'} ${dayMonthYear(maturity)}` : null,
   ]
     .filter(Boolean)
     .join(' · ');

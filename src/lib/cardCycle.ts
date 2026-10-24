@@ -110,6 +110,32 @@ export function buildCardCycle(input: CardCycleInput): CardCycle {
   };
 }
 
+/**
+ * Reads the minimum-due fields from a form: a share of the statement in percent (0-100) and the least it can
+ * be, either or both empty. Anything invalid returns the message to show under the form.
+ */
+export function parseMinDue(
+  pctText: string,
+  floorText: string
+): { minDueBp: number | null; minDueFloorMinor: number | null } | { error: string } {
+  const p = pctText.trim();
+  const f = floorText.trim();
+  let minDueBp: number | null = null;
+  let minDueFloorMinor: number | null = null;
+  if (p) {
+    const pct = Number(p);
+    if (!Number.isFinite(pct) || pct < 0 || pct > 100)
+      return { error: 'Minimum due is a share of the statement, from 0 to 100%' };
+    minDueBp = Math.round(pct * 100);
+  }
+  if (f) {
+    const floor = Math.round(Number(f) * 100);
+    if (!Number.isFinite(floor) || floor < 0) return { error: 'Enter the least the minimum due can be' };
+    minDueFloorMinor = floor;
+  }
+  return { minDueBp, minDueFloorMinor };
+}
+
 /** Whether a day of the month is a valid statement or due day. */
 export function isCycleDay(n: number): boolean {
   return Number.isInteger(n) && n >= 1 && n <= 31;
