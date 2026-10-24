@@ -38,6 +38,7 @@ import { usePrivacy } from '@/theme/PrivacyContext';
 import { isSavingsEntry } from '@/lib/privateSummary';
 import { recurringRulesInCurrency } from '@/lib/recurringScope';
 import { savingsAccountIdsOf } from '@/lib/account';
+import { investRole, investmentIdsOf } from '@/lib/investment';
 import { parentNameOf } from '@/lib/categoryLabel';
 import { ModalSheet } from '@/components/ModalSheet';
 import { weekdayDayMonth } from '@/lib/dateLabels';
@@ -95,6 +96,7 @@ export default function RecurringScreen() {
   const { hideAmounts } = usePrivacy();
   const categoriesById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
   const savingsIds = useMemo(() => savingsAccountIdsOf(accounts), [accounts]);
+  const investIds = useMemo(() => investmentIdsOf(accounts), [accounts]);
   const isHidden = (r: RecurringRule) => hideAmounts && isSavingsEntry(r, categoriesById, savingsIds);
   const accountName = (id: string) => accounts.find((a) => a.id === id)?.name ?? '—';
 
@@ -231,6 +233,7 @@ export default function RecurringScreen() {
                       category={rule.categoryId ? categoriesById.get(rule.categoryId) : undefined}
                       parentName={parentNameOf(rule.categoryId, categoriesById)}
                       masked={isHidden(rule)}
+                      investRole={investRole(rule, investIds)}
                       accountName={accountName}
                       index={i}
                       onTogglePause={() => void togglePause(rule)}
@@ -265,6 +268,7 @@ export default function RecurringScreen() {
                       category={rule.categoryId ? categoriesById.get(rule.categoryId) : undefined}
                       parentName={parentNameOf(rule.categoryId, categoriesById)}
                       masked={isHidden(rule)}
+                      investRole={investRole(rule, investIds)}
                       accountName={accountName}
                       index={i}
                       onTogglePause={() => void togglePause(rule)}
@@ -339,6 +343,7 @@ export default function RecurringScreen() {
                 rule={{ ...rule, nextRunDate: mark.key.slice(rule.id.length + 1) }}
                 category={rule.categoryId ? categoriesById.get(rule.categoryId) : undefined}
                 parentName={parentNameOf(rule.categoryId, categoriesById)}
+                investRole={investRole(rule, investIds)}
                 accountName={accountName}
                 index={index}
                 onTogglePause={() => void togglePause(rule)}

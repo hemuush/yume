@@ -88,7 +88,7 @@ export async function addValuation(
     accountId,
   ]);
   if (!account) throw new Error('Account not found');
-  if (!account.tracked) throw new Error('Turn on "Track its value" for this account first.');
+  if (!account.tracked) throw new Error('Make this account an investment first.');
   // Check-then-write in one transaction, so two quick saves for the same day can't both insert.
   let savedId = '';
   await db.withTransactionAsync(async (tx) => {
@@ -154,4 +154,47 @@ export async function deleteValuation(id: string): Promise<RowSnapshot> {
 export async function restoreValuation(snapshot: RowSnapshot): Promise<void> {
   const db = await getDb();
   await restoreRow(db, snapshot);
+}
+
+/** One value update of a tracked account, with the update before it (for "+₹4,400 since 12 Sep"). */
+export interface ValuationEvent {
+  id: string;
+  accountId: string;
+  date: string;
+  valueMinor: number;
+  previousMinor: number | null;
+  previousDate: string | null;
+}
+
+/** Value updates of tracked accounts dated within a range, newest first: Activity's Invest chip lists them. */
+export async function listValuationEvents(fromDate: string, toDate: string): Promise<ValuationEvent[]> {
+  assertValidIsoDate(fromDate);
+  assertValidIsoDate(toDate);
+  const db = await getDb();
+  const rows = await db.getAllAsync<{
+    id: string;
+    account_id: string;
+    date: string;
+    value_minor: number;
+    prev_value: number | null;
+    prev_date: string | null;
+  }>(
+    `SELECT v.id, v.account_id, v.date, v.value_minor,
+       (SELECT p.value_minor FROM account_valuations p
+         WHERE p.account_id = v.account_id AND p.date < v.date ORDER BY p.date DESC LIMIT 1) AS prev_value,
+       (SELECT p.date FROM account_valuations p
+         WHERE p.account_id = v.account_id AND p.date < v.date ORDER BY p.date DESC LIMIT 1) AS prev_date
+     FROM account_valuations v JOIN accounts a ON a.id = v.account_id
+     WHERE a.tracked = 1 AND v.date >= ? AND v.date <= ?
+     ORDER BY v.date DESC, v.created_at DESC, v.rowid DESC`,
+    [fromDate, toDate]
+  );
+  return rows.map((r) => ({
+    id: r.id,
+    accountId: r.account_id,
+    date: r.date,
+    valueMinor: r.value_minor,
+    previousMinor: r.prev_value,
+    previousDate: r.prev_date,
+  }));
 }

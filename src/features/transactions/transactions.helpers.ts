@@ -1,4 +1,6 @@
 import { Account, Category, Transaction } from '@/types';
+import { investRole } from '@/lib/investment';
+import type { ValuationEvent } from '@/db/valuations';
 import { getCachedCurrency } from '@/db/settings';
 import type { ActivityFilter } from './activityFilter';
 import { toLocalIsoDate, parseLocalIsoDate, addDaysToIsoDate } from '@/lib/date';
@@ -81,6 +83,26 @@ export function weekCompareLabel(week: { start: string; end: string }, todayIso:
  * Consecutive same-date runs — relies on `txs` already being date-sorted (the query's own ORDER BY), not a
  * separate grouping pass over unsorted data.
  */
+const NO_INVESTMENTS: ReadonlySet<string> = new Set();
+
+/** A value update of an investment, shown as a quiet line on its day under Activity's Invest chip. */
+export type ValueNote = ValuationEvent;
+
+/** Days with entries, plus the days that have only a value update; newest first, each with its notes. */
+export function groupWithNotes(
+  groups: { date: string; items: Transaction[] }[],
+  notes: ValueNote[]
+): { date: string; items: Transaction[]; notes: ValueNote[] }[] {
+  const byDate = new Map<string, { date: string; items: Transaction[]; notes: ValueNote[] }>();
+  for (const g of groups) byDate.set(g.date, { date: g.date, items: g.items, notes: [] });
+  for (const n of notes) {
+    const day = byDate.get(n.date) ?? { date: n.date, items: [], notes: [] };
+    day.notes.push(n);
+    byDate.set(n.date, day);
+  }
+  return [...byDate.values()].sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+}
+
 export function groupByDate(txs: Transaction[]): { date: string; items: Transaction[] }[] {
   const groups: { date: string; items: Transaction[] }[] = [];
   for (const tx of txs) {
@@ -128,7 +150,8 @@ export function periodHeading(input: {
 export function filterActivity(
   transactions: Transaction[],
   filter: ActivityFilter,
-  categories: Category[]
+  categories: Category[],
+  investmentIds: ReadonlySet<string> = NO_INVESTMENTS
 ): Transaction[] {
   const parentOf = new Map(categories.map((c) => [c.id, c.parentId]));
   const accountIds = new Set(filter.accountIds);
@@ -138,7 +161,12 @@ export function filterActivity(
     // A refund belongs with spending (it lowers it), so "Spent" shows it and "Income" doesn't.
     const filterAs = t.isRefund ? 'expense' : t.type;
     if (filter.expenseLabel && (filterAs !== 'expense' || t.note.trim() !== expenseLabel)) return false;
-    if (filter.type !== 'all' && filterAs !== filter.type) return false;
+    // Invest shows the transfers that touch an investment; Transfer keeps the other transfers between own accounts.
+    const role = investRole(t, investmentIds);
+    if (filter.type === 'invest') {
+      if (!role) return false;
+    } else if (filter.type !== 'all' && (filterAs !== filter.type || (filterAs === 'transfer' && role)))
+      return false;
     if (
       accountIds.size > 0 &&
       !accountIds.has(t.accountId) &&

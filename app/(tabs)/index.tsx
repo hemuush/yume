@@ -1,4 +1,6 @@
 import { useLocalDayRefresh } from '@/lib/useLocalDayRefresh';
+import { investHref, withdrawHref } from '@/lib/investRoutes';
+import { investRole, investmentIdsOf } from '@/lib/investment';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, StyleSheet, RefreshControl } from 'react-native';
 import { Text } from '@/components/Text';
@@ -458,6 +460,7 @@ export default function DashboardScreen() {
   };
   const accountName = (id: string | null | undefined) => (id ? accountsById.get(id)?.name : undefined);
   const savingsIds = savingsAccountIdsOf(historyAccounts);
+  const investIds = investmentIdsOf(historyAccounts);
   const isSavingsTransfer = (tx: Transaction) =>
     tx.type === 'transfer' &&
     (savingsIds.has(tx.accountId) || (!!tx.toAccountId && savingsIds.has(tx.toAccountId)));
@@ -485,6 +488,7 @@ export default function DashboardScreen() {
   const upcoming = useMemo(() => {
     const cat = (id: string | null) => (id ? categoriesById.get(id) : undefined);
     return buildUpcomingItems({
+      investmentIds: investmentIdsOf(historyAccounts),
       loans: buildLoansSummary(loans, loanProgress).rows.flatMap((row) =>
         row.direction === 'borrowed' && row.nextDueDate && row.nextEmiMinor != null
           ? [{ id: row.id, name: row.name, nextDueDate: row.nextDueDate, nextEmiMinor: row.nextEmiMinor }]
@@ -700,6 +704,7 @@ export default function DashboardScreen() {
                         accountName={accountName(tx.accountId)}
                         toAccountName={accountName(tx.toAccountId)}
                         savingsTransfer={isSavingsTransfer(tx)}
+                        investRole={investRole(tx, investIds)}
                         divider={i > 0}
                       />
                     </Animated.View>
@@ -739,6 +744,14 @@ export default function DashboardScreen() {
           setEditAccount(acc);
         }}
         onChanged={() => load(cursor)}
+        onInvest={(acc) => {
+          setSummaryAccount(null);
+          router.push(investHref(acc));
+        }}
+        onWithdraw={(acc) => {
+          setSummaryAccount(null);
+          router.push(withdrawHref(acc));
+        }}
         onPayBill={(acc, amountMinor) => {
           setSummaryAccount(null);
           router.push(payCardRoute(acc.id, amountMinor));

@@ -1,10 +1,10 @@
 import { found } from './found';
 import { AccountRow } from './rows';
-import { getDb } from './client';
+import { getDb, type AppDb } from './client';
 import { newId } from '@/lib/id';
 import { captureRow, restoreRow, RowSnapshot } from './undoSnapshot';
 import { getDefaultCurrency } from './settings';
-import { Account } from '@/types';
+import { Account, InvestmentKind } from '@/types';
 import { toLocalIsoDate, addDaysToIsoDate } from '@/lib/date';
 import { isCycleDay } from '@/lib/cardCycle';
 import { ledgerFlowSql, valuationAdjSql, latestValuedAtSql, latestValueSql } from './valuationSql';
@@ -107,6 +107,8 @@ function rowToAccount(row: AccountRow & BalanceColumns): Account {
       gainMinor: valuedAt ? adj + (row.inv_income ?? 0) - (row.inv_expense ?? 0) : null,
       valuedAt,
       lastValueMinor: valuedAt ? (row.inv_last_value ?? null) : null,
+      kind: (row.investment_kind as InvestmentKind | null) ?? null,
+      fundingAccountId: row.funding_account_id ?? null,
     };
   }
   return account;
@@ -134,6 +136,44 @@ export async function listAccounts(includeArchived = false): Promise<Account[]> 
   return rows.map(rowToAccount);
 }
 
+const INVESTMENT_KINDS: readonly InvestmentKind[] = [
+  'mutual_fund',
+  'stocks',
+  'gold',
+  'fixed_deposit',
+  'ppf_epf',
+  'other',
+];
+
+/**
+ * What an investment's kind and funding account are allowed to be. Neither means anything on an account that is
+ * not an investment, so both clear there. Funding must be a plain spendable account of the same currency (a
+ * transfer cannot cross currencies), never the investment itself, a card or another investment.
+ */
+async function resolveInvestmentLinks(
+  db: AppDb,
+  accountId: string | null,
+  currency: string,
+  isInvestment: boolean,
+  kind: InvestmentKind | null | undefined,
+  fundingAccountId: string | null | undefined
+): Promise<{ kind: InvestmentKind | null; fundingAccountId: string | null }> {
+  if (!isInvestment) return { kind: null, fundingAccountId: null };
+  if (kind != null && !INVESTMENT_KINDS.includes(kind)) throw new Error('Choose a valid kind of investment.');
+  if (fundingAccountId == null) return { kind: kind ?? null, fundingAccountId: null };
+  if (fundingAccountId === accountId) throw new Error('An investment cannot be paid from itself.');
+  const funding = await db.getFirstAsync<{ type: string; currency: string; tracked: number }>(
+    'SELECT type, currency, tracked FROM accounts WHERE id = ?',
+    [fundingAccountId]
+  );
+  if (!funding) throw new Error('That funding account no longer exists.');
+  if (funding.type === 'credit_card' || funding.tracked)
+    throw new Error('Choose a bank, cash or wallet account to pay from.');
+  if (funding.currency !== currency)
+    throw new Error(`Money can only come from an account in ${currency}, the same as this investment.`);
+  return { kind: kind ?? null, fundingAccountId };
+}
+
 /** A card's statement and due days: both or neither, each a day of the month (1–31). */
 function assertCycleDays(statementDay?: number | null, dueDay?: number | null): void {
   const s = statementDay ?? null;
@@ -154,8 +194,12 @@ export async function createAccount(input: {
   statementDay?: number | null;
   dueDay?: number | null;
   interestRateAnnualBp?: number | null;
-  /** A savings account whose value you update by hand. Ignored for any other type. */
+  /** A savings account whose value you update by hand (an investment). Ignored for any other type. */
   tracked?: boolean;
+  /** An investment's kind; ignored unless tracked. */
+  investmentKind?: InvestmentKind | null;
+  /** The account an investment's money normally comes from; ignored unless tracked. */
+  fundingAccountId?: string | null;
 }): Promise<Account> {
   if (!input.name.trim()) {
     throw new Error('Account name is required');
@@ -171,10 +215,19 @@ export async function createAccount(input: {
   const db = await getDb();
   const id = newId();
   const currency = input.currency ?? (await getDefaultCurrency());
+  const isInvestment = input.type === 'savings' && !!input.tracked;
+  const links = await resolveInvestmentLinks(
+    db,
+    null,
+    currency,
+    isInvestment,
+    input.investmentKind,
+    input.fundingAccountId
+  );
   await db.runAsync(
     `INSERT INTO accounts
-      (id, name, type, currency, opening_balance_minor, credit_limit_minor, statement_day, due_day, interest_rate_annual_bp, tracked)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      (id, name, type, currency, opening_balance_minor, credit_limit_minor, statement_day, due_day, interest_rate_annual_bp, tracked, investment_kind, funding_account_id)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       id,
       input.name.trim(),
@@ -185,7 +238,9 @@ export async function createAccount(input: {
       input.statementDay ?? null,
       input.dueDay ?? null,
       input.interestRateAnnualBp ?? null,
-      input.type === 'savings' && input.tracked ? 1 : 0,
+      isInvestment ? 1 : 0,
+      links.kind,
+      links.fundingAccountId,
     ]
   );
   const row = await db.getFirstAsync<AccountRow>('SELECT * FROM accounts WHERE id = ?', [id]);
@@ -202,6 +257,10 @@ interface UpdateAccountInput {
   dueDay?: number | null;
   /** Track a savings account's value by hand. Omitted keeps the current setting; any other type is never tracked. */
   tracked?: boolean;
+  /** An investment's kind. Omitted keeps the current one; null clears it. Always cleared when not tracked. */
+  investmentKind?: InvestmentKind | null;
+  /** The account its money normally comes from. Omitted keeps the current one; null clears it. */
+  fundingAccountId?: string | null;
 }
 
 /**
@@ -252,9 +311,12 @@ export async function updateAccount(id: string, input: UpdateAccountInput): Prom
     }
   }
   const isCard = input.type === 'credit_card';
-  const current = await db.getFirstAsync<{ tracked: number }>('SELECT tracked FROM accounts WHERE id = ?', [
-    id,
-  ]);
+  const current = await db.getFirstAsync<{
+    tracked: number;
+    currency: string;
+    investment_kind: string | null;
+    funding_account_id: string | null;
+  }>('SELECT tracked, currency, investment_kind, funding_account_id FROM accounts WHERE id = ?', [id]);
   const tracked =
     input.type !== 'savings'
       ? 0
@@ -263,6 +325,16 @@ export async function updateAccount(id: string, input: UpdateAccountInput): Prom
         : input.tracked
           ? 1
           : 0;
+  const links = await resolveInvestmentLinks(
+    db,
+    id,
+    current?.currency ?? (await getDefaultCurrency()),
+    !!tracked,
+    input.investmentKind === undefined
+      ? ((current?.investment_kind as InvestmentKind | null) ?? null)
+      : input.investmentKind,
+    input.fundingAccountId === undefined ? (current?.funding_account_id ?? null) : input.fundingAccountId
+  );
   await db.withTransactionAsync(async (tx) => {
     if (isCard || tracked) {
       const reserved = await tx.getFirstAsync<{ n: number }>(
@@ -275,7 +347,7 @@ export async function updateAccount(id: string, input: UpdateAccountInput): Prom
         );
     }
     await tx.runAsync(
-      `UPDATE accounts SET name = ?, type = ?, opening_balance_minor = ?, credit_limit_minor = ?, statement_day = ?, due_day = ?, tracked = ? WHERE id = ?`,
+      `UPDATE accounts SET name = ?, type = ?, opening_balance_minor = ?, credit_limit_minor = ?, statement_day = ?, due_day = ?, tracked = ?, investment_kind = ?, funding_account_id = ? WHERE id = ?`,
       [
         input.name.trim(),
         input.type,
@@ -284,6 +356,8 @@ export async function updateAccount(id: string, input: UpdateAccountInput): Prom
         isCard ? (input.statementDay ?? null) : null,
         isCard ? (input.dueDay ?? null) : null,
         tracked,
+        links.kind,
+        links.fundingAccountId,
         id,
       ]
     );

@@ -32,6 +32,7 @@ export function rowToTransaction(row: TransactionRow): Transaction {
     loanPaymentId: row.loan_payment_id,
     splitId: row.split_id ?? null,
     isRefund: !!row.is_refund,
+    ruleId: row.rule_id ?? null,
     dayRank: row.day_rank ?? null,
     splitTotalMinor: row.split_total_minor ?? null,
     createdAt: row.created_at,
@@ -52,6 +53,8 @@ export interface CreateTransactionInput {
   splitId?: string | null;
   /** Money back for a purchase: must be type 'income' against an expense category. */
   isRefund?: boolean;
+  /** Set by the recurring-rule runner on the entries it posts, so Activity can call a SIP a SIP. */
+  ruleId?: string | null;
 }
 
 /**
@@ -153,8 +156,8 @@ export async function insertTransactionRow(db: AppDb, input: CreateTransactionIn
   const id = newId();
   await db.runAsync(
     `INSERT INTO transactions
-      (id, type, account_id, to_account_id, category_id, amount_minor, date, note, payment_mode, loan_payment_id, split_id, is_refund)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      (id, type, account_id, to_account_id, category_id, amount_minor, date, note, payment_mode, loan_payment_id, split_id, is_refund, rule_id)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       id,
       input.type,
@@ -168,6 +171,7 @@ export async function insertTransactionRow(db: AppDb, input: CreateTransactionIn
       input.loanPaymentId ?? null,
       input.splitId ?? null,
       input.isRefund ? 1 : 0,
+      input.ruleId ?? null,
     ]
   );
   return id;

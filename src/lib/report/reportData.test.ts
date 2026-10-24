@@ -176,3 +176,44 @@ describe('computeReport', () => {
     expect(r.spendByCategory).toEqual([]);
   });
 });
+
+describe('investing entries in the report', () => {
+  const withFund = (transactions: Transaction[]) => ({
+    ...base(transactions, sep),
+    accounts: [
+      acct({}),
+      acct({
+        id: 'fund',
+        name: 'Nifty 50',
+        type: 'savings',
+        investment: {
+          investedMinor: 0,
+          takenOutMinor: 0,
+          gainMinor: null,
+          valuedAt: null,
+          lastValueMinor: null,
+        },
+      }),
+    ],
+  });
+  it('words a SIP and a withdrawal in the entry list and keeps them out of spending', () => {
+    const r = computeReport(
+      withFund([
+        tx({ type: 'transfer', categoryId: null, toAccountId: 'fund', amountMinor: 500000, ruleId: 'r1' }),
+        tx({
+          type: 'transfer',
+          categoryId: null,
+          accountId: 'fund',
+          toAccountId: 'a1',
+          amountMinor: 100000,
+          date: '2026-09-02',
+        }),
+      ])
+    );
+    expect(r.spentMinor).toBe(0);
+    expect(r.entries.map((e) => [e.title, e.detail])).toEqual([
+      ['Invested in Nifty 50', 'SIP · from HDFC'],
+      ['Withdrawn from Nifty 50', 'to HDFC'],
+    ]);
+  });
+});

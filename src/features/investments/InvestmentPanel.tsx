@@ -30,6 +30,8 @@ export function InvestmentPanel({
   masked,
   onUpdate,
   onEdit,
+  onWithdraw,
+  onAddSip,
 }: {
   account: Account;
   valuations: Valuation[] | null;
@@ -37,6 +39,10 @@ export function InvestmentPanel({
   masked: boolean;
   onUpdate: () => void;
   onEdit: (valuation: Valuation) => void;
+  /** Take money out of this investment (Add, opened as a transfer back). */
+  onWithdraw?: () => void;
+  /** Set up a monthly SIP into it. */
+  onAddSip?: () => void;
 }) {
   const inv = account.investment;
   if (!inv) return null;
@@ -138,6 +144,28 @@ export function InvestmentPanel({
       )}
 
       <PrimaryButton title="Update value" variant="secondary" onPress={onUpdate} style={styles.update} />
+      {(onWithdraw || onAddSip) && (
+        <View style={styles.moreRow}>
+          {onAddSip && (
+            <PrimaryButton
+              compact
+              title="Add a SIP"
+              variant="secondary"
+              onPress={onAddSip}
+              style={styles.more}
+            />
+          )}
+          {onWithdraw && (
+            <PrimaryButton
+              compact
+              title="Withdraw"
+              variant="secondary"
+              onPress={onWithdraw}
+              style={styles.more}
+            />
+          )}
+        </View>
+      )}
     </>
   );
 }
@@ -191,5 +219,7 @@ const styles = StyleSheet.create({
   rowMeta: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 2 },
   empty: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textMuted, marginTop: 8 },
   sip: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary, marginTop: 12 },
+  moreRow: { flexDirection: 'row', gap: 8, marginTop: 8 },
+  more: { flex: 1 },
   update: { marginTop: 12 },
 });

@@ -1,4 +1,7 @@
 import { MonthlyPlanCheck } from '@/features/plan/MonthlyPlanCheck';
+import { investRole, investRuleTitle, investmentIdsOf } from '@/lib/investment';
+import { InvestmentsCard } from '@/features/investments/InvestmentsCard';
+import { buildPortfolio, monthlySipTotal, sipsOf, type Portfolio } from '@/lib/portfolio';
 import { LoanComparison } from '@/features/loans/LoanComparison';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { View, Pressable, StyleSheet, useWindowDimensions } from 'react-native';
@@ -113,6 +116,9 @@ interface PlanData {
   whatIf: { categoryId: string; categoryName: string; avgMonthlyMinor: number } | null;
   habit: HabitState | null;
   dailyGoalMinor: number | null;
+  investments: Portfolio;
+  /** What the active SIPs add up to a month, in the default currency. */
+  sipMonthlyMinor: number;
 }
 
 /** Plan previews open item sheets directly; collection links keep the full-screen routes. */
@@ -212,6 +218,14 @@ export default function PlanScreen() {
     const accountName = (id: string | null) => (id ? accountsById.get(id)?.name : undefined) ?? '—';
     const loansSummary = buildLoansSummary(loans, progress);
     // Same label Home's Upcoming list uses for a rule.
+    const investIds = investmentIdsOf(accounts);
+    const ruleLabel = (r: (typeof rules)[number]) => {
+      const role = investRole(r, investIds);
+      if (role) return investRuleTitle(role, accountName(r.accountId), accountName(r.toAccountId));
+      return r.type === 'transfer'
+        ? `${accountName(r.accountId)} → ${accountName(r.toAccountId)}`
+        : r.note || categoryLabelOf(r.categoryId) || 'Recurring';
+    };
     const toRuleInput = (r: (typeof rules)[number], type: 'income' | 'expense' | 'transfer' = r.type) => ({
       id: r.id,
       type,
@@ -224,10 +238,7 @@ export default function PlanScreen() {
       scheduledDate: r.scheduledDate,
       endDate: r.endDate,
       amountMinor: r.amountMinor,
-      label:
-        r.type === 'transfer'
-          ? `${accountName(r.accountId)} → ${accountName(r.toAccountId)}`
-          : r.note || categoryLabelOf(r.categoryId) || 'Recurring',
+      label: ruleLabel(r),
     });
     const visibleRules = recurringRulesInCurrency(
       rules.filter((r) => !hideAmounts || !isSavingsEntry(r, categoriesById, savingsIds)),
@@ -263,6 +274,8 @@ export default function PlanScreen() {
     );
 
     setData({
+      investments: buildPortfolio(accounts, currency, today),
+      sipMonthlyMinor: monthlySipTotal(sipsOf(rules, accounts), accounts, currency),
       hideAmounts,
       currency,
       accounts,
@@ -565,6 +578,18 @@ export default function PlanScreen() {
                       onGoal={(id) => openDetail('goal', id)}
                       onAdd={() => openDetail('new-goal', '')}
                       limit={data.goals.length + 1}
+                    />
+                  </Section>
+                  <Section
+                    compact
+                    title="Investments"
+                    actionLabel="Open investments"
+                    onSeeAll={() => open('/investments')}
+                  >
+                    <InvestmentsCard
+                      portfolio={data.investments}
+                      monthlySipMinor={data.sipMonthlyMinor}
+                      onOpen={() => open('/investments')}
                     />
                   </Section>
                   <Section compact title="Ideas">

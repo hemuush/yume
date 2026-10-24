@@ -1,4 +1,5 @@
 import type { Account, Category, Loan, Transaction } from '@/types';
+import { investLines, investRole, investmentIdsOf } from '@/lib/investment';
 import type { PersonWithBalance } from '@/db/people';
 import {
   ReportPeriod,
@@ -245,6 +246,7 @@ export function computeReport(input: ReportInput): Report {
   }));
 
   // ---- entries, with the words each row shows
+  const investmentIds = investmentIdsOf(accounts);
   const accountName = (id: string | null) => (id ? (accountById.get(id)?.name ?? 'Deleted account') : '');
   const entryOf = (t: Transaction): ReportEntry => {
     const label = categoryLabel(categoryById, t.categoryId);
@@ -253,6 +255,18 @@ export function computeReport(input: ReportInput): Report {
     const cat = t.categoryId ? categoryById.get(t.categoryId) : undefined;
     const color =
       (cat?.parentId ? categoryById.get(cat.parentId)?.color : undefined) ?? cat?.color ?? '#CFC8B6';
+    const role = investRole(t, investmentIds);
+    if (role) {
+      const lines = investLines(t, role, (id) => accountName(id));
+      return {
+        tx: t,
+        title: lines.title,
+        detail: lines.sub,
+        category: 'Investment',
+        color: '#CFC8B6',
+        currency: currencyOf(t),
+      };
+    }
     if (t.type === 'transfer') {
       return {
         tx: t,
@@ -314,7 +328,7 @@ export function computeReport(input: ReportInput): Report {
     .filter((a) => a.currency === currency && (!a.archived || activity.has(a.id)))
     .map((a) => ({
       name: a.name,
-      type: a.type.replace('_', ' '),
+      type: a.investment ? 'investment' : a.type.replace('_', ' '),
       balanceMinor: a.currentBalanceMinor,
       spentMinor: Math.max(0, activity.get(a.id)?.spent ?? 0),
       incomeMinor: activity.get(a.id)?.income ?? 0,

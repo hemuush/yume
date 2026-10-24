@@ -1,4 +1,5 @@
 import { useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
+import { investRole, investmentIdsOf } from '@/lib/investment';
 import { View, StyleSheet, Pressable } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
@@ -46,6 +47,9 @@ export function AccountSummarySheet({
   onSeeAll,
   onPayBill,
   onChanged,
+  onInvest,
+  onWithdraw,
+  onAddSip,
 }: {
   account: Account | null;
   cursor: PeriodCursor;
@@ -61,6 +65,11 @@ export function AccountSummarySheet({
   onPayBill?: (account: Account, amountMinor: number) => void;
   /** A value update was saved or deleted — the caller reloads its accounts. */
   onChanged?: () => void;
+  /** An investment's "Invest": Add opened as a transfer into it. Without it the footer keeps its old action. */
+  onInvest?: (account: Account) => void;
+  onWithdraw?: (account: Account) => void;
+  /** Opens the recurring-entry sheet for a SIP into this investment. */
+  onAddSip?: (account: Account) => void;
 }) {
   // Home reloads `accounts` after a value update; follow it so this sheet shows the new figures.
   const account = (accountProp && accounts.find((a) => a.id === accountProp.id)) || accountProp;
@@ -215,8 +224,8 @@ export function AccountSummarySheet({
               style={styles.footerBtn}
             />
             <PrimaryButton
-              title={isSavings ? 'Transfer from here' : 'Add expense here'}
-              onPress={() => onAdd(account)}
+              title={inv && onInvest ? 'Invest' : isSavings ? 'Transfer from here' : 'Add expense here'}
+              onPress={() => (inv && onInvest ? onInvest(account) : onAdd(account))}
               style={styles.footerBtn}
             />
           </View>
@@ -260,6 +269,8 @@ export function AccountSummarySheet({
             masked={masked}
             onUpdate={() => setValueSheet({ valuation: null })}
             onEdit={(v) => setValueSheet({ valuation: v })}
+            onWithdraw={onWithdraw ? () => onWithdraw(account) : undefined}
+            onAddSip={onAddSip ? () => onAddSip(account) : undefined}
           />
         )}
 
@@ -384,6 +395,7 @@ export function AccountSummarySheet({
                       (id) => accounts.find((a) => a.id === id)?.type === 'savings'
                     )
                   }
+                  investRole={investRole(tx, investmentIdsOf(accounts))}
                   divider={i > 0}
                 />
               ))}

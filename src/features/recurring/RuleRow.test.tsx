@@ -76,3 +76,26 @@ it('uses the account currency and retains the readable schedule line', () => {
   expect(text).toContain('From SBI');
   act(() => tree.unmount());
 });
+
+describe('a recurring transfer that touches an investment', () => {
+  const sip = { ...rule, type: 'transfer', toAccountId: 'fund', categoryId: null, note: '' } as RecurringRule;
+  const names = (id: string | null | undefined) => (id === 'fund' ? 'Nifty 50' : 'SBI');
+  const shown = (investRole: 'invest' | 'withdraw' | null) => {
+    const { tree } = render({ rule: sip, accountName: names, investRole });
+    return tree.root.findAllByType(Text).map((t) => [].concat(t.props.children).join(''));
+  };
+
+  it('is listed as a SIP, naming the holding and where the money comes from', () => {
+    const lines = shown('invest');
+    expect(lines).toContain('SIP · Nifty 50');
+    expect(lines.some((t) => t.includes('From SBI'))).toBe(true);
+  });
+  it('is a withdrawal when money leaves the investment', () => {
+    expect(shown('withdraw')).toContain('Withdraw · SBI');
+  });
+  it('stays a plain transfer otherwise', () => {
+    const lines = shown(null);
+    expect(lines).toContain('SBI → Nifty 50');
+    expect(lines.some((t) => t.endsWith('Transfer'))).toBe(true);
+  });
+});
