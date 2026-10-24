@@ -4,6 +4,7 @@ import { View } from 'react-native';
 import { Text } from '@/components/Text';
 import {
   updateAccount,
+  listAccounts,
   archiveAccount,
   unarchiveAccount,
   deleteAccount,
@@ -12,10 +13,9 @@ import {
 } from '@/db/ledger';
 import { toMinor, toMajor, formatMoney, formatMaskableMoney } from '@/lib/money';
 import { usePrivacy } from '@/theme/PrivacyContext';
-import { Account, AccountType } from '@/types';
+import type { Account, InvestmentKind } from '@/types';
 import { ModalSheet, SheetLink } from '@/components/ModalSheet';
 import { DraftCard } from '@/components/DraftCard';
-import { SwitchRow } from '@/components/SwitchRow';
 import { modalFooterStyles as f } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
 import { accountHue, accountIcon } from '@/lib/account';
@@ -27,7 +27,8 @@ import { Chip } from '@/components/Chip';
 import { useUndoToast } from '@/components/UndoToast';
 import { haptics } from '@/lib/haptics';
 import { styles } from './profile.styles';
-import { ACCOUNT_TYPES } from './profile.constants';
+import { ACCOUNT_CHOICES, choiceOf, typeOfChoice, type AccountChoice } from './profile.constants';
+import { InvestmentFields, fundingChoices } from './InvestmentFields';
 import { errorMessage } from '@/lib/errorMessage';
 import { CardCycleFields } from './CardCycleFields';
 import { parseCycleDays } from '@/lib/cardCycle';
@@ -54,12 +55,16 @@ export function AccountDetailModal({
     await action();
   });
   const [name, setName] = useState('');
-  const [type, setType] = useState<AccountType>('bank');
+  const [choice, setChoice] = useState<AccountChoice>('bank');
+  const type = typeOfChoice(choice);
+  const tracked = choice === 'investment';
+  const [kind, setKind] = useState<InvestmentKind | null>(null);
+  const [fundingId, setFundingId] = useState<string | null>(null);
+  const [allAccounts, setAllAccounts] = useState<Account[]>([]);
   const [opening, setOpening] = useState('0');
   const [creditLimit, setCreditLimit] = useState('');
   const [statementDay, setStatementDay] = useState('');
   const [dueDay, setDueDay] = useState('');
-  const [tracked, setTracked] = useState(false);
   const [txCount, setTxCount] = useState<number | null>(null);
   // The usage check failed: we can't tell whether the account has history, so only the safe action
   // (archive) is offered, never delete.
@@ -71,16 +76,22 @@ export function AccountDetailModal({
   useEffect(() => {
     if (!account) return;
     setName(account.name);
-    setType(account.type);
+    setChoice(choiceOf(account.type, !!account.investment));
+    setKind(account.investment?.kind ?? null);
+    setFundingId(account.investment?.fundingAccountId ?? null);
     setOpening(toMajor(account.openingBalanceMinor).toString());
     setCreditLimit(account.creditLimitMinor != null ? toMajor(account.creditLimitMinor).toString() : '');
     setStatementDay(account.statementDay != null ? String(account.statementDay) : '');
     setDueDay(account.dueDay != null ? String(account.dueDay) : '');
-    setTracked(!!account.investment);
     setError(null);
     setTxCount(null);
     setTxCheckFailed(false);
     let cancelled = false;
+    listAccounts()
+      .then((list) => {
+        if (!cancelled) setAllAccounts(list);
+      })
+      .catch(() => {});
     getAccountTransactionCount(account.id)
       .then((n) => {
         if (!cancelled) setTxCount(n);
@@ -118,6 +129,19 @@ export function AccountDetailModal({
         setError(days.error);
         return;
       }
+      if (account.investment && !tracked) {
+        const proceed = await new Promise<boolean>((resolve) =>
+          showAlert(
+            'Stop tracking its value?',
+            'Its balance goes back to what your entries add up to. The value updates you saved are kept, in case you track it again.',
+            [
+              { text: 'Cancel', style: 'cancel', onPress: () => resolve(false) },
+              { text: 'Stop tracking', onPress: () => resolve(true) },
+            ]
+          )
+        );
+        if (!proceed) return;
+      }
       setSaving(true);
       try {
         await updateAccount(account.id, {
@@ -127,7 +151,9 @@ export function AccountDetailModal({
           creditLimitMinor,
           statementDay: days.statementDay,
           dueDay: days.dueDay,
-          tracked: type === 'savings' && tracked,
+          tracked,
+          investmentKind: tracked ? kind : null,
+          fundingAccountId: tracked ? fundingId : null,
         });
         onChanged();
       } catch (e) {
@@ -200,7 +226,7 @@ export function AccountDetailModal({
       { text: 'Delete', style: 'destructive', onPress: deleteNow },
     ]);
 
-  const trackingNow = type === 'savings' && tracked;
+  const trackingNow = tracked;
 
   // Calm-sheets layout: the account's own card, which retints as you change its type, then the form.
   // Archive/delete is a quiet link at the end, not a second button beside Save.
@@ -224,9 +250,9 @@ export function AccountDetailModal({
     >
       <DraftCard
         hue={accountHue(type, accent)}
-        icon={accountIcon(type)}
+        icon={accountIcon(type, tracked)}
         title={name.trim() || account.name}
-        kicker={ACCOUNT_TYPES.find((t) => t.value === type)?.label ?? ''}
+        kicker={ACCOUNT_CHOICES.find((t) => t.value === choice)?.label ?? ''}
         figure={formatMaskableMoney(account.currentBalanceMinor, {
           currency: account.currency,
           masked: hideSavings,
@@ -244,20 +270,25 @@ export function AccountDetailModal({
       <FormInput label="Name" value={name} onChangeText={setName} placeholder="e.g. HDFC Savings" />
       <Text style={styles.fieldLabel}>Type</Text>
       <View style={styles.chipRow}>
-        {ACCOUNT_TYPES.map((t) => (
-          <Chip key={t.value} label={t.label} active={type === t.value} onPress={() => setType(t.value)} />
+        {ACCOUNT_CHOICES.map((t) => (
+          <Chip
+            key={t.value}
+            label={t.label}
+            active={choice === t.value}
+            onPress={() => {
+              setChoice(t.value);
+              if (t.value !== 'investment') setFundingId(null);
+            }}
+          />
         ))}
       </View>
-      {type === 'savings' && (
-        <SwitchRow
-          title="Track its value"
-          hint={
-            tracked
-              ? 'Its balance is what you say it is worth; update it from the account sheet.'
-              : "For an index fund, stocks or gold: you update what it's worth."
-          }
-          value={tracked}
-          onChange={setTracked}
+      {choice === 'investment' && (
+        <InvestmentFields
+          kind={kind}
+          onKind={setKind}
+          fundingId={fundingId}
+          onFunding={setFundingId}
+          choices={fundingChoices(allAccounts, account.currency, account.id)}
         />
       )}
       <AmountField

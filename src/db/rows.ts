@@ -17,6 +17,8 @@ export interface AccountRow {
   archived: number;
   created_at: string;
   tracked: number;
+  investment_kind: string | null;
+  funding_account_id: string | null;
 }
 
 /** A row of `categories`. */
@@ -98,6 +100,8 @@ export interface TransactionRow {
   split_id: string | null;
   /** 1 on money back for a purchase (type 'income', expense category). */
   is_refund: number;
+  /** The recurring rule that posted this entry; null when typed in by hand. */
+  rule_id?: string | null;
   /** Manual position within its day (0 = top); null when never reordered. */
   day_rank?: number | null;
   /** Only on list queries: the whole split's total, when this row is a part. */

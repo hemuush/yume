@@ -12,7 +12,15 @@ import { nonOverlappingBudgets } from '@/lib/budgetScope';
  */
 
 export type PlanRoute =
-  '/budgets' | '/savings-goals' | '/recurring' | '/whatif' | '/loans' | '/people' | '/garden' | PayCardRoute;
+  | '/budgets'
+  | '/savings-goals'
+  | '/recurring'
+  | '/whatif'
+  | '/loans'
+  | '/people'
+  | '/garden'
+  | '/investments'
+  | PayCardRoute;
 
 /* ---------- Loans ---------- */
 

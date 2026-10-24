@@ -31,8 +31,11 @@ jest.mock('@/theme/PrivacyContext', () => ({ usePrivacy: () => ({ hideAmounts: f
 jest.mock('@/lib/haptics', () => ({ haptics: { tap: jest.fn(), warn: jest.fn(), confirm: jest.fn() } }));
 
 const mockCount = jest.fn();
+const mockUpdate = jest.fn();
+const mockListAccounts = jest.fn(async () => []);
 jest.mock('@/db/ledger', () => ({
-  updateAccount: jest.fn(),
+  updateAccount: (...a: unknown[]) => mockUpdate(...a),
+  listAccounts: () => mockListAccounts(),
   archiveAccount: jest.fn(),
   unarchiveAccount: jest.fn(),
   deleteAccount: jest.fn(),
@@ -98,5 +101,81 @@ describe('AccountDetailModal usage check', () => {
   it('fills the opening balance in whole units', async () => {
     mockCount.mockResolvedValue(0);
     expect(texts(await render())).toContain('field:Opening balance=12500');
+  });
+});
+
+describe('AccountDetailModal investments', () => {
+  const tracked = (over = {}) =>
+    account({
+      type: 'savings',
+      investment: {
+        investedMinor: 100,
+        takenOutMinor: 0,
+        gainMinor: 0,
+        valuedAt: null,
+        lastValueMinor: null,
+        kind: 'gold',
+        fundingAccountId: null,
+        ...over,
+      },
+    });
+  const press = async (tree: ReactTestRenderer, label: string) =>
+    act(async () =>
+      tree.root.find((n) => typeof n.type === 'function' && n.props.label === label).props.onPress()
+    );
+  const saveButton = (tree: ReactTestRenderer) =>
+    tree.root.find((n) => typeof n.type === 'function' && n.props.title === 'Save changes');
+
+  beforeEach(() => {
+    mockCount.mockResolvedValue(0);
+    mockUpdate.mockReset().mockResolvedValue({});
+    jest.requireMock('@/components/AppDialog').showAlert.mockReset();
+  });
+
+  it('opens a tracked savings account as an Investment with its kind selected', async () => {
+    const tree = await render(tracked());
+    const chips = tree.root.findAll((n) => typeof n.type === 'function' && n.props.label === 'Investment');
+    expect(chips[0].props.active).toBe(true);
+    expect(tree.root.find((n) => typeof n.type === 'function' && n.props.label === 'Gold').props.active).toBe(
+      true
+    );
+  });
+
+  it('turns an ordinary savings account into an investment by picking the type', async () => {
+    const tree = await render(account({ type: 'savings' }));
+    await press(tree, 'Investment');
+    await act(async () => saveButton(tree).props.onPress());
+    expect(mockUpdate).toHaveBeenCalledWith(
+      'acc-1',
+      expect.objectContaining({ type: 'savings', tracked: true })
+    );
+  });
+
+  it('asks before an investment goes back to Savings, and does nothing if cancelled', async () => {
+    const { showAlert } = jest.requireMock('@/components/AppDialog');
+    showAlert.mockImplementation(
+      (_t: string, _m: string, buttons: { text: string; onPress?: () => void }[]) =>
+        buttons.find((b) => b.text === 'Cancel')!.onPress!()
+    );
+    const tree = await render(tracked());
+    await press(tree, 'Savings');
+    await act(async () => saveButton(tree).props.onPress());
+    expect(showAlert).toHaveBeenCalledWith('Stop tracking its value?', expect.any(String), expect.any(Array));
+    expect(mockUpdate).not.toHaveBeenCalled();
+  });
+
+  it('stops tracking and clears the investment fields once confirmed', async () => {
+    const { showAlert } = jest.requireMock('@/components/AppDialog');
+    showAlert.mockImplementation(
+      (_t: string, _m: string, buttons: { text: string; onPress?: () => void }[]) =>
+        buttons.find((b) => b.text === 'Stop tracking')!.onPress!()
+    );
+    const tree = await render(tracked());
+    await press(tree, 'Savings');
+    await act(async () => saveButton(tree).props.onPress());
+    expect(mockUpdate).toHaveBeenCalledWith(
+      'acc-1',
+      expect.objectContaining({ tracked: false, investmentKind: null, fundingAccountId: null })
+    );
   });
 });

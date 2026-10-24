@@ -30,7 +30,13 @@ export interface AccountInvestment {
   valuedAt: string | null;
   /** What that update said it was worth. */
   lastValueMinor: number | null;
+  /** What sort of holding it is, for the split on the Investments page; null when never set. */
+  kind?: InvestmentKind | null;
+  /** The account money normally comes from (Invest and SIPs default to it); null when never set. */
+  fundingAccountId?: string | null;
 }
+
+export type InvestmentKind = 'mutual_fund' | 'stocks' | 'gold' | 'fixed_deposit' | 'ppf_epf' | 'other';
 
 export type CategoryKind = 'income' | 'expense';
 
@@ -72,6 +78,8 @@ export interface Transaction {
   splitId: string | null;
   /** Money back for a purchase: stored as money in, it lowers its (expense) category's spending instead of counting as income. */
   isRefund: boolean;
+  /** The recurring rule that posted it (a SIP, a subscription); null for an entry you made yourself. */
+  ruleId?: string | null;
   /** Where the person dragged it within its day (0 = top); null/undefined when never reordered. */
   dayRank?: number | null;
   /** The whole split's total, on a part read from a list; undefined when not looked up. */

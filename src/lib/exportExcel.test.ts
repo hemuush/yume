@@ -181,9 +181,18 @@ describe('buildExportWorkbook', () => {
       ],
     });
     const rows = XLSX.utils.sheet_to_json<unknown[]>(tracked.Sheets['Accounts'], { header: 1 });
-    expect(rows[0]).toEqual(['Account', 'Type', 'Balance', 'Currency', 'Invested', 'Gain']);
+    expect(rows[0]).toEqual([
+      'Account',
+      'Type',
+      'Balance',
+      'Currency',
+      'Invested',
+      'Gain',
+      'Kind',
+      'Money comes from',
+    ]);
     const fund = rows.find((r) => r[0] === 'Index fund');
-    expect(fund?.slice(2)).toEqual([44560, 'INR', 42000, 2560]);
+    expect(fund?.slice(1)).toEqual(['investment', 44560, 'INR', 42000, 2560, '', '']);
   });
 
   it('omits the Loans/Friends & Family sheets when there is nothing to show, without breaking anything else', () => {
@@ -366,5 +375,81 @@ describe('a period export', () => {
     const bytes = XLSX.write(wb, { bookType: 'xlsx', type: 'array', cellDates: true }) as ArrayBuffer;
     const back = XLSX.read(new Uint8Array(bytes), { type: 'array', cellDates: true });
     expect(back.Sheets['Transactions']['A2'].t).toBe('d');
+  });
+});
+
+describe('investing entries and holdings in the export', () => {
+  const ledger: ExportData = {
+    currency: 'INR',
+    accounts: [
+      account({ id: 'acc-1', name: 'SBI' }),
+      account({
+        id: 'fund',
+        name: 'Nifty 50',
+        type: 'savings',
+        currentBalanceMinor: 100000,
+        investment: {
+          investedMinor: 90000,
+          takenOutMinor: 0,
+          gainMinor: 10000,
+          valuedAt: '2026-03-10',
+          lastValueMinor: 100000,
+          kind: 'mutual_fund',
+          fundingAccountId: 'acc-1',
+        },
+      }),
+    ],
+    categories: [],
+    transactions: [
+      transaction({
+        id: 'in',
+        type: 'transfer',
+        categoryId: null,
+        toAccountId: 'fund',
+        date: '2026-03-05',
+        ruleId: 'r1',
+      }),
+      transaction({
+        id: 'lump',
+        type: 'transfer',
+        categoryId: null,
+        toAccountId: 'fund',
+        date: '2026-03-04',
+      }),
+      transaction({
+        id: 'out',
+        type: 'transfer',
+        categoryId: null,
+        accountId: 'fund',
+        toAccountId: 'acc-1',
+        date: '2026-03-03',
+      }),
+      transaction({
+        id: 'plain',
+        type: 'transfer',
+        categoryId: null,
+        accountId: 'acc-1',
+        toAccountId: 'acc-1x',
+        date: '2026-03-02',
+      }),
+    ],
+    loans: [],
+    people: [],
+  };
+
+  it('writes SIP, Invested and Withdrawn in the Type column and Transfer for the rest', () => {
+    const rows = XLSX.utils.sheet_to_json<any[]>(buildExportWorkbook(ledger).Sheets['Transactions'], {
+      header: 1,
+    });
+    expect(rows.slice(1, 5).map((r) => r[1])).toEqual(['SIP', 'Invested', 'Withdrawn', 'Transfer']);
+  });
+
+  it('says what a holding is and where its money comes from on the Accounts sheet', () => {
+    const rows = XLSX.utils.sheet_to_json<any[]>(buildExportWorkbook(ledger).Sheets['Accounts'], {
+      header: 1,
+    });
+    const fund = rows.find((r) => r[0] === 'Nifty 50')!;
+    expect(fund[1]).toBe('investment');
+    expect(fund.slice(6)).toEqual(['Mutual fund', 'SBI']);
   });
 });

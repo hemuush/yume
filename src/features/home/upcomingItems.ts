@@ -1,4 +1,5 @@
 import type Feather from '@expo/vector-icons/Feather';
+import { investRole, investRuleTitle } from '@/lib/investment';
 import { theme } from '@/constants/theme';
 import { hexToRgba, shade } from '@/lib/color';
 import { dueDateLabel, isDueUrgent } from '@/lib/dueDate';
@@ -61,6 +62,8 @@ export function buildUpcomingItems(input: {
   categoryName: (id: string | null) => string | undefined;
   /** A bill's date tile takes a wash of its category's own colour. */
   categoryColor?: (id: string | null) => string | undefined;
+  /** Accounts that are investments: a recurring transfer into one is listed as a SIP. */
+  investmentIds?: ReadonlySet<string>;
 }): Upcoming {
   const all: UpcomingItem[] = [];
   for (const loan of input.loans) {
@@ -101,9 +104,17 @@ export function buildUpcomingItems(input: {
   for (const rule of input.rules) {
     if (!rule.active) continue;
     const isTransfer = rule.type === 'transfer';
+    const role = input.investmentIds ? investRole(rule, input.investmentIds) : null;
     all.push({
       key: rule.id,
-      icon: isTransfer ? 'repeat' : rule.type === 'income' ? 'arrow-down-right' : 'arrow-up-right',
+      icon:
+        role === 'invest'
+          ? 'trending-up'
+          : isTransfer
+            ? 'repeat'
+            : rule.type === 'income'
+              ? 'arrow-down-right'
+              : 'arrow-up-right',
       iconBg: (() => {
         const c = isTransfer ? undefined : input.categoryColor?.(rule.categoryId);
         return c
@@ -112,9 +123,15 @@ export function buildUpcomingItems(input: {
             ? shade(input.secondary, 94)
             : theme.colors.secondaryTint;
       })(),
-      title: isTransfer
-        ? `${input.accountName(rule.accountId) ?? '—'} → ${input.accountName(rule.toAccountId) ?? '—'}`
-        : rule.note || input.categoryName(rule.categoryId) || 'Recurring',
+      title: role
+        ? investRuleTitle(
+            role,
+            input.accountName(rule.accountId) ?? '—',
+            input.accountName(rule.toAccountId) ?? '—'
+          )
+        : isTransfer
+          ? `${input.accountName(rule.accountId) ?? '—'} → ${input.accountName(rule.toAccountId) ?? '—'}`
+          : rule.note || input.categoryName(rule.categoryId) || 'Recurring',
       subtitle: dueDateLabel(rule.nextRunDate),
       amountMinor: rule.nextAmountMinor ?? rule.amountMinor,
       sign: rule.type === 'income' ? '+' : rule.type === 'expense' ? '-' : '',

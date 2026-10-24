@@ -151,7 +151,7 @@ export function RuleModal({
       setAccountId(prefill?.accountId ?? accountsRef.current[0]?.id ?? null);
       setToAccountId(prefill?.toAccountId ?? null);
       setCategoryId(prefill?.categoryId ?? null);
-      setAmount(prefill ? (prefill.amountMinor / 100).toString() : '');
+      setAmount(prefill && prefill.amountMinor > 0 ? (prefill.amountMinor / 100).toString() : '');
       setNote(prefill?.note ?? '');
       setFrequency('monthly');
       setIntervalCount('1');
@@ -162,7 +162,7 @@ export function RuleModal({
     setError(null);
     setTab('setup');
     // A new rule opens on the category grid; an existing one on its summary.
-    setOpen(editing || prefill?.categoryId ? null : 'category');
+    setOpen(editing || prefill?.categoryId || prefill?.type === 'transfer' ? null : 'category');
   }, [visible, editing, prefill]);
 
   const filteredCategories = useMemo(() => {

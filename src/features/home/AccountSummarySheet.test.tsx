@@ -356,7 +356,7 @@ describe('AccountSummarySheet — tracked account', () => {
       },
     ]);
     const tree = await render({ account: tracked, accounts: [tracked] });
-    expect(byId(tree, 'card').props.kicker).toBe('Savings · tracked');
+    expect(byId(tree, 'card').props.kicker).toBe('Investment');
     expect(has(tree, 'panel')).toBe(true);
     expect(byId(tree, 'panel').props.valuations).toEqual([{ id: 'v1' }]);
     expect(byId(tree, 'panel').props.nextSip).toEqual({
@@ -392,5 +392,54 @@ describe('AccountSummarySheet — tracked account', () => {
     act(() => byId(tree, 'value-sheet').props.onDeleted());
     expect(onChanged).toHaveBeenCalledTimes(1);
     expect(onClose).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('AccountSummarySheet — investing actions', () => {
+  const fund = account({
+    type: 'savings',
+    currentBalanceMinor: 120_000,
+    investment: {
+      investedMinor: 100_000,
+      takenOutMinor: 0,
+      gainMinor: 20_000,
+      valuedAt: '2026-06-01',
+      lastValueMinor: 120_000,
+    },
+  });
+
+  it('makes Invest the main action of an investment when the caller can start it', async () => {
+    const onInvest = jest.fn();
+    const onAdd = jest.fn();
+    const tree = await render({ account: fund, accounts: [fund], onInvest, onAdd });
+    expect(button(tree, 'Transfer from here')).toBeUndefined();
+    act(() => button(tree, 'Invest')!.props.onPress());
+    expect(onInvest).toHaveBeenCalledWith(fund);
+    expect(onAdd).not.toHaveBeenCalled();
+  });
+
+  it('keeps the old action when no investing action is given', async () => {
+    const tree = await render({ account: fund, accounts: [fund] });
+    expect(button(tree, 'Transfer from here')).toBeDefined();
+    expect(byId(tree, 'panel').props.onWithdraw).toBeUndefined();
+    expect(byId(tree, 'panel').props.onAddSip).toBeUndefined();
+  });
+
+  it('offers Withdraw and Add a SIP on the value tab, and they act on this investment', async () => {
+    const onWithdraw = jest.fn();
+    const onAddSip = jest.fn();
+    const tree = await render({ account: fund, accounts: [fund], onWithdraw, onAddSip });
+    // The panel is stubbed here; what the sheet hands it is what the buttons will call.
+    const panel = byId(tree, 'panel').props;
+    act(() => panel.onWithdraw());
+    act(() => panel.onAddSip());
+    expect(onWithdraw).toHaveBeenCalledWith(fund);
+    expect(onAddSip).toHaveBeenCalledWith(fund);
+  });
+
+  it('never offers investing actions on an ordinary account', async () => {
+    const tree = await render({ onInvest: jest.fn(), onWithdraw: jest.fn(), onAddSip: jest.fn() });
+    expect(button(tree, 'Invest')).toBeUndefined();
+    expect(button(tree, 'Add expense here')).toBeDefined();
   });
 });

@@ -327,6 +327,7 @@ async function runDueRecurringRulesOnce(referenceDate: string): Promise<number> 
       date,
       note: rule.note,
       paymentMode: rule.paymentMode ?? undefined,
+      ruleId: rule.id,
     });
     try {
       // Nothing checked here varies by date, so once per rule covers every occurrence; it must run outside

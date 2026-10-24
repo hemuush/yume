@@ -38,7 +38,8 @@ and India-friendly dates.
 
 | Area                      | Included                                                                                                                                          |
 | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Accounts & categories** | Bank, cash, credit-card and savings accounts; account currencies; editable parent categories and subcategories.                                   |
+| **Accounts & categories** | Bank, cash, credit-card, savings and investment accounts; account currencies; editable parent categories and subcategories.                       |
+| **Investments**           | A portfolio page: worth, gain, yearly rate, trend, split by kind, holdings, SIPs and an Update values list; Invest, Withdraw and Add a SIP actions.   |
 | **Loans**                 | EMI schedules and amortization, prepayments, rate changes, payment tracking and linked assets.                                                    |
 | **Budgets & goals**       | Monthly limits, rollover, goal contributions, whole-account tracking and shared goal reservations without moving money.                           |
 | **Recurring payments**    | Scheduled expenses, income and transfers, subscription suggestions, and monthly/yearly totals.                                                    |
