@@ -5,7 +5,7 @@ import type { Account, InvestmentKind } from '@/types';
 import { styles } from './profile.styles';
 import { INVESTMENT_KIND_CHOICES } from './profile.constants';
 
-/** The accounts an investment's money can come from: plain bank, cash or wallet accounts in its currency. */
+/** The accounts an investment's money can come from: plain bank or wallet accounts in its currency. */
 export function fundingChoices(accounts: Account[], currency: string, selfId?: string): Account[] {
   return accounts.filter(
     (a) =>
@@ -13,7 +13,7 @@ export function fundingChoices(accounts: Account[], currency: string, selfId?: s
       !a.archived &&
       !a.investment &&
       a.currency === currency &&
-      ['bank', 'cash', 'wallet'].includes(a.type)
+      ['bank', 'wallet'].includes(a.type)
   );
 }
 
@@ -47,9 +47,9 @@ export function InvestmentFields({
           />
         ))}
       </View>
-      <Text style={styles.fieldLabel}>Money comes from</Text>
+      <Text style={styles.fieldLabel}>Usually funded from (optional)</Text>
       {choices.length === 0 ? (
-        <Text style={styles.hintText}>Add a bank, cash or wallet account in this currency to pick one.</Text>
+        <Text style={styles.hintText}>Add a bank or wallet account in this currency to pick one.</Text>
       ) : (
         <>
           <View style={styles.chipRow}>
