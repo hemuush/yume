@@ -10,6 +10,7 @@ import { topLevelOnly, childrenOf } from '@/lib/categoryTree';
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { useAccent } from '@/theme/AccentContext';
 import { usePressScale } from '@/lib/usePressScale';
+import { softTint } from '@/components/softTint';
 import { styles, TILE_COLUMNS } from './categories.styles';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -24,7 +25,7 @@ export function CategoryTile({
 }: {
   category: Category;
   isSubcategory?: boolean;
-  /** A parent's subcategory count, shown as a small badge. */
+  /** A parent's subcategory count, shown below its name. */
   count?: number;
   /** The parent whose pills are open below. */
   selected?: boolean;
@@ -34,7 +35,11 @@ export function CategoryTile({
   const { animatedStyle, onPressIn, onPressOut } = usePressScale();
   return (
     <AnimatedPressable
-      style={[styles.tile, animatedStyle]}
+      style={[
+        styles.tile,
+        selected && [styles.tileSelected, { backgroundColor: softTint(category.color, 0.16) }],
+        animatedStyle,
+      ]}
       onPressIn={onPressIn}
       onPressOut={onPressOut}
       onPress={onPress}
@@ -44,22 +49,33 @@ export function CategoryTile({
         count ? `${category.name}, ${count} subcategor${count === 1 ? 'y' : 'ies'}` : category.name
       }
       accessibilityState={count ? { expanded: !!selected } : undefined}
+      accessibilityHint={
+        count
+          ? 'Show subcategories. Press and hold for more options.'
+          : 'Edit category. Press and hold for more options.'
+      }
     >
-      <View style={[styles.tileRing, selected && styles.tileRingOn]}>
+      <View style={styles.tileTop}>
         <CategoryIcon
           name={category.icon}
           color={category.color}
           square={isSubcategory ? 40 : 44}
           size={isSubcategory ? 18 : 20}
-          round
         />
         {!!count && (
-          <View style={styles.tileBadge}>
-            <Text style={styles.tileBadgeText}>{count}</Text>
-          </View>
+          <Feather
+            name={selected ? 'chevron-up' : 'chevron-down'}
+            size={14}
+            color={theme.colors.textSecondary}
+          />
         )}
       </View>
       <Text style={styles.tileName}>{isSubcategory ? `↳ ${category.name}` : category.name}</Text>
+      {!!count && (
+        <Text style={styles.tileCount}>
+          {count} subcategor{count === 1 ? 'y' : 'ies'}
+        </Text>
+      )}
     </AnimatedPressable>
   );
 }
@@ -92,7 +108,7 @@ function SubcategoryPill({
 }
 
 /**
- * Tiles in four columns, or two on narrow screens and with enlarged text. `panelAfter` can return a panel to open under a row (given that row's items
+ * Tiles in three columns, two on narrow screens, or one with enlarged text. `panelAfter` can return a panel to open under a row (given that row's items
  * and the column to point at), which is why the rows are built here rather than left to a wrapping flex.
  */
 export function TileRows<T extends { id: string }>({
@@ -105,7 +121,7 @@ export function TileRows<T extends { id: string }>({
   panelAfter?: (rowItems: T[], columns: number) => ReactNode;
 }) {
   const { width, fontScale } = useWindowDimensions();
-  const columns = width < 360 || fontScale > 1.2 ? 2 : TILE_COLUMNS;
+  const columns = fontScale > 1.5 ? 1 : width < 360 || fontScale > 1.2 ? 2 : TILE_COLUMNS;
   const cellStyle = { width: `${100 / columns}%` as `${number}%` };
   const rows: T[][] = [];
   for (let i = 0; i < items.length; i += columns) rows.push(items.slice(i, i + columns));
@@ -161,15 +177,14 @@ export function CategorySection({
           />
         );
       }}
-      panelAfter={(row, columns) => {
+      panelAfter={(row) => {
         const index = row.findIndex((c) => c.id === openId);
         if (index < 0) return null;
         const parent = row[index];
         const kids = childrenOf(cats, parent.id);
         return (
           <View style={styles.panelWrap}>
-            <View style={[styles.notch, { left: `${(index + 0.5) * (100 / columns)}%` }]} />
-            <View style={styles.panel}>
+            <View style={[styles.panel, { borderColor: softTint(parent.color, 0.6) }]}>
               <PanelHeader
                 parent={parent}
                 count={kids.length}

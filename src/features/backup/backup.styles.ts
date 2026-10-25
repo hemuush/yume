@@ -1,6 +1,6 @@
 import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
-import { SECTION_TITLE, SECTION_GAP, EYEBROW } from '@/constants/textStyles';
+import { SECTION_TITLE, SECTION_GAP } from '@/constants/textStyles';
 import { SCREEN } from '@/components/screenStyles';
 
 export const styles = StyleSheet.create({
@@ -13,7 +13,7 @@ export const styles = StyleSheet.create({
   },
   statusCard: { marginHorizontal: SCREEN.gutter, marginTop: theme.layout.screenTopGap, padding: 14 },
   statusHead: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  statusTitle: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.textPrimary },
+  statusTitle: { fontFamily: theme.font.roundedBold, fontSize: 18, color: theme.colors.textPrimary },
   errorLine: { color: theme.colors.expenseText },
   mainAction: { marginTop: 14 },
   scheduleBlock: {
@@ -23,7 +23,6 @@ export const styles = StyleSheet.create({
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: theme.colors.borderSoft,
   },
-  eyebrow: { ...EYEBROW },
   scheduleFoot: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -46,7 +45,7 @@ export const styles = StyleSheet.create({
     textDecorationLine: 'underline',
   },
   linkDisabled: { opacity: 0.45 },
-  tabs: { marginHorizontal: SCREEN.gutter, marginTop: 16 },
+  fileActions: { marginTop: 14, borderWidth: 1, paddingVertical: 4 },
   titleRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -80,15 +79,6 @@ export const styles = StyleSheet.create({
     lineHeight: 19,
     marginTop: 4,
     textAlign: 'center',
-  },
-  restoreFile: { marginTop: 12 },
-  copyHint: {
-    fontFamily: theme.font.body,
-    fontSize: 12,
-    color: theme.colors.textMuted,
-    lineHeight: 17,
-    marginHorizontal: SCREEN.gutter,
-    marginTop: 10,
   },
   node: { paddingLeft: 40 },
   nodeRow: { flexWrap: 'wrap', gap: 8 },

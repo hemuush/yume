@@ -43,18 +43,18 @@ export const styles = StyleSheet.create({
   identityRow: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   identityText: { flex: 1, minWidth: 0 },
   avatar: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+    width: 56,
+    height: 56,
+    borderRadius: 19,
     alignItems: 'center',
     justifyContent: 'center',
     // Without this, a circular View's background can render clipped to a stale layout measurement on Android
     // (the "half-circle avatar" symptom).
     overflow: 'hidden',
   },
-  avatarInitial: { fontFamily: theme.font.roundedBold, fontSize: 20 },
+  avatarInitial: { fontFamily: theme.font.roundedBold, fontSize: 25 },
   nameRow: {
-    minHeight: 48,
+    minHeight: 44,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
@@ -63,29 +63,24 @@ export const styles = StyleSheet.create({
   },
   name: {
     fontFamily: theme.font.roundedBold,
-    fontSize: theme.typeSize.greeting,
+    fontSize: 22,
     color: theme.colors.textPrimary,
     flexShrink: 1,
   },
-  nameEditRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: theme.colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    borderRadius: theme.radius.lg,
-    paddingHorizontal: 12,
-  },
   nameInput: {
-    flex: 1,
-    paddingVertical: 8,
+    minHeight: 48,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: theme.colors.borderSoft,
+    backgroundColor: theme.colors.surface,
     fontFamily: theme.font.bodyMedium,
     fontSize: 14,
     color: theme.colors.textPrimary,
   },
-  nameSave: { minWidth: 48, minHeight: 48, alignItems: 'center', justifyContent: 'center' },
   // SegmentedControl draws its own pill; this only places it.
-  tabWrap: { marginHorizontal: SCREEN.gutter, marginTop: 16 },
+  tabWrap: { marginHorizontal: SCREEN.gutter, marginTop: 14, marginBottom: 4 },
 
   // ---- You: accounts, grouped by type ----
   groupHead: {
@@ -98,7 +93,14 @@ export const styles = StyleSheet.create({
     paddingTop: 10,
     paddingBottom: 6,
   },
-  groupLabel: { ...EYEBROW },
+  groupLabel: { ...EYEBROW, fontSize: 12 },
+  accountGroups: { gap: 10 },
+  accountRow: { minHeight: 76, paddingVertical: 14 },
+  accountContent: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 10 },
+  accountContentStack: { flexDirection: 'column', alignItems: 'stretch', gap: 8 },
+  accountNameStack: { flex: 0 },
+  accountValues: { flexShrink: 1, maxWidth: '52%', alignItems: 'flex-end', gap: 4 },
+  accountValuesStack: { maxWidth: '100%', alignItems: 'flex-start' },
   groupTotal: {
     fontVariant: ['tabular-nums'],
     fontFamily: theme.font.bodyBold,
@@ -130,6 +132,19 @@ export const styles = StyleSheet.create({
   planLinkText: { flex: 1, fontFamily: theme.font.roundedMedium, fontSize: 13, color: theme.colors.ink },
 
   // ---- Settings: rows ----
+  settingsCard: { borderWidth: 1, paddingVertical: 4 },
+  themeError: { color: theme.colors.expenseText, padding: theme.space.md },
+  appearanceCard: { borderWidth: 1, padding: 14, gap: 10 },
+  appearanceHead: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 56 },
+  appearanceTitle: { fontFamily: theme.font.roundedBold, fontSize: 18, color: theme.colors.textPrimary },
+  appearanceHint: {
+    fontFamily: theme.font.body,
+    fontSize: 12,
+    color: theme.colors.textSecondary,
+    marginTop: 3,
+  },
+  themeNameRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 },
+  themeName: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textPrimary },
   // Opens in place under the row that opened it, inside the same card.
   accordionBody: {
     paddingHorizontal: 14,
@@ -164,11 +179,12 @@ export const styles = StyleSheet.create({
   dailyGoalBtn: { flexGrow: 1, flexBasis: 120 },
 
   // ---- Settings: inline theme swatches ----
-  swatches: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 8, paddingBottom: 10 },
+  swatches: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   swatchHit: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
-  swatchActive: { borderWidth: 2, borderColor: theme.colors.ink },
+  swatchActive: { borderWidth: 1.5, borderColor: theme.colors.ink },
   swatch: { width: 30, height: 30, borderRadius: 15, overflow: 'hidden', justifyContent: 'flex-end' },
   swatchHalf: { height: '50%' },
+  swatchCheck: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center' },
 
   // ---- Settings: About footer ----
   footer: { alignItems: 'center', gap: 2, paddingTop: 26, paddingBottom: 4 },

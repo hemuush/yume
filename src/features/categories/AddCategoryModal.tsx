@@ -2,6 +2,9 @@ import { useAccent } from '@/theme/AccentContext';
 import { selectedFill } from '@/theme/interactionColors';
 import { useMemo, useState } from 'react';
 import { View, Pressable } from 'react-native';
+import Feather from '@expo/vector-icons/Feather';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import type { McIconName } from '@/components/iconName';
 import { Text } from '@/components/Text';
 import { createCategory, updateCategory } from '@/db/ledger';
 import { Category, CategoryKind } from '@/types';
@@ -11,7 +14,7 @@ import { PrimaryButton } from '@/components/PrimaryButton';
 import { ModalSheet, SheetLink } from '@/components/ModalSheet';
 import { DraftCard } from '@/components/DraftCard';
 import { SwitchRow } from '@/components/SwitchRow';
-import { CategoryIcon } from '@/components/CategoryIcon';
+import { InsightDisclosure } from '@/components/InsightCard';
 import { CATEGORY_COLOR_PALETTE, modalFooterStyles as f, theme } from '@/constants/theme';
 import { CATEGORY_ICON_CHOICES } from '@/constants/categories';
 import { styles, GRID_COLUMNS, GRID_GAP } from './categories.styles';
@@ -19,6 +22,9 @@ import { errorMessage } from '@/lib/errorMessage';
 import { withPressed } from '@/lib/pressed';
 import { useSaveOnce } from '@/lib/useSaveOnce';
 import { showPrivacyReminderWarning } from '@/lib/privacyReminderFeedback';
+import { softTint } from '@/components/softTint';
+
+const PREVIEW_ICON_COUNT = 24;
 
 const KINDS: { label: string; value: CategoryKind }[] = [
   { label: 'Expense', value: 'expense' },
@@ -32,6 +38,7 @@ export function AddCategoryModal({
   onClose,
   onSaved,
   onManage,
+  initialKind = 'expense',
 }: {
   visible: boolean;
   category: Category | null;
@@ -40,12 +47,15 @@ export function AddCategoryModal({
   onSaved: () => void;
   /** Opens Archive / Delete for the category being edited — shown for your own categories only. */
   onManage?: () => void;
+  initialKind?: CategoryKind;
 }) {
   const { accent } = useAccent();
-  // The colour and icon grids share the sheet's width evenly, so they are sized from it once it is known.
   const [gridWidth, setGridWidth] = useState(0);
-  const cell = gridWidth > 0 ? Math.floor((gridWidth - GRID_GAP * (GRID_COLUMNS - 1)) / GRID_COLUMNS) : 44;
+  const columns = Math.max(1, Math.min(GRID_COLUMNS, Math.floor((gridWidth + GRID_GAP) / (44 + GRID_GAP))));
+  const cell =
+    gridWidth > 0 ? Math.max(44, Math.floor((gridWidth - GRID_GAP * (columns - 1)) / columns)) : 44;
   const cellSize = useMemo(() => ({ width: cell, height: cell }), [cell]);
+  const [showAllIcons, setShowAllIcons] = useState(false);
   const [name, setName] = useState('');
   const [kind, setKind] = useState<CategoryKind>('expense');
   const [parentId, setParentId] = useState<string | null>(null);
@@ -57,19 +67,20 @@ export function AddCategoryModal({
 
   // The form starts fresh each time the sheet opens (or switches to another category). Done while rendering
   // rather than in an effect, so the first painted frame is already the reset form, not last time's.
-  const openKey = visible ? (category ? `edit:${category.id}` : 'new') : null;
+  const openKey = visible ? (category ? `edit:${category.id}` : `new:${initialKind}`) : null;
   const [syncedKey, setSyncedKey] = useState<string | null>(null);
   if (openKey !== syncedKey) {
     setSyncedKey(openKey);
     if (openKey) {
       setName(category?.name ?? '');
-      setKind(category?.kind ?? 'expense');
+      setKind(category?.kind ?? initialKind);
       setParentId(category?.parentId ?? null);
       setColor(category?.color ?? CATEGORY_COLOR_PALETTE[0]);
       setIcon(category?.icon ?? CATEGORY_ICON_CHOICES[0]);
       // Its own flag: one inherited from a hidden parent shows below, but isn't this category's to switch.
       setIsSensitive(category?.ownIsSensitive ?? category?.isSensitive ?? false);
       setError(null);
+      setShowAllIcons(false);
     }
   }
 
@@ -127,10 +138,13 @@ export function AddCategoryModal({
   const parentName = parent?.name;
   // Under a parent marked sensitive, a subcategory is hidden with it (db/spendSql.ts sensitiveOf).
   const hiddenWithParent = !!parent?.isSensitive;
+  const previewIcons = CATEGORY_ICON_CHOICES.slice(0, PREVIEW_ICON_COUNT);
+  if (!previewIcons.includes(icon)) previewIcons[previewIcons.length - 1] = icon;
+  const visibleIcons = showAllIcons ? CATEGORY_ICON_CHOICES : previewIcons;
   return (
     <ModalSheet
       dismissible={!saving}
-      title="Category setup"
+      title={category ? 'Edit category' : 'New category'}
       visible={visible}
       onClose={onClose}
       footer={
@@ -177,10 +191,10 @@ export function AddCategoryModal({
         </>
       )}
       {showParentPicker && (
-        <>
-          <Text style={styles.fieldLabel}>
-            {category?.parentId ? 'Move to another category' : 'Parent category (optional)'}
-          </Text>
+        <InsightDisclosure
+          key={openKey}
+          title={category?.parentId ? 'Move to another category' : 'Parent category (optional)'}
+        >
           <View style={styles.chipRow}>
             <Pressable
               onPress={() => setParentId(null)}
@@ -221,47 +235,62 @@ export function AddCategoryModal({
               total in Reports.
             </Text>
           )}
-        </>
+        </InsightDisclosure>
       )}
-      <Text style={styles.fieldLabel}>Color</Text>
-      <View style={styles.colorRow} onLayout={(e) => setGridWidth(Math.round(e.nativeEvent.layout.width))}>
-        {gridWidth > 0 &&
-          CATEGORY_COLOR_PALETTE.map((c, i) => (
-            <Pressable
-              key={c}
-              onPress={() => setColor(c)}
-              accessibilityRole="button"
-              accessibilityLabel={`Colour ${i + 1} of ${CATEGORY_COLOR_PALETTE.length}`}
-              accessibilityState={{ selected: color === c }}
-              style={withPressed([
-                styles.colorSwatch,
-                cellSize,
-                { backgroundColor: c },
-                color === c && styles.colorSwatchActive,
-              ])}
-            />
-          ))}
-      </View>
-      <Text style={styles.fieldLabel}>Icon</Text>
-      <View style={styles.iconGrid}>
-        {gridWidth > 0 &&
-          CATEGORY_ICON_CHOICES.map((iconName) => (
-            <Pressable
-              key={iconName}
-              onPress={() => setIcon(iconName)}
-              accessibilityRole="button"
-              accessibilityLabel={`${iconName.replace(/-/g, ' ')} icon`}
-              accessibilityState={{ selected: icon === iconName }}
-              style={withPressed([styles.iconChoice, cellSize, icon === iconName && styles.iconChoiceActive])}
-            >
-              <CategoryIcon
-                name={iconName}
-                color={icon === iconName ? color : theme.colors.surface}
-                square={Math.min(38, cell - 4)}
-                size={18}
-              />
-            </Pressable>
-          ))}
+      <View style={styles.appearance}>
+        <Text style={styles.appearanceTitle}>Make it yours</Text>
+        <Text style={styles.pickerLabel}>Color</Text>
+        <View style={styles.colorRow} onLayout={(e) => setGridWidth(Math.round(e.nativeEvent.layout.width))}>
+          {gridWidth > 0 &&
+            CATEGORY_COLOR_PALETTE.map((c, i) => (
+              <Pressable
+                key={c}
+                onPress={() => setColor(c)}
+                accessibilityRole="button"
+                accessibilityLabel={`Colour ${i + 1} of ${CATEGORY_COLOR_PALETTE.length}`}
+                accessibilityState={{ selected: color === c }}
+                style={withPressed([styles.colorSwatch, cellSize, color === c && styles.colorSwatchActive])}
+              >
+                <View style={[styles.colorSwatchFill, { backgroundColor: c }]}>
+                  {color === c && <Feather name="check" size={17} color={theme.colors.ink} />}
+                </View>
+              </Pressable>
+            ))}
+        </View>
+        <Text style={styles.pickerLabel}>Icon</Text>
+        <View style={styles.iconGrid}>
+          {gridWidth > 0 &&
+            visibleIcons.map((iconName) => (
+              <Pressable
+                key={iconName}
+                onPress={() => setIcon(iconName)}
+                accessibilityRole="button"
+                accessibilityLabel={`${iconName.replace(/-/g, ' ')} icon`}
+                accessibilityState={{ selected: icon === iconName }}
+                style={withPressed([
+                  styles.iconChoice,
+                  cellSize,
+                  icon === iconName && [styles.iconChoiceActive, { backgroundColor: softTint(color, 0.4) }],
+                ])}
+              >
+                <MaterialCommunityIcons name={iconName as McIconName} color={theme.colors.ink} size={22} />
+              </Pressable>
+            ))}
+        </View>
+        <Pressable
+          onPress={() => setShowAllIcons((v) => !v)}
+          accessibilityRole="button"
+          accessibilityLabel={showAllIcons ? 'Show fewer icons' : 'Browse all icons'}
+          accessibilityState={{ expanded: showAllIcons }}
+          style={withPressed(styles.moreIcons)}
+        >
+          <Text style={styles.moreIconsText}>{showAllIcons ? 'Show fewer icons' : 'Browse all icons'}</Text>
+          <Feather
+            name={showAllIcons ? 'chevron-up' : 'chevron-down'}
+            size={15}
+            color={theme.colors.textSecondary}
+          />
+        </Pressable>
       </View>
       <SwitchRow
         title="Treat as sensitive"

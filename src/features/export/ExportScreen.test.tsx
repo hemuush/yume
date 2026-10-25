@@ -157,7 +157,7 @@ describe('Reports & exports', () => {
   it('makes an Excel file for a whole year', async () => {
     const tree = await render();
     act(() => segmented(tree, 'month').props.onChange('year'));
-    act(() => segmented(tree, 'pdf').props.onChange('excel'));
+    await pressLabel(tree, 'Excel spreadsheet');
     await act(async () => {
       await createButton(tree).props.onPress();
     });

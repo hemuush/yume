@@ -72,16 +72,12 @@ import { TimelineNode } from '@/features/backup/TimelineNode';
 import { backupStatus, formatBytes, formatWhen } from '@/features/backup/backupStatus';
 import { useAccent } from '@/theme/AccentContext';
 import { useAppLock } from '@/lib/AppLockContext';
+import { InsightDisclosure } from '@/components/InsightCard';
 
 const FREQUENCIES: { label: string; value: BackupFrequency }[] = [
   { label: 'Daily', value: 'daily' },
   { label: 'Weekly', value: 'weekly' },
   { label: 'Monthly', value: 'monthly' },
-];
-
-const TABS: { label: string; value: 'points' | 'copy' }[] = [
-  { label: 'Restore points', value: 'points' },
-  { label: 'Save a copy', value: 'copy' },
 ];
 
 /** How many backups the timeline shows before "See all". */
@@ -115,7 +111,6 @@ export default function BackupScreen() {
     folderUri?: string;
   } | null>(null);
   const [restoring, setRestoring] = useState(false);
-  const [tab, setTab] = useState<'points' | 'copy'>('points');
   const [showAll, setShowAll] = useState(false);
 
   const loadData = useCallback(async () => {
@@ -481,8 +476,8 @@ Restore anyway? Your current data would be replaced with no way back.`,
           {!loaded ? (
             <>
               <Skeleton width={200} height={16} radius={4} />
-              <Skeleton width={260} height={12} radius={4} style={{ marginTop: 8 }} />
-              <Skeleton width={300} height={44} radius={999} style={{ marginTop: 14 }} />
+              <Skeleton width={240} height={12} radius={4} style={{ marginTop: 8 }} />
+              <Skeleton width={240} height={44} radius={999} style={{ marginTop: 14 }} />
             </>
           ) : (
             <>
@@ -514,153 +509,141 @@ Restore anyway? Your current data would be replaced with no way back.`,
                 />
               )}
               <View style={styles.scheduleBlock}>
-                <Text style={styles.eyebrow}>Back up automatically</Text>
-                <SegmentedControl options={FREQUENCIES} value={frequency} onChange={onChangeFrequency} />
-                <View style={styles.scheduleFoot}>
-                  <Text style={styles.scheduleHint}>Runs while Yume is open. Nothing leaves your phone.</Text>
-                  {hasFolder && (
-                    <Pressable
-                      onPress={forgetFolder}
-                      disabled={!!busy}
-                      hitSlop={8}
-                      accessibilityRole="button"
-                      style={withPressedTint(accent, [styles.linkAction, busy && styles.linkDisabled])}
-                    >
-                      <Text style={styles.link}>Forget folder</Text>
-                    </Pressable>
-                  )}
-                </View>
+                <InsightDisclosure title="Backup schedule">
+                  <Text style={styles.scheduleHint}>Choose how often Yume saves to your folder.</Text>
+                  <SegmentedControl
+                    options={FREQUENCIES}
+                    value={frequency}
+                    onChange={onChangeFrequency}
+                    disabled={!!busy}
+                  />
+                  <View style={styles.scheduleFoot}>
+                    <Text style={styles.scheduleHint}>
+                      Runs while Yume is open. Nothing leaves your phone.
+                    </Text>
+                    {hasFolder && (
+                      <Pressable
+                        onPress={forgetFolder}
+                        disabled={!!busy}
+                        hitSlop={8}
+                        accessibilityRole="button"
+                        style={withPressedTint(accent, [styles.linkAction, busy && styles.linkDisabled])}
+                      >
+                        <Text style={styles.link}>Forget folder</Text>
+                      </Pressable>
+                    )}
+                  </View>
+                </InsightDisclosure>
               </View>
             </>
           )}
         </Glass>
 
-        <View style={styles.tabs}>
-          <SegmentedControl options={TABS} value={tab} onChange={setTab} onBand />
+        <View style={[h.card, cardSurface.neutral, styles.fileActions]}>
+          <SettingsRow
+            icon="download-outline"
+            iconBg={theme.colors.secondaryTint}
+            label="Save backup file"
+            sub={busy === 'export-json' ? 'Saving…' : 'A complete copy for restoring or moving phones'}
+            onPress={busy ? undefined : exportJsonLocally}
+            right={<Feather name="download" size={18} color={theme.colors.textMuted} />}
+            dimmed={!!busy && busy !== 'export-json'}
+          />
+          <SettingsRow
+            icon="file-restore-outline"
+            iconBg={theme.colors.goldTint}
+            label="Restore from file"
+            sub={busy === 'restore-file' ? 'Opening…' : 'Choose a Yume backup to recover your data'}
+            onPress={busy ? undefined : restoreFromFile}
+            dimmed={!!busy && busy !== 'restore-file'}
+            divider
+          />
         </View>
 
-        {tab === 'points' ? (
-          <>
-            <View style={styles.titleRow}>
-              <Text style={styles.sectionTitle}>Restore points</Text>
-              {files && files.length > COLLAPSED_FILES && (
-                <Pressable
-                  onPress={() => setShowAll((v) => !v)}
-                  hitSlop={8}
-                  accessibilityRole="button"
-                  accessibilityState={{ expanded: showAll }}
-                  style={withPressedTint(accent, styles.linkAction)}
-                >
-                  <Text style={styles.seeAll}>{showAll ? 'Show less' : `See all ${files.length} →`}</Text>
-                </Pressable>
-              )}
-            </View>
-            {(safetyInfo || shownFiles.length > 0) && (
-              <View style={[h.card, cardSurface.neutral, styles.timeline]}>
-                {safetyInfo && (
-                  <TimelineNode first last={shownFiles.length === 0} copy>
-                    <View style={[h.mid, styles.nodeDetails]}>
-                      <Text style={h.title}>Saved recovery snapshot</Text>
-                      <Text style={[h.sub, styles.copySub]}>
-                        {formatWhen(safetyInfo.savedAt)} · {safetyInfo.transactions}{' '}
-                        {safetyInfo.transactions === 1 ? 'entry' : 'entries'}, {safetyInfo.accounts}{' '}
-                        {safetyInfo.accounts === 1 ? 'account' : 'accounts'}
-                      </Text>
-                      <Text style={h.sub}>Kept before a restore · separate from folder backups</Text>
-                    </View>
-                    <PrimaryButton
-                      compact
-                      title={busy === 'undo-restore' ? 'Putting back…' : 'Put back'}
-                      accessibilityLabel="Put back the saved recovery snapshot"
-                      onPress={confirmUndo}
-                      disabled={!!busy}
-                    />
-                  </TimelineNode>
-                )}
-                {shownFiles.map((file, i) => (
-                  <TimelineNode
-                    key={file.uri}
-                    first={!safetyInfo && i === 0}
-                    last={i === shownFiles.length - 1}
-                    latest={i === 0 && !!file.summary}
-                  >
-                    <View style={[h.mid, styles.nodeDetails]}>
-                      <View style={styles.whenRow}>
-                        <Text style={h.title}>
-                          {file.exportedAt ? formatWhen(file.exportedAt) : 'Backup file'}
-                        </Text>
-                        {i === 0 && file.summary && (
-                          <View style={[styles.latestChip, { backgroundColor: shade(accent, 95) }]}>
-                            <Text style={styles.latestText}>Latest</Text>
-                          </View>
-                        )}
+        {(hasFolder || safetyInfo) && (
+          <View style={styles.titleRow}>
+            <Text style={styles.sectionTitle}>Saved backups</Text>
+            {files && files.length > COLLAPSED_FILES && (
+              <Pressable
+                onPress={() => setShowAll((v) => !v)}
+                hitSlop={8}
+                accessibilityRole="button"
+                accessibilityState={{ expanded: showAll }}
+                accessibilityLabel={showAll ? 'Show fewer backups' : `Show all ${files.length} backups`}
+                style={withPressedTint(accent, styles.linkAction)}
+              >
+                <Text style={styles.seeAll}>{showAll ? 'Show less' : `See all ${files.length} →`}</Text>
+              </Pressable>
+            )}
+          </View>
+        )}
+        {(safetyInfo || shownFiles.length > 0) && (
+          <View style={[h.card, cardSurface.neutral, styles.timeline]}>
+            {safetyInfo && (
+              <TimelineNode first last={shownFiles.length === 0} copy>
+                <View style={[h.mid, styles.nodeDetails]}>
+                  <Text style={h.title}>Saved recovery snapshot</Text>
+                  <Text style={[h.sub, styles.copySub]}>
+                    {formatWhen(safetyInfo.savedAt)} · {safetyInfo.transactions}{' '}
+                    {safetyInfo.transactions === 1 ? 'entry' : 'entries'}, {safetyInfo.accounts}{' '}
+                    {safetyInfo.accounts === 1 ? 'account' : 'accounts'}
+                  </Text>
+                  <Text style={h.sub}>Kept before a restore · separate from folder backups</Text>
+                </View>
+                <PrimaryButton
+                  compact
+                  title={busy === 'undo-restore' ? 'Putting back…' : 'Put back'}
+                  accessibilityLabel="Put back the saved recovery snapshot"
+                  onPress={confirmUndo}
+                  disabled={!!busy}
+                />
+              </TimelineNode>
+            )}
+            {shownFiles.map((file, i) => (
+              <TimelineNode
+                key={file.uri}
+                first={!safetyInfo && i === 0}
+                last={i === shownFiles.length - 1}
+                latest={i === 0 && !!file.summary}
+              >
+                <View style={[h.mid, styles.nodeDetails]}>
+                  <View style={styles.whenRow}>
+                    <Text style={h.title}>
+                      {file.exportedAt ? formatWhen(file.exportedAt) : 'Backup file'}
+                    </Text>
+                    {i === 0 && file.summary && (
+                      <View style={[styles.latestChip, { backgroundColor: shade(accent, 95) }]}>
+                        <Text style={styles.latestText}>Latest</Text>
                       </View>
-                      <Text style={h.sub}>
-                        {file.summary
-                          ? `${file.summary.entries} entries · ${formatBytes(file.sizeBytes)}`
-                          : "Couldn't read this file"}
-                      </Text>
-                    </View>
-                    <PrimaryButton
-                      compact
-                      title="Restore"
-                      variant="secondary"
-                      accessibilityLabel={`Restore the backup from ${
-                        file.exportedAt ? formatWhen(file.exportedAt) : 'this file'
-                      }`}
-                      onPress={() => restoreFile(file)}
-                      disabled={!!busy || !file.summary}
-                    />
-                  </TimelineNode>
-                ))}
-              </View>
-            )}
-            {loaded && shownFiles.length === 0 && (
-              <View style={[h.card, cardSurface.neutral, styles.emptyCard, safetyInfo && styles.emptyAfter]}>
-                <Text style={styles.emptyTitle}>No backups yet</Text>
-                <Text style={styles.emptySub}>
-                  {hasFolder
-                    ? 'Nothing in this folder yet. Tap Back up now to write the first one.'
-                    : 'Choose a folder above and Yume writes the first one.'}
-                </Text>
-              </View>
-            )}
-            <View style={[h.card, cardSurface.neutral, styles.restoreFile]}>
-              <SettingsRow
-                icon="file-restore-outline"
-                label="Restore from file"
-                sub={busy === 'restore-file' ? 'Restoring…' : 'A backup JSON saved on this device'}
-                onPress={busy ? undefined : restoreFromFile}
-                dimmed={!!busy && busy !== 'restore-file'}
-              />
-            </View>
-          </>
-        ) : (
-          <>
-            <Text style={styles.sectionTitle}>Save a copy</Text>
-            <View style={[h.card, cardSurface.neutral]}>
-              <SettingsRow
-                icon="code-json"
-                label="Full backup (JSON)"
-                sub={busy === 'export-json' ? 'Exporting…' : 'The complete copy you can restore into Yume'}
-                onPress={busy ? undefined : exportJsonLocally}
-                right={<Feather name="share" size={18} color={theme.colors.textMuted} />}
-                dimmed={!!busy && busy !== 'export-json'}
-              />
-              <SettingsRow
-                divider
-                icon="file-chart-outline"
-                label="Reports & exports"
-                sub="A PDF report or Excel file for a month, a year or everything"
-                onPress={busy ? undefined : () => router.push('/export')}
-                right={<Feather name="chevron-right" size={18} color={theme.colors.textMuted} />}
-                dimmed={!!busy}
-              />
-            </View>
-            <Text style={styles.copyHint}>
-              These open the share sheet, so you can save them anywhere or send them to yourself.
+                    )}
+                  </View>
+                  <Text style={h.sub}>
+                    {file.summary
+                      ? `${file.summary.entries} entries · ${formatBytes(file.sizeBytes)}`
+                      : "Couldn't read this file"}
+                  </Text>
+                </View>
+                <PrimaryButton
+                  compact
+                  title="Restore"
+                  variant="secondary"
+                  accessibilityLabel={`Restore the backup from ${
+                    file.exportedAt ? formatWhen(file.exportedAt) : 'this file'
+                  }`}
+                  onPress={() => restoreFile(file)}
+                  disabled={!!busy || !file.summary}
+                />
+              </TimelineNode>
+            ))}
+          </View>
+        )}
+        {loaded && hasFolder && shownFiles.length === 0 && (
+          <View style={[h.card, cardSurface.neutral, styles.emptyCard, safetyInfo && styles.emptyAfter]}>
+            <Text style={styles.emptyTitle}>No backups yet</Text>
+            <Text style={styles.emptySub}>
+              Nothing in this folder yet. Tap Back up now to write the first one.
             </Text>
-          </>
+          </View>
         )}
       </ReanimatedAnimated.ScrollView>
       <SkyHeader

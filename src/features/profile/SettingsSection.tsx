@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { View, Pressable } from 'react-native';
+import { View, Pressable, useWindowDimensions } from 'react-native';
 import { Text } from '@/components/Text';
 import { useFocusEffect, router } from 'expo-router';
 import Feather from '@expo/vector-icons/Feather';
@@ -45,6 +45,7 @@ import { withPressedTint } from '@/lib/pressed';
 import { haptics } from '@/lib/haptics';
 import { refreshAllWidgets } from '@/widgets/notifyWidgets';
 import { showAlert } from '@/components/AppDialog';
+import { shade } from '@/lib/color';
 
 /** "today" / "yesterday" / "N days ago" — deliberately coarse, no hours/minutes. */
 export function daysAgoLabel(iso: string, now: Date = new Date()): string {
@@ -88,11 +89,11 @@ function AboutFact({ icon, text }: { icon: string; text: string }) {
 }
 
 /**
- * Settings tab: the safety check (backup, unlock, notifications at a glance), then the groups in order of how
- * often each is touched: Money, Privacy & alerts, Your data, Appearance, About. Glass cards on the wallpaper,
- * each row with its icon on a soft tint.
+ * Settings starts with theme choices, then a safety overview and grouped preferences.
  */
 export function SettingsSection() {
+  const { width, fontScale } = useWindowDimensions();
+  const stackValues = width < 360 || fontScale > 1.2;
   const { accent, themeId, setTheme, themeSaveError } = useAccent();
   const { lockEnabled, setLockEnabled } = useAppLock();
   const { hideAmounts, toggleHideAmounts } = usePrivacy();
@@ -283,6 +284,59 @@ export function SettingsSection() {
           <PrimaryButton title="Retry" variant="secondary" compact onPress={() => void load()} />
         </View>
       )}
+      <Section compact title="Appearance">
+        {themeSaveError && (
+          <Text accessibilityRole="alert" accessibilityLiveRegion="polite" style={styles.themeError}>
+            {themeSaveError.message}
+          </Text>
+        )}
+        <View style={[h.card, styles.appearanceCard, { backgroundColor: shade(activeTheme.primary, 95) }]}>
+          <Pressable
+            onPress={() => router.push('/themes')}
+            style={withPressedTint(accent, styles.appearanceHead)}
+            accessibilityRole="button"
+            accessibilityLabel={`Theme: ${activeTheme.name}. Change theme`}
+          >
+            <ThemeThumb pack={activeTheme} />
+            <View style={h.mid}>
+              <Text style={styles.appearanceTitle}>Make it yours</Text>
+              <View style={styles.themeNameRow}>
+                <Text style={styles.themeName}>{activeTheme.name}</Text>
+              </View>
+            </View>
+            <Feather name="arrow-up-right" size={18} color={theme.colors.ink} />
+          </Pressable>
+          <Text style={styles.appearanceHint}>Tap a color to try a different look.</Text>
+          <View style={styles.swatches}>
+            {THEMES.map((pack) => {
+              const active = pack.id === themeId;
+              return (
+                <Pressable
+                  key={pack.id}
+                  onPress={() => {
+                    if (active) return;
+                    haptics.tap();
+                    setTheme(pack.id);
+                  }}
+                  style={withPressedTint(accent, [styles.swatchHit, active && styles.swatchActive])}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${pack.name} theme`}
+                  accessibilityState={{ selected: active }}
+                >
+                  <View style={[styles.swatch, { backgroundColor: pack.primary }]}>
+                    <View style={[styles.swatchHalf, { backgroundColor: pack.secondary }]} />
+                    {active && (
+                      <View style={styles.swatchCheck}>
+                        <Feather name="check" size={16} color={theme.colors.ink} />
+                      </View>
+                    )}
+                  </View>
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
+      </Section>
       {backupLoaded && (
         <SafetyCheck
           backup={backupOk ? 'ok' : lastBackupFailed ? 'failed' : 'never'}
@@ -303,13 +357,14 @@ export function SettingsSection() {
       )}
 
       <Section compact title="Money">
-        <View style={[h.card, cardSurface.neutral]}>
+        <View style={[h.card, cardSurface.neutral, styles.settingsCard]}>
           <SettingsRow
             icon="currency-inr"
-            round
+            iconBg={theme.colors.goldTint}
             label="Default currency"
             sub="New accounts and displayed amounts"
             value={currencyLoaded ? currency : 'Unavailable'}
+            valueBelow={stackValues}
             onPress={() => setCurrencyOpen((v) => !v)}
             expanded={currencyOpen}
           />
@@ -340,7 +395,7 @@ export function SettingsSection() {
           <MovingRow>
             <SettingsRow
               icon="gauge"
-              round
+              iconBg={theme.colors.goldTint}
               label="Daily spending goal"
               sub="Shown on Home each day"
               value={
@@ -350,6 +405,7 @@ export function SettingsSection() {
                     ? `${formatMoney(dailyGoal, currency)}/day`
                     : 'Not set'
               }
+              valueBelow={stackValues}
               onPress={toggleDailyGoal}
               expanded={dailyGoalOpen}
               divider
@@ -386,7 +442,7 @@ export function SettingsSection() {
           <MovingRow>
             <SettingsRow
               icon="tag-outline"
-              round
+              iconBg={theme.colors.goldTint}
               label="Categories"
               sub="Add, rename, or archive"
               onPress={() => router.push('/categories')}
@@ -397,10 +453,10 @@ export function SettingsSection() {
       </Section>
 
       <Section compact title="Privacy & alerts">
-        <View style={[h.card, cardSurface.neutral]}>
+        <View style={[h.card, cardSurface.neutral, styles.settingsCard]}>
           <SettingsRow
             icon="fingerprint"
-            round
+            iconBg={theme.colors.accentTint}
             label="Require unlock"
             sub="Fingerprint, face, or your phone's PIN"
             right={
@@ -409,7 +465,7 @@ export function SettingsSection() {
           />
           <SettingsRow
             icon="eye-off-outline"
-            round
+            iconBg={theme.colors.accentTint}
             label="Hide savings & investment amounts"
             sub="Also on the eye icon at the top"
             right={
@@ -423,7 +479,7 @@ export function SettingsSection() {
           />
           <SettingsRow
             icon="widgets-outline"
-            round
+            iconBg={theme.colors.accentTint}
             label="Hide widget details"
             sub="Hide financial details on your home screen. Quick Add stays available."
             right={
@@ -438,7 +494,7 @@ export function SettingsSection() {
           />
           <SettingsRow
             icon="bell-outline"
-            round
+            iconBg={theme.colors.accentTint}
             label="Notifications"
             sub={
               alertsOn == null
@@ -452,18 +508,26 @@ export function SettingsSection() {
       </Section>
 
       <Section compact title="Your data">
-        <View style={[h.card, cardSurface.neutral]}>
+        <View style={[h.card, cardSurface.neutral, styles.settingsCard]}>
           <SettingsRow
             icon="folder-outline"
-            round
+            iconBg={theme.colors.secondaryTint}
             label="Backup & restore"
             sub={backupSub}
             subColor={!backupLoaded || backupOk ? undefined : theme.colors.expenseText}
             onPress={() => router.push('/backup')}
           />
           <SettingsRow
+            icon="file-export-outline"
+            iconBg={theme.colors.secondaryTint}
+            label="Export"
+            sub="PDF reports and Excel spreadsheets"
+            onPress={() => router.push('/export')}
+            divider
+          />
+          <SettingsRow
             icon="delete-restore"
-            round
+            iconBg={theme.colors.secondaryTint}
             label="Recently deleted"
             sub={
               deletedCount == null || deletedCount === 0
@@ -475,7 +539,7 @@ export function SettingsSection() {
           />
           <SettingsRow
             icon="broom"
-            round
+            iconBg={theme.colors.secondaryTint}
             label="Tidy up"
             sub={
               tidyCount == null
@@ -488,55 +552,6 @@ export function SettingsSection() {
             onPress={() => router.push('/tidy-up')}
             divider
           />
-        </View>
-      </Section>
-
-      <Section compact title="Appearance">
-        {themeSaveError && (
-          <Text
-            accessibilityRole="alert"
-            accessibilityLiveRegion="polite"
-            style={{ color: theme.colors.expenseText, padding: theme.space.md }}
-          >
-            {themeSaveError.message}
-          </Text>
-        )}
-        <View style={[h.card, cardSurface.neutral]}>
-          <Pressable
-            onPress={() => router.push('/themes')}
-            style={withPressedTint(accent, h.row)}
-            accessibilityRole="button"
-            accessibilityLabel={`Theme: ${activeTheme.name}. Change theme`}
-          >
-            <ThemeThumb pack={activeTheme} />
-            <View style={h.mid}>
-              <Text style={h.title}>Theme</Text>
-              <Text style={h.sub}>{activeTheme.name}</Text>
-            </View>
-            <Feather name="chevron-right" size={18} color={theme.colors.textMuted} />
-          </Pressable>
-          <View style={styles.swatches}>
-            {THEMES.map((pack) => {
-              const active = pack.id === themeId;
-              return (
-                <Pressable
-                  key={pack.id}
-                  onPress={() => {
-                    if (!active) haptics.tap();
-                    setTheme(pack.id);
-                  }}
-                  style={withPressedTint(accent, [styles.swatchHit, active && styles.swatchActive])}
-                  accessibilityRole="button"
-                  accessibilityLabel={`${pack.name} theme`}
-                  accessibilityState={{ selected: active }}
-                >
-                  <View style={[styles.swatch, { backgroundColor: pack.primary }]}>
-                    <View style={[styles.swatchHalf, { backgroundColor: pack.secondary }]} />
-                  </View>
-                </Pressable>
-              );
-            })}
-          </View>
         </View>
       </Section>
 

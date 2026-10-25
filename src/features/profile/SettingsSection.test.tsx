@@ -1,6 +1,5 @@
 /**
- * Profile's Settings tab: a coral note only while backups need attention; groups in signed-off order (Money,
- * Privacy & alerts, Your data, Appearance, About footer); rows that change something still do.
+ * Profile's Settings tab: appearance choices, safety status and grouped preferences retain their actions.
  */
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
 import { Text, TextInput } from 'react-native';
@@ -167,9 +166,9 @@ describe('Profile · Settings section', () => {
     expect(mockLock.setLockEnabled).toHaveBeenCalledWith(true);
   });
 
-  it('lists the groups in the signed-off order', async () => {
+  it('leads with appearance, then groups money, privacy and data', async () => {
     const shown = texts(await render());
-    const order = ['Money', 'Privacy & alerts', 'Your data', 'Appearance', 'Yume · v1.4.0'].map((g) =>
+    const order = ['Appearance', 'Money', 'Privacy & alerts', 'Your data', 'Yume · v1.4.0'].map((g) =>
       shown.indexOf(g)
     );
     expect(order.every((i) => i >= 0)).toBe(true);
@@ -238,6 +237,45 @@ describe('Profile · Settings section', () => {
     await press(tree, 'Theme: Yume. Change theme');
     expect(router.push).toHaveBeenCalledWith('/themes');
     expect(mockSetTheme).not.toHaveBeenCalled();
+  });
+
+  it('opens Backup and Export from separate settings rows', async () => {
+    const tree = await render();
+    await press(tree, 'Backup & restore');
+    expect(router.push).toHaveBeenCalledWith('/backup');
+    await press(tree, 'Export');
+    expect(router.push).toHaveBeenCalledWith('/export');
+    expect(texts(tree)).toContain('PDF reports and Excel spreadsheets');
+  });
+
+  it('keeps setting values and descriptions readable in enlarged layouts', async () => {
+    const dimensions = jest.spyOn(require('react-native'), 'useWindowDimensions').mockReturnValue({
+      width: 320,
+      height: 844,
+      scale: 1,
+      fontScale: 2,
+    });
+    try {
+      const tree = await render();
+      const { SettingsRow } = require('@/components/SettingsRow');
+      const currency = tree.root
+        .findAllByType(SettingsRow)
+        .find((n) => n.props.label === 'Default currency')!;
+      expect(currency.props.valueBelow).toBe(true);
+      expect(texts(tree).filter((text) => text === 'INR')).toHaveLength(1);
+      expect(texts(tree)).toContain('New accounts and displayed amounts');
+      expect(texts(tree).filter((text) => text === '₹500/day')).toHaveLength(1);
+    } finally {
+      dimensions.mockRestore();
+    }
+  });
+
+  it('changes the theme from a color choice and leaves the current choice alone', async () => {
+    const tree = await render();
+    await press(tree, 'Yume theme');
+    expect(mockSetTheme).not.toHaveBeenCalled();
+    await press(tree, 'Hollow Violet theme');
+    expect(mockSetTheme).toHaveBeenCalledWith('hollowViolet');
   });
 
   it("won't turn the lock on when the phone itself has no screen lock", async () => {

@@ -2,6 +2,7 @@
 
 ## Current backup contract
 
+- Settings has separate **Backup & restore** and **Export** entries. Backup shows Save backup file and Restore from file together, with folder backup status, an expandable schedule and recent saved backups. Export separately offers a period, PDF or Excel, and a pinned Create action. PDF/Excel files are reports; the full JSON backup is the restorable copy.
 - New backups are plain JSON, format version 6, containing the tables explicitly listed in [backup.ts](src/lib/backup.ts). Format-1 through format-5 files remain readable. Recently deleted records are not included. Sharing a copy sends it to the destination the user selects.
 - Android folder access uses a persisted storage grant. Choosing a folder scans existing valid files before a write; newer folder data requires an explicit choice rather than silent replacement. Restore replaces records; it does not merge ledgers.
 - Snapshot table reads are serialized in one exclusive database section. Restore validates data and foreign-key consistency; unknown columns and tables emptied by older backups are reported.
