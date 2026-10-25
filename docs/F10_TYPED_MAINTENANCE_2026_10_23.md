@@ -1,5 +1,7 @@
 # F10 — type maintenance rows without an escape hatch
 
+> Historical record: validation and implementation claims apply to the revision recorded below. For maintained behavior see [architecture](ARCHITECTURE.md); for the newer check results see the [repository re-audit](REPOSITORY_REAUDIT_2026_10_25.md).
+
 ## Root cause / result
 
 The rounding query described every column as `number | null`, although all six participating tables use text IDs. Its follow-up query erased that mismatch with an explicit `any[]` cast. The query projection now has a required string ID and SQL-compatible scalar columns. Both snapshots and lookup maps use that row type; IDs bind directly as `string[]`.

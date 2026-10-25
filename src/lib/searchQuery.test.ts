@@ -40,6 +40,12 @@ describe('parseSearchQuery', () => {
     expect(parse('25 dec').date).toBe('2025-12-25');
   });
 
+  it('finds last year’s leap day when this year has no February 29', () => {
+    expect(parseSearchQuery('29 feb', '2025-03-01').date).toBe('2024-02-29');
+    expect(parseSearchQuery('29/2', '2025-01-01').date).toBe('2024-02-29');
+    expect(parseSearchQuery('29/2', '2026-03-01').date).toBeNull();
+  });
+
   it('ignores impossible dates', () => {
     expect(parse('31/2')).toEqual({ date: null, words: [{ text: '31/2' }] });
   });

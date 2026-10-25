@@ -65,13 +65,13 @@ export async function estimatePurchase(accountId: string, amountMinor: number, p
         counterparty: string;
       }>(
         `SELECT p.due_date, p.emi_amount_minor, l.counterparty FROM loan_payments p JOIN loans l ON l.id = p.loan_id
-       WHERE l.direction = 'borrowed' AND l.status = 'active' AND l.linked_account_id = ? AND p.status IN ('pending', 'overdue') AND p.due_date <= ?`,
+       WHERE l.direction = 'borrowed' AND l.status != 'closed' AND l.linked_account_id = ? AND p.status IN ('pending', 'overdue') AND p.due_date <= ?`,
         [accountId, through]
       );
       for (const p of payments)
         movements.push({ date: p.due_date, deltaMinor: -p.emi_amount_minor, label: `${p.counterparty} EMI` });
       const incomplete = await db.getFirstAsync<{ n: number }>(
-        `SELECT COUNT(*) AS n FROM loans l WHERE l.direction = 'borrowed' AND l.status = 'active' AND l.outstanding_principal_minor > 0 AND l.linked_account_id = ?
+        `SELECT COUNT(*) AS n FROM loans l WHERE l.direction = 'borrowed' AND l.status != 'closed' AND l.outstanding_principal_minor > 0 AND l.linked_account_id = ?
        AND NOT EXISTS (SELECT 1 FROM loan_payments p WHERE p.loan_id = l.id AND p.status IN ('pending', 'overdue'))`,
         [accountId]
       );

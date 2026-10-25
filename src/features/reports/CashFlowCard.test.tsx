@@ -1,4 +1,5 @@
 jest.mock('@/components/ModalSheet', () => ({ ModalSheet: () => null }));
+jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
 /** The Trends in-and-out card and category tracks: made-up figures throughout. */
 import { Text } from 'react-native';
 import { create, act, ReactTestRenderer } from 'react-test-renderer';

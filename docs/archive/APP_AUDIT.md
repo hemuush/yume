@@ -1,6 +1,8 @@
 # Initial application audit: implementation record
 
-## Current reading guide
+> Historical record: validation and implementation claims apply to the revision recorded below. For maintained behavior see [architecture](../ARCHITECTURE.md); for the newer check results see the [repository re-audit](../REPOSITORY_REAUDIT_2026_10_25.md).
+
+## Reading guide for this record
 
 Reviewed against the repository on **11 October 2026**. The original findings below are a historical baseline. Subsequent fixes cover privacy inheritance, currency isolation, recurring writes and restore safety; current architecture and release limits are documented separately.
 

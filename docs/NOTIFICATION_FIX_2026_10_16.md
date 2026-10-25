@@ -1,5 +1,7 @@
 # Morning reminder correction — 16 October 2026
 
+> Historical record: validation and implementation claims apply to the revision recorded below. For maintained behavior see [architecture](ARCHITECTURE.md); for the newer check results see the [repository re-audit](REPOSITORY_REAUDIT_2026_10_25.md).
+
 ## Findings and changes
 
 The old planner created no ordinary Morning notification: enabled Morning only carried a due EMI, Monday wrap or queued spending alert. An ordinary day could therefore have zero morning requests. It now creates an amount-free daily check-in opening Plan when that slot has no due content. Existing due entries replace the generic check-in; merging, time clamps, disabled slots and evening logged-today suppression remain.

@@ -1,5 +1,7 @@
 # Loan flow review — 21 October 2026
 
+> Historical record: validation and implementation claims apply to the revision recorded below. For maintained behavior see [architecture](ARCHITECTURE.md); for the newer check results see the [repository re-audit](REPOSITORY_REAUDIT_2026_10_25.md).
+
 Targeted source and automated-flow review, preserving the selected theme, loan identity colours and current card/sheet structure. Earlier cleanup reports retain their own evidence; they are not fresh validation for this pass. Changes remain uncommitted.
 
 ## Areas traced

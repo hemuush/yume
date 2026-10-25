@@ -21,6 +21,30 @@ import { ThisMonthWidget } from './ThisMonthWidget';
 import { PRIVATE_HEALTHY_LINES } from '@/features/home/suuLinePools';
 import { createRecurringRule } from '@/db/recurring';
 
+it('refreshes widget totals after a write when the clock moved backwards', async () => {
+  await mockTestDb.execAsync(CREATE_TABLES_SQL);
+  await setHideSensitiveAmounts(false);
+  const bank = await createAccount({ name: 'Clock test', type: 'bank', openingBalanceMinor: 0 });
+  const food = await createCategory({ name: 'Clock test food', kind: 'expense' });
+  const month = new Date(2029, 0, 15);
+  const startedAt = Date.now() + 10_000;
+  const clock = jest.spyOn(Date, 'now').mockReturnValue(startedAt);
+  try {
+    expect((await getThisMonthWidgetData(month)).spentMinor).toBe(0);
+    await createTransaction({
+      type: 'expense',
+      accountId: bank.id,
+      categoryId: food.id,
+      amountMinor: 10000,
+      date: '2029-01-10',
+    });
+    clock.mockReturnValue(startedAt - 60_000);
+    expect((await getThisMonthWidgetData(month)).spentMinor).toBe(10000);
+  } finally {
+    clock.mockRestore();
+  }
+});
+
 it('excludes sensitive spending and future repeating bills from hidden widget projections', async () => {
   await mockTestDb.execAsync(CREATE_TABLES_SQL);
   const now = new Date(2027, 0, 15);

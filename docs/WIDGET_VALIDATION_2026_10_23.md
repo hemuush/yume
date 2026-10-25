@@ -1,5 +1,7 @@
 # Widget validation — 23 October 2026
 
+> Historical record: validation and implementation claims apply to the revision recorded below. For maintained behavior see [architecture](ARCHITECTURE.md); for the newer check results see the [repository re-audit](REPOSITORY_REAUDIT_2026_10_25.md).
+
 The recheck started on 22 October and continued on 23 October. Reviewed all five widget components, their data/registry paths, picker assets and the installed Android renderer after the style update.
 
 ## Corrections from this review

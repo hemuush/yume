@@ -1,5 +1,7 @@
 # Plan redesign (2026-10-22)
 
+> Historical record: validation and implementation claims apply to the revision recorded below. For maintained behavior see [architecture](ARCHITECTURE.md); for the newer check results see the [repository re-audit](REPOSITORY_REAUDIT_2026_10_25.md).
+
 Not yet verified on a device.
 
 - **Runway card** (`RunwayCard` compact, `RunwayChart`): a flat card with the spending-account balance, a verdict chip

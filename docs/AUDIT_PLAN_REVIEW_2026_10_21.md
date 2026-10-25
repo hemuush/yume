@@ -1,5 +1,7 @@
 # Performance, database, motion and link audit
 
+> Historical record: validation and implementation claims apply to the revision recorded below. For maintained behavior see [architecture](ARCHITECTURE.md); for the newer check results see the [repository re-audit](REPOSITORY_REAUDIT_2026_10_25.md).
+
 Recorded 21 October 2026 against `a5622a6` (Android-only Expo SDK 57 app). It adds no behavior change. Measurements are desktop fixture runs on Node 22 with `TZ=Asia/Kolkata`; the runner had no `en_IN` locale. No APK, emulator or phone was used.
 
 ## Baseline

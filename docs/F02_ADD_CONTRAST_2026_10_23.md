@@ -1,5 +1,7 @@
 # F02 — readable Add labels
 
+> Historical record: validation and implementation claims apply to the revision recorded below. For maintained behavior see [architecture](ARCHITECTURE.md); for the newer check results see the [repository re-audit](REPOSITORY_REAUDIT_2026_10_25.md).
+
 The Add tone supplied the same decorative color to keypad operators, amount labels and currency text. Expense and income missed 4.5:1, and deriving a transfer label at fixed 45% HSL lightness also failed in several theme packs.
 
 The tone now uses the existing `expenseText` / `incomeText` semantic inks and the shared deep theme ink for transfer/friend labels. Pastel backgrounds are unchanged. No amount, validation, persistence or navigation behavior changed.

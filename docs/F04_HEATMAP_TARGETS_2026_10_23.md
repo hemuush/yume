@@ -1,5 +1,7 @@
 # F04 — accessible heatmap selection
 
+> Historical record: validation and implementation claims apply to the revision recorded below. For maintained behavior see [architecture](ARCHITECTURE.md); for the newer check results see the [repository re-audit](REPOSITORY_REAUDIT_2026_10_25.md).
+
 The calendar's 40dp-high cells and the matrix's roughly 10×16dp day buttons were below the requested 44dp target. Tiny year-view month labels were also buttons.
 
 Calendar day controls now have a 44dp minimum in both directions. Reduced outer padding and 1dp column gutters leave enough width in the 360dp layout; scrubbing accounts for gutters and the measured weekday header. At larger text sizes the header can grow.

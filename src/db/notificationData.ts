@@ -40,7 +40,7 @@ export async function listReminderAttention(today: string, recurring: boolean, r
   return items;
 }
 
-/** The next EMI of each active borrowed loan, for planNotifications. */
+/** The next unpaid EMI of each non-closed borrowed loan, for planNotifications. */
 export async function listLoansDue(): Promise<PlanLoan[]> {
   const db = await getDb();
   const rows = await db.getAllAsync<{
@@ -51,10 +51,10 @@ export async function listLoansDue(): Promise<PlanLoan[]> {
   }>(
     `SELECT l.id AS id, l.counterparty AS counterparty, p.due_date AS due_date, p.emi_amount_minor AS emi_amount_minor
      FROM loans l
-     JOIN loan_payments p ON p.loan_id = l.id AND p.status = 'pending'
-     WHERE l.direction = 'borrowed' AND l.status = 'active'
+     JOIN loan_payments p ON p.loan_id = l.id AND p.status IN ('pending', 'overdue')
+     WHERE l.direction = 'borrowed' AND l.status != 'closed'
        AND p.installment_number = (
-         SELECT MIN(q.installment_number) FROM loan_payments q WHERE q.loan_id = l.id AND q.status = 'pending'
+         SELECT MIN(q.installment_number) FROM loan_payments q WHERE q.loan_id = l.id AND q.status IN ('pending', 'overdue')
        )`
   );
   return rows.map((r) => ({

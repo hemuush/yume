@@ -64,6 +64,13 @@ describe('withoutRelock', () => {
     expect(isReturningFromOwnActivity()).toBe(false);
   });
 
+  it('does not extend the picker grace period when the clock moves backwards', async () => {
+    await withoutRelock(async () => {});
+    jest.setSystemTime(Date.now() - 60_000);
+    expect(isReturningFromOwnActivity()).toBe(false);
+    expect(shouldRelock(Date.now() - RELOCK_AFTER_MS, Date.now())).toBe(true);
+  });
+
   it("the unlock prompt itself counts as the app's own activity", async () => {
     jest.advanceTimersByTime(10000);
     (LocalAuthentication.authenticateAsync as jest.Mock).mockResolvedValue({ success: true });

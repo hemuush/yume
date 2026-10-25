@@ -19,7 +19,6 @@ import { errorMessage } from '@/lib/errorMessage';
 import { haptics } from '@/lib/haptics';
 import { gainLabel, estimatedValue } from '@/lib/investment';
 import { addValuation, updateValuation, deleteValuation, restoreValuation, Valuation } from '@/db/valuations';
-import { setHoldingUnits } from '@/db/accounts';
 import type { Account } from '@/types';
 
 /**
@@ -112,12 +111,15 @@ export function UpdateValueSheet({
       }
       setSaving(true);
       try {
-        if (valuation) await updateValuation(valuation.id, { date, valueMinor });
-        else await addValuation(account.id, { date, valueMinor });
-        // Remember the units for next time; they change only when a SIP buys more or you sell some.
-        if (priced && Number.isFinite(unitsNum) && unitsNum > 0 && unitsNum !== inv.units) {
-          await setHoldingUnits(account.id, unitsNum);
-        }
+        const input = {
+          date,
+          valueMinor,
+          ...(priced && Number.isFinite(unitsNum) && unitsNum > 0 && unitsNum !== inv.units
+            ? { units: unitsNum }
+            : {}),
+        };
+        if (valuation) await updateValuation(valuation.id, input);
+        else await addValuation(account.id, input);
         haptics.confirm();
         onSaved();
       } catch (e) {

@@ -1,5 +1,7 @@
 # Android audit fixes and verification — 23 October 2026
 
+> Historical record: validation and implementation claims apply to the revision recorded below. For maintained behavior see [architecture](ARCHITECTURE.md); for the newer check results see the [repository re-audit](REPOSITORY_REAUDIT_2026_10_25.md).
+
 Release-ready: **No**. Nine code findings are implemented; native acceptance (F07) remains open. The user approved keeping all Quick Add actions with a larger minimum widget and blocking financial screens until required capture protection succeeds. Android only. Branch: `audit/android-production-2026-10-23`, original revision `5320285`. No dependency additions, schema migrations, remote telemetry or changes to the declared light/portrait scope.
 
 ## Finding status

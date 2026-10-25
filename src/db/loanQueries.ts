@@ -47,15 +47,15 @@ export async function getLoanProgress(): Promise<LoanProgress[]> {
     `SELECT l.id AS loan_id,
        (SELECT COUNT(*) FROM loan_payments p WHERE p.loan_id = l.id AND p.status = 'paid') AS paid_count,
        (SELECT COUNT(*) FROM loan_payments p WHERE p.loan_id = l.id) AS total_count,
-       (SELECT p.due_date FROM loan_payments p WHERE p.loan_id = l.id AND p.status = 'pending'
+       (SELECT p.due_date FROM loan_payments p WHERE p.loan_id = l.id AND p.status IN ('pending', 'overdue')
           ORDER BY p.installment_number ASC LIMIT 1) AS next_due_date,
-       (SELECT p.emi_amount_minor FROM loan_payments p WHERE p.loan_id = l.id AND p.status = 'pending'
+       (SELECT p.emi_amount_minor FROM loan_payments p WHERE p.loan_id = l.id AND p.status IN ('pending', 'overdue')
           ORDER BY p.installment_number ASC LIMIT 1) AS next_emi_minor,
        (SELECT CASE WHEN p.outstanding_after_minor = 0 THEN p.due_date ELSE NULL END
-          FROM loan_payments p WHERE p.loan_id = l.id AND p.status = 'pending'
+          FROM loan_payments p WHERE p.loan_id = l.id AND p.status IN ('pending', 'overdue')
           ORDER BY p.installment_number DESC LIMIT 1) AS last_due_date,
        (SELECT COALESCE(SUM(p.interest_component_minor), 0) FROM loan_payments p
-          WHERE p.loan_id = l.id AND p.status = 'pending') AS pending_interest_minor
+          WHERE p.loan_id = l.id AND p.status IN ('pending', 'overdue')) AS pending_interest_minor
      FROM loans l`
   );
   return rows.map((r) => ({
@@ -118,7 +118,7 @@ export async function getLoanPaymentContext(loanId: string): Promise<LoanPayment
   );
   if (!loan) return null;
   const next = await db.getFirstAsync<LoanPaymentRow>(
-    `SELECT * FROM loan_payments WHERE loan_id = ? AND status = 'pending' ORDER BY installment_number ASC LIMIT 1`,
+    `SELECT * FROM loan_payments WHERE loan_id = ? AND status IN ('pending', 'overdue') ORDER BY installment_number ASC LIMIT 1`,
     [loanId]
   );
   if (!next) return null;
@@ -185,7 +185,7 @@ interface NextDueInstallment {
   dueDate: string;
 }
 
-/** The single nearest pending installment across every active borrowed loan, for a Home-screen reminder. */
+/** The nearest unpaid installment across non-closed borrowed loans, for a Home-screen reminder. */
 export async function getNextDueInstallment(): Promise<NextDueInstallment | null> {
   const db = await getDb();
   const row = await db.getFirstAsync<{
@@ -197,7 +197,7 @@ export async function getNextDueInstallment(): Promise<NextDueInstallment | null
     `SELECT lp.emi_amount_minor as emi_amount_minor, lp.due_date as due_date, l.id as loan_id, l.counterparty as counterparty
      FROM loan_payments lp
      JOIN loans l ON l.id = lp.loan_id
-     WHERE lp.status = 'pending' AND l.direction = 'borrowed' AND l.status = 'active'
+     WHERE lp.status IN ('pending', 'overdue') AND l.direction = 'borrowed' AND l.status != 'closed'
      ORDER BY lp.due_date ASC
      LIMIT 1`
   );

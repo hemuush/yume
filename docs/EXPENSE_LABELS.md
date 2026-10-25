@@ -18,7 +18,9 @@ Currency scope follows the existing default currency. Hidden sensitive category 
 
 Tracked refund receipts preserve the original purchase label, including an empty label, so partial and full refunds net against the same expense-label total and Activity filter. Startup and backup restore repair app-created linked receipts only when their text exactly matches the old generated `Refund: <purchase label or category>` value. Manually linked refund labels and custom receipt text are preserved. See [19 October audit fixes](AUDIT_FIXES_2026_10_19.md) for current validation; the results below belong to the original implementation.
 
-## Fresh validation
+## Original implementation validation
+
+The results here belong to the 13 October implementation. Use the [repository re-audit](REPOSITORY_REAUDIT_2026_10_25.md) for the newer full regression and current verification limits.
 
 - Final full regression: 268 suites / 10,887 tests passed, exit 0, 465.534 seconds. Two opt-in performance tests were skipped by the ordinary Jest command; they were not rerun for this change.
 - New real-SQLite tests cover old text reuse, date/currency scope, refund-only negative totals, unlabelled rows, income exclusion and sensitive-parent/sibling privacy.

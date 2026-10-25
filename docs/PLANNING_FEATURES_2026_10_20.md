@@ -1,5 +1,7 @@
 # Planning workflow improvements — 20 October 2026
 
+> Historical record: validation and implementation claims apply to the revision recorded below. For maintained behavior see [architecture](ARCHITECTURE.md); for the newer check results see the [repository re-audit](REPOSITORY_REAUDIT_2026_10_25.md).
+
 These changes are local and uncommitted. They preserve the selected app theme and use existing sheets, controls and typography.
 
 ## Where to check

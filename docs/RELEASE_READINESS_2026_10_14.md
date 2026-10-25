@@ -1,5 +1,7 @@
 # Release readiness — 14 October 2026
 
+> Historical record: validation and implementation claims apply to the revision recorded below. For maintained behavior see [architecture](ARCHITECTURE.md); for the newer check results see the [repository re-audit](REPOSITORY_REAUDIT_2026_10_25.md).
+
 Follow-up: preview build 15 was submitted with these fixes using the existing signing key: [build page](https://expo.dev/accounts/xyumex/projects/yume/builds/f4528fb4-decc-4a47-a217-9a0a481192c5). No device acceptance or final artifact inspection is claimed by that submission.
 
 This review applies to the local working tree after preview build 14. It is not device acceptance or a claim that every possible state has been proven correct. Build 14 does not include the subsequent Add/Reports label keyboard fixes or this final filter refinement.

@@ -100,6 +100,7 @@ jest.mock('@/lib/safetyCopy', () => ({
 
 import BackupScreen from '../../../app/backup';
 import { getSafetyCopyInfo } from '@/lib/safetyCopy';
+import { RestorePreviewSheet } from './RestorePreviewSheet';
 
 it('labels an older recovery copy without promising it undoes the latest restore', async () => {
   (getSafetyCopyInfo as jest.Mock).mockResolvedValueOnce({
@@ -340,5 +341,36 @@ it('creates one backup in an empty folder even when Choose folder is tapped twic
   expect(writeLocalBackupNow).toHaveBeenCalledTimes(1);
   expect(writeLocalBackupNow).toHaveBeenCalledWith('content://new-folder', { preserveExisting: true });
   expect(setLocalBackupFolderUri).toHaveBeenCalledWith('content://new-folder');
+  act(() => tree.unmount());
+});
+
+it('reports a committed restore and resyncs even if adopting its backup folder fails', async () => {
+  const { pickBackupFolder, readLocalBackup } = jest.requireMock('@/lib/localBackup');
+  const { setLocalBackupFolderUri } = jest.requireMock('@/db/settings');
+  const { restoreKeepingSafetyCopy } = jest.requireMock('@/lib/safetyCopy');
+  const { showAlert } = jest.requireMock('@/components/AppDialog');
+  const { resyncAfterRestore } = jest.requireMock('@/lib/restoreSync');
+  pickBackupFolder.mockResolvedValue('content://existing');
+  mockState.files = [file(5)];
+  readLocalBackup.mockResolvedValue({ exportedAt: '2026-10-01T00:00:00Z' });
+  restoreKeepingSafetyCopy.mockResolvedValue({ skippedColumns: [], undoAvailable: true });
+  setLocalBackupFolderUri.mockRejectedValueOnce(new Error('folder save failed'));
+  const tree = await render();
+  await act(async () => buttons(tree, 'Choose folder')[0].props.onPress());
+  const actions = showAlert.mock.calls.find(
+    (call: unknown[]) => call[0] === 'Backups found in this folder'
+  )[2];
+  await act(async () =>
+    actions.find((action: { text: string }) => action.text === 'Review latest backup').onPress()
+  );
+  await act(async () => tree.root.findByType(RestorePreviewSheet).props.onRestore());
+  expect(restoreKeepingSafetyCopy).toHaveBeenCalledTimes(1);
+  expect(resyncAfterRestore).toHaveBeenCalled();
+  expect(showAlert).toHaveBeenCalledWith(
+    'Restore complete',
+    expect.stringContaining('backup folder settings could not be saved'),
+    expect.any(Array)
+  );
+  expect(showAlert.mock.calls.some((call: unknown[]) => call[0] === 'Something went wrong')).toBe(false);
   act(() => tree.unmount());
 });

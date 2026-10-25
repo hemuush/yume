@@ -37,8 +37,6 @@ jest.mock('@/theme/PrivacyContext', () => ({
   usePrivacy: () => ({ hideAmounts: false, toggleHideAmounts: jest.fn() }),
 }));
 jest.mock('@/theme/AccentContext', () => ({ useAccent: () => ({ accent: '#8CCED6', dot: '#8CCED6' }) }));
-const mockSetUnits = jest.fn(async () => undefined);
-jest.mock('@/db/accounts', () => ({ setHoldingUnits: (...a: unknown[]) => mockSetUnits(...(a as [])) }));
 jest.mock('@/db/valuations', () => ({
   addValuation: jest.fn(async () => ({})),
   updateValuation: jest.fn(async () => ({})),
@@ -202,7 +200,7 @@ describe('units times price', () => {
     act(() => labelled(r, 'Units held').props.onChangeText('123.456'));
     type(r, '44560');
     await save(r);
-    expect(mockSetUnits).toHaveBeenCalledWith('fund', 123.456);
+    expect(addValuation).toHaveBeenCalledWith('fund', expect.objectContaining({ units: 123.456 }));
   });
 
   it('starts with the remembered units and does not save them again unchanged', async () => {
@@ -214,7 +212,7 @@ describe('units times price', () => {
     expect(labelled(r, 'Units held').props.value).toBe('100');
     type(r, '44560');
     await save(r);
-    expect(mockSetUnits).not.toHaveBeenCalled();
+    expect(addValuation).toHaveBeenCalledWith('fund', { date: today, valueMinor: 4456000 });
   });
 
   it('is not offered for a fixed deposit', () => {

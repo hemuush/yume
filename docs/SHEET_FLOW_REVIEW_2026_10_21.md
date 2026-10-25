@@ -1,5 +1,7 @@
 # Related sheet navigation — 21 October 2026
 
+> Historical record: validation and implementation claims apply to the revision recorded below. For maintained behavior see [architecture](ARCHITECTURE.md); for the newer check results see the [repository re-audit](REPOSITORY_REAUDIT_2026_10_25.md).
+
 The phone screenshots showed Loan details disappearing when EMI account opened as a small centered dialog over Plan. Earlier child-return work retained form state but intentionally hid one native modal and opened another; that did not provide the requested visual continuity.
 
 ## Implementation

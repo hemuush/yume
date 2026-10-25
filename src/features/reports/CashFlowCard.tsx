@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
-import { Animated, View, Pressable, ScrollView, useWindowDimensions, ScrollViewInstance } from 'react-native';
+import { View, Pressable, ScrollView, useWindowDimensions, ScrollViewInstance } from 'react-native';
+import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import type { CashFlowPoint } from '@/db/reports';
@@ -7,7 +8,7 @@ import { formatMoney } from '@/lib/money';
 import { roundedMinor } from '@/lib/round';
 import { haptics } from '@/lib/haptics';
 import { CountUpAmount } from '@/components/CountUpAmount';
-import { useGrowFrom } from '@/lib/useGrowFrom';
+import { useDrawnValue } from '@/lib/useDrawnValue';
 import { withPressed, withPressedTint } from '@/lib/pressed';
 import { softTint } from '@/components/softTint';
 import { MIN_TREND_POINTS } from './TrendChart';
@@ -17,8 +18,6 @@ import { useAccent } from '@/theme/AccentContext';
 import { toLocalIsoDate } from '@/lib/date';
 
 const BAR_MAX = 100;
-/** Past this many months the amount under each bar no longer fits; the sentence still reads the picked one. */
-
 /** From this system font scale the summary strip stacks, so each figure keeps a full row. */
 const STACK_STRIP_AT = 1.3;
 
@@ -36,14 +35,16 @@ function FlowBar({
   narrow: boolean;
   live: boolean;
 }) {
-  const h = useGrowFrom(animKey, heightPx);
+  const height = useDrawnValue(animKey, heightPx);
+  const animatedStyle = useAnimatedStyle(() => ({ height: height.value }));
   return (
     <Animated.View
       style={[
         styles.flowBar,
         styles.flowBarEdge,
         narrow && { width: 5 },
-        { height: h, backgroundColor: color },
+        { backgroundColor: color },
+        animatedStyle,
         live && styles.flowBarLive,
       ]}
     />

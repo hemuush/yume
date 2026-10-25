@@ -27,6 +27,7 @@ import {
 import { saveSplit, getSplitParts, deleteSplit, restoreSplit, splitProblem } from './splits';
 import { countDeletedEntries } from './recentlyDeleted';
 import { getTidyUpReport } from './tidyUp';
+import { expectRefund, receiveRefund, getExpectedRefund } from './refundTracking';
 
 let bank: string;
 let groceries: string;
@@ -37,7 +38,14 @@ beforeAll(async () => {
 });
 
 beforeEach(async () => {
-  for (const table of ['deleted_entries', 'transactions', 'categories', 'accounts']) {
+  for (const table of [
+    'refund_receipts',
+    'refund_expectations',
+    'deleted_entries',
+    'transactions',
+    'categories',
+    'accounts',
+  ]) {
     await mockTestDb.runAsync(`DELETE FROM ${table}`);
   }
   bank = (
@@ -127,6 +135,19 @@ describe('split payments', () => {
     expect(await countDeletedEntries()).toBe(2);
     await restoreSplit(snapshots);
     expect(await listTransactions()).toHaveLength(2);
+    expect(await countDeletedEntries()).toBe(0);
+  });
+
+  it('cannot delete a split while any part has a tracked refund', async () => {
+    const splitId = await dmart();
+    const [purchase] = await getSplitParts(splitId);
+    await expectRefund(purchase.id, 5000, null);
+    await receiveRefund(purchase.id, { amountMinor: 2000, date: '2026-09-28', accountId: bank });
+    const balance = await getAccountBalance(bank);
+    await expect(deleteSplit(splitId)).rejects.toThrow('tracked refund');
+    expect(await getSplitParts(splitId)).toHaveLength(2);
+    expect((await getExpectedRefund(purchase.id))?.receivedMinor).toBe(2000);
+    expect(await getAccountBalance(bank)).toBe(balance);
     expect(await countDeletedEntries()).toBe(0);
   });
 

@@ -1,8 +1,32 @@
 # Release device acceptance
 
+## Repository re-audit acceptance — 25 October 2026
+
+Use a candidate containing the [repository re-audit](REPOSITORY_REAUDIT_2026_10_25.md). Automated checks below do not measure frame pacing or native file-provider behavior.
+
+| Area          | Action                                                                                                                            | Expected result                                                                                                                               | Actual/status |
+| ------------- | --------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
+| Motion        | Open Home, budgets, goals and Reports; change values, switch periods and revisit; repeat with reduced motion                      | Existing design stays intact; percentage/cash-flow bars draw without blocking scroll, revisits stay still, reduced motion settles immediately | Not run       |
+| Picker size   | On a disposable installation, select an oversized non-backup through a provider that omits picker metadata                        | Onboarding and Backup reject it before reading its contents; current data remains intact                                                      | Not run       |
+| Clock changes | On a test phone, finish a picker, background, move clock backwards and reopen; repeat Quick Add and widget refresh after an entry | Lock grace does not extend; Quick Add remains usable; widgets obtain fresh totals                                                             | Not run       |
+| Search        | In a copied ledger with a 29 February 2024 entry, search `29 feb` with the test phone date in 2025                                | Activity resolves the previous leap day; ordinary invalid dates remain text searches                                                          | Not run       |
+
 Use the new candidate containing notification delivery diagnostics and lifecycle fixes. Build 10 contains native privacy hardening but does not contain those notification follow-ups. Test on copied data or a spare device; preserve an independent backup before any restore. Do not change the phone clock or clear your real app data for these checks.
 
 Record: APK/build ___; phone/model ___; Android ___; launcher ___; date ___; tester ___ .
+
+## App audit acceptance — 25 October 2026
+
+Use a candidate containing [this audit's corrections](FULL_APP_AUDIT_2026_10_25.md). All rows below remain unperformed on a phone.
+
+| Area                    | Action                                                                                                                       | Expected result                                                                                                           | Actual/status |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | ------------- |
+| First-run setup         | On a fresh test install, tap Get started rapidly and try Back during setup                                                   | One copy of each chosen account; setup does not navigate away mid-write                                                   | Not run       |
+| Restored loan statuses  | Restore copied data with a defaulted loan and an overdue installment; review Home, Plan, purchase check, Loans and reminders | Unpaid obligations remain included; earliest unpaid is next; rate change/prepayment leaves one row per installment number | Not run       |
+| Investment value        | Edit units and value, save, reopen and verify both                                                                           | One coherent saved update; both retained together; no duplicate save from rapid taps                                      | Not run       |
+| Category navigation     | Step periods quickly, navigate to a parent, toggle privacy and repeat with TalkBack                                          | No old amount under a new period/category or privacy state; loading and errors are understandable                         | Not run       |
+| Backup restore recovery | On copied data, restore from a folder and verify completion, current settings and available recovery copy                    | Successful data restore remains reported as complete; folder-setting failure, if encountered, is reported separately      | Not run       |
+| Theme icon setting      | Open Appearance; enable/cancel/disable Match the app icon; background and reopen                                             | Correct persisted switch, one save at a time, usable error/retry and expected launcher icon                               | Not run       |
 
 ## Related sheet navigation — 21 October 2026
 

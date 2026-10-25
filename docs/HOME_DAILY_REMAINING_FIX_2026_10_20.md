@@ -1,5 +1,7 @@
 # Home daily remaining refresh — 20 October 2026
 
+> Historical record: validation and implementation claims apply to the revision recorded below. For maintained behavior see [architecture](ARCHITECTURE.md); for the newer check results see the [repository re-audit](REPOSITORY_REAUDIT_2026_10_25.md).
+
 ## Reproduced issue
 
 After Home loaded a 500-rupee daily goal with no spending, a new 70-rupee expense followed by navigating away from and back to the current month refreshed the chart and monthly spending to 70 rupees but left the daily footer at 500 rupees. A real-SQLite screen regression failed before the fix with those contradictory figures.

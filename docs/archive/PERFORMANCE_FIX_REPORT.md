@@ -1,6 +1,8 @@
 # Performance: implementation record
 
-## Current reading guide
+> Historical record: validation and implementation claims apply to the revision recorded below. For maintained behavior see [architecture](../ARCHITECTURE.md); for the newer check results see the [repository re-audit](../REPOSITORY_REAUDIT_2026_10_25.md).
+
+## Reading guide for this record
 
 Reviewed against the repository on **11 October 2026**. Cache keys must include the relevant data version and query scope. Avoid redundant state updates and chart animation work; desktop query timing and export success do not establish phone frame rates. Reports now uses its static header design.
 

@@ -1,5 +1,7 @@
 # Production release audit
 
+> Historical record: validation and implementation claims apply to the revision recorded below. For maintained behavior see [architecture](ARCHITECTURE.md); for the newer check results see the [repository re-audit](REPOSITORY_REAUDIT_2026_10_25.md).
+
 Current source and validation: see the [release follow-up audit](RELEASE_FOLLOWUP_AUDIT.md). This document retains the preceding audit record.
 
 Recorded 13 October 2026. Source baseline: `4dff801ff2ddc88aa5745c458e60d4b547b15154`, plus the release fixes described below. This is release-candidate evidence, not a claim that every phone has been tested.

@@ -550,7 +550,7 @@ export async function getTodaySpend(
 
 /**
  * Home's forecast inputs (lib/pace.ts): everyday spend 1st→`today` (excl. Loan EMI, fees, Friends & Family)
- * plus still-due this month: pending borrowed-loan EMIs and active recurring expenses. Default currency only.
+ * plus still-due this month: unpaid non-closed borrowed-loan EMIs and active recurring expenses. Default currency only.
  */
 export async function getMonthPaceInputs(
   today: string = toIso(new Date()),
@@ -573,7 +573,7 @@ export async function getMonthPaceInputs(
   const emis = await db.getFirstAsync<{ total: number | null }>(
     `SELECT SUM(p.emi_amount_minor) AS total FROM loan_payments p
      JOIN loans l ON l.id = p.loan_id
-     WHERE p.status = 'pending' AND l.status = 'active' AND l.direction = 'borrowed'
+     WHERE p.status IN ('pending', 'overdue') AND l.status != 'closed' AND l.direction = 'borrowed'
        AND p.due_date > ? AND p.due_date <= ?`,
     [today, monthEnd]
   );
@@ -647,7 +647,7 @@ async function recurringExpensesDue(
 }
 
 /**
- * Still owed this month, not yet spent: pending EMIs on active borrowed loans due by month end (overdue and
+ * Still owed this month, not yet spent: unpaid EMIs on non-closed borrowed loans due by month end (overdue and
  * due today count) and active recurring expenses after `today` (earlier ones already posted). Default currency.
  */
 export async function getStillToPayThisMonth(
@@ -661,7 +661,7 @@ export async function getStillToPayThisMonth(
   const emis = await db.getFirstAsync<{ total: number | null }>(
     `SELECT SUM(p.emi_amount_minor) AS total FROM loan_payments p
      JOIN loans l ON l.id = p.loan_id
-     WHERE p.status = 'pending' AND l.status = 'active' AND l.direction = 'borrowed'
+     WHERE p.status IN ('pending', 'overdue') AND l.status != 'closed' AND l.direction = 'borrowed'
        AND p.due_date >= ? AND p.due_date <= ?`,
     [monthStart, monthEnd]
   );

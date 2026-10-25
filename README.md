@@ -36,18 +36,18 @@ and India-friendly dates.
 
 ### The details that matter
 
-| Area                      | Included                                                                                                                                          |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Accounts & categories** | Bank, cash, credit-card, savings and investment accounts; account currencies; editable parent categories and subcategories.                       |
-| **Investments**           | A portfolio page: worth, gain, yearly rate, trend, split by kind, holdings, SIPs and an Update values list; Invest, Withdraw and Add a SIP actions.   |
-| **Loans**                 | EMI schedules and amortization, prepayments, rate changes, payment tracking and linked assets.                                                    |
-| **Budgets & goals**       | Monthly limits, rollover, goal contributions, whole-account tracking and shared goal reservations without moving money.                           |
-| **Recurring payments**    | Scheduled expenses, income and transfers, subscription suggestions, and monthly/yearly totals.                                                    |
-| **Planning insights**     | Pending refunds and partial receipts, reservation-aware purchase checks, annual-bill preparation goals, and matched-period spending explanations. |
-| **Friends & family**      | Money owed in either direction, settlement history, and a choice between balance adjustments and actual account movements.                        |
-| **Wrap & Suu**            | Weekly/monthly stories, selectable chapters, day and category exploration, replay, share cards and Suu's spending nudges.                         |
-| **Personalization**       | Five themes, app amount hiding, a separate widget-privacy setting, and app lock using the phone's authentication.                               |
-| **Everyday housekeeping** | Needs you alerts, duplicate/starting-balance checks, undoable tidy-up actions and recently deleted entries.                                       |
+| Area                      | Included                                                                                                                                            |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Accounts & categories** | Bank, cash, credit-card, savings and investment accounts; account currencies; editable parent categories and subcategories.                         |
+| **Investments**           | A portfolio page: worth, gain, yearly rate, trend, split by kind, holdings, SIPs and an Update values list; Invest, Withdraw and Add a SIP actions. |
+| **Loans**                 | EMI schedules and amortization, prepayments, rate changes, payment tracking and linked assets.                                                      |
+| **Budgets & goals**       | Monthly limits, rollover, goal contributions, whole-account tracking and shared goal reservations without moving money.                             |
+| **Recurring payments**    | Scheduled expenses, income and transfers, subscription suggestions, and monthly/yearly totals.                                                      |
+| **Planning insights**     | Pending refunds and partial receipts, reservation-aware purchase checks, annual-bill preparation goals, and matched-period spending explanations.   |
+| **Friends & family**      | Money owed in either direction, settlement history, and a choice between balance adjustments and actual account movements.                          |
+| **Wrap & Suu**            | Weekly/monthly stories, selectable chapters, day and category exploration, replay, share cards and Suu's spending nudges.                           |
+| **Personalization**       | Five themes, app amount hiding, a separate widget-privacy setting, and app lock using the phone's authentication.                                   |
+| **Everyday housekeeping** | Needs you alerts, duplicate/starting-balance checks, undoable tidy-up actions and recently deleted entries.                                         |
 
 ### Android widgets
 
@@ -182,13 +182,14 @@ plugins and performance fixtures. Native integration can use a dependency withou
 
 Start with the [documentation index](docs/INDEX.md) and [architecture and logic guide](docs/ARCHITECTURE.md). Historical reports record earlier revisions; their validation counts are not fresh release results.
 
-| Guide                                                  | Read it for                                                                |
-| ------------------------------------------------------ | -------------------------------------------------------------------------- |
-| [Data model](DATA_MODEL.md)                            | Schema, accounts, the friends ledger and calculation decisions.            |
-| [Backup & restore](BACKUP.md)                          | Local-folder backups, choosing existing data, restore safety and recovery. |
-| [Build guide](BUILD.md)                                | APK/AAB builds and device verification.                                    |
-| [Audit record](docs/archive/AUDIT.md)                  | Recorded fixes, validation and remaining device checks.                    |
-| [Expo SDK 58](https://docs.expo.dev/versions/v58.0.0/) | The versioned Expo reference used by this project.                         |
+| Guide                                                        | Read it for                                                                |
+| ------------------------------------------------------------ | -------------------------------------------------------------------------- |
+| [Data model](DATA_MODEL.md)                                  | Schema, accounts, the friends ledger and calculation decisions.            |
+| [Backup & restore](BACKUP.md)                                | Local-folder backups, choosing existing data, restore safety and recovery. |
+| [Build guide](BUILD.md)                                      | APK/AAB builds and device verification.                                    |
+| [Security boundaries](SECURITY.md)                           | Implemented privacy, input, export and build controls and their limits.    |
+| [Repository re-audit](docs/REPOSITORY_REAUDIT_2026_10_25.md) | Per-file coverage, fixes, fresh checks and open device acceptance.         |
+| [Expo SDK 58](https://docs.expo.dev/versions/v58.0.0/)       | The versioned Expo reference used by this project.                         |
 
 ---
 

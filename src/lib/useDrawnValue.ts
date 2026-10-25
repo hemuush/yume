@@ -7,8 +7,6 @@ import { useReduceMotion } from './useReduceMotion';
 /** The last value each mark showed while the app has been open (module state: it outlives the screen). */
 const lastShown = new Map<string, number>();
 
-/** Test hook: forget every remembered value, as a fresh app launch would. */
-
 /**
  * A shared value for a bar, line or ring that draws on the UI thread (smooth even while JavaScript is busy):
  * a new `key` draws in from 0, a key seen before keeps what it showed, a real change glides old to new, and

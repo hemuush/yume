@@ -1,6 +1,8 @@
 # Code cleanup: implementation record
 
-## Current reading guide
+> Historical record: validation and implementation claims apply to the revision recorded below. For maintained behavior see [architecture](../ARCHITECTURE.md); for the newer check results see the [repository re-audit](../REPOSITORY_REAUDIT_2026_10_25.md).
+
+## Reading guide for this record
 
 Reviewed against the repository on **11 October 2026**. Unused-local type checks do not prove that every export is unused or reachable. Routes, widgets, config plugins and test/performance entry points must be considered before removing code.
 

@@ -1,6 +1,8 @@
 # Sheets and dialogs: implementation record
 
-## Current reading guide
+> Historical record: validation and implementation claims apply to the revision recorded below. For maintained behavior see [architecture](../ARCHITECTURE.md); for the newer check results see the [repository re-audit](../REPOSITORY_REAUDIT_2026_10_25.md).
+
+## Reading guide for this record
 
 Reviewed against the repository on **11 October 2026**. Shared sheets and detail cards provide consistent spacing and wrapping. Loan options use an inline view rather than another stacked sheet. Keyboard, safe-area and large-text behavior still require physical-device checks.
 

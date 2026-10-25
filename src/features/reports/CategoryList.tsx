@@ -10,7 +10,7 @@ import type { CategoryBreakdownItem } from '@/db/reports';
 import { formatPctChange } from '@/lib/format';
 import { allocateRoundedMinor, roundedMinor } from '@/lib/round';
 import { theme } from '@/constants/theme';
-import { AnimatedCategoryFill } from './AnimatedCategoryFill';
+import { GrowFill } from '@/components/GrowFill';
 import { styles } from './reports.styles';
 import { shade } from '@/lib/color';
 import { withPressed, withPressedTint } from '@/lib/pressed';
@@ -110,11 +110,10 @@ export function CategoryList({
                   )}
                 </View>
                 <View style={styles.catTrack}>
-                  <AnimatedCategoryFill
+                  <GrowFill
                     animKey={`reports:${row.categoryId}`}
-                    targetPct={share}
-                    color={row.color}
-                    delay={0}
+                    pct={share}
+                    style={{ height: '100%', borderRadius: 4, backgroundColor: row.color }}
                   />
                 </View>
               </View>

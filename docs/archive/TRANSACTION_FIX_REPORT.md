@@ -1,6 +1,8 @@
 # Transaction entry: implementation record
 
-## Current reading guide
+> Historical record: validation and implementation claims apply to the revision recorded below. For maintained behavior see [architecture](../ARCHITECTURE.md); for the newer check results see the [repository re-audit](../REPOSITORY_REAUDIT_2026_10_25.md).
+
+## Reading guide for this record
 
 Reviewed against the repository on **11 October 2026**. Entry previews round to whole major units by design. Preserve stored precision when an amount has not been edited. Validate calculator results, account/category relationships and linked records before a transactional save; repeated taps must not duplicate it.
 

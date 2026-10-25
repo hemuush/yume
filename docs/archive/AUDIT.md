@@ -1,6 +1,8 @@
 # Application verification record: implementation record
 
-## Current reading guide
+> Historical record: validation and implementation claims apply to the revision recorded below. For maintained behavior see [architecture](../ARCHITECTURE.md); for the newer check results see the [repository re-audit](../REPOSITORY_REAUDIT_2026_10_25.md).
+
+## Reading guide for this record
 
 Reviewed against the repository on **11 October 2026**. Source and automated checks are evidence for specific invariants, not proof that every device behavior is correct. The latest APK is version code 15. The last full Jest run had one selector-fixture failure; its corrected focused rerun passed all eight tests. A clean full rerun after that fixture correction has not been recorded.
 

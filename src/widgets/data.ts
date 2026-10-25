@@ -44,7 +44,8 @@ function coalesced<A extends unknown[], T>(
   return (...args: A) => {
     const now = Date.now();
     const key = keyOf(...args);
-    if (pending && pending.key === key && now - pending.at < windowMs) return pending.promise;
+    if (pending && pending.key === key && now >= pending.at && now - pending.at < windowMs)
+      return pending.promise;
     const promise = fn(...args);
     const entry = { at: now, key, promise };
     pending = entry;

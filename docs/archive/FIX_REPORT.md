@@ -1,6 +1,8 @@
 # Initial audit fixes: implementation record
 
-## Current reading guide
+> Historical record: validation and implementation claims apply to the revision recorded below. For maintained behavior see [architecture](../ARCHITECTURE.md); for the newer check results see the [repository re-audit](../REPOSITORY_REAUDIT_2026_10_25.md).
+
+## Reading guide for this record
 
 Reviewed against the repository on **11 October 2026**. These changes resolved the initial audit findings. Currency filtering, sensitive-parent inheritance and atomic recurring/restore operations remain core invariants. Recorded test counts describe that historical revision.
 

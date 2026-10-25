@@ -1,5 +1,7 @@
 # Recreated Expo account setup — 23 October 2026
 
+> Historical record: validation and implementation claims apply to the revision recorded below. For maintained behavior see [architecture](ARCHITECTURE.md); for the newer check results see the [repository re-audit](REPOSITORY_REAUDIT_2026_10_25.md).
+
 The owner deleted the previous Expo account and recreated it using the same username, `hemant.shrma.3004`. The authenticated CLI accepted the username, but the former project ID `e649762d-57b0-4a9a-bcd6-0185188a9294` no longer existed. An account name alone was insufficient to validate the old link.
 
 ## Current configuration

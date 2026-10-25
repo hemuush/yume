@@ -1,5 +1,7 @@
 # Home redesign (22 October 2026)
 
+> Historical record: validation and implementation claims apply to the revision recorded below. For maintained behavior see [architecture](ARCHITECTURE.md); for the newer check results see the [repository re-audit](REPOSITORY_REAUDIT_2026_10_25.md).
+
 The owner approved a calmer Home from an interactive design (one screen, option C for Coming up) and asked for Budgets and Goals to join the Upcoming card. Everything Home did before is kept; this is the record of what changed. Nothing here has been run on a phone: the automated checks are the full Jest run, typecheck, lint, the cycle check and the Android export.
 
 ## What changed

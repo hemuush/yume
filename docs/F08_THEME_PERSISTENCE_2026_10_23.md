@@ -1,5 +1,7 @@
 # F08 — atomic theme persistence and honest failure feedback
 
+> Historical record: validation and implementation claims apply to the revision recorded below. For maintained behavior see [architecture](ARCHITECTURE.md); for the newer check results see the [repository re-audit](REPOSITORY_REAUDIT_2026_10_25.md).
+
 ## Root cause / expected outcome
 
 The picker immediately updated UI, then wrote theme ID and accent separately with discarded errors. A partial failure could leave mismatched settings; any failure could silently revert on relaunch.

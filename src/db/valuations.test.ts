@@ -65,6 +65,46 @@ describe('tracked accounts', () => {
   });
   beforeEach(reset);
 
+  it('saves the value and units together and rolls both back on a failed result read', async () => {
+    const { fund } = await indexFund();
+    const first = await addValuation(fund.id, { date: '2026-09-28', valueMinor: 4300000, units: 100 });
+    expect((await tracked(fund.id)).account.investment?.units).toBe(100);
+    const read = mockTestDb.getFirstAsync.bind(mockTestDb);
+    const spy = jest.spyOn(mockTestDb, 'getFirstAsync').mockImplementation(async (sql, params) => {
+      if (sql.includes('WHERE v.id = ?')) throw new Error('result unavailable');
+      return read(sql, params);
+    });
+    try {
+      await expect(
+        updateValuation(first.id, { date: first.date, valueMinor: 4500000, units: 120 })
+      ).rejects.toThrow('result unavailable');
+      await expect(
+        addValuation(fund.id, { date: '2026-10-01', valueMinor: 4600000, units: 130 })
+      ).rejects.toThrow('result unavailable');
+    } finally {
+      spy.mockRestore();
+    }
+    expect(await listValuations(fund.id)).toEqual([first]);
+    expect((await tracked(fund.id)).account.investment?.units).toBe(100);
+  });
+
+  it('rolls back a value if its units cannot be persisted', async () => {
+    const { fund } = await indexFund();
+    const run = mockTestDb.runAsync.bind(mockTestDb);
+    const spy = jest.spyOn(mockTestDb, 'runAsync').mockImplementation(async (sql, params) => {
+      if (sql.startsWith('UPDATE accounts SET units')) throw new Error('units write failed');
+      return run(sql, params);
+    });
+    try {
+      await expect(
+        addValuation(fund.id, { date: '2026-10-01', valueMinor: 4600000, units: 130 })
+      ).rejects.toThrow('units write failed');
+    } finally {
+      spy.mockRestore();
+    }
+    expect(await listValuations(fund.id)).toEqual([]);
+  });
+
   it('has no investment summary unless tracked', async () => {
     const bank = await createAccount({ name: 'Bank', type: 'bank' });
     const plain = await createAccount({ name: 'Plain pot', type: 'savings' });

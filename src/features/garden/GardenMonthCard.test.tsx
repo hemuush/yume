@@ -67,3 +67,4 @@ describe('GardenMonthCard', () => {
     act(() => tree.unmount());
   });
 });
+jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());

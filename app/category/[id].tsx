@@ -1,6 +1,6 @@
 import { ScreenLoadError } from '@/components/ScreenLoadError';
 import { PrimaryButton } from '@/components/PrimaryButton';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -81,8 +81,19 @@ export default function CategoryScreen() {
   const [budget, setBudget] = useState<BudgetProgress | null>(null);
   const [entries, setEntries] = useState<Transaction[]>([]);
   const [detailTx, setDetailTx] = useState<Transaction | null>(null);
+  const request = useRef(0);
+  const scopeKey = `${params.id}|${JSON.stringify(cursor)}|${hideAmounts}`;
+  const [loadedKey, setLoadedKey] = useState<string | null>(null);
+  const loadingScope = loadedKey !== scopeKey;
+  useEffect(
+    () => () => {
+      request.current++;
+    },
+    []
+  );
 
   const load = useCallback(async () => {
+    const call = ++request.current;
     const range = windowRange(cursor);
     const [cats, accs, currency] = await Promise.all([
       listCategories(true),
@@ -90,29 +101,32 @@ export default function CategoryScreen() {
       getDefaultCurrency(),
     ]);
     const cat = cats.find((c) => c.id === params.id) ?? null;
-    setCategories(cats);
-    setAccounts(accs);
-    setCategory(cat);
-    if (!cat) return;
     const isCurrentMonth = isThisMonth(cursor);
     const [ov, list, budgets] = await Promise.all([
-      getCategoryOverview(cat.id, cat.kind, range),
-      listTransactions({
-        currency,
-        categoryId: cat.id,
-        includeSubcategories: true,
-        fromDate: range.start,
-        toDate: range.end,
-        limit: ENTRIES_SHOWN,
-      }),
-      cat.kind === 'expense' && isCurrentMonth
+      cat ? getCategoryOverview(cat.id, cat.kind, range) : Promise.resolve(null),
+      cat
+        ? listTransactions({
+            currency,
+            categoryId: cat.id,
+            includeSubcategories: true,
+            fromDate: range.start,
+            toDate: range.end,
+            limit: ENTRIES_SHOWN,
+          })
+        : Promise.resolve([]),
+      cat?.kind === 'expense' && isCurrentMonth
         ? listBudgetsForMonth(undefined, hideAmounts)
         : Promise.resolve([]),
     ]);
+    if (call !== request.current) return;
+    setCategories(cats);
+    setAccounts(accs);
+    setCategory(cat);
     setOverview(ov);
     setEntries(list);
-    setBudget(budgets.find((b) => b.budget.categoryId === cat.id) ?? null);
-  }, [cursor, params.id, hideAmounts]);
+    setBudget(budgets.find((b) => b.budget.categoryId === cat?.id) ?? null);
+    setLoadedKey(scopeKey);
+  }, [cursor, params.id, hideAmounts, scopeKey]);
   const { loaded, hasData, loadError, reload } = useScreenLoad(load);
 
   const range = windowRange(cursor);
@@ -151,10 +165,10 @@ export default function CategoryScreen() {
     router.push(`/category/${parent.id}?${period}`);
   };
 
-  if (!hasData && loadError)
+  if ((!hasData || loadingScope) && loadError)
     return <ScreenLoadError title="Category" message={loadError} onRetry={() => void reload()} />;
 
-  if (loaded && !category) {
+  if (loaded && !loadingScope && !category) {
     return (
       <View style={styles.container}>
         <HomeWallpaper accent={accent} secondary={secondary} />
@@ -168,7 +182,7 @@ export default function CategoryScreen() {
   const privateFamily =
     !!rootCategory &&
     categories.some((c) => c.isSensitive && (c.id === rootCategory.id || c.parentId === rootCategory.id));
-  if (hideAmounts && category && privateFamily) {
+  if (!loadingScope && hideAmounts && category && privateFamily) {
     return (
       <View style={styles.container}>
         <HomeWallpaper accent={accent} secondary={secondary} />
@@ -201,7 +215,7 @@ export default function CategoryScreen() {
           </View>
         )}
 
-        {!overview || !category ? (
+        {loadingScope || !overview || !category ? (
           <View style={{ marginTop: theme.layout.screenTopGap }}>
             <CardRowsSkeleton rows={3} />
           </View>
@@ -367,13 +381,13 @@ export default function CategoryScreen() {
       </ReanimatedAnimated.ScrollView>
       {/* Over the page, with the period control in its band; it shrinks as the page scrolls. */}
       <SkyHeader
-        title={category?.name ?? 'Category'}
+        title={category && category.id === params.id ? category.name : 'Category'}
         showBack
         hideUser
         wallpaper
         collapse={collapse}
         summary={
-          overview ? (
+          !loadingScope && overview ? (
             <HeaderSummary
               figure={formatMoney(overview.totalMinor)}
               rest={category?.kind === 'income' ? 'received' : 'spent'}

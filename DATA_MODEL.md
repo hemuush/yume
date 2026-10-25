@@ -16,6 +16,8 @@ An **investment** is a savings account with `tracked = 1`; the account forms sho
 
 An account's `currentBalanceMinor` is **never stored** — it's computed on every read from `opening_balance_minor` plus the sum of every transaction that touches that account (see [accounts.ts](src/db/accounts.ts) and [valuationSql.ts](src/db/valuationSql.ts)). There is no independently stored current-balance field to update. Tracked valuations are a separate source of balance adjustments; review them alongside transaction history.
 
+Saving or editing an investment value keeps the valuation, optional unit change and returned-result read in one transaction. A failed unit write or result lookup rolls back the entire update. This preserves the existing backup schema and separates a failed save from a later screen-refresh failure.
+
 ## Categories (`categories`)
 
 Mostly user-defined: name, income/expense kind, optional parent (for subcategories — one level deep, enforced in `assertValidParent`), icon, color, archive flag, an `is_sensitive` flag, and an `is_system` flag. Archiving keeps historical transactions intact while removing the category from new-entry pickers, and cascades to subcategories — nothing is ever hard-deleted if it has transaction history. When `is_sensitive` is set and the global "hide sensitive amounts" setting is on, that category's amounts render masked everywhere (Savings Deposit and Investments start flagged).
@@ -50,9 +52,9 @@ where `P` = principal, `r` = monthly interest rate (annual rate ÷ 12), `n` = te
 
 **Asset-backed loans**: a borrowed loan can record what it financed (`asset_label`) and that asset's current value (`asset_value_minor`). When set, the loan's net-worth contribution becomes its real equity (asset value − outstanding) instead of pure debt — see `loanNetWorthContribution` and `computeTrackedBalance` in `src/db/reports.ts`, the shared helpers Home and Profile both use so their headline "Tracked Balance" can never disagree.
 
-Paying an installment (`payInstallment`) atomically: creates the linked transaction (expense if borrowed, income if lent — money moves the opposite direction depending on which side of the loan you're on), marks the installment paid, and updates the loan's outstanding principal — all inside one SQLite transaction so a crash mid-write can't leave the loan and the ledger disagreeing.
+Paying an installment (`payInstallment`) atomically: creates the linked transaction (expense if borrowed, income if lent — money moves the opposite direction depending on which side of the loan you're on), marks the installment paid, and updates the loan's outstanding principal — all inside one SQLite transaction so a crash mid-write can't leave the loan and the ledger disagreeing. Both stored `pending` and `overdue` installments are unpaid for ordering, queries and schedule replacement. Defaulted loans remain obligations until closed, including bill/purchase/reminder queries.
 
-The confirmation defaults the actual money-movement date to the local device day; the user can select an earlier date without changing the agreed due date. The schedule shows that actual paid/received date when recorded. Paid-before-tracking history has no fabricated account entry or actual payment date. Derived payoff dates require a final pending row whose remaining principal is zero; missing/truncated schedules do not establish a reliable debt-free date.
+The confirmation defaults the actual money-movement date to the local device day; the user can select an earlier date without changing the agreed due date. The schedule shows that actual paid/received date when recorded. Paid-before-tracking history has no fabricated account entry or actual payment date. Derived payoff dates require a final unpaid row whose remaining principal is zero; missing/truncated schedules do not establish a reliable debt-free date.
 
 ## Friends & Family ledger (`people`, `person_ledger_entries`)
 
@@ -78,7 +80,7 @@ A plain key/value table — default currency, accent color, user name, onboardin
 
 A named target amount with an optional target date, an optional linked account, and an optional note sealed until the goal is first reached (`note_to_self`, `letter_revealed`). Progress works one of three ways (`src/db/savingsGoals.ts`):
 
-- **By hand** (`track_account = 0`, `reserve_account = 0`, the default): `current_amount_minor`, moved by "+ Add money". There is no contribution ledger and nothing creates a transaction, so adding to a goal is never confused with moving money. A linked account is then only a label.
+- **By hand** (`track_account = 0`, `reserve_account = 0`, the default): `current_amount_minor`, moved by "+ Add money". Changes are recorded in goal_activity without creating an account transaction, so adding to a goal is never confused with moving money. A linked account is then only a label.
 - **Following the linked account** (`track_account = 1`): progress is that account's balance, worked out on every read in the same query that loads the goal (opening balance + income and transfers in − expenses and transfers out, never below zero). `current_amount_minor` is left untouched meanwhile, so switching back to "by hand" brings the old amount back. "+ Add money" is refused; the goal's button opens a transfer into the account instead. What-if uses the account's net growth over the last 90 days as the goal's saving rate (`getAccountMonthlyGrowth`), not the whole balance, which includes money from before the goal existed.
 
 - **Reserved from an account** (`reserve_account = 1`, `track_account = 0`): progress is the explicitly reserved share, while the previous manual amount remains untouched. All reservation goals share a live available balance. See Goal reservations below for safeguards and lifecycle behavior.
