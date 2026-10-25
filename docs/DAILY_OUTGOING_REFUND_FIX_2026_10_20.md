@@ -1,5 +1,7 @@
 # Daily outgoing spending and refunds
 
+> Historical record: validation and implementation claims apply to the revision recorded below. For maintained behavior see [architecture](ARCHITECTURE.md); for the newer check results see the [repository re-audit](REPOSITORY_REAUDIT_2026_10_25.md).
+
 The supplied backup reproduced two expenses totaling 270 major units and a 1,999 refund on the same date, with a saved daily limit of 500. The prior shared net query subtracted that refund, clamped the negative day to zero, and showed the full allowance remaining. This was a calculation-contract error, not a date or refresh failure.
 
 Home daily/weekly bars and its daily allowance now use outgoing expense totals. getTodaySpend and Garden streaks use the same outgoing basis. Refunds do not refill the daily spending allowance. Reports/category/budget reads retain the default net basis and refund deductions. All date, default-currency and privacy scopes are retained. No fixed production date, amount or user record is introduced.

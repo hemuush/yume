@@ -1,5 +1,7 @@
 # Add transaction flow review — 21 October 2026
 
+> Historical record: validation and implementation claims apply to the revision recorded below. For maintained behavior see [architecture](ARCHITECTURE.md); for the newer check results see the [repository re-audit](REPOSITORY_REAUDIT_2026_10_25.md).
+
 This review follows the Add transaction request on the existing uncommitted cleanup and loan work. No commit, push, APK installation or phone interaction was performed for this review. The current palette and account-based entry flow are retained.
 
 ## Scope and reproduced findings

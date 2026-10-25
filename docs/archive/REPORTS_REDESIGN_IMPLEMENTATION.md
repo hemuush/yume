@@ -1,6 +1,8 @@
 # Reports redesign: implementation record
 
-## Current reading guide
+> Historical record: validation and implementation claims apply to the revision recorded below. For maintained behavior see [architecture](../ARCHITECTURE.md); for the newer check results see the [repository re-audit](../REPOSITORY_REAUDIT_2026_10_25.md).
+
+## Reading guide for this record
 
 Reviewed against the repository on **11 October 2026**. The current report presentation retains date-range selection, spending/income and category/account breakdowns, day drill-downs, comparisons and insights. Presentation changes must preserve query scope and stale-response protection.
 

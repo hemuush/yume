@@ -1,4 +1,4 @@
-# Backup and restore: implementation record
+# Backup and restore
 
 ## Current backup contract
 
@@ -12,11 +12,14 @@
 - Daily backup is due on a different local calendar day; weekly/monthly use elapsed windows. Maintenance runs while the app is open, catching up recurring entries first. It is not guaranteed background execution.
 - A successful managed daily write replaces same-day managed files only after the new file is written. Retention keeps the newest 14 managed daily backup files by content ordering; exported copies are outside this policy. Initial-folder preservation avoids replacing existing files or pruning them.
 - The private recovery copy contains the data present before a restore. Its own timestamp/counts must be shown. Putting it back is another restore, not selection of the latest folder file.
+- File imports on Backup and onboarding check the picker size or fall back to `File.size` before reading, with a 150 MiB ceiling. Local-folder reads check their content size after SAF reading; very large files still need device testing.
+- After a successful restore, folder-setting adoption is separate metadata. Its failure appears in Restore complete and does not prevent settings/reminder resync or falsely report a failed data restore. Onboarding retries without a safety copy automatically only when entries, accounts and loans are all empty.
+- Forget folder removes Yume's saved folder reference and stops automatic use. It does not delete backups or explicitly revoke Android's persisted storage grant. Exported/local copies are plain JSON; see [security boundaries](SECURITY.md).
 - Test revoked permissions, invalid/truncated files, newer folder contents, restore rollback and device-owned settings. See [local backup tests](src/lib/localBackup.test.ts), [backup tests](src/lib/backup.test.ts) and [build/device checks](BUILD.md).
 
 ## Current reading guide
 
-Reviewed against the repository on **11 October 2026**. Folder selection scans existing files before writing. Restore replaces local records rather than merging them. A private safety snapshot captures pre-restore data; its own timestamp describes what it contains, not the latest folder backup.
+Maintained through **25 October 2026**; fresh verification is in the [repository re-audit](docs/REPOSITORY_REAUDIT_2026_10_25.md). Folder selection scans existing files before writing. Restore replaces local records rather than merging them. A private safety snapshot captures pre-restore data; its own timestamp describes what it contains, not the latest folder backup.
 
 Implementation: [src/lib/backup.ts](src/lib/backup.ts) and [src/lib/localBackup.ts](src/lib/localBackup.ts). Tests generally live beside these modules; use the [architecture and logic guide](docs/ARCHITECTURE.md) to find related flows.
 
@@ -37,7 +40,7 @@ From **Settings → Backup & Restore**:
 - **Reports & exports** — a separate page (Backup & Restore › Reports & exports) for one **month**, one **year** or **all time**; only periods that have entries are offered, with a line saying how many entries and how much spending they hold. Choose a format:
   - **PDF report** — A4 pages built on the phone in the selected theme's colours with the embedded Fredoka and Archivo fonts: a cover with money in, spent, net, daily average, busiest day and no-spend days (and the change against the period before), where it went with shares, a day-by-day (or month-by-month) chart, weekday pattern, biggest spends, most-repeated notes, accounts, income sources, a month table for a year or all time, category and subcategory detail, loans, friends and family, then every entry grouped by day. Pages and numbering ("Page 2 of 6") are laid out by Yume itself because Android's PDF maker ignores CSS page margins. A period is limited to 4,000 entries; a longer one asks for a shorter period or Excel.
   - **Excel (.xlsx)** — a styled workbook for the same period: Summary, Transactions (real dates, Money in / Money out / Transfer columns that each carry a live SUBTOTAL, Category and Subcategory split, AutoFilter), Accounts, Categories with each one's share, Months (year or all time), Loans, and Friends & Family. Refunds are negative Money out, so that column adds up to spending as everywhere in the app. Balances, loans and people are as they stand today.
-  Totals count the default currency only; other currencies' entries are listed in their own currency and never added in. With app lock on, the phone's unlock is asked before anything is created, and the file is deleted from the app's cache once the share sheet closes.
+    Totals count the default currency only; other currencies' entries are listed in their own currency and never added in. With app lock on, the phone's unlock is asked before anything is created, and the file is deleted from the app's cache once the share sheet closes.
 - **Restore from file** — pick a previously exported JSON file; this **replaces all current data** after the restore preview (see _Restore safety_).
 
 On a new phone, the first onboarding page has **I have a Yume backup**: pick the file, check the same preview, and Yume restores it and skips the rest of setup.
@@ -68,7 +71,7 @@ Only the latest copy is kept. It's written to a pending file first and replaces 
 
 ## Shared goal reservations
 
-New exports use backup format 4 to preserve goal reservations, expected refunds, receipt links and annual-bill goal links. Format-1, format-2 and format-3 backups remain readable; missing planner tables restore as empty, and missing reservation fields default to zero. Earlier app versions reject newer formats rather than silently losing data. Invalid reservation modes, negative/fractional amounts, missing linked accounts and combined whole-account tracking are rejected before replacement. Refund receipts must match the purchase category/currency and cannot exceed the expectation; annual preparation requires a yearly expense and a reservation goal in the same currency. A valid snapshot may contain a shortfall after a withdrawal; reservations remain intact and the app shows the shortfall.
+Backup format 4 introduced support for goal reservations, expected refunds, receipt links and annual-bill goal links. Format-1, format-2 and format-3 backups remain readable; missing planner tables restore as empty, and missing reservation fields default to zero. Earlier app versions reject newer formats rather than silently losing data. Invalid reservation modes, negative/fractional amounts, missing linked accounts and combined whole-account tracking are rejected before replacement. Refund receipts must match the purchase category/currency and cannot exceed the expectation; annual preparation requires a yearly expense and a reservation goal in the same currency. A valid snapshot may contain a shortfall after a withdrawal; reservations remain intact and the app shows the shortfall.
 
 Format 5 adds an investment's kind (`accounts.investment_kind`), the account its money normally comes from (`accounts.funding_account_id`) and the recurring rule that posted an entry (`transactions.rule_id`). Older backups restore with those empty; an earlier app version refuses a format-5 file.
 

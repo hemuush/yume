@@ -1,5 +1,7 @@
 # Current flow audit
 
+> Historical record: validation and implementation claims apply to the revision recorded below. For maintained behavior see [architecture](ARCHITECTURE.md); for the newer check results see the [repository re-audit](REPOSITORY_REAUDIT_2026_10_25.md).
+
 ## Scope
 
 Reviewed screen handlers and current contracts for Home daily spending/account/upcoming navigation, Activity type/account/category/search/reorder/detail flows, Add/edit/staged/split/refund/friend/transfer paths, Plan forecast/recurring/budget/goal/debt actions, Reports periods/charts/privacy/currency/export, and supporting loan/goal/account/backup flows. Tests exercise these routes; this is not a claim that every native phone interaction was manually performed.

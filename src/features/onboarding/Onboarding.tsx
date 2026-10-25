@@ -30,6 +30,7 @@ import { HeaderHills } from '@/features/home/HeaderHills';
 import { withPressed } from '@/lib/pressed';
 import { showAlert } from '@/components/AppDialog';
 import { errorMessage } from '@/lib/errorMessage';
+import { useSaveOnce } from '@/lib/useSaveOnce';
 
 interface Slide {
   title: string;
@@ -94,6 +95,9 @@ const SLIDES: Slide[] = [
  * launch URL ("/"), so `initialRouteName="onboarding"` on the Stack was ignored.
  */
 export function Onboarding({ onDone }: { onDone: () => void }) {
+  const runAction = useSaveOnce(async (action: () => Promise<void>) => {
+    await action();
+  });
   const { accent, secondary } = useAccent();
   const ink = themeInk(accent);
   const insets = useSafeAreaInsets();
@@ -137,17 +141,18 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
     return true;
   };
 
-  const getStarted = async () => {
-    setAccountsError(null);
-    setCreating(true);
-    const ok = await createPickedAccounts();
-    setCreating(false);
-    if (!ok) {
-      setAccountsError("Couldn't add every account. Try again, or skip and add them later in Profile.");
-      return;
-    }
-    await finish();
-  };
+  const getStarted = () =>
+    runAction(async () => {
+      setAccountsError(null);
+      setCreating(true);
+      const ok = await createPickedAccounts();
+      setCreating(false);
+      if (!ok) {
+        setAccountsError("Couldn't add every account. Try again, or skip and add them later in Profile.");
+        return;
+      }
+      await finish();
+    });
 
   const finish = async () => {
     try {
@@ -169,10 +174,11 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
     try {
       const result = await withoutRelock(() => DocumentPicker.getDocumentAsync({ type: '*/*' }));
       if (result.canceled || !result.assets?.[0]) return;
-      if (isTooLargeForBackup(result.assets[0].size)) {
+      const picked = new File(result.assets[0].uri);
+      if (isTooLargeForBackup(result.assets[0].size ?? picked.size)) {
         throw new Error('That file is too large to be a Yume backup — pick a full backup Yume exported.');
       }
-      const content = await new File(result.assets[0].uri).text();
+      const content = await picked.text();
       let snapshot: BackupSnapshot;
       try {
         snapshot = JSON.parse(content);
@@ -191,54 +197,62 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
     }
   };
 
-  const restorePending = async () => {
-    if (!pendingRestore) return;
-    const { snapshot, preview } = pendingRestore;
-    setRestoring(true);
-    try {
+  const restorePending = () =>
+    runAction(async () => {
+      if (!pendingRestore) return;
+      const { snapshot, preview } = pendingRestore;
+      setRestoring(true);
       try {
-        await restoreKeepingSafetyCopy(snapshot);
+        try {
+          await restoreKeepingSafetyCopy(snapshot);
+        } catch (e) {
+          // A first-run phone has nothing worth a safety copy, so if saving that empty copy fails, restoring
+          // loses nothing. With data already here, stop; the Backup screen can do it knowingly.
+          if (
+            !(e instanceof SafetyCopyError) ||
+            preview.current.entries > 0 ||
+            preview.current.accounts > 0 ||
+            preview.current.loans > 0
+          )
+            throw e;
+          await restoreKeepingSafetyCopy(snapshot, { withoutCopy: true });
+        }
       } catch (e) {
-        // A first-run phone has nothing worth a safety copy, so if saving that empty copy fails, restoring
-        // loses nothing. With data already here, stop; the Backup screen can do it knowingly.
-        if (!(e instanceof SafetyCopyError) || preview.current.entries > 0) throw e;
-        await restoreKeepingSafetyCopy(snapshot, { withoutCopy: true });
+        setRestoring(false);
+        setPendingRestore(null);
+        showAlert("Couldn't restore that backup", errorMessage(e));
+        return;
       }
-    } catch (e) {
-      setRestoring(false);
-      setPendingRestore(null);
-      showAlert("Couldn't restore that backup", errorMessage(e));
-      return;
-    }
-    try {
-      await resyncAfterRestore();
-    } catch {
-      // The data is already restored; a failed resync (notifications, widgets) only means those catch up on
-      // the next launch. Never let it strand the user on this screen.
-    } finally {
-      setRestoring(false);
-      setPendingRestore(null);
-    }
-    await finish();
-  };
+      try {
+        await resyncAfterRestore();
+      } catch {
+        // The data is already restored; a failed resync (notifications, widgets) only means those catch up on
+        // the next launch. Never let it strand the user on this screen.
+      } finally {
+        setRestoring(false);
+        setPendingRestore(null);
+      }
+      await finish();
+    });
 
   // Android back steps to the previous slide (onboarding sits outside the navigator, so nothing else would
   // catch it and the app would close).
   useEffect(() => {
     if (index === 0) return;
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (creating || restoring) return true;
       setIndex((i) => Math.max(0, i - 1));
       return true;
     });
     return () => sub.remove();
-  }, [index]);
+  }, [index, creating, restoring]);
 
   const next = () => {
     if (creating) return;
     if (isLast) {
       void getStarted();
     } else {
-      setIndex((i) => i + 1);
+      setIndex((i) => Math.min(SLIDES.length - 1, i + 1));
     }
   };
 
@@ -264,7 +278,7 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
                   // nobody leaves setup by accident with nowhere to record a first entry.
                   onPress={
                     slide.isAccountsStep
-                      ? () => !creating && finish()
+                      ? () => runAction(finish)
                       : () => setIndex(SLIDES.findIndex((s) => s.isAccountsStep))
                   }
                   hitSlop={10}

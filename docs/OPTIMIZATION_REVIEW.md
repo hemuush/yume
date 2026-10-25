@@ -1,5 +1,7 @@
 # Optimization and structure review
 
+> Historical record: validation and implementation claims apply to the revision recorded below. For maintained behavior see [architecture](ARCHITECTURE.md); for the newer check results see the [repository re-audit](REPOSITORY_REAUDIT_2026_10_25.md).
+
 Recorded 13 October 2026 against local changes after `36cb45f`. No APK or bundle was built.
 
 ## Changes

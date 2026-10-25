@@ -31,7 +31,8 @@ yarn-error.*
 *.pem
 
 # local env files
-.env*.local
+.env*
+credentials.json
 
 # editor / tooling local config
 .claude/settings.local.json

@@ -28,12 +28,13 @@ jest.mock('@/components/ModalSheet', () => ({
       </>
     ) : null,
 }));
-const mockBackupFile = { current: '' };
+const mockBackupFile: { current: string; size?: number } = { current: '' };
+const mockReadBackup = jest.fn(async () => mockBackupFile.current);
 jest.mock('expo-document-picker', () => ({
   getDocumentAsync: jest.fn(async () => ({ canceled: false, assets: [{ uri: 'file:///backup.json' }] })),
 }));
 jest.mock('expo-file-system', () => ({
-  File: jest.fn().mockImplementation(() => ({ text: async () => mockBackupFile.current })),
+  File: jest.fn().mockImplementation(() => ({ text: mockReadBackup, size: mockBackupFile.size })),
 }));
 jest.mock('@/lib/appLock', () => ({ withoutRelock: (fn: () => unknown) => fn() }));
 jest.mock('@/lib/backup', () => ({
@@ -54,7 +55,8 @@ jest.mock('@/db/settings', () => ({
 import { Onboarding } from './Onboarding';
 import { createAccount } from '@/db/ledger';
 import { setHasOnboarded } from '@/db/settings';
-import { restoreKeepingSafetyCopy } from '@/lib/safetyCopy';
+import { restoreKeepingSafetyCopy, SafetyCopyError } from '@/lib/safetyCopy';
+import { getCurrentSummary } from '@/lib/backup';
 import { resyncAfterRestore } from '@/lib/restoreSync';
 import { showAlert } from '@/components/AppDialog';
 
@@ -104,6 +106,31 @@ describe('Onboarding account step', () => {
     createAccountMock.mockReset();
     createAccountMock.mockResolvedValue({});
     (setHasOnboarded as jest.Mock).mockClear();
+  });
+
+  it('creates starter accounts once when Get started is pressed twice before rerender', async () => {
+    const onDone = jest.fn();
+    const tree = await render(onDone);
+    await goToAccountStep(tree);
+    let release!: () => void;
+    createAccountMock.mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          release = resolve;
+        })
+    );
+    const start = cta(tree).props.onPress;
+    await act(async () => {
+      start();
+      start();
+    });
+    expect(createAccountMock).toHaveBeenCalledTimes(1);
+    await act(async () => {
+      release();
+    });
+    expect(createAccountMock.mock.calls.map((call) => call[0].name)).toEqual(['Bank account', 'Cash']);
+    expect(onDone).toHaveBeenCalledTimes(1);
+    act(() => tree.unmount());
   });
 
   it('creates the picked accounts with their typed balance, then finishes', async () => {
@@ -186,6 +213,21 @@ describe('Onboarding restore from a backup', () => {
     (setHasOnboarded as jest.Mock).mockClear();
   });
 
+  it.each([
+    { accounts: 1, loans: 0 },
+    { accounts: 0, loans: 1 },
+  ])('keeps existing accounts/loans when a recovery copy fails: %j', async (existing) => {
+    jest.mocked(getCurrentSummary).mockResolvedValueOnce({ entries: 0, lastEntryDate: null, ...existing });
+    jest.mocked(restoreKeepingSafetyCopy).mockRejectedValueOnce(new SafetyCopyError('copy failed'));
+    const onDone = jest.fn();
+    const tree = await render(onDone);
+    await press(byLabel(tree, 'I have a Yume backup'));
+    await press(titled(tree, 'Restore this backup'));
+    expect(restoreKeepingSafetyCopy).toHaveBeenCalledTimes(1);
+    expect(onDone).not.toHaveBeenCalled();
+    act(() => tree.unmount());
+  });
+
   it('previews the picked backup, restores it and skips the setup', async () => {
     const onDone = jest.fn();
     const tree = await render(onDone);
@@ -236,6 +278,23 @@ describe('Onboarding restore from a backup', () => {
     );
     expect(tree.root.findAll((n) => n.props.title === 'Restore this backup')).toHaveLength(0);
     alert.mockRestore();
+  });
+
+  it('rejects an oversized file without reading it when the picker omits its size', async () => {
+    mockBackupFile.size = 151 * 1024 * 1024;
+    try {
+      const tree = await render();
+      await press(byLabel(tree, 'I have a Yume backup'));
+      expect(showAlert).toHaveBeenCalledWith(
+        "Couldn't open that backup",
+        expect.stringContaining('too large')
+      );
+      expect(mockReadBackup).not.toHaveBeenCalled();
+      expect(restoreKeepingSafetyCopy).not.toHaveBeenCalled();
+      act(() => tree.unmount());
+    } finally {
+      mockBackupFile.size = undefined;
+    }
   });
 
   it('only offers it on the first slide', async () => {

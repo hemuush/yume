@@ -28,7 +28,7 @@ export function LimitMeter({
   tone: LimitMeterTone;
   marker?: number;
   /**
-   * Meter identity (e.g. `budget:<id>`): the fill grows from its last width instead of snapping (useGrowFrom).
+   * Meter identity (e.g. `budget:<id>`): the fill grows from its last width on the UI thread.
    * Without it the fill is drawn plain.
    */
   animKey?: string;

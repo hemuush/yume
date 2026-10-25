@@ -1,5 +1,7 @@
 # Shared interaction audit — 25 October 2026
 
+> Historical record: validation and implementation claims apply to the revision recorded below. For maintained behavior see [architecture](ARCHITECTURE.md); for the newer check results see the [repository re-audit](REPOSITORY_REAUDIT_2026_10_25.md).
+
 Focused Ponytail review of shared controls, recovery, animation identity and avoidable reads. This is not an exhaustive app or visual-device audit. Existing uncommitted database, notification, export and investment changes were preserved.
 
 ## Findings and changes

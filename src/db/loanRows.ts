@@ -53,7 +53,7 @@ export function rowToLoan(row: LoanRow & { next_due_date?: string | null }): Loa
 // so the list screen shows "Next due" without a round-trip per loan.
 export const LOAN_SELECT = `
   SELECT l.*,
-    (SELECT due_date FROM loan_payments WHERE loan_id = l.id AND status = 'pending'
+    (SELECT due_date FROM loan_payments WHERE loan_id = l.id AND status IN ('pending', 'overdue')
      ORDER BY installment_number ASC LIMIT 1) AS next_due_date
   FROM loans l`;
 

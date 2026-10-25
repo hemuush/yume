@@ -1,4 +1,5 @@
-import { getDb } from './client';
+import { getDb, type AppDb } from './client';
+import { setHoldingUnits } from './accounts';
 import { newId } from '@/lib/id';
 import { assertValidIsoDate } from '@/lib/date';
 import { captureRow, restoreRow, RowSnapshot } from './undoSnapshot';
@@ -67,8 +68,7 @@ export async function listValuations(accountId: string): Promise<Valuation[]> {
   return rows.map(rowToValuation);
 }
 
-async function getValuation(id: string): Promise<Valuation> {
-  const db = await getDb();
+async function getValuation(db: AppDb, id: string): Promise<Valuation> {
   const row = await db.getFirstAsync<ValuationRow>(`${VALUATION_SELECT} WHERE v.id = ?`, [id]);
   if (!row) throw new Error('That value update no longer exists.');
   return rowToValuation(row);
@@ -80,18 +80,19 @@ async function getValuation(id: string): Promise<Valuation> {
  */
 export async function addValuation(
   accountId: string,
-  input: { date: string; valueMinor: number }
+  input: { date: string; valueMinor: number; units?: number | null }
 ): Promise<Valuation> {
   assertInput(input);
   const db = await getDb();
-  const account = await db.getFirstAsync<{ tracked: number }>('SELECT tracked FROM accounts WHERE id = ?', [
-    accountId,
-  ]);
-  if (!account) throw new Error('Account not found');
-  if (!account.tracked) throw new Error('Make this account an investment first.');
   // Check-then-write in one transaction, so two quick saves for the same day can't both insert.
   let savedId = '';
+  let saved!: Valuation;
   await db.withTransactionAsync(async (tx) => {
+    const account = await tx.getFirstAsync<{ tracked: number }>('SELECT tracked FROM accounts WHERE id = ?', [
+      accountId,
+    ]);
+    if (!account) throw new Error('Account not found');
+    if (!account.tracked) throw new Error('Make this account an investment first.');
     const existing = await tx.getFirstAsync<{ id: string }>(
       'SELECT id FROM account_valuations WHERE account_id = ? AND date = ?',
       [accountId, input.date]
@@ -102,29 +103,32 @@ export async function addValuation(
         existing.id,
       ]);
       savedId = existing.id;
-      return;
+    } else {
+      savedId = newId();
+      await tx.runAsync(
+        'INSERT INTO account_valuations (id, account_id, date, value_minor) VALUES (?, ?, ?, ?)',
+        [savedId, accountId, input.date, input.valueMinor]
+      );
     }
-    savedId = newId();
-    await tx.runAsync(
-      'INSERT INTO account_valuations (id, account_id, date, value_minor) VALUES (?, ?, ?, ?)',
-      [savedId, accountId, input.date, input.valueMinor]
-    );
+    if (input.units !== undefined) await setHoldingUnits(accountId, input.units, tx);
+    saved = await getValuation(tx, savedId);
   });
-  return getValuation(savedId);
+  return saved;
 }
 
 export async function updateValuation(
   id: string,
-  input: { date: string; valueMinor: number }
+  input: { date: string; valueMinor: number; units?: number | null }
 ): Promise<Valuation> {
   assertInput(input);
   const db = await getDb();
-  const current = await db.getFirstAsync<{ account_id: string }>(
-    'SELECT account_id FROM account_valuations WHERE id = ?',
-    [id]
-  );
-  if (!current) throw new Error('That value update no longer exists.');
+  let saved!: Valuation;
   await db.withTransactionAsync(async (tx) => {
+    const current = await tx.getFirstAsync<{ account_id: string }>(
+      'SELECT account_id FROM account_valuations WHERE id = ?',
+      [id]
+    );
+    if (!current) throw new Error('That value update no longer exists.');
     const clash = await tx.getFirstAsync<{ id: string }>(
       'SELECT id FROM account_valuations WHERE account_id = ? AND date = ? AND id != ?',
       [current.account_id, input.date, id]
@@ -135,8 +139,10 @@ export async function updateValuation(
       input.valueMinor,
       id,
     ]);
+    if (input.units !== undefined) await setHoldingUnits(current.account_id, input.units, tx);
+    saved = await getValuation(tx, id);
   });
-  return getValuation(id);
+  return saved;
 }
 
 export async function deleteValuation(id: string): Promise<RowSnapshot> {

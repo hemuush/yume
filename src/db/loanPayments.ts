@@ -46,7 +46,7 @@ export async function payInstallment(
     if (!current) throw new Error('Loan payment not found');
     if (current.status === 'paid') throw new Error('This installment has already been paid');
     const earlier = await tx.getFirstAsync<{ id: string }>(
-      "SELECT id FROM loan_payments WHERE loan_id = ? AND status = 'pending' AND installment_number < ? LIMIT 1",
+      "SELECT id FROM loan_payments WHERE loan_id = ? AND status IN ('pending', 'overdue') AND installment_number < ? LIMIT 1",
       [current.loan_id, current.installment_number]
     );
     if (earlier) throw new Error('Pay the earlier installments first');
@@ -123,7 +123,7 @@ export async function applyRateChange(
     // tenure: a prepayment or earlier change may have moved the payoff, and keepTenure keeps today's.
     const pendingRows = await tx.getFirstAsync<{ n: number; last: number | null }>(
       `SELECT COUNT(*) AS n, MAX(installment_number) AS last FROM loan_payments
-       WHERE loan_id = ? AND status = 'pending'`,
+       WHERE loan_id = ? AND status IN ('pending', 'overdue')`,
       [loanId]
     );
     const remainingMonths = pendingRows?.n ?? 0;
@@ -163,7 +163,9 @@ export async function applyRateChange(
       );
     }
 
-    await tx.runAsync(`DELETE FROM loan_payments WHERE loan_id = ? AND status = 'pending'`, [loanId]);
+    await tx.runAsync(`DELETE FROM loan_payments WHERE loan_id = ? AND status IN ('pending', 'overdue')`, [
+      loanId,
+    ]);
     for (const inst of newSchedule) {
       await tx.runAsync(
         `INSERT INTO loan_payments
@@ -272,10 +274,10 @@ export async function undoInstallmentPayment(loanPaymentId: string): Promise<voi
         fromDate: anchor.fromDate,
         anchorInstallmentNumber: anchor.anchorInstallmentNumber,
       });
-      await tx.runAsync(`DELETE FROM loan_payments WHERE loan_id = ? AND (status = 'pending' OR id = ?)`, [
-        current.loan_id,
-        loanPaymentId,
-      ]);
+      await tx.runAsync(
+        `DELETE FROM loan_payments WHERE loan_id = ? AND (status IN ('pending', 'overdue') OR id = ?)`,
+        [current.loan_id, loanPaymentId]
+      );
       for (const inst of newSchedule) {
         await tx.runAsync(
           `INSERT INTO loan_payments
@@ -354,7 +356,7 @@ async function planPrepayment(
   // The "before" half of the interest-saved/months-shaved comparison — read
   // before any pending rows are replaced.
   const oldPending = await db.getAllAsync<{ interest_component_minor: number; due_date: string }>(
-    `SELECT interest_component_minor, due_date FROM loan_payments WHERE loan_id = ? AND status = 'pending' ORDER BY installment_number ASC`,
+    `SELECT interest_component_minor, due_date FROM loan_payments WHERE loan_id = ? AND status IN ('pending', 'overdue') ORDER BY installment_number ASC`,
     [loanId]
   );
 
@@ -538,7 +540,9 @@ export async function applyPrepayment(
         ]
       );
     }
-    await tx.runAsync(`DELETE FROM loan_payments WHERE loan_id = ? AND status = 'pending'`, [loanId]);
+    await tx.runAsync(`DELETE FROM loan_payments WHERE loan_id = ? AND status IN ('pending', 'overdue')`, [
+      loanId,
+    ]);
     for (const inst of newSchedule) {
       await tx.runAsync(
         `INSERT INTO loan_payments

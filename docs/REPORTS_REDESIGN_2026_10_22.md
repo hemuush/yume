@@ -1,5 +1,7 @@
 # Reports redesign (22 October 2026)
 
+> Historical record: validation and implementation claims apply to the revision recorded below. For maintained behavior see [architecture](ARCHITECTURE.md); for the newer check results see the [repository re-audit](REPOSITORY_REAUDIT_2026_10_25.md).
+
 Presentation and interaction pass over Reports. Queries, privacy scope and calculations are unchanged; the
 screen reads two extra things it already had: the previous period's daily totals (the hero's comparison line)
 and, for a calendar month, the sum of that month's budget limits (`listBudgetsForMonth`).

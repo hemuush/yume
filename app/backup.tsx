@@ -246,7 +246,8 @@ export default function BackupScreen() {
     skippedColumns,
     emptiedTables = [],
     undoAvailable,
-  }: RestoreResult & { undoAvailable: boolean }) => {
+    folderSaved = true,
+  }: RestoreResult & { undoAvailable: boolean; folderSaved?: boolean }) => {
     // Everything scheduled outside the DB still describes pre-restore data: loan due reminders, the
     // reminder schedule, and home-screen widgets. Best-effort; the restore already succeeded.
     void resyncAfterRestore();
@@ -265,11 +266,14 @@ export default function BackupScreen() {
             .map((t) => t.replace(/_/g, ' '))
             .join(', ')}. Those are now empty.`
         : '';
+    const folderNote = folderSaved
+      ? ''
+      : '\n\nYour data is restored, but backup folder settings could not be saved. Choose the folder again in Backup.';
     showAlert(
       'Restore complete',
       undoAvailable
-        ? `Your data has been restored.${note}${emptiedNote}\n\nNot what you expected? You can put back your data from before this restore.`
-        : `Your data has been restored.${note}${emptiedNote}`,
+        ? `Your data has been restored.${note}${emptiedNote}${folderNote}\n\nNot what you expected? You can put back your data from before this restore.`
+        : `Your data has been restored.${note}${emptiedNote}${folderNote}`,
       undoAvailable
         ? [
             { text: 'Undo restore', onPress: confirmUndo },
@@ -301,17 +305,23 @@ export default function BackupScreen() {
       if (!pending) return;
       const { snapshot, folderUri } = pending;
       const adoptFolder = async () => {
-        if (!folderUri) return;
-        await setLastLocalBackupAt(snapshot.exportedAt);
-        await setLastLocalBackupResult({ at: new Date().toISOString(), ok: true });
-        await setLocalBackupFolderUri(folderUri);
+        if (!folderUri) return true;
+        try {
+          await setLastLocalBackupAt(snapshot.exportedAt);
+          await setLastLocalBackupResult({ at: new Date().toISOString(), ok: true });
+          await setLocalBackupFolderUri(folderUri);
+          return true;
+        } catch (error) {
+          console.warn('Backup folder settings could not be saved after restore:', error);
+          return false;
+        }
       };
       setRestoring(true);
       try {
         const result = await restoreKeepingSafetyCopy(snapshot);
-        await adoptFolder();
+        const folderSaved = await adoptFolder();
         setPending(null);
-        finishRestore(result);
+        finishRestore({ ...result, folderSaved });
       } catch (e) {
         setPending(null);
         if (!(e instanceof SafetyCopyError)) {
@@ -334,8 +344,8 @@ Restore anyway? Your current data would be replaced with no way back.`,
                 runAction(async () => {
                   try {
                     const result = await restoreKeepingSafetyCopy(snapshot, { withoutCopy: true });
-                    await adoptFolder();
-                    finishRestore(result);
+                    const folderSaved = await adoptFolder();
+                    finishRestore({ ...result, folderSaved });
                   } catch (err) {
                     showAlert('Something went wrong', errorMessage(err));
                   }

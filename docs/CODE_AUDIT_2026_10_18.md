@@ -1,5 +1,7 @@
 # Code audit — 18 October 2026
 
+> Historical record: validation and implementation claims apply to the revision recorded below. For maintained behavior see [architecture](ARCHITECTURE.md); for the newer check results see the [repository re-audit](REPOSITORY_REAUDIT_2026_10_25.md).
+
 Started 18 October; completed 19 October 2026. Validation below was run for this audit.
 
 Follow-up: see [19 October audit fixes](AUDIT_FIXES_2026_10_19.md) for implemented corrections and new validation. This report preserves the findings and results at the reviewed revision; its source line numbers describe that baseline.
@@ -118,15 +120,15 @@ Runtime import tracing, followed by repository reference searches, found two unu
 
 Fresh performance fixtures passed. Selected desktop SQLite measurements:
 
-| Workload | Time | Instrumented database calls |
-| --- | ---: | ---: |
-| Home | 95 ms | 52 |
-| Reports, month | 143 ms | 51 |
-| Activity, month | 20 ms | 15 |
-| Plan | 10 ms | 5 |
-| Needs you | 66 ms | 38 |
-| Budgets | 3 ms | 4 |
-| Backup snapshot | 79 ms | 1 exclusive operation |
+| Workload        |   Time | Instrumented database calls |
+| --------------- | -----: | --------------------------: |
+| Home            |  95 ms |                          52 |
+| Reports, month  | 143 ms |                          51 |
+| Activity, month |  20 ms |                          15 |
+| Plan            |  10 ms |                           5 |
+| Needs you       |  66 ms |                          38 |
+| Budgets         |   3 ms |                           4 |
+| Backup snapshot |  79 ms |       1 exclusive operation |
 
 These are fixture timings on this desktop, not on-device latency. The exclusive backup count covers multiple internal table reads. Home/Reports/Needs you query fan-out is a useful profiling target because native database bridge operations are serialized. Batch related reads where consistency and measured performance justify it; preserve privacy and currency scope.
 
@@ -145,19 +147,19 @@ These counts do not mean 14 independent runtime exploits. Keep the tooling excep
 
 ## Fresh verification
 
-| Check | Result |
-| --- | --- |
-| `npm run typecheck` | Failed: TS1149, TS1261 and TS2305 from the Home `MoneyBar` / `moneyBar` collision. |
-| `npm run lint` | Failed: one import-casing error at `ThisMonthHero.tsx:25`, no warnings. |
-| `npm run format:check` | Passed. |
-| `npm test -- --runInBand --silent` | 289 suites passed, 3 failed, 2 skipped; 11,038 tests passed, 40 failed, 2 skipped. Failures are in `screens.smoke.test.tsx`, `ThisMonthHero.test.tsx` and `HomeMotion.test.tsx`, with invalid Home component rendering consistent with finding 1. |
-| `npm run test:security` | All 8 tests passed. These cover URI decoding and widget-provider checks, not a full penetration test. |
-| `node scripts/runPerf.cjs` | Both performance suites and both tests passed. These opt-in tests were skipped by the ordinary test run and exercised separately here. |
-| `npx expo install --check` | Dependencies are up to date for the installed SDK. |
-| `npx expo-doctor` | All 21 checks passed. |
-| `npm audit --omit=dev --json` | Reported 14 high-severity affected package nodes, no critical nodes; details and two underlying advisories above. |
-| `node scripts/auditGate.js` | Passed under the repository's existing allowlist for those two advisories. This does not mean the dependency audit is vulnerability-free. |
-| `npx expo export --platform android --output-dir .expo/audit-2026-10-18/bundle` | Passed: 2,337 modules bundled, Android Hermes bundle and assets exported. This verifies JavaScript export, not native compilation, installation or successful screen rendering. |
+| Check                                                                           | Result                                                                                                                                                                                                                                            |
+| ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run typecheck`                                                             | Failed: TS1149, TS1261 and TS2305 from the Home `MoneyBar` / `moneyBar` collision.                                                                                                                                                                |
+| `npm run lint`                                                                  | Failed: one import-casing error at `ThisMonthHero.tsx:25`, no warnings.                                                                                                                                                                           |
+| `npm run format:check`                                                          | Passed.                                                                                                                                                                                                                                           |
+| `npm test -- --runInBand --silent`                                              | 289 suites passed, 3 failed, 2 skipped; 11,038 tests passed, 40 failed, 2 skipped. Failures are in `screens.smoke.test.tsx`, `ThisMonthHero.test.tsx` and `HomeMotion.test.tsx`, with invalid Home component rendering consistent with finding 1. |
+| `npm run test:security`                                                         | All 8 tests passed. These cover URI decoding and widget-provider checks, not a full penetration test.                                                                                                                                             |
+| `node scripts/runPerf.cjs`                                                      | Both performance suites and both tests passed. These opt-in tests were skipped by the ordinary test run and exercised separately here.                                                                                                            |
+| `npx expo install --check`                                                      | Dependencies are up to date for the installed SDK.                                                                                                                                                                                                |
+| `npx expo-doctor`                                                               | All 21 checks passed.                                                                                                                                                                                                                             |
+| `npm audit --omit=dev --json`                                                   | Reported 14 high-severity affected package nodes, no critical nodes; details and two underlying advisories above.                                                                                                                                 |
+| `node scripts/auditGate.js`                                                     | Passed under the repository's existing allowlist for those two advisories. This does not mean the dependency audit is vulnerability-free.                                                                                                         |
+| `npx expo export --platform android --output-dir .expo/audit-2026-10-18/bundle` | Passed: 2,337 modules bundled, Android Hermes bundle and assets exported. This verifies JavaScript export, not native compilation, installation or successful screen rendering.                                                                   |
 
 The lint and formatting results above are clean reruns after temporary audit scripts were moved under the ignored `.expo` evidence directory. Application code was not changed. The full ordinary test run took approximately 19.5 minutes; older validation reports were not substituted for fresh results.
 

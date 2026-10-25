@@ -1,5 +1,7 @@
 # Cleanup recheck — 21 October 2026
 
+> Historical record: validation and implementation claims apply to the revision recorded below. For maintained behavior see [architecture](ARCHITECTURE.md); for the newer check results see the [repository re-audit](REPOSITORY_REAUDIT_2026_10_25.md).
+
 Follow-up to [code refinement](CODE_REFINEMENT_2026_10_21.md). The earlier report preserves its own test results; this record describes the subsequent changes and fresh checks. Changes remain uncommitted and the selected palette/current layout are preserved.
 
 ## Findings and corrections

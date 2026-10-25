@@ -17,8 +17,9 @@ jest.mock('@/theme/AccentContext', () => ({
 const mockSupported = jest.fn();
 jest.mock('@/lib/appIcon', () => ({ appIconSupported: () => mockSupported() }));
 const mockSet = jest.fn();
+const mockGet = jest.fn();
 jest.mock('@/db/settings', () => ({
-  getThemeIconFollows: () => Promise.resolve(false),
+  getThemeIconFollows: () => mockGet(),
   setThemeIconFollows: (v: boolean) => mockSet(v),
 }));
 const mockAlert = jest.fn();
@@ -39,9 +40,44 @@ const toggle = (tree: ReactTestRenderer) =>
 beforeEach(() => {
   mockSupported.mockReturnValue(true);
   mockSet.mockResolvedValue(undefined);
+  mockGet.mockResolvedValue(false);
 });
 
 describe('Match the app icon', () => {
+  it('explains a read failure and retries instead of offering an invented setting', async () => {
+    mockGet.mockRejectedValueOnce(new Error('read failed'));
+    const tree = await render();
+    expect(toggle(tree).props.disabled).toBe(true);
+    expect(
+      tree.root.findAll((node) => node.props.children === "Couldn't load the app icon setting.").length
+    ).toBeGreaterThan(0);
+    const retry = tree.root.findAll(
+      (node) => node.props.onPress && node.props.title === 'Retry app icon setting'
+    )[0];
+    await act(async () => retry.props.onPress());
+    expect(toggle(tree).props.disabled).toBe(false);
+    act(() => tree.unmount());
+  });
+
+  it('serializes rapid saves before the disabled state rerenders', async () => {
+    const tree = await render();
+    const change = toggle(tree).props.onChange;
+    let release!: () => void;
+    mockSet.mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          release = resolve;
+        })
+    );
+    await act(async () => {
+      change(false);
+      change(false);
+    });
+    expect(mockSet).toHaveBeenCalledTimes(1);
+    await act(async () => release());
+    act(() => tree.unmount());
+  });
+
   it('is hidden without native support', async () => {
     mockSupported.mockReturnValue(false);
     expect(toggle(await render())).toBeUndefined();

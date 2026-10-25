@@ -1,6 +1,8 @@
 # Follow-up logic audit: implementation record
 
-## Current reading guide
+> Historical record: validation and implementation claims apply to the revision recorded below. For maintained behavior see [architecture](docs/ARCHITECTURE.md); for the newer check results see the [repository re-audit](docs/REPOSITORY_REAUDIT_2026_10_25.md).
+
+## Reading guide for this record
 
 Reviewed against the repository on **11 October 2026**. Mutations must validate live records and balances, serialize related changes and retain a retry path after failure. Locks and stale-request guards complement database transactions; they do not replace them.
 

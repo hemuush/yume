@@ -1,5 +1,7 @@
 # F05 — retain every Quick Add action with larger targets
 
+> Historical record: validation and implementation claims apply to the revision recorded below. For maintained behavior see [architecture](ARCHITECTURE.md); for the newer check results see the [repository re-audit](REPOSITORY_REAUDIT_2026_10_25.md).
+
 ## Decision / root cause
 
 The user approved retaining all actions and increasing the minimum widget footprint. Previously the main action was 38dp high, Income/Move 28dp, and four category shortcuts shared the space inside a 140dp-wide widget. Height changes alone would leave category widths below 44dp.

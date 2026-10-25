@@ -1,5 +1,7 @@
 # Code refinement — 21 October 2026
 
+> Historical record: validation and implementation claims apply to the revision recorded below. For maintained behavior see [architecture](ARCHITECTURE.md); for the newer check results see the [repository re-audit](REPOSITORY_REAUDIT_2026_10_25.md).
+
 Changes start from `b5008c9`. This pass preserves the current screen design, selected palette and financial contracts. It does not create an APK or commit changes.
 
 ## Review and structure

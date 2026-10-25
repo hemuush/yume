@@ -1,5 +1,7 @@
 # F09 — separate Add workflows and presentation
 
+> Historical record: validation and implementation claims apply to the revision recorded below. For maintained behavior see [architecture](ARCHITECTURE.md); for the newer check results see the [repository re-audit](REPOSITORY_REAUDIT_2026_10_25.md).
+
 ## Root cause / result
 
 The Add route held form state, hydration, draft recovery, validation, list staging, three save modes, deletion, navigation and the complete view in one 1,310-line component file. AmountCard took fourteen flat props. Reviewing save invariants required reading across this whole scope.

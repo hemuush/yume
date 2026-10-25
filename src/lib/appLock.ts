@@ -29,7 +29,8 @@ export async function withoutRelock<T>(open: () => Promise<T>): Promise<T> {
 
 /** For AppGate: is the app coming back from one of its own pickers rather than being reopened by the user? */
 export function isReturningFromOwnActivity(): boolean {
-  return externalActivities > 0 || Date.now() - lastExternalActivityEndedAt < EXTERNAL_ACTIVITY_GRACE_MS;
+  const elapsed = Date.now() - lastExternalActivityEndedAt;
+  return externalActivities > 0 || (elapsed >= 0 && elapsed < EXTERNAL_ACTIVITY_GRACE_MS);
 }
 
 /** How long Yume can be away before asking to unlock again; a quick hop to another app shouldn't lock it. */

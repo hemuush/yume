@@ -1,5 +1,7 @@
 # Final UI consistency review
 
+> Historical record: validation and implementation claims apply to the revision recorded below. For maintained behavior see [architecture](ARCHITECTURE.md); for the newer check results see the [repository re-audit](REPOSITORY_REAUDIT_2026_10_25.md).
+
 Recorded 13 October 2026 against `36cb45f` plus the local presentation changes below. No APK or bundle was built for this review, at the owner's request. Colours, financial calculations, stored data, notification rules and animation behavior are unchanged.
 
 ## Changes

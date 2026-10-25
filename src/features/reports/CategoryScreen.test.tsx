@@ -70,7 +70,7 @@ jest.mock('@/db/ledger', () => ({
   ]),
 }));
 jest.mock('@/db/reports', () => ({
-  getCategoryOverview: async () => ({
+  getCategoryOverview: jest.fn(async () => ({
     totalMinor: 65000,
     count: 4,
     split: [
@@ -81,7 +81,7 @@ jest.mock('@/db/reports', () => ({
       month,
       totalMinor: i === 5 ? 65000 : 0,
     })),
-  }),
+  })),
   usualMonthly: () => null,
 }));
 jest.mock('@/db/budgets', () => ({
@@ -109,6 +109,7 @@ jest.mock('@/db/budgets', () => ({
 import CategoryScreen from '../../../app/category/[id]';
 import { router } from 'expo-router';
 import { listTransactions } from '@/db/ledger';
+import { getCategoryOverview } from '@/db/reports';
 
 // Bars and rings animate to their values (useGrowFrom, at most the 700ms draw):
 // let the last ones finish before the file ends, so no frame fires after teardown.
@@ -140,6 +141,35 @@ beforeAll(async () => {
 }, 180000);
 
 describe('Category page', () => {
+  it('hides old totals while loading another category and ignores a late old result', async () => {
+    const tree = await render();
+    let releaseFood!: (value: Awaited<ReturnType<typeof getCategoryOverview>>) => void;
+    const food = { totalMinor: 90000, spentMinor: 90000, refundMinor: 0, count: 1, split: [], months: [] };
+    jest.mocked(getCategoryOverview).mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          releaseFood = resolve;
+        })
+    );
+    // Start another read for this category, then navigate before it finishes.
+    mockHidden = true;
+    await act(async () => tree.update(<CategoryScreen />));
+    expect(texts(tree)).not.toContain('₹650');
+    mockParams.current = { id: 'rent' };
+    jest.mocked(getCategoryOverview).mockResolvedValueOnce({ ...food, totalMinor: 12300 });
+    try {
+      await act(async () => tree.update(<CategoryScreen />));
+      expect(texts(tree)).toContain('₹123');
+      expect(texts(tree)).not.toContain('₹650');
+      await act(async () => releaseFood(food));
+      expect(texts(tree)).toContain('₹123');
+      expect(texts(tree)).not.toContain('₹900');
+    } finally {
+      mockParams.current = { id: 'food' };
+      mockHidden = false;
+      act(() => tree.unmount());
+    }
+  });
   it('shows the total, the split, the budget and the latest entries', async () => {
     const shown = texts(await render());
     expect(shown).toEqual(

@@ -1,5 +1,7 @@
 # Interaction and recovery refinement
 
+> Historical record: validation and implementation claims apply to the revision recorded below. For maintained behavior see [architecture](ARCHITECTURE.md); for the newer check results see the [repository re-audit](REPOSITORY_REAUDIT_2026_10_25.md).
+
 ## Implemented
 
 - Home shows the real amount immediately; shorter section entrances retain reduced-motion support.

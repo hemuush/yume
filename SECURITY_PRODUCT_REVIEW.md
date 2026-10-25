@@ -1,6 +1,8 @@
 # Security and product decisions: implementation record
 
-## Current reading guide
+> Historical record: validation and implementation claims apply to the revision recorded below. For maintained behavior see [architecture](docs/ARCHITECTURE.md); for the newer check results see the [repository re-audit](docs/REPOSITORY_REAUDIT_2026_10_25.md).
+
+## Reading guide for this record
 
 Reviewed against the repository on **11 October 2026**. Plain JSON backups, whole-major-unit entry and local SQLite are explicit product decisions. Several findings below were addressed later. EAS release configuration blocks Internet permission; development tooling has separate needs. No source audit alone proves an APK has no exploitable behavior.
 

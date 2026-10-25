@@ -1,5 +1,7 @@
 # Home and planning screenshot refinements — 20 October 2026
 
+> Historical record: validation and implementation claims apply to the revision recorded below. For maintained behavior see [architecture](ARCHITECTURE.md); for the newer check results see the [repository re-audit](REPOSITORY_REAUDIT_2026_10_25.md).
+
 ## Findings and changes
 
 - The Home chart deliberately selected the latest nonzero day. With no recorded spending on 20 October, it therefore selected 19 October. Selection now starts on today even at zero, explicitly labels Today in the detail caption, and returns to today after refreshed daily data. Manual taps still inspect older days.

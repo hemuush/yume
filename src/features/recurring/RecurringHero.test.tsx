@@ -138,3 +138,4 @@ describe('RecurringHero', () => {
     expect(tree.root.findAll((n) => n.props.testID === 'landLine')).toHaveLength(0);
   });
 });
+jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());

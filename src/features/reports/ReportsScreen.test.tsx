@@ -81,7 +81,7 @@ jest.mock('@/db/tidyUp', () => ({
 }));
 // Count-up and bar-fill animations would keep ticking past the test's end.
 jest.mock('@/components/CountUpAmount', () => ({ CountUpAmount: () => null }));
-jest.mock('@/features/reports/AnimatedCategoryFill', () => ({ AnimatedCategoryFill: () => null }));
+jest.mock('@/components/GrowFill', () => ({ GrowFill: () => null }));
 // Bars and lines show their settled value: the faked clock never advances, so a running Animated never ends.
 jest.mock('@/lib/useGrowFrom', () => ({
   useGrowFrom: (_key: string, target: number) => new (require('react-native').Animated.Value)(target),
@@ -453,8 +453,8 @@ describe('Reports screen', () => {
   it('scales category bars to their share of all spending', async () => {
     const tree = await render();
     await pressText(tree, 'Breakdown');
-    const Fill = require('@/features/reports/AnimatedCategoryFill').AnimatedCategoryFill;
-    const bars = tree.root.findAllByType(Fill).map((n) => n.props.targetPct as number);
+    const Fill = require('@/components/GrowFill').GrowFill;
+    const bars = tree.root.findAllByType(Fill).map((n) => n.props.pct as number);
     expect(bars[0]).toBeCloseTo((1800000 / 2420000) * 100);
     expect(bars[1]).toBeCloseTo((620000 / 2420000) * 100);
     expect(bars.reduce((sum, value) => sum + value, 0)).toBeCloseTo(100);

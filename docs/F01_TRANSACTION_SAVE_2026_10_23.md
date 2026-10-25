@@ -1,5 +1,7 @@
 # F01 — atomic transaction save
 
+> Historical record: validation and implementation claims apply to the revision recorded below. For maintained behavior see [architecture](ARCHITECTURE.md); for the newer check results see the [repository re-audit](REPOSITORY_REAUDIT_2026_10_25.md).
+
 ## Root cause and expected outcome
 
 `createTransaction` committed its INSERT before reading/converting the saved row. If that read failed, Add treated the rejection as unsaved and retained the staged entry for retry. Retrying could insert another entry.

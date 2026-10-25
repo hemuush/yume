@@ -1,5 +1,7 @@
 # Activity interaction refinement
 
+> Historical record: validation and implementation claims apply to the revision recorded below. For maintained behavior see [architecture](ARCHITECTURE.md); for the newer check results see the [repository re-audit](REPOSITORY_REAUDIT_2026_10_25.md).
+
 Reviewed Activity, its filter sheet, transaction detail actions and recurring handoff. Filters now put type/accounts/categories first and payment/label refinements later, with clearer multi-select headings and spacing. Detail actions use theme-derived icon tints and concise visible captions. The recurring modal hides its parent details sheet and restores it when closed.
 
 Fixed incompatible category picks surviving quick type changes and payment method loss when logging an entry again today. Persisted figures and selected theme colors are unchanged.

@@ -1,5 +1,7 @@
 # Reports, calmer (2026-10-22)
 
+> Historical record: validation and implementation claims apply to the revision recorded below. For maintained behavior see [architecture](ARCHITECTURE.md); for the newer check results see the [repository re-audit](REPOSITORY_REAUDIT_2026_10_25.md).
+
 Not yet verified on a device. This supersedes the layout in `REPORTS_REDESIGN_2026_10_22.md`; read that for the
 scrubbing and day-inspector behaviour that is unchanged.
 

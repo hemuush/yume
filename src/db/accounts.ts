@@ -438,9 +438,9 @@ export async function updateAccount(id: string, input: UpdateAccountInput): Prom
 }
 
 /** Remembers the units held by a tracked account (set by a units x price update), or clears them with null. */
-export async function setHoldingUnits(id: string, units: number | null): Promise<void> {
+export async function setHoldingUnits(id: string, units: number | null, handle?: AppDb): Promise<void> {
   if (units != null && (!Number.isFinite(units) || units < 0)) throw new Error('Units must be zero or more');
-  const db = await getDb();
+  const db = handle ?? (await getDb());
   await db.runAsync('UPDATE accounts SET units = ? WHERE id = ? AND tracked = 1', [units, id]);
 }
 

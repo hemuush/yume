@@ -1,5 +1,7 @@
 # Release follow-up audit
 
+> Historical record: validation and implementation claims apply to the revision recorded below. For maintained behavior see [architecture](ARCHITECTURE.md); for the newer check results see the [repository re-audit](REPOSITORY_REAUDIT_2026_10_25.md).
+
 Recorded 13 October 2026. Baseline `bc5c1f8`, with notification diagnostics and the fixes below. This follow-up corrects the earlier audit's emphasis on automated pass counts: native permission, scheduling, launcher and keyboard behavior remain unverified until device acceptance. The owner can test manually; no connected-device tests were performed.
 
 ## Findings fixed

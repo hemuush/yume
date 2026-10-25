@@ -18,6 +18,8 @@ import { SwitchRow } from '@/components/SwitchRow';
 import { showAlert } from '@/components/AppDialog';
 import { appIconSupported } from '@/lib/appIcon';
 import { getThemeIconFollows, setThemeIconFollows } from '@/db/settings';
+import { useSaveOnce } from '@/lib/useSaveOnce';
+import { PrimaryButton } from '@/components/PrimaryButton';
 
 /**
  * The pack you're on as a live phone at the top, then every pack as a small Home preview in its colours, two
@@ -31,22 +33,46 @@ export default function ThemesScreen() {
   const { themeId, setTheme, accent, secondary, themeSaveError } = useAccent();
   const current = THEMES.find((t) => t.id === themeId) ?? THEMES[0];
   const iconSupported = appIconSupported();
-  const [iconFollows, setIconFollows] = useState(false);
+  const [iconFollows, setIconFollows] = useState<boolean | null>(null);
+  const [iconError, setIconError] = useState<string | null>(null);
+  const [iconRetry, setIconRetry] = useState(0);
+  const [iconSaving, setIconSaving] = useState(false);
   useEffect(() => {
-    if (iconSupported) void getThemeIconFollows().then(setIconFollows);
-  }, [iconSupported]);
+    if (!iconSupported) return;
+    let alive = true;
+    setIconError(null);
+    getThemeIconFollows().then(
+      (value) => {
+        if (alive) setIconFollows(value);
+      },
+      () => {
+        if (alive) setIconError("Couldn't load the app icon setting.");
+      }
+    );
+    return () => {
+      alive = false;
+    };
+  }, [iconSupported, iconRetry]);
+  const saveIcon = useSaveOnce(async (next: boolean) => {
+    setIconSaving(true);
+    try {
+      await setThemeIconFollows(next);
+      setIconFollows(next);
+    } catch {
+      showAlert('Could not save', 'The app icon setting was not saved. Try again.');
+    } finally {
+      setIconSaving(false);
+    }
+  });
   const saveIconFollows = (next: boolean) => {
-    const save = () =>
-      setThemeIconFollows(next)
-        .then(() => setIconFollows(next))
-        .catch(() => showAlert('Could not save', 'The app icon setting was not saved. Try again.'));
-    if (!next) return void save();
+    if (iconFollows == null || iconSaving) return;
+    if (!next) return void saveIcon(next);
     showAlert(
       'Match the app icon to the theme?',
       'The icon changes when you leave the app. Some launchers restart Yume while they refresh it, and a few drop a Yume icon you pinned, so you may need to pin it again.',
       [
         { text: 'Not now', style: 'cancel' },
-        { text: 'Match icon', onPress: () => void save() },
+        { text: 'Match icon', onPress: () => void saveIcon(next) },
       ]
     );
   };
@@ -102,9 +128,21 @@ export default function ThemesScreen() {
           <SwitchRow
             title="Match the app icon"
             hint="The launcher icon takes the theme's colours."
-            value={iconFollows}
+            value={iconFollows ?? false}
+            disabled={iconFollows == null || iconSaving}
             onChange={saveIconFollows}
           />
+        )}
+        {iconError && (
+          <View>
+            <Text accessibilityRole="alert">{iconError}</Text>
+            <PrimaryButton
+              title="Retry app icon setting"
+              variant="secondary"
+              compact
+              onPress={() => setIconRetry((value) => value + 1)}
+            />
+          </View>
         )}
         <View style={styles.grid}>
           {THEMES.map((pack) => {

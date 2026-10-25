@@ -1,5 +1,7 @@
 # Code re-audit — 19 October 2026
 
+> Historical record: validation and implementation claims apply to the revision recorded below. For maintained behavior see [architecture](ARCHITECTURE.md); for the newer check results see the [repository re-audit](REPOSITORY_REAUDIT_2026_10_25.md).
+
 Fresh review of revision `6109b40232266423db459fcd361e1e4d71f57c28` plus the existing, uncommitted audit fixes. This is an audit report, not another application-fix batch. The repository instructions, documentation index, architecture guide and exact [Expo SDK 57 documentation](https://docs.expo.dev/versions/v57.0.0/) were consulted.
 
 **Subsequent implementation:** see [19 October re-audit fixes](REAUDIT_FIXES_2026_10_19.md) for the follow-up changes and their validation. The findings and results below preserve the earlier audit baseline.
@@ -22,7 +24,7 @@ Budget/spending alerts capture their category name and formatted financial infor
 
 ### 2. P1 — Archiving a sensitive category reveals its recurring amounts
 
-Sources: [categories.ts:167](D:/hemuush/yume/src/db/categories.ts:167), [recurring.tsx:70](D:/hemuush/yume/app/recurring.tsx:70), [plan.tsx:181](D:/hemuush/yume/app/(tabs)/plan.tsx:181), [privateSummary.ts:54](D:/hemuush/yume/src/lib/privateSummary.ts:54).
+Sources: [categories.ts:167](D:/hemuush/yume/src/db/categories.ts:167), [recurring.tsx:70](D:/hemuush/yume/app/recurring.tsx:70), [plan.tsx:181](<D:/hemuush/yume/app/(tabs)/plan.tsx:181>), [privateSummary.ts:54](D:/hemuush/yume/src/lib/privateSummary.ts:54).
 
 Category archive retains the associated recurring rule. Recurring and Plan fetch only active categories, then use that incomplete lookup to decide whether a rule is private. `isSavingsEntry` returns false when the category is absent. As a result, archiving removes the sensitivity metadata without removing the amount from the displayed rows, summaries or Plan calculations.
 
@@ -32,7 +34,7 @@ Category archive retains the associated recurring rule. Recurring and Plan fetch
 
 ### 3. P2 — Recurring summaries and upcoming rows combine or relabel different currencies
 
-Sources: [recurring.tsx:95](D:/hemuush/yume/app/recurring.tsx:95), [subscriptions.ts:35](D:/hemuush/yume/src/db/subscriptions.ts:35), [RecurringHero.tsx:155](D:/hemuush/yume/src/features/recurring/RecurringHero.tsx:155), [plan.tsx:215](D:/hemuush/yume/app/(tabs)/plan.tsx:215), [UpcomingRow.tsx:54](D:/hemuush/yume/src/features/home/UpcomingRow.tsx:54).
+Sources: [recurring.tsx:95](D:/hemuush/yume/app/recurring.tsx:95), [subscriptions.ts:35](D:/hemuush/yume/src/db/subscriptions.ts:35), [RecurringHero.tsx:155](D:/hemuush/yume/src/features/recurring/RecurringHero.tsx:155), [plan.tsx:215](<D:/hemuush/yume/app/(tabs)/plan.tsx:215>), [UpcomingRow.tsx:54](D:/hemuush/yume/src/features/home/UpcomingRow.tsx:54).
 
 Recurring's headline totals sum every active expense rule without account-currency scope. Plan's Coming up/due-soon inputs likewise include all visible currencies and discard currency before display. Home's recurring Upcoming inputs also carry no currency through the shared row model. The amounts are subsequently formatted as the default currency. Individual Recurring rule rows do use their account currency, so the page can contradict its own headline. Plan's runway scopes accounts separately and can disagree with its due-soon total.
 
@@ -42,7 +44,7 @@ Recurring's headline totals sum every active expense rule without account-curren
 
 ### 4. P2 — Plan loses the recurrence anchor and can predict a false shortfall
 
-Sources: [plan.tsx:201](D:/hemuush/yume/app/(tabs)/plan.tsx:201), [planOverview.ts:118](D:/hemuush/yume/src/features/plan/planOverview.ts:118), [planOverview.ts:175](D:/hemuush/yume/src/features/plan/planOverview.ts:175).
+Sources: [plan.tsx:201](<D:/hemuush/yume/app/(tabs)/plan.tsx:201>), [planOverview.ts:118](D:/hemuush/yume/src/features/plan/planOverview.ts:118), [planOverview.ts:175](D:/hemuush/yume/src/features/plan/planOverview.ts:175).
 
 The posting engine preserves a rule's original `anchorDay`, but the Plan input omits it. `buildDueItems` substitutes the day of `nextRunDate`. After a day-31 rule reaches February's clamped date, Plan predicts subsequent occurrences on the 28th rather than returning to the 31st. Those predicted occurrences feed its runway calculation as well as Coming up.
 
@@ -102,19 +104,19 @@ A suspected split/refund data-loss path was rejected: SQLite's refund foreign ke
 
 Results below were run again for this audit, independently of historical report results.
 
-| Check | Result |
-| --- | --- |
-| Full regression: `npm test -- --runInBand --silent` | Passed: 293 suites, 11,104 tests; 2 opt-in performance suites/tests skipped here. 409.654 seconds, exit 0. |
-| Focused audit reproductions | Eight undesired behaviors confirmed using real database/domain modules. One suspected data-loss case rejected by the actual foreign-key guard. Exit 0 means the script successfully demonstrated those states; it is not a fix-verification result. |
-| TypeScript / ESLint / formatting | All passed, exit 0; ESLint reported no errors or warnings. |
-| Security: `npm run test:security` | All 8 checks passed, including URI decoder compatibility and widget-provider generation/access guards. |
-| Performance/output parity: `npm run test:perf` | Both suites/tests passed. Desktop fixtures: Home 92 ms, Reports 121 ms, Budgets 2 ms; not phone latency measurements. |
-| Expo compatibility: `npx expo install --check` | Dependencies up to date. |
-| Expo Doctor: `npx expo-doctor` | 21/21 checks passed. |
-| Dependency gate: `node scripts/auditGate.js` | Passed under the existing `braces` and `node-forge` tooling-advisory allowances. |
-| Raw `npm audit --json` | Exit 1: 50 affected dependency entries (45 high, 5 moderate, 0 critical). These include dependency-chain entries, not 50 distinct root advisories. The gate permits the two existing high-severity root advisories; its success does not mean zero vulnerabilities. |
-| Android JavaScript export | Passed: 2,339 modules, 8.1 MB Hermes bundle, exit 0. |
-| `git diff --check` | Passed after adding the report and documentation links. |
+| Check                                               | Result                                                                                                                                                                                                                                                              |
+| --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Full regression: `npm test -- --runInBand --silent` | Passed: 293 suites, 11,104 tests; 2 opt-in performance suites/tests skipped here. 409.654 seconds, exit 0.                                                                                                                                                          |
+| Focused audit reproductions                         | Eight undesired behaviors confirmed using real database/domain modules. One suspected data-loss case rejected by the actual foreign-key guard. Exit 0 means the script successfully demonstrated those states; it is not a fix-verification result.                 |
+| TypeScript / ESLint / formatting                    | All passed, exit 0; ESLint reported no errors or warnings.                                                                                                                                                                                                          |
+| Security: `npm run test:security`                   | All 8 checks passed, including URI decoder compatibility and widget-provider generation/access guards.                                                                                                                                                              |
+| Performance/output parity: `npm run test:perf`      | Both suites/tests passed. Desktop fixtures: Home 92 ms, Reports 121 ms, Budgets 2 ms; not phone latency measurements.                                                                                                                                               |
+| Expo compatibility: `npx expo install --check`      | Dependencies up to date.                                                                                                                                                                                                                                            |
+| Expo Doctor: `npx expo-doctor`                      | 21/21 checks passed.                                                                                                                                                                                                                                                |
+| Dependency gate: `node scripts/auditGate.js`        | Passed under the existing `braces` and `node-forge` tooling-advisory allowances.                                                                                                                                                                                    |
+| Raw `npm audit --json`                              | Exit 1: 50 affected dependency entries (45 high, 5 moderate, 0 critical). These include dependency-chain entries, not 50 distinct root advisories. The gate permits the two existing high-severity root advisories; its success does not mean zero vulnerabilities. |
+| Android JavaScript export                           | Passed: 2,339 modules, 8.1 MB Hermes bundle, exit 0.                                                                                                                                                                                                                |
+| `git diff --check`                                  | Passed after adding the report and documentation links.                                                                                                                                                                                                             |
 
 Local evidence is under `.expo/reaudit-2026-10-19/`: `jest.log`, `reproduce.cjs`, `reproduce.log`, `quality.log`, `security.log`, `perf.log`, `expo.log`, `audit.log`, `npm-audit.json`, `source-graph.log` and `export.log`. That directory is ignored and is not a committed regression suite. The reproduction script uses in-memory SQLite and a simulated native notification adapter with actual application planning/scheduling logic; it never opened the user's financial database or scheduled notifications on a phone.
 

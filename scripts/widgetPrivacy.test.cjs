@@ -2,6 +2,16 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { hardenManifest, providerSource } = require('../plugins/withWidgetPrivacy');
 const config = require('../app.json').expo;
+const fs = require('node:fs');
+const path = require('node:path');
+
+test('Git and EAS archives exclude local dotenv and signing credential files', () => {
+  for (const name of ['.gitignore', '.easignore']) {
+    const lines = fs.readFileSync(path.join(__dirname, '..', name), 'utf8').split(/\r?\n/);
+    assert.ok(lines.includes('.env*'), `${name} must exclude local dotenv files for every environment`);
+    assert.ok(lines.includes('credentials.json'), `${name} must exclude local signing credentials`);
+  }
+});
 
 test('release blocks unused photo access and keeps the native privacy plugin registered', () => {
   assert.ok(config.android.blockedPermissions.includes('android.permission.READ_MEDIA_IMAGES'));

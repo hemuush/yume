@@ -1,5 +1,7 @@
 # Consolidated UI refinements
 
+> Historical record: validation and implementation claims apply to the revision recorded below. For maintained behavior see [architecture](ARCHITECTURE.md); for the newer check results see the [repository re-audit](REPOSITORY_REAUDIT_2026_10_25.md).
+
 Recorded 13 October 2026 against `19d1c06` plus the refinements below. This records source review and automated validation, not phone visual acceptance. No APK or bundle was built.
 
 ## Changes by area

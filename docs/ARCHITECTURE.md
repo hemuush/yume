@@ -1,8 +1,12 @@
 # Architecture and logic
 
-Module and behavior map, maintained through the targeted cleanup, [follow-up recheck](CLEANUP_RECHECK_2026_10_21.md), [pending-flow recheck](PENDING_FLOW_RECHECK_2026_10_21.md) and [loan-flow review](LOAN_FLOW_REVIEW_2026_10_21.md) on 21 October 2026. The [initial cleanup report](CODE_REFINEMENT_2026_10_21.md) retains its original validation; this is not a claim that every line or device state has been proven correct.
+Maintained module and behavior map, updated through the [25 October repository re-audit](REPOSITORY_REAUDIT_2026_10_25.md). Dated reports retain their original validation; this guide describes implemented behavior and does not claim every line or device state has been proven correct. See [security boundaries](../SECURITY.md) and [device acceptance](RELEASE_DEVICE_CHECKS.md) separately.
 
 ## Ownership and data flow
+
+The [25 October app audit](FULL_APP_AUDIT_2026_10_25.md) adds a shared first-run mutation lock; atomic investment value/unit/result reads; request-scoped category snapshots; recoverable launcher-icon preference reads; and linked-part validation before split deletion. Unpaid-loan queries and schedule replacement include stored `overdue` installments, and outstanding-bill/purchase/reminder queries include defaulted loans until closed. This aligns restored status values with the loan sheet's existing payment semantics.
+
+Backup-folder adoption is post-restore metadata: failure shows a warning in Restore complete and does not prevent preference/reminder resync or turn a committed restore into a failed write. Onboarding automatically retries without a safety copy only when current entries, accounts and loans are all empty.
 
 The [24 October repository audit](CODE_AUDIT_2026_10_24.md) keeps creation result reads inside their transactions for accounts, people, plain IOUs, recurring rules and loans: a failed result read rolls back the write, so retry cannot duplicate an apparently failed creation. Investments and Exports retain usable data with an embedded error and Retry after a refresh failure. Export period selection recovers when its month/year disappears. Export previews retain signed monthly refund totals and clamp only the whole selected period. Investment chart history is processed chronologically once, with same-day transfers included before valuation resets.
 
@@ -394,6 +398,10 @@ Future-date confirmations inspect the dates of the rows actually being saved. A 
 Add completion checks its mount lifetime before success feedback or delayed Back navigation, and emits transaction-change events after successful or partially successful writes. A late completion can refresh the visible list without popping a different route. Repeat, Delete and type changes are guarded while saving.
 
 ## Cleanup and shared interaction controls
+
+Shared [GrowFill](../src/components/GrowFill.tsx) percentage bars, Reports category fills and cash-flow heights draw through Reanimated on the UI thread using [useDrawnValue](../src/lib/useDrawnValue.ts). Identities retain their own target, unchanged revisits stay still, and reduced motion jumps to the final value. Reports reuses GrowFill instead of maintaining a second fill component. Existing layout and theme styles remain in their callers. SVG chart paths retain their separate implementation.
+
+Quick-add navigation, the short widget comparison/theme cache and the completed-picker app-lock grace period reject negative elapsed time after a device-clock change. The first two permit a fresh action/read; app lock expires the completed-picker grace rather than extending it. Activity date search checks the previous year when the current year has no February 29.
 
 Undo toasts consume their keyed action before invoking the callback. Repeated taps and callbacks retained by an exiting or expired toast cannot run the old undo or dismiss the next queued toast. Provider teardown clears the dismissal timer and queue. The period picker clears old totals on each opening/privacy change, reports read failures with Retry and keeps period navigation available. Changing its selected period does not reread the all-month totals. Shared bar/ring growth restores the new animation key's own remembered value when a mounted component switches records; an unchanged remembered value does not animate.
 

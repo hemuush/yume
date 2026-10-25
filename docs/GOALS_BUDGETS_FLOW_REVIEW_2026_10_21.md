@@ -1,5 +1,7 @@
 # Goals and budgets review — 21 October 2026
 
+> Historical record: validation and implementation claims apply to the revision recorded below. For maintained behavior see [architecture](ARCHITECTURE.md); for the newer check results see the [repository re-audit](REPOSITORY_REAUDIT_2026_10_25.md).
+
 This review follows the goals/budgets request on the existing uncommitted work. No commit, push, APK installation or native phone interaction was performed. Existing theme packs, category colors and shared sheet/button design are retained.
 
 ## Scope

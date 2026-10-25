@@ -1,5 +1,7 @@
 # Repository audit — 24 October 2026
 
+> Historical record: validation and implementation claims apply to the revision recorded below. For maintained behavior see [architecture](ARCHITECTURE.md); for the newer check results see the [repository re-audit](REPOSITORY_REAUDIT_2026_10_25.md).
+
 Started on 24 October from `728b6d9` with the notification changes already present; final verification completed on 25 October. This audit uses the installed [Ponytail skill](https://github.com/DietrichGebert/ponytail/tree/09c434ab73ca43761c5d8b0c5d341926c2fba710/skills/ponytail) and the [Expo SDK 58 documentation](https://docs.expo.dev/versions/v58.0.0/). No dependency was added. No commit, push, deployment or new APK was made.
 
 ## Scope and evidence

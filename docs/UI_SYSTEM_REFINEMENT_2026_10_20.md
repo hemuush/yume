@@ -1,5 +1,7 @@
 # App UI consistency — 20 October 2026
 
+> Historical record: validation and implementation claims apply to the revision recorded below. For maintained behavior see [architecture](ARCHITECTURE.md); for the newer check results see the [repository re-audit](REPOSITORY_REAUDIT_2026_10_25.md).
+
 ## Implemented scope
 
 The audit resolves local imports from all 26 Expo routes (23 screens, two layouts and the Add redirect). All 25 non-redirect route closures use the refined shared controls. This is source coverage, not a claim that every screen state was visually inspected on a phone.
@@ -12,34 +14,34 @@ The audit resolves local imports from all 26 Expo routes (23 screens, two layout
 
 ## Route coverage
 
-| Route | Source coverage |
-| --- | --- |
-| `app/(tabs)/add.tsx` | Routing-only redirect |
-| `app/(tabs)/index.tsx` | Shared controls reviewed |
-| `app/(tabs)/plan.tsx` | Shared controls reviewed |
-| `app/(tabs)/reports.tsx` | Shared controls reviewed |
-| `app/(tabs)/transactions.tsx` | Shared controls reviewed |
-| `app/(tabs)/_layout.tsx` | Shared controls reviewed |
-| `app/add-transaction.tsx` | Shared controls reviewed |
-| `app/backup.tsx` | Shared controls reviewed |
-| `app/budgets.tsx` | Shared controls reviewed |
-| `app/categories.tsx` | Shared controls reviewed |
-| `app/category/[id].tsx` | Shared controls reviewed |
-| `app/garden.tsx` | Shared controls reviewed |
-| `app/loans.tsx` | Shared controls reviewed |
+| Route                           | Source coverage          |
+| ------------------------------- | ------------------------ |
+| `app/(tabs)/add.tsx`            | Routing-only redirect    |
+| `app/(tabs)/index.tsx`          | Shared controls reviewed |
+| `app/(tabs)/plan.tsx`           | Shared controls reviewed |
+| `app/(tabs)/reports.tsx`        | Shared controls reviewed |
+| `app/(tabs)/transactions.tsx`   | Shared controls reviewed |
+| `app/(tabs)/_layout.tsx`        | Shared controls reviewed |
+| `app/add-transaction.tsx`       | Shared controls reviewed |
+| `app/backup.tsx`                | Shared controls reviewed |
+| `app/budgets.tsx`               | Shared controls reviewed |
+| `app/categories.tsx`            | Shared controls reviewed |
+| `app/category/[id].tsx`         | Shared controls reviewed |
+| `app/garden.tsx`                | Shared controls reviewed |
+| `app/loans.tsx`                 | Shared controls reviewed |
 | `app/notification-settings.tsx` | Shared controls reviewed |
-| `app/notifications.tsx` | Shared controls reviewed |
-| `app/people.tsx` | Shared controls reviewed |
-| `app/profile.tsx` | Shared controls reviewed |
-| `app/recently-deleted.tsx` | Shared controls reviewed |
-| `app/recurring.tsx` | Shared controls reviewed |
-| `app/savings-goals.tsx` | Shared controls reviewed |
-| `app/split.tsx` | Shared controls reviewed |
-| `app/themes.tsx` | Shared controls reviewed |
-| `app/tidy-up.tsx` | Shared controls reviewed |
-| `app/whatif.tsx` | Shared controls reviewed |
-| `app/wrap.tsx` | Shared controls reviewed |
-| `app/_layout.tsx` | Shared controls reviewed |
+| `app/notifications.tsx`         | Shared controls reviewed |
+| `app/people.tsx`                | Shared controls reviewed |
+| `app/profile.tsx`               | Shared controls reviewed |
+| `app/recently-deleted.tsx`      | Shared controls reviewed |
+| `app/recurring.tsx`             | Shared controls reviewed |
+| `app/savings-goals.tsx`         | Shared controls reviewed |
+| `app/split.tsx`                 | Shared controls reviewed |
+| `app/themes.tsx`                | Shared controls reviewed |
+| `app/tidy-up.tsx`               | Shared controls reviewed |
+| `app/whatif.tsx`                | Shared controls reviewed |
+| `app/wrap.tsx`                  | Shared controls reviewed |
+| `app/_layout.tsx`               | Shared controls reviewed |
 
 ## Cleanup and structure
 

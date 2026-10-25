@@ -1,5 +1,7 @@
 # Notification audit — 24 October 2026
 
+> Historical record: validation and implementation claims apply to the revision recorded below. For maintained behavior see [architecture](ARCHITECTURE.md); for the newer check results see the [repository re-audit](REPOSITORY_REAUDIT_2026_10_25.md).
+
 Reviewed from Settings and the bell screen through SQLite preferences, financial mutation callbacks, planning, Expo scheduling, foreground presentation and notification tap routing. The baseline was `728b6d9`. Expo APIs were checked against the [SDK 58 reference](https://docs.expo.dev/versions/v58.0.0/sdk/notifications/) and the installed `expo-notifications` 58.1.6 source. Historical audit results are not fresh validation.
 
 ## Findings corrected

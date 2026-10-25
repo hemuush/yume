@@ -115,6 +115,7 @@ export async function deleteSplit(splitId: string): Promise<RowSnapshot[]> {
   await db.withTransactionAsync(async (tx) => {
     snapshots = await captureRows(tx, 'transactions', 'split_id = ?', [splitId]);
     if (snapshots.length === 0) throw new Error('This split is already deleted.');
+    for (const snapshot of snapshots) await assertEditableTransactionOn(tx, String(snapshot.row.id), true);
     await tx.runAsync('DELETE FROM transactions WHERE split_id = ?', [splitId]);
     for (const s of snapshots) await keepDeletedEntry(tx, s);
   });

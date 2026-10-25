@@ -1,6 +1,8 @@
 # Activity: implementation record
 
-## Current reading guide
+> Historical record: validation and implementation claims apply to the revision recorded below. For maintained behavior see [architecture](../ARCHITECTURE.md); for the newer check results see the [repository re-audit](../REPOSITORY_REAUDIT_2026_10_25.md).
+
+## Reading guide for this record
 
 Reviewed against the repository on **11 October 2026**. Activity groups ledger entries by period and day. Search and screen loads reject stale responses; refund display and chart geometry must preserve the underlying signed totals.
 

@@ -28,7 +28,7 @@ function resolveDate(day: number, month: number, today: string): string | null {
   const thisYear = Number(today.slice(0, 4));
   for (const year of [thisYear, thisYear - 1]) {
     const d = new Date(year, month - 1, day);
-    if (d.getFullYear() !== year || d.getMonth() !== month - 1 || d.getDate() !== day) return null;
+    if (d.getFullYear() !== year || d.getMonth() !== month - 1 || d.getDate() !== day) continue;
     const iso = toLocalIsoDate(d);
     if (iso <= today) return iso;
   }

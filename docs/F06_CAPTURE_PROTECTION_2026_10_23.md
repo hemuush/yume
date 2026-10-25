@@ -1,5 +1,7 @@
 # F06 — block financial UI until capture protection succeeds
 
+> Historical record: validation and implementation claims apply to the revision recorded below. For maintained behavior see [architecture](ARCHITECTURE.md); for the newer check results see the [repository re-audit](REPOSITORY_REAUDIT_2026_10_25.md).
+
 ## Approved behavior / root cause
 
 The user chose blocking financial screens when Android cannot enable screenshot protection. The old root effect discarded prevent/release rejections and mounted unlocked financial screens before the native request completed.

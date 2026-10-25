@@ -7,6 +7,8 @@ import { create, act, ReactTestRenderer } from 'react-test-renderer';
 import { BudgetRow } from './BudgetRow';
 import { BudgetProgress } from '@/db/budgets';
 
+jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
+
 // Bars and rings animate to their values (useGrowFrom); fake timers keep those
 // frames inside the test instead of firing after it ends.
 jest.useFakeTimers();

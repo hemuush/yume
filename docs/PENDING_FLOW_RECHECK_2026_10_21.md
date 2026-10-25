@@ -1,5 +1,7 @@
 # Pending-flow recheck — 21 October 2026
 
+> Historical record: validation and implementation claims apply to the revision recorded below. For maintained behavior see [architecture](ARCHITECTURE.md); for the newer check results see the [repository re-audit](REPOSITORY_REAUDIT_2026_10_25.md).
+
 Targeted follow-up to the [cleanup recheck](CLEANUP_RECHECK_2026_10_21.md). This pass examines shared confirmation actions, recurring mutations and account-creation initialization. It does not establish that every feature or native presentation state has been checked. Existing theme colours, layout and animations are retained.
 
 ## Reproduced and fixed
