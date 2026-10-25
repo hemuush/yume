@@ -276,7 +276,7 @@ describe('planNotifications', () => {
   describe('spending alerts', () => {
     it('wait for the next time after they came up', () => {
       const { notifications, waitingAlerts } = plan({ alerts: [alert()] });
-      expect(waitingAlerts).toHaveLength(1);
+      expect(waitingAlerts).toEqual([expect.objectContaining({ scheduledFor: at(3, 20).toISOString() })]);
       expect(find(notifications, at(3, 20))).toMatchObject({
         title: 'Food is over budget',
         body: '₹1,050 of ₹1,000 this month.\nAdd anything you spent today',
@@ -314,11 +314,27 @@ describe('planNotifications', () => {
       );
     });
 
-    it('count as delivered once their time has passed, and drop out', () => {
-      const old = alert({ queuedAt: new Date(2026, 9, 2, 12, 0).toISOString() });
+    it('consume an accepted alert once its slot has passed', () => {
+      const old = alert({ queuedAt: at(2, 12).toISOString(), scheduledFor: at(2, 20).toISOString() });
       const { notifications, waitingAlerts } = plan({ alerts: [old] });
       expect(waitingAlerts).toEqual([]);
       expect(notifications.map((n) => n.title)).not.toContain('Food is over budget');
+    });
+
+    it('retries an unscheduled alert at the next slot after permission or scheduling recovers', () => {
+      const old = alert({ queuedAt: at(2, 12).toISOString() });
+      const { notifications, waitingAlerts } = plan({ alerts: [old] });
+      expect(find(notifications, at(3, 9))?.title).toBe('Food is over budget');
+      expect(waitingAlerts[0].scheduledFor).toBe(at(3, 9).toISOString());
+    });
+
+    it('removes future acceptance when both slots are disabled so the alert can retry on re-enable', () => {
+      const pending = alert({ scheduledFor: at(3, 20).toISOString() });
+      const off = plan({
+        alerts: [pending],
+        prefs: { ...prefs, morningEnabled: false, eveningEnabled: false },
+      });
+      expect(off.waitingAlerts).toEqual([alert()]);
     });
 
     it('are dropped as stale after three days when no time was on to send them', () => {
@@ -326,6 +342,13 @@ describe('planNotifications', () => {
       const fresh = alert({ queuedAt: new Date(2026, 9, 2, 12, 0).toISOString() });
       const stale = alert({ id: 'x', queuedAt: new Date(2026, 8, 28, 12, 0).toISOString() });
       expect(plan({ prefs: off, alerts: [fresh, stale] }).waitingAlerts).toEqual([fresh]);
+    });
+
+    it('does not schedule a retry beyond the original three-day expiry', () => {
+      const nearlyExpired = alert({ queuedAt: new Date(2026, 8, 30, 8).toISOString() });
+      const result = plan({ alerts: [nearlyExpired] });
+      expect(result.waitingAlerts).toEqual([]);
+      expect(find(result.notifications, at(3, 9))?.title).toBe('Your day, at a glance');
     });
 
     it('are not sent when spending alerts are off', () => {
@@ -339,6 +362,47 @@ describe('planNotifications', () => {
 
     it('ignore an alert with an unreadable time', () => {
       expect(plan({ alerts: [alert({ queuedAt: 'not a date' })] }).waitingAlerts).toEqual([]);
+    });
+  });
+
+  it('does not repeat elapsed EMI, bill, refund or weekly topics at Evening after a rebuild', () => {
+    const input = {
+      prefs: { ...prefs, recurringAlerts: true, refundAlerts: true, weeklySummary: true },
+      now: at(5, 7),
+      loans: [loan()],
+      attention: [
+        { kind: 'bill' as const, id: 'internet', label: 'Internet', date: '2026-10-06' },
+        { kind: 'refund' as const, id: 'refund', label: 'Shoes', date: '2026-10-05' },
+      ],
+    };
+    const morning = find(plan(input).notifications, at(5, 9))!;
+    const previouslyScheduled = morning.reminderKeys.map((key) => ({ key, at: morning.at.toISOString() }));
+    const after = plan({ ...input, now: at(5, 10), previouslyScheduled });
+    expect(find(after.notifications, at(5, 20))?.title).toBe('Before you call it a day');
+    expect(find(after.notifications, at(6, 9))?.title).toBe('EMI overdue');
+    expect(find(after.notifications, at(8, 9))?.body).toContain('Shoes: refund follow-up');
+  });
+
+  it('replans delayed requests still pending in Android instead of treating their passed time as consumed', () => {
+    const delayed = alert({
+      queuedAt: at(3, 6).toISOString(),
+      scheduledFor: at(3, 9).toISOString(),
+      scheduledNotificationId: 'yume-2026-10-03-morning',
+    });
+    const result = plan({
+      now: at(3, 10),
+      loans: [loan({ dueDate: '2026-10-03' })],
+      alerts: [delayed],
+      previouslyScheduled: [
+        { key: '2026-10-03:emi:l1', at: at(3, 9).toISOString(), notificationId: 'yume-2026-10-03-morning' },
+      ],
+      pendingNotificationIds: ['yume-2026-10-03-morning'],
+    });
+    expect(find(result.notifications, at(3, 20))?.body).toContain('Food is over budget');
+    expect(find(result.notifications, at(3, 20))?.title).toBe('EMI due today');
+    expect(result.waitingAlerts[0]).toMatchObject({
+      scheduledFor: at(3, 20).toISOString(),
+      scheduledNotificationId: 'yume-2026-10-03-evening',
     });
   });
 });

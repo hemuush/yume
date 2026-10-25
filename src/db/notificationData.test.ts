@@ -5,7 +5,7 @@ const mockRebuild = jest.fn(async () => true);
 jest.mock('@/lib/notifications', () => ({ rebuildNotifications: () => mockRebuild() }));
 import { updateTransaction, deleteTransaction, restoreTransaction } from './transactions';
 import { CREATE_TABLES_SQL } from './schema';
-import { getNotificationPrefs } from './settings';
+import { getNotificationPrefs, updateNotificationPrefs } from './settings';
 import { hasLoggedOn } from './notificationData';
 
 it('round-trips optional attention preferences and rejects non-boolean restored values', async () => {
@@ -89,4 +89,24 @@ it('malformed restored notification fields fall back safely instead of schedulin
   expect(prefs.eveningMinute).toBe(defaults.eveningMinute);
   expect(prefs.morningEnabled).toBe(defaults.morningEnabled);
   expect(prefs.eveningEnabled).toBe(false);
+});
+
+it('merges overlapping preference patches atomically and rolls back a failed write', async () => {
+  await Promise.all([
+    updateNotificationPrefs({ morningHour: 10, morningMinute: 30 }),
+    updateNotificationPrefs({ weeklySummary: true }),
+  ]);
+  expect(await getNotificationPrefs()).toMatchObject({
+    morningHour: 10,
+    morningMinute: 30,
+    weeklySummary: true,
+  });
+  const write = jest.spyOn(mockDb, 'runAsync').mockRejectedValueOnce(new Error('Write failed'));
+  await expect(updateNotificationPrefs({ morningHour: 11 })).rejects.toThrow('Write failed');
+  write.mockRestore();
+  expect(await getNotificationPrefs()).toMatchObject({
+    morningHour: 10,
+    morningMinute: 30,
+    weeklySummary: true,
+  });
 });

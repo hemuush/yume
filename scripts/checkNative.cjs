@@ -95,10 +95,20 @@ function main() {
   }
   const problems = checkManifest(fs.readFileSync(MANIFEST, 'utf8'));
   const resolved = JSON.parse(
-    execFileSync('npx', ['expo-modules-autolinking', 'resolve', '--platform', 'android', '--json'], {
-      encoding: 'utf8',
-      maxBuffer: 1 << 26,
-    })
+    execFileSync(
+      process.execPath,
+      [
+        require.resolve('expo-modules-autolinking/bin/expo-modules-autolinking.js'),
+        'resolve',
+        '--platform',
+        'android',
+        '--json',
+      ],
+      {
+        encoding: 'utf8',
+        maxBuffer: 1 << 26,
+      }
+    )
   );
   const modules = (resolved.modules ?? resolved).map((m) => m.packageName ?? m.name);
   problems.push(...checkModules(modules));

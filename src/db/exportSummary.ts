@@ -6,7 +6,7 @@ export interface EntryMonth {
   month: string;
   /** Every entry that month, in any currency. */
   count: number;
-  /** Spending in `currency` that month (refunds netted), for the export picker's one-line preview. */
+  /** Net spending in `currency`, including negative months so refunds reconcile across a year. */
   spentMinor: number;
 }
 
@@ -26,5 +26,5 @@ export async function listEntryMonths(currency: string): Promise<EntryMonth[]> {
   );
   return rows
     .filter((r) => /^\d{4}-\d{2}$/.test(r.month))
-    .map((r) => ({ month: r.month, count: r.count, spentMinor: Math.max(0, r.spent ?? 0) }));
+    .map((r) => ({ month: r.month, count: r.count, spentMinor: r.spent ?? 0 }));
 }

@@ -2,12 +2,13 @@
 
 ## Current backup contract
 
-- New backups are plain JSON, format version 4, containing the tables explicitly listed in [backup.ts](src/lib/backup.ts). Format-1, format-2 and format-3 files remain readable. Recently deleted records are not included. Sharing a copy sends it to the destination the user selects.
+- New backups are plain JSON, format version 6, containing the tables explicitly listed in [backup.ts](src/lib/backup.ts). Format-1 through format-5 files remain readable. Recently deleted records are not included. Sharing a copy sends it to the destination the user selects.
 - Android folder access uses a persisted storage grant. Choosing a folder scans existing valid files before a write; newer folder data requires an explicit choice rather than silent replacement. Restore replaces records; it does not merge ledgers.
 - Snapshot table reads are serialized in one exclusive database section. Restore validates data and foreign-key consistency; unknown columns and tables emptied by older backups are reported.
 - Restore repairs exact legacy labels on app-created linked refund receipts inside the restore transaction, matching startup repair. Manually linked refunds and custom receipt text are preserved.
 - The phone keeps its folder URI and last-backup status. Already-set app-lock and widget-detail preferences take precedence; a fresh install can adopt those preferences from the backup.
 - The unfinished-entry recovery setting (`entry_draft_v1`) is local transient state: snapshots omit it, imports ignore it and restore clears pending recovery. A draft never becomes a transaction through restore.
+- Notification permission-request history and topic scheduling receipts belong to this phone; imports preserve local values and ignore the source phone's values. Topic receipts are omitted from exports. Queued spending alerts keep their provenance and creation time, while their OS acceptance markers are stripped on export/import so restored alerts can be scheduled on this phone.
 - Daily backup is due on a different local calendar day; weekly/monthly use elapsed windows. Maintenance runs while the app is open, catching up recurring entries first. It is not guaranteed background execution.
 - A successful managed daily write replaces same-day managed files only after the new file is written. Retention keeps the newest 14 managed daily backup files by content ordering; exported copies are outside this policy. Initial-folder preservation avoids replacing existing files or pruning them.
 - The private recovery copy contains the data present before a restore. Its own timestamp/counts must be shown. Putting it back is another restore, not selection of the latest folder file.

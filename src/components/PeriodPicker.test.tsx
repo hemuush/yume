@@ -16,17 +16,18 @@ jest.mock('@/components/ModalSheet', () => ({
     visible ? children : null,
 }));
 jest.mock('@/db/reports', () => ({
-  getSpendByMonth: async () => ({
+  getSpendByMonth: jest.fn(async () => ({
     byMonth: new Map([
       ['2025-11', 4_500_000],
       ['2026-09', 7_400_000],
       ['2026-10', 5_340_000],
     ]),
     firstMonth: '2025-11',
-  }),
+  })),
 }));
 
 import { PeriodPicker, compactMoney } from './PeriodPicker';
+import { getSpendByMonth } from '@/db/reports';
 
 const today = new Date(2026, 9, 8);
 const texts = (r: ReactTestRenderer) =>
@@ -53,6 +54,54 @@ async function render(over: Partial<React.ComponentProps<typeof PeriodPicker>> =
 }
 
 describe('period picker', () => {
+  it('does not reread all-month totals when only the selected period changes', async () => {
+    const r = await render();
+    const reads = jest.mocked(getSpendByMonth).mock.calls.length;
+    const props = r.root.findByType(PeriodPicker).props as React.ComponentProps<typeof PeriodPicker>;
+    await act(async () =>
+      r.update(<PeriodPicker {...props} selected={{ kind: 'month', year: 2025, month: 11 }} />)
+    );
+    expect(getSpendByMonth).toHaveBeenCalledTimes(reads);
+    expect(button(r, 'December 2025').props.accessibilityState.selected).toBe(true);
+    act(() => r.unmount());
+  });
+
+  it('explains a totals failure and retries', async () => {
+    jest.mocked(getSpendByMonth).mockRejectedValueOnce(new Error('read failed'));
+    const r = await render();
+    expect(texts(r)).toContain("Couldn't load spending totals. You can still pick a period.");
+    const findRetry = () =>
+      r.root.find(
+        (n) =>
+          n.props.onPress &&
+          n.props.accessibilityRole === 'button' &&
+          n.findAllByType(Text).some((t) => t.props.children === 'Retry')
+      );
+    await act(async () => findRetry().props.onPress());
+    expect(texts(r)).toContain('₹74k');
+    expect(texts(r)).not.toContain("Couldn't load spending totals. You can still pick a period.");
+    act(() => r.unmount());
+  });
+
+  it('clears old totals while reopening instead of presenting stale data as current', async () => {
+    const r = await render();
+    expect(texts(r)).toContain('₹74k');
+    const props = r.root.findByType(PeriodPicker).props as React.ComponentProps<typeof PeriodPicker>;
+    act(() => r.update(<PeriodPicker {...props} visible={false} />));
+    let resolve!: (value: Awaited<ReturnType<typeof getSpendByMonth>>) => void;
+    jest.mocked(getSpendByMonth).mockImplementationOnce(
+      () =>
+        new Promise((done) => {
+          resolve = done;
+        })
+    );
+    act(() => r.update(<PeriodPicker {...props} visible />));
+    expect(texts(r)).not.toContain('₹74k');
+    await act(async () => resolve({ byMonth: new Map([['2026-09', 10000]]), firstMonth: '2026-09' }));
+    expect(texts(r)).toContain('₹100');
+    act(() => r.unmount());
+  });
+
   it('shows what each month cost, and keeps the future and the months before the first entry off', async () => {
     const r = await render();
     expect(texts(r)).toEqual(expect.arrayContaining(['₹74k', '₹53k']));

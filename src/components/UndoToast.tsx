@@ -38,6 +38,7 @@ export function UndoToastProvider({ children }: { children: React.ReactNode }) {
   const queue = useRef<ToastState[]>([]);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const keyRef = useRef(0);
+  const activeToast = useRef<ToastState | null>(null);
 
   // A ref, not a direct recursive reference — `showNext` scheduling its own
   // next call by name would read the binding before it's fully initialized.
@@ -45,6 +46,7 @@ export function UndoToastProvider({ children }: { children: React.ReactNode }) {
   const showNext = useCallback(() => {
     timer.current = null;
     const next = queue.current.shift() ?? null;
+    activeToast.current = next;
     setToast(next);
     setQueuedCount(queue.current.length);
     if (next) timer.current = setTimeout(() => showNextRef.current(), AUTO_DISMISS_MS);
@@ -53,6 +55,12 @@ export function UndoToastProvider({ children }: { children: React.ReactNode }) {
   // so this keeps the write out of the render body.
   useEffect(() => {
     showNextRef.current = showNext;
+    return () => {
+      if (timer.current) clearTimeout(timer.current);
+      timer.current = null;
+      activeToast.current = null;
+      queue.current = [];
+    };
   }, [showNext]);
 
   const show = useCallback(
@@ -68,28 +76,42 @@ export function UndoToastProvider({ children }: { children: React.ReactNode }) {
     [showNext]
   );
 
-  const dismiss = useCallback(() => {
-    if (timer.current) clearTimeout(timer.current);
-    showNext();
-  }, [showNext]);
+  const undo = useCallback(
+    (key: number) => {
+      const current = activeToast.current;
+      if (!current || current.key !== key) return;
+      // Consume before user code: repeated taps and exiting views cannot undo or dismiss the next toast.
+      activeToast.current = null;
+      if (timer.current) clearTimeout(timer.current);
+      showNext();
+      haptics.tap();
+      const fail = (e: unknown) => showAlert("Couldn't undo", errorMessage(e));
+      try {
+        void Promise.resolve(current.onUndo()).catch(fail);
+      } catch (e) {
+        fail(e);
+      }
+    },
+    [showNext]
+  );
 
   const value = useMemo(() => ({ show }), [show]);
 
   return (
     <UndoToastContext.Provider value={value}>
       {children}
-      {toast && <ToastView key={toast.key} toast={toast} onDismiss={dismiss} queued={queuedCount} />}
+      {toast && <ToastView key={toast.key} toast={toast} onUndo={undo} queued={queuedCount} />}
     </UndoToastContext.Provider>
   );
 }
 
 function ToastView({
   toast,
-  onDismiss,
+  onUndo,
   queued,
 }: {
   toast: ToastState;
-  onDismiss: () => void;
+  onUndo: (key: number) => void;
   queued: number;
 }) {
   const insets = useSafeAreaInsets();
@@ -119,17 +141,7 @@ function ToastView({
           {queued > 0 ? ` · +${queued} more` : ''}
         </Text>
         <AnimatedPressable
-          onPress={() => {
-            haptics.tap();
-            // A failed undo must say so: otherwise the entry stays gone while it looks put back.
-            const fail = (e: unknown) => showAlert("Couldn't undo", errorMessage(e));
-            try {
-              void Promise.resolve(toast.onUndo()).catch(fail);
-            } catch (e) {
-              fail(e);
-            }
-            onDismiss();
-          }}
+          onPress={() => onUndo(toast.key)}
           onPressIn={onPressIn}
           onPressOut={onPressOut}
           // The word is ~18dp tall; the slop reaches toward 48dp (the pill caps it).

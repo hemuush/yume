@@ -4,8 +4,10 @@ import {
   getAlertQueue,
   getNotificationPermissionAsked,
   getNotificationPrefs,
+  getScheduledReminders,
   setAlertQueue,
   setNotificationPermissionAsked,
+  setScheduledReminders,
 } from '@/db/settings';
 import { hasLoggedOn, listLoansDue, listReminderAttention } from '@/db/notificationData';
 import { resolveQueuedSpendAlerts } from '@/db/queuedSpendAlerts';
@@ -44,13 +46,29 @@ export async function ensureAndroidChannel(): Promise<void> {
   });
 }
 
-export async function requestNotificationPermission(): Promise<boolean> {
-  // Android 13's permission prompt needs a channel to exist first.
-  await ensureAndroidChannel();
-  const existing = await Notifications.getPermissionsAsync();
-  if (existing.granted) return true;
-  const result = await Notifications.requestPermissionsAsync();
-  return result.granted;
+let permissionRequest: Promise<boolean> | null = null;
+
+/** Startup and Settings share one native permission prompt. Failed native calls can be retried. */
+export function requestNotificationPermission(): Promise<boolean> {
+  permissionRequest ??= (async () => {
+    // Android 13's permission prompt needs a channel to exist first.
+    await ensureAndroidChannel();
+    const existing = await Notifications.getPermissionsAsync();
+    if (existing.granted) return true;
+    if (existing.canAskAgain === false) return false;
+    const result = await Notifications.requestPermissionsAsync();
+    if (Platform.OS === 'android') {
+      try {
+        await setNotificationPermissionAsked();
+      } catch (e) {
+        console.warn('Remembering notification permission request failed:', e);
+      }
+    }
+    return result.granted;
+  })().finally(() => {
+    permissionRequest = null;
+  });
+  return permissionRequest;
 }
 
 /**
@@ -67,7 +85,6 @@ export async function askNotificationPermissionOnce(): Promise<boolean> {
   if (!current.canAskAgain || (await getNotificationPermissionAsked())) return false;
   const prefs = await getNotificationPrefs();
   if (!prefs.morningEnabled && !prefs.eveningEnabled) return false;
-  await setNotificationPermissionAsked();
   const granted = await requestNotificationPermission();
   if (granted) await rebuildNotifications();
   return granted;
@@ -164,13 +181,31 @@ export function rebuildNotifications(): Promise<boolean> {
 }
 
 async function doRebuild(): Promise<boolean> {
+  let scheduled: Notifications.NotificationRequest[] = [];
+  const acceptedIds = new Set<string>();
+  const pendingIds = new Set<string>();
+  const cancel = async (ids: string[]): Promise<boolean> => {
+    const results = await Promise.allSettled(
+      ids.map(async (id) => {
+        await Notifications.cancelScheduledNotificationAsync(id);
+      })
+    );
+    results.forEach((result, i) => {
+      if (result.status === 'rejected')
+        console.error(`Cancelling notification ${ids[i]} failed:`, result.reason);
+    });
+    return results.every((result) => result.status === 'fulfilled');
+  };
   try {
+    scheduled = (await Notifications.getAllScheduledNotificationsAsync()) ?? [];
+    scheduled.forEach((request) => pendingIds.add(request.identifier));
     const logDate = toLocalIsoDate(new Date());
-    const [prefs, loans, queuedAlerts, initiallyLogged] = await Promise.all([
+    const [prefs, loans, queuedAlerts, initiallyLogged, previousReminders] = await Promise.all([
       getNotificationPrefs(),
       listLoansDue(),
       getAlertQueue(),
       hasLoggedOn(logDate),
+      getScheduledReminders(),
     ]);
     const alerts = await resolveQueuedSpendAlerts(queuedAlerts);
     const attention =
@@ -191,21 +226,32 @@ async function doRebuild(): Promise<boolean> {
       attention,
       loggedToday,
       now,
+      previouslyScheduled: previousReminders,
+      pendingNotificationIds: [...pendingIds],
     });
 
-    const scheduled = (await Notifications.getAllScheduledNotificationsAsync()) ?? [];
+    let permitted = true;
     if (notifications.length > 0) {
       const permission = await Notifications.getPermissionsAsync();
-      if (!permission?.granted) return false;
-      await ensureAndroidChannel();
-      if (Platform.OS === 'android') {
+      permitted = !!permission?.granted;
+      if (permitted) await ensureAndroidChannel();
+      if (permitted && Platform.OS === 'android') {
         const channel = await Notifications.getNotificationChannelAsync(NOTIFICATION_CHANNEL_ID);
-        if (channel?.importance === Notifications.AndroidImportance.NONE) return false;
+        permitted = channel?.importance !== Notifications.AndroidImportance.NONE;
       }
     }
-    let allScheduled = true;
-    for (const n of notifications) {
+    let allScheduled = permitted;
+    const acceptedTimes = new Set<number>();
+    const nextReminders = previousReminders.filter(
+      (item) => new Date(item.at).getTime() <= now.getTime() && !pendingIds.has(item.notificationId ?? '')
+    );
+    for (const n of permitted ? notifications : []) {
       try {
+        // Bridge/database work can straddle a slot. Never submit an already-passed date.
+        if (n.at.getTime() <= Date.now()) {
+          allScheduled = false;
+          continue;
+        }
         await Notifications.scheduleNotificationAsync({
           identifier: n.id,
           content: { title: n.title, body: n.body, sound: 'default', data: { url: n.route } },
@@ -215,34 +261,78 @@ async function doRebuild(): Promise<boolean> {
             channelId: NOTIFICATION_CHANNEL_ID,
           },
         });
+        acceptedIds.add(n.id);
+        acceptedTimes.add(n.at.getTime());
+        nextReminders.push(
+          ...n.reminderKeys.map((key) => ({ key, at: n.at.toISOString(), notificationId: n.id }))
+        );
       } catch (err) {
         allScheduled = false;
         console.error(`Scheduling notification ${n.id} failed:`, err);
       }
     }
-    const desiredIds = new Set(notifications.map((n) => n.id));
-    let allCancelled = true;
-    await Promise.all(
+    // A failed replacement must not preserve stale names/amounts under the same ID. This also
+    // clears old payloads while permission/the channel is off, before the phone can enable them again.
+    const allCancelled = await cancel(
       scheduled
         .filter(
           (n) =>
             typeof n.identifier === 'string' &&
             n.identifier.startsWith(ID_PREFIX) &&
-            !desiredIds.has(n.identifier)
+            !acceptedIds.has(n.identifier)
         )
-        .map((n) =>
-          Notifications.cancelScheduledNotificationAsync(n.identifier).catch((err) => {
-            allCancelled = false;
-            console.error(`Cancelling notification ${n.identifier} failed:`, err);
-          })
-        )
+        .map((n) => n.identifier)
     );
-    // Alerts already sent (or stale) drop out of the queue here.
-    if (allScheduled && allCancelled && JSON.stringify(waitingAlerts) !== JSON.stringify(queuedAlerts))
-      await setAlertQueue(waitingAlerts, queuedAlerts);
+    const reconciledAlerts = waitingAlerts.map((alert) => {
+      if (alert.scheduledFor && !acceptedTimes.has(new Date(alert.scheduledFor).getTime())) {
+        const pending = { ...alert };
+        delete pending.scheduledFor;
+        delete pending.scheduledNotificationId;
+        return pending;
+      }
+      return alert;
+    });
+    // Record acceptance per slot, including partial success; failed slots remain retryable.
+    if (JSON.stringify(reconciledAlerts) !== JSON.stringify(queuedAlerts))
+      await setAlertQueue(reconciledAlerts, queuedAlerts);
+    await setScheduledReminders(nextReminders);
     return allScheduled && allCancelled;
   } catch (err) {
     console.error('rebuildNotifications failed:', err);
+    // Unknown current content must not leave an obsolete financial payload armed after a failed read.
+    await cancel([
+      ...new Set([
+        ...scheduled.filter((n) => n.identifier?.startsWith(ID_PREFIX)).map((n) => n.identifier),
+        ...acceptedIds,
+      ]),
+    ]);
+    try {
+      const queue = await getAlertQueue();
+      const pending = queue.map((alert) => {
+        if (
+          !alert.scheduledFor ||
+          (new Date(alert.scheduledFor).getTime() <= Date.now() &&
+            !pendingIds.has(alert.scheduledNotificationId ?? '') &&
+            !acceptedIds.has(alert.scheduledNotificationId ?? ''))
+        )
+          return alert;
+        const copy = { ...alert };
+        delete copy.scheduledFor;
+        delete copy.scheduledNotificationId;
+        return copy;
+      });
+      if (JSON.stringify(queue) !== JSON.stringify(pending)) await setAlertQueue(pending, queue);
+      await setScheduledReminders(
+        (await getScheduledReminders()).filter(
+          (item) =>
+            new Date(item.at).getTime() <= Date.now() &&
+            !pendingIds.has(item.notificationId ?? '') &&
+            !acceptedIds.has(item.notificationId ?? '')
+        )
+      );
+    } catch (cleanupError) {
+      console.warn('Clearing notification acceptance after failure failed:', cleanupError);
+    }
     return false;
   }
 }

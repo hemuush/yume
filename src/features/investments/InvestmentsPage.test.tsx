@@ -11,9 +11,18 @@ jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
 }));
 const mockPush = jest.fn();
+const mockFocusCallbacks = new Set<() => void>();
 jest.mock('expo-router', () => ({
   router: { push: (...a: unknown[]) => mockPush(...a), navigate: jest.fn() },
-  useFocusEffect: (cb: () => void) => require('react').useEffect(cb, [cb]),
+  useFocusEffect: (cb: () => (() => void) | void) =>
+    require('react').useEffect(() => {
+      const cleanup = cb();
+      if (!cleanup) mockFocusCallbacks.add(cb);
+      return () => {
+        mockFocusCallbacks.delete(cb);
+        if (typeof cleanup === 'function') cleanup();
+      };
+    }, [cb]),
 }));
 jest.mock('@/components/AppHeader', () => ({ HeaderUserButton: () => null }));
 jest.mock('@/theme/AccentContext', () => ({
@@ -156,6 +165,7 @@ const press = async (tree: ReactTestRenderer, title: string) =>
   });
 
 beforeEach(() => {
+  mockFocusCallbacks.clear();
   mockHide = false;
   mockPush.mockClear();
   mockRule.mockClear();
@@ -168,6 +178,18 @@ beforeEach(() => {
 });
 
 describe('Investments page', () => {
+  it('keeps holdings visible after a failed refresh and offers a working retry', async () => {
+    const tree = await render();
+    mockAccounts.mockRejectedValueOnce(new Error('Refresh failed'));
+    await act(async () => {
+      for (const focus of mockFocusCallbacks) focus();
+    });
+    expect(texts(tree)).toContain('Refresh failed');
+    expect(texts(tree)).toContain('Nifty 50');
+    await press(tree, 'Retry');
+    expect(texts(tree)).not.toContain('Refresh failed');
+    act(() => tree.unmount());
+  });
   it('shows what the holdings add up to, with the gain from the ones that have a value', async () => {
     const shown = texts(await render());
     expect(shown).toContain('Worth now');

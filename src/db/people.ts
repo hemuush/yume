@@ -61,20 +61,24 @@ export async function listPeople(includeArchived = false): Promise<PersonWithBal
 export async function createPerson(input: { name: string; notes?: string }): Promise<Person> {
   if (!input.name.trim()) throw new Error('Person name is required');
   const db = await getDb();
-  // Two people with one name couldn't be told apart in Add's picker or on Friends & family.
-  const clash = await db.getFirstAsync<{ id: string }>(
-    'SELECT id FROM people WHERE archived = 0 AND lower(trim(name)) = lower(trim(?)) LIMIT 1',
-    [input.name]
-  );
-  if (clash) throw new Error(`${input.name.trim()} is already in Friends & family.`);
-  const id = newId();
-  await db.runAsync('INSERT INTO people (id, name, notes) VALUES (?, ?, ?)', [
-    id,
-    input.name.trim(),
-    input.notes ?? '',
-  ]);
-  const row = await db.getFirstAsync<PersonRow>('SELECT * FROM people WHERE id = ?', [id]);
-  return rowToPerson(found(row, 'person'));
+  let created: Person | null = null;
+  await db.withTransactionAsync(async (tx) => {
+    // Two people with one name couldn't be told apart in Add's picker or on Friends & family.
+    const clash = await tx.getFirstAsync<{ id: string }>(
+      'SELECT id FROM people WHERE archived = 0 AND lower(trim(name)) = lower(trim(?)) LIMIT 1',
+      [input.name]
+    );
+    if (clash) throw new Error(`${input.name.trim()} is already in Friends & family.`);
+    const id = newId();
+    await tx.runAsync('INSERT INTO people (id, name, notes) VALUES (?, ?, ?)', [
+      id,
+      input.name.trim(),
+      input.notes ?? '',
+    ]);
+    const row = await tx.getFirstAsync<PersonRow>('SELECT * FROM people WHERE id = ?', [id]);
+    created = rowToPerson(found(row, 'person'));
+  });
+  return found<Person>(created, 'person');
 }
 
 export async function getPersonLedger(personId: string): Promise<PersonLedgerEntry[]> {
@@ -106,6 +110,7 @@ export async function addLedgerEntry(input: {
   }
   const db = await getDb();
   const id = newId();
+  let created: PersonLedgerEntry | null = null;
   await db.withTransactionAsync(async (tx) => {
     if (input.transactionId) {
       const linked = await tx.getFirstAsync<{ account_id: string }>(
@@ -120,12 +125,13 @@ export async function addLedgerEntry(input: {
      VALUES (?, ?, ?, ?, ?, ?)`,
       [id, input.personId, input.transactionId ?? null, input.amountMinor, input.date, input.note ?? '']
     );
+    const row = await tx.getFirstAsync<PersonLedgerEntryRow>(
+      'SELECT * FROM person_ledger_entries WHERE id = ?',
+      [id]
+    );
+    created = rowToEntry(found(row, 'entry'));
   });
-  const row = await db.getFirstAsync<PersonLedgerEntryRow>(
-    'SELECT * FROM person_ledger_entries WHERE id = ?',
-    [id]
-  );
-  return rowToEntry(found(row, 'entry'));
+  return found<PersonLedgerEntry>(created, 'entry');
 }
 
 /**

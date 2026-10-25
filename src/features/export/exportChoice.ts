@@ -17,7 +17,10 @@ export function previewFor(
   );
   return {
     count: inside.reduce((n, m) => n + m.count, 0),
-    spentMinor: inside.reduce((n, m) => n + m.spentMinor, 0),
+    spentMinor: Math.max(
+      0,
+      inside.reduce((n, m) => n + m.spentMinor, 0)
+    ),
   };
 }
 

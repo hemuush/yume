@@ -14,7 +14,10 @@ import { Section } from '@/components/Section';
 import { screenStyles as h, SCREEN } from '@/components/screenStyles';
 import { SlotCard } from '@/features/notifications/SlotCard';
 import { CardRowsSkeleton } from '@/components/ListSkeleton';
-import { getNotificationPrefs, setNotificationPrefs, NotificationPrefs } from '@/db/settings';
+import { ScreenLoadError } from '@/components/ScreenLoadError';
+import type { NotificationPrefs } from '@/db/settings';
+import { useNotificationPreferences } from '@/features/notifications/useNotificationPreferences';
+import { useLocalDayRefresh } from '@/lib/useLocalDayRefresh';
 import {
   rebuildNotifications,
   requestNotificationPermission,
@@ -27,7 +30,6 @@ import { theme } from '@/constants/theme';
 import { errorMessage } from '@/lib/errorMessage';
 import { showAlert } from '@/components/AppDialog';
 import { PrimaryButton } from '@/components/PrimaryButton';
-import { listScreenStyles } from '@/features/shared/listScreenStyles';
 import { useAccent } from '@/theme/AccentContext';
 import { shade } from '@/lib/color';
 import { cardSurface } from '@/components/CardSurface';
@@ -57,27 +59,34 @@ export default function NotificationSettingsScreen() {
   const { accent, secondary } = useAccent();
   // The header sits over the page and shrinks as it scrolls.
   const { collapse, headerHeight, scrollHandler, scrollRef } = useCollapsingHeader();
-  const [prefs, setPrefsState] = useState<NotificationPrefs | null>(null);
-  // The latest prefs, read by every change: two quick toggles each build on the other, not on a stale render.
-  const latest = useRef<NotificationPrefs | null>(null);
-  const setPrefs = useCallback((next: NotificationPrefs | null) => {
-    latest.current = next;
-    setPrefsState(next);
-  }, []);
-  const [loadError, setLoadError] = useState<string | null>(null);
   const [delivery, setDelivery] = useState<NotificationDeliveryStatus | null>(null);
   const [deliveryError, setDeliveryError] = useState<string | null>(null);
   const [deliveryBusy, setDeliveryBusy] = useState(false);
+  const [scheduleFailed, setScheduleFailed] = useState(false);
   const [troubleOpen, setTroubleOpen] = useState(false);
   const deliveryRunning = useRef(false);
+  const deliveryRequest = useRef(0);
+  const focused = useRef(false);
+  const toggleRequests = useRef<Partial<Record<SwitchKey, symbol>>>({});
   const refreshDelivery = useCallback(async () => {
+    const request = ++deliveryRequest.current;
     try {
-      setDelivery(await getNotificationDeliveryStatus());
+      const status = await getNotificationDeliveryStatus();
+      if (!focused.current || request !== deliveryRequest.current) return;
+      setDelivery(status);
       setDeliveryError(null);
     } catch (e) {
-      setDeliveryError(errorMessage(e));
+      if (focused.current && request === deliveryRequest.current) setDeliveryError(errorMessage(e));
     }
   }, []);
+  const onScheduled = useCallback(
+    async (success: boolean) => {
+      setScheduleFailed(!success);
+      await refreshDelivery();
+    },
+    [refreshDelivery]
+  );
+  const { prefs, loadError, load, save } = useNotificationPreferences(onScheduled);
   const checkDelivery = async (test: boolean) => {
     if (deliveryRunning.current) return;
     deliveryRunning.current = true;
@@ -85,61 +94,49 @@ export default function NotificationSettingsScreen() {
     try {
       if (test) {
         await sendTestNotification();
-        showAlert(
-          'Test sent',
-          'Check your notification tray. If it is missing, check the Yume reminders category, Do Not Disturb and battery restrictions on your phone.'
-        );
-      } else if (!(await rebuildNotifications()))
-        throw new Error('Could not rebuild reminders. Please try again.');
-      await refreshDelivery();
+        if (focused.current)
+          showAlert(
+            'Test sent',
+            'Check your notification tray. If it is missing, check the Yume reminders category, Do Not Disturb and battery restrictions on your phone.'
+          );
+      } else {
+        const rebuilt = await rebuildNotifications();
+        if (focused.current) await onScheduled(rebuilt);
+        if (!rebuilt)
+          throw new Error(
+            'Could not rebuild reminders. Check phone permission and the Yume reminders category, then try again.'
+          );
+      }
+      if (test) await refreshDelivery();
     } catch (e) {
-      showAlert('Notification check', errorMessage(e));
+      if (focused.current) showAlert('Notification check', errorMessage(e));
     } finally {
       deliveryRunning.current = false;
-      setDeliveryBusy(false);
+      if (focused.current) setDeliveryBusy(false);
     }
   };
-
-  const load = useCallback(async () => {
-    try {
-      setPrefs(await getNotificationPrefs());
-      setLoadError(null);
-      await refreshDelivery();
-    } catch (e) {
-      // Without this the skeleton below would sit there forever.
-      setLoadError(errorMessage(e));
-    }
-  }, [setPrefs, refreshDelivery]);
 
   useFocusEffect(
     useCallback(() => {
-      load();
-    }, [load])
+      focused.current = true;
+      setDeliveryBusy(deliveryRunning.current);
+      void load();
+      void refreshDelivery();
+      return () => {
+        focused.current = false;
+        deliveryRequest.current++;
+        toggleRequests.current = {};
+      };
+    }, [load, refreshDelivery])
   );
-
-  const save = async (next: NotificationPrefs) => {
-    const previous = latest.current;
-    setPrefs(next);
-    try {
-      await setNotificationPrefs(next);
-    } catch (e) {
-      // The switch already flipped optimistically; without this, a failure left it showing "on" with
-      // nothing persisted — misleading instead of an honest error.
-      setPrefs(previous);
-      showAlert("Couldn't save", errorMessage(e));
-      return;
-    }
-    // The preference is already persisted at this point — only the local
-    // scheduling can fail, so the switch keeps reflecting what's saved.
-    if (!(await rebuildNotifications())) {
-      showAlert('Saved, but reminders may not fire', 'Yume could not schedule them. Try again in a moment.');
-    }
-    await refreshDelivery();
-  };
+  // Returning from Android Settings does not refocus the Expo route.
+  useLocalDayRefresh(() => {
+    void refreshDelivery();
+  }, true);
 
   const ensurePermission = async (): Promise<boolean> => {
     const granted = await requestNotificationPermission().catch(() => false);
-    if (!granted) {
+    if (!granted && focused.current) {
       showAlert(
         'Notifications disabled',
         'Enable notification permission for Yume in your device settings to use reminders.'
@@ -158,41 +155,34 @@ export default function NotificationSettingsScreen() {
   };
 
   const toggle = async (key: SwitchKey, enabled: boolean) => {
-    if (!latest.current) return;
+    if (!prefs) return;
+    const request = Symbol(key);
+    toggleRequests.current[key] = request;
     if (enabled && !(await ensurePermission())) return;
-    if (!latest.current) return;
-    await save({ ...latest.current, [key]: enabled });
+    if (!focused.current || toggleRequests.current[key] !== request) return;
+    await save({ [key]: enabled });
   };
 
   const setSlotMinutes = async (kind: TimeSlotKind, minutes: number) => {
-    const current = latest.current;
-    if (!current) return;
+    if (!prefs) return;
     const clamped = clampSlotMinutes(kind, minutes);
     await save(
       kind === 'morning'
-        ? { ...current, morningHour: Math.floor(clamped / 60), morningMinute: clamped % 60 }
-        : { ...current, eveningHour: Math.floor(clamped / 60), eveningMinute: clamped % 60 }
+        ? { morningHour: Math.floor(clamped / 60), morningMinute: clamped % 60 }
+        : { eveningHour: Math.floor(clamped / 60), eveningMinute: clamped % 60 }
     );
   };
+
+  const settingsError = loadError ? (
+    <ScreenLoadError title="Notifications" message={loadError} onRetry={() => void load()} embedded />
+  ) : null;
 
   if (!prefs) {
     return (
       <View style={styles.container}>
         <HomeWallpaper accent={accent} secondary={secondary} plain />
         <SkyHeader title="Notifications" showBack hideUser wallpaper />
-        {loadError ? (
-          <View style={listScreenStyles.errorBanner}>
-            <Text style={listScreenStyles.errorTitle}>Couldn't load your notification settings</Text>
-            <Text style={listScreenStyles.errorDetail}>{loadError}</Text>
-            <PrimaryButton
-              title="Try again"
-              variant="secondary"
-              compact
-              onPress={() => void load()}
-              style={styles.retry}
-            />
-          </View>
-        ) : (
+        {settingsError ?? (
           <View style={{ marginTop: theme.layout.screenTopGap }}>
             <CardRowsSkeleton rows={4} />
           </View>
@@ -204,7 +194,13 @@ export default function NotificationSettingsScreen() {
   const morningMinutes = prefs.morningHour * 60 + prefs.morningMinute;
   const eveningMinutes = prefs.eveningHour * 60 + prefs.eveningMinute;
   const deliveryOk =
-    !deliveryError && !!delivery && delivery.permitted && !delivery.channelBlocked && !noTimesEarly(prefs);
+    !deliveryError &&
+    !scheduleFailed &&
+    !!delivery &&
+    delivery.permitted &&
+    !delivery.channelBlocked &&
+    !noTimesEarly(prefs) &&
+    delivery.scheduledCount > 0;
   const deliveryTitle = deliveryError
     ? 'Could not check notifications'
     : !delivery
@@ -214,8 +210,12 @@ export default function NotificationSettingsScreen() {
         : delivery.channelBlocked
           ? 'Yume reminders category is off'
           : noTimesEarly(prefs)
-            ? 'Nothing scheduled'
-            : 'Delivering';
+            ? 'Reminder times are off'
+            : scheduleFailed
+              ? 'Reminders need rebuilding'
+              : delivery.scheduledCount === 0
+                ? 'Nothing scheduled'
+                : 'Ready to notify';
   const deliverySub = !delivery
     ? 'Tap for details'
     : delivery.permitted && !delivery.channelBlocked
@@ -233,6 +233,7 @@ export default function NotificationSettingsScreen() {
         scrollEventThrottle={16}
         contentContainerStyle={{ paddingTop: headerHeight }}
       >
+        {settingsError}
         <DayArc
           morning={{ on: prefs.morningEnabled, minutes: morningMinutes }}
           evening={{ on: prefs.eveningEnabled, minutes: eveningMinutes }}
@@ -243,7 +244,13 @@ export default function NotificationSettingsScreen() {
               <Text style={styles.permissionTitle}>Notifications are off for Yume</Text>
               <Text style={styles.permissionSub}>Nothing below will reach you.</Text>
             </View>
-            <PrimaryButton title="Turn on" compact onPress={() => void Linking.openSettings()} />
+            <PrimaryButton
+              title="Turn on"
+              compact
+              onPress={() => {
+                void Linking.openSettings().catch((e) => showAlert('Phone settings', errorMessage(e)));
+              }}
+            />
           </View>
         )}
         <View style={styles.slots}>
@@ -363,7 +370,7 @@ export default function NotificationSettingsScreen() {
                 <ToggleSwitch
                   accessibilityLabel="Suu's check-ins"
                   value={prefs.suuCheckins}
-                  onChange={(v) => latest.current && save({ ...latest.current, suuCheckins: v })}
+                  onChange={(v) => void save({ suuCheckins: v })}
                 />
               }
             />
@@ -483,7 +490,6 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
   deliveryActions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 },
-  retry: { alignSelf: 'flex-start', marginTop: 10 },
   warn: {
     fontFamily: theme.font.body,
     fontSize: 12,

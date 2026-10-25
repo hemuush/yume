@@ -127,6 +127,7 @@ export async function createLoan(input: CreateLoanInput): Promise<Loan> {
     }
   }
 
+  let created: Loan | null = null;
   await db.withTransactionAsync(async (tx) => {
     if (input.linkedAccountId) await assertDefaultCurrencyAccount(tx, input.linkedAccountId, 'Loans');
     if (input.disbursement) await assertDefaultCurrencyAccount(tx, input.disbursement.accountId, 'Loans');
@@ -218,11 +219,12 @@ export async function createLoan(input: CreateLoanInput): Promise<Loan> {
         ]
       );
     }
+    const row = await tx.getFirstAsync<LoanRow>('SELECT * FROM loans WHERE id = ?', [id]);
+    created = rowToLoan(found(row, 'loan'));
   });
 
   await rebuildNotificationsAfterCommit();
-  const row = await db.getFirstAsync<LoanRow>('SELECT * FROM loans WHERE id = ?', [id]);
-  return rowToLoan(found(row, 'loan'));
+  return found<Loan>(created, 'loan');
 }
 
 /**

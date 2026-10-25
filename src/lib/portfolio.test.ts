@@ -204,6 +204,33 @@ describe('annualisedReturn', () => {
 });
 
 describe('buildSeries', () => {
+  it('handles unsorted history, same-day transfers, withdrawals and holdings opened later', () => {
+    const accounts = [
+      inv({ id: 'a', createdAt: '2026-01-01', openingBalanceMinor: 1000 }),
+      inv({ id: 'b', createdAt: '2026-03-01', openingBalanceMinor: 500 }),
+    ];
+    const history = {
+      flows: [
+        { accountId: 'a', date: '2026-04-01', amountMinor: -100 },
+        { accountId: 'b', date: '2026-03-01', amountMinor: 200 },
+        { accountId: 'a', date: '2026-02-01', amountMinor: 100 },
+        { accountId: 'a', date: '2027-01-01', amountMinor: 99999 },
+        { accountId: 'other-currency', date: '2026-02-01', amountMinor: 99999 },
+      ],
+      valuations: [
+        { accountId: 'b', date: '2026-03-01', valueMinor: 750 },
+        { accountId: 'a', date: '2026-02-01', valueMinor: 1200 },
+        { accountId: 'a', date: '2027-01-01', valueMinor: 99999 },
+      ],
+    };
+    const original = JSON.stringify(history);
+    expect(buildSeries(buildPortfolio(accounts, 'INR', '2026-05-01'), history, '2026-05-01')).toEqual([
+      { date: '2026-02-01', valueMinor: 1200, putInMinor: 1100 },
+      { date: '2026-03-01', valueMinor: 1950, putInMinor: 1800 },
+      { date: '2026-05-01', valueMinor: 1850, putInMinor: 1700 },
+    ]);
+    expect(JSON.stringify(history)).toBe(original);
+  });
   const a = inv({
     id: 'a',
     createdAt: '2026-01-01 00:00:00',

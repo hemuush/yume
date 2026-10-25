@@ -24,6 +24,35 @@ const valueOf = (v: Animated.Value | null) => (v as unknown as { __getValue: () 
 beforeEach(() => resetGrowMemory());
 
 describe('useGrowFrom', () => {
+  it('starts a new key from zero when the same component changes records', () => {
+    let tree!: ReturnType<typeof create>;
+    act(() => {
+      tree = create(<Probe k="first" value={80} />);
+    });
+    act(() => jest.advanceTimersByTime(2000));
+    act(() => tree.update(<Probe k="second" value={20} />));
+    expect(valueOf(box.seen)).toBe(0);
+    act(() => jest.advanceTimersByTime(2000));
+    expect(valueOf(box.seen)).toBe(20);
+    act(() => tree.unmount());
+  });
+
+  it('restores a remembered key without animating from the previous record', () => {
+    let tree!: ReturnType<typeof create>;
+    act(() => {
+      tree = create(<Probe k="first" value={80} />);
+    });
+    act(() => jest.advanceTimersByTime(2000));
+    act(() => tree.update(<Probe k="second" value={20} />));
+    act(() => jest.advanceTimersByTime(2000));
+    const timing = jest.spyOn(Animated, 'timing');
+    act(() => tree.update(<Probe k="first" value={80} />));
+    expect(valueOf(box.seen)).toBe(80);
+    expect(timing).not.toHaveBeenCalled();
+    timing.mockRestore();
+    act(() => tree.unmount());
+  });
+
   it('stops a pending animation when its owner unmounts', () => {
     let tree!: ReturnType<typeof create>;
     act(() => {

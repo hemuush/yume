@@ -191,26 +191,36 @@ export function buildSeries(
   const flows = history.flows.filter((f) => ids.has(f.accountId));
   const valuations = history.valuations.filter((v) => ids.has(v.accountId));
   const dates = [...new Set([...valuations.map((v) => v.date), today])].filter((d) => d <= today).sort();
+  const events = [
+    ...flows.map((f) => ({ ...f, kind: 'flow' as const })),
+    ...valuations.map((v) => ({ ...v, kind: 'valuation' as const })),
+  ].sort(
+    (a, b) => a.date.localeCompare(b.date) || Number(a.kind === 'valuation') - Number(b.kind === 'valuation')
+  );
+  const balances = new Map(
+    holdings.map((h) => [h.id, { moved: 0, adjustment: h.account.openingBalanceMinor, hasFlow: false }])
+  );
+  let cursor = 0;
   const at = (date: string): SeriesPoint => {
+    // Walk history once; a valuation includes every transfer on its day.
+    while (cursor < events.length && events[cursor].date <= date) {
+      const event = events[cursor++];
+      const balance = balances.get(event.accountId)!;
+      if (event.kind === 'flow') {
+        balance.moved += event.amountMinor;
+        balance.hasFlow = true;
+      } else {
+        balance.adjustment = event.valueMinor - balance.moved;
+      }
+    }
     let value = 0;
     let putIn = 0;
     for (const h of holdings) {
       const opened = h.account.createdAt.slice(0, 10);
-      if (opened > date && !flows.some((f) => f.accountId === h.id && f.date <= date)) continue;
-      const moved = flows
-        .filter((f) => f.accountId === h.id && f.date <= date)
-        .reduce((s, f) => s + f.amountMinor, 0);
-      putIn += h.account.openingBalanceMinor + moved;
-      const last = valuations
-        .filter((v) => v.accountId === h.id && v.date <= date)
-        .sort((a, b) => (a.date < b.date ? 1 : -1))[0];
-      if (!last) value += h.account.openingBalanceMinor + moved;
-      else {
-        const since = flows
-          .filter((f) => f.accountId === h.id && f.date > last.date && f.date <= date)
-          .reduce((s, f) => s + f.amountMinor, 0);
-        value += last.valueMinor + since;
-      }
+      const balance = balances.get(h.id)!;
+      if (opened > date && !balance.hasFlow) continue;
+      putIn += h.account.openingBalanceMinor + balance.moved;
+      value += balance.moved + balance.adjustment;
     }
     return { date, valueMinor: value, putInMinor: putIn };
   };

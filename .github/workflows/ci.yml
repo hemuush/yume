@@ -50,7 +50,7 @@ jobs:
       - run: npx expo-doctor
       # A high or critical advisory fails the build unless scripts/auditGate.js
       # allows it with a reason (today: node-forge, build tooling with no patched
-      # release, and braces in build/test tooling). Router decoding is patched
+      # release). Router decoding is patched
       # separately and covered by test:security.
       - run: node scripts/auditGate.js
       # Bundles the app's JavaScript for Android, so a broken import or a

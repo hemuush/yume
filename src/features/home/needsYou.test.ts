@@ -10,7 +10,12 @@ const base = (over: Partial<NeedsYouInput> = {}): NeedsYouInput => ({
   ...over,
 });
 
-const emi = (dueDate: string) => ({ counterparty: 'Home loan', dueDate, emiAmountMinor: 987000 });
+const emi = (dueDate: string) => ({
+  loanId: 'home',
+  counterparty: 'Home loan',
+  dueDate,
+  emiAmountMinor: 987000,
+});
 const budget = (id: string, pct: number) => ({
   budget: { id },
   categoryName: id,
@@ -19,6 +24,12 @@ const budget = (id: string, pct: number) => ({
 });
 
 describe('buildNeedsYouItems', () => {
+  it('does not dismiss a different loan with the same due date', () => {
+    const [first] = buildNeedsYouItems(base({ nextDue: emi('2026-09-25') }));
+    const next = buildNeedsYouItems(base({ nextDue: { ...emi('2026-09-25'), loanId: 'car' } }));
+    expect(splitDismissed(next, [first.key]).shown).toEqual(next);
+    expect(splitDismissed(next, [first.key]).dismissed).toEqual([]);
+  });
   it('is empty when nothing needs the user', () => {
     expect(buildNeedsYouItems(base())).toEqual([]);
   });
@@ -41,7 +52,7 @@ describe('buildNeedsYouItems', () => {
 
   it('shows an EMI due today or overdue as urgent', () => {
     expect(buildNeedsYouItems(base({ nextDue: emi('2026-09-25') }))[0]).toMatchObject({
-      key: 'emi-2026-09-25-due',
+      key: 'emi-home-2026-09-25-due',
       tone: 'urgent',
       detail: 'Due today',
       amountMinor: 987000,
@@ -53,12 +64,12 @@ describe('buildNeedsYouItems', () => {
 
   it('warns about an EMI in the next three days, gives a heads-up within two weeks, and ignores later ones', () => {
     expect(buildNeedsYouItems(base({ nextDue: emi('2026-09-26') }))[0]).toMatchObject({
-      key: 'emi-2026-09-26-soon',
+      key: 'emi-home-2026-09-26-soon',
       tone: 'warn',
       detail: 'Due tomorrow',
     });
     expect(buildNeedsYouItems(base({ nextDue: emi('2026-10-04') }))[0]).toMatchObject({
-      key: 'emi-2026-10-04-upcoming',
+      key: 'emi-home-2026-10-04-upcoming',
       tone: 'info',
       detail: 'Due in 9 days',
     });
@@ -110,7 +121,7 @@ describe('buildNeedsYouItems', () => {
       })
     );
     expect(items.map((i) => i.key)).toEqual([
-      'emi-2026-09-25-due',
+      'emi-home-2026-09-25-due',
       'backup-failed',
       'budget-Fuel-near',
       'budget-Food-near',

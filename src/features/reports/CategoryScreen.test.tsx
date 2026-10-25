@@ -184,6 +184,19 @@ describe('Category page', () => {
     }
   });
 
+  it('ignores an impossible calendar date in a custom range link', async () => {
+    mockParams.current = { id: 'food', g: 'custom', from: '2026-02-31', to: '2026-06-30' };
+    try {
+      const tree = await render();
+      press(tree, 'See all');
+      const now = new Date();
+      const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      expect(router.navigate).toHaveBeenLastCalledWith(`/transactions?category=food&month=${month}`);
+    } finally {
+      mockParams.current = { id: 'food' };
+    }
+  });
+
   it('goes back to Budgets when it opened this page, instead of stacking another copy', async () => {
     const tree = await render();
     const budget = tree.root.findAll((n) => typeof n.props.onPress === 'function' && n.props.progress);

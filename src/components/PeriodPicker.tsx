@@ -64,6 +64,8 @@ export function PeriodPicker({
   const { accent } = useAccent();
   const [mode, setMode] = useState<'month' | 'year'>(selected.kind);
   const [year, setYear] = useState(selected.year);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [retry, setRetry] = useState(0);
   const [spend, setSpend] = useState<{ byMonth: Map<string, number>; firstMonth: string | null } | null>(
     null
   );
@@ -72,14 +74,20 @@ export function PeriodPicker({
     if (!visible) return;
     setMode(allowYear ? selected.kind : 'month');
     setYear(selected.year);
+  }, [visible, selected.kind, selected.year, allowYear]);
+
+  useEffect(() => {
+    if (!visible) return;
+    setSpend(null);
+    setLoadFailed(false);
     let alive = true;
     getSpendByMonth(hideAmounts)
       .then((s) => alive && setSpend(s))
-      .catch(() => alive && setSpend(null));
+      .catch(() => alive && setLoadFailed(true));
     return () => {
       alive = false;
     };
-  }, [visible, selected.kind, selected.year, allowYear, hideAmounts]);
+  }, [visible, hideAmounts, retry]);
 
   const thisYear = today.getFullYear();
   const thisMonth = today.getMonth();
@@ -107,6 +115,20 @@ export function PeriodPicker({
       scrollable
     >
       <View style={styles.body}>
+        {loadFailed && (
+          <View style={styles.weeks}>
+            <Text accessibilityRole="alert" style={styles.weeksLabel}>
+              Couldn't load spending totals. You can still pick a period.
+            </Text>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => setRetry((value) => value + 1)}
+              style={withPressed(styles.current)}
+            >
+              <Text style={styles.currentText}>Retry</Text>
+            </Pressable>
+          </View>
+        )}
         {allowYear && (
           <View style={styles.seg} accessibilityRole="radiogroup">
             {(['month', 'year'] as const).map((m) => (

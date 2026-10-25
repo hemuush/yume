@@ -6,7 +6,18 @@ import {
   isoDatesInRange,
   addDaysToIsoDate,
   dayLabel,
+  isIsoDate,
 } from './date';
+
+describe('isIsoDate', () => {
+  it.each(['2026-02-29', '2026-02-31', '2026-13-01', '2026-00-01', '2026-01-00', '2026-1-01', undefined])(
+    'rejects invalid calendar dates from route parameters (%s)',
+    (value) => expect(isIsoDate(value)).toBe(false)
+  );
+  it.each(['2024-02-29', '2026-01-31', '2026-12-31'])('accepts a real calendar date (%s)', (value) =>
+    expect(isIsoDate(value)).toBe(true)
+  );
+});
 
 describe('toLocalIsoDate', () => {
   it("formats using the Date object's own local fields, not a UTC conversion", () => {

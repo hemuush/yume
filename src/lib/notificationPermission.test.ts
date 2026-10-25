@@ -17,6 +17,8 @@ jest.mock('@/db/settings', () => ({
   getHideSensitiveAmounts: jest.fn(async () => false),
   getNotificationPrefs: jest.fn(),
   getAlertQueue: jest.fn(),
+  getScheduledReminders: jest.fn(async () => []),
+  setScheduledReminders: jest.fn(),
   setAlertQueue: jest.fn(),
   getNotificationPermissionAsked: jest.fn(),
   setNotificationPermissionAsked: jest.fn(),
@@ -48,6 +50,7 @@ beforeEach(() => {
   (getNotificationPrefs as jest.Mock).mockResolvedValue(prefs());
   (getNotificationPermissionAsked as jest.Mock).mockResolvedValue(false);
   (getAlertQueue as jest.Mock).mockResolvedValue([]);
+  jest.mocked(require('@/db/settings').getScheduledReminders).mockResolvedValue([]);
   (listLoansDue as jest.Mock).mockResolvedValue([]);
   (hasLoggedOn as jest.Mock).mockResolvedValue(false);
   (listReminderAttention as jest.Mock).mockResolvedValue([]);
@@ -107,4 +110,27 @@ it('does not ask off Android', async () => {
   Platform.OS = 'ios';
   expect(await askNotificationPermissionOnce()).toBe(false);
   expect(N.getPermissionsAsync).not.toHaveBeenCalled();
+});
+
+it('can retry a failed native channel setup without marking the phone as already asked', async () => {
+  N.getPermissionsAsync.mockResolvedValue(permission({}) as never);
+  N.setNotificationChannelAsync.mockRejectedValueOnce(new Error('Native setup failed'));
+  await expect(askNotificationPermissionOnce()).rejects.toThrow('Native setup failed');
+  expect(setNotificationPermissionAsked).not.toHaveBeenCalled();
+  N.requestPermissionsAsync.mockResolvedValue(permission({ status: 'denied' }) as never);
+  expect(await askNotificationPermissionOnce()).toBe(false);
+  expect(N.requestPermissionsAsync).toHaveBeenCalledTimes(1);
+  expect(setNotificationPermissionAsked).toHaveBeenCalledTimes(1);
+});
+
+it('shares one native prompt between overlapping startup and manual permission requests', async () => {
+  const { requestNotificationPermission } = require('./notifications');
+  N.getPermissionsAsync.mockResolvedValue(permission({}) as never);
+  N.requestPermissionsAsync.mockResolvedValue(permission({ status: 'denied' }) as never);
+  await Promise.all([
+    askNotificationPermissionOnce(),
+    requestNotificationPermission(),
+    requestNotificationPermission(),
+  ]);
+  expect(N.requestPermissionsAsync).toHaveBeenCalledTimes(1);
 });
