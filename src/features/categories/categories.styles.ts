@@ -37,7 +37,7 @@ export const styles = StyleSheet.create({
     marginTop: 6,
     marginBottom: 12,
   },
-  collectionTitle: { ...SECTION_TITLE, fontSize: 17 },
+  collectionTitle: { ...SECTION_TITLE, fontFamily: theme.font.roundedBold, fontSize: 17 },
   collectionCount: {
     flexShrink: 1,
     fontFamily: theme.font.body,
@@ -167,7 +167,7 @@ export const styles = StyleSheet.create({
     marginVertical: 8,
     marginBottom: 18,
   },
-  appearanceTitle: { ...SECTION_TITLE, fontSize: 16, marginBottom: 16 },
+  appearanceTitle: { ...SECTION_TITLE, fontFamily: theme.font.roundedBold, fontSize: 16, marginBottom: 16 },
   pickerLabel: {
     fontFamily: theme.font.bodyMedium,
     fontSize: 12,
