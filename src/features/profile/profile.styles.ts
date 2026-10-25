@@ -93,7 +93,7 @@ export const styles = StyleSheet.create({
     paddingTop: 10,
     paddingBottom: 6,
   },
-  groupLabel: { ...EYEBROW, fontSize: 12 },
+  groupLabel: { ...EYEBROW },
   accountGroups: { gap: 10 },
   accountRow: { minHeight: 76, paddingVertical: 14 },
   accountContent: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 10 },
