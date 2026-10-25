@@ -111,12 +111,16 @@ export function useAmountPadHost() {
 type ScrollProps = ReturnType<typeof useAmountPadHost>['scrollProps'];
 
 /** A whole screen's host: the content above, the pad docked under it while an amount field has focus. */
-export function AmountPadDock({ children }: { children: (scrollProps: ScrollProps) => ReactNode }) {
+export function AmountPadDock({
+  children,
+}: {
+  children: (scrollProps: ScrollProps, padVisible: boolean) => ReactNode;
+}) {
   const { host, pad, scrollProps } = useAmountPadHost();
   const insets = useSafeAreaInsets();
   return (
     <AmountPadHostProvider value={host}>
-      <View style={styles.dockContent}>{children(scrollProps)}</View>
+      <View style={styles.dockContent}>{children(scrollProps, pad !== null)}</View>
       {pad && <View style={[styles.screenDock, { paddingBottom: 12 + insets.bottom }]}>{pad}</View>}
     </AmountPadHostProvider>
   );

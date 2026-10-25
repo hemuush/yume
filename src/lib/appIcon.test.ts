@@ -145,3 +145,50 @@ describe('withThemeAppIcons manifest', () => {
     expect(m.manifest.application[0]).toHaveProperty('activity-alias.length', THEMES.length);
   });
 });
+
+describe('theme launch resources', () => {
+  it('pairs every launcher choice with a stable launch theme and preserves the base theme', () => {
+    const base = { $: { name: 'Theme.App.SplashScreen', parent: 'Theme.SplashScreen' }, item: [] };
+    const styles = { resources: { style: [base] } };
+    withThemeAppIcons.applySplashStyles(styles, iconPlugin[1]);
+    for (const icon of iconPlugin[1].icons) {
+      const name = `Theme.App.SplashScreen.${withThemeAppIcons.pascal(icon.id)}`;
+      const style = styles.resources.style.find((s) => s.$.name === name)!;
+      expect(style.$.parent).toBe('Theme.App.SplashScreen');
+      expect(style.item).toEqual(
+        ['windowSplashScreenAnimatedIcon', 'android:windowSplashScreenAnimatedIcon'].map((name) => ({
+          $: { name },
+          _:
+            icon.id === 'yume'
+              ? '@drawable/splashscreen_logo'
+              : `@drawable/splashscreen_${icon.id.replace(/([A-Z])/g, '_$1').toLowerCase()}`,
+        }))
+      );
+    }
+    expect(styles.resources.style).toContain(base);
+    expect(base.item).toEqual(
+      ['windowSplashScreenAnimatedIcon', 'android:windowSplashScreenAnimatedIcon'].map((name) => ({
+        $: { name },
+        _: '@null',
+      }))
+    );
+    const once = JSON.stringify(styles);
+    withThemeAppIcons.applySplashStyles(styles, iconPlugin[1]);
+    expect(JSON.stringify(styles)).toBe(once);
+  });
+
+  it('selects the native launch theme before Expo reads it, without duplicating the hook on prebuild', () => {
+    const source =
+      'override fun onCreate(savedInstanceState: Bundle?) {\n    SplashScreenManager.registerOnActivity(this)\n    super.onCreate(null)\n  }';
+    const patched = withThemeAppIcons.applyLaunchThemeToActivity(source, iconPlugin[1]);
+    expect(patched.indexOf('YumeAppIconModule.applyLaunchTheme')).toBeLessThan(
+      patched.indexOf('SplashScreenManager.registerOnActivity')
+    );
+    for (const id of APP_ICON_IDS)
+      expect(patched).toContain(`"${id}" to R.style.Theme_App_SplashScreen_${withThemeAppIcons.pascal(id)}`);
+    expect(withThemeAppIcons.applyLaunchThemeToActivity(patched, iconPlugin[1])).toBe(patched);
+    expect(() => withThemeAppIcons.applyLaunchThemeToActivity('changed template', iconPlugin[1])).toThrow(
+      'onCreate'
+    );
+  });
+});

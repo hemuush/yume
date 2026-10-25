@@ -1,5 +1,16 @@
 # Release device acceptance
 
+## Reported startup issues — 25 October 2026
+
+Use a newly built APK containing the [startup corrections](STARTUP_FIXES_2026_10_25.md), not an older binary with updated JavaScript.
+
+| Area                  | Action                                                                                                                           | Expected result                                                                                                                    | Actual/status |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ------------- |
+| First install         | On a disposable install, use three-button navigation; finish every onboarding step, open/close the name keyboard and balance pad | Next, Get started and the restore link remain above navigation controls; the number pad adds its bottom inset once                 | Not run       |
+| Gesture navigation    | Repeat setup with gestures, small screen and enlarged text                                                                       | Bottom actions stay reachable with the gesture area reserved                                                                       | Not run       |
+| Theme icon and launch | Enable matching, choose each theme, background, then warm/cold open from its icon; force-stop and reboot; turn matching off      | Launcher and launch-screen artwork follow the selected icon without the fixed original flash; default returns when matching is off | Not run       |
+| Other entry points    | Open from widgets, shortcuts and notifications after switching the icon; test an upgrade with a theme already selected           | MainActivity remains usable; launch branding and navigation remain coherent                                                        | Not run       |
+
 ## Repository re-audit acceptance — 25 October 2026
 
 Use a candidate containing the [repository re-audit](REPOSITORY_REAUDIT_2026_10_25.md). Automated checks below do not measure frame pacing or native file-provider behavior.

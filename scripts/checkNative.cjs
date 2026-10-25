@@ -88,12 +88,80 @@ function checkModules(names) {
   return names.includes('yume-app-icon') ? [] : ['The yume-app-icon module is not autolinked.'];
 }
 
+/** JS-only icon tests cannot catch a missing launch hook or resource reference needed by release shrinking. */
+function checkLaunchResources(styles, activity, icons, defaultId) {
+  const problems = [];
+  const iconAttributes = ['windowSplashScreenAnimatedIcon', 'android:windowSplashScreenAnimatedIcon'];
+  const base = elements(styles, 'style').find((s) => s.attrs.name === 'Theme.App.SplashScreen');
+  const baseItems = elements(base?.body ?? '', 'item');
+  if (
+    iconAttributes.some(
+      (name) => !baseItems.some((item) => item.attrs.name === name && item.body.trim() === '@null')
+    )
+  )
+    problems.push('The base launch theme must not flash a fixed original icon before onCreate.');
+  const hook = activity.indexOf('YumeAppIconModule.applyLaunchTheme(');
+  const install = activity.indexOf('SplashScreenManager.registerOnActivity(');
+  if (hook < 0 || install < 0 || hook > install)
+    problems.push('The icon launch theme must be applied before Expo installs the splash screen.');
+  for (const icon of icons) {
+    const pascal = icon.id.charAt(0).toUpperCase() + icon.id.slice(1);
+    const name = `Theme.App.SplashScreen.${pascal}`;
+    const style = elements(styles, 'style').find((s) => s.attrs.name === name);
+    const drawable =
+      icon.id === defaultId
+        ? 'splashscreen_logo'
+        : `splashscreen_${icon.id.replace(/([A-Z])/g, '_$1').toLowerCase()}`;
+    const items = elements(style?.body ?? '', 'item');
+    if (
+      !style ||
+      style.attrs.parent !== 'Theme.App.SplashScreen' ||
+      iconAttributes.some(
+        (name) =>
+          !items.some((item) => item.attrs.name === name && item.body.trim() === `@drawable/${drawable}`)
+      )
+    )
+      problems.push(`${name} needs its matching launch drawable.`);
+    if (!activity.includes(`"${icon.id}" to R.style.${name.replace(/\./g, '_')}`))
+      problems.push(
+        `MainActivity must reference ${icon.id}'s style directly so release shrinking retains it.`
+      );
+  }
+  return problems;
+}
+
 function main() {
   if (!fs.existsSync(MANIFEST)) {
     console.error(`No ${MANIFEST}: run "npx expo prebuild --platform android --no-install" first.`);
     process.exit(2);
   }
   const problems = checkManifest(fs.readFileSync(MANIFEST, 'utf8'));
+  const config = require('../app.json').expo;
+  const props = config.plugins.find(
+    (plugin) => Array.isArray(plugin) && plugin[0] === './plugins/withThemeAppIcons'
+  )[1];
+  const main = path.join('android', 'app', 'src', 'main');
+  problems.push(
+    ...checkLaunchResources(
+      fs.readFileSync(path.join(main, 'res', 'values', 'styles.xml'), 'utf8'),
+      fs.readFileSync(
+        path.join(main, 'java', ...config.android.package.split('.'), 'MainActivity.kt'),
+        'utf8'
+      ),
+      props.icons,
+      props.defaultId
+    )
+  );
+  for (const icon of props.icons.filter((icon) => icon.id !== props.defaultId)) {
+    const name = icon.id.replace(/([A-Z])/g, '_$1').toLowerCase();
+    for (const [density, scale] of Object.entries({ mdpi: 1, hdpi: 1.5, xhdpi: 2, xxhdpi: 3, xxxhdpi: 4 })) {
+      const image = fs.readFileSync(
+        path.join(main, 'res', `drawable-${density}`, `splashscreen_${name}.png`)
+      );
+      if (image.readUInt32BE(16) !== 288 * scale || image.readUInt32BE(20) !== 288 * scale)
+        problems.push(`${name} has an invalid ${density} splash canvas.`);
+    }
+  }
   const resolved = JSON.parse(
     execFileSync(
       process.execPath,
@@ -120,4 +188,4 @@ function main() {
 }
 
 if (require.main === module) main();
-module.exports = { checkManifest, checkModules, elements };
+module.exports = { checkManifest, checkModules, checkLaunchResources, elements };
