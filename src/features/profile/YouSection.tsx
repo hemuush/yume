@@ -2,7 +2,7 @@ import { cardUsage } from '@/lib/cardUsage';
 import { ScreenLoadError } from '@/components/ScreenLoadError';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { useCallback, useState } from 'react';
-import { View, Pressable, Animated, ActivityIndicator } from 'react-native';
+import { View, Pressable, Animated, ActivityIndicator, useWindowDimensions } from 'react-native';
 import { Text } from '@/components/Text';
 import Feather from '@expo/vector-icons/Feather';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
@@ -214,11 +214,11 @@ export function YouSection() {
         {accounts.length === 0 ? (
           <EmptyState title="No accounts yet" subtitle="Tap + Account to create one." />
         ) : (
-          <Animated.View style={[h.card, cardSurface.neutral]}>
-            {groups.map((group, gi) => (
-              <View key={group.type}>
+          <View style={styles.accountGroups}>
+            {groups.map((group) => (
+              <Animated.View key={group.type} style={[h.card, cardSurface.neutral]}>
                 {groups.length > 1 && (
-                  <View style={[styles.groupHead, gi > 0 && h.divider]}>
+                  <View style={styles.groupHead}>
                     <Text style={styles.groupLabel}>
                       {ACCOUNT_TYPE_LABEL[group.type as Account['type']] ?? group.type} ·{' '}
                       {group.accounts.length}
@@ -241,9 +241,9 @@ export function YouSection() {
                     onPress={setDetailAccount}
                   />
                 ))}
-              </View>
+              </Animated.View>
             ))}
-          </Animated.View>
+          </View>
         )}
 
         {archivedAccounts.length > 0 && (
@@ -339,6 +339,8 @@ function AccountRow({
   onPress: (account: Account) => void;
 }) {
   const { accent } = useAccent();
+  const { width, fontScale } = useWindowDimensions();
+  const stacked = width < 360 || fontScale > 1.2;
   const { hideAmounts } = usePrivacy();
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.98);
   const kind = account.investment ? investmentLabel(account.investment) : ACCOUNT_TYPE_LABEL[account.type];
@@ -349,7 +351,7 @@ function AccountRow({
   });
   return (
     <AnimatedPressable
-      style={[h.row, divider && h.divider, archived && styles.archivedDim, animatedStyle]}
+      style={[h.row, styles.accountRow, divider && h.divider, archived && styles.archivedDim, animatedStyle]}
       onPress={() => onPress(account)}
       onPressIn={onPressIn}
       onPressOut={onPressOut}
@@ -360,24 +362,29 @@ function AccountRow({
       <CategoryIcon
         name={accountIcon(account.type, !!account.investment)}
         color={accountBadgeColor(account.type, accent)}
+        square={40}
+        size={19}
       />
-      <View style={h.mid}>
-        <Text style={h.title} numberOfLines={2}>
-          {account.name}
-        </Text>
-        <Text style={h.sub} numberOfLines={2}>
-          {kind}
-          {usage && !archived ? ` · ${Math.round(usage.pct)}% of limit used` : ''}
-          {archived ? ' · archived' : ''}
-        </Text>
+      <View style={[styles.accountContent, stacked && styles.accountContentStack]}>
+        <View style={[h.mid, stacked && styles.accountNameStack]}>
+          <Text style={h.title}>{account.name}</Text>
+          <Text style={h.sub}>
+            {kind}
+            {usage && !archived ? ` · ${Math.round(usage.pct)}% of limit used` : ''}
+            {archived ? ' · archived' : ''}
+          </Text>
+        </View>
+        <View style={[styles.accountValues, stacked && styles.accountValuesStack]}>
+          {account.investment && !archived && <GainPill account={account} moneyOnly />}
+          <Amount
+            minor={minor}
+            currency={account.currency}
+            sensitive={account.type === 'savings'}
+            style={[h.amount, !archived && account.currentBalanceMinor < 0 && h.expense]}
+          />
+        </View>
       </View>
-      {account.investment && !archived && <GainPill account={account} moneyOnly />}
-      <Amount
-        minor={minor}
-        currency={account.currency}
-        sensitive={account.type === 'savings'}
-        style={[h.amount, !archived && account.currentBalanceMinor < 0 && h.expense]}
-      />
+      <Feather name="chevron-right" size={16} color={theme.colors.textMuted} />
     </AnimatedPressable>
   );
 }

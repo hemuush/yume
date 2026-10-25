@@ -23,6 +23,7 @@ export function SettingsRow({
   sub,
   subColor,
   value,
+  valueBelow = false,
   onPress,
   right,
   divider,
@@ -39,6 +40,8 @@ export function SettingsRow({
   /** Overrides the sub text colour — used for a "never backed up" nudge, otherwise left at the default muted tone. */
   subColor?: string;
   value?: string;
+  /** Places the value below the label when a narrow layout needs the full text column. */
+  valueBelow?: boolean;
   onPress?: () => void;
   right?: React.ReactNode;
   /** A hairline above this row — every row but a group's first. */
@@ -73,6 +76,7 @@ export function SettingsRow({
         >
           {label}
         </Text>
+        {value && valueBelow ? <Text style={styles.valueBelow}>{value}</Text> : null}
         {sub ? (
           <Text
             style={[
@@ -85,7 +89,7 @@ export function SettingsRow({
           </Text>
         ) : null}
       </View>
-      {value ? <Text style={styles.value}>{value}</Text> : null}
+      {value && !valueBelow ? <Text style={styles.value}>{value}</Text> : null}
       {right ?? (onPress ? <Feather name={chevron} size={18} color={theme.colors.textMuted} /> : null)}
     </>
   );
@@ -108,6 +112,12 @@ export function SettingsRow({
 }
 
 const styles = StyleSheet.create({
+  valueBelow: {
+    fontFamily: theme.font.bodyBold,
+    fontSize: 13,
+    color: theme.colors.textPrimary,
+    marginTop: 6,
+  },
   value: {
     fontFamily: theme.font.bodyBold,
     fontSize: 13,

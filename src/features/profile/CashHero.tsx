@@ -6,6 +6,9 @@ import { screenStyles as h } from '@/components/screenStyles';
 import { styles as hero } from '@/features/home/hero.styles';
 import { theme } from '@/constants/theme';
 import { formatMaskableMoney } from '@/lib/money';
+import { useAccent } from '@/theme/AccentContext';
+import { shade } from '@/lib/color';
+import Feather from '@expo/vector-icons/Feather';
 
 /** One account type's slice of the money map. */
 export interface MoneyShare {
@@ -39,11 +42,17 @@ export function CashHero({
   shares?: MoneyShare[];
   children?: React.ReactNode;
 }) {
+  const { accent } = useAccent();
   // Only money that's there makes the bar; a card in debt shows in the legend instead.
   const bar = shares.filter((s) => s.minor > 0 && !(masked && s.sensitive));
   return (
-    <View style={styles.card}>
-      <Text style={styles.label}>{label}</Text>
+    <View style={[styles.card, { backgroundColor: shade(accent, 93) }]}>
+      <View style={styles.heading}>
+        <View style={styles.headingIcon}>
+          <Feather name="pie-chart" size={16} color={theme.colors.ink} />
+        </View>
+        <Text style={styles.label}>{label}</Text>
+      </View>
       {masked ? (
         <Text style={hero.headValue}>{formatMaskableMoney(0, { masked: true })}</Text>
       ) : (
@@ -90,18 +99,27 @@ export function CashHero({
 }
 
 const styles = StyleSheet.create({
-  card: { ...h.card, marginTop: 12, paddingHorizontal: 16, paddingTop: 14, paddingBottom: 12, gap: 8 },
-  label: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textSecondary },
+  card: { ...h.card, marginTop: 12, padding: 16, borderWidth: 1, gap: 10 },
+  heading: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  headingIcon: {
+    width: 30,
+    height: 30,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.glass,
+  },
+  label: { flex: 1, fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textSecondary },
   sub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary, marginTop: -6 },
-  shelf: { flexDirection: 'row', gap: 3, height: 8 },
+  shelf: { flexDirection: 'row', gap: 3, height: 6, marginTop: 4 },
   slice: {
     flexBasis: 0,
     minWidth: 8,
-    height: 8,
+    height: 6,
     borderRadius: 4,
     boxShadow: `inset 0 0 0 1px ${theme.colors.inkHairline}`,
   },
-  legend: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 12, rowGap: 6 },
+  legend: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 14, rowGap: 8, paddingVertical: 4 },
   legendItem: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', maxWidth: '100%' },
   key: {
     width: 9,

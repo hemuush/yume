@@ -2,7 +2,7 @@ import { ScreenLoadError } from '@/components/ScreenLoadError';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { useCallback, useEffect, useState } from 'react';
 import { useLocalSearchParams } from 'expo-router';
-import { View } from 'react-native';
+import { View, Keyboard } from 'react-native';
 import { Text } from '@/components/Text';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -24,6 +24,7 @@ import { SettingsSection } from '@/features/profile/SettingsSection';
 import { ProfileIdentity } from '@/features/profile/ProfileIdentity';
 import { errorMessage } from '@/lib/errorMessage';
 import { showAlert } from '@/components/AppDialog';
+import { useSaveOnce } from '@/lib/useSaveOnce';
 
 type ProfileTab = 'you' | 'settings';
 const TABS: { label: string; value: ProfileTab }[] = [
@@ -32,7 +33,7 @@ const TABS: { label: string; value: ProfileTab }[] = [
 ];
 
 /**
- * Identity card (theme-tinted: avatar, name, member since) plus a "You"/"Settings" segment, the shared
+ * Personal card with inline name editing plus a "You"/"Settings" segment, the shared
  * shell for YouSection and SettingsSection; Settings has no route of its own (nothing else linked to it).
  */
 export default function ProfileScreen() {
@@ -42,6 +43,7 @@ export default function ProfileScreen() {
   const { collapse, headerHeight, onJsScroll, onJsScrollEnd } = useCollapsingHeader();
   const [name, setName] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
+  const [savingName, setSavingName] = useState(false);
   const [draft, setDraft] = useState('');
   const [memberSince, setMemberSince] = useState<number | null>(null);
   const [tab, setTab] = useState<ProfileTab>('you');
@@ -57,15 +59,19 @@ export default function ProfileScreen() {
   }, []);
   const { loaded, hasData, loadError, reload } = useScreenLoad(loadIdentity);
 
-  const saveName = async () => {
+  const saveName = useSaveOnce(async () => {
+    setSavingName(true);
     try {
       await setUserName(draft);
       setName(draft.trim() || null);
       setEditing(false);
+      Keyboard.dismiss();
     } catch (e) {
       showAlert("Couldn't save name", errorMessage(e));
+    } finally {
+      setSavingName(false);
     }
-  };
+  });
 
   if (!hasData && loadError)
     return <ScreenLoadError title="Profile" message={loadError} onRetry={() => void reload()} />;
@@ -129,10 +135,15 @@ export default function ProfileScreen() {
                   setEditing(true);
                 }}
                 onSave={saveName}
+                saving={savingName}
+                onCancel={() => {
+                  setEditing(false);
+                  Keyboard.dismiss();
+                }}
               />
 
               <View style={styles.tabWrap}>
-                <SegmentedControl options={TABS} value={tab} onChange={setTab} onBand />
+                <SegmentedControl options={TABS} value={tab} onChange={setTab} />
               </View>
 
               {tab === 'you' ? <YouSection /> : <SettingsSection />}

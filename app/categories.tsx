@@ -13,7 +13,7 @@ import {
   deleteCategory,
   restoreCategory,
 } from '@/db/ledger';
-import { Category } from '@/types';
+import { Category, CategoryKind } from '@/types';
 import { theme } from '@/constants/theme';
 import { HeaderIconButton } from '@/components/AppHeader';
 import { SkyHeader, HeaderSummary } from '@/features/home/SkyHeader';
@@ -33,6 +33,8 @@ import { showAlert } from '@/components/AppDialog';
 import { HomeWallpaper } from '@/features/home/HomeWallpaper';
 import { useAccent } from '@/theme/AccentContext';
 import { SCREEN } from '@/components/screenStyles';
+import { SheetTabs } from '@/components/SheetTabs';
+import { topLevelOnly } from '@/lib/categoryTree';
 
 export default function CategoriesScreen() {
   const insets = useSafeAreaInsets();
@@ -47,6 +49,7 @@ export default function CategoriesScreen() {
   const [modalVisible, setModalVisible] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [showArchived, setShowArchived] = useState(false);
+  const [kind, setKind] = useState<CategoryKind>('expense');
   // Which category the "manage" sheet is open for, and whether from the active or archived section, which
   // only changes the two actions offered (Archive/Delete vs Restore/Delete).
   const [manageTarget, setManageTarget] = useState<{ cat: Category; archived: boolean } | null>(null);
@@ -63,6 +66,9 @@ export default function CategoriesScreen() {
   const archivedCategories = allCategories.filter((c) => c.archived);
   const expenseCats = categories.filter((c) => c.kind === 'expense');
   const incomeCats = categories.filter((c) => c.kind === 'income');
+  const visibleCategories = kind === 'expense' ? expenseCats : incomeCats;
+  const parentCount = topLevelOnly(visibleCategories).length;
+  const subcategoryCount = visibleCategories.length - parentCount;
 
   const onUnarchive = (cat: Category) => {
     showAlert('Restore category', `Bring "${cat.name}" back into pickers?`, [
@@ -236,7 +242,7 @@ export default function CategoriesScreen() {
           <View style={styles.grid}>
             {[0, 1].map((row) => (
               <View key={row} style={styles.gridRow}>
-                {Array.from({ length: 4 }, (_, i) => (
+                {Array.from({ length: 3 }, (_, i) => (
                   <View key={i} style={[styles.cell, styles.tile]}>
                     <Skeleton width={50} height={50} circle radius={16} />
                     <Skeleton width={48} height={9} radius={4} style={{ marginTop: 6 }} />
@@ -269,11 +275,42 @@ export default function CategoriesScreen() {
             <PrimaryButton title="Retry" compact variant="secondary" onPress={() => void load()} />
           </View>
         )}
-        <Text style={[styles.sectionTitle, styles.firstTitle]}>Expense</Text>
-        <CategorySection cats={expenseCats} onEdit={setEditingCategory} onManage={onManage} />
-
-        <Text style={styles.sectionTitle}>Income</Text>
-        <CategorySection cats={incomeCats} onEdit={setEditingCategory} onManage={onManage} />
+        <View style={styles.screenIntro}>
+          <Text style={styles.introText}>Organize your money, your way.</Text>
+          <SheetTabs
+            options={[
+              { label: `Expense · ${topLevelOnly(expenseCats).length}`, value: 'expense' },
+              { label: `Income · ${topLevelOnly(incomeCats).length}`, value: 'income' },
+            ]}
+            value={kind}
+            onChange={setKind}
+          />
+          <View style={styles.sectionHeading}>
+            <Text style={styles.collectionTitle}>{kind === 'expense' ? 'Expenses' : 'Income'}</Text>
+            <Text style={styles.collectionCount}>
+              {parentCount} categor{parentCount === 1 ? 'y' : 'ies'}
+              {subcategoryCount > 0
+                ? ` · ${subcategoryCount} subcategor${subcategoryCount === 1 ? 'y' : 'ies'}`
+                : ''}
+            </Text>
+          </View>
+        </View>
+        {parentCount > 0 ? (
+          <CategorySection
+            key={kind}
+            cats={visibleCategories}
+            onEdit={setEditingCategory}
+            onManage={onManage}
+          />
+        ) : (
+          <View style={styles.emptyCard}>
+            <Text style={styles.emptyTitle}>
+              A place for your {kind === 'expense' ? 'spending' : 'income'}
+            </Text>
+            <Text style={styles.emptyText}>Create a category to start organizing your transactions.</Text>
+            <PrimaryButton title="Add category" compact onPress={() => setModalVisible(true)} />
+          </View>
+        )}
 
         {showArchived && (
           <>
@@ -302,7 +339,7 @@ export default function CategoriesScreen() {
           </>
         )}
 
-        <Text style={styles.hintText}>Tap to edit or open · hold to move, archive or delete.</Text>
+        <Text style={styles.hintText}>Tap to edit or see subcategories. Hold for more options.</Text>
       </ReanimatedAnimated.ScrollView>
       <SkyHeader
         collapse={collapse}
@@ -337,6 +374,7 @@ export default function CategoriesScreen() {
       <AddCategoryModal
         visible={modalVisible}
         category={null}
+        initialKind={kind}
         allCategories={categories}
         onClose={() => setModalVisible(false)}
         onSaved={async () => {

@@ -1,39 +1,51 @@
-import { Animated, Pressable, View, StyleSheet } from 'react-native';
+import { Animated, Pressable, View, StyleSheet, useWindowDimensions } from 'react-native';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { usePressScale } from '@/lib/usePressScale';
-import { screenStyles as h } from '@/components/screenStyles';
+import Feather from '@expo/vector-icons/Feather';
+import { SCREEN } from '@/components/screenStyles';
+import { useAccent } from '@/theme/AccentContext';
+import { shade } from '@/lib/color';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 function Stat({
   value,
   label,
-  divider,
+  icon,
+  color,
   onPress,
 }: {
   value: number;
   label: string;
-  divider: boolean;
+  icon: React.ComponentProps<typeof Feather>['name'];
+  color: string;
   onPress: () => void;
 }) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.97);
+  const { fontScale } = useWindowDimensions();
   return (
     <AnimatedPressable
-      style={[styles.stat, divider && h.dividerLeft, animatedStyle]}
+      style={[styles.stat, fontScale > 1.2 && styles.statStack, animatedStyle]}
       onPress={onPress}
       onPressIn={onPressIn}
       onPressOut={onPressOut}
       accessibilityRole="button"
       accessibilityLabel={`${value} ${label}`}
     >
+      <View style={styles.top}>
+        <View style={[styles.icon, { backgroundColor: color }]}>
+          <Feather name={icon} size={16} color={theme.colors.ink} />
+        </View>
+        <Feather name="arrow-up-right" size={13} color={theme.colors.textMuted} />
+      </View>
       <Text style={styles.value}>{value}</Text>
       <Text style={styles.label}>{label}</Text>
     </AnimatedPressable>
   );
 }
 
-/** Entries, active loans and friends as one strip of three counts, each opening its screen. */
+/** Three explicit shortcuts, with counts and arrows that make their destinations clear. */
 export function LinkTiles({
   entries,
   loans,
@@ -49,18 +61,52 @@ export function LinkTiles({
   onLoans: () => void;
   onFriends: () => void;
 }) {
+  const { accent, secondary } = useAccent();
+  const { fontScale } = useWindowDimensions();
   return (
-    <View style={styles.row}>
-      <Stat value={entries} label="Entries" divider={false} onPress={onEntries} />
-      <Stat value={loans} label="Active loans" divider onPress={onLoans} />
-      <Stat value={friends} label="Friends" divider onPress={onFriends} />
+    <View style={[styles.row, fontScale > 1.2 && styles.rowStack]}>
+      <Stat value={entries} label="Entries" icon="list" color={shade(accent, 88)} onPress={onEntries} />
+      <Stat
+        value={loans}
+        label="Active loans"
+        icon="credit-card"
+        color={theme.colors.idGold}
+        onPress={onLoans}
+      />
+      <Stat value={friends} label="Friends" icon="users" color={shade(secondary, 88)} onPress={onFriends} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  row: { ...h.card, flexDirection: 'row', marginTop: 12 },
-  stat: { flex: 1, minWidth: 0, minHeight: 68, alignItems: 'center', justifyContent: 'center', gap: 1 },
-  value: { fontFamily: theme.font.bodyBold, fontSize: 18, color: theme.colors.textPrimary },
+  row: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginHorizontal: SCREEN.gutter, marginTop: 12 },
+  rowStack: { flexDirection: 'column' },
+  statStack: { flexBasis: 'auto', flexGrow: 0 },
+  stat: {
+    flexGrow: 1,
+    flexBasis: 90,
+    minWidth: 0,
+    minHeight: 118,
+    padding: 12,
+    gap: 4,
+    borderRadius: 20,
+    backgroundColor: theme.colors.surface,
+    borderWidth: 1,
+    borderColor: theme.colors.borderSoft,
+  },
+  top: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 4,
+    marginBottom: 4,
+  },
+  icon: { width: 32, height: 32, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
+  value: {
+    fontFamily: theme.font.bodyBold,
+    fontSize: 22,
+    color: theme.colors.textPrimary,
+    fontVariant: ['tabular-nums'],
+  },
   label: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
 });

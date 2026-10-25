@@ -155,6 +155,8 @@ describe('AddCategoryModal — new category', () => {
 
   it('offers only top-level categories of the same type as a parent, and forgets one when the type changes', async () => {
     const { tree } = await render();
+    expect(parentChoices(tree)).toEqual([]);
+    act(() => pressable(tree, 'Parent category (optional)').props.onPress());
     expect(parentChoices(tree)).toEqual(['No parent category', 'Inside Test Food']);
 
     await type(tree, 'Snacks');
@@ -170,6 +172,7 @@ describe('AddCategoryModal — new category', () => {
 
   it('saves a subcategory under the parent that was picked', async () => {
     const { tree } = await render();
+    act(() => pressable(tree, 'Parent category (optional)').props.onPress());
     await type(tree, 'Snacks');
     act(() => pressable(tree, 'Inside Test Food').props.onPress());
     await save(tree);
@@ -194,6 +197,40 @@ describe('AddCategoryModal — new category', () => {
     act(() => tree.update(element(true, null)));
     expect(byId(tree, 'name').props.value).toBe('');
     expect(byId(tree, 'sensitive').props.value).toBe(false);
+  });
+
+  it('starts with the type selected on the categories screen', async () => {
+    const { tree } = await render(null, { initialKind: 'income' });
+    expect(byId(tree, 'kind').props.value).toBe('income');
+    await type(tree, 'Freelancing');
+    await save(tree);
+    expect(mockCreate.mock.calls[0][0]).toEqual(expect.objectContaining({ kind: 'income' }));
+  });
+
+  it('keeps color and icon targets at least 44dp on a narrow sheet', async () => {
+    const { tree } = await render();
+    measureGrid(tree, 254);
+    for (const label of [`Colour 1 of ${CATEGORY_COLOR_PALETTE.length}`, 'tag icon']) {
+      const style = StyleSheet.flatten(pressable(tree, label).props.style({ pressed: false }));
+      expect(style.width).toBeGreaterThanOrEqual(44);
+      expect(style.height).toBeGreaterThanOrEqual(44);
+      expect(style.width * 5 + 8 * 4).toBeLessThanOrEqual(254);
+    }
+  });
+
+  it('browses all icons and keeps a chosen extra icon visible when collapsed', async () => {
+    const { tree } = await render();
+    measureGrid(tree);
+    const iconName = CATEGORY_ICON_CHOICES[CATEGORY_ICON_CHOICES.length - 1];
+    const iconLabel = `${iconName.replace(/-/g, ' ')} icon`;
+    expect(pressable(tree, iconLabel)).toBeUndefined();
+    act(() => pressable(tree, 'Browse all icons').props.onPress());
+    act(() => pressable(tree, iconLabel).props.onPress());
+    act(() => pressable(tree, 'Show fewer icons').props.onPress());
+    expect(pressable(tree, iconLabel).props.accessibilityState).toEqual({ selected: true });
+    await type(tree, 'My category');
+    await save(tree);
+    expect(mockCreate.mock.calls[0][0]).toEqual(expect.objectContaining({ icon: iconName }));
   });
 });
 
@@ -220,6 +257,7 @@ describe('AddCategoryModal — editing', () => {
   it('updates in place — never creates — and cannot send a type', async () => {
     const own = cat({ id: 'fuel', name: 'Test Fuel' });
     const { tree, onSaved } = await render(own);
+    act(() => pressable(tree, 'Parent category (optional)').props.onPress());
     await type(tree, 'Test Petrol');
     act(() => pressable(tree, 'Inside Test Food').props.onPress());
     await save(tree);
@@ -236,6 +274,7 @@ describe('AddCategoryModal — editing', () => {
 
   it('lets a subcategory move back to the top level', async () => {
     const { tree } = await render(eatOut);
+    act(() => pressable(tree, 'Move to another category').props.onPress());
     expect(parentChoices(tree)).toEqual(['Top level, no parent category', 'Inside Test Food']);
     act(() => pressable(tree, 'Top level, no parent category').props.onPress());
     await save(tree);

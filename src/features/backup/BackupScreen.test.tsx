@@ -1,6 +1,5 @@
 /**
- * The Backup & restore screen: a status card that says whether you are backed up, then two tabs - the
- * restore-points timeline (three newest, "See all" for the rest) and the exports.
+ * Backup has visible save/restore actions, an optional schedule and a compact backup history.
  */
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
 import { Text } from 'react-native';
@@ -158,13 +157,15 @@ beforeEach(() => {
 });
 
 describe('Backup & restore · status', () => {
-  it('asks for a folder first when none is chosen, and still shows the schedule', async () => {
+  it('offers folder setup and a backup file without requiring a tab change', async () => {
     const tree = await render();
     const shown = texts(tree);
     expect(shown).toContain('No backup folder yet');
     expect(buttons(tree, 'Choose folder')).toHaveLength(1);
     expect(buttons(tree, 'Back up now')).toHaveLength(0);
-    expect(shown).toContain('No backups yet');
+    expect(shown).toContain('Save backup file');
+    expect(shown).toContain('Restore from file');
+    expect(shown).not.toContain('Save a copy');
     expect(shown).not.toContain('Forget folder');
   });
 
@@ -179,7 +180,14 @@ describe('Backup & restore · status', () => {
     expect(shown.some((t) => t.includes('278.8 KB'))).toBe(true);
     expect(shown).toContain('Next backup tomorrow');
     expect(buttons(tree, 'Back up now')).toHaveLength(1);
-    expect(shown).toContain('Forget folder');
+    act(() =>
+      tree.root
+        .find(
+          (n) => n.props.accessibilityLabel === 'Backup schedule' && typeof n.props.onPress === 'function'
+        )
+        .props.onPress()
+    );
+    expect(texts(tree)).toContain('Forget folder');
   });
 
   it('shows why the last backup failed', async () => {
@@ -206,7 +214,7 @@ describe('Backup & restore · restore points', () => {
     expect(texts(tree)).toContain('See all 5 →');
 
     const seeAll = tree.root.find(
-      (n) => n.props.accessibilityState?.expanded === false && typeof n.props.onPress === 'function'
+      (n) => n.props.accessibilityLabel === 'Show all 5 backups' && typeof n.props.onPress === 'function'
     );
     act(() => seeAll.props.onPress());
     expect(buttons(tree, 'Restore')).toHaveLength(5);
@@ -230,33 +238,21 @@ describe('Backup & restore · restore points', () => {
 });
 
 describe('Backup & restore · save a copy', () => {
-  it('moves the exports to their own tab', async () => {
+  it('keeps full backups and restore visible while report exports live separately', async () => {
     const tree = await render();
     expect(texts(tree)).not.toContain('Reports & exports');
 
-    const tabs = tree.root.find(
-      (n) => n.props.options?.[0]?.value === 'points' && typeof n.props.onChange === 'function'
-    );
-    act(() => tabs.props.onChange('copy'));
     const shown = texts(tree);
-    expect(shown).toContain('Full backup (JSON)');
-    expect(shown).toContain('Reports & exports');
-    expect(shown).not.toContain('Restore from file');
+    expect(shown).toContain('Save backup file');
+    expect(shown).not.toContain('Reports & exports');
+    expect(shown).toContain('Restore from file');
   });
 });
 
 describe('Backup & restore · the temporary export file', () => {
-  const openCopyTab = async () => {
-    const tree = await render();
-    const tabs = tree.root.find(
-      (n) => n.props.options?.[0]?.value === 'points' && typeof n.props.onChange === 'function'
-    );
-    act(() => tabs.props.onChange('copy'));
-    return tree;
-  };
   const exportJson = async (tree: ReactTestRenderer) => {
     const row = tree.root.find(
-      (n) => n.props.label === 'Full backup (JSON)' && typeof n.props.onPress === 'function'
+      (n) => n.props.label === 'Save backup file' && typeof n.props.onPress === 'function'
     );
     await act(async () => {
       await row.props.onPress();
@@ -269,7 +265,7 @@ describe('Backup & restore · the temporary export file', () => {
   });
 
   it('is deleted once the share sheet has closed', async () => {
-    await exportJson(await openCopyTab());
+    await exportJson(await render());
     expect(mockSharing.shareAsync).toHaveBeenCalledTimes(1);
     expect(mockCreated).toHaveLength(1);
     expect(mockCreated[0].deleted).toBe(true);
@@ -277,14 +273,14 @@ describe('Backup & restore · the temporary export file', () => {
 
   it('is deleted even when sharing fails', async () => {
     mockSharing.shareAsync.mockRejectedValue(new Error('no share target'));
-    await exportJson(await openCopyTab());
+    await exportJson(await render());
     expect(mockCreated).toHaveLength(1);
     expect(mockCreated[0].deleted).toBe(true);
   });
 
   it('is deleted when sharing is not available at all', async () => {
     mockSharing.isAvailableAsync.mockResolvedValue(false);
-    await exportJson(await openCopyTab());
+    await exportJson(await render());
     expect(mockSharing.shareAsync).not.toHaveBeenCalled();
     expect(mockCreated[0].deleted).toBe(true);
   });

@@ -66,9 +66,9 @@ describe('Categories · tile grid', () => {
     expect(name?.props.numberOfLines).toBeUndefined();
   });
 
-  it('badges a parent with its subcategory count and edits a childless tile on tap', async () => {
+  it('labels a parent with its subcategory count and edits a childless tile on tap', async () => {
     const { tree, onEdit } = await render();
-    expect(texts(tree)).toContain('2');
+    expect(texts(tree)).toContain('2 subcategories');
     act(() => pressable(tree, 'Rent').props.onPress());
     expect(onEdit).toHaveBeenCalledWith(expect.objectContaining({ id: 'rent' }));
   });
