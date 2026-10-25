@@ -14,6 +14,8 @@ const path = require('path');
 const {
   withAndroidManifest,
   withAndroidColors,
+  withAndroidStyles,
+  withMainActivity,
   withDangerousMod,
   AndroidConfig,
 } = require('expo/config-plugins');
@@ -71,6 +73,49 @@ function adaptiveXml(id) {
 `;
 }
 
+/** Stable names are persisted by Android's setSplashScreenTheme across launches. */
+function applySplashStyles(styles, props) {
+  const base = styles.resources.style?.find((style) => style.$.name === 'Theme.App.SplashScreen');
+  if (!base) throw new Error('withThemeAppIcons: Expo splash theme is missing.');
+  // No fixed blue preview before onCreate: Android 12+ falls back to the launched alias's icon.
+  const iconAttributes = ['windowSplashScreenAnimatedIcon', 'android:windowSplashScreenAnimatedIcon'];
+  base.item = [
+    ...(base.item ?? []).filter((item) => !iconAttributes.includes(item.$.name)),
+    ...iconAttributes.map((name) => ({ $: { name }, _: '@null' })),
+  ];
+  const names = new Set(props.icons.map((icon) => `Theme.App.SplashScreen.${pascal(icon.id)}`));
+  styles.resources.style = [
+    ...(styles.resources.style ?? []).filter((style) => !names.has(style.$.name)),
+    ...props.icons.map((icon) => ({
+      $: { name: `Theme.App.SplashScreen.${pascal(icon.id)}`, parent: 'Theme.App.SplashScreen' },
+      item: iconAttributes.map((name) => ({
+        $: { name },
+        _:
+          icon.id === props.defaultId
+            ? '@drawable/splashscreen_logo'
+            : `@drawable/splashscreen_${snake(icon.id)}`,
+      })),
+    })),
+  ];
+  return styles;
+}
+
+function applyLaunchThemeToActivity(contents, props) {
+  const source = contents.replace(
+    /^\s*expo\.modules\.yumeappicon\.YumeAppIconModule\.applyLaunchTheme\(this, mapOf\([^\n]*\)\)\r?\n/gm,
+    ''
+  );
+  const onCreate = /override fun onCreate\(savedInstanceState: Bundle\?\) \{/;
+  if (!onCreate.test(source)) throw new Error('withThemeAppIcons: cannot find Kotlin MainActivity.onCreate.');
+  const themes = props.icons
+    .map((icon) => `"${icon.id}" to R.style.Theme_App_SplashScreen_${pascal(icon.id)}`)
+    .join(', ');
+  return source.replace(
+    onCreate,
+    `$&\n    expo.modules.yumeappicon.YumeAppIconModule.applyLaunchTheme(this, mapOf(${themes}))`
+  );
+}
+
 async function resize(projectRoot, cacheType, src, px, backgroundColor) {
   const { generateImageAsync } = require('@expo/image-utils');
   const { source } = await generateImageAsync(
@@ -80,7 +125,8 @@ async function resize(projectRoot, cacheType, src, px, backgroundColor) {
   return source;
 }
 
-async function writeIcons(projectRoot, platformRoot, props) {
+async function writeIcons(projectRoot, platformRoot, props, splashImageWidth) {
+  const { generateImageBackgroundAsync, compositeImagesAsync } = require('@expo/image-utils');
   const res = path.join(platformRoot, 'app', 'src', 'main', 'res');
   for (const icon of props.icons) {
     if (icon.id === props.defaultId) continue;
@@ -91,6 +137,25 @@ async function writeIcons(projectRoot, platformRoot, props) {
       fs.writeFileSync(
         path.join(dir, `ic_launcher_${name}.png`),
         await resize(projectRoot, `theme-icon-${name}`, icon.icon, LEGACY_DP * scale, 'transparent')
+      );
+      // Match Expo's 288dp canvas and configured logo width on every supported Android version.
+      const canvas = 288 * scale;
+      const size = splashImageWidth * scale;
+      const splashDir = path.join(res, `drawable-${density}`);
+      fs.mkdirSync(splashDir, { recursive: true });
+      fs.writeFileSync(
+        path.join(splashDir, `splashscreen_${name}.png`),
+        await compositeImagesAsync({
+          background: await generateImageBackgroundAsync({
+            width: canvas,
+            height: canvas,
+            backgroundColor: 'transparent',
+            resizeMode: 'cover',
+          }),
+          foreground: await resize(projectRoot, `theme-splash-${name}`, icon.icon, size, 'transparent'),
+          x: (canvas - size) / 2,
+          y: (canvas - size) / 2,
+        })
       );
       fs.writeFileSync(
         path.join(dir, `ic_launcher_foreground_${name}.png`),
@@ -139,10 +204,26 @@ module.exports = function withThemeAppIcons(config, props) {
     }
     return cfg;
   });
+  config = withAndroidStyles(config, (cfg) => {
+    cfg.modResults = applySplashStyles(cfg.modResults, props);
+    return cfg;
+  });
+  config = withMainActivity(config, (cfg) => {
+    cfg.modResults.contents = applyLaunchThemeToActivity(cfg.modResults.contents, props);
+    return cfg;
+  });
+  const splash = config.plugins?.find(
+    (plugin) => Array.isArray(plugin) && plugin[0] === 'expo-splash-screen'
+  )?.[1];
   return withDangerousMod(config, [
     'android',
     async (cfg) => {
-      await writeIcons(cfg.modRequest.projectRoot, cfg.modRequest.platformProjectRoot, props);
+      await writeIcons(
+        cfg.modRequest.projectRoot,
+        cfg.modRequest.platformProjectRoot,
+        props,
+        splash?.imageWidth ?? 100
+      );
       return cfg;
     },
   ]);
@@ -150,3 +231,5 @@ module.exports = function withThemeAppIcons(config, props) {
 module.exports.applyAliases = applyAliases;
 module.exports.adaptiveXml = adaptiveXml;
 module.exports.pascal = pascal;
+module.exports.applySplashStyles = applySplashStyles;
+module.exports.applyLaunchThemeToActivity = applyLaunchThemeToActivity;

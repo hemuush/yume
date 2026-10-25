@@ -1,15 +1,18 @@
 package expo.modules.yumeappicon
 
+import android.app.Activity
 import android.content.ComponentName
 import android.content.Context
 import android.content.pm.PackageManager
+import android.os.Build
 import expo.modules.kotlin.exception.CodedException
+import expo.modules.kotlin.functions.Queues
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
 
 /**
  * Switches the launcher icon between the `Icon<Id>` activity-aliases that plugins/withThemeAppIcons.js adds.
- * Exactly one alias is enabled at a time. MainActivity itself is never touched, so shortcuts, widgets,
+ * Exactly one alias is enabled at a time. MainActivity stays enabled, so shortcuts, widgets,
  * notifications and yume:// links keep resolving to it whichever icon is showing.
  */
 class YumeAppIconModule : Module() {
@@ -28,6 +31,13 @@ class YumeAppIconModule : Module() {
       if (id !in ids) throw CodedException("ERR_UNKNOWN_ICON", "No launcher icon named $id", null)
       val context = context()
       val pm = context.packageManager
+      val theme = splashTheme(id)
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        val activity = appContext.currentActivity
+          ?: throw CodedException("ERR_NO_ACTIVITY", "The launch theme cannot be updated without an Activity", null)
+        // Persist before switching aliases: Android draws the next launch before JS or onCreate can run.
+        activity.splashScreen.setSplashScreenTheme(theme)
+      }
       pm.setComponentEnabledSetting(
         alias(context, id), PackageManager.COMPONENT_ENABLED_STATE_ENABLED, PackageManager.DONT_KILL_APP
       )
@@ -36,27 +46,45 @@ class YumeAppIconModule : Module() {
           alias(context, it), PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP
         )
       }
-    }
+    }.runOnQueue(Queues.MAIN)
   }
 
   private fun context(): Context =
     appContext.reactContext ?: throw CodedException("ERR_NO_CONTEXT", "The app context is unavailable", null)
 
-  private fun alias(context: Context, id: String) =
-    ComponentName(context.packageName, "${context.packageName}.Icon${id.replaceFirstChar { it.uppercase() }}")
+  companion object {
+    private var splashThemes: Map<String, Int> = emptyMap()
 
-  private fun isEnabled(context: Context, id: String): Boolean {
-    val pm = context.packageManager
-    val component = alias(context, id)
-    return try {
-      when (pm.getComponentEnabledSetting(component)) {
-        PackageManager.COMPONENT_ENABLED_STATE_ENABLED -> true
-        PackageManager.COMPONENT_ENABLED_STATE_DEFAULT ->
-          pm.getActivityInfo(component, PackageManager.MATCH_DISABLED_COMPONENTS).enabled
-        else -> false
+    /** Select the same drawable for the pre-Android-12 compat splash, before Expo installs it. */
+    fun applyLaunchTheme(activity: Activity, themes: Map<String, Int>) {
+      splashThemes = themes
+      val id = themes.keys.firstOrNull { isEnabled(activity, it) } ?: return
+      val theme = splashTheme(id)
+      activity.setTheme(theme)
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        activity.splashScreen.setSplashScreenTheme(theme)
       }
-    } catch (e: PackageManager.NameNotFoundException) {
-      false
+    }
+
+    private fun splashTheme(id: String): Int =
+      splashThemes[id] ?: throw CodedException("ERR_UNKNOWN_SPLASH", "No launch theme for $id", null)
+
+    private fun alias(context: Context, id: String) =
+      ComponentName(context.packageName, "${context.packageName}.Icon${id.replaceFirstChar { it.uppercase() }}")
+
+    private fun isEnabled(context: Context, id: String): Boolean {
+      val pm = context.packageManager
+      val component = alias(context, id)
+      return try {
+        when (pm.getComponentEnabledSetting(component)) {
+          PackageManager.COMPONENT_ENABLED_STATE_ENABLED -> true
+          PackageManager.COMPONENT_ENABLED_STATE_DEFAULT ->
+            pm.getActivityInfo(component, PackageManager.MATCH_DISABLED_COMPONENTS).enabled
+          else -> false
+        }
+      } catch (e: PackageManager.NameNotFoundException) {
+        false
+      }
     }
   }
 }

@@ -42,6 +42,12 @@ Activity's filter contract lives in [activityFilter.ts](../src/features/transact
 
 Draft reference validation lives in [draftReferences.ts](../src/features/add/draftReferences.ts), outside route state orchestration. It checks active selections and all staged/split entries against live reference sets; absent selections remain editable and unused mode fields do not block recovery.
 
+## Startup safe areas and launch branding
+
+Onboarding keeps its bottom safe area in a margin because the keyboard controller owns animated paddingBottom. AmountPadDock supplies its visible state so its navigation-bar inset replaces that margin when the number pad opens. The other dock callers retain their existing content padding.
+
+Theme-following launcher icons also have matching native splash themes. The icon module persists the Android 12+ splash choice before changing aliases; MainActivity chooses the enabled alias's theme before Expo installs its compatibility splash. Stable per-icon style names and direct R.style references retain the generated assets. The base launch theme contains no fixed original icon. These changes need a new native binary; see [startup corrections](STARTUP_FIXES_2026_10_25.md) for implementation evidence and open phone checks.
+
 ## Add transaction flow
 
 The [Add-flow review](ADD_TRANSACTION_FLOW_REVIEW_2026_10_21.md) covers expenses, income, transfers, friend entries, refunds, staged saves, splits and editing. [Add](../app/add-transaction.tsx) waits for complete initial reference/link/split loading before enabling Save or Add more. Failed initial loads offer Retry; superseded or unfocused loads cannot publish late results. Split editing publishes the whole payment only after its parts have loaded successfully.

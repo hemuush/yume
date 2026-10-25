@@ -259,9 +259,10 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
   return (
     <View style={styles.root}>
       <AmountPadDock>
-        {(scrollProps) => (
+        {(scrollProps, padVisible) => (
           <KeyboardAvoidingView
-            style={[styles.container, { paddingBottom: insets.bottom }]}
+            // Keyboard avoidance owns paddingBottom; the dock owns the inset while its pad is visible.
+            style={[styles.container, { marginBottom: padVisible ? 0 : insets.bottom }]}
             behavior="padding"
           >
             {/* The sky: the Yume mark and Skip on top, Suu in the middle, Home's hills along the bottom. */}

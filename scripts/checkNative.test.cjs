@@ -1,6 +1,6 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { checkManifest, checkModules } = require('./checkNative.cjs');
+const { checkManifest, checkModules, checkLaunchResources } = require('./checkNative.cjs');
 
 const alias = (name, enabled) =>
   `<activity-alias android:name="${name}" android:enabled="${enabled}" android:exported="true" android:targetActivity=".MainActivity" android:icon="@mipmap/${name}"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity-alias>`;
@@ -96,4 +96,26 @@ test('missing shortcuts or link scheme are caught', () => {
 test('the app icon module must be autolinked', () => {
   assert.deepEqual(checkModules(['expo', 'yume-app-icon']), []);
   assert.equal(checkModules(['expo']).length, 1);
+});
+
+const launchStyles =
+  '<style name="Theme.App.SplashScreen"><item name="windowSplashScreenAnimatedIcon">@null</item><item name="android:windowSplashScreenAnimatedIcon">@null</item></style><style name="Theme.App.SplashScreen.Yume" parent="Theme.App.SplashScreen"><item name="windowSplashScreenAnimatedIcon">@drawable/splashscreen_logo</item><item name="android:windowSplashScreenAnimatedIcon">@drawable/splashscreen_logo</item></style>';
+const launchActivity =
+  'YumeAppIconModule.applyLaunchTheme(this, mapOf("yume" to R.style.Theme_App_SplashScreen_Yume))\nSplashScreenManager.registerOnActivity(this)';
+const launchProblems = (styles = launchStyles, activity = launchActivity) =>
+  checkLaunchResources(styles, activity, [{ id: 'yume' }], 'yume');
+
+test('generated launch theme resources and lifecycle order are checked', () => {
+  assert.deepEqual(launchProblems(), []);
+  assert.match(launchProblems('', launchActivity).join('\n'), /drawable/);
+  assert.match(
+    launchProblems(launchStyles, 'SplashScreenManager.registerOnActivity(this)').join('\n'),
+    /before Expo/
+  );
+  assert.match(
+    launchProblems(launchStyles, launchActivity.replace('R.style.Theme_App_SplashScreen_Yume', '0')).join(
+      '\n'
+    ),
+    /shrinking retains/
+  );
 });

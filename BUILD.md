@@ -44,7 +44,7 @@ npx expo prebuild --platform android --no-install
 npm run check:native
 ```
 
-Prebuild writes the ignored Android project and can change the package.json `android` script to `expo run:android`; retain the repository's intended development script. `check:native` checks the generated launcher aliases, enabled MainActivity, shortcuts, deep-link scheme, backup/storage policy and local icon-module autolinking. It does not compile Kotlin/Java or install the app.
+Prebuild writes the ignored Android project and can change the package.json `android` script to `expo run:android`; retain the repository's intended development script. `check:native` checks the generated launcher aliases, enabled MainActivity, shortcuts, deep-link scheme, backup/storage policy and local icon-module autolinking. It also checks theme-specific splash styles/images, direct resource references for release shrinking, and launch-theme selection before Expo installs the splash. It does not compile Kotlin/Java or install the app. Launcher/splash changes require a new native APK; see the [startup corrections](docs/STARTUP_FIXES_2026_10_25.md).
 
 [app.config.js](app.config.js) blocks Internet permission when `EAS_BUILD_PROFILE` is set; local development retains Metro connectivity. Set the matching profile when inspecting release configuration, and inspect permissions on the actual APK/AAB after native changes. Automatic Android backup and unused broad storage/photo permissions are disabled. Git and EAS independently exclude `.env*`, credentials.json, private/signing files and local attachments; ignore rules cannot remove already tracked secrets.
 

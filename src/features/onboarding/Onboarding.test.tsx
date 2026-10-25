@@ -10,12 +10,17 @@ jest.setTimeout(30000);
 
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
 jest.mock('react-native-keyboard-controller', () => ({
-  KeyboardAvoidingView: require('react-native').View,
+  // The installed component's animated padding wins even when the keyboard is closed.
+  KeyboardAvoidingView: ({ style, ...props }: any) => {
+    const { View } = require('react-native');
+    return <View {...props} style={[style, { paddingBottom: 0 }]} />;
+  },
   KeyboardProvider: ({ children }: { children: unknown }) => children,
   useKeyboardState: () => false,
 }));
+let mockBottomInset = 0;
 jest.mock('react-native-safe-area-context', () => ({
-  useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
+  useSafeAreaInsets: () => ({ top: 0, bottom: mockBottomInset, left: 0, right: 0 }),
 }));
 jest.mock('@/components/SuuIllustration', () => ({ SuuIllustration: () => null }));
 jest.mock('@/db/ledger', () => ({ createAccount: jest.fn() }));
@@ -74,6 +79,37 @@ const cta = (tree: ReactTestRenderer) =>
   tree.root.find((n) => n.props.testID === 'onboarding-cta' && n.props.onPress);
 const byLabel = (tree: ReactTestRenderer, label: string) =>
   tree.root.find((n) => n.props.accessibilityLabel === label && (n.props.onPress || n.props.onChangeText));
+
+it('keeps first-install actions above three-button navigation and lets the number pad own its inset', async () => {
+  mockBottomInset = 48;
+  const { StyleSheet } = require('react-native');
+  const tree = await render();
+  const avoidingStyle = () =>
+    StyleSheet.flatten(
+      tree.root.find((n) => typeof n.type === 'string' && n.props.behavior === 'padding').props.style
+    );
+  try {
+    expect(avoidingStyle().marginBottom).toBe(48);
+    await goToAccountStep(tree);
+    expect(avoidingStyle().marginBottom).toBe(48);
+    await act(async () =>
+      tree.root
+        .find(
+          (n) => typeof n.type === 'string' && n.props.accessibilityLabel === 'Bank account current balance'
+        )
+        .props.onFocus({})
+    );
+    expect(avoidingStyle().marginBottom).toBe(0);
+    expect(
+      tree.root.findAll(
+        (n) => typeof n.type === 'string' && StyleSheet.flatten(n.props.style)?.paddingBottom === 60
+      )
+    ).toHaveLength(1);
+  } finally {
+    act(() => tree.unmount());
+    mockBottomInset = 0;
+  }
+});
 
 /**
  * The CTA fires its async work without returning it, so awaiting onPress doesn't wait. One macrotask lets
