@@ -124,31 +124,35 @@ export async function createRecurringRule(input: RecurringRuleInput): Promise<Re
   await validate(input);
   const db = await getDb();
   const id = newId();
-  await db.runAsync(
-    `INSERT INTO recurring_rules
-      (id, type, account_id, to_account_id, category_id, amount_minor, note, payment_mode,
-       frequency, interval_count, next_run_date, end_date, active, anchor_day, posting_mode)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)`,
-    [
-      id,
-      input.type,
-      input.accountId,
-      input.type === 'transfer' ? (input.toAccountId ?? null) : null,
-      input.type === 'transfer' ? null : (input.categoryId ?? null),
-      input.amountMinor,
-      input.note ?? '',
-      input.paymentMode ?? null,
-      input.frequency,
-      input.intervalCount,
-      input.nextRunDate,
-      input.endDate ?? null,
-      dayOfIsoDate(input.nextRunDate),
-      input.postingMode ?? 'automatic',
-    ]
-  );
-  const row = await db.getFirstAsync<RecurringRuleRow>('SELECT * FROM recurring_rules WHERE id = ?', [id]);
+  let created: RecurringRule | null = null;
+  await db.withTransactionAsync(async (tx) => {
+    await tx.runAsync(
+      `INSERT INTO recurring_rules
+        (id, type, account_id, to_account_id, category_id, amount_minor, note, payment_mode,
+         frequency, interval_count, next_run_date, end_date, active, anchor_day, posting_mode)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)`,
+      [
+        id,
+        input.type,
+        input.accountId,
+        input.type === 'transfer' ? (input.toAccountId ?? null) : null,
+        input.type === 'transfer' ? null : (input.categoryId ?? null),
+        input.amountMinor,
+        input.note ?? '',
+        input.paymentMode ?? null,
+        input.frequency,
+        input.intervalCount,
+        input.nextRunDate,
+        input.endDate ?? null,
+        dayOfIsoDate(input.nextRunDate),
+        input.postingMode ?? 'automatic',
+      ]
+    );
+    const row = await tx.getFirstAsync<RecurringRuleRow>('SELECT * FROM recurring_rules WHERE id = ?', [id]);
+    created = rowToRule(found(row, 'recurring entry'));
+  });
   await rebuildAttentionNotificationsAfterCommit('recurringAlerts');
-  return rowToRule(found(row, 'recurring entry'));
+  return found<RecurringRule>(created, 'recurring entry');
 }
 
 export async function updateRecurringRule(id: string, input: RecurringRuleInput): Promise<RecurringRule> {

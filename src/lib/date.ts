@@ -89,7 +89,7 @@ export function dayLabel(isoDate: string): string {
 
 /** Whether a route param (or any string) is a plain YYYY-MM-DD date. */
 export function isIsoDate(v: string | undefined): v is string {
-  return !!v && /^\d{4}-\d{2}-\d{2}$/.test(v);
+  return typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) && toLocalIsoDate(parseLocalIsoDate(v)) === v;
 }
 
 /**
@@ -108,7 +108,7 @@ export function isoDatesInRange(from: string, to: string): string[] {
 
 /** A stored date must survive a local calendar round-trip, not just match YYYY-MM-DD. */
 export function assertValidIsoDate(value: string): void {
-  if (!isIsoDate(value) || toLocalIsoDate(parseLocalIsoDate(value)) !== value) {
+  if (!isIsoDate(value)) {
     throw new Error('Pick a valid date');
   }
 }

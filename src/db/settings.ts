@@ -1,5 +1,6 @@
 import { clampSlotMinutes } from '../lib/notificationTimes';
-import type { QueuedAlert } from '../lib/queuedAlert';
+import { toLocalIsoDate } from '../lib/date';
+import type { QueuedAlert, ScheduledReminder } from '../lib/queuedAlert';
 import { getDb } from './client';
 
 import {
@@ -132,9 +133,13 @@ export async function getNotificationPrefs(): Promise<NotificationPrefs> {
   const row = await db.getFirstAsync<{ value: string }>('SELECT value FROM settings WHERE key = ?', [
     NOTIFICATION_PREFS_KEY,
   ]);
-  if (!row) return { ...DEFAULT_NOTIFICATION_PREFS };
+  return readNotificationPrefs(row?.value);
+}
+
+function readNotificationPrefs(value: string | undefined): NotificationPrefs {
+  if (!value) return { ...DEFAULT_NOTIFICATION_PREFS };
   try {
-    const stored = JSON.parse(row.value);
+    const stored = JSON.parse(value);
     // `flynnCheckins` was renamed to `suuCheckins`; carry an existing install's value across so anyone who
     // turned check-ins off doesn't get them back on.
     if ('flynnCheckins' in stored && !('suuCheckins' in stored)) {
@@ -162,8 +167,28 @@ export async function setNotificationPrefs(prefs: NotificationPrefs): Promise<vo
   await db.runAsync(
     `INSERT INTO settings (key, value) VALUES (?, ?)
      ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
-    [NOTIFICATION_PREFS_KEY, JSON.stringify(prefs)]
+    [NOTIFICATION_PREFS_KEY, JSON.stringify(clampPrefTimes(prefs))]
   );
+}
+
+/** Merge one UI change with live settings atomically; unrelated choices and restores cannot be overwritten. */
+export async function updateNotificationPrefs(patch: Partial<NotificationPrefs>): Promise<NotificationPrefs> {
+  return withSettingsLock(async () => {
+    const db = await getDb();
+    let updated!: NotificationPrefs;
+    await db.withTransactionAsync(async (tx) => {
+      const row = await tx.getFirstAsync<{ value: string }>('SELECT value FROM settings WHERE key = ?', [
+        NOTIFICATION_PREFS_KEY,
+      ]);
+      updated = clampPrefTimes({ ...readNotificationPrefs(row?.value), ...patch });
+      await tx.runAsync(
+        `INSERT INTO settings (key, value) VALUES (?, ?)
+         ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
+        [NOTIFICATION_PREFS_KEY, JSON.stringify(updated)]
+      );
+    });
+    return updated;
+  });
 }
 
 const ACCENT_COLOR_KEY = 'accent_color';
@@ -523,7 +548,7 @@ export function resetSettingsCache(): void {
   cachedAppLockEnabled = undefined;
   cachedBackupFrequency = undefined;
   cachedLastLocalResult = undefined;
-  cachedLastOverspendNotified = undefined;
+  cachedSpendSpikesSent = undefined;
   cachedHideSensitiveAmounts = undefined;
   cachedHideWidgetValues = undefined;
   cachedBudgetNudgesSent = undefined;
@@ -531,27 +556,45 @@ export function resetSettingsCache(): void {
 }
 
 const LAST_OVERSPEND_NOTIFIED_KEY = 'last_overspend_notified';
-let cachedLastOverspendNotified: string | null | undefined;
+let cachedSpendSpikesSent: string[] | undefined;
 
-/** A "categoryId:YYYY-MM" key for the last overspend alert actually shown, so the same category doesn't re-notify on every single transaction logged that month. */
-export async function getLastOverspendNotified(): Promise<string | null> {
-  if (cachedLastOverspendNotified !== undefined) return cachedLastOverspendNotified;
+/** Per-category/month spike keys already queued. Older installs stored only the last key as plain text. */
+export async function getSpendSpikesSent(): Promise<string[]> {
+  if (cachedSpendSpikesSent !== undefined) return cachedSpendSpikesSent;
   const db = await getDb();
   const row = await db.getFirstAsync<{ value: string }>('SELECT value FROM settings WHERE key = ?', [
     LAST_OVERSPEND_NOTIFIED_KEY,
   ]);
-  cachedLastOverspendNotified = row?.value ?? null;
-  return cachedLastOverspendNotified;
+  let parsed: unknown = [];
+  try {
+    parsed = row ? JSON.parse(row.value) : [];
+  } catch {
+    parsed = row ? [row.value] : [];
+  }
+  cachedSpendSpikesSent = Array.isArray(parsed)
+    ? parsed.filter((key): key is string => typeof key === 'string' && /:\d{4}-(0[1-9]|1[0-2])$/.test(key))
+    : [];
+  return cachedSpendSpikesSent;
 }
 
-export async function setLastOverspendNotified(key: string): Promise<void> {
-  const db = await getDb();
-  await db.runAsync(
-    `INSERT INTO settings (key, value) VALUES (?, ?)
-     ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
-    [LAST_OVERSPEND_NOTIFIED_KEY, key]
-  );
-  cachedLastOverspendNotified = key;
+export async function addSpendSpikeSent(key: string): Promise<void> {
+  await withSettingsLock(async () => {
+    const now = new Date();
+    const months = [
+      toLocalIsoDate(now).slice(0, 7),
+      toLocalIsoDate(new Date(now.getFullYear(), now.getMonth() - 1, 1)).slice(0, 7),
+    ];
+    const next = [...new Set([...(await getSpendSpikesSent()), key])].filter((item) =>
+      months.includes(item.slice(-7))
+    );
+    const db = await getDb();
+    await db.runAsync(
+      `INSERT INTO settings (key, value) VALUES (?, ?)
+       ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
+      [LAST_OVERSPEND_NOTIFIED_KEY, JSON.stringify(next)]
+    );
+    cachedSpendSpikesSent = next;
+  });
 }
 
 const NEEDS_YOU_DISMISSED_KEY = 'needs_you_dismissed';
@@ -697,6 +740,39 @@ export async function addBudgetNudgesSent(keys: string[]): Promise<void> {
 }
 
 const ALERT_QUEUE_KEY = 'notification_alert_queue';
+const SCHEDULED_REMINDERS_KEY = 'notification_scheduled_topics';
+
+/** Device-local scheduling receipts, not a claim of OS presentation. Invalid/expired history is ignored. */
+export async function getScheduledReminders(): Promise<ScheduledReminder[]> {
+  const db = await getDb();
+  const row = await db.getFirstAsync<{ value: string }>('SELECT value FROM settings WHERE key = ?', [
+    SCHEDULED_REMINDERS_KEY,
+  ]);
+  try {
+    const parsed: unknown = row ? JSON.parse(row.value) : [];
+    const cutoff = Date.now() - 14 * 86400000;
+    return Array.isArray(parsed)
+      ? parsed.filter(
+          (item): item is ScheduledReminder =>
+            !!item &&
+            typeof item.key === 'string' &&
+            typeof item.at === 'string' &&
+            new Date(item.at).getTime() >= cutoff
+        )
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+export async function setScheduledReminders(items: ScheduledReminder[]): Promise<void> {
+  const db = await getDb();
+  await db.runAsync(
+    `INSERT INTO settings (key, value) VALUES (?, ?)
+     ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
+    [SCHEDULED_REMINDERS_KEY, JSON.stringify(items)]
+  );
+}
 /** Alerts only wait for the next time, so a handful is plenty. */
 const ALERT_QUEUE_KEPT = 20;
 

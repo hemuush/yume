@@ -2,7 +2,12 @@ import { emiCopy, emiOverdueCopy, logCopy, wrapCopy, morningCopy } from './notif
 import { dayMonth } from './dateLabels';
 import { clampSlotMinutes, TimeSlotKind } from './notificationTimes';
 import { toLocalIsoDate, addDaysToIsoDate } from './date';
-import { NOTIFICATION_ROUTES, type NotificationRoute, type QueuedAlert } from './queuedAlert';
+import {
+  NOTIFICATION_ROUTES,
+  type NotificationRoute,
+  type QueuedAlert,
+  type ScheduledReminder,
+} from './queuedAlert';
 
 export { NOTIFICATION_ROUTES };
 export type { NotificationRoute, QueuedAlert };
@@ -50,6 +55,7 @@ interface PlannedNotification {
   title: string;
   body: string;
   route: NotificationRoute;
+  reminderKeys: string[];
 }
 
 interface Entry {
@@ -57,6 +63,7 @@ interface Entry {
   body: string;
   extra: string;
   route: NotificationRoute;
+  reminderKeys?: string[];
 }
 
 interface Slot {
@@ -110,10 +117,21 @@ export function planNotifications(input: {
   alerts: QueuedAlert[];
   loggedToday: boolean;
   now: Date;
+  previouslyScheduled?: ScheduledReminder[];
+  pendingNotificationIds?: string[];
 }): { notifications: PlannedNotification[]; waitingAlerts: QueuedAlert[] } {
   const { prefs, loans, alerts, loggedToday, now } = input;
   const slots = enabledSlots(prefs);
   const today = startOfDay(now);
+  const pendingIds = new Set(input.pendingNotificationIds ?? []);
+  const elapsedTopics = new Set(
+    (input.previouslyScheduled ?? [])
+      .filter(
+        (item) => new Date(item.at).getTime() <= now.getTime() && !pendingIds.has(item.notificationId ?? '')
+      )
+      .map((item) => item.key)
+  );
+  const topicKey = (day: Date, kind: string, id = '') => `${toLocalIsoDate(day)}:${kind}:${id}`;
 
   // What is due at each time, keyed by the time's own id.
   const due = new Map<string, { day: Date; slot: Slot; entries: Entry[] }>();
@@ -134,6 +152,8 @@ export function planNotifications(input: {
     for (const iso of dates) {
       const day = parseIsoDate(iso);
       if (daysBetween(today, day) < 0 || daysBetween(today, day) >= PLAN_DAYS) continue;
+      const key = topicKey(day, item.kind, item.id);
+      if (elapsedTopics.has(key)) continue;
       const slot = firstSlotOn(day);
       if (!slot) continue;
       const late = item.kind === 'refund' && iso !== item.date;
@@ -146,6 +166,7 @@ export function planNotifications(input: {
               body: `${item.label} is scheduled for tomorrow. Take a look before it’s recorded.`,
               extra: `${item.label} is scheduled tomorrow`,
               route: '/recurring',
+              reminderKeys: [key],
             }
           : {
               title: late ? 'Still waiting on your refund?' : 'A refund is expected today',
@@ -154,6 +175,7 @@ export function planNotifications(input: {
                 : `${item.label}: check whether the refund has arrived.`,
               extra: `${item.label}: ${late ? 'refund follow-up' : 'refund expected today'}`,
               route: '/(tabs)/plan',
+              reminderKeys: [key],
             }
       );
     }
@@ -163,12 +185,20 @@ export function planNotifications(input: {
   // Not limited to the 14 days: a late due date should still be reminded of.
   if (prefs.billAlerts) {
     const byDate = new Map<string, PlanLoan[]>();
-    for (const loan of loans) byDate.set(loan.dueDate, [...(byDate.get(loan.dueDate) ?? []), loan]);
+    for (const loan of loans) {
+      if (elapsedTopics.has(topicKey(parseIsoDate(loan.dueDate), 'emi', loan.id))) continue;
+      byDate.set(loan.dueDate, [...(byDate.get(loan.dueDate) ?? []), loan]);
+    }
     for (const [iso, group] of byDate) {
       const day = parseIsoDate(iso);
       if (daysBetween(today, day) < 0) continue;
       const slot = firstSlotOn(day);
-      if (slot) add(day, slot, { ...emiCopy(group), route: '/loans' });
+      if (slot)
+        add(day, slot, {
+          ...emiCopy(group),
+          route: '/loans',
+          reminderKeys: group.map((loan) => topicKey(day, 'emi', loan.id)),
+        });
     }
     // Missed the day: once a day until it's paid, for up to OVERDUE_EMI_DAYS after it was due. (Paying it
     // rebuilds the plan, which drops these.)
@@ -176,19 +206,25 @@ export function planNotifications(input: {
       const day = startOfDay(today, i);
       const overdue = loans.filter((l) => {
         const late = daysBetween(parseIsoDate(l.dueDate), day);
-        return late > 0 && late <= OVERDUE_EMI_DAYS;
+        return late > 0 && late <= OVERDUE_EMI_DAYS && !elapsedTopics.has(topicKey(day, 'emi', l.id));
       });
       if (overdue.length === 0) continue;
       const slot = firstSlotOn(day);
-      if (slot) add(day, slot, { ...emiOverdueCopy(overdue, dayMonth), route: '/loans' });
+      if (slot)
+        add(day, slot, {
+          ...emiOverdueCopy(overdue, dayMonth),
+          route: '/loans',
+          reminderKeys: overdue.map((loan) => topicKey(day, 'emi', loan.id)),
+        });
     }
   }
 
   for (let i = 0; i < PLAN_DAYS; i++) {
     const day = startOfDay(today, i);
-    if (prefs.weeklySummary && day.getDay() === 1) {
+    if (prefs.weeklySummary && day.getDay() === 1 && !elapsedTopics.has(topicKey(day, 'wrap'))) {
       const slot = firstSlotOn(day);
-      if (slot) add(day, slot, { ...wrapCopy(), route: '/wrap?period=week' });
+      if (slot)
+        add(day, slot, { ...wrapCopy(), route: '/wrap?period=week', reminderKeys: [topicKey(day, 'wrap')] });
     }
     // The nudge to log goes at the Evening time only, and not on a day something is already logged.
     const evening = slots.find((s) => s.kind === 'evening');
@@ -197,26 +233,41 @@ export function planNotifications(input: {
     }
   }
 
-  // A spending alert goes out at the first time on or after it arose; a passed time means delivered,
-  // and one with no time to go out at keeps waiting until it is stale.
+  // A passed slot consumes an alert only after the OS accepted it. Permission/scheduler failures
+  // leave it waiting for the next enabled time, within its original three-day lifetime.
   const waitingAlerts: QueuedAlert[] = [];
   if (prefs.overspendAlerts) {
     for (const alert of alerts) {
       const queuedAt = new Date(alert.queuedAt);
       if (Number.isNaN(queuedAt.getTime())) continue;
       if (now.getTime() - queuedAt.getTime() > ALERT_MAX_AGE_DAYS * DAY_MS) continue;
+      if (
+        alert.scheduledFor &&
+        new Date(alert.scheduledFor).getTime() <= now.getTime() &&
+        !pendingIds.has(alert.scheduledNotificationId ?? '')
+      )
+        continue;
       let found: { day: Date; slot: Slot } | undefined;
       for (let i = 0; i <= ALERT_MAX_AGE_DAYS + 1 && !found; i++) {
-        const day = startOfDay(queuedAt, i);
-        const slot = slots.find((s) => slotTime(day, s) >= queuedAt);
+        const day = startOfDay(queuedAt > now ? queuedAt : now, i);
+        const slot = slots.find((s) => slotTime(day, s) >= queuedAt && slotTime(day, s) > now);
         if (slot) found = { day, slot };
       }
+      const pending = { ...alert };
+      delete pending.scheduledFor;
+      delete pending.scheduledNotificationId;
       if (!found) {
-        waitingAlerts.push(alert);
+        waitingAlerts.push(pending);
         continue;
       }
-      if (slotTime(found.day, found.slot) <= now) continue; // already delivered
-      waitingAlerts.push(alert);
+      if (slotTime(found.day, found.slot).getTime() - queuedAt.getTime() > ALERT_MAX_AGE_DAYS * DAY_MS)
+        continue;
+      // The scheduler persists this marker only for requests it successfully submits.
+      waitingAlerts.push({
+        ...pending,
+        scheduledFor: slotTime(found.day, found.slot).toISOString(),
+        scheduledNotificationId: slotId(found.day, found.slot),
+      });
       add(found.day, found.slot, alert);
     }
   }
@@ -235,8 +286,7 @@ export function planNotifications(input: {
 
   const notifications = [...due.entries()]
     .map(([id, { day, slot, entries }]): PlannedNotification => {
-      // `entries` order is: EMIs, Monday's wrap and log nudge, then spending alerts (as added).
-      // Leading order is alerts and EMIs, then the wrap, then the log nudge.
+      // EMIs lead, then bills/spending alerts, refunds, the wrap and the logging nudge.
       const lead = [...entries].sort((a, b) => priority(a) - priority(b))[0];
       const rest = entries.filter((e) => e !== lead).sort((a, b) => priority(a) - priority(b));
       return {
@@ -245,6 +295,7 @@ export function planNotifications(input: {
         title: lead.title,
         body: [lead.body, ...rest.map((e) => e.extra)].join('\n'),
         route: lead.route,
+        reminderKeys: entries.flatMap((entry) => entry.reminderKeys ?? []),
       };
     })
     .sort((a, b) => a.at.getTime() - b.at.getTime());

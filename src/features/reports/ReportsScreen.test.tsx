@@ -640,18 +640,21 @@ describe('Reports screen', () => {
       mockSearch.current = {};
     }
   });
-  it('ignores a malformed range link', async () => {
-    mockSearch.current = { from: 'yesterday', to: '2026-09-26' };
-    try {
-      const tree = await render();
-      await pressText(tree, 'Breakdown');
-      await pressText(tree, 'Food');
-      await pressText(tree, 'Open Food ›');
-      expect(lastPush()).toBe('/category/food?g=month&o=0');
-    } finally {
-      mockSearch.current = {};
+  it.each(['yesterday', '2026-02-29', '2026-02-31', '2026-00-01'])(
+    'ignores a malformed range link (%s)',
+    async (from) => {
+      mockSearch.current = { from, to: '2026-09-26' };
+      try {
+        const tree = await render();
+        await pressText(tree, 'Breakdown');
+        await pressText(tree, 'Food');
+        await pressText(tree, 'Open Food ›');
+        expect(lastPush()).toBe('/category/food?g=month&o=0');
+      } finally {
+        mockSearch.current = {};
+      }
     }
-  });
+  );
   describe('Biggest spends', () => {
     it('previews three purchases and expands the remaining largest entries', async () => {
       const original = mockLargest.getMockImplementation()!;

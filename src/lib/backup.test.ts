@@ -156,3 +156,42 @@ it('excludes unfinished drafts from export and discards imported drafts during r
     await mockTestDb.getFirstAsync("SELECT value FROM settings WHERE key = 'entry_draft_v1'")
   ).toBeNull();
 });
+
+it('exports retryable alerts and ignores scheduling acceptance from another phone on restore', async () => {
+  const alert = {
+    id: 'alert',
+    queuedAt: '2026-10-24T10:00:00Z',
+    scheduledFor: '2026-10-24T14:30:00Z',
+    scheduledNotificationId: 'yume-2026-10-24-evening',
+  };
+  await mockTestDb.runAsync(
+    "INSERT OR REPLACE INTO settings (key,value) VALUES ('notification_alert_queue',?)",
+    [JSON.stringify([alert])]
+  );
+  await mockTestDb.runAsync(
+    "INSERT OR REPLACE INTO settings (key,value) VALUES ('notification_scheduled_topics',?)",
+    [JSON.stringify([{ key: 'local-topic', at: alert.scheduledFor }])]
+  );
+  const snapshot = await buildBackupSnapshot();
+  expect(snapshot.tables.settings.find((row) => row.key === 'notification_alert_queue')?.value).not.toContain(
+    'scheduledFor'
+  );
+  expect(snapshot.tables.settings.some((row) => row.key === 'notification_scheduled_topics')).toBe(false);
+  const settings = snapshot.tables.settings.filter((row) => row.key !== 'notification_alert_queue');
+  settings.push({ key: 'notification_alert_queue', value: JSON.stringify([alert]) });
+  settings.push({
+    key: 'notification_scheduled_topics',
+    value: JSON.stringify([{ key: 'other-phone', at: alert.scheduledFor }]),
+  });
+  await restoreFromSnapshot({ ...snapshot, tables: { ...snapshot.tables, settings } });
+  const queue = await mockTestDb.getFirstAsync<{ value: string }>(
+    "SELECT value FROM settings WHERE key='notification_alert_queue'"
+  );
+  expect(queue?.value).not.toContain('scheduledFor');
+  expect(queue?.value).not.toContain('scheduledNotificationId');
+  const receipts = await mockTestDb.getFirstAsync<{ value: string }>(
+    "SELECT value FROM settings WHERE key='notification_scheduled_topics'"
+  );
+  expect(receipts?.value).toContain('local-topic');
+  expect(receipts?.value).not.toContain('other-phone');
+});

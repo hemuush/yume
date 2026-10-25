@@ -164,6 +164,8 @@ it('reports scheduler failure while preserving committed privacy/category change
   N.scheduleNotificationAsync.mockRejectedValue(new Error('OS scheduler unavailable'));
   expect(await saveHideSensitiveAmounts(true)).toBe(false);
   expect(await getHideSensitiveAmounts()).toBe(true);
+  expect(scheduledText()).not.toContain('Private bill');
+  expect(scheduledText()).not.toContain('Private purchase');
   expect(
     await updateCategory(categoryId, {
       name: 'Private category',
@@ -175,6 +177,15 @@ it('reports scheduler failure while preserving committed privacy/category change
   expect(
     await mockDb.getFirstAsync('SELECT is_sensitive FROM categories WHERE id = ?', [categoryId])
   ).toEqual({ is_sensitive: 0 });
+});
+
+it('cancels private OS payloads even when phone permission was revoked before hiding amounts', async () => {
+  expect(scheduledText()).toContain('Private purchase');
+  N.getPermissionsAsync.mockResolvedValue({ granted: false } as Notifications.NotificationPermissionsStatus);
+  jest.spyOn(console, 'warn').mockImplementation(() => {});
+  expect(await saveHideSensitiveAmounts(true)).toBe(false);
+  expect(scheduledText()).not.toContain('Private bill');
+  expect(scheduledText()).not.toContain('Private purchase');
 });
 
 it('clears stale private payloads even when attention topics have since been disabled', async () => {

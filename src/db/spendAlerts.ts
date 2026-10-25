@@ -1,8 +1,8 @@
 import { getDb } from './client';
 import {
   getNotificationPrefs,
-  getLastOverspendNotified,
-  setLastOverspendNotified,
+  getSpendSpikesSent,
+  addSpendSpikeSent,
   getBudgetNudgesSent,
   addBudgetNudgesSent,
   addQueuedAlerts,
@@ -51,7 +51,7 @@ export async function queueSpendAlerts(categoryId: string): Promise<void> {
     // "Already nudged" is recorded only once the alert is safely queued, so a failed queue write retries
     // next time instead of silently losing the alert for the month.
     if (budgetAlert) await addBudgetNudgesSent(budgetAlert.nudgeKeys).catch(() => {});
-    if (spike) await setLastOverspendNotified(spike.monthKey).catch(() => {});
+    if (spike) await addSpendSpikeSent(spike.monthKey).catch(() => {});
   } finally {
     // Never lets a notification-scheduler failure replace (or mask) the real outcome of the check.
     await rebuildNotificationsAfterCommit();
@@ -119,7 +119,7 @@ async function spikeAlertFor(
   // One alert per category per month: otherwise the same top grower would queue a fresh alert after every
   // transaction logged that month.
   const monthKey = `${topLevelCategoryId}:${toLocalIsoDate(new Date()).slice(0, 7)}`;
-  if ((await getLastOverspendNotified()) === monthKey) return null;
+  if ((await getSpendSpikesSent()).includes(monthKey)) return null;
   return {
     monthKey,
     alert: {

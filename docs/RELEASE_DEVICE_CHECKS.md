@@ -97,3 +97,14 @@ Use copied test data and a candidate containing the [loan-flow changes](LOAN_FLO
 | Theme and motion    | Use selected theme packs and reduced motion; record one EMI and navigate away during a test-build delayed write | Existing palette is retained; one success haptic; no stale sheet navigation or delayed completion animation with reduced motion | Not run       |
 
 Optional attention topics (not yet device-verified): enable Recurring expense heads-up and Refund follow-ups separately. On copied test data, verify a next-day expense rule and dated pending refund; pause/delete the rule and close/receive/undo the refund, confirming the schedule refreshes. Verify both off, both slots off, privacy on, an ended rule, an undated refund and a fully received refund. At most one merged notification may occupy each slot. Check separate morning/evening counts and confirm tap routes to Recurring or Plan. These checks require a new candidate containing the optional topics.
+
+24 October notification audit additions (all **Not run** on a phone):
+
+The [24 October repository audit](CODE_AUDIT_2026_10_24.md) also needs phone acceptance for Investments/Exports refresh error and Retry layout, export period selection after a copied-data restore, PDF/Excel sharing, and the investment chart with a large copied ledger. These remain **Not run**; desktop timings and component tests do not close them.
+
+- Deny app permission or block the reminder category, then hide sensitive amounts and rebuild. Re-enable delivery in phone Settings; the page must refresh its status on return, and old private payloads must not reappear.
+- With phone permission disabled, change a reminder time. Verify the choice remains saved after reopening the page and the failed rebuild is surfaced rather than claiming readiness. The automated harness separately covers rejected same-ID replacement and cleanup.
+- Receive a Morning EMI/bill/refund/wrap, reopen Yume after Morning, and confirm the same topic is absent from Evening. Its next overdue day/separate three-day refund follow-up must remain eligible.
+- With battery restrictions delaying an accepted request, reopen before it appears. A still-pending request must remain eligible for the next configured slot; log the actual OS behavior and delay.
+- Keep a spending alert unscheduled through its first intended time, then allow delivery before its three-day expiry. Rebuild and verify it can reach the next slot. Also restore a copied backup on a spare install and confirm source-phone scheduling markers do not suppress it.
+- Change several settings quickly, including while a permission prompt is open. Verify the last intended choice and selected times after reopening the page. Test its error/retry and enlarged-text layout on the candidate build.

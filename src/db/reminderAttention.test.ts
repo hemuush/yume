@@ -74,3 +74,20 @@ it('removes paused bills and closed refunds after changes, without creating ledg
   expect(await listReminderAttention('2026-10-15', true, true)).toEqual([]);
   expect(await mockDb.getFirstAsync('SELECT COUNT(*) n FROM transactions')).toEqual(before);
 });
+
+it('omits an active recurring child of an archived category and includes it after the parent is restored', async () => {
+  await mockDb.runAsync(
+    "INSERT INTO categories (id,name,kind,archived) VALUES ('archived-parent','Archived','expense',1)"
+  );
+  await mockDb.runAsync(
+    "INSERT INTO categories (id,name,kind,parent_id) VALUES ('active-child','Active child','expense','archived-parent')"
+  );
+  await mockDb.runAsync(
+    "INSERT INTO recurring_rules (id,type,active,category_id,account_id,amount_minor,frequency,next_run_date,note) VALUES ('child-bill','expense',1,'active-child','bank',1000,'monthly','2026-10-16','Child bill')"
+  );
+  expect(await listReminderAttention('2026-10-15', true, false)).toEqual([]);
+  await mockDb.runAsync("UPDATE categories SET archived=0 WHERE id='archived-parent'");
+  expect(await listReminderAttention('2026-10-15', true, false)).toEqual([
+    { kind: 'bill', id: 'child-bill', label: 'Child bill', date: '2026-10-16' },
+  ]);
+});

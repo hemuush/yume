@@ -7,7 +7,9 @@ import { getHideSensitiveAmounts } from './settings';
 export async function listReminderAttention(today: string, recurring: boolean, refunds: boolean) {
   const db = await getDb();
   const privacy = (await getHideSensitiveAmounts())
-    ? `AND a.type <> 'savings' AND NOT EXISTS (
+    ? `AND a.type <> 'savings' AND c.id IS NOT NULL
+    AND (c.parent_id IS NULL OR EXISTS (SELECT 1 FROM categories parent WHERE parent.id = c.parent_id))
+    AND NOT EXISTS (
     SELECT 1 FROM categories hidden WHERE hidden.is_sensitive = 1
     AND COALESCE(hidden.parent_id, hidden.id) = COALESCE(c.parent_id, c.id)
   )`
@@ -18,6 +20,7 @@ export async function listReminderAttention(today: string, recurring: boolean, r
       `SELECT r.id, COALESCE(NULLIF(trim(r.note), ''), c.name, 'Recurring bill') AS label, r.next_run_date AS date
        FROM recurring_rules r JOIN accounts a ON a.id = r.account_id LEFT JOIN categories c ON c.id = r.category_id
        WHERE r.active = 1 AND r.type = 'expense' AND a.archived = 0 AND c.archived = 0
+       AND (c.parent_id IS NULL OR EXISTS (SELECT 1 FROM categories parent WHERE parent.id = c.parent_id AND parent.archived = 0))
        AND r.next_run_date BETWEEN ? AND ? AND (r.end_date IS NULL OR r.next_run_date <= r.end_date) ${privacy}`,
       [addDaysToIsoDate(today, 1), addDaysToIsoDate(today, 14)]
     );

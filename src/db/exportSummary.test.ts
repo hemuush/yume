@@ -7,9 +7,30 @@ jest.mock('@/lib/notifications', () => ({ rebuildNotifications: async () => {} }
 import { CREATE_TABLES_SQL } from '@/db/schema';
 import { createAccount, createCategory, createTransaction } from '@/db/ledger';
 import { listEntryMonths } from '@/db/exportSummary';
+import { previewFor } from '@/features/export/exportChoice';
 
 beforeAll(async () => {
   await mockTestDb.execAsync(CREATE_TABLES_SQL);
+});
+beforeEach(async () => {
+  await mockTestDb.execAsync('DELETE FROM transactions; DELETE FROM accounts; DELETE FROM categories;');
+});
+
+it('preserves a refund-only month when building a multi-month preview', async () => {
+  const accountId = (await createAccount({ name: 'Refund bank', type: 'bank', currency: 'EUR' })).id;
+  const categoryId = (await createCategory({ name: 'Refunded purchase', kind: 'expense' })).id;
+  await createTransaction({ type: 'expense', accountId, categoryId, amountMinor: 10000, date: '2024-01-01' });
+  await createTransaction({
+    type: 'income',
+    isRefund: true,
+    accountId,
+    categoryId,
+    amountMinor: 5000,
+    date: '2024-02-01',
+  });
+  const months = await listEntryMonths('EUR');
+  expect(months.find((m) => m.month === '2024-02')?.spentMinor).toBe(-5000);
+  expect(previewFor(months, { kind: 'year', year: 2024 }).spentMinor).toBe(5000);
 });
 
 it('lists months with entries, newest first, with spending in the default currency only', async () => {

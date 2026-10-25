@@ -15,6 +15,8 @@ const DEVICE_BOUND_SETTINGS = [
   'last_local_backup_result',
   // Whether this phone has been asked for notification permission: a new phone must be asked again.
   'notification_permission_asked',
+  // A different phone has not scheduled the source phone's reminder topics.
+  'notification_scheduled_topics',
 ];
 
 /**
@@ -50,6 +52,29 @@ const TABLES = [
 /** One table row in a backup: column name → its JSON value. */
 type BackupRow = Record<string, string | number | boolean | null>;
 
+/** A restored spending alert has not been accepted by this phone's scheduler yet. */
+function withoutNotificationAcceptance(row: BackupRow): BackupRow {
+  if (row.key !== 'notification_alert_queue' || typeof row.value !== 'string') return row;
+  try {
+    const parsed: unknown = JSON.parse(row.value);
+    if (!Array.isArray(parsed)) return row;
+    return {
+      ...row,
+      value: JSON.stringify(
+        parsed.map((item: unknown) => {
+          if (!item || typeof item !== 'object') return item;
+          const copy = { ...item } as Record<string, unknown>;
+          delete copy.scheduledFor;
+          delete copy.scheduledNotificationId;
+          return copy;
+        })
+      ),
+    };
+  } catch {
+    return row;
+  }
+}
+
 export interface BackupSnapshot {
   formatVersion: number;
   exportedAt: string;
@@ -73,7 +98,10 @@ export async function buildBackupSnapshotOn(db: AppDb): Promise<BackupSnapshot> 
     async (xdb) => {
       for (const table of TABLES) {
         tables[table] = await xdb.getAllAsync<BackupRow>(`SELECT * FROM ${table}`);
-        if (table === 'settings') tables[table] = tables[table].filter((row) => row.key !== ENTRY_DRAFT_KEY);
+        if (table === 'settings')
+          tables[table] = tables[table]
+            .filter((row) => row.key !== ENTRY_DRAFT_KEY && row.key !== 'notification_scheduled_topics')
+            .map(withoutNotificationAcceptance);
       }
     },
     { readOnly: true }
@@ -310,7 +338,8 @@ export async function restoreFromSnapshotOn(db: AppDb, snapshot: BackupSnapshot)
         for (const table of insertOrder) {
           const rows = snapshot.tables[table] ?? [];
           const validColumns = columnsByTable[table];
-          for (const row of rows) {
+          for (const sourceRow of rows) {
+            const row = table === 'settings' ? withoutNotificationAcceptance(sourceRow) : sourceRow;
             if (table === 'settings' && row.key === ENTRY_DRAFT_KEY) continue;
             const columns: string[] = [];
             for (const key of Object.keys(row)) {

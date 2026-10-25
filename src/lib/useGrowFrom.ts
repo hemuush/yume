@@ -47,8 +47,15 @@ export function useGrowFrom(
   });
 
   useEffect(() => {
+    const changedKey = previous.current.key !== key;
+    const remembered = lastShown.get(key);
+    if (changedKey) {
+      v.stopAnimation();
+      v.setValue(remembered ?? 0);
+      drawn.current = remembered !== undefined;
+    }
     lastShown.set(key, target);
-    const unchanged = previous.current.key === key && previous.current.target === target;
+    const unchanged = changedKey ? remembered === target : previous.current.target === target;
     previous.current = { key, target };
     if (reduce || unchanged) {
       v.stopAnimation();

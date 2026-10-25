@@ -13,12 +13,22 @@ export const NOTIFICATION_ROUTES = [
 ] as const;
 export type NotificationRoute = (typeof NOTIFICATION_ROUTES)[number];
 
+/** A topic accepted for a slot; retained briefly so rebuilding later that day cannot repeat it. */
+export interface ScheduledReminder {
+  key: string;
+  at: string;
+  notificationId?: string;
+}
+
 /** A spending alert (a budget limit, a big jump) waiting for the next time. */
 export interface QueuedAlert {
   /** Stable per alert, so queuing the same one twice keeps one. */
   id: string;
   /** When it came up (ISO); it goes out at the first time on or after this. */
   queuedAt: string;
+  /** Slot accepted by the OS scheduler. Passing a requested time alone is not evidence of scheduling. */
+  scheduledFor?: string;
+  scheduledNotificationId?: string;
   title: string;
   body: string;
   extra: string;

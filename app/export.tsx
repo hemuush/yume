@@ -54,7 +54,11 @@ export default function ExportScreen() {
     setCurrency(cur);
     setMonths(list);
     // Keep a still-valid choice across reloads; otherwise open on the latest month.
-    setPeriod((old) => old ?? openPeriod(list, 'month', today));
+    setPeriod((old) =>
+      old && (old.kind === 'all' || previewFor(list, old).count > 0)
+        ? old
+        : openPeriod(list, old?.kind ?? 'month', today)
+    );
   }, [today]);
   const { loaded, hasData, loadError, reload } = useScreenLoad(load);
 
@@ -132,6 +136,9 @@ export default function ExportScreen() {
           },
         ]}
       >
+        {loadError && (
+          <ScreenLoadError title="Export" message={loadError} onRetry={() => void reload()} embedded />
+        )}
         <Glass radius={28} tone="strong" style={styles.card}>
           <Text style={styles.label}>Period</Text>
           <SegmentedControl

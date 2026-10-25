@@ -248,39 +248,43 @@ export async function createAccount(input: {
   const id = newId();
   const currency = input.currency ?? (await getDefaultCurrency());
   const isInvestment = input.type === 'savings' && !!input.tracked;
-  const links = await resolveInvestmentLinks(
-    db,
-    null,
-    currency,
-    isInvestment,
-    input.investmentKind,
-    input.fundingAccountId
-  );
-  await db.runAsync(
-    `INSERT INTO accounts
-      (id, name, type, currency, opening_balance_minor, credit_limit_minor, statement_day, due_day, interest_rate_annual_bp, tracked, investment_kind, funding_account_id, min_due_bp, min_due_floor_minor, units, maturity_date)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [
-      id,
-      input.name.trim(),
-      input.type,
+  let created: Account | null = null;
+  await db.withTransactionAsync(async (tx) => {
+    const links = await resolveInvestmentLinks(
+      tx,
+      null,
       currency,
-      input.openingBalanceMinor ?? 0,
-      input.creditLimitMinor ?? null,
-      input.statementDay ?? null,
-      input.dueDay ?? null,
-      (isInvestment ? input.rateBp : input.interestRateAnnualBp) ?? null,
-      isInvestment ? 1 : 0,
-      links.kind,
-      links.fundingAccountId,
-      input.type === 'credit_card' ? (input.minDueBp ?? null) : null,
-      input.type === 'credit_card' ? (input.minDueFloorMinor ?? null) : null,
-      isInvestment ? (input.units ?? null) : null,
-      isInvestment ? (input.maturityDate ?? null) : null,
-    ]
-  );
-  const row = await db.getFirstAsync<AccountRow>('SELECT * FROM accounts WHERE id = ?', [id]);
-  return rowToAccount(found(row, 'account'));
+      isInvestment,
+      input.investmentKind,
+      input.fundingAccountId
+    );
+    await tx.runAsync(
+      `INSERT INTO accounts
+        (id, name, type, currency, opening_balance_minor, credit_limit_minor, statement_day, due_day, interest_rate_annual_bp, tracked, investment_kind, funding_account_id, min_due_bp, min_due_floor_minor, units, maturity_date)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        id,
+        input.name.trim(),
+        input.type,
+        currency,
+        input.openingBalanceMinor ?? 0,
+        input.creditLimitMinor ?? null,
+        input.statementDay ?? null,
+        input.dueDay ?? null,
+        (isInvestment ? input.rateBp : input.interestRateAnnualBp) ?? null,
+        isInvestment ? 1 : 0,
+        links.kind,
+        links.fundingAccountId,
+        input.type === 'credit_card' ? (input.minDueBp ?? null) : null,
+        input.type === 'credit_card' ? (input.minDueFloorMinor ?? null) : null,
+        isInvestment ? (input.units ?? null) : null,
+        isInvestment ? (input.maturityDate ?? null) : null,
+      ]
+    );
+    const row = await tx.getFirstAsync<AccountRow>('SELECT * FROM accounts WHERE id = ?', [id]);
+    created = rowToAccount(found(row, 'account'));
+  });
+  return found<Account>(created, 'account');
 }
 
 interface UpdateAccountInput {

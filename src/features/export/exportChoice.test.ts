@@ -7,6 +7,15 @@ const months = [
 ];
 
 describe('export picker choices', () => {
+  it('nets refunds across the selected period before clamping the displayed spending', () => {
+    const refunded = [
+      { month: '2026-09', count: 1, spentMinor: -5000 },
+      { month: '2026-07', count: 1, spentMinor: 10000 },
+    ];
+    expect(previewFor(refunded, { kind: 'month', year: 2026, month: 9 }).spentMinor).toBe(0);
+    expect(previewFor(refunded, { kind: 'year', year: 2026 }).spentMinor).toBe(5000);
+    expect(previewFor(refunded, { kind: 'all' }).spentMinor).toBe(5000);
+  });
   it('previews a month, a year and everything', () => {
     expect(previewFor(months, { kind: 'month', year: 2026, month: 9 })).toEqual({
       count: 312,

@@ -9,9 +9,18 @@ jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMoc
 jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
 }));
+const mockFocusCallbacks = new Set<() => void>();
 jest.mock('expo-router', () => ({
   router: { replace: jest.fn(), push: jest.fn() },
-  useFocusEffect: (cb: () => void) => require('react').useEffect(cb, [cb]),
+  useFocusEffect: (cb: () => (() => void) | void) =>
+    require('react').useEffect(() => {
+      const cleanup = cb();
+      if (!cleanup) mockFocusCallbacks.add(cb);
+      return () => {
+        mockFocusCallbacks.delete(cb);
+        cleanup?.();
+      };
+    }, [cb]),
 }));
 jest.mock('@/theme/AccentContext', () => ({
   useAccent: () => ({ accent: '#A6B4F2', secondary: '#F0B79A', dot: '#F0B79A', onAccent: '#12130F' }),
@@ -63,6 +72,7 @@ const createButton = (tree: ReactTestRenderer) =>
   tree.root.find((n) => /^Create /.test(n.props.title ?? '') && typeof n.props.onPress === 'function');
 
 beforeEach(() => {
+  mockFocusCallbacks.clear();
   mockMonths.mockResolvedValue(MONTHS);
   mockPdf.mockResolvedValue({ bytes: new Uint8Array([1]), pageCount: 3 });
   mockXlsx.mockResolvedValue(new Uint8Array([2]));
@@ -72,6 +82,48 @@ beforeEach(() => {
 });
 
 describe('Reports & exports', () => {
+  const refresh = async () => {
+    await act(async () => {
+      for (const focus of mockFocusCallbacks) focus();
+    });
+  };
+
+  it('shows a refresh failure beside the loaded period and retries', async () => {
+    const tree = await render();
+    mockMonths.mockRejectedValueOnce(new Error('Database busy'));
+    await refresh();
+    expect(texts(tree)).toContain('Database busy');
+    expect(texts(tree)).toContain('September 2026');
+    await act(async () => {
+      tree.root.find((n) => n.props.title === 'Retry' && n.props.onPress).props.onPress();
+    });
+    expect(texts(tree)).not.toContain('Database busy');
+  });
+
+  it('chooses an available month when the old month disappears', async () => {
+    const tree = await render();
+    mockMonths.mockResolvedValue([{ month: '2025-12', count: 2, spentMinor: 5000 }]);
+    await refresh();
+    expect(texts(tree)).toContain('December 2025');
+    expect(createButton(tree).props.disabled).toBe(false);
+  });
+
+  it('retains a month that still has entries when newer data arrives', async () => {
+    const tree = await render();
+    mockMonths.mockResolvedValue([{ month: '2026-10', count: 1, spentMinor: 1000 }, ...MONTHS]);
+    await refresh();
+    expect(texts(tree)).toContain('September 2026');
+  });
+
+  it('retains the year kind when the old year disappears', async () => {
+    const tree = await render();
+    act(() => segmented(tree, 'month').props.onChange('year'));
+    mockMonths.mockResolvedValue([{ month: '2025-12', count: 2, spentMinor: 5000 }]);
+    await refresh();
+    expect(texts(tree)).toContain('2025');
+    expect(segmented(tree, 'month').props.value).toBe('year');
+  });
+
   it('opens on the latest month with entries and says what is in it', async () => {
     const tree = await render();
     expect(texts(tree)).toContain('September 2026');

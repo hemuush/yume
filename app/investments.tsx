@@ -170,6 +170,9 @@ export default function InvestmentsScreen() {
           paddingBottom: theme.layout.screenScrollPad + insets.bottom,
         }}
       >
+        {loadError && (
+          <ScreenLoadError title="Investments" message={loadError} onRetry={() => void reload()} embedded />
+        )}
         {none ? (
           <StartTracking onAdd={() => setAdding(true)} />
         ) : (

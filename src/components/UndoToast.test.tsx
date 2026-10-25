@@ -48,6 +48,52 @@ function render() {
 }
 
 describe('UndoToast', () => {
+  it('consumes a rapid double tap once without dismissing the next queued toast', () => {
+    const tree = render();
+    const first = jest.fn();
+    const second = jest.fn();
+    act(() => {
+      show('Deleted A', first);
+      show('Deleted B', second);
+    });
+    const press = undoButton(tree)!.props.onPress;
+    act(() => {
+      press();
+      press();
+    });
+    expect(first).toHaveBeenCalledTimes(1);
+    expect(second).not.toHaveBeenCalled();
+    expect(texts(tree)).toContain('Deleted B');
+    act(() => tree.unmount());
+  });
+
+  it('ignores an expired button while the next toast is visible', () => {
+    const tree = render();
+    const first = jest.fn();
+    act(() => show('Deleted A', first));
+    const press = undoButton(tree)!.props.onPress;
+    act(() => show('Deleted B', jest.fn()));
+    act(() => jest.advanceTimersByTime(4000));
+    act(() => press());
+    expect(first).not.toHaveBeenCalled();
+    expect(texts(tree)).toContain('Deleted B');
+    act(() => tree.unmount());
+  });
+
+  it('cancels its dismissal timer on unmount', () => {
+    const tree = render();
+    const schedule = jest.spyOn(global, 'setTimeout');
+    const cancel = jest.spyOn(global, 'clearTimeout');
+    act(() => show('Deleted A', jest.fn()));
+    const timerIndex = schedule.mock.calls.findIndex((args) => args[1] === 4000);
+    const timer = schedule.mock.results[timerIndex].value;
+    act(() => show('Deleted B', jest.fn()));
+    act(() => tree.unmount());
+    expect(cancel).toHaveBeenCalledWith(timer);
+    schedule.mockRestore();
+    cancel.mockRestore();
+  });
+
   it('announces the message for TalkBack when it appears', () => {
     const tree = render();
     expect(announce).not.toHaveBeenCalled();

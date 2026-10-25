@@ -13,13 +13,23 @@ import {
   subscribeToNotificationTaps,
   NOTIFICATION_ROUTES,
 } from './notifications';
-import { getAlertQueue, getNotificationPrefs, setAlertQueue } from '@/db/settings';
+import {
+  getAlertQueue,
+  getNotificationPrefs,
+  setAlertQueue,
+  getScheduledReminders,
+  setScheduledReminders,
+} from '@/db/settings';
 import { hasLoggedOn, listLoansDue, listReminderAttention } from '@/db/notificationData';
 import { addDaysToIsoDate, toLocalIsoDate } from './date';
 
 jest.mock('@/db/settings', () => ({
   getHideSensitiveAmounts: jest.fn(async () => false),
+  getCachedCurrency: () => 'INR',
   getNotificationPrefs: jest.fn(),
+  getScheduledReminders: jest.fn(async () => []),
+  setScheduledReminders: jest.fn(),
+  setNotificationPermissionAsked: jest.fn(),
   getAlertQueue: jest.fn(),
   setAlertQueue: jest.fn(),
 }));
@@ -118,6 +128,8 @@ describe('rebuildNotifications', () => {
     jest.mocked(getNotificationPrefs).mockResolvedValue(prefs);
     jest.mocked(getAlertQueue).mockResolvedValue([]);
     jest.mocked(setAlertQueue).mockResolvedValue(undefined);
+    jest.mocked(getScheduledReminders).mockResolvedValue([]);
+    jest.mocked(setScheduledReminders).mockResolvedValue(undefined);
     jest.mocked(listLoansDue).mockResolvedValue([]);
     jest.mocked(hasLoggedOn).mockResolvedValue(false);
     jest.mocked(listReminderAttention).mockResolvedValue([]);
@@ -186,7 +198,7 @@ describe('rebuildNotifications', () => {
     ).toBe(true);
   });
 
-  it('does not cancel an existing matching reminder when replacing it fails', async () => {
+  it('cancels an existing matching reminder when replacing its potentially stale details fails', async () => {
     await rebuildNotifications();
     const id = N.scheduleNotificationAsync.mock.calls[0][0].identifier!;
     N.getAllScheduledNotificationsAsync.mockResolvedValue([scheduled(id)]);
@@ -194,7 +206,7 @@ describe('rebuildNotifications', () => {
     N.scheduleNotificationAsync.mockRejectedValueOnce(new Error('temporary scheduling failure'));
     const error = jest.spyOn(console, 'error').mockImplementation(() => {});
     expect(await rebuildNotifications()).toBe(false);
-    expect(N.cancelScheduledNotificationAsync).not.toHaveBeenCalledWith(id);
+    expect(N.cancelScheduledNotificationAsync).toHaveBeenCalledWith(id);
     error.mockRestore();
   });
 
@@ -232,10 +244,12 @@ describe('rebuildNotifications', () => {
   });
 
   it('reports that enabled reminders cannot be scheduled without permission', async () => {
+    N.getAllScheduledNotificationsAsync.mockResolvedValue([scheduled('yume-private'), scheduled('other')]);
     N.getPermissionsAsync.mockResolvedValue({ granted: false } as any);
     expect(await rebuildNotifications()).toBe(false);
     expect(N.scheduleNotificationAsync).not.toHaveBeenCalled();
-    expect(N.cancelScheduledNotificationAsync).not.toHaveBeenCalled();
+    expect(N.cancelScheduledNotificationAsync).toHaveBeenCalledWith('yume-private');
+    expect(N.cancelScheduledNotificationAsync).not.toHaveBeenCalledWith('other');
     expect(setAlertQueue).not.toHaveBeenCalled();
   });
 
@@ -273,6 +287,107 @@ describe('rebuildNotifications', () => {
     });
     await Promise.all([rebuildNotifications(), rebuildNotifications()]);
     expect(order).toEqual(['start', 'end', 'start', 'end']);
+  });
+
+  it('keeps rejected spending alerts retryable and marks only accepted slots', async () => {
+    jest.useFakeTimers();
+    const errors = jest.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      jest.setSystemTime(new Date(2026, 9, 3, 7));
+      const alert = {
+        id: 'alert',
+        queuedAt: new Date(2026, 9, 3, 6).toISOString(),
+        title: 'Food alert',
+        body: 'Food budget',
+        extra: 'Food budget',
+        route: '/budgets' as const,
+      };
+      jest.mocked(getAlertQueue).mockResolvedValue([alert]);
+      N.scheduleNotificationAsync.mockRejectedValueOnce(new Error('Scheduling unavailable'));
+      expect(await rebuildNotifications()).toBe(false);
+      // Its first requested slot passed, but no acceptance was saved, so retry at Evening.
+      jest.setSystemTime(new Date(2026, 9, 3, 10));
+      N.scheduleNotificationAsync.mockClear();
+      expect(await rebuildNotifications()).toBe(true);
+      expect(N.scheduleNotificationAsync).toHaveBeenCalledWith(
+        expect.objectContaining({
+          identifier: 'yume-2026-10-03-evening',
+          content: expect.objectContaining({ title: 'Food alert' }),
+        })
+      );
+      expect(setAlertQueue).toHaveBeenLastCalledWith(
+        [
+          {
+            ...alert,
+            scheduledFor: new Date(2026, 9, 3, 20).toISOString(),
+            scheduledNotificationId: 'yume-2026-10-03-evening',
+          },
+        ],
+        [alert]
+      );
+    } finally {
+      jest.useRealTimers();
+      errors.mockRestore();
+    }
+  });
+
+  it('persists topic acceptance and avoids repeating a morning EMI after a later rebuild', async () => {
+    jest.useFakeTimers();
+    try {
+      jest.setSystemTime(new Date(2026, 9, 3, 7));
+      jest
+        .mocked(listLoansDue)
+        .mockResolvedValue([{ id: 'loan', dueDate: '2026-10-03', counterparty: 'Bank', emiMinor: 1000 }]);
+      expect(await rebuildNotifications()).toBe(true);
+      const receipts = jest.mocked(setScheduledReminders).mock.calls.at(-1)![0];
+      expect(receipts).toContainEqual({
+        key: '2026-10-03:emi:loan',
+        at: new Date(2026, 9, 3, 9).toISOString(),
+        notificationId: 'yume-2026-10-03-morning',
+      });
+      jest.mocked(getScheduledReminders).mockResolvedValue(receipts);
+      jest.setSystemTime(new Date(2026, 9, 3, 10));
+      N.scheduleNotificationAsync.mockClear();
+      expect(await rebuildNotifications()).toBe(true);
+      expect(N.scheduleNotificationAsync).toHaveBeenCalledWith(
+        expect.objectContaining({
+          identifier: 'yume-2026-10-03-evening',
+          content: expect.objectContaining({ title: 'Before you call it a day' }),
+        })
+      );
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('moves a delayed pending EMI to the next slot without retaining a false elapsed receipt', async () => {
+    jest.useFakeTimers();
+    try {
+      jest.setSystemTime(new Date(2026, 9, 3, 10));
+      jest
+        .mocked(listLoansDue)
+        .mockResolvedValue([{ id: 'loan', dueDate: '2026-10-03', counterparty: 'Bank', emiMinor: 1000 }]);
+      jest.mocked(getScheduledReminders).mockResolvedValue([
+        {
+          key: '2026-10-03:emi:loan',
+          at: new Date(2026, 9, 3, 9).toISOString(),
+          notificationId: 'yume-2026-10-03-morning',
+        },
+      ]);
+      N.getAllScheduledNotificationsAsync.mockResolvedValue([scheduled('yume-2026-10-03-morning')]);
+      expect(await rebuildNotifications()).toBe(true);
+      expect(N.cancelScheduledNotificationAsync).toHaveBeenCalledWith('yume-2026-10-03-morning');
+      const receipts = jest.mocked(setScheduledReminders).mock.calls.at(-1)![0];
+      expect(receipts.filter((item) => item.key === '2026-10-03:emi:loan')).toEqual([
+        {
+          key: '2026-10-03:emi:loan',
+          at: new Date(2026, 9, 3, 20).toISOString(),
+          notificationId: 'yume-2026-10-03-evening',
+        },
+      ]);
+    } finally {
+      jest.useRealTimers();
+    }
   });
 });
 
@@ -337,7 +452,7 @@ describe('notification delivery checks', () => {
     await expect(sendTestNotification()).rejects.toThrow('Allow Yume notifications');
     expect(N.scheduleNotificationAsync).not.toHaveBeenCalled();
   });
-  it('reports a blocked Android channel as a scheduling failure without clearing queued alerts', async () => {
+  it('reports a blocked channel, cancels stale payloads and prunes only expired alerts', async () => {
     jest.mocked(getNotificationPrefs).mockResolvedValue({
       morningEnabled: true,
       morningHour: 9,
@@ -365,8 +480,13 @@ describe('notification delivery checks', () => {
     N.getNotificationChannelAsync.mockResolvedValue({
       importance: Notifications.AndroidImportance.NONE,
     } as any);
+    N.getAllScheduledNotificationsAsync.mockResolvedValue([{ identifier: 'yume-private' }] as any);
     expect(await rebuildNotifications()).toBe(false);
     expect(N.scheduleNotificationAsync).not.toHaveBeenCalled();
-    expect(setAlertQueue).not.toHaveBeenCalled();
+    expect(N.cancelScheduledNotificationAsync).toHaveBeenCalledWith('yume-private');
+    expect(setAlertQueue).toHaveBeenCalledWith(
+      [],
+      expect.arrayContaining([expect.objectContaining({ id: 'old' })])
+    );
   });
 });

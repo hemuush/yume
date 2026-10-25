@@ -26,7 +26,7 @@ export interface NeedsYouItem {
 
 export interface NeedsYouInput {
   /** The nearest pending EMI across active borrowed loans (getNextDueInstallment). */
-  nextDue: { counterparty: string; dueDate: string; emiAmountMinor: number } | null;
+  nextDue: { loanId: string; counterparty: string; dueDate: string; emiAmountMinor: number } | null;
   /** This month's budgets (listBudgetsForMonth), any order. */
   budgets: {
     budget: { id: string };
@@ -92,14 +92,14 @@ export function buildNeedsYouItems(input: NeedsYouInput): NeedsYouItem[] {
       const late = -days;
       items.push({
         ...base,
-        key: `emi-${input.nextDue.dueDate}-due`,
+        key: `emi-${input.nextDue.loanId}-${input.nextDue.dueDate}-due`,
         tone: 'urgent',
         detail: late === 0 ? 'Due today' : `Overdue by ${late} day${late === 1 ? '' : 's'}`,
       });
     } else if (days <= UPCOMING_EMI_DAYS) {
       items.push({
         ...base,
-        key: `emi-${input.nextDue.dueDate}-${days <= EMI_SOON_DAYS ? 'soon' : 'upcoming'}`,
+        key: `emi-${input.nextDue.loanId}-${input.nextDue.dueDate}-${days <= EMI_SOON_DAYS ? 'soon' : 'upcoming'}`,
         tone: days <= EMI_SOON_DAYS ? 'warn' : 'info',
         detail: days === 1 ? 'Due tomorrow' : `Due in ${days} days`,
       });

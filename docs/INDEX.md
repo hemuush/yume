@@ -1,5 +1,9 @@
 # Documentation index
 
+See the [25 October shared interaction audit](INTERACTION_AUDIT_2026_10_25.md) for focused Undo, period-picker recovery and progress-animation corrections, fresh validation and device limits.
+
+The [24 October repository audit](CODE_AUDIT_2026_10_24.md) records creation rollback, UI refresh recovery, export/refund reconciliation, loan alert identity, investment chart performance and Windows native-check corrections, with a per-file coverage inventory and explicit device limits.
+
 The [23 October recreated Expo account setup](EAS_ACCOUNT_SETUP_2026_10_23.md) records the current EAS project, approved fresh Android signing key, version-code 1 baseline and configuration verification. Earlier account/build records refer to their historical project identities.
 
 The [23 October Android audit verification](ANDROID_AUDIT_VERIFICATION_2026_10_23.md) tracks implemented fixes, fresh checks, the final installable APK and remaining phone acceptance. The [original audit](ANDROID_PRODUCTION_AUDIT_2026_10_23.md) preserves the architecture, scores, baseline source references and fault reproduction before those fixes. Historical widget-validation results remain distinct from fresh verification and Android acceptance.
@@ -16,7 +20,7 @@ The [19 October audit fixes](AUDIT_FIXES_2026_10_19.md) records the earlier eigh
 
 See the [16 October app audit](APP_AUDIT_2026_10_16.md) for popup validation, preference-race fixes, startup privacy gating and outstanding device checks.
 
-See [16 October morning notification fix](NOTIFICATION_FIX_2026_10_16.md) for current reminder behaviour, corrections and verification limits.
+See the [24 October end-to-end notification audit](NOTIFICATION_AUDIT_2026_10_24.md) for current UI, permissions, scheduling, privacy, retry and restore behavior and fresh verification limits. The [16 October morning notification fix](NOTIFICATION_FIX_2026_10_16.md) preserves the earlier behavior and validation record.
 
 See [14 October release readiness](RELEASE_READINESS_2026_10_14.md) for the latest local audit, fixes, fresh validation and remaining release gates.
 
