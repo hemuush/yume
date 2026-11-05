@@ -35,6 +35,7 @@ const mockLedger = {
   transactions: [] as Transaction[],
   accounts: [{ id: 'bank', name: 'Bank', type: 'bank' }] as Account[],
 };
+const mockSearchTransactions = jest.fn(async (..._args: unknown[]): Promise<Transaction[]> => []);
 jest.mock('@/db/reports', () => ({
   getRangeComparison: async () => {
     await mockComparison.wait;
@@ -54,7 +55,7 @@ jest.mock('@/db/ledger', () => ({
   listTransactions: async () => mockLedger.transactions,
   listAccounts: async () => mockLedger.accounts,
   listCategories: async () => [],
-  searchTransactions: async () => [],
+  searchTransactions: (...args: unknown[]) => mockSearchTransactions(...args),
   setDayOrder: jest.fn(),
 }));
 
@@ -70,6 +71,8 @@ afterEach(() => {
   mounted = null;
   mockLedger.transactions = [];
   mockLedger.accounts = [{ id: 'bank', name: 'Bank', type: 'bank' }] as Account[];
+  mockSearchTransactions.mockReset();
+  mockSearchTransactions.mockResolvedValue([]);
 });
 
 async function render() {
@@ -83,6 +86,36 @@ async function render() {
   });
   return tree;
 }
+
+it('clears search in place and ignores results from the cleared query', async () => {
+  const { HeaderIconButton } = require('@/components/AppHeader');
+  const { TextInput } = require('@/components/Text');
+  const { SearchStatus } = require('./ActivityFilterChips');
+  let resolveSearch!: (rows: Transaction[]) => void;
+  mockSearchTransactions.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        resolveSearch = resolve;
+      })
+  );
+  const tree = await render();
+  const headerAction = (label: string) =>
+    tree.root.findAllByType(HeaderIconButton).find((n) => n.props.label === label)!;
+  act(() => headerAction('Search transactions').props.onPress());
+  act(() => tree.root.findByType(TextInput).props.onChangeText('coffee'));
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 350));
+  });
+  expect(mockSearchTransactions).toHaveBeenCalledWith('coffee', 50);
+  act(() => headerAction('Clear search').props.onPress());
+  expect(tree.root.findByType(TextInput).props.value).toBe('');
+  expect(headerAction('Close search')).toBeDefined();
+  await act(async () => {
+    resolveSearch([{ id: 'stale' } as Transaction]);
+  });
+  expect(tree.root.findByType(SearchStatus).props.resultCount).toBe(0);
+  expect(tree.root.findByType(SearchStatus).props.loading).toBe(false);
+});
 
 describe('Activity when the totals query fails', () => {
   it("leaves the skeleton and says the totals couldn't load", async () => {

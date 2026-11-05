@@ -212,7 +212,12 @@ export function YouSection() {
         right={<AddButton onPress={() => setAddAccountVisible(true)} label="+ Account" />}
       >
         {accounts.length === 0 ? (
-          <EmptyState title="No accounts yet" subtitle="Tap + Account to create one." />
+          <EmptyState
+            title="Add your first account"
+            subtitle="Track a bank account, cash or wallet. Use its current balance as your starting balance."
+          >
+            <PrimaryButton title="Add an account" onPress={() => setAddAccountVisible(true)} />
+          </EmptyState>
         ) : (
           <View style={styles.accountGroups}>
             {groups.map((group) => (

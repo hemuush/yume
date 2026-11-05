@@ -676,7 +676,13 @@ export default function ReportsScreen() {
                   ? 'Money in is under Breakdown, and Trends shows the bigger picture.'
                   : 'Use the arrows to look back, or open Trends for recorded history.'
               }
-            />
+            >
+              <PrimaryButton
+                title={hasData ? 'View breakdown' : 'View trends'}
+                variant="secondary"
+                onPress={() => setTab(hasData ? 'cats' : 'trends')}
+              />
+            </EmptyState>
           ) : tab === 'days' ? (
             <>
               <ReportHero

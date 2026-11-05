@@ -964,10 +964,19 @@ export default function TransactionsScreen() {
                 placeholderTextColor={theme.colors.textMuted}
                 style={styles.searchInput}
                 autoFocus
+                autoCapitalize="none"
                 returnKeyType="search"
                 onSubmitEditing={() => rememberSearch(searchQuery)}
                 accessibilityLabel="Search transactions"
               />
+              {searchQuery.length > 0 && (
+                <HeaderIconButton
+                  icon="x"
+                  size={44}
+                  label="Clear search"
+                  onPress={() => setSearchQuery('')}
+                />
+              )}
             </View>
             <Pressable style={withPressed()} onPress={closeSearch} hitSlop={8} accessibilityRole="button">
               <Text style={styles.searchCancel}>Cancel</Text>
