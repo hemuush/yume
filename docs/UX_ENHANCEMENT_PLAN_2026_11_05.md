@@ -17,6 +17,20 @@ Validation for this pass: 367 Jest suites passed (11,798 tests; two existing ski
 
 ## Whole-app priorities
 
+### Follow-up: reports, planning, account setup and search
+
+- **Reports:** an empty spending Overview now opens Breakdown when the period has income, or Trends when the period has no entries. Both actions use the existing tabs and preserve the selected report period.
+- **Custom report ranges:** the selection instruction sits above the calendar and updates after choosing a start day. Calendar accessibility hints identify the next action; Next month exposes its disabled state. Existing backwards-range swapping, single-day ranges, quick picks and future-day limits are retained.
+- **Profile accounts:** the first-use explanation describes the starting balance and offers Add an account directly.
+- **Savings goals:** the active list's empty state offers Create a goal; the archived list retains its separate meaning. Cancelling the form leaves the goals unchanged.
+- **Activity search:** an explicit Clear search control empties the query while keeping search open. Existing query invalidation prevents a cleared query's delayed results from appearing.
+
+The follow-up source review also covered Add's header, detail chips, account/date sheets and category search; Plan's budget/goal prompts; report label search; settings preferences; shared segmented controls, tabs and modal/sheet motion. These already provide relevant direct actions or existing feedback, so this pass does not redesign them. Physical-device keyboard, focus, touch accuracy and frame pacing remain unverified.
+
+Follow-up validation: all 367 Jest suites passed (11,804 tests; two existing skips), along with typecheck, lint, formatting, import-cycle checks and Android JavaScript export. Focused cases cover both report recovery destinations, range selection guidance, direct account setup, goal cancellation and a search response arriving after its query is cleared. The [device acceptance checklist](RELEASE_DEVICE_CHECKS.md) records remaining hands-on checks as Not run.
+
+### Remaining journey priorities
+
 | Journey / surface            | Enhancement direction                                                                                                                                                    | Acceptance criteria before broad redesign                                                                                  |
 | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
 | Welcome and account setup    | Explain what is stored locally, distinguish starting balance from income, and offer restore as a first-class alternative. Keep setup progressive instead of a long form. | Fresh install and restore reach a usable Home without duplicate accounts; keyboard and large text reach every action.      |

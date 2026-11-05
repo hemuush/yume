@@ -142,6 +142,9 @@ export function RangeSheet({
         })}
       </ScrollView>
 
+      <Text style={styles.instruction} accessibilityLiveRegion="polite">
+        {end ? 'Choose a start day, then an end day.' : `Start: ${dayMonthYear(start)}. Choose an end day.`}
+      </Text>
       <View style={styles.header}>
         <Pressable
           onPress={() => stepMonth(-1)}
@@ -156,6 +159,7 @@ export function RangeSheet({
         <Pressable
           onPress={() => canNext && stepMonth(1)}
           disabled={!canNext}
+          accessibilityState={{ disabled: !canNext }}
           hitSlop={10}
           style={withPressed([styles.navBtn, !canNext && { opacity: 0.25 }])}
           accessibilityRole="button"
@@ -192,6 +196,7 @@ export function RangeSheet({
                 accessibilityRole="button"
                 accessibilityState={{ selected: isEnd || inside, disabled: future }}
                 accessibilityLabel={dayMonthYear(iso)}
+                accessibilityHint={end ? 'Sets the start of a new range' : 'Sets the end of the range'}
                 testID={`range-day-${iso}`}
               >
                 <View
@@ -219,6 +224,12 @@ export function RangeSheet({
 }
 
 const styles = StyleSheet.create({
+  instruction: {
+    fontFamily: theme.font.bodyMedium,
+    fontSize: 13,
+    color: theme.colors.textPrimary,
+    marginBottom: 12,
+  },
   picks: { gap: 8, paddingBottom: 14 },
   pick: {
     paddingHorizontal: 12,

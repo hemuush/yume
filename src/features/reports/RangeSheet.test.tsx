@@ -44,6 +44,21 @@ const texts = (tree: ReactTestRenderer) =>
   tree.root.findAllByType(Text).map((t) => [t.props.children].flat().join(''));
 
 describe('RangeSheet', () => {
+  it('explains the next selection before the calendar and updates after choosing a start', async () => {
+    const tree = await render();
+    try {
+      expect(texts(tree)).toContain('Choose a start day, then an end day.');
+      expect(day(tree, today).props.accessibilityHint).toBe('Sets the start of a new range');
+      act(() => day(tree, today).props.onPress());
+      expect(texts(tree).some((t) => t.startsWith('Start: ') && t.endsWith('Choose an end day.'))).toBe(true);
+      expect(day(tree, today).props.accessibilityHint).toBe('Sets the end of the range');
+      expect(show(tree).props.disabled).toBe(true);
+      act(() => day(tree, today).props.onPress());
+      expect(show(tree).props.disabled).toBe(false);
+    } finally {
+      act(() => tree.unmount());
+    }
+  });
   it('builds a range from two taps, swapping a backwards pair', async () => {
     const onApply = jest.fn();
     const tree = await render(onApply);

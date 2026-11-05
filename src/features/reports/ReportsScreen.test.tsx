@@ -341,6 +341,20 @@ describe('Reports screen', () => {
     (require('expo-router').router.push as jest.Mock).mockClear();
     (require('expo-router').router.navigate as jest.Mock).mockClear();
   });
+  it('opens recorded trends directly when the selected period has no entries', async () => {
+    const read = jest.mocked(getRangeComparison);
+    read.mockResolvedValueOnce({
+      period: 'month',
+      current: summary([]),
+      previous: summary([]),
+      incomeChangePct: null,
+      expenseChangePct: null,
+    });
+    const tree = await render();
+    await pressText(tree, 'View trends');
+    const { ReportTabs } = require('./ReportControls');
+    expect(tree.root.findByType(ReportTabs).props.value).toBe('trends');
+  });
   it('opens directly on Days with the period total, not Home’s full summary', async () => {
     const shown = texts(await render());
     expect(shown).toEqual(expect.arrayContaining(['Overview', 'Breakdown', 'Trends', 'Spending by day']));
@@ -765,6 +779,13 @@ describe('Reports screen', () => {
   describe('a period with income but no spending', () => {
     afterEach(() => {
       mockIncomeOnly.current = false;
+    });
+    it('opens the breakdown directly from the empty spending overview', async () => {
+      mockIncomeOnly.current = true;
+      const tree = await render();
+      await pressText(tree, 'View breakdown');
+      await pressText(tree, 'Income');
+      expect(texts(tree)).toEqual(expect.arrayContaining(['Where it came from', 'Salary']));
     });
     it('still shows the lenses and the income breakdown', async () => {
       mockIncomeOnly.current = true;
