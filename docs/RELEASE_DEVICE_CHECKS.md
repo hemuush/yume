@@ -1,5 +1,16 @@
 # Release device acceptance
 
+## UI/UX follow-up — 5 November 2026
+
+Use a build containing the [UI/UX follow-up](UX_ENHANCEMENT_PLAN_2026_11_05.md). Component tests and JavaScript export do not replace these checks.
+
+| Area             | Action                                                                                                                           | Expected result                                                                                                                   | Actual/status |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | ------------- |
+| First-use setup  | Open Profile without active accounts and Savings goals without active goals; open and cancel each setup form                     | Direct setup actions are readable and reachable; cancelling creates no records                                                    | Not run       |
+| Reports recovery | Open a period with only income, then a period with no entries; use the empty Overview action                                     | Breakdown or Trends opens in place and retains the selected period                                                                | Not run       |
+| Custom range     | Select a start/end, reverse the dates, select one day twice and use a quick pick; repeat with TalkBack                           | Instruction stays visible above the calendar, explains the next selection and announces changes; disabled Next month is announced | Not run       |
+| Search recovery  | Enter a long query, clear it while results load, type again and close search; repeat with keyboard, 200% text and reduced motion | Clear remains reachable, keeps search open and does not show old results; keyboard and text stay usable                           | Not run       |
+
 ## Reported startup issues — 25 October 2026
 
 Use a newly built APK containing the [startup corrections](STARTUP_FIXES_2026_10_25.md), not an older binary with updated JavaScript.

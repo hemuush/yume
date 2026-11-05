@@ -144,6 +144,12 @@ export default function TransactionsScreen() {
   const { collapse, headerHeight, collapsedHeight, scrollHandler, scrollRef } =
     useCollapsingHeader<FlatListInstance>();
   useTabScrollToTop(scrollRef);
+  const clearFilters = useCallback(() => {
+    setFilterType('all');
+    setFilterLabel(undefined);
+    setFilterCategoryIds([]);
+    setFilterAccountIds([]);
+  }, []);
   // Which stacked lines ("Food & Dining ×5") are open lives here, not in TimelineDay: FlatList unmounts
   // off-screen rows, and local state there would silently close a stack the user opened.
   const [openStacks, setOpenStacks] = useState<Set<string>>(new Set());
@@ -854,12 +860,7 @@ export default function TransactionsScreen() {
                     accountName={accountName}
                     onRemoveCategory={(id) => setFilterCategoryIds((ids) => ids.filter((x) => x !== id))}
                     onRemoveAccount={(id) => setFilterAccountIds((ids) => ids.filter((x) => x !== id))}
-                    onClearAll={() => {
-                      setFilterType('all');
-                      setFilterLabel(undefined);
-                      setFilterCategoryIds([]);
-                      setFilterAccountIds([]);
-                    }}
+                    onClearAll={clearFilters}
                   />
 
                   {/* The same Suu empty state as every other screen, not a bare line of grey text. */}
@@ -867,7 +868,12 @@ export default function TransactionsScreen() {
                     <EmptyState title="No accounts yet" subtitle="Add an account before recording entries." />
                   )}
                   {accounts.length > 0 && transactions.length > 0 && groupedDays.length === 0 && (
-                    <EmptyState title="Nothing matches" subtitle="Try removing a filter above." />
+                    <EmptyState
+                      title="No entries match these filters"
+                      subtitle="Clear the filters to see this period’s entries."
+                    >
+                      <PrimaryButton title="Clear filters" variant="secondary" onPress={clearFilters} />
+                    </EmptyState>
                   )}
                   {accounts.length > 0 && transactions.length === 0 && (
                     <EmptyState
@@ -958,10 +964,19 @@ export default function TransactionsScreen() {
                 placeholderTextColor={theme.colors.textMuted}
                 style={styles.searchInput}
                 autoFocus
+                autoCapitalize="none"
                 returnKeyType="search"
                 onSubmitEditing={() => rememberSearch(searchQuery)}
                 accessibilityLabel="Search transactions"
               />
+              {searchQuery.length > 0 && (
+                <HeaderIconButton
+                  icon="x"
+                  size={44}
+                  label="Clear search"
+                  onPress={() => setSearchQuery('')}
+                />
+              )}
             </View>
             <Pressable style={withPressed()} onPress={closeSearch} hitSlop={8} accessibilityRole="button">
               <Text style={styles.searchCancel}>Cancel</Text>

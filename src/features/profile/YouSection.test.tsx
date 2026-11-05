@@ -123,6 +123,21 @@ beforeAll(async () => {
 const openTracked = (tree: ReactTestRenderer) => press(tree, 'Tracked balance');
 
 describe('Profile · You section', () => {
+  it('opens account setup from the first-use explanation', async () => {
+    const { listAccounts } = require('@/db/ledger');
+    listAccounts.mockResolvedValueOnce([]);
+    const tree = await render();
+    const { PrimaryButton } = require('@/components/PrimaryButton');
+    const { AddAccountModal } = require('./AddAccountModal');
+    try {
+      const add = tree.root.findAllByType(PrimaryButton).find((n) => n.props.title === 'Add an account');
+      expect(add).toBeDefined();
+      act(() => add!.props.onPress());
+      expect(tree.root.findByType(AddAccountModal).props.visible).toBe(true);
+    } finally {
+      act(() => tree.unmount());
+    }
+  });
   it('leads with what is in your accounts, and keeps the tracked balance to one line', async () => {
     const shown = texts(await render());
     // ₹99,999 − ₹5,00,000 + ₹2,500 = −₹3,97,501, built from the lines as shown.

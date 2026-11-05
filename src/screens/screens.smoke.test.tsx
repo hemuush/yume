@@ -1086,3 +1086,54 @@ it('renders Home financial content while secondary housekeeping is still pending
     subscription.mockRestore();
   }
 });
+
+it('opens goal setup from the empty state without creating a goal on cancel', async () => {
+  const { AppState } = require('react-native');
+  const subscription = jest.spyOn(AppState, 'addEventListener').mockReturnValue({ remove: jest.fn() });
+  await freshDb();
+  mockHide = false;
+  mockParams = {};
+  const { listSavingsGoals } = require('@/db/savingsGoals');
+  const tree = await open(SCREENS.find(([name]) => name === 'savings goals')![1]);
+  try {
+    const { PrimaryButton } = require('@/components/PrimaryButton');
+    const { AddGoalModal } = require('@/features/goals/AddGoalModal');
+    act(() =>
+      tree.root
+        .findAllByType(PrimaryButton)
+        .find((n) => n.props.title === 'Create a goal')!
+        .props.onPress()
+    );
+    expect(tree.root.findByType(AddGoalModal).props.visible).toBe(true);
+    act(() => tree.root.findByType(AddGoalModal).props.onClose());
+    expect(tree.root.findByType(AddGoalModal).props.visible).toBe(false);
+    expect(await listSavingsGoals()).toEqual([]);
+  } finally {
+    act(() => tree.unmount());
+    subscription.mockRestore();
+  }
+});
+
+it('opens recurring setup from the first-use call to action', async () => {
+  const { AppState } = require('react-native');
+  const subscription = jest.spyOn(AppState, 'addEventListener').mockReturnValue({ remove: jest.fn() });
+  await freshDb();
+  mockHide = false;
+  mockParams = {};
+  await createAccount({ name: 'Bank', type: 'bank', currency: 'INR', openingBalanceMinor: 0 });
+  const tree = await open(SCREENS.find(([name]) => name === 'recurring')![1]);
+  try {
+    const { PrimaryButton } = require('@/components/PrimaryButton');
+    const { RuleModal } = require('@/features/recurring/RuleModal');
+    act(() =>
+      tree.root
+        .findAllByType(PrimaryButton)
+        .find((n) => n.props.title === 'Add a recurring entry')!
+        .props.onPress()
+    );
+    expect(tree.root.findByType(RuleModal).props.visible).toBe(true);
+  } finally {
+    act(() => tree.unmount());
+    subscription.mockRestore();
+  }
+});
