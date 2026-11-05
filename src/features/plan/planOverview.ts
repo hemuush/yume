@@ -168,6 +168,7 @@ export interface PlanDueItem {
   route: '/loans' | '/recurring' | PayCardRoute;
   /** Set on an EMI — Coming up's Paid button records that loan's next installment. */
   loanId?: string;
+  nextInstallment?: boolean;
   ruleId?: string;
   /** Set on a transfer that leaves or re-enters your spending accounts. */
   transfer?: DueTransfer;
@@ -190,20 +191,28 @@ export function buildDueItems(
   rules: PlanRuleInput[],
   cardBills: PlanCardBillInput[] = [],
   /** The last day the screen shows (YYYY-MM-DD): a rule's runs up to it are listed, each on its own day. */
-  untilDate?: string
+  untilDate?: string,
+  loanPayments?: { id: string; loanId: string; dueDate: string; emiAmountMinor: number }[]
 ): PlanDueItem[] {
   const items: PlanDueItem[] = [];
   for (const l of loanRows) {
     if (l.direction !== 'borrowed' || !l.nextDueDate || l.nextEmiMinor == null) continue;
-    items.push({
-      key: `loan-${l.id}`,
-      title: l.name,
-      kind: 'emi',
-      dueDate: l.nextDueDate,
-      amountMinor: l.nextEmiMinor,
-      route: '/loans',
-      loanId: l.id,
-    });
+    const payments = loanPayments?.filter((p) => p.loanId === l.id) ?? [
+      { id: l.id, dueDate: l.nextDueDate, emiAmountMinor: l.nextEmiMinor },
+    ];
+    for (const [index, payment] of payments.entries()) {
+      if (untilDate && payment.dueDate > untilDate) continue;
+      items.push({
+        key: index === 0 ? `loan-${l.id}` : `loan-${l.id}-${payment.id}`,
+        nextInstallment: index === 0,
+        title: l.name,
+        kind: 'emi',
+        dueDate: payment.dueDate,
+        amountMinor: payment.emiAmountMinor,
+        route: '/loans',
+        loanId: l.id,
+      });
+    }
   }
   for (const r of rules) {
     if (!r.active) continue;

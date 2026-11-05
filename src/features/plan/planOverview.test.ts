@@ -381,3 +381,26 @@ it('preserves untracked days separately from missed daily goals', () => {
   expect(result.tracked).toEqual([false, true, true]);
   expect(result.dates).toEqual(['2026-10-08', '2026-10-09', '2026-10-10']);
 });
+
+it('includes all unpaid EMIs and permits payment only for the first', () => {
+  const rows = buildLoansSummary(
+    [
+      {
+        id: 'l1',
+        counterparty: 'Bank',
+        direction: 'borrowed',
+        status: 'active',
+        principalMinor: 1200000,
+        outstandingPrincipalMinor: 1200000,
+      },
+    ],
+    [{ loanId: 'l1', paidCount: 0, totalCount: 12, nextDueDate: '2026-11-01', nextEmiMinor: 100000 }]
+  ).rows;
+  const items = buildDueItems(rows, [], [], '2026-12-04', [
+    { id: 'nov', loanId: 'l1', dueDate: '2026-11-01', emiAmountMinor: 100000 },
+    { id: 'dec', loanId: 'l1', dueDate: '2026-12-01', emiAmountMinor: 100000 },
+  ]);
+  expect(items.map((i) => i.dueDate)).toEqual(['2026-11-01', '2026-12-01']);
+  expect(items.map((i) => i.nextInstallment)).toEqual([true, false]);
+  expect(new Set(items.map((i) => i.key)).size).toBe(2);
+});

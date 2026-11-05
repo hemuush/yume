@@ -2,10 +2,7 @@
 const { spawnSync } = require('node:child_process');
 
 // Each entry needs a reason. Remove it as soon as a patched release exists; the gate says so when the advisory disappears.
-const ALLOWED = {
-  'GHSA-86w9-cpqp-85rv':
-    'node-forge <=1.4.0 (latest release). Reached only through @expo/cli build tooling, never bundled into the app, and no patched version exists yet.',
-};
+const ALLOWED = {};
 
 function advisoriesOf(report) {
   const found = new Map();

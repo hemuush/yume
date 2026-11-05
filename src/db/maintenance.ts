@@ -2,7 +2,7 @@ import { getDb } from './client';
 
 /**
  * Settings data hygiene: rounds stored ledger amounts to whole rupees (old entries left sub-rupee paise).
- * Loan tables and loan-linked transactions are skipped: their exact paise make schedules sum to the principal.
+ * Loan-linked amounts and linked friend/account entries stay exact so their financial relationships agree.
  */
 
 // SQLite ROUND is half-away-from-zero, matching how amounts are displayed.
@@ -11,9 +11,14 @@ const ROUND_TO_RUPEE = (col: string) => `CAST(ROUND(${col} / 100.0) AS INTEGER) 
 /**
  * Ledger entries safe to round: not tied to a loan, and not an EMI payment (those are linked from the other side,
  * via loan_payments.transaction_id, and carry the exact paise that make the schedule sum to the principal).
+ * A linked friend entry may represent a partial IOU allocation, so preserve both sides rather than rounding
+ * them independently or replacing the IOU with the transaction's entire amount.
  */
 const ROUNDABLE_TRANSACTION = `loan_id IS NULL AND loan_payment_id IS NULL
-  AND NOT EXISTS (SELECT 1 FROM loan_payments lp WHERE lp.transaction_id = transactions.id)`;
+  AND NOT EXISTS (SELECT 1 FROM loan_payments lp WHERE lp.transaction_id = transactions.id)
+  AND NOT EXISTS (SELECT 1 FROM person_ledger_entries pe WHERE pe.transaction_id = transactions.id)`;
+
+const ROUNDABLE_PERSON_ENTRY = 'transaction_id IS NULL AND amount_minor % 100 != 0';
 
 interface RoundAmountsResult {
   transactions: number;
@@ -55,7 +60,7 @@ const ROUNDED_ROWS: {
     key: 'personLedgerEntries',
     table: 'person_ledger_entries',
     columns: ['amount_minor'],
-    where: 'amount_minor % 100 != 0',
+    where: ROUNDABLE_PERSON_ENTRY,
   },
   {
     key: 'recurringRules',
@@ -145,7 +150,7 @@ export async function roundLedgerAmountsToWholeRupees(): Promise<RoundAmountsOut
     await tx.runAsync(
       `UPDATE person_ledger_entries
          SET amount_minor = ${ROUND_TO_RUPEE('amount_minor')}
-       WHERE amount_minor % 100 != 0`
+       WHERE ${ROUNDABLE_PERSON_ENTRY}`
     );
     await tx.runAsync(
       `UPDATE recurring_rules

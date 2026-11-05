@@ -1,3 +1,4 @@
+import { contrastRatio } from '@/lib/color';
 import {
   createContext,
   useCallback,
@@ -13,17 +14,10 @@ import { THEMES, DEFAULT_THEME_ID, themeById } from './themes';
 import { theme } from '@/constants/theme';
 import { onSettingsRestored } from '@/lib/dataEvents';
 
-function hexToRgb(hex: string): [number, number, number] {
-  const clean = hex.replace('#', '');
-  return [parseInt(clean.slice(0, 2), 16), parseInt(clean.slice(2, 4), 16), parseInt(clean.slice(4, 6), 16)];
-}
-
-// Picks black or white text readable on the user's accent: light accents (white, mint, sky) need dark
-// text, dark ones (ink) need light text.
 function contrastColor(hex: string): string {
-  const [r, g, b] = hexToRgb(hex);
-  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  return luminance > 0.6 ? theme.colors.ink : theme.colors.surface;
+  return contrastRatio(hex, theme.colors.ink) >= contrastRatio(hex, theme.colors.surface)
+    ? theme.colors.ink
+    : theme.colors.surface;
 }
 
 interface AccentContextValue {

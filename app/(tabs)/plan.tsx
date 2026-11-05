@@ -12,7 +12,13 @@ import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { listBudgetsForMonth } from '@/db/budgets';
 import { listSavingsGoals } from '@/db/savingsGoals';
 import { listRecurringRules } from '@/db/recurring';
-import { listLoans, getLoanProgress, getLoanPaymentContext, LoanPaymentContext } from '@/db/loans';
+import {
+  listLoans,
+  listPendingLoanPayments,
+  getLoanProgress,
+  getLoanPaymentContext,
+  LoanPaymentContext,
+} from '@/db/loans';
 import { listPeople } from '@/db/people';
 import { listAccounts, listCategories } from '@/db/ledger';
 import { getDailyGoalStreakSeries, getCategoryMonthlyAverages } from '@/db/reports';
@@ -172,6 +178,7 @@ export default function PlanScreen() {
   const loadPlan = useCallback(async () => {
     const call = ++request.current;
     const today = toLocalIsoDate(new Date());
+    const until = addDaysToIsoDate(today, PLAN_DAYS - 1);
     const dailyGoalRead = getDailySpendingGoal();
     const [
       budgets,
@@ -187,6 +194,7 @@ export default function PlanScreen() {
       allCardCycles,
       streak,
       currency,
+      loanPayments,
     ] = await Promise.all([
       listBudgetsForMonth(undefined, hideAmounts),
       listSavingsGoals(),
@@ -202,6 +210,7 @@ export default function PlanScreen() {
       // The streak only needs the goal value, so it chains off the same read instead of waiting for the batch.
       dailyGoalRead.then((goal) => (goal != null ? getDailyGoalStreakSeries(goal, 5) : null)),
       getDefaultCurrency(),
+      listPendingLoanPayments(until),
     ]);
 
     if (call !== request.current) return;
@@ -260,13 +269,13 @@ export default function PlanScreen() {
       accounts,
       currency
     );
-    const until = addDaysToIsoDate(today, PLAN_DAYS - 1);
     // Every run in the fortnight Plan shows: a weekly bill is due twice in it, not once.
     const dueItems = buildDueItems(
       loansSummary.rows,
       visibleRules.map((r) => toRuleInput(r)),
       cardCycles,
-      until
+      until,
+      loanPayments
     );
     // The runway only moves with money in and out of bank, cash and wallets: a bill charged to a card waits for
     // the card's own bill, and a transfer counts when it crosses in or out of those accounts (a SIP to an
@@ -279,7 +288,7 @@ export default function PlanScreen() {
       }
       return runwayIds.has(r.accountId) ? [toRuleInput(r)] : [];
     });
-    const runwayItems = buildDueItems(loansSummary.rows, runwayRules, cardCycles, until);
+    const runwayItems = buildDueItems(loansSummary.rows, runwayRules, cardCycles, until, loanPayments);
     // The top-spend category (sorted biggest first) a cut could apply to: not a built-in like Loan EMI,
     // which the app files automatically — "spend 10% less on your EMI" isn't a real choice.
     const top = averages.find(

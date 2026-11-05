@@ -371,7 +371,7 @@ export function computeReport(input: ReportInput): Report {
     }
     for (const key of [...byMonth.keys()].sort()) {
       const m = byMonth.get(key)!;
-      const spent = Math.max(0, m.spent);
+      const spent = m.spent;
       months.push({
         label: `${MONTHS[Number(key.slice(5, 7)) - 1]} ${key.slice(0, 4)}`,
         incomeMinor: m.income,

@@ -96,6 +96,7 @@ export default function BackupScreen() {
   const [lastLocalBackup, setLastLocalBackup] = useState<string | null>(null);
   const [localResult, setLocalResult] = useState<BackupOutcome | null>(null);
   const [folderNeedsReview, setFolderNeedsReview] = useState(false);
+  const [folderError, setFolderError] = useState<string | null>(null);
   const [frequency, setFrequency] = useState<BackupFrequency>('daily');
   const [busy, setBusy] = useState<string | null>(null);
   const [doneLabel, setDoneLabel] = useState<string | null>(null);
@@ -121,7 +122,16 @@ export default function BackupScreen() {
       getLastLocalBackupResult(),
       getBackupFrequency(),
     ]);
-    const list = folder ? await listLocalBackups(folder) : null;
+    let list: LocalBackupFile[] | null = null;
+    let scanError: string | null = null;
+    if (folder) {
+      try {
+        list = await listLocalBackups(folder);
+      } catch (error) {
+        scanError = errorMessage(error);
+      }
+    }
+    setFolderError(scanError);
     setSafetyInfo(safety);
     setLocalFolderUri(folder);
     setFiles(list);
@@ -441,7 +451,7 @@ Restore anyway? Your current data would be replaced with no way back.`,
   const status = backupStatus({
     folder: localFolderUri,
     lastAt: lastLocalBackup,
-    outcome: localResult,
+    outcome: folderError ? { at: new Date().toISOString(), ok: false, error: folderError } : localResult,
     frequency,
     existingOnly: folderNeedsReview,
     now: new Date(),
@@ -494,9 +504,17 @@ Restore anyway? Your current data would be replaced with no way back.`,
               </View>
               {hasFolder ? (
                 <PrimaryButton
-                  title={busy === 'backup-now-local' ? 'Backing up…' : 'Back up now'}
+                  title={
+                    folderError
+                      ? busy === 'pick-folder'
+                        ? 'Choosing…'
+                        : 'Choose another folder'
+                      : busy === 'backup-now-local'
+                        ? 'Backing up…'
+                        : 'Back up now'
+                  }
                   done={doneLabel === 'backup-now-local'}
-                  onPress={backupNowLocal}
+                  onPress={folderError ? choosePickFolder : backupNowLocal}
                   disabled={!!busy}
                   style={styles.mainAction}
                 />
@@ -637,7 +655,7 @@ Restore anyway? Your current data would be replaced with no way back.`,
             ))}
           </View>
         )}
-        {loaded && hasFolder && shownFiles.length === 0 && (
+        {loaded && hasFolder && !folderError && shownFiles.length === 0 && (
           <View style={[h.card, cardSurface.neutral, styles.emptyCard, safetyInfo && styles.emptyAfter]}>
             <Text style={styles.emptyTitle}>No backups yet</Text>
             <Text style={styles.emptySub}>

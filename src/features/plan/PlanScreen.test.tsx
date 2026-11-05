@@ -90,6 +90,9 @@ jest.mock('@/db/recurring', () => ({
   ],
 }));
 jest.mock('@/db/loans', () => ({
+  listPendingLoanPayments: jest.fn(async () => [
+    { id: 'p13', loanId: 'l1', dueDate: mockDay(3), emiAmountMinor: 2500000 },
+  ]),
   listLoans: async () => [
     {
       id: 'l1',

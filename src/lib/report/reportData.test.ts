@@ -217,3 +217,17 @@ describe('investing entries in the report', () => {
     ]);
   });
 });
+
+it('retains refund credits so month rows reconcile with year spending', () => {
+  const r = computeReport(
+    base(
+      [
+        tx({ date: '2026-01-10', amountMinor: 10000 }),
+        tx({ date: '2026-02-10', type: 'income', isRefund: true, amountMinor: 10000 }),
+      ],
+      { kind: 'year', year: 2026 }
+    )
+  );
+  expect(r.spentMinor).toBe(0);
+  expect(r.months.map((m) => m.spentMinor)).toEqual([10000, -10000]);
+});

@@ -330,7 +330,10 @@ function monthsTable(r: Report): RowsBlock | null {
     html: `<div class="trow"><span class="c1">${esc(m.label)}</span><span>${esc(money(m.incomeMinor, cur))}</span><span>${esc(money(m.spentMinor, cur))}</span><span style="color:${m.netMinor >= 0 ? C.income : C.expense}">${esc(signed(m.netMinor, cur))}</span><span class="c5">${m.count}</span></div>`,
   }));
   const tin = r.months.reduce((s, m) => s + m.incomeMinor, 0);
-  const tsp = r.months.reduce((s, m) => s + m.spentMinor, 0);
+  const tsp = Math.max(
+    0,
+    r.months.reduce((s, m) => s + m.spentMinor, 0)
+  );
   rows.push({
     h: 6.6,
     html: `<div class="trow tt"><span class="c1">Total</span><span>${esc(money(tin, cur))}</span><span>${esc(money(tsp, cur))}</span><span>${esc(signed(tin - tsp, cur))}</span><span class="c5">${r.months.reduce((s, m) => s + m.count, 0)}</span></div>`,

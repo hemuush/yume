@@ -152,7 +152,10 @@ export default function InvestmentsScreen() {
         sip.active ? ` · next ${weekdayDayMonth(sip.rule.nextRunDate)}` : ' · paused'
       }`}
       subColor={sip.active ? undefined : theme.colors.warnInk}
-      value={money(sip.rule.amountMinor)}
+      value={money(
+        sip.rule.amountMinor,
+        accounts.find((account) => account.id === sip.rule.accountId)?.currency
+      )}
       onPress={() => setRule({ editing: sip.rule, holding: null })}
       divider={i > 0}
     />

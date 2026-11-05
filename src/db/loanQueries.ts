@@ -1,3 +1,4 @@
+import { assertValidIsoDate } from '@/lib/date';
 import { LoanPaymentRow, LoanRateChangeRow, LoanRow } from './rows';
 import { getDb } from './client';
 import { Loan, LoanPayment } from '@/types';
@@ -208,4 +209,18 @@ export async function getNextDueInstallment(): Promise<NextDueInstallment | null
     emiAmountMinor: row.emi_amount_minor,
     dueDate: row.due_date,
   };
+}
+
+/** All unpaid borrowed installments through the forecast horizon, including overdue rows. */
+export async function listPendingLoanPayments(untilDate: string): Promise<LoanPayment[]> {
+  assertValidIsoDate(untilDate);
+  const db = await getDb();
+  const rows = await db.getAllAsync<LoanPaymentRow>(
+    `SELECT p.* FROM loan_payments p JOIN loans l ON l.id = p.loan_id
+     WHERE l.direction = 'borrowed' AND l.status != 'closed'
+       AND p.status IN ('pending', 'overdue') AND p.due_date <= ?
+     ORDER BY p.loan_id, p.installment_number`,
+    [untilDate]
+  );
+  return rows.map(rowToLoanPayment);
 }

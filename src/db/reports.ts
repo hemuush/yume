@@ -993,7 +993,8 @@ export function loanNetWorthContribution(
 
 /**
  * "Tracked Balance" (Home and Profile headline), shared so they can't drift: default-currency account balances
- * + non-closed loans' loanNetWorthContribution + net friends balance. A defaulted loan counts; 'closed' drops.
+ * + loans' net-worth contribution + net friends balance. A closed loan has no debt/receivable, but the
+ * tracked asset financed by a borrowed loan remains owned after repayment.
  */
 export function computeTrackedBalance(input: TrackedBalanceInput): number {
   const parts = trackedBalanceParts(input);
@@ -1015,7 +1016,7 @@ interface TrackedBalanceInput {
 export interface TrackedBalanceParts {
   /** Default-currency account balances. */
   accountsMinor: number;
-  /** Every not-yet-closed loan's net-worth contribution (loanNetWorthContribution). */
+  /** Loan equity/receivables, including tracked assets retained after a borrowed loan closes. */
   loansMinor: number;
   /** The net of every friends-and-family balance. */
   peopleMinor: number;
@@ -1027,13 +1028,12 @@ export function trackedBalanceParts(input: TrackedBalanceInput): TrackedBalanceP
     accountsMinor: input.accounts
       .filter((a) => a.currency === input.defaultCurrency)
       .reduce((sum, a) => sum + a.currentBalanceMinor, 0),
-    loansMinor: input.loans
-      .filter((l) => l.status !== 'closed')
-      .reduce(
-        (sum, l) =>
-          sum + loanNetWorthContribution(l.direction, l.outstandingPrincipalMinor, 0, l.assetValueMinor ?? 0),
-        0
-      ),
+    loansMinor: input.loans.reduce((sum, l) => {
+      if (l.status === 'closed') return sum + (l.direction === 'borrowed' ? (l.assetValueMinor ?? 0) : 0);
+      return (
+        sum + loanNetWorthContribution(l.direction, l.outstandingPrincipalMinor, 0, l.assetValueMinor ?? 0)
+      );
+    }, 0),
     peopleMinor: input.people.reduce((sum, p) => sum + p.balanceMinor, 0),
   };
 }

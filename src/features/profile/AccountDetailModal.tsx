@@ -126,9 +126,16 @@ export function AccountDetailModal({
         setError('Enter a name');
         return;
       }
-      const openingBalanceMinor = toMinor(parseFloat(opening || '0'));
+      const openingBalanceMinor =
+        opening === toMajor(account.openingBalanceMinor).toString()
+          ? account.openingBalanceMinor
+          : toMinor(parseFloat(opening || '0'));
       const creditLimitMinor =
-        type === 'credit_card' && creditLimit ? toMinor(parseFloat(creditLimit)) : null;
+        type === 'credit_card' && creditLimit
+          ? account.creditLimitMinor != null && creditLimit === toMajor(account.creditLimitMinor).toString()
+            ? account.creditLimitMinor
+            : toMinor(parseFloat(creditLimit))
+          : null;
       if (
         !Number.isFinite(openingBalanceMinor) ||
         (creditLimitMinor !== null && !Number.isFinite(creditLimitMinor))

@@ -221,6 +221,14 @@ describe('AccountSummarySheet', () => {
     expect(texts(tree)).not.toContain('See all in Activity');
   });
 
+  it('uses the account currency for latest entries as well as the summary', async () => {
+    mockList.mockResolvedValue([{ ...tx('usd-expense'), amountMinor: 10_000 }]);
+    const usd = account({ currency: 'USD' });
+    const tree = await render({ account: usd, accounts: [usd] });
+    await pickTab(tree, 'latest');
+    expect(byId(tree, 'row').props.currency).toBe('USD');
+  });
+
   it('hands the account to Edit and to Add expense here', async () => {
     const onEdit = jest.fn();
     const onAdd = jest.fn();

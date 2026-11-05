@@ -9,7 +9,7 @@ import type { ReactElement } from 'react';
 
 type Props = { model: AddEntryModel };
 export function AddEntryBody({ model }: Props): ReactElement {
-  const { formBusy, footerHeight, rows, totals, listFade, removeRow } = model;
+  const { formBusy, footerHeight, rows, accounts, listFade, removeRow } = model;
 
   return (
     <KeyboardAwareScrollView
@@ -27,12 +27,7 @@ export function AddEntryBody({ model }: Props): ReactElement {
       <AddEntryDraftNotices model={model} />
       <AddEntryFields model={model} />
       {rows.length > 0 && (
-        <StagedList
-          rows={rows}
-          netMinor={totals.income - totals.expense}
-          fadeStyle={listFade}
-          onRemove={removeRow}
-        />
+        <StagedList rows={rows} accounts={accounts} fadeStyle={listFade} onRemove={removeRow} />
       )}
     </KeyboardAwareScrollView>
   );

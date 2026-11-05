@@ -96,3 +96,19 @@ export function stableIndexFromId(id: string, modulo: number): number {
   }
   return Math.abs(hash) % modulo;
 }
+
+/** WCAG contrast ratio for opaque sRGB hex colours. */
+export function contrastRatio(a: string, b: string): number {
+  const luminance = (hex: string) => {
+    const clean = hex.replace('#', '');
+    const full = clean.length === 3 ? clean.replace(/./g, (c) => c + c) : clean;
+    const channels = [0, 2, 4].map((i) => {
+      const value = parseInt(full.slice(i, i + 2), 16) / 255;
+      return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+    });
+    return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
+  };
+  const first = luminance(a),
+    second = luminance(b);
+  return (Math.max(first, second) + 0.05) / (Math.min(first, second) + 0.05);
+}

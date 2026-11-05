@@ -284,8 +284,9 @@ export function ThisMonthHero({
   const full = heroSlices(poolMinor, displayed.spentMinor, displayed.savingsMinor, billsMinor);
   const slices = hideAmounts ? withoutSavings(full) : full;
 
-  // The headline: what's free to use, or by how much the month went over.
-  const over = slices.overMinor > 0;
+  // The bar compares spending with income and positive carry. The headline must use Home's actual
+  // balance, which also includes signed carry and money withdrawn from savings.
+  const over = slices.overMinor > 0 && displayed.surplusMinor < 0;
   // With bills still to come this month, what is free is counted after them.
   const hasDue = slices.hasIncome && !over && billsMinor > 0;
   const freeMinor = displayed.surplusMinor - (hasDue ? billsMinor : 0);
@@ -296,7 +297,7 @@ export function ThisMonthHero({
         ? 'Short after bills'
         : 'Free after bills'
       : 'Free to use';
-  const headMinor = over ? slices.overMinor : freeMinor;
+  const headMinor = over ? -displayed.surplusMinor : freeMinor;
   const headNeg = over || freeMinor < 0;
   // Keep the caption about deductions; the disclosure retains the full income/carryover sum.
   const headCaption = !slices.hasIncome

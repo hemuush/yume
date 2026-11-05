@@ -327,6 +327,53 @@ describe('month card with money carried over from earlier months', () => {
   });
 });
 
+describe('month card with savings withdrawals and carried shortfalls', () => {
+  const withdrawn = {
+    incomeMinor: 100_000,
+    spentMinor: 150_000,
+    savingsMinor: -100_000,
+    carryMinor: 0,
+    surplusMinor: 50_000,
+  };
+
+  it('keeps the actual free balance when a withdrawal funds spending beyond income', () => {
+    const all = texts(render(withdrawn));
+    expect(all).toEqual(expect.arrayContaining(['Free to use', '₹500']));
+    expect(all).not.toContain('Over by');
+  });
+
+  it('deducts outstanding bills once from a savings-funded balance', () => {
+    const r = render({ ...withdrawn, dueMinor: 20_000 });
+    expect(texts(r)).toEqual(expect.arrayContaining(['Free after bills', '₹300']));
+    act(() => byLabel(r, 'How this adds up').props.onPress());
+    expect(texts(r)).toEqual(expect.arrayContaining(['Free to use', '₹500', 'After bills', '₹300']));
+  });
+
+  it('reports the actual remaining deficit after a smaller withdrawal', () => {
+    const all = texts(render({ ...withdrawn, savingsMinor: -20_000, surplusMinor: -30_000 }));
+    expect(all).toEqual(expect.arrayContaining(['Over by', '₹300']));
+    expect(all).not.toContain('₹500');
+  });
+
+  it('includes a carried shortfall in the overspent headline', () => {
+    const all = texts(render({ ...withdrawn, savingsMinor: 0, carryMinor: -20_000, surplusMinor: -70_000 }));
+    expect(all).toEqual(expect.arrayContaining(['Over by', '₹700']));
+    expect(all).not.toContain('₹500');
+  });
+
+  it('keeps a savings-funded balance usable when savings are hidden', () => {
+    mockHideAmounts = true;
+    try {
+      const all = texts(render(withdrawn));
+      expect(all).toEqual(expect.arrayContaining(['Free to use', '₹500', 'after deductions']));
+      expect(all).not.toContain('Over by');
+      expect(all.join(' ')).not.toMatch(/savings/i);
+    } finally {
+      mockHideAmounts = false;
+    }
+  });
+});
+
 describe('month card when bills change without the period changing', () => {
   it('never shows a short state for a month whose figures have not landed yet', () => {
     // Same period key: Home keeps the old month on screen while the next one

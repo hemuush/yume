@@ -718,7 +718,7 @@ export default function TransactionsScreen() {
           expenseLabel: filterLabel,
         }}
         onClose={() => setFilterVisible(false)}
-        countFor={(next) => filterActivity(transactions, next, categories).length}
+        countFor={(next) => filterActivity(transactions, next, categories, investmentIds).length}
         onApply={(next) => {
           setFilterType(next.type);
           setFilterCategoryIds(next.categoryIds);
