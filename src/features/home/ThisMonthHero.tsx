@@ -14,8 +14,6 @@ import { formatMoney, formatMaskableMoney } from '@/lib/money';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 import { haptics } from '@/lib/haptics';
 import { MOTION, timing, ROW_LAYOUT, ROW_EXIT, PANEL_ENTER } from '@/lib/animation';
-import Svg, { Defs, RadialGradient, Stop, Circle } from 'react-native-svg';
-import { useAccent } from '@/theme/AccentContext';
 import { CountUpAmount } from '@/components/CountUpAmount';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import { heroSlices, withoutSavings, heroPct } from './heroSlices';
@@ -60,8 +58,6 @@ interface HeroContent {
 
 /** How far a horizontal drag must travel before letting go changes the period. */
 const SWIPE_STEP_PX = 60;
-/** The theme-coloured glow behind the card's top corner. */
-const GLOW = 240;
 
 /**
  * Home's compact month card: available money, an inline period footer and calculation disclosure,
@@ -108,7 +104,6 @@ export function ThisMonthHero({
   pace?: { projectedMinor: number; byLabel: string } | null;
 }) {
   const reduce = useReduceMotion();
-  const { accent } = useAccent();
   const { hideAmounts } = usePrivacy();
   const [displayed, setDisplayed] = useState<HeroContent>({
     incomeMinor,
@@ -316,7 +311,6 @@ export function ThisMonthHero({
   const now = new Date();
   const isCurrentMonth = displayed.periodKey === 'month:0';
   const daysLeft = daysLeftInMonth(now);
-  const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
   const perDayMinor =
     isCurrentMonth && slices.hasIncome && !over ? dailyAllowance(freeMinor, daysLeft) : null;
   const legend: LegendItem[] = !slices.hasIncome
@@ -372,36 +366,8 @@ export function ThisMonthHero({
   return (
     <>
       <ReanimatedAnimated.View layout={ROW_LAYOUT} style={styles.card}>
-        <View pointerEvents="none" style={styles.glow}>
-          <Svg width={GLOW} height={GLOW}>
-            <Defs>
-              <RadialGradient id="homeGlow" cx="50%" cy="50%" r="50%">
-                <Stop offset="0" stopColor={accent} stopOpacity={0.22} />
-                <Stop offset="1" stopColor={accent} stopOpacity={0} />
-              </RadialGradient>
-            </Defs>
-            <Circle cx={GLOW / 2} cy={GLOW / 2} r={GLOW / 2} fill="url(#homeGlow)" />
-          </Svg>
-        </View>
         <View style={styles.bar}>
-          <View style={styles.headTitle}>
-            <Text style={styles.headLabel}>{headLabel}</Text>
-            {slices.hasIncome && (
-              <Pressable
-                onPress={() => {
-                  haptics.tap();
-                  setShowWorking((v) => !v);
-                }}
-                style={withPressed([styles.howLink, showWorking && styles.howLinkOn])}
-                hitSlop={{ top: 6, bottom: 6, left: 8, right: 8 }}
-                accessibilityRole="button"
-                accessibilityState={{ expanded: showWorking }}
-                accessibilityLabel="How this adds up"
-              >
-                <Feather name="info" size={17} color={theme.colors.link} />
-              </Pressable>
-            )}
-          </View>
+          <Text style={styles.headLabel}>{headLabel}</Text>
           {renderPeriod ? renderPeriod(displayed.periodKey) : period}
         </View>
 
@@ -438,9 +404,6 @@ export function ThisMonthHero({
                 <Text style={styles.headValue}>—</Text>
               )}
             </View>
-            {perDayMinor != null && (
-              <AllowanceTile perDayMinor={perDayMinor} daysLeft={daysLeft} daysInMonth={daysInMonth} />
-            )}
           </View>
 
           <Text
@@ -450,6 +413,29 @@ export function ThisMonthHero({
           >
             {headCaption}
           </Text>
+
+          {slices.hasIncome && (
+            <View style={styles.detailsRow}>
+              <Pressable
+                onPress={() => {
+                  haptics.tap();
+                  setShowWorking((v) => !v);
+                }}
+                style={withPressed(styles.howLink)}
+                accessibilityRole="button"
+                accessibilityState={{ expanded: showWorking }}
+                accessibilityLabel="How this adds up"
+              >
+                <Text style={styles.howLinkText}>How it adds up</Text>
+                <Feather
+                  name={showWorking ? 'chevron-up' : 'chevron-down'}
+                  size={14}
+                  color={theme.colors.link}
+                />
+              </Pressable>
+              {perDayMinor != null && <AllowanceTile perDayMinor={perDayMinor} daysLeft={daysLeft} />}
+            </View>
+          )}
 
           {slices.hasIncome && (
             <MonthLine slices={slices} hideSavings={hideAmounts} periodKey={displayed.periodKey} />

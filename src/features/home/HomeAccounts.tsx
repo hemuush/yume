@@ -46,7 +46,7 @@ export function HomeAccounts({
       >
         <View style={styles.fresh}>
           <View style={styles.freshHead}>
-            <Text style={styles.freshTitle}>Accounts</Text>
+            <Text style={styles.freshTitle}>Your accounts</Text>
             <Feather name="plus" size={17} color={theme.colors.textSecondary} />
           </View>
           <Text style={styles.freshBig}>A fresh start</Text>
@@ -63,7 +63,7 @@ export function HomeAccounts({
   // Bigger text needs a wider tile for a balance to stay on one line.
   const width = Math.round(TILE_WIDTH * Math.min(1.3, Math.max(1, fontScale)));
   return (
-    <Section compact title="Accounts" onSeeAll={onOpenAccounts} actionLabel="View all">
+    <Section compact title="Your accounts" onSeeAll={onOpenAccounts} actionLabel="View all">
       <ScrollView
         horizontal
         nestedScrollEnabled
@@ -137,7 +137,7 @@ const AccountTile = memo(function AccountTile({
 
 const styles = StyleSheet.create({
   row: { paddingHorizontal: 16, paddingVertical: 4, gap: TILE_GAP },
-  tile: { ...h.card, marginHorizontal: 0, minHeight: 108, padding: 12 },
+  tile: { ...h.card, marginHorizontal: 0, minHeight: 136, padding: 12 },
   icon: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
   name: {
     marginTop: 10,
@@ -149,7 +149,7 @@ const styles = StyleSheet.create({
   balance: {
     marginTop: 2,
     fontFamily: theme.font.bodyBold,
-    fontSize: 15,
+    fontSize: 16,
     fontVariant: ['tabular-nums'],
     color: theme.colors.textPrimary,
   },

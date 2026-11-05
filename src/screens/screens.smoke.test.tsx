@@ -747,7 +747,7 @@ describe('Home, stepping between months on a lived-in phone', () => {
     expect(textOf(tree)).toContain('Bank');
     for (let i = 0; i < 4; i++) {
       await step(tree, 'decrement');
-      expect(textOf(tree)).toContain('Accounts');
+      expect(textOf(tree)).toContain('Your accounts');
       expect(textOf(tree)).toContain('Bank');
     }
     await settle();
@@ -781,8 +781,8 @@ describe('Home, stepping between months on a lived-in phone', () => {
     const tree = await open(SCREENS[0][1]);
     const { Section } = require('@/components/Section');
     const titles = tree.root.findAllByType(Section).map((n) => n.props.title);
-    expect(titles.indexOf('Accounts')).toBeGreaterThanOrEqual(0);
-    expect(titles.indexOf('Coming up')).toBeGreaterThan(titles.indexOf('Accounts'));
+    expect(titles.indexOf('Your accounts')).toBeGreaterThanOrEqual(0);
+    expect(titles.indexOf('Coming up')).toBeGreaterThan(titles.indexOf('Your accounts'));
     expect(titles).not.toContain('Spending');
     expect(tree.root.findAllByProps({ testID: 'home-swipe-pages' })).toHaveLength(0);
     const { RecentTransactionRow } = require('@/features/home/RecentTransactionRow');

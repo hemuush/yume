@@ -1,5 +1,16 @@
 # Release device acceptance
 
+## Approved Home implementation — 5 November 2026
+
+Use a candidate containing the [approved Home refinement](HOME_REFINEMENT_2026_11_05.md). The approved screenshots are browser prototypes, not native-device acceptance evidence.
+
+| Area                        | Action                                                                                         | Expected result                                                                                                                                      | Actual/status |
+| --------------------------- | ---------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
+| Home identity and hierarchy | Compare the candidate with the approved second concept in each selected theme                  | Familiar cream/pastel identity, larger available amount, visible calculation action, chart inside the card, account carousel and existing navigation | Not run       |
+| Exact values and privacy    | Browse month/year, shortfall and refund-heavy periods; hide savings; expand calculations       | Figures agree with the ledger and current privacy rules; full legend amounts remain readable and hidden values are not announced                     | Not run       |
+| Large text and amounts      | Use 200% text, narrow display settings, long account names and large balances                  | Header and card reflow, allowance stays readable, legend wraps, accounts scroll and actions remain reachable                                         | Not run       |
+| Gestures and motion         | Rapidly change periods, scroll vertically, select bars, refresh and repeat with reduced motion | Existing period guards hold, bars reveal exact values, no cascading entrance or blocked taps, static reduced-motion path works                       | Not run       |
+
 ## UI/UX follow-up — 5 November 2026
 
 Use a build containing the [UI/UX follow-up](UX_ENHANCEMENT_PLAN_2026_11_05.md). Component tests and JavaScript export do not replace these checks.
