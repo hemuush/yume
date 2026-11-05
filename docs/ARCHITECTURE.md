@@ -441,4 +441,6 @@ Home's headline uses signed surplus for the monetary amount, including savings w
 
 ## Smoothness pass — November 2026
 
+Shared empty states use the title type size, secondary supporting text and bounded action widths. People and Recurring offer first-use setup directly in their empty states; Activity's filtered empty state clears type, category, account and label together while retaining the selected period. The [UI/UX enhancement plan](UX_ENHANCEMENT_PLAN_2026_11_05.md) separates these implemented changes from proposed journey and motion improvements.
+
 Home defers the secondary Needs you scan until idle instead of gating its financial content. The card transition uses fixed layout with composited transforms and a concurrent fade. Amount interpolation bounds JS text paints while preserving exact completion and accessible values. Shared backgrounds default to one glow; Home section entrances no longer stagger or translate. See [the smoothness review](SMOOTHNESS_REVIEW_2026_11_05.md) for source coverage, measured query-fixture limits and the pending Pixel 10a checklist.

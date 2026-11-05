@@ -4,6 +4,8 @@ Use maintained guides for implemented behavior. Dated audits preserve their own 
 
 ## Current verification
 
+The [5 November UI/UX enhancement plan](UX_ENHANCEMENT_PLAN_2026_11_05.md) records the first-use and filter recovery improvements, whole-app design priorities, motion principles and remaining device acceptance work.
+
 The [25 October startup corrections](STARTUP_FIXES_2026_10_25.md) address onboarding content under Android's navigation bar and the original splash icon flashing after selecting a theme icon. These changes require a rebuilt Android binary and separate phone acceptance.
 
 The [25 October repository re-audit](REPOSITORY_REAUDIT_2026_10_25.md) records per-file coverage, dependency/security checks, small motion improvements, cleanup and current validation. Its [coverage inventory](REPOSITORY_REAUDIT_COVERAGE_2026_10_25.csv) distinguishes full-content automated checks from focused manual flow review. The preceding [25 October app-flow audit](FULL_APP_AUDIT_2026_10_25.md) records the setup, loan, valuation, category, theme, split and restore corrections.

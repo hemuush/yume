@@ -87,7 +87,12 @@ export default function PeopleScreen() {
             ))}
           </View>
         ) : people.length === 0 ? (
-          <EmptyState title="No one here yet" subtitle="Tap + Person to add a friend or family member." />
+          <EmptyState
+            title="Keep track of money between people"
+            subtitle="Add a friend or family member, then record money given or received."
+          >
+            <PrimaryButton title="Add a person" onPress={() => setAddVisible(true)} />
+          </EmptyState>
         ) : (
           <>
             {summary && (
