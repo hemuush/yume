@@ -101,10 +101,15 @@ describe('Home spending week', () => {
     for (const label of ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Today']) expect(t).toContain(label);
   });
 
-  it('puts each day’s amount over its capsule, a dash over an empty one', () => {
-    const t = text(render([{ date: '2026-10-16', totalMinor: 92_700 }], '2026-10-17'));
-    expect(t).toContain('₹927');
-    expect(t).toContain('–');
+  it('keeps unselected day amounts in their accessible labels without crowding the chart', () => {
+    const r = render([{ date: '2026-10-16', totalMinor: 92_700 }], '2026-10-17');
+    expect(text(r)).not.toContain('₹927');
+    const day = r.root.findAll(
+      (n) => n.props.onPress && n.props.accessibilityLabel?.includes('16 October')
+    )[0];
+    expect(day.props.accessibilityLabel).toContain('₹927');
+    act(() => day.props.onPress());
+    expect(text(r)).toContain('Fri, 16 Oct | ₹927');
   });
 
   it('starts on today with its amount read in the row above', () => {

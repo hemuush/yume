@@ -57,7 +57,7 @@ import {
 } from '@/lib/animation';
 import { HomeHeader } from '@/features/home/HomeHeader';
 import { ThisMonthHero } from '@/features/home/ThisMonthHero';
-import { ThisMonthHeroSkeleton, CardRowsSkeleton } from '@/features/home/HomeSkeleton';
+import { ThisMonthHeroSkeleton, AccountTilesSkeleton, CardRowsSkeleton } from '@/features/home/HomeSkeleton';
 import { MonthPill } from '@/features/home/MonthPill';
 import { HomeWallpaper } from '@/features/home/HomeWallpaper';
 import { HomeAccounts } from '@/features/home/HomeAccounts';
@@ -637,7 +637,7 @@ export default function DashboardScreen() {
         {!loaded && (
           <>
             <View style={{ marginTop: SCREEN.sectionGap }}>
-              <CardRowsSkeleton rows={2} meter />
+              <AccountTilesSkeleton />
             </View>
             <Section title="Recent activity">
               <CardRowsSkeleton rows={3} subtitle />

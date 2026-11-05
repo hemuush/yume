@@ -199,6 +199,9 @@ export function HomeHeader({
           <ReanimatedAnimated.View
             entering={FadeIn.duration(MOTION.enter).easing(MOTION.ease).reduceMotion(ReduceMotion.System)}
           >
+            <Text style={styles.date}>
+              {new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' })}
+            </Text>
             <Text style={styles.greet}>
               Good {greetingWord()}
               {userName ? (
@@ -207,9 +210,6 @@ export function HomeHeader({
                 </>
               ) : null}
               .
-            </Text>
-            <Text style={styles.date}>
-              {new Date().toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })}
             </Text>
             {line ? <Text style={styles.insight}>{line}</Text> : null}
           </ReanimatedAnimated.View>
@@ -223,7 +223,7 @@ export function HomeHeader({
 const styles = StyleSheet.create({
   root: { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10 },
   // The band's gap above and its padding below are equal, so the greeting sits centred between the brand row and the card.
-  fading: { gap: 8, paddingTop: 2 },
+  fading: { gap: 8, paddingTop: 4 },
   miniSlot: { flex: 1, minWidth: 0, alignItems: 'flex-end' },
   band: { paddingHorizontal: HEADER.gutter, paddingBottom: 12, gap: 8, overflow: 'hidden' },
   row: {
@@ -238,16 +238,17 @@ const styles = StyleSheet.create({
   actions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   date: {
     fontFamily: theme.font.body,
-    fontSize: 10,
+    fontSize: 11,
     lineHeight: 16,
-    letterSpacing: 1,
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
     color: theme.colors.textSecondary,
     marginBottom: 2,
   },
   greet: {
     fontFamily: theme.font.roundedMedium,
-    fontSize: 18,
-    lineHeight: 24,
+    fontSize: 21,
+    lineHeight: 28,
     letterSpacing: -0.2,
     color: theme.colors.ink,
     marginTop: 1,
