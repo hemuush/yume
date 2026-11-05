@@ -93,7 +93,7 @@ export function ComingUpSection({
             </View>
             {g.items.map((item, i) => {
               const tone = dueTone(item, today);
-              const payable = !!item.loanId && !!onPay && tone != null;
+              const payable = !!item.loanId && item.nextInstallment !== false && !!onPay && tone != null;
               return (
                 <UpcomingRow
                   key={item.key}

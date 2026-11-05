@@ -328,3 +328,21 @@ describe('Deposit and provident fund details', () => {
     act(() => tree.unmount());
   });
 });
+
+it('clears minimum payment terms between consecutive credit cards', async () => {
+  const { tree, onClose, onCreated } = await render();
+  act(() => byProps(tree, { label: 'Name' }).props.onChangeText('Card A'));
+  act(() => byProps(tree, { label: 'Credit card' }).props.onPress());
+  act(() => byProps(tree, { label: 'Minimum due (%)' }).props.onChangeText('5'));
+  act(() => byProps(tree, { label: 'At least' }).props.onChangeText('200'));
+  await save(tree);
+  act(() => tree.update(<AddAccountModal visible={false} onClose={onClose} onCreated={onCreated} />));
+  await act(async () => tree.update(<AddAccountModal visible onClose={onClose} onCreated={onCreated} />));
+  act(() => byProps(tree, { label: 'Name' }).props.onChangeText('Card B'));
+  act(() => byProps(tree, { label: 'Credit card' }).props.onPress());
+  await save(tree);
+  expect(mockCreateAccount).toHaveBeenLastCalledWith(
+    expect.objectContaining({ name: 'Card B', minDueBp: null, minDueFloorMinor: null })
+  );
+  act(() => tree.unmount());
+});

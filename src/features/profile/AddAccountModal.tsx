@@ -97,6 +97,10 @@ export function AddAccountModal({
     setCreditLimit('');
     setStatementDay('');
     setDueDay('');
+    setRate('');
+    setMaturity('');
+    setMinDuePct('');
+    setMinDueFloor('');
     setWorth('');
     setError(null);
     createdId.current = null;

@@ -182,3 +182,22 @@ describe('AccountDetailModal investments', () => {
     );
   });
 });
+
+it('preserves stored paise when renaming an account', async () => {
+  mockCount.mockResolvedValue(0);
+  mockUpdate.mockReset().mockResolvedValue({});
+  const tree = await render(account({ openingBalanceMinor: 12345 }));
+  act(() =>
+    tree.root
+      .find((n) => typeof n.type === 'function' && n.props.label === 'Name')
+      .props.onChangeText('Renamed')
+  );
+  await act(async () =>
+    tree.root.find((n) => typeof n.type === 'function' && n.props.title === 'Save changes').props.onPress()
+  );
+  expect(mockUpdate).toHaveBeenCalledWith(
+    'acc-1',
+    expect.objectContaining({ name: 'Renamed', openingBalanceMinor: 12345 })
+  );
+  act(() => tree.unmount());
+});

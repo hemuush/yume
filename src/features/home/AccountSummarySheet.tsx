@@ -356,6 +356,7 @@ export function AccountSummarySheet({
                 <RecentTransactionRow
                   key={tx.id}
                   tx={tx}
+                  currency={account.currency}
                   category={categories.find((c) => c.id === tx.categoryId)}
                   parentName={parentNameOf(tx.categoryId, categoriesById)}
                   accountName={nameOf(tx.accountId)}

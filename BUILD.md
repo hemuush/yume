@@ -35,7 +35,7 @@ npx expo export --platform android
 
 Type checking includes unused locals/parameters. Markdown is excluded by the repository's default Prettier ignore file; format edited Markdown explicitly with an empty ignore file or Prettier's API. Historical reports and generated coverage CSV snapshots retain their own dates/results.
 
-The audit gate rejects unapproved high/critical advisories. Its documented CLI-only node-forge exception is still a build-tool risk; a passing gate does not mean zero advisories. Keep Expo-compatible native versions together rather than independently installing every package's latest release. See [security boundaries](SECURITY.md) and [current verification](docs/REPOSITORY_REAUDIT_2026_10_25.md).
+The audit gate rejects high/critical advisories and currently exempts none. The lockfile uses the compatible patched node-forge 1.4.3 build dependency. A passing gate does not mean zero lower-severity advisories. Keep Expo-compatible native versions together rather than independently installing every package's latest release. See [security boundaries](SECURITY.md) and [current verification](docs/REPOSITORY_REAUDIT_2026_10_25.md).
 
 ## Native checks
 

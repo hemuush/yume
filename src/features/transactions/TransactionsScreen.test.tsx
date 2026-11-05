@@ -4,6 +4,7 @@
  */
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
 import { Text } from 'react-native';
+import type { Account, Transaction } from '@/types';
 
 jest.setTimeout(60000);
 
@@ -30,6 +31,10 @@ jest.mock('@/features/transactions/TransactionsSkeleton', () => ({
 }));
 jest.mock('@/components/UndoToast', () => ({ useUndoToast: () => ({ show: jest.fn() }) }));
 const mockComparison: { fail: boolean; wait?: Promise<void> } = { fail: true };
+const mockLedger = {
+  transactions: [] as Transaction[],
+  accounts: [{ id: 'bank', name: 'Bank', type: 'bank' }] as Account[],
+};
 jest.mock('@/db/reports', () => ({
   getRangeComparison: async () => {
     await mockComparison.wait;
@@ -46,8 +51,8 @@ jest.mock('@/db/reports', () => ({
   },
 }));
 jest.mock('@/db/ledger', () => ({
-  listTransactions: async () => [],
-  listAccounts: async () => [{ id: 'bank', name: 'Bank', type: 'bank' }],
+  listTransactions: async () => mockLedger.transactions,
+  listAccounts: async () => mockLedger.accounts,
   listCategories: async () => [],
   searchTransactions: async () => [],
   setDayOrder: jest.fn(),
@@ -63,6 +68,8 @@ let mounted: ReactTestRenderer | null = null;
 afterEach(() => {
   if (mounted) act(() => mounted!.unmount());
   mounted = null;
+  mockLedger.transactions = [];
+  mockLedger.accounts = [{ id: 'bank', name: 'Bank', type: 'bank' }] as Account[];
 });
 
 async function render() {
@@ -191,4 +198,33 @@ it('ignores legacy payment metadata in Activity filters', async () => {
   expect(tree.root.findByType(ActivityFilterChips).props.accountIds).toEqual(['bank']);
   expect(tree.root.findByType(ActivityFilterChips).props.filterCount).toBe(1);
   expect(texts(tree).join(' ')).not.toContain('Payment method');
+});
+
+it('counts investment transfers separately from ordinary transfers in the filter sheet', async () => {
+  const { FilterModal } = require('./FilterModal');
+  const { toLocalIsoDate } = require('@/lib/date');
+  mockComparison.fail = false;
+  mockLedger.accounts = [
+    ...mockLedger.accounts,
+    { id: 'fund', name: 'Fund', type: 'savings', investment: { kind: 'mutual_fund' } },
+    { id: 'cash', name: 'Cash', type: 'cash' },
+  ] as Account[];
+  const transfer = {
+    type: 'transfer',
+    accountId: 'bank',
+    categoryId: null,
+    amountMinor: 10_000,
+    date: toLocalIsoDate(new Date()),
+    note: '',
+  };
+  mockLedger.transactions = [
+    { ...transfer, id: 'investment', toAccountId: 'fund' },
+    { ...transfer, id: 'ordinary-1', toAccountId: 'cash' },
+    { ...transfer, id: 'ordinary-2', toAccountId: 'cash' },
+  ] as Transaction[];
+  const tree = await render();
+  const countFor = tree.root.findByType(FilterModal).props.countFor;
+  const filter = { categoryIds: [], accountIds: [] };
+  expect(countFor({ ...filter, type: 'invest' })).toBe(1);
+  expect(countFor({ ...filter, type: 'transfer' })).toBe(2);
 });

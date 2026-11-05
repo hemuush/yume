@@ -43,13 +43,44 @@ export interface DeletedEntry {
   deletedAt: string;
   /** Whole days left before it's cleared; at least 1 while it's still here. */
   daysLeft: number;
-  /** Why it can't be put back (its account or category is gone), or null when it can. */
+  /** Why its current account/category cannot accept it, or null when it can be restored. */
   blockedReason: string | null;
 }
 
 export function daysLeftOf(deletedAt: string, now: Date = new Date()): number {
   const age = now.getTime() - new Date(deletedAt).getTime();
   return Math.max(1, Math.ceil(KEEP_DAYS - age / DAY_MS));
+}
+
+async function restoreReferences(db: AppDb) {
+  // Archived references are valid for historical restoration; only their existence and account type matter.
+  const accounts = new Map(
+    (await db.getAllAsync<{ id: string; type: string }>('SELECT id, type FROM accounts')).map((r) => [
+      r.id,
+      r.type,
+    ])
+  );
+  const categories = new Set(
+    (await db.getAllAsync<{ id: string }>('SELECT id FROM categories')).map((r) => r.id)
+  );
+  return { accounts, categories };
+}
+
+function restoreBlockedReason(
+  row: { account_id?: unknown; to_account_id?: unknown; category_id?: unknown; type?: unknown },
+  references: Awaited<ReturnType<typeof restoreReferences>>
+): string | null {
+  const accountId = String(row.account_id);
+  if (
+    !references.accounts.has(accountId) ||
+    (row.to_account_id != null && !references.accounts.has(String(row.to_account_id)))
+  )
+    return 'Its account no longer exists';
+  if (row.category_id != null && !references.categories.has(String(row.category_id)))
+    return 'Its category no longer exists';
+  if (row.type !== 'transfer' && references.accounts.get(accountId) === 'savings')
+    return 'Its account is now savings and only accepts transfers';
+  return null;
 }
 
 /** Everything in the list, newest deletion first. */
@@ -59,12 +90,7 @@ export async function listDeletedEntries(now: Date = new Date()): Promise<Delete
     'SELECT id, snapshot, deleted_at FROM deleted_entries WHERE deleted_at >= ? ORDER BY deleted_at DESC',
     [retentionCutoff(now)]
   );
-  const accountIds = new Set(
-    (await db.getAllAsync<{ id: string }>('SELECT id FROM accounts')).map((r) => r.id)
-  );
-  const categoryIds = new Set(
-    (await db.getAllAsync<{ id: string }>('SELECT id FROM categories')).map((r) => r.id)
-  );
+  const references = await restoreReferences(db);
   const out: DeletedEntry[] = [];
   for (const r of rows) {
     let row: TransactionRow;
@@ -75,9 +101,6 @@ export async function listDeletedEntries(now: Date = new Date()): Promise<Delete
     } catch {
       continue; // A damaged snapshot can't be shown or restored; the 30-day purge clears it.
     }
-    const accountGone =
-      !accountIds.has(row.account_id) || (row.to_account_id != null && !accountIds.has(row.to_account_id));
-    const categoryGone = row.category_id != null && !categoryIds.has(row.category_id);
     out.push({
       id: r.id,
       type: row.type,
@@ -89,11 +112,7 @@ export async function listDeletedEntries(now: Date = new Date()): Promise<Delete
       toAccountId: row.to_account_id ?? null,
       deletedAt: r.deleted_at,
       daysLeft: daysLeftOf(r.deleted_at, now),
-      blockedReason: accountGone
-        ? 'Its account no longer exists'
-        : categoryGone
-          ? 'Its category no longer exists'
-          : null,
+      blockedReason: restoreBlockedReason(row, references),
     });
   }
   return out;
@@ -147,11 +166,16 @@ export async function restoreDeletedEntry(id: string, now: Date = new Date()): P
         }
       }
     }
+    const references = await restoreReferences(tx);
     for (const entry of together) {
       const exists = await tx.getFirstAsync<{ id: string }>('SELECT id FROM transactions WHERE id = ?', [
         entry.id,
       ]);
-      if (!exists) await restoreRow(tx, { table: 'transactions', row: entry.row });
+      if (!exists) {
+        const blockedReason = restoreBlockedReason(entry.row, references);
+        if (blockedReason) throw new Error(blockedReason);
+        await restoreRow(tx, { table: 'transactions', row: entry.row });
+      }
       await tx.runAsync('DELETE FROM deleted_entries WHERE id = ?', [entry.id]);
     }
   });

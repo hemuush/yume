@@ -1,3 +1,6 @@
+import { getCachedCurrency } from '@/db/settings';
+import { stagedTotals } from '@/features/add/saveEntry';
+import type { Account } from '@/types';
 import { Animated, Pressable, View } from 'react-native';
 import { Text } from '@/components/Text';
 import Feather from '@expo/vector-icons/Feather';
@@ -14,25 +17,42 @@ import { useAccent } from '@/theme/AccentContext';
 /** Entries added with "Add to list", waiting for Save, each removable. */
 export function StagedList({
   rows,
-  netMinor,
+  accounts,
   fadeStyle,
   onRemove,
 }: {
   rows: Staged[];
-  /** Income less spending across the list. */
-  netMinor: number;
+  accounts: Account[];
   fadeStyle: React.ComponentProps<typeof Animated.View>['style'];
   onRemove: (id: string) => void;
 }) {
   const { accent, secondary } = useAccent();
+  const accountCurrencies = new Map(accounts.map((account) => [account.id, account.currency]));
+  const currencyOf = (row: Staged) =>
+    (row.accountId && accountCurrencies.get(row.accountId)) || getCachedCurrency();
+  const groups = new Map<string, Staged[]>();
+  for (const row of rows) {
+    const currency = currencyOf(row);
+    const group = groups.get(currency);
+    if (group) group.push(row);
+    else groups.set(currency, [row]);
+  }
   return (
     <Animated.View style={[styles.staged, fadeStyle]}>
       <View style={styles.stagedHeadRow}>
         <Text style={styles.stagedHead}>{rows.length} staged</Text>
-        <Text style={styles.stagedHeadTotal}>
-          {netMinor >= 0 ? '+' : '−'}
-          {formatMoney(Math.abs(netMinor))}
-        </Text>
+        <View style={{ alignItems: 'flex-end', gap: 2 }}>
+          {Array.from(groups, ([currency, group]) => {
+            const { income, expense } = stagedTotals(group);
+            const netMinor = income - expense;
+            return (
+              <Text key={currency} style={styles.stagedHeadTotal}>
+                {netMinor >= 0 ? '+' : '−'}
+                {formatMoney(Math.abs(netMinor), currency)}
+              </Text>
+            );
+          })}
+        </View>
       </View>
       {rows.map((r, i) => {
         const incomeLike = r.kind === 'transaction' ? r.type === 'income' : r.sign === -1;
@@ -60,7 +80,7 @@ export function StagedList({
             </View>
             <Text style={[styles.stagedValue, incomeLike && styles.income, expenseLike && styles.expense]}>
               {incomeLike ? '+' : expenseLike ? '−' : ''}
-              {formatMoney(r.amountMinor)}
+              {formatMoney(r.amountMinor, currencyOf(r))}
             </Text>
             <Pressable
               onPress={() => onRemove(r.id)}

@@ -17,7 +17,7 @@ interface LoanPayoff {
  */
 export function loanPayoff(schedule: LoanPayment[], outstandingMinor: number): LoanPayoff {
   const pending = schedule
-    .filter((p) => p.status === 'pending')
+    .filter((p) => p.status === 'pending' || p.status === 'overdue')
     .sort((a, b) => a.installmentNumber - b.installmentNumber);
   const last = pending[pending.length - 1];
   return {

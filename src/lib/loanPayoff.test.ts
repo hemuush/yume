@@ -69,3 +69,12 @@ describe('payoffMonth', () => {
     expect(payoffMonth('2045-01-05')).toMatch(/2045/);
   });
 });
+
+it('includes overdue installments in interest, remaining counts and balances', () => {
+  expect(loanPayoff([payment(1, 'overdue', 500, 9000), payment(2, 'pending', 200, 0)], 18000)).toEqual({
+    lastDueDate: '2026-02-05',
+    emisLeft: 2,
+    interestLeftMinor: 700,
+    balances: [18000, 9000, 0],
+  });
+});

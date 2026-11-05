@@ -30,6 +30,6 @@ Git and EAS independently exclude `.env*`, `credentials.json`, private keys, sig
 
 CI runs type checking, lint, formatting, import-cycle checks, regression/security tests, Expo Doctor, the advisory gate, Android JavaScript export and generated native configuration checks. Actions are pinned to commits and jobs use read-only repository permissions. EAS builds use the commit that passed CI. Native release compilation and phone acceptance remain separate checks.
 
-The advisory gate currently documents one high-severity exception: `GHSA-86w9-cpqp-85rv` in the Expo CLI's `node-forge` build-tool chain. It is not an app-runtime dependency, but it remains a build-environment risk. Recheck the registry and remove the exception when a compatible patched dependency becomes available. A passing gate must not be described as zero advisories.
+The lockfile uses `node-forge` 1.4.3 in the Expo CLI build-tool chain. The earlier signature-verification advisory exception has been removed; the gate currently exempts no advisories. It rejects every reported high or critical advisory. A passing gate does not mean zero lower-severity advisories or establish that every dependency path has been security-tested.
 
 No external penetration test, rooted-device resistance assessment, database encryption migration or device security certification is implied by these checks. Report suspected vulnerabilities privately to the repository owner without attaching personal ledgers, tokens, signing files or unredacted backups to public issues.

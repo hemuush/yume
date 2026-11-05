@@ -340,7 +340,12 @@ export default function RecurringScreen() {
             .map(({ rule, mark }, index) => (
               <RuleRow
                 key={mark.key}
-                rule={{ ...rule, nextRunDate: mark.key.slice(rule.id.length + 1) }}
+                rule={{
+                  ...rule,
+                  nextRunDate: mark.key.slice(rule.id.length + 1),
+                  nextAmountMinor:
+                    mark.key === `${rule.id}-${rule.nextRunDate}` ? rule.nextAmountMinor : null,
+                }}
                 category={rule.categoryId ? categoriesById.get(rule.categoryId) : undefined}
                 parentName={parentNameOf(rule.categoryId, categoriesById)}
                 investRole={investRole(rule, investIds)}

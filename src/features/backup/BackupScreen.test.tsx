@@ -370,3 +370,17 @@ it('reports a committed restore and resyncs even if adopting its backup folder f
   expect(showAlert.mock.calls.some((call: unknown[]) => call[0] === 'Something went wrong')).toBe(false);
   act(() => tree.unmount());
 });
+
+it('keeps recovery controls when the saved folder grant is revoked', async () => {
+  mockState.folder = 'content://revoked-folder';
+  const { listLocalBackups } = jest.requireMock('@/lib/localBackup');
+  listLocalBackups.mockRejectedValueOnce(new Error('Folder permission revoked'));
+  const tree = await render();
+  const shown = texts(tree);
+  expect(shown).toContain('Folder permission revoked');
+  expect(shown).toContain('Save backup file');
+  expect(shown).toContain('Restore from file');
+  expect(shown).not.toContain('No backups yet');
+  expect(buttons(tree, 'Choose another folder')).toHaveLength(1);
+  act(() => tree.unmount());
+});

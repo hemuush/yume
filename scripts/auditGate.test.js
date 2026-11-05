@@ -1,4 +1,4 @@
-const { evaluateAudit } = require('./auditGate');
+const { evaluateAudit, ALLOWED } = require('./auditGate');
 
 const adv = (id, severity, name = 'pkg') => ({
   source: 1,
@@ -10,6 +10,10 @@ const adv = (id, severity, name = 'pkg') => ({
 const report = (...vias) => ({ vulnerabilities: { a: { via: vias }, b: { via: ['a'] } } });
 
 describe('evaluateAudit', () => {
+  it('does not exempt the patched node-forge signature advisory', () => {
+    expect(ALLOWED).not.toHaveProperty('GHSA-86w9-cpqp-85rv');
+    expect(evaluateAudit(report(adv('GHSA-86w9-cpqp-85rv', 'high'))).blocking).toHaveLength(1);
+  });
   const allowed = { 'GHSA-aaaa': 'reason' };
 
   it('blocks a high advisory that is not allowed', () => {
