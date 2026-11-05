@@ -198,8 +198,10 @@ export default function RecurringScreen() {
         ) : rules.length === 0 && suggestions.length === 0 ? (
           <EmptyState
             title="Nothing recurring yet"
-            subtitle="Tap + to add rent, a subscription, or your salary."
-          />
+            subtitle="Plan rent, subscriptions or salary so you can see what is coming."
+          >
+            <PrimaryButton title="Add a recurring entry" onPress={() => setModalVisible(true)} />
+          </EmptyState>
         ) : (
           <>
             {(activeRules.length > 0 || suggestions.length > 0) && (

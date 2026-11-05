@@ -208,7 +208,9 @@ export default function SavingsGoalsScreen() {
                 ? undefined
                 : 'Set something you’re saving toward — a trip, an emergency fund, a big purchase.'
             }
-          />
+          >
+            {!showArchived && <PrimaryButton title="Create a goal" onPress={() => setAddVisible(true)} />}
+          </EmptyState>
         ) : (
           <>
             {!showArchived && <GoalsHero totals={totals} />}
