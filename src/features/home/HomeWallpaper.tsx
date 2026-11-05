@@ -18,11 +18,11 @@ export function wallpaperTop(accent: string): string {
 export const HomeWallpaper = memo(function HomeWallpaper({
   accent,
   secondary,
-  plain = false,
+  plain = true,
 }: {
   accent: string;
   secondary: string;
-  /** Home's own: the wash and one soft glow of the second colour, without the blobs the other screens keep behind their glass. */
+  /** Default: a wash and one soft glow; opt out only for an intentionally richer decorative surface. */
   plain?: boolean;
 }) {
   const top = wallpaperTop(accent);
