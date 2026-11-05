@@ -126,7 +126,14 @@ describe('month card', () => {
       ])
     );
     // The money-bar legend stays scoped to this month.
-    expect(all).toEqual(expect.arrayContaining(['Spent', 'Saved', 'Free', '₹96k', '₹1L', '49%', '51%']));
+    expect(all).toEqual(expect.arrayContaining(['Spent', 'Saved', 'Free', '₹95,762', '₹99,500']));
+    expect(
+      r.root.findAll((n) => n.props.accessibilityLabel === 'Spent, ₹95,762, 49%').length
+    ).toBeGreaterThan(0);
+    expect(
+      r.root.findAll((n) => n.props.accessibilityLabel === 'Saved, ₹99,500, 51%').length
+    ).toBeGreaterThan(0);
+    expect(all).not.toContain('49%');
     expect(all).not.toContain('Bills left');
     expect(all).toContain('₹2,955 left');
     expect(byLabel(r, 'How this adds up')).toBeDefined();
@@ -189,8 +196,7 @@ describe('month card with bills still to pay', () => {
         '₹40,000',
         'after spending, savings and bills',
         'Bills left',
-        '₹20k',
-        '20%',
+        '₹20,000',
       ])
     );
     expect(all).not.toContain('Free to use');
@@ -218,7 +224,7 @@ describe('month card with bills still to pay', () => {
 
   it('says short when the bills are more than what is free', () => {
     const all = texts(render({ ...base, dueMinor: 7_000_000 }));
-    expect(all).toEqual(expect.arrayContaining(['Short after bills', '-₹10,000', '₹70k']));
+    expect(all).toEqual(expect.arrayContaining(['Short after bills', '-₹10,000', '₹70,000']));
   });
 
   it('is the plain Free to use card when nothing is due', () => {
@@ -508,8 +514,11 @@ describe('month card: today and the free figure', () => {
 describe('month card: what can be spent a day', () => {
   it('shows the days left and a day’s allowance for the current month', () => {
     // ₹794 free over the 9 days after 22 October.
-    expect(texts(render())).toEqual(expect.arrayContaining(['₹88 a day']));
-    expect(texts(render()).some((t) => t.endsWith('days left'))).toBe(true);
+    const r = render();
+    expect(texts(r)).toContain('₹88');
+    expect(
+      r.root.findAll((n) => n.props.accessibilityLabel === '9 days left, about ₹88 a day').length
+    ).toBeGreaterThan(0);
   });
   it('is left out of a past month, a month over its income, and one with nothing free', () => {
     expect(texts(render({ periodKey: 'month:-1' })).some((t) => t.includes('a day'))).toBe(false);

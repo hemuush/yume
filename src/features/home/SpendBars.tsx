@@ -4,9 +4,7 @@ import Animated, {
   cancelAnimation,
   useSharedValue,
   useAnimatedStyle,
-  withDelay,
   withTiming,
-  FadeIn,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import Feather from '@expo/vector-icons/Feather';
@@ -17,6 +15,7 @@ import { compactMoney } from '@/lib/compactMoney';
 import { haptics } from '@/lib/haptics';
 import { timing, PANEL_ENTER, ROW_EXIT } from '@/lib/animation';
 import { useReduceMotion } from '@/lib/useReduceMotion';
+import { DURATIONS } from '@/lib/motionTimings';
 import { useAccent } from '@/theme/AccentContext';
 import { hexToRgba, hexToHsl, shade } from '@/lib/color';
 import { withPressed } from '@/lib/pressed';
@@ -32,8 +31,6 @@ const TRACK_H = 60;
 const FILL_MIN = 14;
 /** The lightest the capsule fill's second colour gets, so it still reads against the track in every theme. */
 const FILL_END_MAX_L = 72;
-/** Past this font scale the amounts over the capsules would collide, so only the picked day's is read (above). */
-const VALUES_UP_TO = 1.15;
 /** A day this many times the daily goal is a one-off, not a slip: said calmly. */
 const BIG_DAY_FACTOR = 4;
 
@@ -47,8 +44,6 @@ function Capsule({
   bar,
   maxMinor,
   goalMinor,
-  showValue,
-  delay,
   dateLabel,
   selected,
   onSelect,
@@ -56,8 +51,6 @@ function Capsule({
   bar: SpendBar;
   maxMinor: number;
   goalMinor: number | null;
-  showValue: boolean;
-  delay: number;
   dateLabel: string;
   selected: boolean;
   onSelect: () => void;
@@ -67,19 +60,13 @@ function Capsule({
   const target = fillHeight(bar.totalMinor, maxMinor);
   // A very light second colour would vanish into the track, so its lightness is capped.
   const fillEnd = hexToHsl(secondary)[2] > FILL_END_MAX_L ? shade(secondary, FILL_END_MAX_L) : secondary;
-  const growth = useSharedValue(reduce ? 1 : 0);
-  useEffect(() => {
-    growth.value = reduce ? 1 : withDelay(delay, withTiming(1, timing(320)));
-    return () => cancelAnimation(growth);
-  }, [reduce, delay, growth]);
   const height = useSharedValue(target);
   useEffect(() => {
-    height.value = reduce ? target : withTiming(target, timing(240));
+    height.value = reduce ? target : withTiming(target, timing(DURATIONS.standard));
     return () => cancelAnimation(height);
   }, [target, reduce, height]);
   const fillStyle = useAnimatedStyle(() => ({
     height: height.value,
-    transform: [{ scaleY: growth.value }],
   }));
   const goalH = goalMinor != null && goalMinor > 0 ? fillHeight(goalMinor, maxMinor) : null;
   return (
@@ -90,9 +77,6 @@ function Capsule({
       accessibilityState={{ selected }}
       accessibilityLabel={`${dateLabel}, ${formatMoney(bar.totalMinor)}`}
     >
-      <Text style={[styles.value, selected && styles.valueOn]} numberOfLines={1}>
-        {showValue ? (bar.totalMinor > 0 ? compactMoney(bar.totalMinor) : '–') : ' '}
-      </Text>
       <View style={[styles.track, { backgroundColor: hexToRgba(accent, 0.2) }, selected && styles.trackOn]}>
         <Animated.View style={[styles.fill, { height: target, transformOrigin: 'bottom' }, fillStyle]}>
           <LinearGradient colors={[accent, fillEnd]} style={StyleSheet.absoluteFill} />
@@ -240,10 +224,7 @@ export function SpendBars({
           </Text>
         </Animated.View>
       )}
-      <Animated.View
-        entering={FadeIn.duration(200)}
-        style={[styles.bars, { height: 112 + 28 * Math.max(0, fontScale - 1) }]}
-      >
+      <View style={[styles.bars, { height: 90 + 28 * Math.max(0, fontScale - 1) }]}>
         {bars.map((b, i) => (
           <Capsule
             key={`${range}:${b.key}`}
@@ -256,8 +237,6 @@ export function SpendBars({
             }}
             maxMinor={maxMinor}
             goalMinor={goal}
-            showValue={fontScale <= VALUES_UP_TO}
-            delay={i * 45}
             dateLabel={
               range === 'week'
                 ? parseLocalIsoDate(b.key).toLocaleDateString(undefined, {
@@ -269,7 +248,7 @@ export function SpendBars({
             }
           />
         ))}
-      </Animated.View>
+      </View>
       {goal != null && (
         <View
           style={styles.goalKey}
@@ -327,14 +306,6 @@ const styles = StyleSheet.create({
   },
   bars: { flexDirection: 'row', gap: 6, paddingTop: 2, paddingBottom: 2 },
   col: { flex: 1, minWidth: 0, alignItems: 'center', gap: 4 },
-  value: {
-    minHeight: 14,
-    fontFamily: theme.font.bodyBold,
-    fontSize: 11,
-    color: theme.colors.textMuted,
-    fontVariant: ['tabular-nums'],
-  },
-  valueOn: { color: theme.colors.textPrimary },
   track: {
     flex: 1,
     width: '100%',

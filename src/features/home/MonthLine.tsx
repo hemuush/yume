@@ -20,7 +20,7 @@ export function MonthLine({
   hideSavings: boolean;
   periodKey: string;
 }) {
-  const draw = useDrawnValue(`month-line:${periodKey}`, 1, DURATIONS.draw + 220);
+  const draw = useDrawnValue(`month-line:${periodKey}`, 1, DURATIONS.standard);
   const drawStyle = useAnimatedStyle(() => ({ transform: [{ scaleX: draw.value }] }));
   const parts = [
     { key: 'spent', share: slices.spent, color: theme.colors.slice.spent },

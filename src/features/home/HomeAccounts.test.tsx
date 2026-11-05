@@ -81,7 +81,7 @@ it('keeps an account with no balance reachable under View all and still offers A
   expect(texts(tree)).not.toContain('Empty');
   act(() =>
     tree.root
-      .find((n) => n.props.accessibilityLabel === 'View all — Accounts' && n.props.onPress)
+      .find((n) => n.props.accessibilityLabel === 'View all — Your accounts' && n.props.onPress)
       .props.onPress()
   );
   act(() =>
@@ -98,7 +98,7 @@ it('limits the row to eight accounts while leaving the full list reachable', () 
   expect(texts(tree)).toContain('Bank 7');
   expect(texts(tree)).not.toContain('Bank 8');
   expect(
-    tree.root.findAll((n) => n.props.onPress && n.props.accessibilityLabel === 'View all — Accounts')
+    tree.root.findAll((n) => n.props.onPress && n.props.accessibilityLabel === 'View all — Your accounts')
   ).not.toHaveLength(0);
 });
 
@@ -113,12 +113,12 @@ it('groups spending and savings previews while keeping the complete account list
     ],
     onOpenAccounts,
   });
-  expect(texts(tree)).toEqual(expect.arrayContaining(['Accounts', 'SBI', 'Cash']));
+  expect(texts(tree)).toEqual(expect.arrayContaining(['Your accounts', 'SBI', 'Cash']));
   expect(texts(tree)).toContain('Pot');
   expect(texts(tree)).toContain('Wise');
   act(() =>
     tree.root
-      .find((n) => n.props.accessibilityLabel === 'View all — Accounts' && n.props.onPress)
+      .find((n) => n.props.accessibilityLabel === 'View all — Your accounts' && n.props.onPress)
       .props.onPress()
   );
   expect(onOpenAccounts).toHaveBeenCalledTimes(1);
