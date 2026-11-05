@@ -15,13 +15,13 @@ import { GrowRect, subscribeCardGrow } from '@/lib/cardGrow';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 
 const GROW_MS = 240;
-const SETTLE_MS = 140;
-const FADE_MS = 180;
+const FADE_DELAY_MS = GROW_MS / 2;
+const FADE_MS = 140;
 
 /**
  * Mounted once above the Stack. A card that opens a full page registers its rect (see `useCardGrow`); this
  * paints a page-coloured panel that grows from that rect to the whole screen while the new screen fades in
- * beneath, then fades away. Expo Router has no Android shared-element transition, so this stands in for one.
+ * beneath and fades away as the destination becomes visible. Expo Router has no Android shared-element transition, so this stands in for one.
  * It never takes touches and does nothing with reduce motion on. Every value runs on the UI thread, so the
  * grow stays smooth while the new screen mounts on the JS thread.
  */
@@ -49,7 +49,7 @@ export function CardGrowHost() {
       grow.set(withTiming(1, { duration: GROW_MS, easing: Easing.out(Easing.cubic) }));
       fade.set(
         withDelay(
-          GROW_MS + SETTLE_MS,
+          FADE_DELAY_MS,
           withTiming(0, { duration: FADE_MS }, (finished) => {
             if (finished) runOnJS(setActive)(false);
           })
@@ -59,10 +59,17 @@ export function CardGrowHost() {
   }, [reduce, grow, fade, fromX, fromY, fromW, fromH]);
 
   const panelStyle = useAnimatedStyle(() => ({
-    left: interpolate(grow.get(), [0, 1], [fromX.get(), 0]),
-    top: interpolate(grow.get(), [0, 1], [fromY.get(), 0]),
-    width: interpolate(grow.get(), [0, 1], [fromW.get(), width]),
-    height: interpolate(grow.get(), [0, 1], [fromH.get(), height]),
+    // Keep Yoga geometry fixed: only the composited transform follows the source card.
+    left: 0,
+    top: 0,
+    width,
+    height,
+    transform: [
+      { translateX: interpolate(grow.get(), [0, 1], [fromX.get() + fromW.get() / 2 - width / 2, 0]) },
+      { translateY: interpolate(grow.get(), [0, 1], [fromY.get() + fromH.get() / 2 - height / 2, 0]) },
+      { scaleX: interpolate(grow.get(), [0, 1], [fromW.get() / Math.max(1, width), 1]) },
+      { scaleY: interpolate(grow.get(), [0, 1], [fromH.get() / Math.max(1, height), 1]) },
+    ],
     borderRadius: interpolate(grow.get(), [0, 1], [theme.radius.xl, 0]),
     backgroundColor: interpolateColor(grow.get(), [0, 1], [theme.colors.surface, theme.colors.background]),
     opacity: fade.get(),

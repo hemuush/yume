@@ -68,10 +68,16 @@ export function CountUpAmount({
     let active = true;
     // Only re-render when the shown (whole-unit) text changes: a frame that moved a few paise would
     // otherwise re-measure the auto-fit text for nothing.
-    let shown = '';
+    let shown = formatMoney(from, currency);
+    let lastPaint = -Infinity;
     const id = t.addListener(({ value }) => {
       if (!active) return;
       const next = Math.round(from + (minor - from) * value);
+      // Digits require JS text updates. Bound that work independently of 60/90/120 Hz screen refresh;
+      // interrupted updates resume from the last painted amount instead of an invisible intermediate.
+      const now = Date.now();
+      if (value < 1 && now - lastPaint >= 0 && now - lastPaint < 32) return;
+      lastPaint = now;
       current.current = next;
       const nextText = formatMoney(next, currency);
       if (nextText === shown) return;

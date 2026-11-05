@@ -15,6 +15,20 @@ jest.mock('@/db/client', () => ({
 }));
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
 jest.mock('@/lib/useReduceMotion', () => ({ useReduceMotion: () => true }));
+const mockNeedsGate: { wait: Promise<void> | null } = { wait: null };
+jest.mock('@/features/home/needsYouData', () => {
+  const original = jest.requireActual('@/features/home/needsYouData');
+  return {
+    ...original,
+    loadNeedsYou: async (...args: unknown[]) => {
+      if (mockNeedsGate.wait) {
+        await mockNeedsGate.wait;
+        return { shown: [], dismissed: [] };
+      }
+      return original.loadNeedsYou(...args);
+    },
+  };
+});
 jest.mock('@/lib/haptics', () => ({
   haptics: { tap: jest.fn(), confirm: jest.fn(), warn: jest.fn(), select: jest.fn() },
 }));
@@ -1042,6 +1056,32 @@ it('refreshes today spending when Home returns from the background without navig
     expect(textOf(tree)).toContain('₹430 left');
     expect(textOf(tree)).toContain('Today | ₹70 | ₹430 left');
   } finally {
+    act(() => tree.unmount());
+    subscription.mockRestore();
+  }
+});
+
+it('renders Home financial content while secondary housekeeping is still pending', async () => {
+  const { AppState } = require('react-native');
+  const subscription = jest.spyOn(AppState, 'addEventListener').mockReturnValue({ remove: jest.fn() });
+  await freshDb();
+  mockHide = false;
+  mockParams = {};
+  let release!: () => void;
+  mockNeedsGate.wait = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const tree = await open(SCREENS.find(([name]) => name === 'home')![1]);
+  try {
+    const { HomeSkeleton } = require('@/features/home/HomeSkeleton');
+    expect(tree.root.findAllByType(HomeSkeleton)).toHaveLength(0);
+    expectHealthy('Home before housekeeping', tree);
+  } finally {
+    await act(async () => {
+      release();
+      await Promise.resolve();
+    });
+    mockNeedsGate.wait = null;
     act(() => tree.unmount());
     subscription.mockRestore();
   }

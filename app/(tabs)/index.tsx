@@ -1,3 +1,4 @@
+import { runWhenIdle } from '@/lib/runWhenIdle';
 import { useLocalDayRefresh } from '@/lib/useLocalDayRefresh';
 import { investHref, withdrawHref } from '@/lib/investRoutes';
 import { investRole, investmentIdsOf } from '@/lib/investment';
@@ -296,7 +297,6 @@ export default function DashboardScreen() {
           dailyGoal,
           paceIn,
           stillToPay,
-          needs,
           wraps,
           defaultCurrency,
           budgetRows,
@@ -314,7 +314,6 @@ export default function DashboardScreen() {
           getDailySpendingGoal(),
           getMonthPaceInputs(undefined, hideAmounts),
           getStillToPayThisMonth(undefined, hideAmounts),
-          loadNeedsYou(),
           loadReadyWraps(),
           getDefaultCurrency(),
           // Budgets and goals are extras here: a failed read leaves them out instead of blanking Home.
@@ -358,7 +357,15 @@ export default function DashboardScreen() {
         setDailyGoalMinor(dailyGoal);
         setPaceInputs(paceIn);
         setStillToPayMinor(stillToPay);
-        setNeedsYou(needs.shown);
+        // Housekeeping scans do not gate the first useful financial content or the tab transition.
+        runWhenIdle(() => {
+          if (fSeq !== fullSeq.current) return;
+          void loadNeedsYou()
+            .then((needs) => {
+              if (fSeq === fullSeq.current) setNeedsYou(needs.shown);
+            })
+            .catch((error) => console.warn('Needs you refresh failed:', error));
+        });
         setReadyWraps(wraps);
         setCurrency(defaultCurrency);
         setLoadError(null);

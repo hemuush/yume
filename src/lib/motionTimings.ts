@@ -19,9 +19,9 @@ export const DURATIONS = {
   /** The opening fade-in, and the gap between one row's start and the next. */
   enter: 160,
   enterStep: 0,
-  /** A Home section rising into place when Home first opens, and the gap before the next one starts. */
-  section: 220,
-  sectionStep: 25,
+  /** A simultaneous Home section fade; no stagger delay. */
+  section: 160,
+  sectionStep: 0,
   /** A list row sliding into its new place / fading out when removed. */
   rowMove: 180,
   rowExit: 160,
