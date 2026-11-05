@@ -13,7 +13,12 @@ export const styles = StyleSheet.create({
     columnGap: 12,
     rowGap: 8,
   },
-  rhythm: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.borderSoft, marginTop: 0 },
+  rhythm: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: theme.colors.borderSoft,
+    marginTop: 2,
+    paddingTop: 8,
+  },
   actions: { marginHorizontal: 16, marginTop: 12 },
   bar: {
     flexDirection: 'row',
@@ -23,43 +28,48 @@ export const styles = StyleSheet.create({
     gap: 8,
     minHeight: 32,
   },
-  glow: { position: 'absolute', right: -80, top: -100 },
   body: { gap: 2 },
   figure: { flexShrink: 1, minWidth: 0, marginTop: 2 },
 
-  headTitle: { flexDirection: 'row', alignItems: 'center', gap: 2, flexShrink: 1 },
   headLabel: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textSecondary },
   headValue: {
     fontFamily: theme.font.bodyLight,
-    fontSize: theme.typeSize.headline,
+    fontSize: 42,
     fontVariant: ['tabular-nums'],
-    lineHeight: 40,
+    lineHeight: 52,
     letterSpacing: -1.1,
     color: theme.colors.textPrimary,
   },
   headSymbol: {
     fontFamily: theme.font.body,
-    fontSize: 22,
+    fontSize: 27,
     letterSpacing: 0,
     color: theme.colors.textMuted,
   },
   headValueNeg: { color: theme.colors.expenseText },
   headCaption: {
     fontFamily: theme.font.body,
-    fontSize: 13,
+    fontSize: 12,
     lineHeight: 19,
     color: theme.colors.textSecondary,
   },
 
-  // The info control keeps a full-size touch target beside the label.
-  howLink: { alignItems: 'center', justifyContent: 'center', width: 44, minHeight: 44, borderRadius: 22 },
-  howLinkOn: { backgroundColor: theme.colors.tray },
+  detailsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    columnGap: 12,
+    rowGap: 2,
+  },
+  howLink: { flexDirection: 'row', alignItems: 'center', gap: 5, minHeight: 44 },
+  howLinkText: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.link },
 
   // The month as one line: spent, saved, bills and free, in the colours the legend below uses.
-  line: { flexDirection: 'row', gap: 3, height: 10 },
-  lineWrap: { marginTop: 16 },
+  line: { flexDirection: 'row', gap: 3, height: 7 },
+  lineWrap: { marginTop: 8 },
   lineOrigin: { transformOrigin: 'left center' },
-  lineSegment: { height: 10, borderRadius: 5, minWidth: 5 },
+  lineSegment: { height: 7, borderRadius: 5, minWidth: 5 },
 
   insightsLink: {
     minHeight: 44,

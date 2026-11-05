@@ -1,7 +1,6 @@
 import { View, Pressable, StyleSheet, useWindowDimensions } from 'react-native';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
-import { compactMoney } from '@/lib/compactMoney';
 import { formatMoney } from '@/lib/money';
 
 export interface LegendItem {
@@ -20,15 +19,17 @@ const PAIR_AT = 1.15;
 
 /**
  * Under the month line, one column per slice of it (spent, saved, bills still to pay, free): its colour and
- * name, the amount and its share, so the line is the picture and this the key. Bills opens the sum.
+ * name and amount. Shares remain in the accessible label and month line, without a third row competing
+ * with the main amount. Bills opens the sum.
  */
 export function HeroLegend({ items }: { items: LegendItem[] }) {
-  const { fontScale } = useWindowDimensions();
-  const pair = fontScale > PAIR_AT;
+  const { width, fontScale } = useWindowDimensions();
+  const pair = width < 360 || fontScale > PAIR_AT;
   return (
     <View style={styles.row}>
       {items.map((it) => {
         const Container = it.onPress ? Pressable : View;
+        const amount = formatMoney(it.minor);
         return (
           <Container
             key={it.key}
@@ -37,8 +38,13 @@ export function HeroLegend({ items }: { items: LegendItem[] }) {
             accessibilityState={it.onPress ? { expanded: it.expanded } : undefined}
             accessibilityHint={it.onPress ? 'Shows how this adds up' : undefined}
             accessible
-            accessibilityLabel={`${it.label}, ${formatMoney(it.minor)}, ${it.share}`}
-            style={[styles.col, pair && styles.colPair, it.onPress && styles.tap]}
+            accessibilityLabel={`${it.label}, ${amount}, ${it.share}`}
+            style={[
+              styles.col,
+              { minWidth: Math.max(60, amount.length * 7) },
+              pair && styles.colPair,
+              it.onPress && styles.tap,
+            ]}
           >
             <View style={styles.head}>
               <View style={[styles.dot, { backgroundColor: it.color }]} />
@@ -47,9 +53,8 @@ export function HeroLegend({ items }: { items: LegendItem[] }) {
               </Text>
             </View>
             <Text style={styles.amount} numberOfLines={1}>
-              {compactMoney(it.minor)}
+              {amount}
             </Text>
-            <Text style={styles.share}>{it.share}</Text>
           </Container>
         );
       })}
@@ -58,7 +63,7 @@ export function HeroLegend({ items }: { items: LegendItem[] }) {
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 8, rowGap: 4, marginTop: 12, marginBottom: 12 },
+  row: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 8, rowGap: 4, marginTop: 10, marginBottom: 10 },
   col: { flexGrow: 1, flexBasis: 0, minWidth: 60, gap: 1 },
   colPair: { flexBasis: '45%' },
   tap: { minHeight: 44 },
@@ -74,12 +79,6 @@ const styles = StyleSheet.create({
     fontFamily: theme.font.bodyBold,
     fontSize: 14,
     color: theme.colors.textPrimary,
-    fontVariant: ['tabular-nums'],
-  },
-  share: {
-    fontFamily: theme.font.body,
-    fontSize: 12,
-    color: theme.colors.textMuted,
     fontVariant: ['tabular-nums'],
   },
 });
