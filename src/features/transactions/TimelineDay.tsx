@@ -617,7 +617,19 @@ const styles = StyleSheet.create({
  */
 export const TimelineDay = memo(TimelineDayView, (prev, next) => {
   for (const key of Object.keys(next) as (keyof typeof next)[]) {
-    if (key !== 'entering' && prev[key] !== next[key]) return false;
+    if (key === 'entering' || prev[key] === next[key]) continue;
+    if (key === 'openStacks') {
+      // Expansion belongs to a date. Opening another day's stack must not rebuild this day's rows.
+      const prefix = `${next.date}|`;
+      for (const stack of prev.openStacks) {
+        if (stack.startsWith(prefix) && !next.openStacks.has(stack)) return false;
+      }
+      for (const stack of next.openStacks) {
+        if (stack.startsWith(prefix) && !prev.openStacks.has(stack)) return false;
+      }
+      continue;
+    }
+    return false;
   }
   return Object.keys(prev).length === Object.keys(next).length;
 });

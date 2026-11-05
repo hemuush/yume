@@ -314,3 +314,34 @@ it('releases the parent scroll lock when a held day unmounts', () => {
   act(() => r.unmount());
   expect(onDragActive).toHaveBeenLastCalledWith(false);
 });
+
+it('does not rebuild an unrelated day when another day expands, but refreshes its own expansion', () => {
+  const money = require('@/lib/money');
+  const format = jest.spyOn(money, 'formatMaskableMoney');
+  const props = {
+    date: DATE,
+    label: 'Today',
+    dateLabel: '25 Sept',
+    items,
+    categories,
+    accountName: (id: string) => accounts[id],
+    categoryName: (id: string | null) => names[id ?? ''],
+    onPressTx: jest.fn(),
+    onToggleStack: jest.fn(),
+    openStacks: new Set<string>(),
+  };
+  let tree!: ReactTestRenderer;
+  try {
+    act(() => {
+      tree = create(<TimelineDay {...props} />);
+    });
+    format.mockClear();
+    act(() => tree.update(<TimelineDay {...props} openStacks={new Set(['2026-09-24|expense|food'])} />));
+    expect(format).not.toHaveBeenCalled();
+    act(() => tree.update(<TimelineDay {...props} openStacks={new Set([`${DATE}|expense|food`])} />));
+    expect(format).toHaveBeenCalled();
+  } finally {
+    act(() => tree.unmount());
+    format.mockRestore();
+  }
+});
