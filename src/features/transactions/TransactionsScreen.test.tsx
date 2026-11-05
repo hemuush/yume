@@ -228,3 +228,42 @@ it('counts investment transfers separately from ordinary transfers in the filter
   expect(countFor({ ...filter, type: 'invest' })).toBe(1);
   expect(countFor({ ...filter, type: 'transfer' })).toBe(2);
 });
+
+it('recovers from an empty filter result in one action without changing the period', async () => {
+  mockComparison.fail = false;
+  const { toLocalIsoDate } = require('@/lib/date');
+  const { FilterModal } = require('./FilterModal');
+  const { PrimaryButton } = require('@/components/PrimaryButton');
+  mockLedger.transactions = [
+    {
+      id: 'expense',
+      type: 'expense',
+      accountId: 'bank',
+      categoryId: null,
+      amountMinor: 10000,
+      date: toLocalIsoDate(new Date()),
+      note: '',
+    },
+  ] as Transaction[];
+  const tree = await render();
+  expect(texts(tree)).toContain('This week');
+  act(() =>
+    tree.root.findByType(FilterModal).props.onApply({
+      type: 'income',
+      categoryIds: ['missing'],
+      accountIds: ['missing'],
+      expenseLabel: 'absent',
+    })
+  );
+  const clear = tree.root.findAllByType(PrimaryButton).find((n) => n.props.title === 'Clear filters');
+  expect(clear).toBeDefined();
+  act(() => clear!.props.onPress());
+  expect(tree.root.findByType(FilterModal).props.filter).toEqual({
+    type: 'all',
+    categoryIds: [],
+    accountIds: [],
+    expenseLabel: undefined,
+  });
+  expect(tree.root.findAllByType(PrimaryButton).some((n) => n.props.title === 'Clear filters')).toBe(false);
+  expect(texts(tree)).toContain('This week');
+});

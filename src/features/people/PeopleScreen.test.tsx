@@ -108,6 +108,21 @@ describe('Friends & Family screen', () => {
 
   it('invites the first person when no one is added', async () => {
     mockPeople.current = [];
-    expect(texts(await render())).toContain('No one here yet');
+    expect(texts(await render())).toContain('Keep track of money between people');
   });
+});
+
+it('opens first-person setup directly from the empty state', async () => {
+  mockPeople.current = [];
+  const tree = await render();
+  const { PrimaryButton } = require('@/components/PrimaryButton');
+  const { AddPersonModal } = require('./AddPersonModal');
+  act(() =>
+    tree.root
+      .findAllByType(PrimaryButton)
+      .find((n) => n.props.title === 'Add a person')!
+      .props.onPress()
+  );
+  expect(tree.root.findByType(AddPersonModal).props.visible).toBe(true);
+  act(() => tree.unmount());
 });

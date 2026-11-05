@@ -1086,3 +1086,27 @@ it('renders Home financial content while secondary housekeeping is still pending
     subscription.mockRestore();
   }
 });
+
+it('opens recurring setup from the first-use call to action', async () => {
+  const { AppState } = require('react-native');
+  const subscription = jest.spyOn(AppState, 'addEventListener').mockReturnValue({ remove: jest.fn() });
+  await freshDb();
+  mockHide = false;
+  mockParams = {};
+  await createAccount({ name: 'Bank', type: 'bank', currency: 'INR', openingBalanceMinor: 0 });
+  const tree = await open(SCREENS.find(([name]) => name === 'recurring')![1]);
+  try {
+    const { PrimaryButton } = require('@/components/PrimaryButton');
+    const { RuleModal } = require('@/features/recurring/RuleModal');
+    act(() =>
+      tree.root
+        .findAllByType(PrimaryButton)
+        .find((n) => n.props.title === 'Add a recurring entry')!
+        .props.onPress()
+    );
+    expect(tree.root.findByType(RuleModal).props.visible).toBe(true);
+  } finally {
+    act(() => tree.unmount());
+    subscription.mockRestore();
+  }
+});

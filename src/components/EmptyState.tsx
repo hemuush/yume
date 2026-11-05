@@ -22,7 +22,9 @@ export function EmptyState({
   return (
     <View style={styles.wrap}>
       {illustration}
-      <Text style={styles.title}>{title}</Text>
+      <Text accessibilityRole="header" style={styles.title}>
+        {title}
+      </Text>
       {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
       {children && <View style={styles.action}>{children}</View>}
     </View>
@@ -33,18 +35,21 @@ const styles = StyleSheet.create({
   wrap: { alignItems: 'center', paddingVertical: 24, paddingHorizontal: 20 },
   title: {
     fontFamily: theme.font.roundedMedium,
-    fontSize: 15,
+    fontSize: theme.typeSize.title,
     color: theme.colors.textPrimary,
     marginTop: 14,
     textAlign: 'center',
+    maxWidth: 360,
+    lineHeight: 24,
   },
   subtitle: {
     fontFamily: theme.font.body,
     fontSize: 13,
-    color: theme.colors.textMuted,
+    color: theme.colors.textSecondary,
     marginTop: 4,
     textAlign: 'center',
-    lineHeight: 19,
+    lineHeight: 20,
+    maxWidth: 360,
   },
-  action: { alignSelf: 'stretch', marginTop: 16 },
+  action: { alignSelf: 'center', width: '100%', maxWidth: 360, marginTop: 20 },
 });
