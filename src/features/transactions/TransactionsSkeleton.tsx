@@ -12,8 +12,8 @@ export function TransactionsSkeleton() {
   return (
     <View style={styles.wrap}>
       <View style={styles.sumCard}>
-        <Skeleton width={120} height={13} radius={4} />
-        <Skeleton width={150} height={34} radius={6} style={{ marginTop: 14 }} />
+        <Skeleton width={120} height={12} radius={4} />
+        <Skeleton width={150} height={46} radius={6} style={{ marginTop: 2 }} />
         <Skeleton width={190} height={22} radius={11} style={{ marginTop: 10 }} />
         <View style={styles.barRow}>
           {BAR_HEIGHTS.map((h, i) => (
@@ -28,7 +28,7 @@ export function TransactionsSkeleton() {
           <View style={styles.dayCard}>
             {[0, 1].map((i) => (
               <View key={i} style={[styles.row, i > 0 && styles.rowDivider]}>
-                <Skeleton width={30} height={30} radius={15} />
+                <Skeleton width={34} height={34} radius={17} />
                 <View style={styles.rowMid}>
                   <Skeleton width={130} height={13} radius={4} />
                   <Skeleton width={90} height={10} radius={3} style={{ marginTop: 6 }} />
@@ -59,16 +59,23 @@ const styles = StyleSheet.create({
     height: 60,
     marginTop: 24,
   },
-  dayGroup: { marginTop: 26 },
+  dayGroup: { marginTop: 16 },
   dayCard: {
-    marginTop: 10,
+    marginTop: 6,
     backgroundColor: theme.colors.surface,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
     borderRadius: theme.radius.xl2,
     overflow: 'hidden',
   },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 13, paddingHorizontal: 16 },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    minHeight: 52,
+    paddingVertical: 9,
+    paddingHorizontal: 12,
+  },
   rowDivider: { borderTopWidth: 1, borderTopColor: theme.colors.divider },
   rowMid: { flex: 1 },
 });

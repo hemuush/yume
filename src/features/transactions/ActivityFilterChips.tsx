@@ -67,7 +67,7 @@ export function ActivityFilterChips({
                 onPress={() => onFilterType(c.value)}
                 style={withPressedTint(accent, [
                   styles.typeBtn,
-                  wrapTabs && { flexBasis: '40%' },
+                  wrapTabs && { flexBasis: fontScale > 1.2 ? '40%' : '30%' },
                   on && { backgroundColor: selectedFill(accent) },
                 ])}
                 accessibilityRole="radio"
@@ -82,7 +82,7 @@ export function ActivityFilterChips({
         {onOpenFilters && (
           <HeaderIconButton
             icon="sliders"
-            size={52}
+            size={48}
             glass
             onPress={onOpenFilters}
             label={filterCount > 0 ? `Filters, ${filterCount} on` : 'Filters'}

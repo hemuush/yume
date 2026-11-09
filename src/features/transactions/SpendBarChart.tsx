@@ -295,7 +295,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     columnGap: 10,
     rowGap: 4,
-    marginTop: 14,
+    marginTop: 10,
   },
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: 5, maxWidth: '100%', flexShrink: 1 },
   legendDot: { width: 8, height: 8, borderRadius: 3, flexShrink: 0 },

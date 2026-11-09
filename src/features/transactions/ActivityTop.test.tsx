@@ -91,7 +91,7 @@ describe('Spent card', () => {
 });
 
 describe('Activity filter bar', () => {
-  function bar(categoryIds: string[], onOpenFilters?: () => void, filterCount = 0) {
+  function bar(categoryIds: string[], onOpenFilters?: () => void, filterCount = 0, onFilterType = jest.fn()) {
     let r!: ReactTestRenderer;
     act(() => {
       r = create(
@@ -99,7 +99,7 @@ describe('Activity filter bar', () => {
           onOpenFilters={onOpenFilters}
           filterCount={filterCount}
           filterType="all"
-          onFilterType={jest.fn()}
+          onFilterType={onFilterType}
           categoryIds={categoryIds}
           accountIds={[]}
           categoryName={(id) => (id === 'groc' ? 'Groceries' : id)}
@@ -116,6 +116,32 @@ describe('Activity filter bar', () => {
   it('is one bar of types, with no second line when nothing is picked', () => {
     const all = texts(bar([]));
     expect(all).toEqual(['All', 'Spent', 'Income', 'Transfers', 'Invest']);
+  });
+
+  it.each([1, 2])('keeps every type filter actionable at 320dp and text scale %s', (fontScale) => {
+    const dimensions = jest
+      .spyOn(require('react-native'), 'useWindowDimensions')
+      .mockReturnValue({ width: 320, height: 800, fontScale, scale: 1 });
+    const choose = jest.fn();
+    const tree = bar([], undefined, 0, choose);
+    try {
+      for (const label of ['all', 'spent', 'income', 'transfers', 'invest']) {
+        const button = tree.root.find(
+          (n) => n.props.accessibilityLabel === `Show ${label}` && n.props.onPress
+        );
+        act(() => button.props.onPress());
+      }
+      expect(choose.mock.calls.map(([value]) => value)).toEqual([
+        'all',
+        'expense',
+        'income',
+        'transfer',
+        'invest',
+      ]);
+    } finally {
+      act(() => tree.unmount());
+      dimensions.mockRestore();
+    }
   });
 
   it('opens Filters beside the type group and retains its active count', () => {

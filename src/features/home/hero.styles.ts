@@ -3,7 +3,7 @@ import { theme } from '@/constants/theme';
 import { screenStyles as h } from '@/components/screenStyles';
 
 export const styles = StyleSheet.create({
-  // The two Home cards are the app's one card (screenStyles.card): cream, rounded, a hairline edge, no shadow.
+  // Keep Home's cream surface and quiet edge consistent with the rest of the app.
   card: { ...h.card, paddingHorizontal: 16, paddingTop: 12, paddingBottom: 12 },
   heroRow: {
     flexDirection: 'row',
@@ -17,9 +17,9 @@ export const styles = StyleSheet.create({
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: theme.colors.borderSoft,
     marginTop: 2,
-    paddingTop: 8,
+    paddingTop: 6,
   },
-  actions: { marginHorizontal: 16, marginTop: 12 },
+  actions: { marginHorizontal: 16, marginTop: 10 },
   bar: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -31,18 +31,23 @@ export const styles = StyleSheet.create({
   body: { gap: 2 },
   figure: { flexShrink: 1, minWidth: 0, marginTop: 2 },
 
-  headLabel: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textSecondary },
+  headLabel: {
+    fontFamily: theme.font.bodyMedium,
+    fontSize: 12,
+    letterSpacing: 0.3,
+    color: theme.colors.textSecondary,
+  },
   headValue: {
     fontFamily: theme.font.bodyLight,
-    fontSize: 42,
+    fontSize: 44,
     fontVariant: ['tabular-nums'],
     lineHeight: 52,
-    letterSpacing: -1.1,
+    letterSpacing: -1.4,
     color: theme.colors.textPrimary,
   },
   headSymbol: {
     fontFamily: theme.font.body,
-    fontSize: 27,
+    fontSize: 26,
     letterSpacing: 0,
     color: theme.colors.textMuted,
   },
@@ -67,7 +72,7 @@ export const styles = StyleSheet.create({
 
   // The month as one line: spent, saved, bills and free, in the colours the legend below uses.
   line: { flexDirection: 'row', gap: 3, height: 7 },
-  lineWrap: { marginTop: 8 },
+  lineWrap: { marginTop: 4 },
   lineOrigin: { transformOrigin: 'left center' },
   lineSegment: { height: 7, borderRadius: 5, minWidth: 5 },
 

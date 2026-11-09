@@ -111,18 +111,20 @@ const AccountTile = memo(function AccountTile({
       accessibilityLabel={`${a.name}, ${accountTypeLabel(a)}. Open summary`}
       style={withPressedTint(accent, [styles.tile, { width }])}
     >
-      <View style={[styles.icon, { backgroundColor: shade(hue, 88) }]}>
-        <MaterialCommunityIcons
-          name={accountIcon(a.type) as McIconName}
-          size={18}
-          color={shade(hue, 30, 10)}
-        />
+      <View style={styles.tileHead}>
+        <View style={[styles.icon, { backgroundColor: shade(hue, 88) }]}>
+          <MaterialCommunityIcons
+            name={accountIcon(a.type) as McIconName}
+            size={17}
+            color={shade(hue, 30, 10)}
+          />
+        </View>
+        <Text style={styles.kind} numberOfLines={1}>
+          {accountTypeLabel(a)}
+        </Text>
       </View>
       <Text style={styles.name} numberOfLines={1}>
         {a.name}
-      </Text>
-      <Text style={styles.kind} numberOfLines={1}>
-        {accountTypeLabel(a)}
       </Text>
       <Amount
         minor={a.currentBalanceMinor}
@@ -130,6 +132,7 @@ const AccountTile = memo(function AccountTile({
         sensitive={a.type === 'savings'}
         style={styles.balance}
         numberOfLines={1}
+        adjustsFontSizeToFit
       />
     </Pressable>
   );
@@ -137,19 +140,26 @@ const AccountTile = memo(function AccountTile({
 
 const styles = StyleSheet.create({
   row: { paddingHorizontal: 16, paddingVertical: 4, gap: TILE_GAP },
-  tile: { ...h.card, marginHorizontal: 0, minHeight: 136, padding: 12 },
-  icon: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+  tile: { ...h.card, marginHorizontal: 0, minHeight: 116, padding: 12 },
+  tileHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
+  icon: { width: 32, height: 32, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   name: {
     marginTop: 10,
     fontFamily: theme.font.bodyBold,
     fontSize: theme.typeSize.row,
     color: theme.colors.textPrimary,
   },
-  kind: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
+  kind: {
+    flexShrink: 1,
+    fontFamily: theme.font.body,
+    fontSize: 11,
+    textAlign: 'right',
+    color: theme.colors.textMuted,
+  },
   balance: {
-    marginTop: 2,
-    fontFamily: theme.font.bodyBold,
-    fontSize: 16,
+    marginTop: 4,
+    fontFamily: theme.font.bodyMedium,
+    fontSize: 18,
     fontVariant: ['tabular-nums'],
     color: theme.colors.textPrimary,
   },

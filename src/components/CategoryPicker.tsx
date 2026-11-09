@@ -34,6 +34,8 @@ interface Props {
   /** Shown faded: already used elsewhere (a split's other parts). Still tappable, so the host can say why. */
   dimmedIds?: string[];
   minColumnWidth?: number;
+  /** Tighter medal spacing for Add, without changing names or touch targets. */
+  compact?: boolean;
 }
 
 /**
@@ -49,6 +51,7 @@ export function CategoryPicker({
   onSearchFocusChange,
   dimmedIds,
   minColumnWidth = MEDAL_MIN_WIDTH,
+  compact = false,
 }: Props) {
   const topLevel = topLevelOnly(categories);
   // The medal grid fills its width evenly: as many columns as fit, each an equal share,
@@ -138,7 +141,7 @@ export function CategoryPicker({
 
   // 'medal' — the icon-tile picker.
   const search = searchable && (
-    <View style={styles.search}>
+    <View style={[styles.search, compact && styles.searchCompact]}>
       <Feather name="search" size={14} color={theme.colors.textMuted} />
       <TextInput
         value={query}
@@ -174,10 +177,11 @@ export function CategoryPicker({
         {matches.length === 0 ? (
           <Text style={styles.noMatch}>No category called "{query.trim()}"</Text>
         ) : (
-          <View style={styles.medalGrid} onLayout={onGridLayout}>
+          <View style={[styles.medalGrid, compact && styles.medalGridCompact]} onLayout={onGridLayout}>
             {matches.map((cat) => (
               <MedalTile
                 key={cat.id}
+                compact={compact}
                 width={tileWidth}
                 dimmed={dimmed(cat.id)}
                 active={selectedId === cat.id}
@@ -201,10 +205,11 @@ export function CategoryPicker({
   return (
     <View>
       {search}
-      <View style={styles.medalGrid} onLayout={onGridLayout}>
+      <View style={[styles.medalGrid, compact && styles.medalGridCompact]} onLayout={onGridLayout}>
         {topLevel.map((cat) => (
           <MedalTile
             key={cat.id}
+            compact={compact}
             width={tileWidth}
             dimmed={dimmed(cat.id)}
             active={selectedId === cat.id}
@@ -218,10 +223,11 @@ export function CategoryPicker({
       {expandedChildren.length > 0 && (
         <View style={styles.subGroup}>
           <Text style={styles.subGroupLabel}>{expandedParent?.name} —</Text>
-          <View style={styles.medalGrid}>
+          <View style={[styles.medalGrid, compact && styles.medalGridCompact]}>
             {expandedChildren.map((cat) => (
               <View key={cat.id} style={tileWidth ? { width: tileWidth } : undefined}>
                 <MedalTile
+                  compact={compact}
                   width={tileWidth}
                   dimmed={dimmed(cat.id)}
                   active={selectedId === cat.id}
@@ -251,6 +257,7 @@ function MedalTile({
   hint,
   width,
   dimmed,
+  compact,
 }: {
   active: boolean;
   name: string;
@@ -263,6 +270,7 @@ function MedalTile({
   /** An equal share of the grid's width; the fixed default until the grid has measured itself. */
   width?: number;
   dimmed?: boolean;
+  compact?: boolean;
 }) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.92);
   const { accent } = useAccent();
@@ -281,11 +289,18 @@ function MedalTile({
         style={[
           styles.medalBody,
           active && [styles.medalBodyActive, { backgroundColor: softTint(accent, 0.22) }],
+          compact && styles.medalBodyCompact,
           dimmed && styles.medalDimmed,
         ]}
       >
         <View style={[styles.medalRing, sub && styles.medalRingSub, active && styles.medalRingActive]}>
-          <CategoryIcon name={icon} color={color} size={sub ? 16 : 20} square={sub ? 38 : 48} round />
+          <CategoryIcon
+            name={icon}
+            color={color}
+            size={sub ? 16 : compact ? 18 : 20}
+            square={sub ? 38 : compact ? 40 : 48}
+            round
+          />
         </View>
         {/* A single long word shrinks a little rather than splitting mid-word (larger text sizes, narrow phones). */}
         <Text
@@ -310,7 +325,10 @@ const styles = StyleSheet.create({
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   // Columns are an equal share of the width (see `cols` above), so only rows need a gap.
   medalGrid: { flexDirection: 'row', flexWrap: 'wrap', rowGap: 14 },
+  medalGridCompact: { rowGap: 8 },
   medalBody: { alignItems: 'center', alignSelf: 'stretch' },
+  // Selection changes the ring and tint while vertical padding stays fixed.
+  medalBodyCompact: { paddingVertical: 2 },
   medalDimmed: { opacity: 0.35 },
   // The picked tile: a light theme tint behind the whole tile, not only a ring.
   medalBodyActive: { borderRadius: 16, paddingVertical: 4 },
@@ -353,6 +371,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: theme.colors.textPrimary,
   },
+  searchCompact: { marginBottom: 8 },
   noMatch: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, paddingVertical: 8 },
   subGroup: {
     marginTop: 10,

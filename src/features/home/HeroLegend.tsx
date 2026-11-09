@@ -63,12 +63,12 @@ export function HeroLegend({ items }: { items: LegendItem[] }) {
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 8, rowGap: 4, marginTop: 10, marginBottom: 10 },
+  row: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 8, rowGap: 4, marginTop: 8, marginBottom: 8 },
   col: { flexGrow: 1, flexBasis: 0, minWidth: 60, gap: 1 },
   colPair: { flexBasis: '45%' },
   tap: { minHeight: 44 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  dot: { width: 7, height: 7, borderRadius: 4 },
+  dot: { width: 6, height: 6, borderRadius: 3 },
   label: {
     flexShrink: 1,
     fontFamily: theme.font.bodyMedium,

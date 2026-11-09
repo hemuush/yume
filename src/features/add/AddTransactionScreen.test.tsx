@@ -249,6 +249,26 @@ beforeEach(() => {
 });
 
 describe('Add screen', () => {
+  it.each([true, false])(
+    'keeps batch save available at enlarged text with the pad open: %s',
+    async (padOpen) => {
+      const fontScale = jest.spyOn(require('@/lib/useFontScale'), 'useFontScale').mockReturnValue(2);
+      const tree = await render();
+      try {
+        await press(tree, 'Food');
+        await typeAmount(tree, '120');
+        if (!padOpen) await pressLabelled(tree, 'Hide pad');
+        await press(tree, 'Add more');
+        await save(tree, 'Save 1 entry');
+        expect(createTransaction).toHaveBeenCalledTimes(1);
+        expect(createTransaction).toHaveBeenCalledWith(expect.objectContaining({ amountMinor: 12000 }));
+      } finally {
+        act(() => tree.unmount());
+        fontScale.mockRestore();
+      }
+    }
+  );
+
   it('keeps Save disabled until the complete saved split has loaded and offers retry on failure', async () => {
     mockParams.current = { id: 't1', amount: '10000', categoryId: 'food' };
     const tx = {

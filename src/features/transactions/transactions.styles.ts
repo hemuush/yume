@@ -5,8 +5,8 @@ import { GLASS } from '@/components/Glass';
 
 // Shared by the Transactions screen and its modals/rows (FilterModal, TransactionRow,
 // TransactionDetailModal).
-/** One height for Activity's pill controls (period, Week | Month, type): a 44 target plus 3 of padding each side. */
-const CONTROL_H = 52;
+/** A 44dp target, 2dp padding per side and the control's border. */
+const CONTROL_H = 50;
 
 export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
@@ -39,10 +39,10 @@ export const styles = StyleSheet.create({
     gap: 10,
     minHeight: 44,
     paddingHorizontal: 14,
-    borderRadius: theme.radius.pill,
-    backgroundColor: GLASS.fillStrong,
-    borderWidth: 1,
-    borderColor: GLASS.edge,
+    borderRadius: theme.radius.lg,
+    backgroundColor: theme.colors.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
   },
   searchInput: {
     flex: 1,
@@ -52,6 +52,7 @@ export const styles = StyleSheet.create({
     padding: 0,
   },
   searchCancel: { fontSize: 13, fontFamily: theme.font.bodyBold, color: theme.colors.link },
+  searchCancelBtn: { minHeight: 44, justifyContent: 'center', paddingHorizontal: 4 },
   searchLoading: { paddingVertical: 40, alignItems: 'center' },
   // Search before anything is typed: what it looks at, things to try, and past searches.
   searchEmpty: { alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingTop: 24 },
@@ -105,21 +106,21 @@ export const styles = StyleSheet.create({
   recentDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.borderSoft },
   recentText: { flex: 1, fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textPrimary },
 
-  // The Spent card leads the tab, frosted like Home's month card: the kicker, a big light figure, its chips
-  // (the change, money in, net), the chart and a one-line legend.
-  sumCard: { marginHorizontal: 16, marginTop: 8, padding: 16 },
-  sumKicker: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textSecondary },
+  // The Spent card shares Home's cream surface and light headline typography.
+  // The selected chart amount can extend past its first/last column.
+  sumCard: { marginHorizontal: 16, marginTop: 8, padding: 16, overflow: 'visible' },
+  sumKicker: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
   headlineAmt: {
     fontFamily: theme.font.bodyLight,
-    fontSize: theme.typeSize.headline,
-    lineHeight: 40,
+    fontSize: 38,
+    lineHeight: 46,
     letterSpacing: -1.1,
     color: theme.colors.textPrimary,
-    marginTop: 6,
+    marginTop: 2,
   },
   headlineSymbol: {
     fontFamily: theme.font.body,
-    fontSize: 22,
+    fontSize: 24,
     letterSpacing: 0,
     color: theme.colors.textMuted,
   },
@@ -128,17 +129,34 @@ export const styles = StyleSheet.create({
   sumChange: { flexShrink: 1, fontFamily: theme.font.bodyMedium, fontSize: 12 },
   // Room above the tallest bar for the tapped bar's amount bubble.
   sumChart: { marginTop: 22 },
-  sumTop: { flexDirection: 'row', alignItems: 'flex-start', gap: 14 },
+  sumTop: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
   sumTopStacked: { flexDirection: 'column' },
   sumLead: { flexGrow: 1, flexShrink: 1, minWidth: 0 },
-  sumCashflow: { width: '42%', gap: 8, alignItems: 'stretch' },
-  sumCashflowStacked: { width: '100%', flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+  sumCashflow: {
+    width: '38%',
+    gap: 8,
+    alignItems: 'stretch',
+    paddingLeft: 12,
+    borderLeftWidth: StyleSheet.hairlineWidth,
+    borderLeftColor: theme.colors.borderSoft,
+  },
+  sumCashflowStacked: {
+    width: '100%',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    paddingLeft: 0,
+    paddingTop: 10,
+    borderLeftWidth: 0,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: theme.colors.borderSoft,
+  },
   sumMetric: { minWidth: 0, gap: 3, alignItems: 'flex-end' },
   sumMetricStacked: { flexGrow: 1, flexBasis: 120, alignItems: 'flex-start' },
   sumMetricAmount: {
     fontFamily: theme.font.bodyBold,
     fontVariant: ['tabular-nums'],
-    fontSize: 15,
+    fontSize: 14,
     color: theme.colors.textPrimary,
   },
   // Week | Month beside the period pill, the picked one on deep ink.
@@ -147,7 +165,7 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 2,
     minHeight: CONTROL_H,
-    padding: 3,
+    padding: 2,
     borderRadius: theme.radius.pill,
     backgroundColor: GLASS.fill,
     borderWidth: 1,
@@ -174,8 +192,8 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 4,
     minHeight: CONTROL_H,
-    paddingHorizontal: 3,
-    paddingVertical: 3,
+    paddingHorizontal: 2,
+    paddingVertical: 2,
     borderRadius: theme.radius.pill,
     overflow: 'hidden',
     backgroundColor: GLASS.fill,
@@ -248,11 +266,11 @@ export const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
     minHeight: CONTROL_H,
-    padding: 3,
-    borderRadius: theme.radius.pill,
-    backgroundColor: GLASS.fill,
-    borderWidth: 1,
-    borderColor: GLASS.edge,
+    padding: 2,
+    borderRadius: theme.radius.xl,
+    backgroundColor: theme.colors.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
   },
   typeBtn: {
     flex: 1,
@@ -261,7 +279,7 @@ export const styles = StyleSheet.create({
     minHeight: 44,
     paddingVertical: 8,
     paddingHorizontal: 4,
-    borderRadius: theme.radius.pill,
+    borderRadius: theme.radius.md,
   },
   typeText: {
     textAlign: 'center',
@@ -270,18 +288,18 @@ export const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
   },
   typeTextOn: { color: theme.colors.textPrimary, fontFamily: theme.font.roundedBold },
-  chipsRow: { gap: 8, paddingHorizontal: 16, paddingTop: 10 },
-  filterGap: { height: 16 },
+  chipsRow: { gap: 8, paddingHorizontal: 16, paddingTop: 8 },
+  filterGap: { height: 12 },
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    minHeight: 40,
+    minHeight: 44,
     paddingHorizontal: 12,
-    borderRadius: theme.radius.pill,
-    backgroundColor: GLASS.fill,
-    borderWidth: 1,
-    borderColor: GLASS.edge,
+    borderRadius: theme.radius.md,
+    backgroundColor: theme.colors.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
   },
   chipText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textSecondary },
 
