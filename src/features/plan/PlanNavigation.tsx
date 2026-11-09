@@ -78,10 +78,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   label: {
-    fontFamily: theme.font.roundedMedium,
+    fontFamily: theme.font.body,
     fontSize: 13,
     color: theme.colors.textSecondary,
     textAlign: 'center',
   },
-  activeLabel: { fontFamily: theme.font.roundedBold, color: theme.colors.textPrimary },
+  activeLabel: { fontFamily: theme.font.bodyMedium, color: theme.colors.textPrimary },
 });

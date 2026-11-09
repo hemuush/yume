@@ -186,7 +186,7 @@ const s = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
   },
-  row: { minHeight: 68, paddingVertical: 12, flexDirection: 'row', alignItems: 'center', gap: 10 },
+  row: { minHeight: 64, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 10 },
   divider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.divider },
   icon: {
     width: 34,
@@ -197,7 +197,7 @@ const s = StyleSheet.create({
     backgroundColor: theme.colors.surfaceAlt,
   },
   warning: { backgroundColor: theme.colors.expenseTint },
-  copy: { flex: 1, minWidth: 0, gap: 4 },
-  title: { fontFamily: theme.font.roundedBold, fontSize: 14, color: theme.colors.textPrimary },
+  copy: { flex: 1, minWidth: 0, gap: 2 },
+  title: { fontFamily: theme.font.bodyMedium, fontSize: 14, color: theme.colors.textPrimary },
   detail: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 18, color: theme.colors.textSecondary },
 });

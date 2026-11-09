@@ -1,4 +1,4 @@
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, useWindowDimensions } from 'react-native';
 import { Text } from '@/components/Text';
 import { Amount } from '@/components/Amount';
 import { CountUpAmount } from '@/components/CountUpAmount';
@@ -44,6 +44,8 @@ export function ReportHero({
   animKey: string;
 }) {
   const { accent } = useAccent();
+  const { width, fontScale } = useWindowDimensions();
+  const stacked = width < 360 || fontScale > 1.2;
   const ink = themeInk(accent);
   const used = budget ? budget.spentMinor / budget.limitMinor : 0;
   const over = budget != null && used > 1;
@@ -81,7 +83,7 @@ export function ReportHero({
           </Text>
         </View>
       )}
-      <View style={styles.kpis}>
+      <View style={[styles.kpis, stacked && styles.kpisStacked]}>
         <View style={styles.kpi}>
           <Text style={styles.kpiLabel}>Income</Text>
           <Amount
@@ -96,7 +98,7 @@ export function ReportHero({
             </Text>
           )}
         </View>
-        <View style={[styles.kpi, h.dividerLeft, styles.kpiRight]}>
+        <View style={[styles.kpi, stacked ? styles.kpiBelow : [h.dividerLeft, styles.kpiRight]]}>
           <Text style={styles.kpiLabel}>Kept</Text>
           <Text
             style={[styles.kpiValue, kept < 0 ? styles.bad : styles.good]}
@@ -124,20 +126,26 @@ const styles = StyleSheet.create({
   figure: {
     fontFamily: theme.font.bodyMedium,
     fontSize: theme.typeSize.headline,
-    lineHeight: 40,
+    lineHeight: 38,
     letterSpacing: -0.3,
     color: theme.colors.textPrimary,
     fontVariant: ['tabular-nums'],
   },
   sub: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textSecondary, marginTop: 2 },
-  budget: { marginTop: 12, gap: 6 },
-  track: { height: 8, borderRadius: 4, overflow: 'hidden' },
-  fill: { height: 8, borderRadius: 4 },
+  budget: { marginTop: 10, gap: 6 },
+  track: { height: 6, borderRadius: 3, overflow: 'hidden' },
+  fill: { height: 6, borderRadius: 3 },
   budgetText: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
   kpis: {
     flexDirection: 'row',
-    marginTop: 14,
-    paddingTop: 12,
+    marginTop: 12,
+    paddingTop: 10,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: theme.colors.borderSoft,
+  },
+  kpisStacked: { flexDirection: 'column', gap: 10 },
+  kpiBelow: {
+    paddingTop: 10,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: theme.colors.borderSoft,
   },
@@ -145,8 +153,9 @@ const styles = StyleSheet.create({
   kpiRight: { paddingLeft: 14 },
   kpiLabel: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
   kpiValue: {
-    fontFamily: theme.font.bodyBold,
+    fontFamily: theme.font.bodyMedium,
     fontSize: 16,
+    lineHeight: 22,
     color: theme.colors.textPrimary,
     fontVariant: ['tabular-nums'],
   },
