@@ -509,7 +509,7 @@ describe('Add screen', () => {
     await pressLabelled(tree, 'Hide pad');
     expect(tree.root.findAll((n) => n.props.accessibilityLabel === 'delete')).toHaveLength(0);
     await press(tree, 'Show pad');
-    expect(texts(tree)).toContain('120');
+    expect(texts(tree)).toContain('₹120');
   });
 
   it('folds the pad away when a category is picked after an amount, and Save names the amount', async () => {
@@ -538,7 +538,7 @@ describe('Add screen', () => {
     await typeAmount(tree, '1÷0');
     expect(texts(tree)).toContain('Enter a positive amount. Check the calculation.');
     expect(tree.root.find((n) => isSaveTitle(n.props.title)).props.disabled).toBe(true);
-    expect(texts(tree)).toContain('—');
+    expect(texts(tree)).toContain('₹—');
   });
   it('opens with no category picked, even one saved before, but keeps the account', async () => {
     (getAddDefaults as jest.Mock).mockResolvedValueOnce({
@@ -779,7 +779,7 @@ describe('Add screen', () => {
     // Add opens with no category picked; this entry is Food.
     await press(tree, 'Food');
     await typeAmount(tree, '120+45');
-    expect(texts(tree)).toEqual(expect.arrayContaining(['165', '120 + 45']));
+    expect(texts(tree)).toEqual(expect.arrayContaining(['₹165', '120 + 45']));
     await save(tree);
     expect(createTransaction).toHaveBeenCalledWith(expect.objectContaining({ amountMinor: 16500 }));
   });

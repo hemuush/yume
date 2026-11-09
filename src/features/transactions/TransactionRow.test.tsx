@@ -51,7 +51,7 @@ it('promotes the entry label, shows a date badge and keeps expense amounts neutr
     .findAllByType(Text)
     .find((n) => Array.isArray(n.props.children) && n.props.children[0] === '−')!;
   expect(StyleSheet.flatten(amount.props.style).color).toBe(theme.colors.textPrimary);
-  expect(StyleSheet.flatten(amount.props.style).fontFamily).toBe(theme.font.bodyBold);
+  expect(StyleSheet.flatten(amount.props.style).fontFamily).toBe(theme.font.bodyMedium);
   act(() =>
     tree.root.findAll((n) => n.props.accessibilityRole === 'button' && n.props.onPress)[0].props.onPress()
   );

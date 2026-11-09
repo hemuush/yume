@@ -133,12 +133,6 @@ export const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
   },
-  amountCurrency: {
-    fontFamily: theme.font.bodyMedium,
-    fontSize: theme.typeSize.inputAmount,
-    lineHeight: 44,
-    color: theme.colors.textPrimary,
-  },
   amountText: {
     fontFamily: theme.font.bodyMedium,
     fontSize: theme.typeSize.inputAmount,
