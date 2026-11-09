@@ -89,14 +89,12 @@ export function AmountCard({
           accessibilityLabel={`Amount, ${expr === '' ? 'empty' : shownAmount}`}
           accessibilityHint={padVisible ? undefined : 'Opens the number pad'}
         >
-          <Text style={[styles.amountCurrency, expr === '' && styles.amountPlaceholder]}>
-            {getCurrencySymbol(currency)}
-          </Text>
           <Text
             style={[styles.amountText, expr === '' && styles.amountPlaceholder]}
             numberOfLines={1}
             adjustsFontSizeToFit
           >
+            {getCurrencySymbol(currency)}
             {shownAmount}
           </Text>
           {padVisible && <View style={[styles.caret, { backgroundColor: wash.accent }]} />}
