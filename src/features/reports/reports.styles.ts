@@ -20,7 +20,7 @@ export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
   dimmed: { opacity: 0.55 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
-  errTitle: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.expenseText },
+  errTitle: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.expenseText },
   errDetail: {
     fontFamily: theme.font.body,
     fontSize: 12,
@@ -38,7 +38,7 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    minHeight: 52,
+    minHeight: 48,
     paddingHorizontal: 4,
     borderWidth: 1,
     borderColor: GLASS.edge,
@@ -58,7 +58,7 @@ export const styles = StyleSheet.create({
   periodLabel: {
     flexShrink: 1,
     textAlign: 'center',
-    fontFamily: theme.font.roundedBold,
+    fontFamily: theme.font.bodyMedium,
     fontSize: 13,
     color: theme.colors.textPrimary,
   },
@@ -73,7 +73,7 @@ export const styles = StyleSheet.create({
     backgroundColor: GLASS.fillStrong,
     borderRadius: theme.radius.pill,
   },
-  granChipText: { fontFamily: theme.font.roundedMedium, fontSize: 14, color: theme.colors.ink },
+  granChipText: { fontFamily: theme.font.bodyMedium, fontSize: 14, color: theme.colors.ink },
   // The Days tab's heatmap card.
 
   // Shared section headings.
@@ -104,7 +104,7 @@ export const styles = StyleSheet.create({
     paddingBottom: 8,
   },
   dayHeadText: { flex: 1, minWidth: 0 },
-  dayTitle: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.textPrimary },
+  dayTitle: { fontFamily: theme.font.bodyMedium, fontSize: 15, color: theme.colors.textPrimary },
   dayClose: {
     width: 44,
     height: 44,
@@ -141,7 +141,7 @@ export const styles = StyleSheet.create({
     fontSize: 13,
     color: theme.colors.textSecondary,
   },
-  bigFootStrong: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
+  bigFootStrong: { fontFamily: theme.font.bodyMedium, color: theme.colors.textPrimary },
 
   // Categories: how the list is grouped (by category or by account).
   catSplitCaption: {
@@ -164,7 +164,7 @@ export const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 8,
   },
-  trendTitle: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.textPrimary },
+  trendTitle: { fontFamily: theme.font.bodyMedium, fontSize: 15, color: theme.colors.textPrimary },
   trendReadTray: {
     borderRadius: 14,
     backgroundColor: theme.colors.tray,
@@ -196,7 +196,7 @@ export const styles = StyleSheet.create({
   },
   flowBarLive: { borderWidth: 1.5, borderStyle: 'dashed', borderColor: theme.colors.ink },
   flowLabel: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
-  flowLabelOn: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
+  flowLabelOn: { fontFamily: theme.font.bodyMedium, color: theme.colors.textPrimary },
   stripCard: {
     flexDirection: 'row',
     ...CARD,
@@ -208,7 +208,7 @@ export const styles = StyleSheet.create({
   stripLabel: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
   stripValue: {
     fontVariant: ['tabular-nums'],
-    fontFamily: theme.font.bodyBold,
+    fontFamily: theme.font.bodyMedium,
     fontSize: 15,
     color: theme.colors.textPrimary,
   },
@@ -226,15 +226,15 @@ export const styles = StyleSheet.create({
     gap: 12,
     paddingVertical: 12,
     paddingHorizontal: 16,
-    minHeight: 68,
+    minHeight: 64,
     borderTopWidth: 1,
     borderTopColor: theme.colors.divider,
   },
   trackMid: { flex: 1, minWidth: 0 },
-  trackName: { fontFamily: theme.font.bodyBold, fontSize: 14, color: theme.colors.textPrimary },
-  trackSub: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textMuted, marginTop: 2 },
+  trackName: { fontFamily: theme.font.bodyMedium, fontSize: 14, color: theme.colors.textPrimary },
+  trackSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 2 },
   trackEnd: { alignItems: 'flex-end', gap: 4 },
-  trackPct: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textMuted },
+  trackPct: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textMuted },
   trackPctOver: { color: theme.colors.expenseText },
   trackPctUnder: { color: theme.colors.incomeText },
   trackFoot: {
@@ -247,10 +247,10 @@ export const styles = StyleSheet.create({
     borderTopColor: theme.colors.divider,
   },
   trackFootText: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textMuted },
-  trackFootLink: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.link },
+  trackFootLink: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.link },
 
   trendLink: { alignSelf: 'flex-start', paddingVertical: 8 },
-  trendLinkText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.link },
+  trendLinkText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.link },
 
   tidyNudge: {
     marginTop: 12,
@@ -264,7 +264,7 @@ export const styles = StyleSheet.create({
     lineHeight: 20,
     color: theme.colors.textPrimary,
   },
-  tidyNudgeLink: { fontFamily: theme.font.bodyBold, textDecorationLine: 'underline' },
+  tidyNudgeLink: { fontFamily: theme.font.bodyMedium, textDecorationLine: 'underline' },
   blockTitle: { ...SECTION_TITLE, marginBottom: SECTION_GAP.bottom },
 
   catCard: {
@@ -300,7 +300,7 @@ export const styles = StyleSheet.create({
     marginBottom: 10,
   },
   breakdownHeading: {
-    fontFamily: theme.font.roundedBold,
+    fontFamily: theme.font.bodyMedium,
     fontSize: 15,
     color: theme.colors.textPrimary,
     marginTop: 12,
@@ -344,7 +344,7 @@ export const styles = StyleSheet.create({
   catLinks: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 18, rowGap: 2 },
   catLink: { minHeight: 40, justifyContent: 'center', paddingVertical: 8 },
   catMeta: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4, marginBottom: 3 },
-  catLinkText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.link },
+  catLinkText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.link },
   catName: { fontFamily: theme.font.bodyMedium, fontSize: 14, color: theme.colors.textPrimary },
   catDot: { width: 10, height: 10, borderRadius: 5 },
   catPct: {
@@ -366,10 +366,11 @@ export const styles = StyleSheet.create({
   catAmt: {
     fontVariant: ['tabular-nums'],
     fontFamily: theme.font.bodyMedium,
-    fontSize: 13,
+    fontSize: 14,
+    lineHeight: 20,
     color: theme.colors.textPrimary,
   },
-  catDelta: { flexShrink: 1, fontFamily: theme.font.bodyBold, fontSize: 12 },
+  catDelta: { flexShrink: 1, fontFamily: theme.font.bodyMedium, fontSize: 12 },
   catTrack: {
     height: 5,
     borderRadius: 3,
@@ -398,8 +399,9 @@ export const styles = StyleSheet.create({
   },
   dayMid: { flex: 1, minWidth: 0 },
   dayName: {
-    fontFamily: theme.font.bodyBold,
+    fontFamily: theme.font.bodyMedium,
     fontSize: 14,
+    lineHeight: 20,
     color: theme.colors.textPrimary,
   },
   daySub: {
@@ -410,7 +412,7 @@ export const styles = StyleSheet.create({
   },
   dayAmt: {
     fontVariant: ['tabular-nums'],
-    fontFamily: theme.font.bodyBold,
+    fontFamily: theme.font.bodyMedium,
     fontSize: 14,
     color: theme.colors.textPrimary,
   },
@@ -430,7 +432,7 @@ export const styles = StyleSheet.create({
   },
   dayTotalValue: {
     fontVariant: ['tabular-nums'],
-    fontFamily: theme.font.bodyBold,
+    fontFamily: theme.font.bodyMedium,
     fontSize: 14,
     color: theme.colors.textPrimary,
   },

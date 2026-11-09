@@ -10,9 +10,9 @@ const GAP = 10;
 const INSET = 14;
 
 const figure = {
-  fontFamily: theme.font.body,
+  fontFamily: theme.font.bodyMedium,
   fontSize: theme.typeSize.title,
-  letterSpacing: -0.5,
+  letterSpacing: -0.3,
   color: theme.colors.textPrimary,
   fontVariant: ['tabular-nums'] as 'tabular-nums'[],
 } as const;
@@ -48,7 +48,7 @@ export const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 8,
   },
-  forecastFigure: { gap: 2 },
+  forecastFigure: { gap: 2, flex: 1, minWidth: 0 },
   forecastValue: {
     fontFamily: theme.font.bodyMedium,
     fontSize: 30,
@@ -67,8 +67,8 @@ export const styles = StyleSheet.create({
   },
   forecastMetricValue: {
     fontFamily: theme.font.bodyMedium,
-    fontSize: 18,
-    lineHeight: 24,
+    fontSize: 16,
+    lineHeight: 22,
     color: theme.colors.textPrimary,
     fontVariant: ['tabular-nums'],
   },
