@@ -145,7 +145,7 @@ const styles = StyleSheet.create({
   },
   baseCompact: { paddingVertical: 7, paddingHorizontal: 14 },
   withIcon: { flexDirection: 'row', gap: 8 },
-  textCompact: { fontFamily: theme.font.roundedBold, fontSize: 13 },
+  textCompact: { fontFamily: theme.font.bodyMedium, fontSize: 13 },
   primary: { backgroundColor: theme.colors.ink },
   danger: { backgroundColor: theme.colors.expenseText },
   secondary: {
@@ -153,7 +153,7 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
   },
-  text: { fontFamily: theme.font.roundedBold, fontSize: 14, textAlign: 'center', flexShrink: 1 },
+  text: { fontFamily: theme.font.bodyMedium, fontSize: 14, textAlign: 'center', flexShrink: 1 },
   textPrimary: { color: theme.colors.surface },
   textSecondary: { color: theme.colors.textPrimary },
   disabled: { opacity: 0.45 },

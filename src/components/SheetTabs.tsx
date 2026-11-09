@@ -97,5 +97,5 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
     textAlign: 'center',
   },
-  active: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
+  active: { fontFamily: theme.font.bodyMedium, color: theme.colors.textPrimary },
 });

@@ -10,7 +10,7 @@ import { useAccent } from '@/theme/AccentContext';
 
 /**
  * The pieces every Frost screen shares (Plan and the screens it opens): a card's topic as an icon disc and a
- * name, small chips that carry good or bad news, the hero's big thin figure, and a pace bar with a tick for
+ * name, small chips that carry good or bad news, the hero's compact financial figure, and a pace bar with a tick for
  * where an even pace would be today.
  */
 
@@ -142,13 +142,13 @@ export const frost = StyleSheet.create({
 
   bigRow: { flexDirection: 'row', alignItems: 'baseline', gap: 6, flexWrap: 'wrap' },
   bigValue: {
-    fontFamily: theme.font.bodyLight,
+    fontFamily: theme.font.bodyMedium,
     fontSize: theme.typeSize.hero,
-    lineHeight: 42,
-    letterSpacing: -1.2,
+    lineHeight: 40,
+    letterSpacing: -0.3,
+    fontVariant: ['tabular-nums'],
     color: theme.colors.textPrimary,
   },
-  bigSymbol: { fontFamily: theme.font.body, fontSize: 22, letterSpacing: 0, color: theme.colors.textMuted },
   bigNote: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textMuted },
   side: { alignItems: 'flex-end', maxWidth: '45%' },
   sideLabel: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textMuted },

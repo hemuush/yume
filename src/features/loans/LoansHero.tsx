@@ -71,7 +71,6 @@ export function LoansHero({
               <Kicker icon={onlyLent ? 'users' : 'flag'}>{onlyLent ? 'Owed to you' : 'You owe'}</Kicker>
               <CountUpAmount
                 minor={onlyLent ? totals.owedToYouMinor : totals.youOweMinor}
-                symbolStyle={frost.bigSymbol}
                 style={[
                   frost.bigValue,
                   { fontSize: 30, lineHeight: 36 },

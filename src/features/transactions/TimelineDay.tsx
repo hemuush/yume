@@ -584,7 +584,12 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.surfaceAlt,
   },
   entryHead: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6 },
-  name: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textPrimary },
+  name: {
+    fontFamily: theme.font.bodyMedium,
+    fontSize: theme.typeSize.row,
+    lineHeight: 20,
+    color: theme.colors.textPrimary,
+  },
   stackName: { flexShrink: 1 },
   sub: {
     fontFamily: theme.font.body,
@@ -596,6 +601,7 @@ const styles = StyleSheet.create({
   amount: {
     fontFamily: theme.font.bodyMedium,
     fontSize: 14,
+    lineHeight: 20,
     color: theme.colors.textPrimary,
     fontVariant: ['tabular-nums'],
     flexShrink: 1,

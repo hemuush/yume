@@ -168,12 +168,12 @@ const styles = StyleSheet.create({
   },
   segmentText: {
     fontSize: 13,
-    fontFamily: theme.font.roundedMedium,
+    fontFamily: theme.font.body,
     color: theme.colors.textSecondary,
     textAlign: 'center',
     flexShrink: 1,
   },
-  segmentTextActive: { color: theme.colors.textPrimary, fontFamily: theme.font.roundedBold },
+  segmentTextActive: { color: theme.colors.textPrimary, fontFamily: theme.font.bodyMedium },
   // On a wallpaper (Add's header): a frosted track and an ink pill.
   wrapBand: {
     backgroundColor: GLASS.fill,

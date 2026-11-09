@@ -18,7 +18,7 @@ export function ThisMonthHeroSkeleton() {
           <Skeleton width={84} height={12} radius={4} />
           <Skeleton width={96} height={32} radius={16} />
         </View>
-        <Skeleton width={Math.min(210, innerWidth)} height={52} radius={8} />
+        <Skeleton width={Math.min(210, innerWidth)} height={38} radius={8} />
         <Skeleton width={Math.min(170, innerWidth)} height={11} radius={4} />
         <View style={styles.bar}>
           <Skeleton width={Math.min(110, innerWidth / 2)} height={32} radius={8} />

@@ -317,10 +317,10 @@ export const styles = StyleSheet.create({
   },
   breakdownAmount: {
     fontVariant: ['tabular-nums'],
-    fontFamily: theme.font.bodyLight,
+    fontFamily: theme.font.bodyMedium,
     fontSize: 28,
     lineHeight: 34,
-    letterSpacing: -0.9,
+    letterSpacing: -0.3,
     color: theme.colors.textPrimary,
   },
   catMain: { flex: 1, minWidth: 0 },

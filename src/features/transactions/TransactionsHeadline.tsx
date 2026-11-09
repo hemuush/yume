@@ -117,7 +117,6 @@ export function TransactionsHeadline({
               countFromZero={false}
               minor={displayed.expenseMinor}
               style={styles.headlineAmt}
-              symbolStyle={styles.headlineSymbol}
               numberOfLines={1}
               adjustsFontSizeToFit
             />

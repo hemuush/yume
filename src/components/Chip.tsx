@@ -86,8 +86,8 @@ const styles = StyleSheet.create({
   text: {
     fontSize: 12,
     color: theme.colors.textSecondary,
-    fontFamily: theme.font.roundedMedium,
+    fontFamily: theme.font.body,
     flexShrink: 1,
   },
-  textActive: { color: theme.colors.textPrimary, fontFamily: theme.font.roundedBold },
+  textActive: { color: theme.colors.textPrimary, fontFamily: theme.font.bodyMedium },
 });

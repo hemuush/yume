@@ -58,7 +58,12 @@ export const screenStyles = StyleSheet.create({
     justifyContent: 'center',
   },
   mid: { flex: 1, minWidth: 0 },
-  title: { fontFamily: theme.font.bodyBold, fontSize: theme.typeSize.row, color: theme.colors.textPrimary },
+  title: {
+    fontFamily: theme.font.bodyMedium,
+    fontSize: theme.typeSize.row,
+    lineHeight: 20,
+    color: theme.colors.textPrimary,
+  },
   sub: {
     fontFamily: theme.font.body,
     fontSize: 13,
@@ -70,8 +75,9 @@ export const screenStyles = StyleSheet.create({
   subSoon: { fontFamily: theme.font.bodyBold, color: theme.colors.warnInk },
   amount: {
     fontVariant: ['tabular-nums'],
-    fontFamily: theme.font.bodyBold,
+    fontFamily: theme.font.bodyMedium,
     fontSize: theme.typeSize.row,
+    lineHeight: 20,
     color: theme.colors.textPrimary,
   },
   income: { color: theme.colors.incomeText },

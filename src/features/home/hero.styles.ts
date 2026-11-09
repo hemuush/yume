@@ -32,30 +32,23 @@ export const styles = StyleSheet.create({
   figure: { flexShrink: 1, minWidth: 0, marginTop: 2 },
 
   headLabel: {
-    fontFamily: theme.font.bodyMedium,
+    fontFamily: theme.font.body,
     fontSize: 12,
-    letterSpacing: 0.3,
     color: theme.colors.textSecondary,
   },
   headValue: {
-    fontFamily: theme.font.bodyLight,
-    fontSize: 44,
+    fontFamily: theme.font.bodyMedium,
+    fontSize: theme.typeSize.headline,
     fontVariant: ['tabular-nums'],
-    lineHeight: 52,
-    letterSpacing: -1.4,
+    lineHeight: 38,
+    letterSpacing: -0.3,
     color: theme.colors.textPrimary,
-  },
-  headSymbol: {
-    fontFamily: theme.font.body,
-    fontSize: 26,
-    letterSpacing: 0,
-    color: theme.colors.textMuted,
   },
   headValueNeg: { color: theme.colors.expenseText },
   headCaption: {
     fontFamily: theme.font.body,
     fontSize: 12,
-    lineHeight: 19,
+    lineHeight: 17,
     color: theme.colors.textSecondary,
   },
 

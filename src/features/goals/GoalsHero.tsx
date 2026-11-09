@@ -33,7 +33,6 @@ export function GoalsHero({ totals }: { totals: GoalsTotals }) {
             <CountUpAmount
               minor={totals.savedMinor}
               countFromZero={false}
-              symbolStyle={frost.bigSymbol}
               style={[frost.bigValue, { fontSize: 30, lineHeight: 36 }]}
               numberOfLines={1}
               adjustsFontSizeToFit

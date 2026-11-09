@@ -59,7 +59,6 @@ export function CashHero({
         <CountUpAmount
           minor={minor}
           countFromZero={false}
-          symbolStyle={hero.headSymbol}
           style={hero.headValue}
           numberOfLines={1}
           adjustsFontSizeToFit

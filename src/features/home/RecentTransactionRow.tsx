@@ -149,7 +149,7 @@ const styles = StyleSheet.create({
   mid: h.mid,
   title: h.title,
   sub: h.sub,
-  amount: { ...h.amount, fontFamily: theme.font.bodyBold, fontVariant: ['tabular-nums'] },
+  amount: h.amount,
   income: h.income,
   refund: { fontFamily: theme.font.bodyBold, color: theme.colors.incomeText },
 });

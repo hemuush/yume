@@ -1,6 +1,6 @@
 import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
-import { EYEBROW } from '@/constants/textStyles';
+import { EYEBROW, FIELD_LABEL } from '@/constants/textStyles';
 import { GLASS } from '@/components/Glass';
 
 // Shared by the Add screen (app/add-transaction.tsx) and its fields (AddFields.tsx).
@@ -79,12 +79,7 @@ export const styles = StyleSheet.create({
     color: theme.colors.textMuted,
     textTransform: 'capitalize',
   },
-  label: {
-    fontFamily: theme.font.roundedMedium,
-    fontSize: 13,
-    color: theme.colors.textSecondary,
-    marginBottom: 8,
-  },
+  label: { ...FIELD_LABEL, marginBottom: 8 },
   hint: {
     fontFamily: theme.font.body,
     fontSize: 12,
@@ -103,7 +98,7 @@ export const styles = StyleSheet.create({
     gap: 5,
   },
   heroDot: { width: 6, height: 6, borderRadius: 3 },
-  heroLabel: { fontFamily: theme.font.bodyBold, fontSize: 12 },
+  heroLabel: { fontFamily: theme.font.bodyMedium, fontSize: 12 },
   padToggle: {
     marginLeft: 'auto',
     minHeight: 44,
@@ -133,24 +128,30 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-end',
-    gap: 4,
-    minHeight: 52,
+    gap: 2,
+    minHeight: 44,
     flex: 1,
     minWidth: 0,
   },
-  amountCurrency: { fontFamily: theme.font.body, fontSize: 24, color: theme.colors.textMuted },
+  amountCurrency: {
+    fontFamily: theme.font.bodyMedium,
+    fontSize: theme.typeSize.inputAmount,
+    lineHeight: 44,
+    color: theme.colors.textPrimary,
+  },
   amountText: {
-    fontFamily: theme.font.bodyLight,
-    fontSize: 44,
-    lineHeight: 52,
-    letterSpacing: -1.5,
+    fontFamily: theme.font.bodyMedium,
+    fontSize: theme.typeSize.inputAmount,
+    lineHeight: 44,
+    letterSpacing: -0.3,
+    fontVariant: ['tabular-nums'],
     color: theme.colors.textPrimary,
     flexShrink: 1,
   },
   amountError: { color: theme.colors.expenseText, fontFamily: theme.font.bodyMedium },
   amountPlaceholder: { color: theme.colors.textMuted },
   // A blinking-free caret: shows the pad is typing into this amount.
-  caret: { width: 2, height: 36, borderRadius: 1, backgroundColor: theme.colors.ink, marginLeft: 2 },
+  caret: { width: 2, height: 28, borderRadius: 1, backgroundColor: theme.colors.ink, marginLeft: 2 },
   expression: {
     fontFamily: theme.font.body,
     fontSize: 13,

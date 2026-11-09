@@ -120,9 +120,8 @@ export const theme = {
   spacing: (n: number) => n * 4,
   // The one spacing scale. Gutter and card padding are roles on top of it (see SCREEN in screenStyles).
   space: { xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 24, xxxl: 32 },
-  // Compact sizing keeps Yume's existing fonts and hierarchy. Text elsewhere follows the same ladder: 11 for axis
-  // and legend text, 12 captions, 13 body and row titles, 14-15 emphasis, then these.
-  typeSize: { hero: 34, headline: 30, inputAmount: 40, title: 18, greeting: 16, section: 15, row: 13 },
+  // Captions stay quiet; readable row text and firmer financial figures provide the hierarchy.
+  typeSize: { hero: 32, headline: 30, inputAmount: 36, title: 18, greeting: 16, section: 15, row: 14 },
   accessibility: { maxFontScale: 2, reflowFontScale: 1.3, minTouchTarget: 44, lineHeightRatio: 1.4 },
   // Metrics shared with screens that scroll clear of the tab bar: a pushed screen needs `screenScrollPad`
   // bottom padding (callers add `insets.bottom`); a tab screen clears the bar by its height (see uiScale).
@@ -135,15 +134,15 @@ export const theme = {
     screenTopGap: 8,
   },
   font: {
-    // Light, for Home's big glass-card figures only.
+    // Light remains available for secondary screens; primary financial figures use bodyMedium.
     bodyLight: 'Archivo_300Light',
     body: 'Archivo_400Regular',
     bodyMedium: 'Archivo_600SemiBold',
     bodyBold: 'Archivo_700Bold',
     mono: 'SpaceMono_400Regular',
     monoBold: 'SpaceMono_700Bold',
-    // Fredoka, a rounded face for Home's warmer register: wordmark, section titles, hero headings.
-    // Body copy stays Archivo and amounts stay Space Mono.
+    // Fredoka preserves Yume's character in the wordmark, greeting and screen headers.
+    // Functional labels and monetary figures use Archivo; the wordmark and greeting retain Fredoka.
     roundedMedium: 'Fredoka_500Medium',
     roundedBold: 'Fredoka_600SemiBold',
   },

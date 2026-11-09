@@ -61,7 +61,6 @@ export function ReportHero({
         minor={roundedMinor(spentMinor)}
         countFromZero
         style={styles.figure}
-        symbolStyle={styles.symbol}
         numberOfLines={1}
         adjustsFontSizeToFit
       />
@@ -123,14 +122,13 @@ const styles = StyleSheet.create({
   card: { ...h.card, marginHorizontal: 0, marginBottom: 12, paddingHorizontal: 16, paddingVertical: 14 },
   label: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textSecondary },
   figure: {
-    fontFamily: theme.font.bodyLight,
+    fontFamily: theme.font.bodyMedium,
     fontSize: theme.typeSize.headline,
     lineHeight: 40,
-    letterSpacing: -1.1,
+    letterSpacing: -0.3,
     color: theme.colors.textPrimary,
     fontVariant: ['tabular-nums'],
   },
-  symbol: { fontFamily: theme.font.body, fontSize: 22, letterSpacing: 0, color: theme.colors.textMuted },
   sub: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textSecondary, marginTop: 2 },
   budget: { marginTop: 12, gap: 6 },
   track: { height: 8, borderRadius: 4, overflow: 'hidden' },

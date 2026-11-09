@@ -204,7 +204,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   pct: {
-    fontFamily: theme.font.bodyLight,
+    fontFamily: theme.font.bodyMedium,
     fontSize: 14,
     fontVariant: ['tabular-nums'],
     lineHeight: 21,

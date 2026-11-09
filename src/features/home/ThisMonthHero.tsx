@@ -396,7 +396,6 @@ export function ThisMonthHero({
                   minor={headMinor}
                   duration={DURATIONS.rollUp}
                   style={[styles.headValue, headNeg && styles.headValueNeg]}
-                  symbolStyle={styles.headSymbol}
                   numberOfLines={1}
                   adjustsFontSizeToFit
                 />

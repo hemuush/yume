@@ -280,8 +280,8 @@ const styles = StyleSheet.create({
   headMain: { flexShrink: 1, minHeight: 44, justifyContent: 'center' },
   dayRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: 8, rowGap: 4 },
   dayTitle: {
-    fontFamily: theme.font.roundedBold,
-    fontSize: theme.typeSize.section,
+    fontFamily: theme.font.body,
+    fontSize: 12,
     color: theme.colors.textPrimary,
   },
   dayAmount: {

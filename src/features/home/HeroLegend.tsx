@@ -71,12 +71,12 @@ const styles = StyleSheet.create({
   dot: { width: 6, height: 6, borderRadius: 3 },
   label: {
     flexShrink: 1,
-    fontFamily: theme.font.bodyMedium,
+    fontFamily: theme.font.body,
     fontSize: 12,
     color: theme.colors.textSecondary,
   },
   amount: {
-    fontFamily: theme.font.bodyBold,
+    fontFamily: theme.font.bodyMedium,
     fontSize: 14,
     color: theme.colors.textPrimary,
     fontVariant: ['tabular-nums'],
