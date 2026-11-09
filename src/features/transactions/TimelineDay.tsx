@@ -268,7 +268,7 @@ function TimelineDayView({
                 name={cat?.icon ?? 'tag'}
                 color={cat?.color}
                 size={16}
-                square={SCREEN.mark}
+                square={SCREEN.iconTile}
                 round
               />
             </View>
@@ -321,7 +321,13 @@ function TimelineDayView({
           {/* A new entry folded into this line glows the line. */}
           <JustAddedGlow ids={line.items.map((t) => t.id)} surface="activity" />
           <View style={styles.lead}>
-            <CategoryIcon name={cat?.icon ?? 'tag'} color={cat?.color} size={16} square={SCREEN.mark} round />
+            <CategoryIcon
+              name={cat?.icon ?? 'tag'}
+              color={cat?.color}
+              size={16}
+              square={SCREEN.iconTile}
+              round
+            />
           </View>
           <View style={[styles.mid, stacked && styles.wideMid]}>
             <View style={styles.stackMid}>
@@ -511,14 +517,14 @@ function TimelineDayView({
 }
 
 const styles = StyleSheet.create({
-  day: { paddingHorizontal: 16, paddingBottom: 16 },
+  day: { paddingHorizontal: 16, paddingBottom: 12 },
   head: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     alignItems: 'baseline',
     justifyContent: 'space-between',
     gap: 8,
-    marginBottom: 8,
+    marginBottom: 6,
   },
   title: {
     flexGrow: 1,
@@ -534,11 +540,11 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: theme.colors.textPrimary,
   },
-  lead: { width: SCREEN.lead, alignItems: 'center', justifyContent: 'center' },
+  lead: { width: SCREEN.iconTile, alignItems: 'center', justifyContent: 'center' },
   transferIcon: {
-    width: SCREEN.mark,
-    height: SCREEN.mark,
-    borderRadius: SCREEN.mark / 2,
+    width: SCREEN.iconTile,
+    height: SCREEN.iconTile,
+    borderRadius: SCREEN.iconTile / 2,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -560,9 +566,9 @@ const styles = StyleSheet.create({
   line: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    gap: 10,
+    paddingHorizontal: 0,
+    paddingVertical: 9,
     // A minimum target; text can wrap and measured row heights drive reordering.
     minHeight: 52,
   },
@@ -585,14 +591,15 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 17,
     color: theme.colors.textSecondary,
-    marginTop: 3,
+    marginTop: 2,
   },
   amount: {
-    fontFamily: theme.font.bodyBold,
-    fontSize: 13,
+    fontFamily: theme.font.bodyMedium,
+    fontSize: 14,
     color: theme.colors.textPrimary,
     fontVariant: ['tabular-nums'],
     flexShrink: 1,
+    marginLeft: 'auto',
   },
   income: { color: theme.colors.incomeText },
   // An open stack's entries: the same card, dividers and text as every other
@@ -601,14 +608,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    // The dot centred under the stack's 44px icon slot: row padding + (44 − 8) / 2.
-    paddingLeft: 14 + 18,
-    paddingRight: 14,
+    // Centre the dot under the category icon; its trailing space aligns the entry text above.
+    paddingLeft: (SCREEN.iconTile - 6) / 2,
+    paddingRight: 0,
     paddingVertical: 8,
     minHeight: 48,
   },
   // Ends where the icon ends, so the text lines up with the lines above.
-  subDot: { width: 8, height: 8, borderRadius: 4, marginRight: 18 },
+  subDot: { width: 6, height: 6, borderRadius: 3, marginRight: (SCREEN.iconTile - 6) / 2 },
 });
 
 /**

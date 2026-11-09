@@ -16,8 +16,7 @@ import { styles } from './transactions.styles';
 import { DURATIONS } from '@/lib/motionTimings';
 import Feather from '@expo/vector-icons/Feather';
 import { theme } from '@/constants/theme';
-import { Glass } from '@/components/Glass';
-import { cardSurface } from '@/components/CardSurface';
+import { screenStyles } from '@/components/screenStyles';
 
 /** How many categories the legend names before "+N more". */
 const LEGEND_MAX = 4;
@@ -35,7 +34,7 @@ interface HeadlineContent {
 }
 
 /**
- * Frosted Spent card: committed figures, chips and bars enter together on a period step.
+ * Cream Spent card: committed figures, chips and bars enter together on a period step.
  * `periodKey` = period shown; `direction` = step (+1 forward, -1 back, 0 scope toggle/picked month: fade).
  */
 export function TransactionsHeadline({
@@ -108,7 +107,7 @@ export function TransactionsHeadline({
   const net = displayed.incomeMinor - displayed.expenseMinor;
   const change = displayed.expenseChangeMinor;
   return (
-    <Glass radius={theme.radius.xl2} style={[styles.sumCard, cardSurface.summary]}>
+    <View style={[screenStyles.card, styles.sumCard]}>
       <ReanimatedAnimated.View style={slideStyle}>
         <View style={[styles.sumTop, stacked && styles.sumTopStacked]}>
           <View style={styles.sumLead}>
@@ -159,6 +158,6 @@ export function TransactionsHeadline({
         </View>
         <ChartLegend items={displayed.legend} inset={0} max={LEGEND_MAX} />
       </ReanimatedAnimated.View>
-    </Glass>
+    </View>
   );
 }

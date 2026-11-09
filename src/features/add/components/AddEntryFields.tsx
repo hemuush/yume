@@ -4,7 +4,6 @@ import { PrimaryButton } from '@/components/PrimaryButton';
 import { CategoryPicker } from '@/components/CategoryPicker';
 import { StripCard } from '@/components/StripCard';
 import { styles } from '@/features/add/add.styles';
-import { Glass } from '@/components/Glass';
 import { exprFromMinor } from '@/lib/padMath';
 import { FriendFields } from '@/features/add/AddFields';
 import { TransferAccounts, UsualChips } from '@/features/add/AddSections';
@@ -92,7 +91,7 @@ export function AddEntryFields({ model }: Props): ReactElement {
   return (
     <>
       {type === 'friend' ? (
-        <Glass radius={24} style={styles.fieldCard}>
+        <View style={styles.fieldCard}>
           <FriendFields
             people={people}
             accounts={friendAccounts}
@@ -104,7 +103,7 @@ export function AddEntryFields({ model }: Props): ReactElement {
             setFriendAccountId={setFriendAccountId}
             onAddPerson={() => setAddPersonVisible(true)}
           />
-        </Glass>
+        </View>
       ) : (
         <>
           {pickableAccounts.length === 0 && (
@@ -128,7 +127,7 @@ export function AddEntryFields({ model }: Props): ReactElement {
           )}
 
           {type === 'transfer' ? (
-            <Glass radius={24} style={styles.fieldCard}>
+            <View style={styles.fieldCard}>
               <TransferAccounts
                 fromOptions={pickableAccounts}
                 accounts={accounts}
@@ -137,7 +136,7 @@ export function AddEntryFields({ model }: Props): ReactElement {
                 onPickFrom={pickAccount}
                 onPickTo={setToAccountId}
               />
-            </Glass>
+            </View>
           ) : splitParts ? (
             <SplitCard
               parts={splitParts}
@@ -169,7 +168,7 @@ export function AddEntryFields({ model }: Props): ReactElement {
                   }}
                 />
               )}
-              <Glass radius={24} style={styles.fieldCard}>
+              <View style={styles.fieldCard}>
                 <CategoryPicker
                   categories={filteredCategories}
                   selectedId={categoryId}
@@ -179,10 +178,11 @@ export function AddEntryFields({ model }: Props): ReactElement {
                     if (expr !== '') setPadOpen(false);
                   }}
                   variant="medal"
+                  compact
                   searchable
                   onSearchFocusChange={setSearchFocused}
                 />
-              </Glass>
+              </View>
             </View>
           )}
         </>

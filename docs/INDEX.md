@@ -4,6 +4,8 @@ Use maintained guides for implemented behavior. Dated audits preserve their own 
 
 ## Current verification
 
+The [architecture guide](ARCHITECTURE.md#smoothness-pass--november-2026) also describes the 9 November compact Home, Add Transaction and Activity presentation refinements. Their source changes do not establish fresh physical-device acceptance.
+
 The [approved 5 November Home refinement](HOME_REFINEMENT_2026_11_05.md) records the implementation of the second screenshot direction, retained financial behavior and remaining Pixel acceptance checks.
 
 The [5 November UI/UX enhancement plan](UX_ENHANCEMENT_PLAN_2026_11_05.md) records the first-use and filter recovery improvements, whole-app design priorities, motion principles and remaining device acceptance work.

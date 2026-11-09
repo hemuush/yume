@@ -35,7 +35,7 @@ export function ThisMonthHeroSkeleton() {
       </View>
       <View style={styles.actions}>
         {[0, 1, 2].map((i) => (
-          <Skeleton key={i} width={actionWidth} height={50} radius={16} />
+          <Skeleton key={i} width={actionWidth} height={48} radius={14} />
         ))}
       </View>
     </>
@@ -46,7 +46,7 @@ export function AccountTilesSkeleton() {
   return (
     <View style={styles.accountTiles}>
       {[0, 1, 2].map((i) => (
-        <Skeleton key={i} width={148} height={136} radius={22} />
+        <Skeleton key={i} width={148} height={116} radius={22} />
       ))}
     </View>
   );
@@ -56,6 +56,6 @@ const styles = StyleSheet.create({
   card: { ...h.card, padding: 16, gap: 10 },
   bar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   row: { flexDirection: 'row', gap: 8 },
-  actions: { flexDirection: 'row', gap: 8, marginHorizontal: 16, marginTop: 12 },
+  actions: { flexDirection: 'row', gap: 8, marginHorizontal: 16, marginTop: 10 },
   accountTiles: { marginHorizontal: 16, flexDirection: 'row', gap: 10, overflow: 'hidden' },
 });

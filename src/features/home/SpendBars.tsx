@@ -83,7 +83,12 @@ function Capsule({
         </Animated.View>
         {goalH != null && <View pointerEvents="none" style={[styles.goalTick, { bottom: goalH }]} />}
       </View>
-      <Text style={[styles.label, selected && styles.labelOn]} numberOfLines={1}>
+      <Text
+        style={[styles.label, selected && styles.labelOn]}
+        numberOfLines={1}
+        adjustsFontSizeToFit
+        minimumFontScale={0.85}
+      >
         {bar.label}
       </Text>
     </Pressable>
@@ -328,7 +333,14 @@ const styles = StyleSheet.create({
     borderStyle: 'dashed',
     borderColor: 'rgba(18,19,15,0.35)',
   },
-  label: { minHeight: 16, fontFamily: theme.font.bodyMedium, fontSize: 11, color: theme.colors.textMuted },
+  label: {
+    alignSelf: 'stretch',
+    textAlign: 'center',
+    minHeight: 16,
+    fontFamily: theme.font.bodyMedium,
+    fontSize: 11,
+    color: theme.colors.textMuted,
+  },
   labelOn: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
   goalKey: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingTop: 2, paddingBottom: 4 },
   goalSwatch: {

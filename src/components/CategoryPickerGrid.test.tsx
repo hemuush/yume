@@ -2,7 +2,7 @@
  * The category grid fills its width with equal columns (no lopsided last row), and a category the host
  * marks as taken (a split's other parts) shows faded.
  */
-import { Text, View } from 'react-native';
+import { Text, TextInput, View } from 'react-native';
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
 
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
@@ -51,6 +51,30 @@ const tileOf = (r: ReactTestRenderer, name: string) =>
   );
 
 describe('category grid', () => {
+  it('keeps subcategory discovery and search selection working in compact mode', () => {
+    const onSelect = jest.fn();
+    let tree!: ReactTestRenderer;
+    act(() => {
+      tree = create(
+        <CategoryPicker
+          categories={[...cats, { ...cats[0], id: 'coffee', name: 'Coffee', parentId: 'c0' }]}
+          selectedId={null}
+          onSelect={onSelect}
+          variant="medal"
+          compact
+          searchable
+        />
+      );
+    });
+    act(() => tileOf(tree, 'Food').props.onPress());
+    expect(tree.root.findAllByType(Text).some((n) => n.props.children === 'Coffee')).toBe(true);
+    act(() => tree.root.findByType(TextInput).props.onChangeText('Coffee'));
+    act(() => tileOf(tree, 'Coffee').props.onPress());
+    expect(onSelect.mock.calls.map(([id]) => id)).toEqual(['c0', 'coffee']);
+    expect(tree.root.findByType(TextInput).props.value).toBe('');
+    act(() => tree.unmount());
+  });
+
   it('gives transaction category names wider columns when requested', () => {
     const r = render(undefined, 80);
     expect(flat(tileOf(r, 'Food').props.style).width).toBe(92);

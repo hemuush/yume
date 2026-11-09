@@ -17,7 +17,7 @@ import { useAccent } from '@/theme/AccentContext';
  */
 
 /**
- * The glass card under the sky header: the amount and this category's usual amounts.
+ * The cream card under the sky header: the amount and this category's usual amounts.
  * The kicker and caret take the entry type's colour; selection details stay in the dock.
  */
 export function AmountCard({
@@ -89,7 +89,7 @@ export function AmountCard({
           accessibilityLabel={`Amount, ${expr === '' ? 'empty' : shownAmount}`}
           accessibilityHint={padVisible ? undefined : 'Opens the number pad'}
         >
-          <Text style={[styles.amountCurrency, { color: wash.accent }]}>{getCurrencySymbol(currency)}</Text>
+          <Text style={styles.amountCurrency}>{getCurrencySymbol(currency)}</Text>
           <Text
             style={[styles.amountText, expr === '' && styles.amountPlaceholder]}
             numberOfLines={1}

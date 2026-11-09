@@ -9,6 +9,7 @@ import { AmountPad } from '@/components/AmountPad';
 import { AddDetailRow } from '@/features/add/AddDetailRow';
 import { withPressedTint } from '@/lib/pressed';
 import { useAccent } from '@/theme/AccentContext';
+import { useFontScale } from '@/lib/useFontScale';
 import type { AddEntryModel } from '@/features/add/types/addEntryModel';
 import type { ReactElement } from 'react';
 
@@ -58,6 +59,7 @@ type Props = {
 };
 export function AddEntryFooter({ model }: Props): ReactElement {
   const { accent } = useAccent();
+  const stackActions = useFontScale() > theme.accessibility.reflowFontScale;
   const {
     saveTitle,
     saveDone,
@@ -108,7 +110,7 @@ export function AddEntryFooter({ model }: Props): ReactElement {
       loading={saving && !saveDone}
       onPress={submit}
       disabled={!formReady || saving || addingRow || saveDone || isLinked || cannotSave}
-      style={styles.saveBtn}
+      style={[styles.saveBtn, stackActions && styles.saveBtnStacked]}
     />
   );
 
@@ -126,6 +128,14 @@ export function AddEntryFooter({ model }: Props): ReactElement {
       <Feather name="plus" size={14} color={theme.colors.textPrimary} />
       <Text style={styles.addToListText}>{addingRow ? 'Adding…' : 'Add more'}</Text>
     </Pressable>
+  );
+  const actions = (
+    <View
+      style={[styles.actionRow, padVisible && styles.padActions, stackActions && styles.actionRowStacked]}
+    >
+      {addToListButton}
+      {saveButton}
+    </View>
   );
   return (
     <KeyboardStickyView
@@ -173,14 +183,10 @@ export function AddEntryFooter({ model }: Props): ReactElement {
       </View>
       {padVisible ? (
         <AmountPad onKey={onPadKey} onClear={clearAmount} tone={padTone}>
-          {addToListButton}
-          {saveButton}
+          {actions}
         </AmountPad>
       ) : (
-        <View style={styles.actionRow}>
-          {addToListButton}
-          {saveButton}
-        </View>
+        actions
       )}
     </KeyboardStickyView>
   );
