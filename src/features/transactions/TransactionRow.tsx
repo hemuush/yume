@@ -108,12 +108,7 @@ export function TransactionRow({
       <Text
         numberOfLines={1}
         adjustsFontSizeToFit
-        style={[
-          h.amount,
-          { maxWidth: '100%', flexShrink: 1 },
-          { fontFamily: theme.font.bodyBold, fontVariant: ['tabular-nums'] },
-          tx.type === 'income' && h.income,
-        ]}
+        style={[h.amount, { maxWidth: '100%', flexShrink: 1 }, tx.type === 'income' && h.income]}
       >
         {tx.type === 'expense' ? '−' : tx.type === 'income' ? '+' : ''}
         <Amount minor={tx.amountMinor} currency={currency} sensitive={cat?.isSensitive || savingsTransfer} />

@@ -144,10 +144,10 @@ const styles = StyleSheet.create({
   main: { flex: 1, minWidth: 0 },
   date: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textSecondary },
   amount: {
-    fontFamily: theme.font.bodyLight,
+    fontFamily: theme.font.bodyMedium,
     fontSize: 26,
     lineHeight: 32,
-    letterSpacing: -0.8,
+    letterSpacing: -0.3,
     color: theme.colors.textPrimary,
     fontVariant: ['tabular-nums'],
   },

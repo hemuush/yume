@@ -106,23 +106,18 @@ export const styles = StyleSheet.create({
   recentDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.borderSoft },
   recentText: { flex: 1, fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textPrimary },
 
-  // The Spent card shares Home's cream surface and light headline typography.
+  // The Spent card shares Home's compact financial typography.
   // The selected chart amount can extend past its first/last column.
   sumCard: { marginHorizontal: 16, marginTop: 8, padding: 16, overflow: 'visible' },
-  sumKicker: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
+  sumKicker: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
   headlineAmt: {
-    fontFamily: theme.font.bodyLight,
-    fontSize: 38,
-    lineHeight: 46,
-    letterSpacing: -1.1,
+    fontFamily: theme.font.bodyMedium,
+    fontSize: theme.typeSize.headline,
+    lineHeight: 38,
+    letterSpacing: -0.3,
+    fontVariant: ['tabular-nums'],
     color: theme.colors.textPrimary,
     marginTop: 2,
-  },
-  headlineSymbol: {
-    fontFamily: theme.font.body,
-    fontSize: 24,
-    letterSpacing: 0,
-    color: theme.colors.textMuted,
   },
   // The change against the period before, one line under the figure (green when spending is down).
   sumChangeRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
@@ -154,7 +149,7 @@ export const styles = StyleSheet.create({
   sumMetric: { minWidth: 0, gap: 3, alignItems: 'flex-end' },
   sumMetricStacked: { flexGrow: 1, flexBasis: 120, alignItems: 'flex-start' },
   sumMetricAmount: {
-    fontFamily: theme.font.bodyBold,
+    fontFamily: theme.font.bodyMedium,
     fontVariant: ['tabular-nums'],
     fontSize: 14,
     color: theme.colors.textPrimary,
@@ -179,8 +174,8 @@ export const styles = StyleSheet.create({
     borderRadius: theme.radius.pill,
   },
   scopeBtnStacked: { flex: 1, alignItems: 'center' },
-  scopeText: { fontFamily: theme.font.roundedMedium, fontSize: 13, color: theme.colors.textPrimary },
-  scopeTextOn: { color: theme.colors.textPrimary, fontFamily: theme.font.roundedBold },
+  scopeText: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textPrimary },
+  scopeTextOn: { color: theme.colors.textPrimary, fontFamily: theme.font.bodyMedium },
 
   // ‹ This week › in a frosted pill, Week | Month beside it.
   periodBar: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 2 },
@@ -220,7 +215,7 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  periodTitle: { fontFamily: theme.font.roundedBold, fontSize: 13, color: theme.colors.textPrimary },
+  periodTitle: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
   periodSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
 
   listArea: { flex: 1 },
@@ -283,11 +278,11 @@ export const styles = StyleSheet.create({
   },
   typeText: {
     textAlign: 'center',
-    fontFamily: theme.font.roundedMedium,
+    fontFamily: theme.font.body,
     fontSize: 12,
     color: theme.colors.textSecondary,
   },
-  typeTextOn: { color: theme.colors.textPrimary, fontFamily: theme.font.roundedBold },
+  typeTextOn: { color: theme.colors.textPrimary, fontFamily: theme.font.bodyMedium },
   chipsRow: { gap: 8, paddingHorizontal: 16, paddingTop: 8 },
   filterGap: { height: 12 },
   chip: {

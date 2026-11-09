@@ -8,7 +8,7 @@ import { theme } from './theme';
 
 /** A section heading above a card or list: Home's "Recent activity", Categories' groups. */
 export const SECTION_TITLE: TextStyle = {
-  fontFamily: theme.font.roundedBold,
+  fontFamily: theme.font.bodyMedium,
   fontSize: theme.typeSize.section,
   color: theme.colors.textPrimary,
 };
@@ -31,7 +31,7 @@ export const EYEBROW: TextStyle = {
 /** A form field's label, above its input (FormInput, DateField, pickers). */
 export const FIELD_LABEL: TextStyle = {
   fontSize: 12,
-  fontFamily: theme.font.roundedMedium,
+  fontFamily: theme.font.bodyMedium,
   letterSpacing: 0,
   color: theme.colors.textSecondary,
 };

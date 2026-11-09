@@ -31,7 +31,6 @@ export function BudgetsHero({ figures: h }: { figures: BudgetsHeroFigures }) {
           <CountUpAmount
             minor={over ? h.overMinor : h.leftMinor}
             countFromZero={false}
-            symbolStyle={frost.bigSymbol}
             style={[frost.bigValue, over && { color: theme.colors.expenseText }]}
             numberOfLines={1}
             adjustsFontSizeToFit

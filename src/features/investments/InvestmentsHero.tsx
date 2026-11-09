@@ -55,7 +55,6 @@ export function InvestmentsHero({
               minor={portfolio.valueMinor}
               currency={currency}
               countFromZero={false}
-              symbolStyle={frost.bigSymbol}
               style={[frost.bigValue, styles.bigFigure]}
               numberOfLines={1}
               adjustsFontSizeToFit
@@ -142,6 +141,6 @@ export function StartTracking({ onAdd }: { onAdd: () => void }) {
 const styles = StyleSheet.create({
   // Cards sit on the screen gutter like every other screen's; the sections below bring their own.
   block: { marginTop: 0, marginBottom: 12 },
-  bigFigure: { fontFamily: theme.font.bodyLight, fontSize: 30, lineHeight: 36 },
+  bigFigure: { fontFamily: theme.font.bodyMedium, fontSize: 30, lineHeight: 36 },
   hint: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textMuted },
 });

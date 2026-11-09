@@ -145,7 +145,7 @@ const styles = StyleSheet.create({
   icon: { width: 32, height: 32, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   name: {
     marginTop: 10,
-    fontFamily: theme.font.bodyBold,
+    fontFamily: theme.font.bodyMedium,
     fontSize: theme.typeSize.row,
     color: theme.colors.textPrimary,
   },
@@ -159,7 +159,8 @@ const styles = StyleSheet.create({
   balance: {
     marginTop: 4,
     fontFamily: theme.font.bodyMedium,
-    fontSize: 18,
+    fontSize: 16,
+    lineHeight: 22,
     fontVariant: ['tabular-nums'],
     color: theme.colors.textPrimary,
   },

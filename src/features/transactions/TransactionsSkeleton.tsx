@@ -13,7 +13,7 @@ export function TransactionsSkeleton() {
     <View style={styles.wrap}>
       <View style={styles.sumCard}>
         <Skeleton width={120} height={12} radius={4} />
-        <Skeleton width={150} height={46} radius={6} style={{ marginTop: 2 }} />
+        <Skeleton width={150} height={38} radius={6} style={{ marginTop: 2 }} />
         <Skeleton width={190} height={22} radius={11} style={{ marginTop: 10 }} />
         <View style={styles.barRow}>
           {BAR_HEIGHTS.map((h, i) => (

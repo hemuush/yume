@@ -84,7 +84,7 @@ const styles = StyleSheet.create({
     borderColor: GLASS.edge,
     maxWidth: 168,
   },
-  pillText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.ink, flexShrink: 1 },
+  pillText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.ink, flexShrink: 1 },
   pillCompact: { gap: 4, minHeight: 36, paddingHorizontal: 12, maxWidth: 140 },
-  pillTextCompact: { fontFamily: theme.font.bodyBold, fontSize: 12 },
+  pillTextCompact: { fontFamily: theme.font.bodyMedium, fontSize: 12 },
 });
