@@ -5,6 +5,7 @@ import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
 import { dayMonth } from '@/lib/dateLabels';
 import { Runway } from './runway';
+import { RunwayChart } from './RunwayChart';
 
 /** Read-only explanation of the same loaded runway, never a second calculation. */
 export function ForecastDetails({ runway, onClose }: { runway: Runway; onClose: () => void }) {
@@ -26,6 +27,11 @@ export function ForecastDetails({ runway, onClose }: { runway: Runway; onClose: 
         Active bank, cash and wallet accounts in your default currency. Savings, investments and credit limits
         are excluded from the starting balance.
       </Text>
+      {runway.days.length > 1 && (
+        <View style={styles.chart}>
+          <RunwayChart runway={runway} />
+        </View>
+      )}
       <View style={styles.facts}>
         {facts.map(([label, value]) => (
           <View key={label} style={styles.row}>
@@ -48,6 +54,7 @@ export function ForecastDetails({ runway, onClose }: { runway: Runway; onClose: 
 }
 
 const styles = StyleSheet.create({
+  chart: { marginBottom: 16 },
   note: {
     fontFamily: theme.font.body,
     fontSize: 13,

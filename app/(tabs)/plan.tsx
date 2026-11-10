@@ -70,7 +70,8 @@ import {
   PlanRoute,
 } from '@/features/plan/planOverview';
 import { PayInstallmentSheet } from '@/features/loans/PayInstallmentSheet';
-import { PeopleTile, HabitTile, PlanPerson, PEOPLE_SHOWN } from '@/features/plan/PlanTiles';
+import { PlanPerson, PEOPLE_SHOWN } from '@/features/plan/PlanTiles';
+import { PlanPeopleHabit } from '@/features/plan/PlanPeopleHabit';
 import { PlanOverviewPanels } from '@/features/plan/PlanOverviewPanels';
 import { UpcomingDates } from '@/features/plan/UpcomingDates';
 import { RunwayCard } from '@/features/plan/RunwayCard';
@@ -82,7 +83,6 @@ import { GoalOverviewModal } from '@/features/goals/GoalOverviewModal';
 import { AddGoalModal } from '@/features/goals/AddGoalModal';
 import { GoalsStrip, WhatIfCard } from '@/features/plan/PlanGoals';
 import { buildRunway, isRunwayAccount, runwayStartMinor, transferFlow, Runway } from '@/features/plan/runway';
-import { styles as planStyles } from '@/features/plan/plan.styles';
 import { ComingUpSection } from '@/features/plan/ComingUpSection';
 import { listCardCycles } from '@/db/cardCycles';
 import { showAlert } from '@/components/AppDialog';
@@ -490,20 +490,15 @@ export default function PlanScreen() {
                     />
                   </View>
                   <Section compact title="People & habit">
-                    <View style={[planStyles.row, stackTiles && planStyles.rowStack]}>
-                      <PeopleTile
-                        state={data.people}
-                        people={data.topPeople}
-                        onOpen={() => open('/people')}
-                        onPerson={(id) => openDetail('person', id)}
-                      />
-                      <HabitTile
-                        habit={data.habit}
-                        goalMinor={data.dailyGoalMinor}
-                        today={data.today}
-                        onOpen={() => open('/garden')}
-                      />
-                    </View>
+                    <PlanPeopleHabit
+                      people={data.people}
+                      topPeople={data.topPeople}
+                      habit={data.habit}
+                      goalMinor={data.dailyGoalMinor}
+                      onPeople={() => open('/people')}
+                      onPerson={(id) => openDetail('person', id)}
+                      onGarden={() => open('/garden')}
+                    />
                   </Section>
                 </>
               )}
@@ -678,7 +673,6 @@ export default function PlanScreen() {
       </ReanimatedAnimated.ScrollView>
       <SkyHeader
         title="Plan"
-        subtitle="Make room for what matters."
         actions={
           <Pressable
             accessibilityRole="button"

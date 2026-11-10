@@ -1,3 +1,4 @@
+import { LimitMeter } from '@/components/LimitMeter';
 import { selectedFill } from '@/theme/interactionColors';
 import { useState } from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
@@ -88,6 +89,14 @@ function BudgetRow({
         />
       }
       title={`${name} budget`}
+      meter={
+        <LimitMeter
+          pct={progress.percentUsed}
+          tone={state === 'over' ? 'over' : state === 'ahead' ? 'near' : 'ok'}
+          trackColor={theme.colors.trayTrack}
+          height={6}
+        />
+      }
       subtitle={subtitle}
       subtitleTone={state === 'over' ? 'urgent' : state === 'ahead' ? 'soon' : undefined}
       value={percent}
@@ -171,6 +180,7 @@ function PaymentRow({
       dueDate={item.sortDate}
       actionLabel={item.pinned && item.payable ? 'Pay' : undefined}
       highlight={item.pinned}
+      payInline
     />
   );
 }
@@ -191,6 +201,7 @@ export function HomeComingUp({
   openingRefund,
   onOpenRefund,
   onRetryRefunds,
+  stillToPayMinor = 0,
 }: {
   upcoming: Upcoming;
   budgets: BudgetProgress[];
@@ -203,6 +214,8 @@ export function HomeComingUp({
   openingRefund?: string | null;
   onOpenRefund?: (transactionId: string) => void;
   onRetryRefunds?: () => void;
+  /** Unpaid EMIs and bills left this month: the heading's summary line (0 = nothing said). */
+  stillToPayMinor?: number;
 }) {
   const [picked, setPicked] = useState<ComingUpFilter>('all');
   const items = buildComingUp({ upcoming, budgets, goals, today });
@@ -216,6 +229,7 @@ export function HomeComingUp({
     <Section
       compact
       title="Coming up"
+      subtitle={stillToPayMinor > 0 ? `${formatMoney(stillToPayMinor)} still to pay this month` : undefined}
       onSeeAll={() => onSeeAll(filter)}
       actionLabel={filter === 'budget' ? 'All budgets' : filter === 'goal' ? 'All goals' : 'View plan'}
     >

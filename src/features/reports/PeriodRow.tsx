@@ -61,7 +61,10 @@ export function PeriodRow({
   const granLabel = GRANULARITIES.find((g) => g.key === cursor.granularity)?.label ?? 'Month';
   return (
     <View style={[styles.periodRow, stacked && { flexDirection: 'column', alignItems: 'stretch' }, style]}>
-      <View style={[styles.periodPill, stacked && { flex: 0 }]} {...swipe.panHandlers}>
+      <View
+        style={[styles.periodPill, compact && styles.periodPillCompact, stacked && { flex: 0 }]}
+        {...swipe.panHandlers}
+      >
         <Pressable
           onPress={() => change(stepWindow(cursor, -1))}
           hitSlop={4}
@@ -96,11 +99,15 @@ export function PeriodRow({
           haptics.tap();
           setMenuOpen(true);
         }}
-        style={withPressedTint(accent, [styles.granChip, stacked && { justifyContent: 'center' }])}
+        style={withPressedTint(accent, [
+          styles.granChip,
+          compact && styles.granChipCompact,
+          stacked && { justifyContent: 'center' },
+        ])}
         accessibilityRole="button"
         accessibilityLabel={`Period type: ${granLabel}. Change`}
       >
-        <Text style={styles.granChipText}>{granLabel}</Text>
+        <Text style={[styles.granChipText, compact && styles.granChipTextCompact]}>{granLabel}</Text>
         <Feather name="chevron-down" size={14} color={theme.colors.ink} />
       </Pressable>
       <ActionSheet
