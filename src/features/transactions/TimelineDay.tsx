@@ -30,10 +30,16 @@ import { isSavingsEntry } from '@/lib/privateSummary';
 import { DraggableLine } from './DraggableLine';
 import { withPressedTint } from '@/lib/pressed';
 import { categorySpoken, joinSub, parentNameOf } from '@/lib/categoryLabel';
+import { compactMoney } from '@/lib/compactMoney';
+import { GLASS } from '@/components/Glass';
+import { selectedFill } from '@/theme/interactionColors';
+import { parseLocalIsoDate } from '@/lib/date';
 
 /** A compact row: its least height and the category disc it leads with. */
 const ROW_H = 48;
 const ICON = 32;
+/** The date tile's width beside a day's entries. */
+const TILE_W = 52;
 
 const NO_ACCOUNTS: ReadonlySet<string> = new Set();
 const NO_NOTES: ValueNote[] = [];
@@ -90,6 +96,9 @@ function TimelineDayView({
   notes = NO_NOTES,
   onPressNote,
   accountCurrency = () => getCachedCurrency(),
+  timeline = false,
+  isToday = false,
+  selected = false,
 }: {
   date: string;
   label: string;
@@ -118,6 +127,12 @@ function TimelineDayView({
   /** Tapping a value update (opens the investments page). */
   onPressNote?: (note: ValueNote) => void;
   accountCurrency?: (id: string) => string;
+  /** Activity's list: the date is a tile beside the day's entries, with the day's total under it. */
+  timeline?: boolean;
+  /** Tints the date tile. */
+  isToday?: boolean;
+  /** The day picked on the chart: its tile takes an ink edge. */
+  selected?: boolean;
 }) {
   const { hideAmounts } = usePrivacy();
   const { width, fontScale } = useWindowDimensions();
@@ -388,22 +403,52 @@ function TimelineDayView({
     );
   };
 
+  const showTotal = net !== 0 && !(lines.length === 1 && transfers.length === 0);
+  const totalText = `${net > 0 ? '+' : '−'}${formatMoney(Math.abs(net))}`;
+  // The date beside the entries instead of above them. Narrow screens and large text keep the heading, so a
+  // row never loses the width it needs.
+  const beside = timeline && !stacked;
+  const day = parseLocalIsoDate(date);
   return (
-    <ReanimatedAnimated.View entering={entering} style={styles.day}>
-      <View style={styles.head}>
-        <Text style={styles.title}>
-          {label}
-          {'  '}
-          <Text style={styles.date}>{dateLabel}</Text>
-        </Text>
-        {net !== 0 && !(lines.length === 1 && transfers.length === 0) && (
-          <Text style={[styles.total, net > 0 && styles.income]}>
-            {net > 0 ? '+' : '−'}
-            {formatMoney(Math.abs(net))}
+    <ReanimatedAnimated.View entering={entering} style={[styles.day, beside && styles.dayBeside]}>
+      {beside ? (
+        <View
+          style={[
+            styles.tile,
+            { width: Math.round(TILE_W * Math.min(1.2, Math.max(1, fontScale))) },
+            isToday && { backgroundColor: selectedFill(accent), borderColor: 'transparent' },
+            selected && styles.tileOn,
+          ]}
+          accessible
+          accessibilityRole="header"
+          accessibilityLabel={`${label}, ${dateLabel}${net !== 0 ? `, ${totalText}` : ''}`}
+        >
+          <Text style={styles.tileDay}>
+            {day.toLocaleDateString(undefined, { weekday: 'short' }).toUpperCase()}
           </Text>
-        )}
-      </View>
-      <View style={styles.lane}>
+          <Text style={styles.tileNum}>{day.getDate()}</Text>
+          {net !== 0 && (
+            <Text
+              style={[styles.tileTotal, net > 0 && styles.income]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.75}
+            >
+              {totalText.length > 9 ? compactMoney(net).replace(/^(?!−)/, net > 0 ? '+' : '') : totalText}
+            </Text>
+          )}
+        </View>
+      ) : (
+        <View style={styles.head}>
+          <Text style={styles.title}>
+            {label}
+            {'  '}
+            <Text style={styles.date}>{dateLabel}</Text>
+          </Text>
+          {showTotal && <Text style={[styles.total, net > 0 && styles.income]}>{totalText}</Text>}
+        </View>
+      )}
+      <View style={[styles.lane, beside && styles.laneBeside]}>
         {shown.map((line, i) => (
           <DraggableLine
             key={laneKey(line)}
@@ -510,6 +555,40 @@ function TimelineDayView({
 
 const styles = StyleSheet.create({
   day: { paddingHorizontal: 16, paddingBottom: 10 },
+  dayBeside: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, paddingBottom: 8 },
+  laneBeside: { flex: 1, minWidth: 0, borderRadius: 18 },
+  tile: {
+    alignItems: 'center',
+    gap: 1,
+    paddingHorizontal: 3,
+    paddingTop: 6,
+    paddingBottom: 7,
+    borderRadius: 14,
+    backgroundColor: GLASS.fill,
+    borderWidth: 1,
+    borderColor: GLASS.edge,
+  },
+  tileOn: { borderColor: theme.colors.ink },
+  tileDay: {
+    fontFamily: theme.font.bodyBold,
+    fontSize: 11,
+    letterSpacing: 0.5,
+    color: theme.colors.textSecondary,
+  },
+  tileNum: {
+    fontFamily: theme.font.roundedBold,
+    fontSize: 16,
+    lineHeight: 19,
+    color: theme.colors.textPrimary,
+  },
+  tileTotal: {
+    alignSelf: 'stretch',
+    textAlign: 'center',
+    fontFamily: theme.font.bodyMedium,
+    fontSize: 11,
+    color: theme.colors.textPrimary,
+    fontVariant: ['tabular-nums'],
+  },
   head: {
     flexDirection: 'row',
     flexWrap: 'wrap',

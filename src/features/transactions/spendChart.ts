@@ -29,7 +29,7 @@ const WEEKDAY_INITIAL = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
 // Bucket for expenses with no (or unresolvable) category, e.g. loan EMIs from raw SQL (payInstallment): they
 // still count toward `totalMinor` (as in Home/Reports); only the *segment* depends on a resolved category.
-const UNCATEGORIZED_ID = '__uncategorized__';
+export const UNCATEGORIZED_ID = '__uncategorized__';
 
 function summariseExpenses(
   transactions: Transaction[],
@@ -140,6 +140,8 @@ export interface ChartLegendItem {
   categoryId: string;
   name: string;
   color: string;
+  /** What the bars hold for it across the period. */
+  totalMinor: number;
 }
 
 /**
@@ -162,7 +164,5 @@ export function legendForBars(bars: SpendBar[]): ChartLegendItem[] {
         });
     }
   }
-  return [...seen.values()]
-    .sort((a, b) => b.totalMinor - a.totalMinor)
-    .map(({ categoryId, name, color }) => ({ categoryId, name, color }));
+  return [...seen.values()].sort((a, b) => b.totalMinor - a.totalMinor);
 }
