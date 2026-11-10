@@ -44,3 +44,18 @@ Approved from the same canvas, to the same compact scale: nothing on Overview or
 - **Breakdown.** Spending/Income is a compact switch at the start of the summary card's heading row, beside the grouping picker, instead of a full-width row above the card. "Where it went" / "Where it came from" stays as a small label over the total, which is 20 pixels. Each row puts name and amount on its first line, then the share bar, then share and change.
 
 `SegmentedControl` gained a `compact` option for this switch (32 pixels tall, touch area extended by hit slop). Trends, the sheets, queries and report calculations were not changed. The full suite passed after this pass with the same counts as above.
+
+## Plan overview
+
+Approved from the same canvas after a first proposal that only tightened the existing rows was sent back for a more considered design. Nothing on the Overview tab is larger than the 15-pixel section size.
+
+- **Header.** The tagline under the title is removed.
+- **Runway card.** The card opens with the verdict in words (Covered, Nothing due, or the amount still needed) under the existing "Runway · next N days" label, with one line naming the lowest balance and its day. The 30-pixel balance is gone; **Now, Going out, Coming in** and the closing balance read left to right as four 14-pixel figures. The link names the count ("View 4 payments") and keeps its "View payments" accessible label.
+- **Runway ribbon.** `RunwayRibbon` replaces the tall chart on Overview: a 62-pixel balance line on the same zero-based scale, a row of pips (coral where money goes out, green where it comes in), weekly date ticks and one line reading the picked day. It opens on the first shortfall or the lowest day and is read by tap, drag or the screen reader's adjust actions. The window is the existing 30 days, so days are pips rather than the tappable date numbers drawn for a 14-day sample in the design.
+- **Full chart.** The original `RunwayChart`, with its guides, labels and readout, now sits at the top of the Forecast details sheet.
+- **Needs attention.** Same alerts and order, each as one tinted line under the section title.
+- **Your plans.** Four tiles in two columns (one above 130% text or on a very narrow screen) that show standing rather than a description: Debt (amount left, repaid share as a bar, the debt-free month), Budgets (used of budgeted, a bar split by budget with over-limit budgets in the expense colour, the count over), Goals (total saved, the leading goal's progress, how many are reached; withheld when savings are hidden) and Investments (value, gain, values due). Each opens what its row opened before. The repaid share stays a bar only: its figure remains on the Debt tab, as an existing test requires.
+- **People & habit.** `PlanPeopleHabit` shows Friends and Spend streak as two rows in one card. Up to two people appear as initials that open that person directly, as the tile's chips did; To collect and To pay back appear when non-zero; the streak keeps its week of growing sprouts. `PeopleTile` and `HabitTile` remain in the codebase for their existing tests.
+- **Other tabs.** `PlanSummaryRow` (budget and goal rows) is 52 pixels with a 32-pixel icon instead of 64 and 34. Upcoming, Money plan and Debt are otherwise unchanged.
+
+No runway, budget, goal, loan or people calculation changed. `RunwayRibbon` has its own tests; no existing Plan test was altered. The full suite passed: 369 suites and 11,815 tests, with two existing skips.
