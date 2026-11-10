@@ -31,3 +31,16 @@ Approved from the same canvas after the user rejected a first, larger proposal a
 - **Days.** Day headings are 13 pixels; Today and Yesterday also show the weekday. Rows are at least 48 pixels with a 32-pixel category disc; row text stays 14 with a 12-pixel line under it. A stack shows its entry count beside the chevron. Hand-ordering, stacks, transfers, value updates and savings masking are unchanged.
 
 Search, the filter sheet, the entry sheet, the period bar and the shared header were not changed. The full suite passed after this pass with the same counts as above.
+
+## Compact Reports
+
+Approved from the same canvas, to the same compact scale: nothing on Overview or Breakdown is larger than 20 logical pixels.
+
+- **Header.** The tagline under the title is removed. In Reports' own header the period pill and period-type chip are 44 pixels tall instead of 48; the arrows keep their 44-pixel touch size. The category page's period row is unchanged.
+- **Overview summary.** Spent (20), Income and Kept (14) sit side by side, each with its one small line: per-day spend, income change, share kept. The label reads "Spent" or "Spent so far"; the accessible label still names the period. The budgets bar follows. On a narrow screen or above 120% text the figures stack.
+- **Calendar.** Day cells remain 44 pixels in each direction. A 38-pixel cell was proposed and then withdrawn, because the existing touch-size guarantee for calendar days is deliberate. The category picker is a 32-pixel pill with hit slop, and the card's padding is tighter.
+- **Picked day.** The amount is 16 pixels on one wrapping line with its comparison to a usual day; Open day and the category split are unchanged.
+- **Worth a look and Biggest spends.** Same content in tighter rows: 32-pixel marks, 12-pixel detail lines, and 48-pixel Biggest spends rows. The day sheet's rows keep the shared size.
+- **Breakdown.** Spending/Income is a compact switch at the start of the summary card's heading row, beside the grouping picker, instead of a full-width row above the card. "Where it went" / "Where it came from" stays as a small label over the total, which is 20 pixels. Each row puts name and amount on its first line, then the share bar, then share and change.
+
+`SegmentedControl` gained a `compact` option for this switch (32 pixels tall, touch area extended by hit slop). Trends, the sheets, queries and report calculations were not changed. The full suite passed after this pass with the same counts as above.
