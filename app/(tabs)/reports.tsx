@@ -645,7 +645,7 @@ export default function ReportsScreen() {
         ref={scrollRef}
         testID="reports-content"
         contentContainerStyle={{
-          paddingTop: 18,
+          paddingTop: 12,
           paddingHorizontal: 16,
           paddingBottom: tabScrollPad + insets.bottom,
         }}
@@ -786,18 +786,17 @@ export default function ReportsScreen() {
             </>
           ) : tab === 'cats' ? (
             <View>
-              <FlowSwitch
-                flow={flow}
-                onFlow={(f) => {
-                  setFlow(f);
-                  setCatExpanded(false);
-                  setSelectedCat(null);
-                  setSelectedAccount(null);
-                }}
-              />
               <View style={styles.sumCard}>
                 <View style={styles.sumHead}>
-                  <Text style={styles.sumTitle}>{income ? 'Where it came from' : 'Where it went'}</Text>
+                  <FlowSwitch
+                    flow={flow}
+                    onFlow={(f) => {
+                      setFlow(f);
+                      setCatExpanded(false);
+                      setSelectedCat(null);
+                      setSelectedAccount(null);
+                    }}
+                  />
                   <GroupPicker
                     flow={flow}
                     group={group}
@@ -810,6 +809,9 @@ export default function ReportsScreen() {
                     }}
                   />
                 </View>
+                <Text style={styles.sumKicker} accessibilityRole="header">
+                  {income ? 'Where it came from' : 'Where it went'}
+                </Text>
                 {(byAccount ? accountItems !== null : shownBreakdown.length > 0) && (
                   <View style={styles.breakdownContext}>
                     <Amount minor={byAccount ? accountTotal : shownTotal} style={styles.breakdownAmount} />

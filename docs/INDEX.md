@@ -6,6 +6,8 @@ Use maintained guides for implemented behavior. Dated audits preserve their own 
 
 The [architecture guide](ARCHITECTURE.md#smoothness-pass--november-2026) describes the 9 November compact screen refinements and the Groww-referenced financial-typography follow-up. These source changes do not establish fresh physical-device acceptance.
 
+The [approved 10 November Home redesign](HOME_REDESIGN_2026_11_10.md) records the separate week card, section summary lines, day-grouped recent activity and the remaining Pixel acceptance checks. It supersedes the chart placement of the 5 November refinement and also records the compact Activity and Reports passes and the Plan overview redesign.
+
 The [approved 5 November Home refinement](HOME_REFINEMENT_2026_11_05.md) records the implementation of the second screenshot direction, retained financial behavior and remaining Pixel acceptance checks.
 
 The [5 November UI/UX enhancement plan](UX_ENHANCEMENT_PLAN_2026_11_05.md) records the first-use and filter recovery improvements, whole-app design priorities, motion principles and remaining device acceptance work.

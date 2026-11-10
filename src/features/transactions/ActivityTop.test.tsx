@@ -178,7 +178,7 @@ it('expands and collapses the category legend without changing the selected peri
 });
 
 it.each([
-  { width: 390, fontScale: 1, direction: 'row', align: 'flex-end' },
+  { width: 390, fontScale: 1, direction: 'row', align: 'flex-start' },
   { width: 320, fontScale: 1, direction: 'column', align: 'flex-start' },
   { width: 390, fontScale: 1.5, direction: 'column', align: 'flex-start' },
 ])('places cashflow in the top summary at $width / $fontScale', (size) => {

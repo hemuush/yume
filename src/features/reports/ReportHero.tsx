@@ -56,34 +56,26 @@ export function ReportHero({
   const keptPct = incomeMinor > 0 ? Math.round((kept / incomeMinor) * 100) : null;
   const incomeChange =
     previousIncomeMinor > 0 ? Math.round((incomeMinor / previousIncomeMinor - 1) * 100) : null;
+  // The period is named in the header; a screen reader still hears it with the figure.
+  const spentSpoken = `Spent in ${periodName}${inProgress ? ' so far' : ''}, ${money(spentMinor)}${
+    perDayMinor != null && perDayMinor > 0 ? `, ${money(perDayMinor)} a day` : ''
+  }`;
   return (
     <View style={styles.card}>
-      <Text style={styles.label}>{`Spent in ${periodName}${inProgress ? ' so far' : ''}`}</Text>
-      <CountUpAmount
-        minor={roundedMinor(spentMinor)}
-        countFromZero
-        style={styles.figure}
-        numberOfLines={1}
-        adjustsFontSizeToFit
-      />
-      {perDayMinor != null && perDayMinor > 0 && (
-        <Text style={styles.sub}>{`${money(perDayMinor)} a day`}</Text>
-      )}
-      {budget && (
-        <View style={styles.budget} accessible accessibilityLabel={budgetSpoken(budget)}>
-          <View style={[styles.track, { backgroundColor: hexToRgba(ink, 0.1) }]}>
-            <View
-              key={animKey}
-              style={[styles.fill, { width: `${Math.min(100, used * 100)}%`, backgroundColor: barColor }]}
-            />
-          </View>
-          <Text style={[styles.budgetText, over && styles.bad]}>
-            {`${budget.count} budget${budget.count === 1 ? '' : 's'}: ${money(budget.spentMinor)} of ${money(budget.limitMinor)}`}
-            {over ? ` · ${money(budget.spentMinor - budget.limitMinor)} over` : ''}
-          </Text>
-        </View>
-      )}
       <View style={[styles.kpis, stacked && styles.kpisStacked]}>
+        <View style={[styles.kpi, styles.kpiLead]} accessible accessibilityLabel={spentSpoken}>
+          <Text style={styles.kpiLabel}>{`Spent${inProgress ? ' so far' : ''}`}</Text>
+          <CountUpAmount
+            minor={roundedMinor(spentMinor)}
+            countFromZero
+            style={styles.figure}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+          />
+          {perDayMinor != null && perDayMinor > 0 && (
+            <Text style={styles.kpiSub}>{`${money(perDayMinor)} a day`}</Text>
+          )}
+        </View>
         <View style={styles.kpi}>
           <Text style={styles.kpiLabel}>Income</Text>
           <Amount
@@ -98,7 +90,7 @@ export function ReportHero({
             </Text>
           )}
         </View>
-        <View style={[styles.kpi, stacked ? styles.kpiBelow : [h.dividerLeft, styles.kpiRight]]}>
+        <View style={styles.kpi}>
           <Text style={styles.kpiLabel}>Kept</Text>
           <Text
             style={[styles.kpiValue, kept < 0 ? styles.bad : styles.good]}
@@ -113,6 +105,20 @@ export function ReportHero({
           </Text>
         </View>
       </View>
+      {budget && (
+        <View style={styles.budget} accessible accessibilityLabel={budgetSpoken(budget)}>
+          <View style={[styles.track, { backgroundColor: hexToRgba(ink, 0.1) }]}>
+            <View
+              key={animKey}
+              style={[styles.fill, { width: `${Math.min(100, used * 100)}%`, backgroundColor: barColor }]}
+            />
+          </View>
+          <Text style={[styles.budgetText, over && styles.bad]}>
+            {`${budget.count} budget${budget.count === 1 ? '' : 's'}: ${money(budget.spentMinor)} of ${money(budget.limitMinor)}`}
+            {over ? ` · ${money(budget.spentMinor - budget.limitMinor)} over` : ''}
+          </Text>
+        </View>
+      )}
     </View>
   );
 }
@@ -121,45 +127,33 @@ const budgetSpoken = (b: BudgetCover) =>
   `${b.count} budget${b.count === 1 ? '' : 's'}: ${money(b.spentMinor)} of ${money(b.limitMinor)} used`;
 
 const styles = StyleSheet.create({
-  card: { ...h.card, marginHorizontal: 0, marginBottom: 12, paddingHorizontal: 16, paddingVertical: 14 },
-  label: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textSecondary },
+  card: { ...h.card, marginHorizontal: 0, marginBottom: 10, paddingHorizontal: 14, paddingVertical: 12 },
+  // Compact: Spent leads at 20, Income and Kept beside it at 14, each with one small line under it.
   figure: {
     fontFamily: theme.font.bodyMedium,
-    fontSize: theme.typeSize.headline,
-    lineHeight: 38,
-    letterSpacing: -0.3,
+    fontSize: 20,
+    lineHeight: 26,
+    letterSpacing: -0.2,
     color: theme.colors.textPrimary,
     fontVariant: ['tabular-nums'],
   },
-  sub: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textSecondary, marginTop: 2 },
-  budget: { marginTop: 10, gap: 6 },
+  budget: { marginTop: 10, gap: 5 },
   track: { height: 6, borderRadius: 3, overflow: 'hidden' },
   fill: { height: 6, borderRadius: 3 },
   budgetText: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
-  kpis: {
-    flexDirection: 'row',
-    marginTop: 12,
-    paddingTop: 10,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: theme.colors.borderSoft,
-  },
-  kpisStacked: { flexDirection: 'column', gap: 10 },
-  kpiBelow: {
-    paddingTop: 10,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: theme.colors.borderSoft,
-  },
-  kpi: { flex: 1, minWidth: 0, paddingRight: 14, gap: 2 },
-  kpiRight: { paddingLeft: 14 },
+  kpis: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
+  kpisStacked: { flexDirection: 'column', alignItems: 'stretch', gap: 8 },
+  kpi: { flexGrow: 1, flexShrink: 1, flexBasis: 0, minWidth: 0 },
+  kpiLead: { flexGrow: 1.3 },
   kpiLabel: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
   kpiValue: {
     fontFamily: theme.font.bodyMedium,
-    fontSize: 16,
-    lineHeight: 22,
+    fontSize: 14,
+    lineHeight: 26,
     color: theme.colors.textPrimary,
     fontVariant: ['tabular-nums'],
   },
-  kpiSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
+  kpiSub: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textMuted },
   good: { color: theme.colors.incomeText },
   bad: { color: theme.colors.expenseText },
 });

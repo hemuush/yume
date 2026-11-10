@@ -1,7 +1,7 @@
 import { View, Pressable, StyleSheet } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
-import { screenStyles as h, SCREEN } from '@/components/screenStyles';
+import { screenStyles as h } from '@/components/screenStyles';
 import { theme } from '@/constants/theme';
 import { softTint } from '@/components/softTint';
 import { withPressedTint } from '@/lib/pressed';
@@ -9,6 +9,9 @@ import { useAccent } from '@/theme/AccentContext';
 import { MoonPhase } from './MoonPhase';
 import type { StoryAction, StoryCard } from './reportsInsights';
 import { styles as shared } from './reports.styles';
+
+/** The round mark each read leads with. */
+const MARK = 32;
 
 const TONE_HEX = {
   coral: theme.colors.slice.spent,
@@ -55,9 +58,9 @@ export function ReportInsights({
             <>
               <View style={[s.mark, { backgroundColor: softTint(TONE_HEX[card.tone], 0.3) }]}>
                 {card.moonFraction != null ? (
-                  <MoonPhase size={26} litFraction={card.moonFraction} accent={accent} />
+                  <MoonPhase size={24} litFraction={card.moonFraction} accent={accent} />
                 ) : (
-                  <Feather name={ICON[card.key] ?? 'info'} size={SCREEN.iconGlyph} color={theme.colors.ink} />
+                  <Feather name={ICON[card.key] ?? 'info'} size={15} color={theme.colors.ink} />
                 )}
               </View>
               <View style={s.mid}>
@@ -92,17 +95,17 @@ export function ReportInsights({
 }
 
 const s = StyleSheet.create({
-  block: { marginBottom: 12 },
+  block: { marginBottom: 10 },
   card: { ...h.card, marginHorizontal: 0 },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, paddingVertical: 10 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 12, paddingVertical: 8 },
   mark: {
-    width: SCREEN.iconTile,
-    height: SCREEN.iconTile,
-    borderRadius: SCREEN.iconTile / 2,
+    width: MARK,
+    height: MARK,
+    borderRadius: MARK / 2,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  mid: { flex: 1, minWidth: 0, gap: 2 },
+  mid: { flex: 1, minWidth: 0, gap: 1 },
   kicker: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
   big: {
     fontFamily: theme.font.bodyMedium,
@@ -110,6 +113,6 @@ const s = StyleSheet.create({
     lineHeight: 20,
     color: theme.colors.textPrimary,
   },
-  detail: { fontFamily: theme.font.body, fontSize: 13, lineHeight: 19, color: theme.colors.textSecondary },
+  detail: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textSecondary },
   foot: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textMuted },
 });

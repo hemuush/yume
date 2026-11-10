@@ -23,6 +23,8 @@ interface Props<T extends string> {
   /** On a coloured band (Add's sky header): a see-through track and an ink pill. */
   onBand?: boolean;
   disabled?: boolean;
+  /** A smaller switch inside a card's heading row: 32 tall, with the touch area kept at 44. */
+  compact?: boolean;
 }
 
 /**
@@ -35,6 +37,7 @@ export function SegmentedControl<T extends string>({
   onChange,
   onBand,
   disabled = false,
+  compact = false,
 }: Props<T>) {
   const reduce = useReduceMotion();
   const { accent } = useAccent();
@@ -74,7 +77,12 @@ export function SegmentedControl<T extends string>({
 
   return (
     <View
-      style={[styles.wrap, onBand && styles.wrapBand, disabled && styles.disabled]}
+      style={[
+        styles.wrap,
+        onBand && styles.wrapBand,
+        compact && styles.wrapCompact,
+        disabled && styles.disabled,
+      ]}
       onLayout={onLayout}
       accessibilityRole="tablist"
     >
@@ -95,6 +103,7 @@ export function SegmentedControl<T extends string>({
           fallbackInk={segWidth <= 0 ? selectedFill(accent) : undefined}
           label={opt.label}
           disabled={disabled}
+          compact={compact}
           onPress={() => onChange(opt.value)}
         />
       ))}
@@ -108,18 +117,21 @@ function Segment({
   onPress,
   fallbackInk,
   disabled,
+  compact,
 }: {
   active: boolean;
   label: string;
   onPress: () => void;
   fallbackInk?: string;
   disabled: boolean;
+  compact: boolean;
 }) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.95);
   return (
     <AnimatedPressable
       style={[
         styles.segment,
+        compact && styles.segmentCompact,
         active && fallbackInk ? { backgroundColor: fallbackInk } : undefined,
         animatedStyle,
       ]}
@@ -130,6 +142,7 @@ function Segment({
         onPress();
       }}
       disabled={disabled}
+      hitSlop={compact ? { top: 6, bottom: 6 } : undefined}
       accessibilityRole="tab"
       accessibilityState={{ selected: active, disabled }}
       onPressIn={onPressIn}
@@ -173,6 +186,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     flexShrink: 1,
   },
+  wrapCompact: { marginBottom: 0, backgroundColor: theme.colors.tray, borderWidth: 0 },
+  segmentCompact: { minHeight: 32, paddingVertical: 4, paddingHorizontal: 12 },
   segmentTextActive: { color: theme.colors.textPrimary, fontFamily: theme.font.bodyMedium },
   // On a wallpaper (Add's header): a frosted track and an ink pill.
   wrapBand: {

@@ -4,7 +4,6 @@ import ReanimatedAnimated from 'react-native-reanimated';
 import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
 import { CategoryIcon } from '@/components/CategoryIcon';
-import { SCREEN } from '@/components/screenStyles';
 import { SECTION_TITLE } from '@/constants/textStyles';
 import { StatusBadge } from '@/components/StatusBadge';
 import { MovingRow } from '@/components/MovingRow';
@@ -31,6 +30,10 @@ import { isSavingsEntry } from '@/lib/privateSummary';
 import { DraggableLine } from './DraggableLine';
 import { withPressedTint } from '@/lib/pressed';
 import { categorySpoken, joinSub, parentNameOf } from '@/lib/categoryLabel';
+
+/** A compact row: its least height and the category disc it leads with. */
+const ROW_H = 48;
+const ICON = 32;
 
 const NO_ACCOUNTS: ReadonlySet<string> = new Set();
 const NO_NOTES: ValueNote[] = [];
@@ -176,11 +179,11 @@ function TimelineDayView({
   const shown = arranged ?? lines;
   const canReorder = !!onReorder && shown.length > 1;
 
-  const heightsInOrder = () => shown.map((l) => heights.current.get(laneKey(l)) ?? 52);
+  const heightsInOrder = () => shown.map((l) => heights.current.get(laneKey(l)) ?? ROW_H);
   const lift = (index: number) => {
     haptics.tap();
     dy.setValue(0);
-    dragRef.current = { from: index, to: index, height: heights.current.get(laneKey(shown[index])) ?? 52 };
+    dragRef.current = { from: index, to: index, height: heights.current.get(laneKey(shown[index])) ?? ROW_H };
     setDrag({ ...dragRef.current, items });
     onDragActive?.(true);
   };
@@ -264,13 +267,7 @@ function TimelineDayView({
           >
             <JustAddedGlow ids={[tx.id]} surface="activity" />
             <View style={styles.lead}>
-              <CategoryIcon
-                name={cat?.icon ?? 'tag'}
-                color={cat?.color}
-                size={16}
-                square={SCREEN.iconTile}
-                round
-              />
+              <CategoryIcon name={cat?.icon ?? 'tag'} color={cat?.color} size={15} square={ICON} round />
             </View>
             <View style={[styles.mid, stacked && styles.wideMid]}>
               <View style={styles.entryHead}>
@@ -321,19 +318,14 @@ function TimelineDayView({
           {/* A new entry folded into this line glows the line. */}
           <JustAddedGlow ids={line.items.map((t) => t.id)} surface="activity" />
           <View style={styles.lead}>
-            <CategoryIcon
-              name={cat?.icon ?? 'tag'}
-              color={cat?.color}
-              size={16}
-              square={SCREEN.iconTile}
-              round
-            />
+            <CategoryIcon name={cat?.icon ?? 'tag'} color={cat?.color} size={15} square={ICON} round />
           </View>
           <View style={[styles.mid, stacked && styles.wideMid]}>
             <View style={styles.stackMid}>
               <Text style={[styles.name, styles.stackName]}>{name}</Text>
               {line.items.every((t) => t.isRefund) && <StatusBadge label="Refund" tone="complete" />}
               <View style={styles.stackChip}>
+                <Text style={styles.stackCount}>{line.items.length}</Text>
                 <Feather
                   name={open ? 'chevron-up' : 'chevron-down'}
                   size={13}
@@ -517,20 +509,23 @@ function TimelineDayView({
 }
 
 const styles = StyleSheet.create({
-  day: { paddingHorizontal: 16, paddingBottom: 12 },
+  day: { paddingHorizontal: 16, paddingBottom: 10 },
   head: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     alignItems: 'baseline',
     justifyContent: 'space-between',
     gap: 8,
-    marginBottom: 6,
+    marginBottom: 4,
+    paddingHorizontal: 4,
   },
   title: {
     flexGrow: 1,
     flexBasis: 160,
-    // The same title style as every section heading.
+    // A quiet day label: the section heading's face at row-caption size.
     ...SECTION_TITLE,
+    fontFamily: theme.font.bodyMedium,
+    fontSize: 13,
   },
   date: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
   // Spending reads in ink with its minus sign; only money in is green.
@@ -540,11 +535,11 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: theme.colors.textPrimary,
   },
-  lead: { width: SCREEN.iconTile, alignItems: 'center', justifyContent: 'center' },
+  lead: { width: ICON, alignItems: 'center', justifyContent: 'center' },
   transferIcon: {
-    width: SCREEN.iconTile,
-    height: SCREEN.iconTile,
-    borderRadius: SCREEN.iconTile / 2,
+    width: ICON,
+    height: ICON,
+    borderRadius: ICON / 2,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -568,9 +563,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
     paddingHorizontal: 0,
-    paddingVertical: 9,
+    paddingVertical: 6,
     // A minimum target; text can wrap and measured row heights drive reordering.
-    minHeight: 52,
+    minHeight: ROW_H,
   },
   wrapLine: { flexWrap: 'wrap', rowGap: 6 },
   wideMid: { flexGrow: 1, flexBasis: '75%' },
@@ -580,9 +575,12 @@ const styles = StyleSheet.create({
     minHeight: 20,
     paddingHorizontal: 6,
     borderRadius: 10,
-    justifyContent: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
     backgroundColor: theme.colors.surfaceAlt,
   },
+  stackCount: { fontFamily: theme.font.bodyBold, fontSize: 11, color: theme.colors.textSecondary },
   entryHead: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6 },
   name: {
     fontFamily: theme.font.bodyMedium,
@@ -615,13 +613,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
     // Centre the dot under the category icon; its trailing space aligns the entry text above.
-    paddingLeft: (SCREEN.iconTile - 6) / 2,
+    paddingLeft: (ICON - 6) / 2,
     paddingRight: 0,
-    paddingVertical: 8,
-    minHeight: 48,
+    paddingVertical: 5,
+    minHeight: 44,
   },
   // Ends where the icon ends, so the text lines up with the lines above.
-  subDot: { width: 6, height: 6, borderRadius: 3, marginRight: (SCREEN.iconTile - 6) / 2 },
+  subDot: { width: 6, height: 6, borderRadius: 3, marginRight: (ICON - 6) / 2 },
 });
 
 /**

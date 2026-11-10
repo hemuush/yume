@@ -23,6 +23,7 @@ import { parseLocalIsoDate } from '@/lib/date';
 import { defaultBar, monthBars, weekBars, SpendBar } from './spendBarData';
 import { WorkingRow } from './WorkingRow';
 import { styles as hero } from './hero.styles';
+import { LimitMeter } from '@/components/LimitMeter';
 
 type Range = 'week' | 'month';
 
@@ -167,8 +168,10 @@ export function SpendBars({
   const explains = goal != null && isToday;
   const dayRow = (
     <View style={styles.dayRow}>
-      <Text style={styles.dayTitle}>{title}</Text>
-      <Text style={styles.dayAmount}>{formatMoney(selectedSpent)}</Text>
+      <View style={styles.dayFigure}>
+        <Text style={styles.dayTitle}>{title}</Text>
+        <Text style={styles.dayAmount}>{formatMoney(selectedSpent)}</Text>
+      </View>
       {chip && (
         <View
           style={[styles.chip, chip.tone === 'ok' && styles.chipOk, chip.tone === 'warn' && styles.chipWarn]}
@@ -229,6 +232,16 @@ export function SpendBars({
           </Text>
         </Animated.View>
       )}
+      {goal != null && goal > 0 && (
+        <View style={styles.meter}>
+          <LimitMeter
+            pct={(selectedSpent / goal) * 100}
+            tone={selectedSpent > goal ? 'near' : 'ok'}
+            trackColor={theme.colors.trayTrack}
+            height={6}
+          />
+        </View>
+      )}
       <View style={[styles.bars, { height: 90 + 28 * Math.max(0, fontScale - 1) }]}>
         {bars.map((b, i) => (
           <Capsule
@@ -277,23 +290,33 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     columnGap: 8,
   },
-  headMain: { flexShrink: 1, minHeight: 44, justifyContent: 'center' },
-  dayRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: 8, rowGap: 4 },
+  headMain: { flexGrow: 1, flexShrink: 1, minHeight: 44, justifyContent: 'center' },
+  dayRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    columnGap: 8,
+    rowGap: 4,
+  },
+  dayFigure: { flexShrink: 1, gap: 2 },
+  meter: { marginTop: 4, marginBottom: 8 },
   dayTitle: {
     fontFamily: theme.font.body,
     fontSize: 12,
-    color: theme.colors.textPrimary,
+    color: theme.colors.textSecondary,
   },
   dayAmount: {
     fontFamily: theme.font.bodyMedium,
-    fontSize: 15,
-    color: theme.colors.textSecondary,
+    fontSize: 16,
+    lineHeight: 22,
+    color: theme.colors.textPrimary,
     fontVariant: ['tabular-nums'],
   },
   chip: {
-    minHeight: 26,
+    minHeight: 28,
     justifyContent: 'center',
-    paddingHorizontal: 10,
+    paddingHorizontal: 12,
     borderRadius: theme.radius.pill,
     backgroundColor: theme.colors.tray,
   },

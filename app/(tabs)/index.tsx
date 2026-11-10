@@ -77,7 +77,9 @@ import { loadReadyWraps, ReadyWrap } from '@/features/wrap/wrapWindow';
 import { NeedsYouItem } from '@/features/home/needsYou';
 import { loadNeedsYou } from '@/features/home/needsYouData';
 import { AddAccountModal } from '@/features/profile/AddAccountModal';
-import { toLocalIsoDate } from '@/lib/date';
+import { toLocalIsoDate, dayLabel } from '@/lib/date';
+import { formatMoney } from '@/lib/money';
+import { EYEBROW } from '@/constants/textStyles';
 import { categorySentence } from '@/lib/categoryLabel';
 import { onTransactionsChanged } from '@/lib/dataEvents';
 import { useFreshness } from '@/lib/useFreshness';
@@ -650,6 +652,7 @@ export default function DashboardScreen() {
           <Animated.View entering={sectionEntering(1)} layout={ROW_LAYOUT}>
             <HomeAccounts
               accounts={accounts}
+              currency={currency}
               onOpenAccounts={() => router.push('/profile')}
               onOpenAccount={setSummaryAccount}
               onAddAccount={() => setAddAccountVisible(true)}
@@ -672,6 +675,7 @@ export default function DashboardScreen() {
               onRetryRefunds={() => void load(cursorRef.current)}
               rowEntering={rowEntering}
               onSeeAll={openComingUp}
+              stillToPayMinor={roundedMinor(stillToPayMinor)}
             />
           </Animated.View>
         )}
@@ -688,15 +692,26 @@ export default function DashboardScreen() {
                 <EmptyState title="Nothing logged" subtitle="Try another period." />
               ) : (
                 <View style={styles.recent}>
-                  {recent.slice(0, 5).map((tx, i) => (
+                  {recent.slice(0, 5).map((tx, i, rows) => (
                     <Animated.View
                       key={tx.id}
                       entering={rowEntering(i)}
                       layout={ROW_LAYOUT}
                       exiting={ROW_EXIT}
                     >
+                      {/* Each day is named once, above its rows; today also carries what went out. */}
+                      {(i === 0 || rows[i - 1].date !== tx.date) && (
+                        <View style={[styles.dayHead, i > 0 && styles.dayHeadDivider]}>
+                          <Text style={styles.dayHeadText}>{dayLabel(tx.date)}</Text>
+                          {tx.date === todayIso && loadedCursor.offset === 0 && todaySpendMinor > 0 && (
+                            <Text style={styles.dayHeadText}>
+                              −{formatMoney(roundedMinor(todaySpendMinor))}
+                            </Text>
+                          )}
+                        </View>
+                      )}
                       <RecentTransactionRow
-                        omitToday
+                        showDay={false}
                         onPress={() => {
                           refundRequest.current++;
                           openingRefundRef.current = false;
@@ -712,7 +727,7 @@ export default function DashboardScreen() {
                         toAccountName={accountName(tx.toAccountId)}
                         savingsTransfer={isSavingsTransfer(tx)}
                         investRole={investRole(tx, investIds)}
-                        divider={i > 0}
+                        divider={i > 0 && rows[i - 1].date === tx.date}
                       />
                     </Animated.View>
                   ))}
@@ -819,6 +834,17 @@ const styles = StyleSheet.create({
   scroll: { flex: 1 },
   heroGap: { marginTop: 4 },
   recent: { ...screenStyles.card, paddingHorizontal: 12 },
+  dayHead: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    columnGap: 8,
+    paddingHorizontal: 14,
+    paddingTop: 12,
+    paddingBottom: 2,
+  },
+  dayHeadDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.borderSoft },
+  dayHeadText: { ...EYEBROW, fontFamily: theme.font.bodyBold, fontSize: 11, fontVariant: ['tabular-nums'] },
   errorBanner: {
     marginHorizontal: 20,
     marginTop: 16,

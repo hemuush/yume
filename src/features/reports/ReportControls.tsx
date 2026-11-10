@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Pressable, StyleSheet } from 'react-native';
+import { View, Pressable, StyleSheet, useWindowDimensions } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
 import { ActionSheet } from '@/components/ActionSheet';
@@ -31,7 +31,7 @@ export function ReportTabs({ value, onChange }: { value: ReportTab; onChange: (v
   );
 }
 
-/** Spending or income, in the same pill switch as the tabs above it. */
+/** Spending or income: a small pill switch at the start of the breakdown card's heading row. */
 export function FlowSwitch({
   flow,
   onFlow,
@@ -39,8 +39,9 @@ export function FlowSwitch({
   flow: 'expense' | 'income';
   onFlow: (value: 'expense' | 'income') => void;
 }) {
+  const { fontScale } = useWindowDimensions();
   return (
-    <View style={s.flow}>
+    <View style={[s.flow, { minWidth: Math.round(172 * Math.min(1.3, Math.max(1, fontScale))) }]}>
       <SegmentedControl
         options={[
           { label: 'Spending', value: 'expense' as const },
@@ -48,7 +49,7 @@ export function FlowSwitch({
         ]}
         value={flow}
         onChange={onFlow}
-        onBand
+        compact
       />
     </View>
   );
@@ -74,6 +75,7 @@ export function GroupPicker({
         onPress={() => setOpen(true)}
         accessibilityRole="button"
         accessibilityLabel={`Group breakdown: By ${group}. Change`}
+        hitSlop={6}
         style={withPressedTint(accent, s.group)}
       >
         <Text style={s.groupText}>{group === 'category' ? 'By category' : 'By account'}</Text>
@@ -135,9 +137,9 @@ export function ComparisonNote({ label, partial }: { label: string; partial: boo
 const s = StyleSheet.create({
   // The same margins as Plan's tabs.
   tabs: { marginHorizontal: 16, marginTop: theme.layout.screenTopGap, marginBottom: 6 },
-  flow: { marginBottom: 12 },
+  flow: { flexShrink: 1 },
   group: {
-    minHeight: 36,
+    minHeight: 32,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
@@ -145,8 +147,8 @@ const s = StyleSheet.create({
     borderRadius: theme.radius.pill,
     backgroundColor: theme.colors.tray,
   },
-  groupText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
-  comparison: { minHeight: 40, flexDirection: 'row', alignItems: 'center', gap: 8 },
+  groupText: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textPrimary },
+  comparison: { minHeight: 36, flexDirection: 'row', alignItems: 'center', gap: 8 },
   note: { flex: 1, fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textMuted },
   explanation: {
     fontFamily: theme.font.body,

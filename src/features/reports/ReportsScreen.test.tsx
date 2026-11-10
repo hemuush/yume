@@ -359,7 +359,7 @@ describe('Reports screen', () => {
     const shown = texts(await render());
     expect(shown).toEqual(expect.arrayContaining(['Overview', 'Breakdown', 'Trends', 'Spending by day']));
     // One compact card with the period's total (Reports can look at any period, unlike Home).
-    expect(shown.some((t) => t.startsWith('Spent in '))).toBe(true);
+    expect(shown.some((t) => t.startsWith('Spent'))).toBe(true);
     expect(shown).not.toContain('Usual month');
     // The period in a few short reads, as rows.
     expect(shown).toContain('Worth a look');
