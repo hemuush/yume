@@ -136,8 +136,8 @@ describe('legendForBars', () => {
     );
     const legend = legendForBars(bars);
     expect(legend).toEqual([
-      { categoryId: 'food', name: 'Food & Dining', color: '#FF9E7D' },
-      { categoryId: 'fuel', name: 'Fuel', color: '#A8B8FF' },
+      { categoryId: 'food', name: 'Food & Dining', color: '#FF9E7D', totalMinor: 1500 },
+      { categoryId: 'fuel', name: 'Fuel', color: '#A8B8FF', totalMinor: 700 },
     ]);
   });
 

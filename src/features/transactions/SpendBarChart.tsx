@@ -8,6 +8,7 @@ import { SpendBar, ChartLegendItem } from './spendChart';
 
 import { useAccent } from '@/theme/AccentContext';
 import { themeInk } from '@/theme/interactionColors';
+import { compactMoney } from '@/lib/compactMoney';
 
 const MAX_BAR_HEIGHT = 48;
 // A day with any spend is at least this tall, so a small one still reads as a bar.
@@ -75,6 +76,8 @@ export function SpendBarChart({
   onPressDay,
   selectedKey = null,
   inset = 22,
+  dates = false,
+  amounts = false,
 }: {
   bars: SpendBar[];
   onPressDay: (key: string) => void;
@@ -82,6 +85,10 @@ export function SpendBarChart({
   selectedKey?: string | null;
   /** Side padding — 0 when the chart sits inside a card that already pads it. */
   inset?: number;
+  /** A week of days: the date sits under each weekday, and today's date carries the pill. */
+  dates?: boolean;
+  /** A short amount over every bar (₹1.9k); the picked bar shows its exact one. Left off at large text. */
+  amounts?: boolean;
 }) {
   const { accent } = useAccent();
   const ink = themeInk(accent);
@@ -93,9 +100,17 @@ export function SpendBarChart({
   const labelLine = Math.ceil(15 * k);
   const labelBox = { lineHeight: labelLine, minHeight: labelLine };
   const pillBox = { height: labelLine };
+  const showAmounts = amounts && fontScale <= 1.2;
+  const amountLine = showAmounts ? Math.ceil(15 * k) : 0;
+  const dateLine = dates ? Math.ceil(19 * k) : 0;
 
   return (
-    <View style={[styles.row, { paddingHorizontal: inset, height: MAX_BAR_HEIGHT + Math.ceil(22 * k) }]}>
+    <View
+      style={[
+        styles.row,
+        { paddingHorizontal: inset, height: MAX_BAR_HEIGHT + Math.ceil(22 * k) + amountLine + dateLine },
+      ]}
+    >
       {bars.map((bar, i) => {
         const barPx =
           bar.totalMinor > 0 ? Math.max(MIN_BAR_HEIGHT, (bar.totalMinor / maxTotal) * MAX_BAR_HEIGHT) : 0;
@@ -111,6 +126,11 @@ export function SpendBarChart({
                 <View style={bar.state === 'outside' ? styles.outsideDay : styles.futureDay} />
               </View>
               <Text style={[styles.label, labelBox, styles.labelAway]}>{bar.label}</Text>
+              {dates && (
+                <Text style={[styles.dateNum, { lineHeight: dateLine - 2 }, styles.labelAway]}>
+                  {Number(bar.key.slice(8, 10))}
+                </Text>
+              )}
             </View>
           );
         }
@@ -118,12 +138,17 @@ export function SpendBarChart({
           <Pressable
             key={bar.key}
             onPress={() => onPressDay(bar.key)}
-            style={[styles.col, faded && styles.colFaded]}
+            style={[styles.col, selected && styles.colOn, faded && styles.colFaded]}
             accessibilityRole="button"
             accessibilityState={{ selected }}
             accessibilityLabel={`${bar.key} (${bar.label})${bar.totalMinor > 0 ? `, spent ${formatMoney(bar.totalMinor)}` : ', nothing spent'}`}
           >
-            <View style={[styles.barTrack, selected && styles.barLifted]}>
+            {showAmounts && (
+              <Text style={[styles.amount, { lineHeight: amountLine, height: amountLine }]} numberOfLines={1}>
+                {bar.totalMinor > 0 && !selected ? compactMoney(bar.totalMinor) : ''}
+              </Text>
+            )}
+            <View style={styles.barTrack}>
               {bar.totalMinor > 0 ? (
                 <AnimatedBarStack
                   heightPct={heightPct}
@@ -159,12 +184,25 @@ export function SpendBarChart({
                 </View>
               )}
             </View>
-            {bar.isCurrent ? (
+            {bar.isCurrent && !dates ? (
               <View style={[styles.todayPill, pillBox, { backgroundColor: accent }]}>
                 <Text style={[styles.todayText, { lineHeight: Math.ceil(13 * k) }]}>{bar.label}</Text>
               </View>
             ) : (
               <Text style={[styles.label, labelBox]}>{bar.label}</Text>
+            )}
+            {dates && (
+              <View style={[styles.dateBox, { height: dateLine }]}>
+                <Text
+                  style={[
+                    styles.dateNum,
+                    { lineHeight: dateLine - 2 },
+                    bar.isCurrent && [styles.dateToday, { backgroundColor: accent }],
+                  ]}
+                >
+                  {Number(bar.key.slice(8, 10))}
+                </Text>
+              </View>
             )}
           </Pressable>
         );
@@ -227,7 +265,28 @@ const styles = StyleSheet.create({
     height: MAX_BAR_HEIGHT + 22,
   },
   col: { width: `${100 / 7.4}%`, alignItems: 'center', height: '100%', justifyContent: 'flex-end' },
-  colFaded: { opacity: 0.35 },
+  colFaded: { opacity: 0.4 },
+  // The picked day: a soft tray behind its column, under the exact amount.
+  colOn: { backgroundColor: theme.colors.tray, borderRadius: 12 },
+  amount: {
+    fontFamily: theme.font.body,
+    fontSize: 11,
+    color: theme.colors.textMuted,
+    fontVariant: ['tabular-nums'],
+    textAlign: 'center',
+  },
+  dateBox: { alignItems: 'center', justifyContent: 'center' },
+  dateNum: {
+    minWidth: 22,
+    paddingHorizontal: 4,
+    borderRadius: 7,
+    overflow: 'hidden',
+    textAlign: 'center',
+    fontFamily: theme.font.roundedBold,
+    fontSize: 13,
+    color: theme.colors.textPrimary,
+  },
+  dateToday: { color: theme.colors.ink },
   barTrack: { height: MAX_BAR_HEIGHT, justifyContent: 'flex-end', alignItems: 'center' },
   barLifted: { transform: [{ translateY: -3 }] },
   stack: {
