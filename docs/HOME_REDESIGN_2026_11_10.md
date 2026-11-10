@@ -59,3 +59,15 @@ Approved from the same canvas after a first proposal that only tightened the exi
 - **Other tabs.** `PlanSummaryRow` (budget and goal rows) is 52 pixels with a 32-pixel icon instead of 64 and 34. Upcoming, Money plan and Debt are otherwise unchanged.
 
 No runway, budget, goal, loan or people calculation changed. `RunwayRibbon` has its own tests; no existing Plan test was altered. The full suite passed: 369 suites and 11,815 tests, with two existing skips.
+
+## Activity as a timeline
+
+A second Activity pass, approved from the same canvas after the compact pass above had merged. It changes how the screen is used, at the same type scale.
+
+- **Week strip.** In Week the chart shows a short amount over every bar, the weekday and the date under it; today's date carries the theme pill. The picked day sits on a soft tray and shows its exact amount. Short amounts are left off above 120% text. Month keeps its week buckets with their day ranges.
+- **Categories as filters.** `CategorySplit` replaces the legend under the chart: one split bar and a chip per top-level category with its amount. Tapping a chip sets Activity's existing category filter to that category (a subcategory counts for its parent); tapping it again clears it. The chips always show the whole period's split, a picked category is never folded behind "+N more", and uncategorized spending is shown but is not a filter. A type filter that hides spending returns to All when a chip is picked. The filter sheet and the removable chips under the type pills show the same filter.
+- **Narrowed summary.** While categories are filtered, the bars and the figure show only what went on them ("Spent on Dining out this week"), and the comparison and cash flow, which describe the whole period, are hidden.
+- **Summary layout.** The comparison is a tinted pill beside the figure. Money in and Left are one wrapping line under the categories.
+- **Date tiles.** Each day's weekday, date and net total sit in a tile beside its entries instead of a heading above them; today's tile is tinted and the day picked on the chart takes an ink edge. The tile reads to a screen reader as one heading. On a narrow screen, above 120% text and in search results the heading above the entries is kept. A total too long for the tile is shown in short form; its exact value stays in the accessible label.
+
+Hand-ordering, stacks, transfers, value updates, search and savings masking are unchanged. New tests cover `CategorySplit`, the narrowed headline and the date tile. The full suite passed: 370 suites and 11,822 tests, with two existing skips.

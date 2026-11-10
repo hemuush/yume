@@ -398,7 +398,18 @@ export default function TransactionsScreen() {
     return cmp != null;
   }, []);
 
-  const bars = useMemo(
+  // The chips under the chart are a filter: with categories picked, the bars and the figure show only what
+  // went on them (a subcategory counts for its parent), while the chips keep the whole period's split.
+  const narrowedTransactions = useMemo(() => {
+    if (filterCategoryIds.length === 0) return chartTransactions;
+    const picked = new Set(filterCategoryIds);
+    return chartTransactions.filter((t) => {
+      if (!t.categoryId) return false;
+      const parent = categoriesById.get(t.categoryId)?.parentId;
+      return picked.has(t.categoryId) || (!!parent && picked.has(parent));
+    });
+  }, [chartTransactions, filterCategoryIds, categoriesById]);
+  const allBars = useMemo(
     () =>
       loadedPeriod.scope === 'week'
         ? buildWeekSpendBars(
@@ -416,7 +427,27 @@ export default function TransactionsScreen() {
           ),
     [chartTransactions, categories, loadedPeriod, today]
   );
-  const legend = useMemo(() => legendForBars(bars), [bars]);
+  const bars = useMemo(
+    () =>
+      narrowedTransactions === chartTransactions
+        ? allBars
+        : loadedPeriod.scope === 'week'
+          ? buildWeekSpendBars(
+              narrowedTransactions,
+              categories,
+              { start: loadedPeriod.fromDate, end: loadedPeriod.toDate },
+              today
+            )
+          : buildWeeklySpendBars(
+              narrowedTransactions,
+              categories,
+              loadedPeriod.fromDate,
+              loadedPeriod.toDate,
+              today
+            ),
+    [allBars, narrowedTransactions, chartTransactions, categories, loadedPeriod, today]
+  );
+  const legend = useMemo(() => legendForBars(allBars), [allBars]);
 
   // Destructured so the focus effect depends on primitive dates/scope, not the `visibleRange` object
   // rebuilt every render (which would re-run the load each time).
@@ -818,6 +849,23 @@ export default function TransactionsScreen() {
                       onPressDay={onPressBar}
                       selectedKey={selectedBar}
                       current={today >= loadedPeriod.fromDate && today <= loadedPeriod.toDate}
+                      narrowedTo={
+                        filterCategoryIds.length === 0
+                          ? null
+                          : filterCategoryIds.length === 1
+                            ? categoryName(filterCategoryIds[0])
+                            : `${filterCategoryIds.length} categories`
+                      }
+                      selectedCategoryIds={filterCategoryIds}
+                      onToggleCategory={(id) => {
+                        // One category at a time from the chips; the filter sheet still picks several.
+                        setFilterCategoryIds((ids) =>
+                          ids.includes(id) ? ids.filter((x) => x !== id) : [id]
+                        );
+                        // Chart categories are spending: a type that hides spending would leave an empty list.
+                        if (filterType !== 'all' && filterType !== 'expense') setFilterType('all');
+                        setSelectedBar(null);
+                      }}
                     />
                   </ReanimatedAnimated.View>
 
@@ -921,6 +969,9 @@ export default function TransactionsScreen() {
                 onToggleStack={toggleStack}
                 onReorder={canReorder ? reorderDay : undefined}
                 onDragActive={setDragging}
+                timeline={!searching}
+                isToday={group.date === today}
+                selected={!searching && loadedPeriod.scope === 'week' && selectedBar === group.date}
               />
             )}
           />

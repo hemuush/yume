@@ -22,6 +22,7 @@ const legend = ['Food', 'Groceries', 'Fun', 'Shopping', 'Travel', 'Home'].map((n
   categoryId: `c${i}`,
   name,
   color: '#FF9E7D',
+  totalMinor: (6 - i) * 10_000,
 }));
 
 const texts = (r: ReactTestRenderer) =>
@@ -178,26 +179,30 @@ it('expands and collapses the category legend without changing the selected peri
 });
 
 it.each([
-  { width: 390, fontScale: 1, direction: 'row', align: 'flex-start' },
-  { width: 320, fontScale: 1, direction: 'column', align: 'flex-start' },
-  { width: 390, fontScale: 1.5, direction: 'column', align: 'flex-start' },
-])('places cashflow in the top summary at $width / $fontScale', (size) => {
-  const dimensions = jest
-    .spyOn(require('react-native'), 'useWindowDimensions')
-    .mockReturnValue({ ...size, height: 800, scale: 3 });
-  try {
-    const tree = headline();
-    const top = tree.root.find((n) => Array.isArray(n.props.style) && n.props.style[0] === styles.sumTop);
-    expect(StyleSheet.flatten(top.props.style).flexDirection).toBe(size.direction);
-    const labels = top.findAllByType(Text).map((n) => [n.props.children].flat().join(''));
-    expect(labels).toContain('Money in');
-    expect(labels).toContain('Left');
-    const metric = top.findAll(
-      (n) => Array.isArray(n.props.style) && n.props.style[0] === styles.sumMetric
-    )[0];
-    expect(StyleSheet.flatten(metric.props.style).alignItems).toBe(size.align);
-    act(() => tree.unmount());
-  } finally {
-    dimensions.mockRestore();
+  { width: 390, fontScale: 1, direction: 'row' },
+  { width: 320, fontScale: 1, direction: 'column' },
+  { width: 390, fontScale: 1.5, direction: 'column' },
+])(
+  'keeps the figure and its comparison on top and cashflow as one wrapping line at $width / $fontScale',
+  (size) => {
+    const dimensions = jest
+      .spyOn(require('react-native'), 'useWindowDimensions')
+      .mockReturnValue({ ...size, height: 800, scale: 3 });
+    try {
+      const tree = headline();
+      const top = tree.root.find((n) => Array.isArray(n.props.style) && n.props.style[0] === styles.sumTop);
+      expect(StyleSheet.flatten(top.props.style).flexDirection).toBe(size.direction);
+      const topLabels = top.findAllByType(Text).map((n) => [n.props.children].flat().join(''));
+      expect(topLabels.some((t) => t.includes('less than last week'))).toBe(true);
+      expect(topLabels).not.toContain('Money in');
+      const cashflow = tree.root.find((n) => n.props.style === styles.sumCashflow);
+      const labels = cashflow.findAllByType(Text).map((n) => [n.props.children].flat().join(''));
+      expect(labels).toContain('Money in');
+      expect(labels).toContain('Left');
+      expect(StyleSheet.flatten(cashflow.props.style).flexWrap).toBe('wrap');
+      act(() => tree.unmount());
+    } finally {
+      dimensions.mockRestore();
+    }
   }
-});
+);
