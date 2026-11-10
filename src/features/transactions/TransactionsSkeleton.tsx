@@ -2,7 +2,7 @@ import { View, StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
 import { Skeleton } from '@/components/Skeleton';
 
-const BAR_HEIGHTS = [14, 28, 10, 38, 22, 32, 18];
+const BAR_HEIGHTS = [12, 24, 8, 32, 18, 26, 14];
 
 /**
  * Stands in for the headline + spend chart + day list while the first `listTransactions` batch is still
@@ -13,8 +13,8 @@ export function TransactionsSkeleton() {
     <View style={styles.wrap}>
       <View style={styles.sumCard}>
         <Skeleton width={120} height={12} radius={4} />
-        <Skeleton width={150} height={38} radius={6} style={{ marginTop: 2 }} />
-        <Skeleton width={190} height={22} radius={11} style={{ marginTop: 10 }} />
+        <Skeleton width={110} height={26} radius={6} style={{ marginTop: 2 }} />
+        <Skeleton width={170} height={12} radius={4} style={{ marginTop: 6 }} />
         <View style={styles.barRow}>
           {BAR_HEIGHTS.map((h, i) => (
             <Skeleton key={i} width={18} height={h} radius={6} />
@@ -28,7 +28,7 @@ export function TransactionsSkeleton() {
           <View style={styles.dayCard}>
             {[0, 1].map((i) => (
               <View key={i} style={[styles.row, i > 0 && styles.rowDivider]}>
-                <Skeleton width={34} height={34} radius={17} />
+                <Skeleton width={32} height={32} radius={16} />
                 <View style={styles.rowMid}>
                   <Skeleton width={130} height={13} radius={4} />
                   <Skeleton width={90} height={10} radius={3} style={{ marginTop: 6 }} />
@@ -56,8 +56,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-end',
     justifyContent: 'space-between',
-    height: 60,
-    marginTop: 24,
+    height: 48,
+    marginTop: 20,
   },
   dayGroup: { marginTop: 16 },
   dayCard: {

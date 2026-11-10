@@ -55,39 +55,53 @@ export function ActivityFilterChips({
   const chipBg = shade(accent, 95);
   const { width, fontScale } = useWindowDimensions();
   const wrapTabs = width < 360 || fontScale > 1.2;
+  const pills = TYPE_CHIPS.map((c) => {
+    const on = filterType === c.value;
+    return (
+      <Pressable
+        key={c.value}
+        onPress={() => onFilterType(c.value)}
+        // Drawn 36 tall; the touch area stays 44.
+        hitSlop={{ top: 4, bottom: 4 }}
+        style={withPressedTint(accent, [
+          styles.typeBtn,
+          on && { backgroundColor: selectedFill(accent), borderColor: 'transparent' },
+        ])}
+        accessibilityRole="radio"
+        accessibilityState={{ selected: on }}
+        accessibilityLabel={`Show ${c.label.toLowerCase()}`}
+      >
+        <Text style={[styles.typeText, on && styles.typeTextOn]}>{c.label}</Text>
+      </Pressable>
+    );
+  });
   return (
     <>
-      <View style={styles.typeFilterRow}>
-        <View style={[styles.typeBar, wrapTabs && { flexWrap: 'wrap' }]} accessibilityRole="radiogroup">
-          {TYPE_CHIPS.map((c) => {
-            const on = filterType === c.value;
-            return (
-              <Pressable
-                key={c.value}
-                onPress={() => onFilterType(c.value)}
-                style={withPressedTint(accent, [
-                  styles.typeBtn,
-                  wrapTabs && { flexBasis: fontScale > 1.2 ? '40%' : '30%' },
-                  on && { backgroundColor: selectedFill(accent) },
-                ])}
-                accessibilityRole="radio"
-                accessibilityState={{ selected: on }}
-                accessibilityLabel={`Show ${c.label.toLowerCase()}`}
-              >
-                <Text style={[styles.typeText, on && styles.typeTextOn]}>{c.label}</Text>
-              </Pressable>
-            );
-          })}
-        </View>
+      <View style={[styles.typeFilterRow, wrapTabs && { alignItems: 'flex-start' }]}>
         {onOpenFilters && (
           <HeaderIconButton
             icon="sliders"
-            size={48}
+            size={40}
             glass
             onPress={onOpenFilters}
             label={filterCount > 0 ? `Filters, ${filterCount} on` : 'Filters'}
             count={filterCount}
           />
+        )}
+        {wrapTabs ? (
+          <View style={[styles.typeBar, styles.typeBarWrap]} accessibilityRole="radiogroup">
+            {pills}
+          </View>
+        ) : (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={styles.typeBar}
+            accessibilityRole="radiogroup"
+          >
+            {pills}
+          </ScrollView>
         )}
       </View>
       {picked > 0 && (

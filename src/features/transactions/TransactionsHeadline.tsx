@@ -120,22 +120,9 @@ export function TransactionsHeadline({
               numberOfLines={1}
               adjustsFontSizeToFit
             />
-            {change != null && change !== 0 && (
-              <View style={styles.sumChangeRow}>
-                <Feather
-                  name={change > 0 ? 'arrow-up-right' : 'arrow-down-right'}
-                  size={13}
-                  color={change > 0 ? theme.colors.expenseText : theme.colors.incomeText}
-                />
-                <Text style={[styles.sumChange, change > 0 ? styles.expense : styles.income]}>
-                  {formatMoney(Math.abs(change))} {change > 0 ? 'more' : 'less'} than{' '}
-                  {displayed.compareLabel ?? `last ${displayed.viewScope}`}
-                </Text>
-              </View>
-            )}
           </View>
           {displayed.incomeMinor > 0 && (
-            <View style={[styles.sumCashflow, stacked && styles.sumCashflowStacked]}>
+            <>
               <View style={[styles.sumMetric, stacked && styles.sumMetricStacked]}>
                 <Text style={styles.sumKicker}>Money in</Text>
                 <Text style={[styles.sumMetricAmount, styles.income]}>
@@ -149,9 +136,22 @@ export function TransactionsHeadline({
                   {formatMoney(Math.abs(net))}
                 </Text>
               </View>
-            </View>
+            </>
           )}
         </View>
+        {change != null && change !== 0 && (
+          <View style={styles.sumChangeRow}>
+            <Feather
+              name={change > 0 ? 'arrow-up-right' : 'arrow-down-right'}
+              size={12}
+              color={change > 0 ? theme.colors.expenseText : theme.colors.incomeText}
+            />
+            <Text style={[styles.sumChange, change > 0 ? styles.expense : styles.income]}>
+              {formatMoney(Math.abs(change))} {change > 0 ? 'more' : 'less'} than{' '}
+              {displayed.compareLabel ?? `last ${displayed.viewScope}`}
+            </Text>
+          </View>
+        )}
         <View style={styles.sumChart}>
           <SpendBarChart bars={displayed.bars} onPressDay={onPressDay} selectedKey={selectedKey} inset={0} />
         </View>

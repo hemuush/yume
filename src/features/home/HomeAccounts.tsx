@@ -17,7 +17,7 @@ import type { Account } from '@/types';
 
 /** Accounts shown in the row; the rest are one tap away under "View all". */
 const PREVIEW_ACCOUNTS = 8;
-const TILE_WIDTH = 152;
+const TILE_WIDTH = 148;
 const IN_HAND_TYPES = new Set<Account['type']>(['bank', 'cash', 'wallet']);
 const TILE_GAP = 10;
 
@@ -163,9 +163,9 @@ const AccountTile = memo(function AccountTile({
 
 const styles = StyleSheet.create({
   row: { paddingHorizontal: 16, paddingVertical: 4, gap: TILE_GAP },
-  tile: { ...h.card, marginHorizontal: 0, minHeight: 120, padding: 12 },
+  tile: { ...h.card, marginHorizontal: 0, minHeight: 112, padding: 12 },
   tileHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
-  icon: { width: 34, height: 34, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  icon: { width: 32, height: 32, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   name: {
     marginTop: 10,
     fontFamily: theme.font.bodyMedium,
@@ -182,8 +182,8 @@ const styles = StyleSheet.create({
   balance: {
     marginTop: 2,
     fontFamily: theme.font.bodyMedium,
-    fontSize: 18,
-    lineHeight: 24,
+    fontSize: 16,
+    lineHeight: 22,
     fontVariant: ['tabular-nums'],
     color: theme.colors.textPrimary,
   },

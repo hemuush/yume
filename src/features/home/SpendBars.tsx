@@ -28,7 +28,7 @@ import { LimitMeter } from '@/components/LimitMeter';
 type Range = 'week' | 'month';
 
 /** The tallest a capsule's fill gets, and the least a day with any spending shows. */
-const TRACK_H = 72;
+const TRACK_H = 60;
 const FILL_MIN = 14;
 /** The lightest the capsule fill's second colour gets, so it still reads against the track in every theme. */
 const FILL_END_MAX_L = 72;
@@ -242,7 +242,7 @@ export function SpendBars({
           />
         </View>
       )}
-      <View style={[styles.bars, { height: 102 + 28 * Math.max(0, fontScale - 1) }]}>
+      <View style={[styles.bars, { height: 90 + 28 * Math.max(0, fontScale - 1) }]}>
         {bars.map((b, i) => (
           <Capsule
             key={`${range}:${b.key}`}
@@ -300,7 +300,7 @@ const styles = StyleSheet.create({
     rowGap: 4,
   },
   dayFigure: { flexShrink: 1, gap: 2 },
-  meter: { marginTop: 8, marginBottom: 10 },
+  meter: { marginTop: 4, marginBottom: 8 },
   dayTitle: {
     fontFamily: theme.font.body,
     fontSize: 12,
@@ -308,8 +308,8 @@ const styles = StyleSheet.create({
   },
   dayAmount: {
     fontFamily: theme.font.bodyMedium,
-    fontSize: 22,
-    lineHeight: 28,
+    fontSize: 16,
+    lineHeight: 22,
     color: theme.colors.textPrimary,
     fontVariant: ['tabular-nums'],
   },
