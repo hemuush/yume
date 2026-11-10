@@ -515,7 +515,7 @@ describe('month card: what can be spent a day', () => {
   it('shows the days left and a day’s allowance for the current month', () => {
     // ₹794 free over the 9 days after 22 October.
     const r = render();
-    expect(texts(r)).toContain('₹88');
+    expect(texts(r)).toContain('₹88 a day');
     expect(
       r.root.findAll((n) => n.props.accessibilityLabel === '9 days left, about ₹88 a day').length
     ).toBeGreaterThan(0);
@@ -557,12 +557,12 @@ it('keeps every ready recap available from the calculation disclosure', () => {
   expect(week).toHaveBeenCalledTimes(1);
 });
 
-it('keeps the embedded trend and insights attached to the displayed period', () => {
+it('keeps the week card and insights attached to the displayed period', () => {
   const onSeeInsights = jest.fn();
   const r = render({ spendingTrend: { daily: [], today: '2026-10-20' }, onSeeInsights });
   const { SpendBars } = require('./SpendBars');
   expect(r.root.findAllByType(SpendBars)).toHaveLength(1);
-  act(() => byLabel(r, 'See spending insights').props.onPress());
+  act(() => byLabel(r, 'Insights — This week').props.onPress());
   expect(onSeeInsights).toHaveBeenLastCalledWith('month:0');
   act(() => r.update(hero({ periodKey: 'month:-1', spendingTrend: null, onSeeInsights })));
   expect(r.root.findAllByType(SpendBars)).toHaveLength(0);

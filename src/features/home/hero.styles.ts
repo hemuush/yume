@@ -4,7 +4,7 @@ import { screenStyles as h } from '@/components/screenStyles';
 
 export const styles = StyleSheet.create({
   // Keep Home's cream surface and quiet edge consistent with the rest of the app.
-  card: { ...h.card, paddingHorizontal: 16, paddingTop: 12, paddingBottom: 12 },
+  card: { ...h.card, paddingHorizontal: 16, paddingTop: 14, paddingBottom: 4 },
   heroRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -13,11 +13,34 @@ export const styles = StyleSheet.create({
     columnGap: 12,
     rowGap: 8,
   },
-  rhythm: {
+  // The week's spending, in its own card under the Add buttons.
+  rhythm: { ...h.card, paddingHorizontal: 16, paddingTop: 12, paddingBottom: 12 },
+  footer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    columnGap: 12,
+    marginTop: 4,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: theme.colors.borderSoft,
-    marginTop: 2,
-    paddingTop: 6,
+    borderTopColor: theme.colors.divider,
+  },
+  lineHead: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    columnGap: 8,
+    marginTop: 14,
+  },
+  lineHeadText: { fontFamily: theme.font.body, fontSize: 11, lineHeight: 16, color: theme.colors.textMuted },
+  dayTick: {
+    position: 'absolute',
+    top: -4,
+    width: 2,
+    height: 20,
+    marginLeft: -1,
+    borderRadius: 2,
+    backgroundColor: theme.colors.ink,
   },
   actions: { marginHorizontal: 16, marginTop: 10 },
   bar: {
@@ -33,41 +56,34 @@ export const styles = StyleSheet.create({
 
   headLabel: {
     fontFamily: theme.font.body,
-    fontSize: 12,
+    fontSize: 13,
     color: theme.colors.textSecondary,
   },
   headValue: {
     fontFamily: theme.font.bodyMedium,
-    fontSize: theme.typeSize.headline,
+    fontSize: 44,
     fontVariant: ['tabular-nums'],
-    lineHeight: 38,
-    letterSpacing: -0.3,
+    lineHeight: 52,
+    letterSpacing: -0.8,
     color: theme.colors.textPrimary,
   },
   headValueNeg: { color: theme.colors.expenseText },
   headCaption: {
+    flexShrink: 1,
     fontFamily: theme.font.body,
     fontSize: 12,
     lineHeight: 17,
-    color: theme.colors.textSecondary,
+    color: theme.colors.textMuted,
   },
 
-  detailsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    columnGap: 12,
-    rowGap: 2,
-  },
   howLink: { flexDirection: 'row', alignItems: 'center', gap: 5, minHeight: 44 },
-  howLinkText: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.link },
+  howLinkText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.link },
 
   // The month as one line: spent, saved, bills and free, in the colours the legend below uses.
-  line: { flexDirection: 'row', gap: 3, height: 7 },
-  lineWrap: { marginTop: 4 },
+  line: { flexDirection: 'row', gap: 3, height: 12 },
+  lineWrap: { marginTop: 6 },
   lineOrigin: { transformOrigin: 'left center' },
-  lineSegment: { height: 7, borderRadius: 5, minWidth: 5 },
+  lineSegment: { height: 12, borderRadius: 6, minWidth: 5 },
 
   insightsLink: {
     minHeight: 44,

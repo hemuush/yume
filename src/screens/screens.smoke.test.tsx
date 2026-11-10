@@ -805,7 +805,7 @@ describe('Home, stepping between months on a lived-in phone', () => {
     await settle();
     act(() =>
       tree.root
-        .findAll((n) => n.props.accessibilityLabel === 'See spending insights' && n.props.onPress)[0]
+        .findAll((n) => n.props.accessibilityLabel === 'Insights — Spending by week' && n.props.onPress)[0]
         .props.onPress()
     );
     expect(navigate).toHaveBeenLastCalledWith({ pathname: '/reports', params: { month: '-1' } });

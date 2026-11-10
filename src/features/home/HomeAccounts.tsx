@@ -6,6 +6,7 @@ import { Text } from '@/components/Text';
 import { Amount } from '@/components/Amount';
 import type { McIconName } from '@/components/iconName';
 import { theme } from '@/constants/theme';
+import { formatMoney } from '@/lib/money';
 import { accountHue, accountIcon, accountTypeLabel } from '@/lib/account';
 import { shade } from '@/lib/color';
 import { withPressed, withPressedTint } from '@/lib/pressed';
@@ -16,7 +17,8 @@ import type { Account } from '@/types';
 
 /** Accounts shown in the row; the rest are one tap away under "View all". */
 const PREVIEW_ACCOUNTS = 8;
-const TILE_WIDTH = 148;
+const TILE_WIDTH = 152;
+const IN_HAND_TYPES = new Set<Account['type']>(['bank', 'cash', 'wallet']);
 const TILE_GAP = 10;
 
 /**
@@ -25,11 +27,14 @@ const TILE_GAP = 10;
  */
 export function HomeAccounts({
   accounts,
+  currency,
   onOpenAccounts,
   onOpenAccount,
   onAddAccount,
 }: {
   accounts: Account[];
+  /** The default currency: the heading's in-hand total counts only everyday accounts held in it. */
+  currency?: string;
   onOpenAccounts: () => void;
   onOpenAccount: (account: Account) => void;
   onAddAccount: () => void;
@@ -60,10 +65,28 @@ export function HomeAccounts({
   const savings = held.filter((a) => a.type === 'savings');
   const everyday = held.filter((a) => a.type !== 'savings');
   const preview = [...everyday, ...savings].slice(0, PREVIEW_ACCOUNTS);
+  // Money you can reach today: bank, cash and wallet balances in the default currency. Savings, investments
+  // and cards stay out, so the line never reveals a hidden savings figure.
+  const inHand = accounts.filter(
+    (a) => IN_HAND_TYPES.has(a.type) && !a.investment && a.currency === currency && a.currentBalanceMinor > 0
+  );
+  const inHandLine =
+    currency && inHand.length > 0
+      ? `${formatMoney(
+          inHand.reduce((sum, a) => sum + a.currentBalanceMinor, 0),
+          currency
+        )} in hand across ${inHand.length} ${inHand.length === 1 ? 'account' : 'accounts'}`
+      : undefined;
   // Bigger text needs a wider tile for a balance to stay on one line.
   const width = Math.round(TILE_WIDTH * Math.min(1.3, Math.max(1, fontScale)));
   return (
-    <Section compact title="Your accounts" onSeeAll={onOpenAccounts} actionLabel="View all">
+    <Section
+      compact
+      title="Your accounts"
+      subtitle={inHandLine}
+      onSeeAll={onOpenAccounts}
+      actionLabel="View all"
+    >
       <ScrollView
         horizontal
         nestedScrollEnabled
@@ -130,7 +153,7 @@ const AccountTile = memo(function AccountTile({
         minor={a.currentBalanceMinor}
         currency={a.currency}
         sensitive={a.type === 'savings'}
-        style={styles.balance}
+        style={[styles.balance, a.currentBalanceMinor < 0 && styles.balanceOwed]}
         numberOfLines={1}
         adjustsFontSizeToFit
       />
@@ -140,9 +163,9 @@ const AccountTile = memo(function AccountTile({
 
 const styles = StyleSheet.create({
   row: { paddingHorizontal: 16, paddingVertical: 4, gap: TILE_GAP },
-  tile: { ...h.card, marginHorizontal: 0, minHeight: 116, padding: 12 },
+  tile: { ...h.card, marginHorizontal: 0, minHeight: 120, padding: 12 },
   tileHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
-  icon: { width: 32, height: 32, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  icon: { width: 34, height: 34, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   name: {
     marginTop: 10,
     fontFamily: theme.font.bodyMedium,
@@ -157,13 +180,14 @@ const styles = StyleSheet.create({
     color: theme.colors.textMuted,
   },
   balance: {
-    marginTop: 4,
+    marginTop: 2,
     fontFamily: theme.font.bodyMedium,
-    fontSize: 16,
-    lineHeight: 22,
+    fontSize: 18,
+    lineHeight: 24,
     fontVariant: ['tabular-nums'],
     color: theme.colors.textPrimary,
   },
+  balanceOwed: { color: theme.colors.expenseText },
   addTile: {
     alignItems: 'center',
     justifyContent: 'center',

@@ -28,6 +28,7 @@ export function UpcomingRow({
   dueDate = date,
   actionLabel,
   highlight,
+  payInline = false,
 }: {
   icon: React.ComponentProps<typeof Feather>['name'];
   iconBg: string;
@@ -50,7 +51,10 @@ export function UpcomingRow({
   actionLabel?: string;
   /** Due soon (pinned): the row sits on a pale amber panel so it stands out from the rest of the week. */
   highlight?: boolean;
+  /** Home's list: a payable bill says its amount beside the due date, leaving Pay as the row's ending. */
+  payInline?: boolean;
 }) {
+  const inline = payInline && !!actionLabel;
   const money = `${sign}${formatMoney(amountMinor)}`;
   const chip = urgent
     ? {
@@ -72,11 +76,13 @@ export function UpcomingRow({
         )
       }
       title={title}
-      subtitle={subtitle}
+      // A bill with a Pay button says its amount beside the due date, so the button is the row's only ending.
+      subtitle={inline ? `${subtitle} · ${money}` : subtitle}
       subtitleTone={urgent ? 'urgent' : soon ? 'soon' : undefined}
-      value={money}
+      value={inline ? undefined : money}
       valueTone={sign === '+' ? 'income' : undefined}
-      chip={chip}
+      // Overdue and Due now stay as a chip beside Pay; the amber panel already says "due soon".
+      chip={inline && !urgent ? undefined : chip}
       action={actionLabel}
       onPress={onPress}
       divider={divider}
