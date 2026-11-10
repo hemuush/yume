@@ -51,10 +51,10 @@ function headline(over: Partial<React.ComponentProps<typeof TransactionsHeadline
 }
 
 describe('Spent card', () => {
-  it('shows cashflow above the chart and keeps the comparison separate', () => {
+  it('shows the comparison beside the figure and cashflow as its own line', () => {
     const all = texts(headline());
     expect(all).toEqual(expect.arrayContaining(['Spent', 'Money in', '₹5,796', 'Left', '−₹11,273']));
-    expect(all.some((t) => t.includes('₹2,310 less than last week'))).toBe(true);
+    expect(all).toEqual(expect.arrayContaining(['₹2,310 less', 'than last week']));
   });
 
   it('leaves money in and net out when nothing came in, since Net would only repeat Spent', () => {
@@ -66,13 +66,13 @@ describe('Spent card', () => {
   it('says how much more, in rupees, and what it is compared with', () => {
     const tree = headline({ expenseChangeMinor: 917_400, compareLabel: 'same days last week' });
     const all = texts(tree);
-    expect(all).toContain('₹9,174 more than same days last week');
+    expect(all).toEqual(expect.arrayContaining(['₹9,174 more', 'than same days last week']));
     // An up arrow beside it: more spent.
     expect(tree.root.findAll((n) => n.props.name === 'arrow-up-right').length).toBeGreaterThan(0);
     expect(all.some((t) => t.includes('%'))).toBe(false);
   });
 
-  it('has no pill when there is nothing to compare, or no change', () => {
+  it('shows no comparison when there is nothing to compare, or no change', () => {
     expect(texts(headline({ expenseChangeMinor: null })).some((t) => /more than|less than/.test(t))).toBe(
       false
     );
@@ -193,7 +193,7 @@ it.each([
       const top = tree.root.find((n) => Array.isArray(n.props.style) && n.props.style[0] === styles.sumTop);
       expect(StyleSheet.flatten(top.props.style).flexDirection).toBe(size.direction);
       const topLabels = top.findAllByType(Text).map((n) => [n.props.children].flat().join(''));
-      expect(topLabels.some((t) => t.includes('less than last week'))).toBe(true);
+      expect(topLabels).toEqual(expect.arrayContaining(['₹2,310 less', 'than last week']));
       expect(topLabels).not.toContain('Money in');
       const cashflow = tree.root.find((n) => n.props.style === styles.sumCashflow);
       const labels = cashflow.findAllByType(Text).map((n) => [n.props.children].flat().join(''));

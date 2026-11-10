@@ -71,3 +71,28 @@ A second Activity pass, approved from the same canvas after the compact pass abo
 - **Date tiles.** Each day's weekday, date and net total sit in a tile beside its entries instead of a heading above them; today's tile is tinted and the day picked on the chart takes an ink edge. The tile reads to a screen reader as one heading. On a narrow screen, above 120% text and in search results the heading above the entries is kept. A total too long for the tile is shown in short form; its exact value stays in the accessible label.
 
 Hand-ordering, stacks, transfers, value updates, search and savings masking are unchanged. New tests cover `CategorySplit`, the narrowed headline and the date tile. The full suite passed: 370 suites and 11,822 tests, with two existing skips.
+
+## Activity, compact timeline
+
+A third Activity pass, drawn from a screenshot of the first timeline running on a phone. That version had made the summary card about 110 dp taller than the compact one it replaced (roughly 221 dp became 330), which pushed the entries down the screen, and its date tiles did not match the height of their cards. This pass keeps the card near its earlier height and replaces the tiles. It supersedes the summary, legend and date-tile parts of the section above.
+
+- **Summary card.** About the height of the compact card. The figure and its comparison share the top row; the comparison is right-aligned, with the amount in colour and "than same days last week" in a quiet line under it. The card has a soft shadow, which is cheap because it is one element.
+- **Week capsules.** Each day is a capsule in the theme's tint, 36 dp tall and up to 26 dp wide. The short amount sits directly over its own capsule, so it no longer floats above a short bar. The picked day rests on a stronger tint and shows its exact amount in bold in the same place; the separate bubble is used only when the short amounts are dropped at large text. Empty days show an empty capsule, future days a dimmed one.
+- **Categories.** The split bar, its "Where it went" title and the tap hint are removed: the chips already carry the colours and amounts. The chips are one row that scrolls sideways, so the card never changes height with the number of categories. A fade marks that more chips lie beyond the edge, and a picked chip is scrolled into view so its ✕ is never hidden. The filter behaviour is unchanged.
+- **Rail.** The date tile is replaced by a date column on the left edge and a thin rail with a dot per day beside one card. Today's dot is filled with the theme colour and ringed and its label reads TODAY; the day picked on the chart has an ink edge. The rail ends at the first and last day. The day's total appears under its date only from two lines up, in short form (+₹9.5k), because with one line it only repeats the entry beside it; the full total stays in the accessible label.
+- **Separators.** Row separators are hairlines that start under the icon, so the icon column stays unbroken. They apply to entries, stacks, open stack entries, transfers and value updates.
+- **Spacing.** Header, card and filter pills are 12 apart, the list starts 16 below the pills, and days are 14 apart.
+- **Unchanged.** Large text, narrow screens and search keep the heading above the entries with no rail. Hand-ordering, stacks, search, filters and masking are unchanged.
+
+### Design references
+
+The search tools could reach only some sources from this environment; Nielsen Norman Group, Material and Monzo's own site were blocked, so those points come from search summaries rather than the full pages and are not treated as verified.
+
+- Keep the list high on the screen: Monzo community feedback on its redesign ([thread](https://community.monzo.com/t/get-to-know-your-new-home-screen/151912)).
+- Spacing inside a card tighter than between groups, with an extra step between groups ([Ramotion](https://www.ramotion.com/blog/proximity-gestalt-principle/), [proximity guide](https://openskillindex.com/skills/intense-visions-harness-engineering-design-gestalt-proximity)); few separators and no boxing of every group ([Guandata](https://docs.guandata.com/product/en/bi/466559634967101440)).
+- People scan down the left edge of a list ([NN/g](https://www.nngroup.com/articles/right-justified-navigation-menus/)).
+- Distinct, consistent category colours with a legend ([case study](https://contra.com/p/ER6X2r7O-budget-tracking-mobile-app)) and tap-to-drill-down ([Lincoln Financial](https://www.lincolnfinancial.com/public/microsite/wellnesspathhelp/managingmyfinances/mymoney/spending)).
+- Scrolling chips: an edge fade, and keep a picked chip in view ([overflow-pattern prototype](https://josh-laurelai.github.io/ux-prototypes/smart-filters/), [Material chips](https://m2.material.io/components/chips)).
+- Timelines: the connector ends at the last item ([PhiaUI timeline](https://hexdocs.pm/phia_ui/PhiaUi.Components.Timeline.html)); charts: tap to select with a persistent value, 44-point targets and a text alternative ([TanStack charts accessibility](https://unpkg.com/@tanstack/charts@1.2.0/docs/guides/accessibility.md)).
+
+The full suite passed with the repository's locale settings: 370 suites and 11,831 tests, with two existing skips. This pass has not been run on a device.
