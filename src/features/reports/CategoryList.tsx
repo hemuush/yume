@@ -89,7 +89,24 @@ export function CategoryList({
                 <View style={[styles.catDot, { backgroundColor: row.color }]} />
               )}
               <View style={styles.catMain}>
-                <Text style={styles.catName}>{row.name}</Text>
+                <View style={styles.catTop}>
+                  <Text style={styles.catName}>{row.name}</Text>
+                  <Amount
+                    minor={rounded[i]}
+                    sensitive={row.isSensitive}
+                    style={styles.catAmt}
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.8}
+                  />
+                </View>
+                <View style={styles.catTrack}>
+                  <GrowFill
+                    animKey={`reports:${row.categoryId}`}
+                    pct={share}
+                    style={{ height: '100%', borderRadius: 4, backgroundColor: row.color }}
+                  />
+                </View>
                 <View style={styles.catMeta}>
                   <Text style={styles.stripSub}>{Math.round(share)}% of total</Text>
                   {delta != null && Math.abs(delta) >= DELTA_MIN_PCT && (
@@ -109,25 +126,13 @@ export function CategoryList({
                     </Text>
                   )}
                 </View>
-                <View style={styles.catTrack}>
-                  <GrowFill
-                    animKey={`reports:${row.categoryId}`}
-                    pct={share}
-                    style={{ height: '100%', borderRadius: 4, backgroundColor: row.color }}
-                  />
-                </View>
               </View>
-              <View style={styles.catRight}>
-                <Amount
-                  minor={rounded[i]}
-                  sensitive={row.isSensitive}
-                  style={styles.catAmt}
-                  numberOfLines={1}
-                  adjustsFontSizeToFit
-                  minimumFontScale={0.8}
-                />
-                <Feather name="chevron-right" size={14} color={theme.colors.textMuted} />
-              </View>
+              <Feather
+                name="chevron-right"
+                size={14}
+                color={theme.colors.textMuted}
+                style={styles.catChevron}
+              />
             </Pressable>
           );
         })}

@@ -88,14 +88,17 @@ export function DayInspector({
       <View style={styles.top}>
         <View style={styles.main}>
           <Text style={styles.date}>{date}</Text>
-          <Text style={styles.amount} numberOfLines={1} adjustsFontSizeToFit>
-            {future ? '—' : spentMinor > 0 ? formatMoney(roundedMinor(spentMinor)) : 'No spending'}
-          </Text>
-          {!!sub && <Text style={styles.sub}>{sub}</Text>}
+          <View style={styles.figure}>
+            <Text style={styles.amount}>
+              {future ? '—' : spentMinor > 0 ? formatMoney(roundedMinor(spentMinor)) : 'No spending'}
+            </Text>
+            {!!sub && <Text style={styles.sub}>{sub}</Text>}
+          </View>
         </View>
         {!future && (
           <Pressable
             onPress={onOpen}
+            hitSlop={6}
             accessibilityRole="button"
             accessibilityLabel={`Open ${date}`}
             style={withPressedTint(accent, styles.open)}
@@ -134,10 +137,11 @@ export function DayInspector({
 
 const styles = StyleSheet.create({
   box: {
-    marginHorizontal: 14,
-    marginTop: 12,
-    padding: 14,
-    borderRadius: 22,
+    marginHorizontal: 12,
+    marginTop: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 16,
     backgroundColor: theme.colors.tray,
   },
   top: { flexDirection: 'row', alignItems: 'center', gap: 12 },
@@ -145,16 +149,16 @@ const styles = StyleSheet.create({
   date: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textSecondary },
   amount: {
     fontFamily: theme.font.bodyMedium,
-    fontSize: 26,
-    lineHeight: 32,
-    letterSpacing: -0.3,
+    fontSize: 16,
+    lineHeight: 22,
     color: theme.colors.textPrimary,
     fontVariant: ['tabular-nums'],
   },
-  sub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
+  figure: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline', columnGap: 6 },
+  sub: { flexShrink: 1, fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
   open: {
-    minHeight: 44,
-    paddingHorizontal: 14,
+    minHeight: 32,
+    paddingHorizontal: 12,
     borderRadius: theme.radius.pill,
     flexDirection: 'row',
     alignItems: 'center',
@@ -162,7 +166,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.surface,
   },
   openText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.link },
-  mixBar: { flexDirection: 'row', gap: 2, height: 8, marginTop: 12, borderRadius: 4, overflow: 'hidden' },
+  mixBar: { flexDirection: 'row', gap: 2, height: 6, marginTop: 8, borderRadius: 3, overflow: 'hidden' },
   mixSeg: {
     flexBasis: 0,
     minWidth: 3,

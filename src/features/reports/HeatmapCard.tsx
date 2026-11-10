@@ -57,6 +57,7 @@ export function HeatmapCard({
         {scopes.length > 1 && (
           <Pressable
             onPress={() => setOpen(true)}
+            hitSlop={6}
             accessibilityRole="button"
             accessibilityLabel={`Colour the heatmap by category: ${scopeName(current)}. Change`}
             style={withPressed(styles.scope)}
@@ -109,13 +110,13 @@ export function HeatmapCard({
 }
 
 const styles = StyleSheet.create({
-  card: { ...h.card, marginHorizontal: 0, paddingTop: 14, paddingBottom: 14, marginBottom: 12 },
+  card: { ...h.card, marginHorizontal: 0, paddingTop: 8, paddingBottom: 12, marginBottom: 10 },
   head: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 8,
-    paddingHorizontal: 16,
+    paddingHorizontal: 14,
   },
   title: {
     flexShrink: 1,
@@ -124,20 +125,20 @@ const styles = StyleSheet.create({
     color: theme.colors.textPrimary,
   },
   scope: {
-    minHeight: 44,
+    minHeight: 32,
     maxWidth: '55%',
     flexShrink: 1,
-    paddingHorizontal: 12,
+    paddingHorizontal: 11,
     borderRadius: theme.radius.pill,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 5,
     backgroundColor: theme.colors.tray,
   },
   scopeText: {
     flexShrink: 1,
     fontFamily: theme.font.bodyMedium,
-    fontSize: 13,
+    fontSize: 12,
     color: theme.colors.textPrimary,
   },
   chipDot: { width: 8, height: 8, borderRadius: 4 },

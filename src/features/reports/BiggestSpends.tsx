@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Pressable } from 'react-native';
+import { View, Pressable, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
 import { Amount } from '@/components/Amount';
 import { CategoryIcon } from '@/components/CategoryIcon';
@@ -82,18 +82,25 @@ export function BiggestSpends({
               onPress={() => onOpenDay(e.date)}
               style={withPressedTint(accent, [
                 styles.dayRow,
+                compact.row,
                 i === 0 && { borderTopWidth: 0 },
                 openIso === e.date && { backgroundColor: softTint(accent, 0.16) },
               ])}
               accessibilityRole="button"
               accessibilityLabel={`${note ?? catName}, ${day}. Show this day`}
             >
-              <CategoryIcon name={cat?.icon ?? 'swap-horizontal'} color={cat?.color} />
+              <CategoryIcon
+                name={cat?.icon ?? 'swap-horizontal'}
+                color={cat?.color}
+                size={15}
+                square={32}
+                round
+              />
               <View style={styles.dayMid}>
                 <Text style={styles.dayName} numberOfLines={2}>
                   {note ?? catName}
                 </Text>
-                <Text style={styles.daySub} numberOfLines={1}>
+                <Text style={[styles.daySub, compact.sub]} numberOfLines={1}>
                   {sub}
                 </Text>
               </View>
@@ -104,7 +111,7 @@ export function BiggestSpends({
           );
         })}
         {share !== null && (
-          <Text style={styles.bigFoot}>
+          <Text style={[styles.bigFoot, compact.foot]}>
             Together <Text style={styles.bigFootStrong}>{share}%</Text> of what you&rsquo;ve spent
             {scopeName ? ` on ${scopeName}` : ''}
             {inProgress ? ' so far' : ''}
@@ -114,3 +121,17 @@ export function BiggestSpends({
     </View>
   );
 }
+
+// This list only: the day sheet's rows keep the shared, roomier size.
+const compact = StyleSheet.create({
+  row: { minHeight: 48, gap: 10, paddingVertical: 6, paddingHorizontal: 12 },
+  sub: { fontFamily: theme.font.body, fontSize: 12, marginTop: 1 },
+  foot: {
+    marginTop: 0,
+    paddingTop: 9,
+    paddingBottom: 2,
+    paddingHorizontal: 14,
+    fontFamily: theme.font.body,
+    fontSize: 12,
+  },
+});
