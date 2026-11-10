@@ -238,7 +238,7 @@ const styles = StyleSheet.create({
   actions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   date: {
     fontFamily: theme.font.body,
-    fontSize: 11,
+    fontSize: 12,
     lineHeight: 16,
     letterSpacing: 0.2,
     color: theme.colors.textSecondary,
@@ -246,8 +246,8 @@ const styles = StyleSheet.create({
   },
   greet: {
     fontFamily: theme.font.roundedMedium,
-    fontSize: 20,
-    lineHeight: 26,
+    fontSize: 22,
+    lineHeight: 28,
     letterSpacing: -0.2,
     color: theme.colors.ink,
     marginTop: 1,

@@ -50,7 +50,7 @@ const fills = (r: ReactTestRenderer) =>
 const heights = (r: ReactTestRenderer) =>
   fills(r).map((n) => StyleSheet.flatten(n.props.style).height as number);
 // One capsule fills the track; a smaller day keeps its square-root share of it.
-const FULL = 60;
+const FULL = 72;
 const smaller = (ratio: number) => 14 + Math.sqrt(ratio) * (FULL - 14);
 
 // The fill's second colour is capped in lightness so it still reads against the track.

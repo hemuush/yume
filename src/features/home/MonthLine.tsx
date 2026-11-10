@@ -15,10 +15,13 @@ export function MonthLine({
   slices,
   hideSavings,
   periodKey,
+  dayShare = null,
 }: {
   slices: HeroSlices;
   hideSavings: boolean;
   periodKey: string;
+  /** How far through the month today is (0–1): a tick on the line, so spending reads against time. */
+  dayShare?: number | null;
 }) {
   const draw = useDrawnValue(`month-line:${periodKey}`, 1, DURATIONS.standard);
   const drawStyle = useAnimatedStyle(() => ({ transform: [{ scaleX: draw.value }] }));
@@ -46,5 +49,15 @@ export function MonthLine({
       ))}
     </Animated.View>
   );
-  return <View style={styles.lineWrap}>{line}</View>;
+  return (
+    <View style={styles.lineWrap}>
+      {line}
+      {dayShare != null && (
+        <View
+          pointerEvents="none"
+          style={[styles.dayTick, { left: `${Math.min(100, Math.max(0, dayShare * 100))}%` }]}
+        />
+      )}
+    </View>
+  );
 }

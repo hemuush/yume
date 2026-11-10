@@ -26,6 +26,7 @@ export function HomeRow({
   title,
   subtitle,
   subtitleTone,
+  meter,
   value,
   valueTone,
   chip,
@@ -40,6 +41,8 @@ export function HomeRow({
   title: string;
   subtitle?: string;
   subtitleTone?: 'urgent' | 'soon';
+  /** A thin progress bar between the title and its line (a budget's share used). */
+  meter?: React.ReactNode;
   value?: string;
   valueTone?: 'over' | 'income';
   chip?: { label: string; tone: HomeRowChipTone };
@@ -71,6 +74,7 @@ export function HomeRow({
         <Text style={styles.title} numberOfLines={2}>
           {title}
         </Text>
+        {meter ? <View style={styles.meter}>{meter}</View> : null}
         {subtitle ? (
           <Text
             style={[
@@ -119,6 +123,7 @@ const styles = StyleSheet.create({
   },
   mid: h.mid,
   title: h.title,
+  meter: { marginTop: 5, marginBottom: 3 },
   sub: { ...h.sub, marginTop: 2, lineHeight: 18 },
   end: { flexShrink: 0, alignItems: 'flex-end', gap: 4, maxWidth: '45%' },
   value: h.amount,

@@ -17,6 +17,7 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
  */
 export function Section({
   title,
+  subtitle,
   badge,
   heading,
   onSeeAll,
@@ -27,6 +28,8 @@ export function Section({
   children,
 }: {
   title: string;
+  /** One quiet line under the title: the block's own total ("₹12,300 still to pay this month"). */
+  subtitle?: string;
   badge?: number;
   heading?: React.ReactNode;
   onSeeAll?: () => void;
@@ -46,7 +49,10 @@ export function Section({
       <View style={[styles.head, compact && { marginBottom: 4 }]}>
         {heading ?? (
           <View style={styles.titleRow}>
-            <Text style={styles.title}>{title}</Text>
+            <View style={styles.titleCol}>
+              <Text style={styles.title}>{title}</Text>
+              {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+            </View>
             {badge != null && badge > 0 && (
               <View style={styles.badge} accessibilityLabel={`${badge} item${badge === 1 ? '' : 's'}`}>
                 <Text style={styles.badgeText}>{badge}</Text>
@@ -88,7 +94,15 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   titleRow: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 8 },
+  titleCol: { flexShrink: 1, minWidth: 0, gap: 1 },
   title: { ...SECTION_TITLE, flexShrink: 1 },
+  subtitle: {
+    fontFamily: theme.font.body,
+    fontSize: 12,
+    lineHeight: 17,
+    color: theme.colors.textMuted,
+    fontVariant: ['tabular-nums'],
+  },
   badge: {
     minWidth: 20,
     minHeight: 20,

@@ -26,6 +26,8 @@ import { WorkingRow } from './WorkingRow';
 import { SpendBars } from './SpendBars';
 import { MonthLine } from './MonthLine';
 import { HeroActions } from './HeroActions';
+import { Section } from '@/components/Section';
+import { weekBars, monthBars } from './spendBarData';
 import { withPressed } from '@/lib/pressed';
 
 interface HeroContent {
@@ -305,12 +307,19 @@ export function ThisMonthHero({
 
   const shownToday = displayed.today;
   const shownPace = displayed.pace;
-  const hasRhythm = !!(displayed.spendingTrend || onSeeInsights);
+  const weekMode = displayed.spendingTrend?.mode !== 'month';
+  const trendTotalMinor = displayed.spendingTrend
+    ? (weekMode ? weekBars : monthBars)(displayed.spendingTrend.daily, displayed.spendingTrend.today).reduce(
+        (sum, bar) => sum + bar.totalMinor,
+        0
+      )
+    : 0;
 
   // The current month also gets a day-of-month tick on its line and what can be spent a day from here on.
   const now = new Date();
   const isCurrentMonth = displayed.periodKey === 'month:0';
   const daysLeft = daysLeftInMonth(now);
+  const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
   const perDayMinor =
     isCurrentMonth && slices.hasIncome && !over ? dailyAllowance(freeMinor, daysLeft) : null;
   const legend: LegendItem[] = !slices.hasIncome
@@ -405,39 +414,29 @@ export function ThisMonthHero({
             </View>
           </View>
 
-          <Text
-            style={styles.headCaption}
-            accessibilityElementsHidden
-            importantForAccessibility="no-hide-descendants"
-          >
-            {headCaption}
-          </Text>
+          {perDayMinor != null && <AllowanceTile perDayMinor={perDayMinor} daysLeft={daysLeft} />}
 
           {slices.hasIncome && (
-            <View style={styles.detailsRow}>
-              <Pressable
-                onPress={() => {
-                  haptics.tap();
-                  setShowWorking((v) => !v);
-                }}
-                style={withPressed(styles.howLink)}
-                accessibilityRole="button"
-                accessibilityState={{ expanded: showWorking }}
-                accessibilityLabel="How this adds up"
+            <>
+              <View
+                style={styles.lineHead}
+                accessibilityElementsHidden
+                importantForAccessibility="no-hide-descendants"
               >
-                <Text style={styles.howLinkText}>How it adds up</Text>
-                <Feather
-                  name={showWorking ? 'chevron-up' : 'chevron-down'}
-                  size={14}
-                  color={theme.colors.link}
-                />
-              </Pressable>
-              {perDayMinor != null && <AllowanceTile perDayMinor={perDayMinor} daysLeft={daysLeft} />}
-            </View>
-          )}
-
-          {slices.hasIncome && (
-            <MonthLine slices={slices} hideSavings={hideAmounts} periodKey={displayed.periodKey} />
+                <Text style={styles.lineHeadText}>Where the money stands</Text>
+                {isCurrentMonth && (
+                  <Text style={styles.lineHeadText}>
+                    Day {now.getDate()} of {daysInMonth}
+                  </Text>
+                )}
+              </View>
+              <MonthLine
+                slices={slices}
+                hideSavings={hideAmounts}
+                periodKey={displayed.periodKey}
+                dayShare={isCurrentMonth ? now.getDate() / daysInMonth : null}
+              />
+            </>
           )}
 
           {/* The legend describes this period; total debt belongs in Plan. */}
@@ -487,20 +486,34 @@ export function ThisMonthHero({
               ))}
             </ReanimatedAnimated.View>
           )}
-        </ReanimatedAnimated.View>
 
-        {hasRhythm && (
-          <ReanimatedAnimated.View style={[styles.rhythm, rhythmSlideStyle]}>
-            {displayed.spendingTrend && (
-              <SpendBars
-                daily={displayed.spendingTrend.daily}
-                today={displayed.spendingTrend.today}
-                periodMode={displayed.spendingTrend.mode}
-                goalMinor={shownToday?.goalMinor ?? null}
-                todaySpentMinor={shownToday?.spentMinor ?? null}
-                onSeeInsights={onSeeInsights ? () => onSeeInsights(displayed.periodKey) : undefined}
-              />
+          <View style={styles.footer}>
+            {slices.hasIncome && (
+              <Pressable
+                onPress={() => {
+                  haptics.tap();
+                  setShowWorking((v) => !v);
+                }}
+                style={withPressed(styles.howLink)}
+                accessibilityRole="button"
+                accessibilityState={{ expanded: showWorking }}
+                accessibilityLabel="How this adds up"
+              >
+                <Text style={styles.howLinkText}>How it adds up</Text>
+                <Feather
+                  name={showWorking ? 'chevron-up' : 'chevron-down'}
+                  size={14}
+                  color={theme.colors.link}
+                />
+              </Pressable>
             )}
+            <Text
+              style={styles.headCaption}
+              accessibilityElementsHidden
+              importantForAccessibility="no-hide-descendants"
+            >
+              {headCaption}
+            </Text>
             {onSeeInsights && !displayed.spendingTrend && (
               <Pressable
                 accessibilityRole="button"
@@ -512,12 +525,32 @@ export function ThisMonthHero({
                 <Feather name="arrow-up-right" size={14} color={theme.colors.link} />
               </Pressable>
             )}
-          </ReanimatedAnimated.View>
-        )}
+          </View>
+        </ReanimatedAnimated.View>
       </ReanimatedAnimated.View>
       <View style={styles.actions}>
         <HeroActions />
       </View>
+      {/* The week's spending has its own card, so the figure above keeps the summary card to itself. */}
+      {displayed.spendingTrend && (
+        <Section
+          compact
+          title={weekMode ? 'This week' : 'Spending by week'}
+          subtitle={`${formatMoney(trendTotalMinor)} spent${weekMode ? ' in 7 days' : ''}`}
+          onSeeAll={onSeeInsights ? () => onSeeInsights(displayed.periodKey) : undefined}
+          actionLabel="Insights"
+        >
+          <ReanimatedAnimated.View style={[styles.rhythm, rhythmSlideStyle]}>
+            <SpendBars
+              daily={displayed.spendingTrend.daily}
+              today={displayed.spendingTrend.today}
+              periodMode={displayed.spendingTrend.mode}
+              goalMinor={shownToday?.goalMinor ?? null}
+              todaySpentMinor={shownToday?.spentMinor ?? null}
+            />
+          </ReanimatedAnimated.View>
+        </Section>
+      )}
     </>
   );
 }
