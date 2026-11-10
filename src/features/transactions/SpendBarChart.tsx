@@ -9,7 +9,7 @@ import { SpendBar, ChartLegendItem } from './spendChart';
 import { useAccent } from '@/theme/AccentContext';
 import { themeInk } from '@/theme/interactionColors';
 
-const MAX_BAR_HEIGHT = 60;
+const MAX_BAR_HEIGHT = 48;
 // A day with any spend is at least this tall, so a small one still reads as a bar.
 const MIN_BAR_HEIGHT = 6;
 // Only 7 daily bars or ~4-5 weekly ones at a time, so a tighter cap than the

@@ -23,7 +23,7 @@ import { useSwipeDrag } from '@/lib/useSwipeDrag';
 import { usePressScale } from '@/lib/usePressScale';
 import { styles } from '@/features/transactions/transactions.styles';
 import { ActivityFilterChips, SearchStatus } from '@/features/transactions/ActivityFilterChips';
-import { dayMonth, longMonth, longWeekday } from '@/lib/dateLabels';
+import { dayMonth, longMonth, longWeekday, weekdayDayMonth } from '@/lib/dateLabels';
 import { PeriodPicker } from '@/components/PeriodPicker';
 import { FilterModal } from '@/features/transactions/FilterModal';
 import { TimelineDay } from '@/features/transactions/TimelineDay';
@@ -901,7 +901,13 @@ export default function TransactionsScreen() {
                         ? dayMonth(group.date)
                         : longWeekday(group.date)
                 }
-                dateLabel={searching && group.date !== today ? group.date.slice(0, 4) : dayMonth(group.date)}
+                dateLabel={
+                  searching && group.date !== today
+                    ? group.date.slice(0, 4)
+                    : group.date === today || group.date === yesterday
+                      ? weekdayDayMonth(group.date)
+                      : dayMonth(group.date)
+                }
                 items={group.items}
                 categories={categories}
                 accountName={accountName}

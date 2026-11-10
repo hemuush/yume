@@ -18,8 +18,8 @@ export function ThisMonthHeroSkeleton() {
           <Skeleton width={84} height={12} radius={4} />
           <Skeleton width={96} height={32} radius={16} />
         </View>
-        <Skeleton width={Math.min(230, innerWidth)} height={48} radius={10} />
-        <Skeleton width={Math.min(210, innerWidth)} height={30} radius={15} />
+        <Skeleton width={Math.min(230, innerWidth)} height={36} radius={8} />
+        <Skeleton width={Math.min(190, innerWidth)} height={26} radius={13} />
         <Skeleton width={innerWidth} height={12} radius={6} />
         <View style={styles.row}>
           {[0, 1, 2, 3].map((i) => (
@@ -35,7 +35,7 @@ export function ThisMonthHeroSkeleton() {
       </View>
       <View style={[styles.card, styles.week]}>
         <Skeleton width={Math.min(150, innerWidth)} height={28} radius={8} />
-        <Skeleton width={innerWidth} height={102} radius={14} />
+        <Skeleton width={innerWidth} height={90} radius={14} />
       </View>
     </>
   );
@@ -45,7 +45,7 @@ export function AccountTilesSkeleton() {
   return (
     <View style={styles.accountTiles}>
       {[0, 1, 2].map((i) => (
-        <Skeleton key={i} width={152} height={120} radius={22} />
+        <Skeleton key={i} width={148} height={112} radius={22} />
       ))}
     </View>
   );

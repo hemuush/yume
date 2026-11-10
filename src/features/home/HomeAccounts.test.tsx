@@ -175,8 +175,8 @@ it('widens the tiles with the text size so a balance keeps one line', () => {
       dimensions.mockRestore();
     }
   };
-  expect(widthOf(1)).toBe(152);
-  expect(widthOf(1.5)).toBe(198);
+  expect(widthOf(1)).toBe(148);
+  expect(widthOf(1.5)).toBe(192);
 });
 
 it('ends the row with an Add account tile', () => {
