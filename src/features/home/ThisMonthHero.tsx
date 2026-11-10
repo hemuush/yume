@@ -536,7 +536,9 @@ export function ThisMonthHero({
         <Section
           compact
           title={weekMode ? 'This week' : 'Spending by week'}
-          subtitle={`${formatMoney(trendTotalMinor)} spent${weekMode ? ' in 7 days' : ''}`}
+          // A past month names no total here: the bars count money out before refunds, so it could
+          // disagree with the card's net Spent figure above.
+          subtitle={weekMode ? `${formatMoney(trendTotalMinor)} spent in 7 days` : undefined}
           onSeeAll={onSeeInsights ? () => onSeeInsights(displayed.periodKey) : undefined}
           actionLabel="Insights"
         >
