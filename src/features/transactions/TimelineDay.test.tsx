@@ -345,3 +345,59 @@ it('does not rebuild an unrelated day when another day expands, but refreshes it
     format.mockRestore();
   }
 });
+
+describe('date tile beside the entries', () => {
+  const day = (over: Partial<React.ComponentProps<typeof TimelineDay>> = {}) => {
+    let tree!: ReactTestRenderer;
+    act(() => {
+      tree = create(
+        <TimelineDay
+          date={DATE}
+          label="Today"
+          dateLabel="Fri 25 Sept"
+          items={[tx('a', { amountMinor: 10000 }), tx('b', { amountMinor: 5000, categoryId: 'travel' })]}
+          categories={categories}
+          accountName={(id) => id}
+          categoryName={(id) => names[id ?? ''] ?? ''}
+          onPressTx={jest.fn()}
+          openStacks={new Set()}
+          onToggleStack={jest.fn()}
+          timeline
+          {...over}
+        />
+      );
+    });
+    return tree;
+  };
+
+  it('shows the weekday, date and day total in the tile and says them as one heading', () => {
+    const dimensions = jest
+      .spyOn(require('react-native'), 'useWindowDimensions')
+      .mockReturnValue({ width: 390, height: 800, scale: 3, fontScale: 1 });
+    try {
+      const tree = day();
+      const shown = texts(tree);
+      expect(shown).toEqual(expect.arrayContaining(['FRI', '25', `−${formatMoney(15000)}`]));
+      expect(shown.some((t) => t.startsWith('Today'))).toBe(false);
+      const heading = tree.root.find((n) => n.props.accessibilityRole === 'header');
+      expect(heading.props.accessibilityLabel).toBe(`Today, Fri 25 Sept, −${formatMoney(15000)}`);
+      act(() => tree.unmount());
+    } finally {
+      dimensions.mockRestore();
+    }
+  });
+
+  it('keeps the heading above the entries at large text, where a tile would squeeze the rows', () => {
+    const dimensions = jest
+      .spyOn(require('react-native'), 'useWindowDimensions')
+      .mockReturnValue({ width: 390, height: 800, scale: 3, fontScale: 1.5 });
+    try {
+      const tree = day();
+      expect(texts(tree).some((t) => t.startsWith('Today'))).toBe(true);
+      expect(tree.root.findAll((n) => n.props.accessibilityRole === 'header')).toHaveLength(0);
+      act(() => tree.unmount());
+    } finally {
+      dimensions.mockRestore();
+    }
+  });
+});
