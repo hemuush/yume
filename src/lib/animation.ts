@@ -13,6 +13,8 @@ const MAX_LIST_STAGGER_MS = 0;
  */
 export const MOTION = {
   ease: Easing.bezier(0.22, 1, 0.36, 1),
+  /** Leaving: starts gently and speeds away, so exits never feel like they hang. */
+  exit: Easing.bezier(0.4, 0, 1, 1),
   ...DURATIONS,
 } as const;
 
@@ -69,7 +71,9 @@ export function homeSectionEntering(index: number, opening: boolean) {
 export const ROW_LAYOUT = LinearTransition.duration(DURATIONS.rowMove)
   .easing(MOTION.ease)
   .reduceMotion(ReduceMotion.System);
-export const ROW_EXIT = FadeOut.duration(DURATIONS.rowExit).reduceMotion(ReduceMotion.System);
+export const ROW_EXIT = FadeOut.duration(DURATIONS.rowExit)
+  .easing(MOTION.exit)
+  .reduceMotion(ReduceMotion.System);
 
 /**
  * A panel opening in place (Settings accordion, archived accounts): fades in while the rows below slide down
