@@ -45,7 +45,6 @@ it('rapid period turns render the latest bars and bind taps to that same period 
       expenseChangeMinor={null}
       viewScope="week"
       bars={[bar(key, 10000)]}
-      legend={[]}
       selectedKey={null}
       onPressDay={press}
     />

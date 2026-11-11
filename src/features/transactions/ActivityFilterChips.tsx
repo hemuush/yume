@@ -13,12 +13,12 @@ import { useAccent } from '@/theme/AccentContext';
 
 // The one-tap type choices above the list — the same `filterType` the filter
 // sheet sets, just without opening it.
+// Investments are one of the types too, but a rare one: they live in the filter sheet, not on this row.
 const TYPE_CHIPS: { label: string; value: ActivityType }[] = [
   { label: 'All', value: 'all' },
   { label: 'Spent', value: 'expense' },
   { label: 'Income', value: 'income' },
   { label: 'Transfers', value: 'transfer' },
-  { label: 'Invest', value: 'invest' },
 ];
 
 /**
@@ -78,16 +78,6 @@ export function ActivityFilterChips({
   return (
     <>
       <View style={[styles.typeFilterRow, wrapTabs && { alignItems: 'flex-start' }]}>
-        {onOpenFilters && (
-          <HeaderIconButton
-            icon="sliders"
-            size={40}
-            glass
-            onPress={onOpenFilters}
-            label={filterCount > 0 ? `Filters, ${filterCount} on` : 'Filters'}
-            count={filterCount}
-          />
-        )}
         {wrapTabs ? (
           <View style={[styles.typeBar, styles.typeBarWrap]} accessibilityRole="radiogroup">
             {pills}
@@ -97,11 +87,22 @@ export function ActivityFilterChips({
             horizontal
             showsHorizontalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
+            style={styles.typeScroll}
             contentContainerStyle={styles.typeBar}
             accessibilityRole="radiogroup"
           >
             {pills}
           </ScrollView>
+        )}
+        {onOpenFilters && (
+          <HeaderIconButton
+            icon="sliders"
+            size={40}
+            glass
+            onPress={onOpenFilters}
+            label={filterCount > 0 ? `Filters, ${filterCount} on` : 'Filters'}
+            count={filterCount}
+          />
         )}
       </View>
       {picked > 0 && (

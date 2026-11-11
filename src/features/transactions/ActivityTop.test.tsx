@@ -1,6 +1,6 @@
 /**
- * Top of Activity: the Spent card (change pill, Week/Month corner, one-line legend, Money in / Net corner)
- * and the type filter as one segmented bar, picked categories under it only while any. Figures are made up.
+ * Top of Activity: the Spent card (the figure, its change on one line, Money in / Left) and the type
+ * filter as one row of chips, picked categories under it only while any. Figures are made up.
  */
 import { Text, StyleSheet } from 'react-native';
 import { styles } from './transactions.styles';
@@ -17,13 +17,7 @@ jest.useFakeTimers();
 
 import { TransactionsHeadline } from './TransactionsHeadline';
 import { ActivityFilterChips } from './ActivityFilterChips';
-
-const legend = ['Food', 'Groceries', 'Fun', 'Shopping', 'Travel', 'Home'].map((name, i) => ({
-  categoryId: `c${i}`,
-  name,
-  color: '#FF9E7D',
-  totalMinor: (6 - i) * 10_000,
-}));
+import { SpendBarChart } from './SpendBarChart';
 
 const texts = (r: ReactTestRenderer) =>
   r.root.findAllByType(Text).map((t) => [t.props.children].flat(Infinity).join(''));
@@ -40,7 +34,6 @@ function headline(over: Partial<React.ComponentProps<typeof TransactionsHeadline
         expenseChangeMinor={-231_000}
         viewScope="week"
         bars={[]}
-        legend={legend}
         onPressDay={jest.fn()}
         selectedKey={null}
         {...over}
@@ -51,10 +44,11 @@ function headline(over: Partial<React.ComponentProps<typeof TransactionsHeadline
 }
 
 describe('Spent card', () => {
-  it('shows the comparison beside the figure and cashflow as its own line', () => {
+  it('shows the comparison under the figure and cashflow as its own line', () => {
     const all = texts(headline());
     expect(all).toEqual(expect.arrayContaining(['Spent', 'Money in', '₹5,796', 'Left', '−₹11,273']));
-    expect(all).toEqual(expect.arrayContaining(['₹2,310 less', 'than last week']));
+    expect(all.some((t) => t === '₹2,310 less')).toBe(true);
+    expect(all.some((t) => t.endsWith('than last week'))).toBe(true);
   });
 
   it('leaves money in and net out when nothing came in, since Net would only repeat Spent', () => {
@@ -66,7 +60,8 @@ describe('Spent card', () => {
   it('says how much more, in rupees, and what it is compared with', () => {
     const tree = headline({ expenseChangeMinor: 917_400, compareLabel: 'same days last week' });
     const all = texts(tree);
-    expect(all).toEqual(expect.arrayContaining(['₹9,174 more', 'than same days last week']));
+    expect(all.some((t) => t === '₹9,174 more')).toBe(true);
+    expect(all.some((t) => t.endsWith('than same days last week'))).toBe(true);
     // An up arrow beside it: more spent.
     expect(tree.root.findAll((n) => n.props.name === 'arrow-up-right').length).toBeGreaterThan(0);
     expect(all.some((t) => t.includes('%'))).toBe(false);
@@ -78,16 +73,41 @@ describe('Spent card', () => {
     );
     expect(texts(headline({ expenseChangeMinor: 0 })).some((t) => /more than|less than/.test(t))).toBe(false);
   });
+});
 
-  it('names the four biggest categories, then how many more', () => {
-    const all = texts(headline());
-    expect(all).toEqual(expect.arrayContaining(['Food', 'Shopping', '+2 more']));
-    expect(all).not.toContain('Travel');
+describe('Spent card chart', () => {
+  const bar = (key: string, totalMinor: number, state?: 'future' | 'outside') => ({
+    key,
+    label: 'T',
+    totalMinor,
+    segments: [],
+    isCurrent: false,
+    ...(state ? { state } : {}),
   });
 
-  it('keeps the legend when a bar is tapped — the amount shows on the bar', () => {
-    const all = texts(headline({ selectedKey: '2026-10-01' }));
-    expect(all).toContain('+2 more');
+  it('hands the chart what a day cost so far: the days that have happened, empty ones included', () => {
+    const tree = headline({
+      bars: [
+        bar('2026-10-01', 100_000),
+        bar('2026-10-02', 0),
+        bar('2026-10-03', 50_000),
+        bar('2026-10-04', 0, 'future'),
+      ],
+    });
+    expect(tree.root.findByType(SpendBarChart).props.averageMinor).toBe(50_000);
+    act(() => tree.unmount());
+  });
+
+  it('draws no average with a single day, or while the figure is narrowed to a category', () => {
+    const one = headline({ bars: [bar('2026-10-01', 100_000)] });
+    expect(one.root.findByType(SpendBarChart).props.averageMinor).toBeNull();
+    act(() => one.unmount());
+    const narrowed = headline({
+      narrowedTo: 'Food',
+      bars: [bar('2026-10-01', 100_000), bar('2026-10-02', 0)],
+    });
+    expect(narrowed.root.findByType(SpendBarChart).props.averageMinor).toBeNull();
+    act(() => narrowed.unmount());
   });
 });
 
@@ -116,7 +136,7 @@ describe('Activity filter bar', () => {
 
   it('is one bar of types, with no second line when nothing is picked', () => {
     const all = texts(bar([]));
-    expect(all).toEqual(['All', 'Spent', 'Income', 'Transfers', 'Invest']);
+    expect(all).toEqual(['All', 'Spent', 'Income', 'Transfers']);
   });
 
   it.each([1, 2])('keeps every type filter actionable at 320dp and text scale %s', (fontScale) => {
@@ -126,19 +146,13 @@ describe('Activity filter bar', () => {
     const choose = jest.fn();
     const tree = bar([], undefined, 0, choose);
     try {
-      for (const label of ['all', 'spent', 'income', 'transfers', 'invest']) {
+      for (const label of ['all', 'spent', 'income', 'transfers']) {
         const button = tree.root.find(
           (n) => n.props.accessibilityLabel === `Show ${label}` && n.props.onPress
         );
         act(() => button.props.onPress());
       }
-      expect(choose.mock.calls.map(([value]) => value)).toEqual([
-        'all',
-        'expense',
-        'income',
-        'transfer',
-        'invest',
-      ]);
+      expect(choose.mock.calls.map(([value]) => value)).toEqual(['all', 'expense', 'income', 'transfer']);
     } finally {
       act(() => tree.unmount());
       dimensions.mockRestore();
@@ -162,43 +176,26 @@ describe('Activity filter bar', () => {
   });
 });
 
-it('expands and collapses the category legend without changing the selected period', () => {
-  const tree = headline();
-  const toggle = () =>
-    tree.root.findAll(
-      (n) =>
-        n.props.accessibilityLabel === 'Show all 6 categories' ||
-        n.props.accessibilityLabel === 'Show fewer categories'
-    )[0]!;
-  expect(toggle().props.accessibilityState.expanded).toBe(false);
-  act(() => toggle().props.onPress());
-  expect(texts(tree)).toContain('Travel');
-  expect(toggle().props.accessibilityState.expanded).toBe(true);
-  act(() => toggle().props.onPress());
-  expect(texts(tree)).not.toContain('Travel');
-});
-
 it.each([
-  { width: 390, fontScale: 1, direction: 'row' },
-  { width: 320, fontScale: 1, direction: 'column' },
-  { width: 390, fontScale: 1.5, direction: 'column' },
+  { width: 390, fontScale: 1 },
+  { width: 320, fontScale: 1 },
+  { width: 390, fontScale: 1.5 },
 ])(
-  'keeps the figure and its comparison on top and cashflow as one wrapping line at $width / $fontScale',
+  'keeps the figure and its comparison together and cashflow as one wrapping line at $width / $fontScale',
   (size) => {
     const dimensions = jest
       .spyOn(require('react-native'), 'useWindowDimensions')
       .mockReturnValue({ ...size, height: 800, scale: 3 });
     try {
       const tree = headline();
-      const top = tree.root.find((n) => Array.isArray(n.props.style) && n.props.style[0] === styles.sumTop);
-      expect(StyleSheet.flatten(top.props.style).flexDirection).toBe(size.direction);
-      const topLabels = top.findAllByType(Text).map((n) => [n.props.children].flat().join(''));
-      expect(topLabels).toEqual(expect.arrayContaining(['₹2,310 less', 'than last week']));
-      expect(topLabels).not.toContain('Money in');
+      const lead = tree.root.find((n) => n.props.style === styles.sumLead);
+      const labels = lead.findAllByType(Text).map((n) => [n.props.children].flat().join(''));
+      expect(labels.some((t) => t === '₹2,310 less')).toBe(true);
+      expect(labels).not.toContain('Money in');
       const cashflow = tree.root.find((n) => n.props.style === styles.sumCashflow);
-      const labels = cashflow.findAllByType(Text).map((n) => [n.props.children].flat().join(''));
-      expect(labels).toContain('Money in');
-      expect(labels).toContain('Left');
+      const cash = cashflow.findAllByType(Text).map((n) => [n.props.children].flat().join(''));
+      expect(cash).toContain('Money in');
+      expect(cash).toContain('Left');
       expect(StyleSheet.flatten(cashflow.props.style).flexWrap).toBe('wrap');
       act(() => tree.unmount());
     } finally {

@@ -14,7 +14,6 @@ jest.mock('@/theme/PrivacyContext', () => ({
 import { TimelineDay } from './TimelineDay';
 import { Category, Transaction } from '@/types';
 import { formatMoney } from '@/lib/money';
-import { theme } from '@/constants/theme';
 
 it('shows foreign amounts in their own currency and excludes them from the day total', () => {
   let tree!: ReactTestRenderer;
@@ -347,7 +346,7 @@ it('does not rebuild an unrelated day when another day expands, but refreshes it
   }
 });
 
-describe('date and rail beside the entries', () => {
+describe('days as segments of one card', () => {
   const day = (over: Partial<React.ComponentProps<typeof TimelineDay>> = {}) => {
     let tree!: ReactTestRenderer;
     act(() => {
@@ -363,45 +362,12 @@ describe('date and rail beside the entries', () => {
           onPressTx={jest.fn()}
           openStacks={new Set()}
           onToggleStack={jest.fn()}
-          timeline
           {...over}
         />
       );
     });
     return tree;
   };
-
-  it('shows the weekday, date and total beside the entries and says them as one heading', () => {
-    const dimensions = jest
-      .spyOn(require('react-native'), 'useWindowDimensions')
-      .mockReturnValue({ width: 390, height: 800, scale: 3, fontScale: 1 });
-    try {
-      const tree = day();
-      const shown = texts(tree);
-      expect(shown).toEqual(expect.arrayContaining(['FRI', '25', `−${formatMoney(15000)}`]));
-      expect(shown.some((t) => t.startsWith('Today'))).toBe(false);
-      const heading = tree.root.find((n) => n.props.accessibilityRole === 'header');
-      expect(heading.props.accessibilityLabel).toBe(`Today, Fri 25 Sept, −${formatMoney(15000)}`);
-      act(() => tree.unmount());
-    } finally {
-      dimensions.mockRestore();
-    }
-  });
-
-  it('keeps the heading above the entries at large text, where a column would squeeze the rows', () => {
-    const dimensions = jest
-      .spyOn(require('react-native'), 'useWindowDimensions')
-      .mockReturnValue({ width: 390, height: 800, scale: 3, fontScale: 1.5 });
-    try {
-      const tree = day();
-      expect(texts(tree).some((t) => t.startsWith('Today'))).toBe(true);
-      expect(tree.root.findAll((n) => n.props.accessibilityRole === 'header')).toHaveLength(0);
-      act(() => tree.unmount());
-    } finally {
-      dimensions.mockRestore();
-    }
-  });
-
   const withWidth = (fn: () => void) => {
     const dimensions = jest
       .spyOn(require('react-native'), 'useWindowDimensions')
@@ -412,43 +378,46 @@ describe('date and rail beside the entries', () => {
       dimensions.mockRestore();
     }
   };
-  const railLine = (tree: ReactTestRenderer) =>
-    tree.root.findAll((n) => {
-      const flat = StyleSheet.flatten(n.props.style);
-      return !!flat && flat.position === 'absolute' && flat.width === 2;
-    });
 
-  it('names today and fills its dot', () =>
+  it('names the day above its entries, with its total, and says them as one heading', () =>
     withWidth(() => {
-      const tree = day({ isToday: true });
-      expect(texts(tree)).toContain('TODAY');
-      const dot = tree.root.find((n) => {
-        const flat = StyleSheet.flatten(n.props.style);
-        return !!flat && flat.width === 12 && flat.height === 12;
-      });
-      expect(StyleSheet.flatten(dot.props.style).backgroundColor).not.toBe(theme.colors.surface);
+      const tree = day();
+      const shown = texts(tree);
+      expect(shown.some((t) => t.startsWith('Today'))).toBe(true);
+      expect(shown).toContain(`−${formatMoney(15000)}`);
+      // No weekday column: "TODAY" can no longer wrap in a narrow column.
+      expect(shown).not.toContain('TODAY');
+      const heading = tree.root.find((n) => n.props.accessibilityRole === 'header');
+      expect(heading.props.accessibilityLabel).toBe(`Today, Fri 25 Sept, −${formatMoney(15000)}`);
       act(() => tree.unmount());
     }));
 
-  it('ends the rail at the first and last day and omits it for a lone day', () =>
+  it('rounds the card at the first and last day only', () =>
     withWidth(() => {
-      const heights = (position: 'only' | 'first' | 'middle' | 'last') => {
+      const edges = (position: 'only' | 'first' | 'middle' | 'last') => {
         const tree = day({ position });
-        const lines = railLine(tree).map((n) => StyleSheet.flatten(n.props.style));
+        const segment = tree.root.find(
+          (n) =>
+            Array.isArray(n.props.style) &&
+            n.props.style.some(
+              (x: unknown) => !!x && (x as { marginHorizontal?: number }).marginHorizontal === 16
+            )
+        );
+        const flat = StyleSheet.flatten(segment.props.style);
         act(() => tree.unmount());
-        return lines;
+        return flat;
       };
-      expect(heights('only')).toHaveLength(0);
-      // First: starts at its dot, runs on down. Last: runs down from the day above to its dot and stops.
-      expect(heights('first')[0].top).toBe(25);
-      expect(heights('last')[0].height).toBe(25);
-      expect(heights('middle')[0]).toMatchObject({ top: 0, bottom: 0 });
+      expect(edges('first')).toMatchObject({ borderTopWidth: 1, borderTopLeftRadius: 16 });
+      expect(edges('first').borderBottomWidth).toBeUndefined();
+      expect(edges('last')).toMatchObject({ borderBottomWidth: 1, borderBottomLeftRadius: 16 });
+      expect(edges('middle').borderTopLeftRadius).toBeUndefined();
+      expect(edges('middle').borderBottomLeftRadius).toBeUndefined();
+      expect(edges('only')).toMatchObject({ borderTopWidth: 1, borderBottomWidth: 1 });
     }));
 
   it('leaves the day total out when one line would only repeat it', () =>
     withWidth(() => {
       const tree = day({ items: [tx('a', { amountMinor: 10000 })] });
-      // The entry's own amount is the only one: nothing repeats it in the date column.
       expect(texts(tree).filter((t) => t === `−${formatMoney(10000)}`)).toHaveLength(1);
       const heading = tree.root.find((n) => n.props.accessibilityRole === 'header');
       expect(heading.props.accessibilityLabel).toBe('Today, Fri 25 Sept');

@@ -4,19 +4,20 @@ import { Text, MAX_FONT_SCALE } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 import { formatMoney } from '@/lib/money';
-import { SpendBar, ChartLegendItem } from './spendChart';
+import type { SpendBar } from './spendChart';
 
 import { useAccent } from '@/theme/AccentContext';
 import { themeInk } from '@/theme/interactionColors';
-import { compactMoney } from '@/lib/compactMoney';
 import { shade } from '@/lib/color';
 
-const MAX_BAR_HEIGHT = 36;
+const MAX_BAR_HEIGHT = 52;
 // A day with any spend is at least this tall, so a small one still reads as a bar.
 const MIN_BAR_HEIGHT = 6;
 // Only 7 daily bars or ~4-5 weekly ones at a time, so a tighter cap than the
 // heatmap's (which can stagger a whole month of cells) still finishes fast.
 const MAX_STAGGER_MS = 220;
+/** Height kept over the bars for the picked day's amount bubble. */
+const BUBBLE_ROOM = 22;
 
 /**
  * One bar's stack: grows from 0 once on first appearance (staggered by `delay`), then glides between heights.
@@ -78,58 +79,65 @@ export function SpendBarChart({
   selectedKey = null,
   inset = 22,
   dates = false,
-  amounts = false,
+  averageMinor = null,
 }: {
   bars: SpendBar[];
   onPressDay: (key: string) => void;
-  /** The tapped bar: it lifts slightly and the rest fade back, so the chart shows what you picked. */
+  /** The tapped bar: it turns to the theme's ink and shows its exact amount; the rest stay in a soft tint. */
   selectedKey?: string | null;
   /** Side padding — 0 when the chart sits inside a card that already pads it. */
   inset?: number;
-  /** A week of days: the date sits under each weekday, and today's date carries the pill. */
+  /** A week of days: the date sits under each weekday. */
   dates?: boolean;
-  /** A short amount over every bar (₹1.9k); the picked bar shows its exact one. Left off at large text. */
-  amounts?: boolean;
+  /** The average spent a day so far: a dashed line across the chart, named at its right end. */
+  averageMinor?: number | null;
 }) {
   const { accent } = useAccent();
   const ink = themeInk(accent);
-  // Each day is a capsule in the theme's own tint; the picked day's column rests on a slightly stronger one.
+  // One colour for every day, so the chart reads as shape; the picked day is the one dark bar.
   const track = shade(accent, 94);
-  const tray = shade(accent, 95);
+  const fill = shade(accent, 75);
   const maxTotal = Math.max(1, ...bars.map((b) => b.totalMinor));
-  // The day labels and the today pill have fixed line heights; they grow with the text size so a larger font
-  // is not clipped, and the row grows by the same amount so the bars keep their room.
+  // The day labels have fixed line heights; they grow with the text size so a larger font is not clipped,
+  // and the row grows by the same amount so the bars keep their room.
   const { fontScale } = useWindowDimensions();
   const k = Math.min(MAX_FONT_SCALE, Math.max(1, fontScale));
   const labelLine = Math.ceil(15 * k);
   const labelBox = { lineHeight: labelLine, minHeight: labelLine };
-  const pillBox = { height: labelLine };
-  const showAmounts = amounts && fontScale <= 1.2;
-  const amountLine = showAmounts ? Math.ceil(15 * k) : 0;
   const dateLine = dates ? Math.ceil(19 * k) : 0;
-  // Column padding, the amount over the capsule, the capsule, the weekday and the date.
-  const rowHeight = 8 + (showAmounts ? amountLine + 4 : 0) + MAX_BAR_HEIGHT + 6 + labelLine + dateLine;
+  // Column padding, room for the picked day's amount, the capsule, the weekday and the date.
+  const rowHeight = 8 + BUBBLE_ROOM + MAX_BAR_HEIGHT + 6 + labelLine + dateLine;
+  // Where the capsules rest: column padding, the gap and the weekday and date lines under them.
+  const baseline = 4 + 6 + labelLine + dateLine;
+  const showAverage = averageMinor != null && averageMinor > 0 && averageMinor <= maxTotal;
 
   return (
     <View style={[styles.row, { paddingHorizontal: inset, height: rowHeight }]}>
+      {showAverage && (
+        <View
+          pointerEvents="none"
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+          style={[
+            styles.average,
+            { bottom: baseline + (averageMinor! / maxTotal) * MAX_BAR_HEIGHT, left: inset, right: inset },
+          ]}
+        >
+          <Text style={styles.averageText}>avg {formatMoney(averageMinor!)}</Text>
+        </View>
+      )}
       {bars.map((bar, i) => {
         const barPx =
           bar.totalMinor > 0 ? Math.max(MIN_BAR_HEIGHT, (bar.totalMinor / maxTotal) * MAX_BAR_HEIGHT) : 0;
         const heightPct = (barPx / MAX_BAR_HEIGHT) * 100;
-        const segmentTotal = bar.segments.reduce((sum, seg) => sum + Math.max(0, seg.amountMinor), 0);
         const selected = selectedKey === bar.key;
-        const faded = selectedKey != null && !selected;
         if (bar.state) {
-          // Not a day of this week's month, or not here yet: a quiet placeholder, never tappable.
+          // Not a day of this week's month, or not here yet: a small quiet dot, never tappable.
           return (
             <View key={bar.key} style={styles.col} accessibilityElementsHidden importantForAccessibility="no">
-              {bar.state === 'outside' ? (
-                <View style={[styles.barTrack, styles.trackOutside]}>
-                  <View style={styles.outsideDay} />
-                </View>
-              ) : (
-                <View style={[styles.barTrack, { backgroundColor: track, opacity: 0.5 }]} />
-              )}
+              <View style={[styles.barTrack, styles.trackOutside]}>
+                <View style={styles.outsideDay} />
+              </View>
               <Text style={[styles.label, labelBox, styles.labelAway]}>{bar.label}</Text>
               {dates && (
                 <Text style={[styles.dateNum, { lineHeight: dateLine - 2 }, styles.labelAway]}>
@@ -143,57 +151,22 @@ export function SpendBarChart({
           <Pressable
             key={bar.key}
             onPress={() => onPressDay(bar.key)}
-            style={[
-              styles.col,
-              selected && [styles.colOn, { backgroundColor: tray }],
-              faded && styles.colFaded,
-            ]}
+            style={styles.col}
             accessibilityRole="button"
             accessibilityState={{ selected }}
             accessibilityLabel={`${bar.key} (${bar.label})${bar.totalMinor > 0 ? `, spent ${formatMoney(bar.totalMinor)}` : ', nothing spent'}`}
           >
-            {showAmounts && (
-              <Text
-                style={[
-                  styles.amount,
-                  selected && styles.amountOn,
-                  { lineHeight: amountLine, height: amountLine },
-                ]}
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.7}
-              >
-                {bar.totalMinor > 0
-                  ? selected
-                    ? formatMoney(bar.totalMinor)
-                    : compactMoney(bar.totalMinor)
-                  : ''}
-              </Text>
-            )}
             <View style={[styles.barTrack, { backgroundColor: track }]}>
               {bar.totalMinor > 0 ? (
                 <AnimatedBarStack
                   heightPct={heightPct}
                   delay={Math.min(i * 45, MAX_STAGGER_MS)}
-                  style={styles.stack}
+                  style={[styles.stack, { backgroundColor: selected ? ink : fill }]}
                 >
-                  {/* Positive category weights fill the stack; a refund in another category can
-                      make their sum exceed net spending. Keep net height and category amounts intact. */}
-                  {bar.segments.map((seg) => (
-                    <View
-                      key={seg.categoryId}
-                      style={[
-                        styles.segment,
-                        {
-                          backgroundColor: seg.color,
-                          height: `${(Math.max(0, seg.amountMinor) / Math.max(1, segmentTotal)) * 100}%`,
-                        },
-                      ]}
-                    />
-                  ))}
+                  {null}
                 </AnimatedBarStack>
               ) : null}
-              {selected && !showAmounts && (
+              {selected && (
                 <View style={[styles.bubbleWrap, { bottom: Math.max(barPx, 2) + 6 }]} pointerEvents="none">
                   <View style={[styles.bubble, { backgroundColor: ink }]}>
                     <Text style={styles.bubbleText} numberOfLines={1}>
@@ -204,22 +177,14 @@ export function SpendBarChart({
                 </View>
               )}
             </View>
-            {bar.isCurrent && !dates ? (
-              <View style={[styles.todayPill, pillBox, { backgroundColor: accent }]}>
-                <Text style={[styles.todayText, { lineHeight: Math.ceil(13 * k) }]}>{bar.label}</Text>
-              </View>
-            ) : (
-              <Text style={[styles.label, labelBox]}>{bar.label}</Text>
-            )}
+            <Text
+              style={[styles.label, labelBox, bar.isCurrent && styles.labelToday, selected && styles.labelOn]}
+            >
+              {bar.label}
+            </Text>
             {dates && (
               <View style={[styles.dateBox, { height: dateLine }]}>
-                <Text
-                  style={[
-                    styles.dateNum,
-                    { lineHeight: dateLine - 2 },
-                    bar.isCurrent && [styles.dateToday, { backgroundColor: accent }],
-                  ]}
-                >
+                <Text style={[styles.dateNum, { lineHeight: dateLine - 2 }, selected && styles.labelOn]}>
                   {Number(bar.key.slice(8, 10))}
                 </Text>
               </View>
@@ -227,52 +192,6 @@ export function SpendBarChart({
           </Pressable>
         );
       })}
-    </View>
-  );
-}
-
-/** The chart's own colour key — only the categories it's actually showing. */
-export function ChartLegend({
-  items,
-  inset = 22,
-  max,
-}: {
-  items: ChartLegendItem[];
-  inset?: number;
-  /** Names this many (the chart's biggest), then an expandable "+N more" control. */
-  max?: number;
-}) {
-  const [expandedKey, setExpandedKey] = useState<string | null>(null);
-  const itemKey = JSON.stringify(items.map((item) => item.categoryId));
-  const expanded = expandedKey === itemKey;
-  if (items.length === 0) return null;
-  const canExpand = max != null && max > 0 && items.length > max;
-  const shown = canExpand && !expanded ? items.slice(0, max) : items;
-  const more = items.length - shown.length;
-  return (
-    <View style={[styles.legend, { paddingHorizontal: inset }]}>
-      {shown.map((item) => (
-        <View key={item.categoryId} style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: item.color }]} />
-          <Text style={styles.legendText} numberOfLines={1}>
-            {item.name}
-          </Text>
-        </View>
-      ))}
-      {canExpand && (
-        <Pressable
-          style={styles.legendToggle}
-          hitSlop={{ top: 8, bottom: 8 }}
-          accessibilityRole="button"
-          accessibilityLabel={expanded ? 'Show fewer categories' : `Show all ${items.length} categories`}
-          accessibilityState={{ expanded }}
-          onPress={() => setExpandedKey(expanded ? null : itemKey)}
-        >
-          <Text style={[styles.legendText, styles.legendMore]}>
-            {expanded ? 'Show fewer' : `+${more} more`}
-          </Text>
-        </Pressable>
-      )}
     </View>
   );
 }
@@ -291,18 +210,6 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     paddingVertical: 4,
   },
-  colFaded: { opacity: 0.4 },
-  // The picked day: a soft tray behind its column, under the exact amount.
-  colOn: { borderRadius: 14 },
-  amount: {
-    fontFamily: theme.font.body,
-    fontSize: 11,
-    color: theme.colors.textMuted,
-    fontVariant: ['tabular-nums'],
-    textAlign: 'center',
-    marginBottom: 4,
-  },
-  amountOn: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
   dateBox: { alignItems: 'center', justifyContent: 'center' },
   dateNum: {
     minWidth: 22,
@@ -314,7 +221,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: theme.colors.textPrimary,
   },
-  dateToday: { color: theme.colors.ink },
   barTrack: {
     width: '100%',
     maxWidth: 26,
@@ -325,8 +231,7 @@ const styles = StyleSheet.create({
   },
   trackOutside: { alignItems: 'center', justifyContent: 'center' },
   // Fills the capsule from the bottom; the capsule's own corners round it.
-  stack: { width: '100%', borderRadius: 4, overflow: 'hidden', flexDirection: 'column-reverse' },
-  segment: { width: '100%' },
+  stack: { width: '100%', borderRadius: 13 },
   outsideDay: {
     width: 4,
     height: 4,
@@ -343,19 +248,6 @@ const styles = StyleSheet.create({
     color: theme.colors.textMuted,
     marginTop: 6,
   },
-  todayPill: {
-    height: 15,
-    marginTop: 6,
-    paddingHorizontal: 6,
-    justifyContent: 'center',
-    borderRadius: 6,
-  },
-  todayText: {
-    fontFamily: theme.font.bodyBold,
-    fontSize: 11,
-    lineHeight: 13,
-    color: theme.colors.textPrimary,
-  },
   bubbleWrap: { position: 'absolute', left: -24, right: -24, alignItems: 'center' },
   bubble: { paddingHorizontal: 7, paddingVertical: 3, borderRadius: 8, backgroundColor: theme.colors.ink },
   bubbleText: { fontFamily: theme.font.bodyBold, fontSize: 11, color: theme.colors.surface },
@@ -369,23 +261,23 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.ink,
     transform: [{ rotate: '45deg' }],
   },
-  legend: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    columnGap: 10,
-    rowGap: 4,
-    marginTop: 10,
+  average: {
+    position: 'absolute',
+    borderTopWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: theme.colors.inkOff,
+    alignItems: 'flex-end',
   },
-  legendItem: { flexDirection: 'row', alignItems: 'center', gap: 5, maxWidth: '100%', flexShrink: 1 },
-  legendDot: { width: 8, height: 8, borderRadius: 3, flexShrink: 0 },
-  legendText: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary, flexShrink: 1 },
-  legendToggle: {
-    minHeight: 28,
-    paddingHorizontal: 10,
-    justifyContent: 'center',
-    borderRadius: 14,
-    backgroundColor: theme.colors.surfaceAlt,
+  averageText: {
+    marginTop: -16,
+    paddingLeft: 4,
+    fontFamily: theme.font.body,
+    fontSize: 11,
+    lineHeight: 14,
+    color: theme.colors.textMuted,
+    backgroundColor: theme.colors.surface,
+    fontVariant: ['tabular-nums'],
   },
-  legendMore: { color: theme.colors.textPrimary, fontFamily: theme.font.bodyMedium },
+  labelToday: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
+  labelOn: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
 });

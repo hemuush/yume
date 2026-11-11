@@ -38,7 +38,7 @@ function chart(selectedKey: string | null, onPressDay = jest.fn()) {
 }
 
 describe('SpendBarChart week', () => {
-  it('fills a net-spending bar without overflow when another category has a refund', () => {
+  it('fills a net-spending bar in one colour, whatever categories made it up', () => {
     let tree!: ReactTestRenderer;
     act(() => {
       tree = create(
@@ -59,12 +59,12 @@ describe('SpendBarChart week', () => {
         />
       );
     });
-    const heights = tree.root
+    const colours = tree.root
       .findAllByType(View)
       .map((n) => StyleSheet.flatten(n.props.style))
-      .filter((s) => s?.backgroundColor === '#123456' || s?.backgroundColor === '#654321')
-      .map((s) => s.height);
-    expect(heights).toEqual(['60%', '40%']);
+      .map((s) => s?.backgroundColor);
+    expect(colours).not.toContain('#123456');
+    expect(colours).not.toContain('#654321');
     act(() => tree.unmount());
   });
   it('shows no amount until a day is tapped, then the tapped day’s amount', () => {
@@ -131,45 +131,34 @@ describe('large text', () => {
   });
 });
 
-describe('SpendBarChart capsules', () => {
-  const render = (selectedKey: string | null) => {
+describe('SpendBarChart calm chart', () => {
+  const render = (selectedKey: string | null, averageMinor: number | null = null) => {
     let r!: ReactTestRenderer;
     act(() => {
       r = create(
-        <SpendBarChart bars={bars} onPressDay={jest.fn()} selectedKey={selectedKey} inset={0} dates amounts />
+        <SpendBarChart
+          bars={bars}
+          onPressDay={jest.fn()}
+          selectedKey={selectedKey}
+          inset={0}
+          dates
+          averageMinor={averageMinor}
+        />
       );
     });
     return r;
   };
-  // The test environment reports a doubled font scale; the layout under test is the ordinary one.
-  const atFontScale = (fontScale: number, fn: () => void) => {
-    const dimensions = jest
-      .spyOn(require('react-native'), 'useWindowDimensions')
-      .mockReturnValue({ width: 390, height: 800, scale: 3, fontScale });
-    try {
-      fn();
-    } finally {
-      dimensions.mockRestore();
-    }
-  };
 
-  it('puts a short amount over each bar, its date under the weekday, and the exact amount over the picked one', () =>
-    atFontScale(1, () => {
-      const shown = texts(render(null));
-      expect(shown).toEqual(expect.arrayContaining(['₹13k', '₹175', '1', '2', '3']));
-      expect(texts(render('2026-10-01'))).toContain('₹13484');
-    }));
+  it('puts the date under the weekday and an amount only over the picked day', () => {
+    const none = texts(render(null));
+    expect(none).toEqual(expect.arrayContaining(['1', '2', '3']));
+    expect(none).not.toContain('₹13484');
+    expect(none).not.toContain('₹13k');
+    expect(texts(render('2026-10-01'))).toContain('₹13484');
+  });
 
-  it('does not repeat the picked amount in a bubble when it already sits over the bar', () =>
-    atFontScale(1, () => {
-      const shown = texts(render('2026-10-01'));
-      expect(shown.filter((t) => t === '₹13484')).toHaveLength(1);
-    }));
-
-  it('keeps the bubble, and drops the short amounts, at large text', () =>
-    atFontScale(1.5, () => {
-      const shown = texts(render('2026-10-01'));
-      expect(shown).not.toContain('₹175');
-      expect(shown).toContain('₹13484');
-    }));
+  it('draws the average as a dashed line named at its end, and nothing without one', () => {
+    expect(texts(render(null, 5000))).toContain('avg ₹50');
+    expect(texts(render(null, null)).some((t) => t.startsWith('avg'))).toBe(false);
+  });
 });
