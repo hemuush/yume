@@ -89,11 +89,14 @@ export function PaceBar({
   animKey,
   style,
   accessibilityLabel,
+  height = 10,
 }: {
   pct: number;
   color: string;
   marker?: number;
   animKey: string;
+  /** The track's thickness; 10 by default, 8 on the flat summary cards. */
+  height?: number;
   style?: StyleProp<ViewStyle>;
   /** Read out for the bar, which is otherwise decorative (the marker has no words of its own). */
   accessibilityLabel?: string;
@@ -104,11 +107,11 @@ export function PaceBar({
       accessible={accessibilityLabel != null}
       accessibilityLabel={accessibilityLabel}
     >
-      <View style={frost.paceTrack}>
+      <View style={[frost.paceTrack, { height, borderRadius: height / 2 }]}>
         <GrowFill
           animKey={animKey}
           pct={Math.max(0, Math.min(100, pct))}
-          style={[frost.paceFill, { backgroundColor: color }]}
+          style={[frost.paceFill, { backgroundColor: color, borderRadius: height / 2 }]}
         />
       </View>
       {marker != null && (

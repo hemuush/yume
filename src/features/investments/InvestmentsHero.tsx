@@ -1,10 +1,17 @@
-import { View, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
-import { Glass } from '@/components/Glass';
 import { CountUpAmount } from '@/components/CountUpAmount';
 import { PrimaryButton } from '@/components/PrimaryButton';
-import { cardSurface } from '@/components/CardSurface';
-import { Kicker, FrostChip, frost } from '@/components/Frost';
+import {
+  SummaryCard,
+  SummaryFacts,
+  SummarySide,
+  SummaryTop,
+  summaryFigure,
+  summaryNote,
+  type FactTone,
+  type SummaryFact,
+} from '@/components/SummaryCard';
 import { theme } from '@/constants/theme';
 import { formatMaskableMoney } from '@/lib/money';
 import { formatReturnPct } from '@/lib/investment';
@@ -35,19 +42,28 @@ export function InvestmentsHero({
   const { hideAmounts } = usePrivacy();
   const money = (minor: number) => formatMaskableMoney(minor, { currency, masked: hideAmounts });
   const gain = portfolio.gainMinor;
-  const gainColor =
-    gain == null || gain === 0
-      ? theme.colors.textPrimary
-      : gain > 0
-        ? theme.colors.incomeText
-        : theme.colors.expenseText;
+  const returnTone = hideAmounts || gain == null || gain === 0 ? undefined : gain > 0 ? 'good' : 'bad';
+  const facts: SummaryFact[] = [
+    { label: 'Put in', value: money(portfolio.investedMinor) },
+    ...(portfolio.takenOutMinor > 0 ? [{ label: 'Taken out', value: money(portfolio.takenOutMinor) }] : []),
+    ...(gain != null
+      ? [
+          {
+            label: 'Gain',
+            value: hideAmounts ? '••••' : `${gain < 0 ? '−' : gain > 0 ? '+' : ''}${money(Math.abs(gain))}`,
+            tone: returnTone as FactTone | undefined,
+          },
+        ]
+      : []),
+    ...(sipMonthly > 0 ? [{ label: 'SIPs', value: `${money(sipMonthly)} a month` }] : []),
+  ];
   return (
-    <Glass radius={22} tone="strong" style={[frost.hero, cardSurface.summary, styles.block]}>
-      <View style={frost.heroRow}>
-        <View style={[frost.heroMain, { gap: 2 }]}>
-          <Kicker icon="trending-up">Worth now</Kicker>
-          {hideAmounts ? (
-            <Text style={[frost.bigValue, styles.bigFigure]}>
+    <SummaryCard>
+      <SummaryTop
+        label="Worth now"
+        figure={
+          hideAmounts ? (
+            <Text style={summaryFigure}>
               {formatMaskableMoney(portfolio.valueMinor, { currency, masked: true })}
             </Text>
           ) : (
@@ -55,53 +71,29 @@ export function InvestmentsHero({
               minor={portfolio.valueMinor}
               currency={currency}
               countFromZero={false}
-              style={[frost.bigValue, styles.bigFigure]}
+              style={summaryFigure}
               numberOfLines={1}
               adjustsFontSizeToFit
             />
-          )}
-        </View>
-        {portfolio.returnPct != null && (
-          <View style={frost.side}>
-            <Text style={frost.sideLabel}>Return</Text>
-            <Text style={[frost.sideValue, !hideAmounts && { color: gainColor }]}>
-              {hideAmounts ? '••%' : formatReturnPct(portfolio.returnPct)}
-            </Text>
-          </View>
-        )}
-      </View>
-      <View style={frost.chips}>
-        {gain != null && (
-          <FrostChip
-            icon={gain < 0 ? 'trending-down' : 'trending-up'}
-            tone={hideAmounts || gain === 0 ? undefined : gain > 0 ? 'ok' : 'bad'}
-          >
-            {hideAmounts ? '••••' : `${gain < 0 ? '−' : gain > 0 ? '+' : ''}${money(Math.abs(gain))}`}
-          </FrostChip>
-        )}
-        {rate && (
-          <FrostChip icon="calendar">
-            {hideAmounts
-              ? '••% a year'
-              : `${formatReturnPct(rate.rate * 100).replace('+', '')} a year over ${years(rate.days)}`}
-          </FrostChip>
-        )}
-      </View>
-      <Text style={frost.sub}>
-        Put in <Text style={frost.subBold}>{money(portfolio.investedMinor)}</Text>
-        {portfolio.takenOutMinor > 0 && (
-          <>
-            {' · taken out '}
-            <Text style={frost.subBold}>{money(portfolio.takenOutMinor)}</Text>
-          </>
-        )}
-        {sipMonthly > 0 && (
-          <>
-            {' · SIPs '}
-            <Text style={frost.subBold}>{money(sipMonthly)}</Text> a month
-          </>
-        )}
-      </Text>
+          )
+        }
+        side={
+          portfolio.returnPct != null ? (
+            <SummarySide
+              main={hideAmounts ? '••% return' : `${formatReturnPct(portfolio.returnPct)} return`}
+              tone={returnTone}
+            />
+          ) : undefined
+        }
+      />
+      <SummaryFacts facts={facts} />
+      {rate && (
+        <Text style={styles.hint}>
+          {hideAmounts
+            ? '••% a year'
+            : `${formatReturnPct(rate.rate * 100).replace('+', '')} a year over ${years(rate.days)}`}
+        </Text>
+      )}
       {(gain == null || (!rate && !hideAmounts) || portfolio.unvaluedCount > 0) && (
         <Text style={styles.hint}>
           {gain == null
@@ -114,33 +106,32 @@ export function InvestmentsHero({
             : ''}
         </Text>
       )}
-    </Glass>
+    </SummaryCard>
   );
 }
 
 /** What a first-time visitor sees: three steps and one button. */
 export function StartTracking({ onAdd }: { onAdd: () => void }) {
   return (
-    <Glass radius={22} tone="strong" style={[frost.hero, cardSurface.summary, styles.block]}>
-      <Kicker icon="trending-up">Start tracking in 3 steps</Kicker>
+    <SummaryCard>
+      <Text style={styles.title}>Start tracking in 3 steps</Text>
       {[
         'Add an investment: a fund, stocks, gold or a deposit.',
         'Invest money into it from a bank account.',
         'Update its value now and then to see the gain.',
       ].map((line, i) => (
-        <Text key={line} style={frost.sub}>
-          <Text style={frost.subBold}>{i + 1}. </Text>
+        <Text key={line} style={styles.hint}>
+          <Text style={styles.stepNo}>{i + 1}. </Text>
           {line}
         </Text>
       ))}
       <PrimaryButton title="Add your first investment" onPress={onAdd} />
-    </Glass>
+    </SummaryCard>
   );
 }
 
 const styles = StyleSheet.create({
-  // Cards sit on the screen gutter like every other screen's; the sections below bring their own.
-  block: { marginTop: 0, marginBottom: 12 },
-  bigFigure: { fontFamily: theme.font.bodyMedium, fontSize: 30, lineHeight: 36 },
-  hint: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textMuted },
+  title: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.textPrimary },
+  hint: { ...summaryNote, paddingHorizontal: 2 },
+  stepNo: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
 });

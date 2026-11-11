@@ -46,7 +46,14 @@ export const styles = StyleSheet.create({
   tileRow: { flexDirection: 'row', gap: 10, marginHorizontal: SCREEN.gutter, marginBottom: 10 },
   tileCell: { flex: 1, minWidth: 0 },
   // A white tile (StripCard) whose top strip says which way the money goes: mint they owe you, coral you owe.
-  personTile: { padding: 14 },
+  personTile: {
+    padding: 14,
+    borderRadius: 16,
+    backgroundColor: theme.colors.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
+    overflow: 'hidden',
+  },
   tileWho: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   tileAvatar: {
     width: 32,
@@ -75,7 +82,6 @@ export const styles = StyleSheet.create({
   },
   tileMeta: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary, marginTop: 2 },
   settledTitle: { ...SECTION_TITLE, marginHorizontal: 24, marginTop: 12, marginBottom: 8 },
-  settledCard: { marginHorizontal: SCREEN.gutter, overflow: 'hidden' },
   quietRow: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -1,10 +1,17 @@
 import { useState } from 'react';
 import { View, Pressable, ScrollView, StyleSheet, LayoutChangeEvent } from 'react-native';
 import { Text } from '@/components/Text';
-import { Glass } from '@/components/Glass';
-import { cardSurface } from '@/components/CardSurface';
 import { InsightDisclosure } from '@/components/InsightCard';
-import { Kicker, frost } from '@/components/Frost';
+import { CountUpAmount } from '@/components/CountUpAmount';
+import {
+  SummaryCard,
+  SummaryFacts,
+  SummarySide,
+  SummarySplit,
+  SummaryTop,
+  summaryFigure,
+  summaryNote,
+} from '@/components/SummaryCard';
 import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
 import { dayMonth, weekdayDayMonth } from '@/lib/dateLabels';
@@ -51,14 +58,6 @@ export function RecurringHero({
   const ink = themeInk(accent);
   const [width, setWidth] = useState(0);
   const running = totals.count > 0;
-  const caption = [
-    topShareLine(shares),
-    `${totals.count} running expense ${totals.count === 1 ? 'rule' : 'rules'}`,
-    nextDate ? `Next: ${weekdayDayMonth(nextDate)}` : null,
-  ]
-    .filter(Boolean)
-    .join(' · ');
-
   const start = today ? parseLocalIsoDate(today).getTime() : 0;
   const grouped = groupRunMarks(marks);
   const max = Math.max(1, ...grouped.map((m) => m.amountMinor));
@@ -137,53 +136,51 @@ export function RecurringHero({
     </>
   );
 
+  const biggest = shares[0];
   return (
     // Keyed so it can't lose its children when it switches between the two states.
-    <Glass
+    <SummaryCard
       key={running ? 'totals' : 'intro'}
-      radius={22}
-      tone="strong"
-      style={[styles.card, cardSurface.summary]}
+      style={timelineShown ? styles.cardWithDisclosure : undefined}
     >
       {running ? (
         <>
-          <View style={[frost.heroRow, styles.summary]}>
-            <View style={[frost.heroMain, { gap: 2 }]}>
-              <Kicker icon="repeat">Subscriptions & bills</Kicker>
-              <View style={frost.bigRow}>
-                <Text
-                  style={[frost.bigValue, { fontSize: 30, lineHeight: 36 }]}
+          <SummaryTop
+            label="Subscriptions & bills"
+            figure={
+              <View style={styles.figureRow}>
+                <CountUpAmount
+                  minor={totals.monthlyMinor}
+                  currency={currency}
+                  countFromZero={false}
+                  style={summaryFigure}
                   numberOfLines={1}
                   adjustsFontSizeToFit
-                >
-                  {formatMoney(totals.monthlyMinor, currency)}
-                </Text>
-                <Text style={frost.bigNote}>a month</Text>
+                />
+                <Text style={styles.figureNote}>a month</Text>
               </View>
-            </View>
-            <View style={frost.side}>
-              <Text style={frost.sideLabel}>A year</Text>
-              <Text style={frost.sideValue} numberOfLines={1} adjustsFontSizeToFit>
-                {formatMoney(totals.yearlyMinor, currency)}
-              </Text>
-            </View>
-          </View>
-
-          {schedule}
-
+            }
+            side={<SummarySide main={`${formatMoney(totals.yearlyMinor, currency)} a year`} />}
+          />
           {shares.length > 1 && (
-            <View style={styles.stack}>
-              {shares.map((s) => (
-                <View key={s.key} style={{ flex: s.minor, backgroundColor: s.color }} />
-              ))}
-            </View>
+            <SummarySplit parts={shares.map((s) => ({ key: s.key, weight: s.minor, color: s.color }))} />
           )}
-          <Text style={frost.sub}>{caption}</Text>
+          <SummaryFacts
+            facts={[
+              { label: 'Running', value: String(totals.count) },
+              ...(nextDate ? [{ label: 'Next due', value: weekdayDayMonth(nextDate) }] : []),
+              ...(shares.length > 1 && biggest
+                ? [{ label: 'Biggest', value: `${biggest.name} ${formatMoney(biggest.minor, currency)}` }]
+                : []),
+            ]}
+          />
+          {!!topShareLine(shares) && <Text style={styles.note}>{topShareLine(shares)}</Text>}
+          {schedule}
         </>
       ) : (
         <>
-          <Kicker icon="repeat">Subscriptions & bills</Kicker>
-          <Text style={frost.sub}>
+          <Text style={styles.title}>Subscriptions & bills</Text>
+          <Text style={styles.note}>
             {hasOtherCurrencies
               ? `No running expense rules in ${currency}.`
               : 'Set up rent, a subscription or your salary once. Due entries are added when you open Yume.'}
@@ -192,15 +189,21 @@ export function RecurringHero({
         </>
       )}
       {hasOtherCurrencies && (
-        <Text style={frost.sub}>Summary and timeline in {currency}. Other currencies are listed below.</Text>
+        <Text style={styles.note}>
+          Summary and timeline in {currency}. Other currencies are listed below.
+        </Text>
       )}
-    </Glass>
+    </SummaryCard>
   );
 }
 
 const styles = StyleSheet.create({
-  card: { padding: 14, gap: 8 },
-  summary: { flexWrap: 'wrap', gap: 8 },
+  // The timeline disclosure row sits flush with the card's bottom edge.
+  cardWithDisclosure: { paddingBottom: 4 },
+  figureRow: { flexDirection: 'row', alignItems: 'baseline', gap: 6, flexWrap: 'wrap' },
+  figureNote: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
+  title: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.textPrimary },
+  note: summaryNote,
   dateGroups: { gap: 6 },
   dateGroup: {
     minHeight: 44,
@@ -222,11 +225,4 @@ const styles = StyleSheet.create({
   dot: { position: 'absolute', borderWidth: 3, backgroundColor: theme.colors.surface },
   axis: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, justifyContent: 'space-between', marginTop: 2 },
   axisText: { fontFamily: theme.font.bodyMedium, fontSize: 11, color: theme.colors.textMuted },
-  stack: {
-    flexDirection: 'row',
-    height: 5,
-    gap: 2,
-    borderRadius: theme.radius.pill,
-    overflow: 'hidden',
-  },
 });
