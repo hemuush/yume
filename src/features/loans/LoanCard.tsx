@@ -94,7 +94,6 @@ export function LoanCard({
                 <Text style={styles.left}>{isBorrowed ? 'Principal remaining' : 'Still to receive'}</Text>
                 <CountUpAmount
                   minor={roundedMinor(loan.outstandingPrincipalMinor)}
-                  countFromZero={false}
                   style={styles.outstanding}
                   numberOfLines={1}
                   adjustsFontSizeToFit

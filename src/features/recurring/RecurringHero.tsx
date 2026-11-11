@@ -154,7 +154,6 @@ export function RecurringHero({
                 <CountUpAmount
                   minor={totals.monthlyMinor}
                   currency={currency}
-                  countFromZero={false}
                   style={summaryFigure}
                   numberOfLines={1}
                   adjustsFontSizeToFit

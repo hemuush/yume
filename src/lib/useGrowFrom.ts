@@ -15,30 +15,25 @@ export function resetGrowMemory(): void {
 }
 
 /**
- * A bar/ring value that grows from what it showed last: a new `key` draws in from 0, returning moves nothing,
- * a real change glides old → new; reduce motion = end value. Core `Animated`, JS driver (widths/SVG props).
+ * A bar/ring/line value that shows where it is at once and glides only when it really changes: a new `key` starts
+ * at its value (nothing draws in from empty), returning moves nothing, a real change glides old → new; reduce
+ * motion = end value. Core `Animated`, JS driver (widths/SVG props).
  */
 export function useGrowFrom(
   key: string,
   target: number,
-  {
-    drawMs = DURATIONS.draw,
-    changeMs = DURATIONS.standard,
-    delay = 0,
-  }: { drawMs?: number; changeMs?: number; delay?: number } = {}
+  { changeMs = DURATIONS.standard }: { changeMs?: number } = {}
 ): Animated.Value {
   const reduce = useReduceMotion();
-  const [v] = useState(() => new Animated.Value(lastShown.get(key) ?? 0));
-  const drawn = useRef(lastShown.has(key));
-  const previous = useRef({ key, target: lastShown.get(key) ?? 0 });
+  const [v] = useState(() => new Animated.Value(lastShown.get(key) ?? target));
+  const previous = useRef({ key, target: lastShown.get(key) ?? target });
 
-  // The durations are fixed per call site; only a new value or key moves the bar, so the effect starts the
-  // animation through an Effect Event instead of depending on them.
-  const animateTo = useEffectEvent((first: boolean) => {
+  // The duration is fixed per call site; only a new value or key moves the bar, so the effect starts the
+  // animation through an Effect Event instead of depending on it.
+  const animateTo = useEffectEvent(() => {
     const animation = Animated.timing(v, {
       toValue: target,
-      duration: first ? drawMs : changeMs,
-      delay: first ? delay : 0,
+      duration: changeMs,
       easing: EASE_OUT,
       useNativeDriver: false,
     });
@@ -51,21 +46,17 @@ export function useGrowFrom(
     const remembered = lastShown.get(key);
     if (changedKey) {
       v.stopAnimation();
-      v.setValue(remembered ?? 0);
-      drawn.current = remembered !== undefined;
+      v.setValue(remembered ?? target);
     }
     lastShown.set(key, target);
-    const unchanged = changedKey ? remembered === target : previous.current.target === target;
+    const unchanged = changedKey ? (remembered ?? target) === target : previous.current.target === target;
     previous.current = { key, target };
     if (reduce || unchanged) {
       v.stopAnimation();
       v.setValue(target);
-      drawn.current = true;
       return;
     }
-    const first = !drawn.current;
-    drawn.current = true;
-    const animation = animateTo(first);
+    const animation = animateTo();
     return () => animation.stop();
   }, [key, target, reduce, v]);
 

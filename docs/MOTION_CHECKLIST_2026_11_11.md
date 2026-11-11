@@ -1,3 +1,5 @@
+> The motion rules this checklist was written against changed: see [CALM_MOTION_2026_11_11.md](CALM_MOTION_2026_11_11.md). The per-file inventory of what animates is still accurate; the durations and presets it names are not.
+
 # Motion checklist — every screen and component (2026-11-11)
 
 Generated from a scan of every `.tsx` under `app/` and `src/` (281 files, 76 with motion), then reviewed. Each motion item is checked against the same six rules:

@@ -8,19 +8,19 @@ import { useReduceMotion } from './useReduceMotion';
 const lastShown = new Map<string, number>();
 
 /**
- * A shared value for a bar, line or ring that draws on the UI thread (smooth even while JavaScript is busy):
- * a new `key` draws in from 0, a key seen before keeps what it showed, a real change glides old to new, and
- * reduced motion goes straight to the end. The UI-thread twin of useGrowFrom.
+ * A shared value for a bar, line or ring on the UI thread (smooth even while JavaScript is busy): it shows its value
+ * at once (nothing draws in from empty), a key seen before keeps what it showed, a real change glides old to new,
+ * and reduced motion goes straight to the end. The UI-thread twin of useGrowFrom.
  */
 export function useDrawnValue(
   key: string,
   target: number,
-  duration: number = DURATIONS.draw
+  duration: number = DURATIONS.standard
 ): SharedValue<number> {
   const reduce = useReduceMotion();
-  const value = useSharedValue(reduce ? target : (lastShown.get(key) ?? 0));
+  const value = useSharedValue(reduce ? target : (lastShown.get(key) ?? target));
   useEffect(() => {
-    const from = lastShown.get(key) ?? 0;
+    const from = lastShown.get(key) ?? target;
     lastShown.set(key, target);
     if (reduce || from === target) {
       value.value = target;

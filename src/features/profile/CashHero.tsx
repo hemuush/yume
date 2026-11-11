@@ -32,13 +32,7 @@ export function CashHero({
           {masked ? (
             <Text style={styles.figure}>{formatMaskableMoney(0, { masked: true })}</Text>
           ) : (
-            <CountUpAmount
-              minor={minor}
-              countFromZero={false}
-              style={styles.figure}
-              numberOfLines={1}
-              adjustsFontSizeToFit
-            />
+            <CountUpAmount minor={minor} style={styles.figure} numberOfLines={1} adjustsFontSizeToFit />
           )}
         </View>
         <Text style={styles.sub}>{sub}</Text>

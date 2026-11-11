@@ -70,7 +70,6 @@ export function InvestmentsHero({
             <CountUpAmount
               minor={portfolio.valueMinor}
               currency={currency}
-              countFromZero={false}
               style={summaryFigure}
               numberOfLines={1}
               adjustsFontSizeToFit

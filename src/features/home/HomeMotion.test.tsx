@@ -1,6 +1,5 @@
 import { Animated, Text } from 'react-native';
 
-type EndCallback = (result: { finished: boolean }) => void;
 import { act, create, ReactTestRenderer } from 'react-test-renderer';
 
 let mockReduce = false;
@@ -66,46 +65,20 @@ it('shows settled money immediately when opening a screen by default', () => {
   expect(timing).not.toHaveBeenCalled();
 });
 
-it('continues a changed amount from the visible value and ignores an obsolete completion', () => {
-  const runs: { value: Animated.Value; finish?: EndCallback; stop: jest.Mock }[] = [];
-  jest.spyOn(Animated, 'timing').mockImplementation((value) => {
-    const run = {
-      value: value as Animated.Value,
-      stop: jest.fn(),
-      finish: undefined as EndCallback | undefined,
-    };
-    runs.push(run);
-    return {
-      start: (finish?: EndCallback) => {
-        run.finish = finish;
-      },
-      stop: run.stop,
-      reset: jest.fn(),
-    };
-  });
-  const r = render(<CountUpAmount minor={100000} countFromZero={false} />);
+it('changes a figure at once instead of rolling it, with no animation or listener', () => {
+  const timing = jest.spyOn(Animated, 'timing');
+  const r = render(<CountUpAmount minor={100000} />);
+  expect(text(r)).toContain('₹1,000');
   act(() => {
-    r.update(<CountUpAmount minor={300000} countFromZero={false} />);
+    r.update(<CountUpAmount minor={300000} />);
   });
-  act(() => {
-    runs[0].value.setValue(0.5);
-  });
-  expect(text(r)).toContain('₹2,000');
-  act(() => {
-    r.update(<CountUpAmount minor={500000} countFromZero={false} />);
-  });
-  expect(runs[0].stop).toHaveBeenCalled();
-  act(() => {
-    runs[0].finish?.({ finished: true });
-    runs[1].value.setValue(0.25);
-  });
-  expect(text(r)).toContain('₹2,750');
+  expect(text(r)).toContain('₹3,000');
   mockReduce = true;
   act(() => {
-    r.update(<CountUpAmount minor={500000} countFromZero={false} />);
+    r.update(<CountUpAmount minor={500000} />);
   });
-  expect(runs[1].stop).toHaveBeenCalled();
   expect(text(r)).toContain('₹5,000');
+  expect(timing).not.toHaveBeenCalled();
 });
 
 it('keeps the month label, figures and current-month chips together through interrupted transitions', () => {
@@ -159,7 +132,6 @@ it('cancels press feedback on reduced-motion changes and unmount', () => {
     feedback = usePressScale(0.92);
     return <Text>Button</Text>;
   }
-  const spring = jest.spyOn(Animated, 'spring');
   const timing = jest
     .spyOn(Animated, 'timing')
     .mockReturnValue({ start: jest.fn(), stop: jest.fn(), reset: jest.fn() });
@@ -171,12 +143,17 @@ it('cancels press feedback on reduced-motion changes and unmount', () => {
     feedback.onPressOut();
   });
   expect(stop).toHaveBeenCalledTimes(2);
-  expect(timing).toHaveBeenCalledTimes(1);
-  expect(timing).toHaveBeenCalledWith(
+  expect(timing).toHaveBeenCalledTimes(2);
+  expect(timing).toHaveBeenNthCalledWith(
+    1,
     scale,
-    expect.objectContaining({ toValue: 0.97, duration: 90, useNativeDriver: true })
+    expect.objectContaining({ toValue: 0.97, duration: 80, useNativeDriver: true })
   );
-  expect(spring).toHaveBeenCalledWith(scale, expect.objectContaining({ toValue: 1, useNativeDriver: true }));
+  expect(timing).toHaveBeenNthCalledWith(
+    2,
+    scale,
+    expect.objectContaining({ toValue: 1, duration: 120, useNativeDriver: true })
+  );
   mockReduce = true;
   act(() => r.update(<Button />));
   timing.mockClear();

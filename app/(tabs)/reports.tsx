@@ -94,7 +94,6 @@ import {
   BudgetCover,
 } from '@/features/reports/reportsInsights';
 import { errorMessage } from '@/lib/errorMessage';
-import { growHref } from '@/lib/cardGrow';
 import { withPressed } from '@/lib/pressed';
 import { EmptyState } from '@/components/EmptyState';
 import { useTabScrollToTop } from '@/lib/useTabScrollToTop';
@@ -537,11 +536,11 @@ export default function ReportsScreen() {
           router.navigate(`/transactions?account=${a.categoryId}&month=${range.start.slice(0, 7)}`)
       : undefined;
   // A category opens its own page (app/category/[id].tsx), on this same period.
-  const openCategory = (categoryId: string, grow = false) => {
+  const openCategory = (categoryId: string) => {
     const href = isCustomWindow(cursor)
       ? `/category/${categoryId}?g=custom&from=${cursor.start}&to=${cursor.end}`
       : `/category/${categoryId}?g=${cursor.granularity}&o=${cursor.offset}`;
-    router.push(grow ? growHref(href) : href);
+    router.push(href);
   };
   const onPressCategory = (c: CategoryBreakdownItem) => openCategory(c.categoryId);
   // The heatmap can be narrowed to one category, at any period length.
@@ -925,7 +924,7 @@ export default function ReportsScreen() {
                 rows={categoriesAgainstUsual(catTracks)}
                 catById={catById}
                 inProgress={historyInProgress}
-                onOpen={(id) => openCategory(id, true)}
+                onOpen={openCategory}
               />
             </>
           ) : (

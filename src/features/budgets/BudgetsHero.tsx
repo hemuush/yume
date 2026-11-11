@@ -51,7 +51,6 @@ export function BudgetsHero({ figures: h }: { figures: BudgetsHeroFigures }) {
         figure={
           <CountUpAmount
             minor={over ? h.overMinor : h.leftMinor}
-            countFromZero={false}
             style={[summaryFigure, over && { color: theme.colors.expenseText }]}
             numberOfLines={1}
             adjustsFontSizeToFit

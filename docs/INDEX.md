@@ -12,6 +12,8 @@ The [11 November Budgets, Recurring, Investments and Friends & family redesign](
 
 The [11 November Category detail, Recently deleted, Tidy up and Notifications redesign](CATEGORY_DELETED_TIDY_NOTIFICATIONS_2026_11_11.md) continues the same card on four more screens and tidies a few oversized figures. It does not establish device acceptance.
 
+The [11 November calm motion pass](CALM_MOTION_2026_11_11.md) simplifies the app's motion to short fades and glides (no rolling figures, draw-ins, staggers or springs) and supersedes the motion polish below.
+
 The [11 November motion polish](MOTION_POLISH_2026_11_11.md) and its [per-screen checklist](MOTION_CHECKLIST_2026_11_11.md) record the shared timings, curve and entrance presets.
 
 The [approved 5 November Home refinement](HOME_REFINEMENT_2026_11_05.md) records the implementation of the second screenshot direction, retained financial behavior and remaining Pixel acceptance checks.

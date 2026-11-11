@@ -1,8 +1,5 @@
-import { MOTION } from '@/lib/animation';
-import { DURATIONS } from '@/lib/motionTimings';
 import { useEffect, useRef, useState } from 'react';
 import { View, Pressable, StyleSheet, PanResponder, GestureResponderEvent, ViewInstance } from 'react-native';
-import Animated, { FadeIn, ReduceMotion } from 'react-native-reanimated';
 import { MAX_FONT_SCALE, Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { spendHeatScale, hexToHsl, shade } from '@/lib/color';
@@ -77,12 +74,6 @@ function useHeatColors(hue: string) {
   };
 }
 
-const enter = (delay: number) =>
-  FadeIn.duration(DURATIONS.draw - 60)
-    .delay(delay)
-    .easing(MOTION.ease)
-    .reduceMotion(ReduceMotion.System);
-
 function CalendarHeat({
   model,
   selectedIso,
@@ -109,15 +100,11 @@ function CalendarHeat({
     const d = rows[row][col];
     return d && !d.future ? d.iso : null;
   }, onSelect);
-  const renderDay = (d: HeatDay, pos: number) => {
+  const renderDay = (d: HeatDay) => {
     const selected = d.iso === selectedIso;
     const big = usualMinor > 0 && d.minor > usualMinor * BIG_DAY_FACTOR;
     return (
-      <Animated.View
-        key={d.iso}
-        entering={enter(Math.floor(pos / 7) * 45 + (pos % 7) * 22)}
-        style={styles.slot}
-      >
+      <View key={d.iso} style={styles.slot}>
         <Pressable
           disabled={d.future}
           onPress={() => onSelect(d.iso)}
@@ -139,7 +126,7 @@ function CalendarHeat({
           {big && <View style={styles.bigDot} />}
           {d.today && <View style={styles.todayDot} />}
         </Pressable>
-      </Animated.View>
+      </View>
     );
   };
   return (
@@ -153,7 +140,7 @@ function CalendarHeat({
       </View>
       {rows.map((row, r) => (
         <View key={r} style={styles.weekRow}>
-          {row.map((d, c) => (d ? renderDay(d, r * 7 + c) : <View key={`b${c}`} style={styles.slot} />))}
+          {row.map((d, c) => (d ? renderDay(d) : <View key={`b${c}`} style={styles.slot} />))}
         </View>
       ))}
     </View>
@@ -199,7 +186,7 @@ function MatrixHeat({
       accessibilityRole="image"
       accessibilityLabel="Spending overview. Use Choose day or month for details."
     >
-      {model.rows.map((row, r) => (
+      {model.rows.map((row) => (
         <View key={row.key} style={[styles.matrixRow, { height: rowHeight }]}>
           <View style={[styles.matrixLabelWrap, { width: labelWidth }]}>
             <Text style={[styles.matrixLabel, row.key === selectedMonth && styles.matrixLabelOn]}>
@@ -208,7 +195,7 @@ function MatrixHeat({
           </View>
           {row.days.map((d, c) =>
             d ? (
-              <Animated.View key={d.iso} entering={enter(r * 28 + c * 4)} style={styles.dotSlot}>
+              <View key={d.iso} style={styles.dotSlot}>
                 <View
                   style={[
                     styles.dot,
@@ -218,7 +205,7 @@ function MatrixHeat({
                     { backgroundColor: scale[d.level] },
                   ]}
                 />
-              </Animated.View>
+              </View>
             ) : (
               <View key={`x${c}`} style={styles.dotSlot} />
             )
