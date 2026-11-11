@@ -35,7 +35,7 @@ export const styles = StyleSheet.create({
   lineHeadText: { fontFamily: theme.font.body, fontSize: 11, lineHeight: 16, color: theme.colors.textMuted },
   dayTick: {
     position: 'absolute',
-    top: -4,
+    top: -1,
     width: 2,
     height: 20,
     marginLeft: -1,
@@ -80,7 +80,7 @@ export const styles = StyleSheet.create({
   howLinkText: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.link },
 
   // The month as one line: spent, saved, bills and free, in the colours the legend below uses.
-  line: { flexDirection: 'row', gap: 3, height: 12 },
+  line: { flexDirection: 'row', alignItems: 'center', gap: 3, height: 18 },
   lineWrap: { marginTop: 6 },
   lineOrigin: { transformOrigin: 'left center' },
   lineSegment: { height: 12, borderRadius: 6, minWidth: 5 },

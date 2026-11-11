@@ -12,6 +12,10 @@ export interface LegendItem {
   share: string;
   onPress?: () => void;
   expanded?: boolean;
+  /** What tapping it does, read after its name. */
+  hint?: string;
+  /** The slice picked on the line above: its figure turns bold. */
+  selected?: boolean;
 }
 
 /** Below this font scale the columns sit in one row; above it they pair up so each keeps its figure whole. */
@@ -35,8 +39,8 @@ export function HeroLegend({ items }: { items: LegendItem[] }) {
             key={it.key}
             onPress={it.onPress}
             accessibilityRole={it.onPress ? 'button' : undefined}
-            accessibilityState={it.onPress ? { expanded: it.expanded } : undefined}
-            accessibilityHint={it.onPress ? 'Shows how this adds up' : undefined}
+            accessibilityState={it.onPress ? { expanded: it.expanded, selected: it.selected } : undefined}
+            accessibilityHint={it.onPress ? it.hint : undefined}
             accessible
             accessibilityLabel={`${it.label}, ${amount}, ${it.share}`}
             style={[
@@ -52,7 +56,7 @@ export function HeroLegend({ items }: { items: LegendItem[] }) {
                 {it.label}
               </Text>
             </View>
-            <Text style={styles.amount} numberOfLines={1}>
+            <Text style={[styles.amount, it.selected && styles.amountOn]} numberOfLines={1}>
               {amount}
             </Text>
           </Container>
@@ -81,4 +85,5 @@ const styles = StyleSheet.create({
     color: theme.colors.textPrimary,
     fontVariant: ['tabular-nums'],
   },
+  amountOn: { fontFamily: theme.font.bodyBold },
 });

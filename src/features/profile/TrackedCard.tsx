@@ -67,7 +67,7 @@ export function TrackedCard({
   return (
     <View style={embedded ? styles.embedded : [h.card, cardSurface.neutral, styles.card]}>
       <Pressable
-        style={withPressedTint(secondary, [styles.head, embedded && styles.headEmbedded])}
+        style={withPressedTint(secondary, styles.head)}
         onPress={() => setOpen((v) => !v)}
         accessibilityRole="button"
         accessibilityState={{ expanded: open }}
@@ -87,7 +87,7 @@ export function TrackedCard({
       </Pressable>
       {open && (
         <ReanimatedAnimated.View entering={PANEL_ENTER} exiting={ROW_EXIT}>
-          <View style={[styles.sumLines, !embedded && styles.inset]}>
+          <View style={[styles.sumLines, styles.inset]}>
             <SumLine
               color={secondary}
               label={accountsLabel}
@@ -114,7 +114,7 @@ export function TrackedCard({
           </View>
           {untrackedAssetLoan ? (
             <Pressable
-              style={withPressedTint(secondary, [styles.hint, styles.hintWarn, !embedded && styles.inset])}
+              style={withPressedTint(secondary, [styles.hint, styles.hintWarn, styles.inset])}
               onPress={() => router.push('/loans')}
               accessibilityRole="button"
               accessibilityLabel="A loan's home or vehicle isn't counted yet. Open loans to add its value"
@@ -128,7 +128,7 @@ export function TrackedCard({
             </Pressable>
           ) : (
             hasLoans && (
-              <View style={[styles.hint, !embedded && styles.inset]}>
+              <View style={[styles.hint, styles.inset]}>
                 <MaterialCommunityIcons name="information-outline" size={16} color={theme.colors.textMuted} />
                 <Text style={styles.hintText}>
                   Loans with a tracked asset value count their real equity here, not just the debt.
@@ -147,7 +147,6 @@ const styles = StyleSheet.create({
   // At the foot of the money map, which draws the glass and the padding.
   embedded: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.divider },
   head: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, minHeight: 44 },
-  headEmbedded: { paddingHorizontal: 0 },
   headText: { flex: 1, minWidth: 0, flexDirection: 'row', flexWrap: 'wrap', columnGap: 6 },
   label: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textPrimary },
   headSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },

@@ -135,34 +135,3 @@ export function buildWeeklySpendBars(
     };
   });
 }
-
-export interface ChartLegendItem {
-  categoryId: string;
-  name: string;
-  color: string;
-  /** What the bars hold for it across the period. */
-  totalMinor: number;
-}
-
-/**
- * Categories that appear in `bars` (not the full list), biggest spend first, so a legend of the first few
- * names the ones that matter.
- */
-export function legendForBars(bars: SpendBar[]): ChartLegendItem[] {
-  const seen = new Map<string, ChartLegendItem & { totalMinor: number }>();
-  for (const bar of bars) {
-    if (bar.totalMinor <= 0 || bar.state) continue;
-    for (const seg of bar.segments) {
-      const item = seen.get(seg.categoryId);
-      if (item) item.totalMinor += seg.amountMinor;
-      else
-        seen.set(seg.categoryId, {
-          categoryId: seg.categoryId,
-          name: seg.name,
-          color: seg.color,
-          totalMinor: seg.amountMinor,
-        });
-    }
-  }
-  return [...seen.values()].sort((a, b) => b.totalMinor - a.totalMinor);
-}

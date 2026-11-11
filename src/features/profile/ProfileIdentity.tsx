@@ -61,7 +61,7 @@ export function ProfileIdentity({
             {name || 'Add your name'}
           </Text>
           <Text style={local.sub}>
-            Member since {memberSince ?? new Date().getFullYear()} · On this phone, works offline
+            Member since {memberSince ?? new Date().getFullYear()} · On this phone
           </Text>
         </Pressable>
         {!editing && (
@@ -116,34 +116,24 @@ export function ProfileIdentity({
 }
 
 const local = StyleSheet.create({
-  // One slim card: the avatar, the name with a line under it, and an edit button.
-  card: {
-    marginHorizontal: SCREEN.gutter,
-    marginTop: theme.layout.screenTopGap,
-    paddingVertical: 10,
-    paddingLeft: 12,
-    paddingRight: 4,
-    borderRadius: 22,
-    borderWidth: 1,
-    borderColor: theme.colors.borderSoft,
-    backgroundColor: theme.colors.surface,
-  },
+  // One slim line with no card: the avatar, the name with a line under it, and an edit button.
+  card: { marginHorizontal: SCREEN.gutter, marginTop: 8 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 14,
+    width: 36,
+    height: 36,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
     // A circular View's background can render clipped to a stale layout on Android.
     overflow: 'hidden',
   },
-  avatarInitial: { fontFamily: theme.font.roundedBold, fontSize: 18 },
+  avatarInitial: { fontFamily: theme.font.roundedBold, fontSize: 16 },
   text: { flex: 1, minWidth: 0, minHeight: 44, justifyContent: 'center' },
   name: { fontFamily: theme.font.roundedBold, fontSize: 16, color: theme.colors.textPrimary },
   sub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
   editButton: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
-  editForm: { marginTop: 8, marginRight: 12, gap: 8 },
+  editForm: { marginTop: 4, gap: 8 },
   inputLabel: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
   editActions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   editAction: { flexGrow: 1, flexBasis: 110 },

@@ -22,12 +22,14 @@ export function TransactionsSkeleton() {
         </View>
       </View>
 
-      {[0, 1].map((g) => (
-        <View key={g} style={styles.dayGroup}>
-          <Skeleton width={90} height={11} radius={4} />
-          <View style={styles.dayCard}>
+      <View style={styles.dayCard}>
+        {[0, 1].map((g) => (
+          <View key={g}>
+            <View style={styles.dayHead}>
+              <Skeleton width={90} height={11} radius={4} />
+            </View>
             {[0, 1].map((i) => (
-              <View key={i} style={[styles.row, i > 0 && styles.rowDivider]}>
+              <View key={i} style={styles.row}>
                 <Skeleton width={32} height={32} radius={16} />
                 <View style={styles.rowMid}>
                   <Skeleton width={130} height={13} radius={4} />
@@ -37,8 +39,8 @@ export function TransactionsSkeleton() {
               </View>
             ))}
           </View>
-        </View>
-      ))}
+        ))}
+      </View>
     </View>
   );
 }
@@ -59,23 +61,23 @@ const styles = StyleSheet.create({
     height: 48,
     marginTop: 20,
   },
-  dayGroup: { marginTop: 16 },
   dayCard: {
-    marginTop: 6,
+    marginTop: 12,
     backgroundColor: theme.colors.surface,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
-    borderRadius: theme.radius.xl2,
+    borderRadius: 16,
     overflow: 'hidden',
+    paddingBottom: 6,
   },
+  dayHead: { paddingHorizontal: 14, paddingTop: 14, paddingBottom: 4 },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
     minHeight: 52,
-    paddingVertical: 9,
-    paddingHorizontal: 12,
+    paddingVertical: 6,
+    paddingHorizontal: 14,
   },
-  rowDivider: { borderTopWidth: 1, borderTopColor: theme.colors.divider },
   rowMid: { flex: 1 },
 });
