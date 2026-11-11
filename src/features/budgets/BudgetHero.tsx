@@ -119,11 +119,11 @@ const styles = StyleSheet.create({
   amountOver: { color: theme.colors.expenseText },
   meter: { marginTop: 12 },
   line: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 4, marginTop: 8 },
-  spent: { fontFamily: theme.font.body, fontSize: 12.5, lineHeight: 18, color: theme.colors.textSecondary },
+  spent: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 18, color: theme.colors.textSecondary },
   spentFigure: {
     fontFamily: theme.font.bodyMedium,
     color: theme.colors.textPrimary,
     fontVariant: ['tabular-nums'],
   },
-  status: { fontFamily: theme.font.body, fontSize: 12.5, lineHeight: 18, color: theme.colors.textSecondary },
+  status: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 18, color: theme.colors.textSecondary },
 });

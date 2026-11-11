@@ -108,7 +108,7 @@ const styles = StyleSheet.create({
   per: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 15, color: theme.colors.textSecondary },
   meta: {
     fontFamily: theme.font.body,
-    fontSize: 12.5,
+    fontSize: 12,
     lineHeight: 18,
     color: theme.colors.textSecondary,
     marginTop: 8,

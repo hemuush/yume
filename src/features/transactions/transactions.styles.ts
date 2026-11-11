@@ -275,7 +275,7 @@ export const styles = StyleSheet.create({
   quickText: {
     flexShrink: 1,
     fontFamily: theme.font.bodyMedium,
-    fontSize: 12.5,
+    fontSize: 12,
     color: theme.colors.textPrimary,
   },
   // Edit, then the bin, which turns into a red "Delete?" on the first tap.

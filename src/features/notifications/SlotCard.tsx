@@ -111,5 +111,5 @@ const styles = StyleSheet.create({
     color: theme.colors.textPrimary,
     textAlign: 'center',
   },
-  range: { fontFamily: theme.font.body, fontSize: 11.5, color: theme.colors.textMuted, textAlign: 'center' },
+  range: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, textAlign: 'center' },
 });
