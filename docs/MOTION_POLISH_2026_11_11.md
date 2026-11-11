@@ -20,3 +20,10 @@ Screen-by-screen pass:
 - Every core-`Animated` timing (toggle knob, fade-in hook, completion card, loan wizard fill) now uses `EASE_OUT`; the card-grow transition (Budgets, Savings goals, Category) uses `MOTION.ease` and runs 300 ms.
 - Reviewed with no further change needed: secondary screens (Backup, Categories, People, Themes, Recurring, Investments, Notifications, Export, Tidy up, What-if, Split) only scroll with the collapsing header and press-scale controls; Budgets, Goals and Loans lists use `MovingRow`; Settings/You/Tracked panels use `PANEL_ENTER`/`ROW_EXIT`.
 - Not touched: Wrap and Garden (decorative, own timings).
+
+Audit pass (read each motion file):
+
+- Confirmed Reanimated accepts `Easing.bezier` (factory) in `withTiming` and layout-animation builders.
+- Confirmed no view mixes core `Animated` styles with Reanimated entering/layout props.
+- `GrowFill` animates width (kept: scaling would squash its rounded ends).
+- No web target exists, so nothing here has been run in a real renderer; feel is unchecked on device.
