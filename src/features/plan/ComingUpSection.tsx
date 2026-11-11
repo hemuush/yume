@@ -6,7 +6,7 @@ import { dueDateLabel } from '@/lib/dueDate';
 import { withPressed, withPressedTint } from '@/lib/pressed';
 import { formatMoney } from '@/lib/money';
 import { weekdayDayMonth } from '@/lib/dateLabels';
-import { hexToRgba, shade } from '@/lib/color';
+import { shade } from '@/lib/color';
 import { useAccent } from '@/theme/AccentContext';
 import { themeInk } from '@/theme/interactionColors';
 import { DueGroup, PlanDueItem, PlanRoute, dueTone } from './planOverview';
@@ -86,11 +86,22 @@ export function ComingUpSection({
           <Feather name="chevron-right" size={16} color={theme.colors.textMuted} />
         </Pressable>
       ) : (
-        shown.map((g, gi) => {
+        shown.map((g) => {
           const late = g.items.some((item) => item.dueDate < g.date);
           return (
             <View key={g.date}>
-              <View style={[s.dayHead, gi > 0 && s.dayHeadDivider]}>
+              <View
+                style={[
+                  s.dayHead,
+                  {
+                    backgroundColor: late
+                      ? theme.colors.expenseTint
+                      : g.date === today
+                        ? shade(accent, 93)
+                        : theme.colors.tray,
+                  },
+                ]}
+              >
                 <Text style={[s.dayHeadText, late && s.dayHeadLate]}>
                   {g.date === today ? 'Today · ' : ''}
                   {weekdayDayMonth(g.date)}
@@ -129,23 +140,26 @@ export function ComingUpSection({
                       style={[
                         s.icon,
                         {
+                          // One neutral theme tint for every payment; only late (red) and income (green) differ.
                           backgroundColor:
                             tone === 'urgent'
                               ? theme.colors.expenseTint
-                              : item.kind === 'emi'
-                                ? hexToRgba(accent, 0.18)
-                                : incoming
-                                  ? theme.colors.incomeTint
-                                  : item.key.startsWith('card-')
-                                    ? theme.colors.idGold
-                                    : theme.colors.secondaryTint,
+                              : incoming
+                                ? theme.colors.incomeTint
+                                : shade(accent, 92),
                         },
                       ]}
                     >
                       <Feather
                         name={kindIcon(item)}
                         size={15}
-                        color={tone === 'urgent' ? theme.colors.expense : theme.colors.ink}
+                        color={
+                          tone === 'urgent'
+                            ? theme.colors.expenseText
+                            : incoming
+                              ? theme.colors.incomeText
+                              : theme.colors.ink
+                        }
                       />
                     </View>
                     <View style={s.mid}>
@@ -186,7 +200,7 @@ const s = StyleSheet.create({
     borderWidth: 1,
     borderColor: theme.colors.borderSoft,
     overflow: 'hidden',
-    paddingBottom: 2,
+    paddingBottom: 4,
   },
   dayHead: {
     flexDirection: 'row',
@@ -195,22 +209,16 @@ const s = StyleSheet.create({
     justifyContent: 'space-between',
     columnGap: 8,
     paddingHorizontal: 14,
-    paddingTop: 10,
-    paddingBottom: 2,
-  },
-  dayHeadDivider: {
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: theme.colors.divider,
-    marginTop: 4,
+    paddingVertical: 8,
   },
   dayHeadText: {
     flexShrink: 1,
     fontFamily: theme.font.bodyBold,
     fontSize: 12,
-    color: theme.colors.textMuted,
+    color: theme.colors.textSecondary,
   },
   dayHeadLate: { color: theme.colors.expenseText },
-  dayHeadNote: { fontFamily: theme.font.body, color: theme.colors.textMuted },
+  dayHeadNote: { fontFamily: theme.font.body, color: theme.colors.textSecondary },
   dayTotal: {
     fontFamily: theme.font.body,
     fontSize: 12,
