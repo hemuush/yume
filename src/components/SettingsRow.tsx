@@ -144,7 +144,6 @@ const styles = StyleSheet.create({
   },
   dimmed: { opacity: 0.45 },
   compactRow: { minHeight: 52, paddingVertical: 8 },
-  compactIcon: { width: 28, height: 28, borderRadius: 14 },
   compactSub: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, marginTop: 0 },
   compactValue: { fontFamily: theme.font.bodyBold, fontSize: 12 },
   round: { borderRadius: 19 },

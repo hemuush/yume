@@ -1,8 +1,6 @@
 import { View } from 'react-native';
 import { Text } from '@/components/Text';
-import { theme } from '@/constants/theme';
 import { PrimaryButton } from '@/components/PrimaryButton';
-import { StripCard } from '@/components/StripCard';
 import { styles } from '@/features/add/add.styles';
 import type { AddEntryModel } from '@/features/add/types/addEntryModel';
 import type { ReactElement } from 'react';
@@ -22,11 +20,11 @@ export function AddEntryLoadNotice({ model }: Props): ReactElement {
         </View>
       )}
       {isLinked && (
-        <StripCard tone={theme.colors.slice.due} lifted={false} style={[styles.linkedNote, styles.noteCard]}>
+        <View style={[styles.noteCard, styles.linkedNote]}>
           <Text style={styles.linkedText}>
             This entry is tied to a loan or a person&rsquo;s ledger — edit it from there.
           </Text>
-        </StripCard>
+        </View>
       )}
     </>
   );

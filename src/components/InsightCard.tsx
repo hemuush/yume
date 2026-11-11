@@ -145,7 +145,7 @@ export const insight = StyleSheet.create({
   },
   value: {
     fontFamily: theme.font.bodyMedium,
-    fontSize: 22,
+    fontSize: 20,
     color: theme.colors.textPrimary,
     fontVariant: ['tabular-nums'],
   },

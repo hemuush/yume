@@ -299,9 +299,16 @@ export const styles = StyleSheet.create({
   },
   removeBtn: { width: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' },
 
-  linkedNote: { marginBottom: 16 },
-  // A white note card with a strip; the space at the top clears the strip.
-  noteCard: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 12 },
+  // A tinted note: amber, because the entry can't be edited here.
+  linkedNote: { marginBottom: 16, backgroundColor: theme.colors.dueTint },
+  // A flat note card.
+  noteCard: {
+    padding: 14,
+    borderRadius: theme.radius.xl,
+    backgroundColor: theme.colors.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
+  },
   linkedText: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textPrimary, lineHeight: 17 },
 
   // Frosted discs and pills on the wallpaper, like the other headers' buttons.

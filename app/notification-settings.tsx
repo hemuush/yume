@@ -11,7 +11,7 @@ import { useCollapsingHeader } from '@/lib/useCollapsingHeader';
 import { ToggleSwitch } from '@/components/ToggleSwitch';
 import { SettingsRow } from '@/components/SettingsRow';
 import { Section } from '@/components/Section';
-import { screenStyles as h, SCREEN } from '@/components/screenStyles';
+import { SCREEN } from '@/components/screenStyles';
 import { SlotCard } from '@/features/notifications/SlotCard';
 import { CardRowsSkeleton } from '@/components/ListSkeleton';
 import { ScreenLoadError } from '@/components/ScreenLoadError';
@@ -32,7 +32,7 @@ import { showAlert } from '@/components/AppDialog';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { useAccent } from '@/theme/AccentContext';
 import { shade } from '@/lib/color';
-import { cardSurface } from '@/components/CardSurface';
+import { ListCard } from '@/components/SummaryCard';
 import { HomeWallpaper } from '@/features/home/HomeWallpaper';
 import { DayArc } from '@/features/notifications/DayArc';
 
@@ -281,7 +281,7 @@ export default function NotificationSettingsScreen() {
             </Text>
           }
         >
-          <View style={[h.card, cardSurface.neutral]}>
+          <ListCard>
             <SettingsRow
               icon="credit-card-outline"
               iconBg={theme.colors.idGold}
@@ -356,11 +356,11 @@ export default function NotificationSettingsScreen() {
                 />
               }
             />
-          </View>
+          </ListCard>
         </Section>
 
         <Section title="In the app">
-          <View style={[h.card, cardSurface.neutral]}>
+          <ListCard>
             <SettingsRow
               icon="sprout"
               iconBg={shade(secondary, 94)}
@@ -374,11 +374,11 @@ export default function NotificationSettingsScreen() {
                 />
               }
             />
-          </View>
+          </ListCard>
         </Section>
 
         <Section title="Delivery">
-          <View style={[h.card, cardSurface.neutral]}>
+          <ListCard>
             <Pressable
               onPress={() => setTroubleOpen((v) => !v)}
               style={withPressedTint(accent, styles.troubleRow)}
@@ -445,7 +445,7 @@ export default function NotificationSettingsScreen() {
                 </Text>
               </View>
             )}
-          </View>
+          </ListCard>
         </Section>
 
         <Text style={styles.footNote}>At most one notification per time. Nothing leaves your phone.</Text>

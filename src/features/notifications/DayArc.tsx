@@ -3,7 +3,7 @@ import { View, StyleSheet, LayoutChangeEvent } from 'react-native';
 import Svg, { Path, Line, Circle } from 'react-native-svg';
 import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
-import { screenStyles as h } from '@/components/screenStyles';
+import { SummaryCard } from '@/components/SummaryCard';
 import { theme } from '@/constants/theme';
 import { formatSlotTime } from '@/lib/notificationTimes';
 
@@ -43,7 +43,7 @@ export function DayArc({ morning, evening }: { morning: Slot; evening: Slot }) {
     : 'No times on';
 
   return (
-    <View style={[h.card, styles.card]}>
+    <SummaryCard style={styles.card}>
       <Text style={styles.kicker}>Your day with Yume</Text>
       <View
         style={styles.plot}
@@ -119,12 +119,12 @@ export function DayArc({ morning, evening }: { morning: Slot; evening: Slot }) {
         )}
         <Text style={styles.axisText}>Midnight</Text>
       </View>
-    </View>
+    </SummaryCard>
   );
 }
 
 const styles = StyleSheet.create({
-  card: { marginTop: theme.layout.screenTopGap, padding: 14, gap: 8 },
+  card: { gap: 8 },
   kicker: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textSecondary },
   plot: { height: HEIGHT, marginTop: 4 },
   icon: {
