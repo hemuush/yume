@@ -20,12 +20,27 @@ import type { Portfolio } from '@/lib/portfolio';
  * figure (what they are worth) and a line under it (the return, or how many values are due). Opens the
  * Investments page; with none yet, the same dashed add tile the others use invites you to track the first.
  */
-export function InvestmentsCard({ portfolio, onOpen }: { portfolio: Portfolio; onOpen: () => void }) {
+export function InvestmentsCard({
+  portfolio,
+  onOpen,
+  extraTile,
+}: {
+  portfolio: Portfolio;
+  onOpen: () => void;
+  /** Another tile in the same row (Plan puts its what-if idea beside the investments). */
+  extraTile?: React.ReactNode;
+}) {
   const { hideAmounts } = usePrivacy();
   const none = portfolio.holdings.length === 0 && portfolio.otherCurrency.length === 0;
   if (none) {
     return (
-      <TileGrid tiles={[]} label="Add" accessibilityLabel="Track an investment" onAdd={onOpen} limit={1} />
+      <TileGrid
+        tiles={extraTile ? [extraTile] : []}
+        label="Add"
+        accessibilityLabel="Track an investment"
+        onAdd={onOpen}
+        limit={extraTile ? 2 : 1}
+      />
     );
   }
   const due = portfolio.holdings.filter((x) => x.stale).length;
@@ -59,30 +74,33 @@ export function InvestmentsCard({ portfolio, onOpen }: { portfolio: Portfolio; o
             hideAmounts || pct == null ? '' : `, ${formatReturnPct(pct)} return`
           }${due > 0 ? `, ${due} ${due === 1 ? 'value is' : 'values are'} due an update` : ''}. Open investments`}
         >
-          <Glass radius={20} style={[styles.tileFill, cardSurface.neutral]}>
-            <View style={[styles.tileIcon, { backgroundColor: softTint(theme.colors.slice.saved, 0.6) }]}>
-              <MaterialCommunityIcons name="trending-up" size={18} color={theme.colors.ink} />
+          <Glass radius={16} style={[styles.tileFill, cardSurface.neutral]}>
+            <View style={styles.tileHead}>
+              <View style={[styles.tileIcon, { backgroundColor: softTint(theme.colors.slice.saved, 0.6) }]}>
+                <MaterialCommunityIcons name="trending-up" size={14} color={theme.colors.ink} />
+              </View>
+              {hideAmounts ? (
+                <Feather name="eye-off" size={16} color={theme.colors.textMuted} />
+              ) : (
+                <Text style={styles.tilePct} numberOfLines={1}>
+                  {compactMoney(portfolio.valueMinor)}
+                </Text>
+              )}
             </View>
             <Text style={styles.tileName} numberOfLines={2}>
               Investments
             </Text>
-            {hideAmounts ? (
-              <Feather name="eye-off" size={20} color={theme.colors.textMuted} />
-            ) : (
-              <Text style={styles.tilePct} numberOfLines={1} adjustsFontSizeToFit>
-                {compactMoney(portfolio.valueMinor)}
-              </Text>
-            )}
-            <Text style={[styles.tileAmt, { color: tone, marginTop: 'auto' }]} numberOfLines={2}>
+            <Text style={[styles.tileAmt, { color: tone }]} numberOfLines={2}>
               {due > 0 ? `${due} ${due === 1 ? 'value' : 'values'} due` : line}
             </Text>
           </Glass>
         </Pressable>,
+        ...(extraTile ? [extraTile] : []),
       ]}
       label="Add"
       accessibilityLabel="Track an investment"
       onAdd={onOpen}
-      limit={1}
+      limit={extraTile ? 2 : 1}
     />
   );
 }

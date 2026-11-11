@@ -130,3 +130,46 @@ describe('large text', () => {
     expect(metrics(4)).toEqual(metrics(2));
   });
 });
+
+describe('SpendBarChart capsules', () => {
+  const render = (selectedKey: string | null) => {
+    let r!: ReactTestRenderer;
+    act(() => {
+      r = create(
+        <SpendBarChart bars={bars} onPressDay={jest.fn()} selectedKey={selectedKey} inset={0} dates amounts />
+      );
+    });
+    return r;
+  };
+  // The test environment reports a doubled font scale; the layout under test is the ordinary one.
+  const atFontScale = (fontScale: number, fn: () => void) => {
+    const dimensions = jest
+      .spyOn(require('react-native'), 'useWindowDimensions')
+      .mockReturnValue({ width: 390, height: 800, scale: 3, fontScale });
+    try {
+      fn();
+    } finally {
+      dimensions.mockRestore();
+    }
+  };
+
+  it('puts a short amount over each bar, its date under the weekday, and the exact amount over the picked one', () =>
+    atFontScale(1, () => {
+      const shown = texts(render(null));
+      expect(shown).toEqual(expect.arrayContaining(['₹13k', '₹175', '1', '2', '3']));
+      expect(texts(render('2026-10-01'))).toContain('₹13484');
+    }));
+
+  it('does not repeat the picked amount in a bubble when it already sits over the bar', () =>
+    atFontScale(1, () => {
+      const shown = texts(render('2026-10-01'));
+      expect(shown.filter((t) => t === '₹13484')).toHaveLength(1);
+    }));
+
+  it('keeps the bubble, and drops the short amounts, at large text', () =>
+    atFontScale(1.5, () => {
+      const shown = texts(render('2026-10-01'));
+      expect(shown).not.toContain('₹175');
+      expect(shown).toContain('₹13484');
+    }));
+});

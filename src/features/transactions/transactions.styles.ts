@@ -111,10 +111,12 @@ export const styles = StyleSheet.create({
   // Compact: Spent, Money in and Left side by side as label-over-value figures, none of them a hero.
   sumCard: {
     marginHorizontal: 16,
-    marginTop: 8,
+    marginTop: 12,
     paddingHorizontal: 14,
-    paddingTop: 12,
-    paddingBottom: 10,
+    paddingTop: 14,
+    paddingBottom: 14,
+    // One lifted card over a list of flat ones. It is a single element, so the shadow costs nothing in scrolling.
+    boxShadow: '0px 1px 2px rgba(18,19,15,0.04), 0px 8px 24px rgba(18,19,15,0.05)',
     overflow: 'visible',
   },
   sumKicker: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
@@ -127,21 +129,13 @@ export const styles = StyleSheet.create({
     color: theme.colors.textPrimary,
   },
   // The change against the period before, one line under the figure (green when spending is down).
-  sumChangeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    flexShrink: 1,
-    minHeight: 24,
-    paddingHorizontal: 9,
-    paddingVertical: 3,
-    borderRadius: 12,
-  },
-  sumChangeUp: { backgroundColor: theme.colors.expenseTint },
-  sumChangeDown: { backgroundColor: theme.colors.incomeTint },
-  sumChange: { flexShrink: 1, fontFamily: theme.font.bodyMedium, fontSize: 12 },
-  // Room above the tallest bar for the tapped bar's amount bubble.
-  sumChart: { marginTop: 14 },
+  // The comparison, right-aligned: the figure in colour, what it is against in a quiet line under it.
+  sumChange: { flexShrink: 1, alignItems: 'flex-end' },
+  sumChangeStacked: { alignItems: 'flex-start' },
+  sumChangeRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  sumChangeValue: { fontFamily: theme.font.bodyMedium, fontSize: 13, fontVariant: ['tabular-nums'] },
+  sumChangeCaption: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted },
+  sumChart: { marginTop: 8 },
   sumTop: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 10 },
   sumTopStacked: { flexDirection: 'column', alignItems: 'flex-start', gap: 6 },
   sumLead: { flexShrink: 1, minWidth: 0 },
@@ -248,7 +242,7 @@ export const styles = StyleSheet.create({
 
   // Type filter as one segmented bar, then picked categories/accounts on their own line (only when some).
   // The gap below matches the gap between days.
-  typeFilterRow: { flexDirection: 'row', alignItems: 'center', marginTop: 10, paddingLeft: 16, gap: 6 },
+  typeFilterRow: { flexDirection: 'row', alignItems: 'center', marginTop: 12, paddingLeft: 16, gap: 6 },
   // The type pills scroll sideways under the Filters button; at large text they wrap instead.
   typeBar: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingRight: 16 },
   typeBarWrap: { flex: 1, flexWrap: 'wrap' },

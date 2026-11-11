@@ -41,6 +41,10 @@ const text = () =>
     .map((n) => n.props.children)
     .flat(Infinity)
     .join('');
+const pressIncome = () =>
+  tree.root
+    .findAll((n) => n.props.accessibilityLabel === 'Edit expected income' && n.props.onPress)[0]
+    .props.onPress();
 const button = (title: string) =>
   tree.root.findAllByType(PrimaryButton).find((n) => n.props.title === title)!;
 afterEach(() => {
@@ -57,7 +61,7 @@ it.each(['-50', 'invalid', '999999999999999999'])(
     await act(async () => {
       tree = create(<MonthlyPlanCheck input={input} currency="INR" hidden={false} />);
     });
-    act(() => button('Income').props.onPress());
+    act(() => pressIncome());
     act(() => tree.root.findByType(AmountField).props.onChangeText(value));
     await act(async () => button('Save estimate').props.onPress());
     expect((setMonthlyPlanIncome as jest.Mock).mock.calls[0][1]).not.toBe(0);
@@ -71,7 +75,7 @@ it('allows an explicit zero income estimate', async () => {
   await act(async () => {
     tree = create(<MonthlyPlanCheck input={input} currency="INR" hidden={false} />);
   });
-  act(() => button('Income').props.onPress());
+  act(() => pressIncome());
   act(() => tree.root.findByType(AmountField).props.onChangeText('0'));
   await act(async () => button('Save estimate').props.onPress());
   expect(setMonthlyPlanIncome).toHaveBeenCalledWith('INR', 0);
@@ -100,7 +104,7 @@ it('does not let a completed old save overwrite a restored estimate', async () =
   await act(async () => {
     tree = create(<MonthlyPlanCheck input={input} currency="INR" hidden={false} refreshToken={{}} />);
   });
-  act(() => button('Income').props.onPress());
+  act(() => pressIncome());
   act(() => tree.root.findByType(AmountField).props.onChangeText('150'));
   let pending!: Promise<void>;
   act(() => {
@@ -115,4 +119,29 @@ it('does not let a completed old save overwrite a restored estimate', async () =
   });
   expect(text()).toContain(formatMoney(20000, 'INR'));
   expect(text()).not.toContain(formatMoney(15000, 'INR'));
+});
+
+it('leads with what is left to plan and the income link, and says when it is over', async () => {
+  (getMonthlyPlanIncome as jest.Mock).mockResolvedValue(10000);
+  await act(async () => {
+    tree = create(<MonthlyPlanCheck input={input} currency="INR" hidden={false} />);
+  });
+  expect(text()).toContain('Left to plan this month');
+  expect(text()).toContain(`Income ${formatMoney(10000, 'INR')}`);
+  expect(text()).toContain('Spending');
+  expect(text()).toContain('Savings');
+  await act(async () => {
+    tree.update(
+      <MonthlyPlanCheck
+        input={{
+          ...input,
+          budgets: [{ categoryId: 'c', limitMinor: 50000 }],
+          categories: [{ id: 'c', name: 'Food', kind: 'expense', parentId: null } as never],
+        }}
+        currency="INR"
+        hidden={false}
+      />
+    );
+  });
+  expect(text()).toContain('Over expected income');
 });

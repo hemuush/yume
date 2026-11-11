@@ -3,7 +3,7 @@
  * 2+ entries of a category stack into a line that opens in place; every entry stays tappable (no "+N more").
  */
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
-import { Text } from 'react-native';
+import { Text, StyleSheet } from 'react-native';
 
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
 let mockHideAmounts = false;
@@ -14,6 +14,7 @@ jest.mock('@/theme/PrivacyContext', () => ({
 import { TimelineDay } from './TimelineDay';
 import { Category, Transaction } from '@/types';
 import { formatMoney } from '@/lib/money';
+import { theme } from '@/constants/theme';
 
 it('shows foreign amounts in their own currency and excludes them from the day total', () => {
   let tree!: ReactTestRenderer;
@@ -346,7 +347,7 @@ it('does not rebuild an unrelated day when another day expands, but refreshes it
   }
 });
 
-describe('date tile beside the entries', () => {
+describe('date and rail beside the entries', () => {
   const day = (over: Partial<React.ComponentProps<typeof TimelineDay>> = {}) => {
     let tree!: ReactTestRenderer;
     act(() => {
@@ -370,7 +371,7 @@ describe('date tile beside the entries', () => {
     return tree;
   };
 
-  it('shows the weekday, date and day total in the tile and says them as one heading', () => {
+  it('shows the weekday, date and total beside the entries and says them as one heading', () => {
     const dimensions = jest
       .spyOn(require('react-native'), 'useWindowDimensions')
       .mockReturnValue({ width: 390, height: 800, scale: 3, fontScale: 1 });
@@ -387,7 +388,7 @@ describe('date tile beside the entries', () => {
     }
   });
 
-  it('keeps the heading above the entries at large text, where a tile would squeeze the rows', () => {
+  it('keeps the heading above the entries at large text, where a column would squeeze the rows', () => {
     const dimensions = jest
       .spyOn(require('react-native'), 'useWindowDimensions')
       .mockReturnValue({ width: 390, height: 800, scale: 3, fontScale: 1.5 });
@@ -400,4 +401,68 @@ describe('date tile beside the entries', () => {
       dimensions.mockRestore();
     }
   });
+
+  const withWidth = (fn: () => void) => {
+    const dimensions = jest
+      .spyOn(require('react-native'), 'useWindowDimensions')
+      .mockReturnValue({ width: 390, height: 800, scale: 3, fontScale: 1 });
+    try {
+      fn();
+    } finally {
+      dimensions.mockRestore();
+    }
+  };
+  const railLine = (tree: ReactTestRenderer) =>
+    tree.root.findAll((n) => {
+      const flat = StyleSheet.flatten(n.props.style);
+      return !!flat && flat.position === 'absolute' && flat.width === 2;
+    });
+
+  it('names today and fills its dot', () =>
+    withWidth(() => {
+      const tree = day({ isToday: true });
+      expect(texts(tree)).toContain('TODAY');
+      const dot = tree.root.find((n) => {
+        const flat = StyleSheet.flatten(n.props.style);
+        return !!flat && flat.width === 12 && flat.height === 12;
+      });
+      expect(StyleSheet.flatten(dot.props.style).backgroundColor).not.toBe(theme.colors.surface);
+      act(() => tree.unmount());
+    }));
+
+  it('ends the rail at the first and last day and omits it for a lone day', () =>
+    withWidth(() => {
+      const heights = (position: 'only' | 'first' | 'middle' | 'last') => {
+        const tree = day({ position });
+        const lines = railLine(tree).map((n) => StyleSheet.flatten(n.props.style));
+        act(() => tree.unmount());
+        return lines;
+      };
+      expect(heights('only')).toHaveLength(0);
+      // First: starts at its dot, runs on down. Last: runs down from the day above to its dot and stops.
+      expect(heights('first')[0].top).toBe(25);
+      expect(heights('last')[0].height).toBe(25);
+      expect(heights('middle')[0]).toMatchObject({ top: 0, bottom: 0 });
+    }));
+
+  it('leaves the day total out when one line would only repeat it', () =>
+    withWidth(() => {
+      const tree = day({ items: [tx('a', { amountMinor: 10000 })] });
+      // The entry's own amount is the only one: nothing repeats it in the date column.
+      expect(texts(tree).filter((t) => t === `−${formatMoney(10000)}`)).toHaveLength(1);
+      const heading = tree.root.find((n) => n.props.accessibilityRole === 'header');
+      expect(heading.props.accessibilityLabel).toBe('Today, Fri 25 Sept');
+      act(() => tree.unmount());
+    }));
+
+  it('separates rows with a hairline that starts under the icon', () =>
+    withWidth(() => {
+      const tree = day();
+      const separators = tree.root.findAll((n) => {
+        const flat = StyleSheet.flatten(n.props.style);
+        return !!flat && flat.height === StyleSheet.hairlineWidth && flat.marginLeft === 42;
+      });
+      expect(separators.length).toBeGreaterThan(0);
+      act(() => tree.unmount());
+    }));
 });

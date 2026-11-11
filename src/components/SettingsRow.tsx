@@ -31,6 +31,7 @@ export function SettingsRow({
   dimmed,
   round,
   field = false,
+  compact = false,
 }: {
   icon: string;
   /** Defaults to the neutral tile; only pass a colour when it says something. */
@@ -54,6 +55,8 @@ export function SettingsRow({
   round?: boolean;
   /** Muted field label above a prominent value (sub). */
   field?: boolean;
+  /** The denser row Settings uses: a 28 dp round icon, 12 dp line under the label, 52 dp tall. */
+  compact?: boolean;
 }) {
   const inSheet = useSheetSurface();
   const { accent } = useAccent();
@@ -81,6 +84,7 @@ export function SettingsRow({
           <Text
             style={[
               h.sub,
+              compact && styles.compactSub,
               field && { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textPrimary },
               subColor && { color: subColor },
             ]}
@@ -89,17 +93,29 @@ export function SettingsRow({
           </Text>
         ) : null}
       </View>
-      {value && !valueBelow ? <Text style={styles.value}>{value}</Text> : null}
+      {value && !valueBelow ? (
+        <Text style={[styles.value, compact && styles.compactValue]}>{value}</Text>
+      ) : null}
       {right ?? (onPress ? <Feather name={chevron} size={18} color={theme.colors.textMuted} /> : null)}
     </>
   );
 
   if (!onPress) {
-    return <View style={[h.row, divider && h.divider, dimmed && styles.dimmed]}>{content}</View>;
+    return (
+      <View style={[h.row, compact && styles.compactRow, divider && h.divider, dimmed && styles.dimmed]}>
+        {content}
+      </View>
+    );
   }
   return (
     <AnimatedPressable
-      style={[h.row, divider && h.divider, dimmed && styles.dimmed, animatedStyle]}
+      style={[
+        h.row,
+        compact && styles.compactRow,
+        divider && h.divider,
+        dimmed && styles.dimmed,
+        animatedStyle,
+      ]}
       onPress={onPress}
       onPressIn={onPressIn}
       onPressOut={onPressOut}
@@ -127,6 +143,10 @@ const styles = StyleSheet.create({
     textAlign: 'right',
   },
   dimmed: { opacity: 0.45 },
+  compactRow: { minHeight: 52, paddingVertical: 8 },
+  compactIcon: { width: 28, height: 28, borderRadius: 14 },
+  compactSub: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, marginTop: 0 },
+  compactValue: { fontFamily: theme.font.bodyBold, fontSize: 12 },
   round: { borderRadius: 19 },
   sheetIcon: { width: 40, height: 40, borderRadius: 20 },
 });

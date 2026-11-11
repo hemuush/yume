@@ -63,8 +63,11 @@ export function TileGrid({
   onAdd,
   limit = GRID_SHOWN,
   showAdd = true,
+  maxColumns = GRID_COLUMNS,
 }: {
   showAdd?: boolean;
+  /** Columns on a normal screen (three by default; the debt tiles use two). */
+  maxColumns?: number;
   tiles: React.ReactNode[];
   label: string;
   accessibilityLabel: string;
@@ -73,7 +76,7 @@ export function TileGrid({
   limit?: number;
 }) {
   const { width, fontScale } = useWindowDimensions();
-  const columns = fontScale > 1.2 ? 1 : width < 360 ? 2 : GRID_COLUMNS;
+  const columns = fontScale > 1.2 ? 1 : width < 360 ? Math.min(2, maxColumns) : maxColumns;
   const shown = tiles.slice(0, limit);
   const rows: React.ReactNode[][] = [];
   for (let i = 0; i < shown.length; i += columns) rows.push(shown.slice(i, i + columns));

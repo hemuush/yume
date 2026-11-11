@@ -396,6 +396,8 @@ export default function PlanScreen() {
   };
 
   const scoped = data?.hideAmounts === hideAmounts ? data : null;
+  // The same colour a loan has on Loans, by its place among the borrowed ones.
+  const loanHuesById = loanHues(data?.loanDetails ?? []);
   const selectedLoan =
     detail?.kind === 'loan'
       ? scoped?.loanDetails.find((l) => l.id === detail.id && l.status !== 'closed')
@@ -503,11 +505,16 @@ export default function PlanScreen() {
                 </>
               )}
               {tab === 'upcoming' && (
-                <Section compact title="Upcoming payments">
+                <Section
+                  compact
+                  title="Upcoming payments"
+                  actionLabel="Manage recurring"
+                  onSeeAll={() => open('/recurring')}
+                >
                   <Text
                     style={{
                       marginHorizontal: 16,
-                      marginBottom: 10,
+                      marginBottom: 8,
                       fontFamily: theme.font.body,
                       fontSize: 12,
                       color: theme.colors.textSecondary,
@@ -517,19 +524,19 @@ export default function PlanScreen() {
                   </Text>
                   <UpcomingDates
                     runway={data.schedule}
-                    renderDay={(day, mode) => (
+                    today={data.today}
+                    renderDays={(days, mode) => (
                       <ComingUpSection
-                        groups={[
-                          {
-                            date: day.date,
-                            outMinor: 0,
-                            items: day.items.filter((item) =>
-                              mode === 'income'
-                                ? item.kind === 'income' || item.transfer?.flow === 'in'
-                                : item.kind === 'emi' || item.kind === 'bill' || item.transfer?.flow === 'out'
-                            ),
-                          },
-                        ]}
+                        flow={mode === 'income' ? 'in' : 'out'}
+                        groups={days.map((day) => ({
+                          date: day.date,
+                          outMinor: mode === 'income' ? day.inMinor : day.outMinor,
+                          items: day.items.filter((item) =>
+                            mode === 'income'
+                              ? item.kind === 'income' || item.transfer?.flow === 'in'
+                              : item.kind === 'emi' || item.kind === 'bill' || item.transfer?.flow === 'out'
+                          ),
+                        }))}
                         today={data.today}
                         onOpen={open}
                         onPay={(id) => void payEmi(id)}
@@ -538,15 +545,6 @@ export default function PlanScreen() {
                       />
                     )}
                   />
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel="Recurring"
-                    onPress={() => open('/recurring')}
-                    style={withPressed(styles.manageRecurring)}
-                  >
-                    <Text style={styles.headLinkText}>Manage recurring</Text>
-                    <Feather name="arrow-right" size={14} color={theme.colors.link} />
-                  </Pressable>
                 </Section>
               )}
               {tab === 'money' && (
@@ -600,24 +598,23 @@ export default function PlanScreen() {
                       limit={data.goals.length + 1}
                     />
                   </Section>
-                  <Section
-                    compact
-                    title="Investments"
-                    actionLabel="Manage investments"
-                    onSeeAll={() => open('/investments')}
-                  >
-                    <InvestmentsCard portfolio={data.investments} onOpen={() => open('/investments')} />
-                  </Section>
-                  <Section compact title="Ideas">
-                    <WhatIfCard
-                      whatIf={data.whatIf}
-                      onOpen={(cut) =>
-                        data.whatIf
-                          ? router.push({
-                              pathname: '/whatif',
-                              params: { category: data.whatIf.categoryId, cut: String(cut) },
-                            })
-                          : open('/whatif')
+                  <Section compact title="More">
+                    <InvestmentsCard
+                      portfolio={data.investments}
+                      onOpen={() => open('/investments')}
+                      extraTile={
+                        <WhatIfCard
+                          key="what-if"
+                          whatIf={data.whatIf}
+                          onOpen={(cut) =>
+                            data.whatIf
+                              ? router.push({
+                                  pathname: '/whatif',
+                                  params: { category: data.whatIf.categoryId, cut: String(cut) },
+                                })
+                              : open('/whatif')
+                          }
+                        />
                       }
                     />
                   </Section>
@@ -625,27 +622,24 @@ export default function PlanScreen() {
               )}
               {tab === 'debt' && (
                 <>
-                  {data.loans.rows.filter((loan) => loan.direction === 'borrowed').length >= 2 && (
-                    <View style={{ marginHorizontal: 16, marginTop: 12 }}>
-                      <PrimaryButton
-                        variant="secondary"
-                        compact
-                        title="Compare an extra payment"
-                        onPress={() => setComparisonOpen(true)}
-                      />
-                    </View>
-                  )}
-                  <Section compact title="Debt">
+                  <View style={{ marginTop: 12 }}>
                     <DebtPath
                       loans={data.loans}
                       today={data.today}
+                      hues={loanHuesById}
                       onOpen={() => open('/loans')}
                       onAdd={data.loans.rows.length === 0 ? () => openDetail('new-loan', '') : undefined}
+                      onCompare={
+                        data.loans.rows.filter((loan) => loan.direction === 'borrowed').length >= 2
+                          ? () => setComparisonOpen(true)
+                          : undefined
+                      }
                     />
-                  </Section>
+                  </View>
                   {data.loans.rows.some((loan) => loan.direction === 'borrowed') && (
                     <Section compact title="Loans" onSeeAll={() => open('/loans')}>
                       <DebtLoans
+                        hues={loanHuesById}
                         loans={{
                           ...data.loans,
                           rows: data.loans.rows.filter((loan) => loan.direction === 'borrowed'),
@@ -657,6 +651,7 @@ export default function PlanScreen() {
                   {data.loans.rows.some((loan) => loan.direction === 'lent') && (
                     <Section compact title="Money lent" onSeeAll={() => open('/loans')}>
                       <DebtLoans
+                        hues={loanHuesById}
                         loans={{
                           ...data.loans,
                           rows: data.loans.rows.filter((loan) => loan.direction === 'lent'),
@@ -894,14 +889,6 @@ export default function PlanScreen() {
 }
 
 const styles = StyleSheet.create({
-  manageRecurring: {
-    marginHorizontal: 16,
-    minHeight: 44,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    gap: 5,
-  },
   addPlan: {
     minHeight: 44,
     paddingHorizontal: 12,

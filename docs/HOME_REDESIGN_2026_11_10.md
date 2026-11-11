@@ -71,3 +71,63 @@ A second Activity pass, approved from the same canvas after the compact pass abo
 - **Date tiles.** Each day's weekday, date and net total sit in a tile beside its entries instead of a heading above them; today's tile is tinted and the day picked on the chart takes an ink edge. The tile reads to a screen reader as one heading. On a narrow screen, above 120% text and in search results the heading above the entries is kept. A total too long for the tile is shown in short form; its exact value stays in the accessible label.
 
 Hand-ordering, stacks, transfers, value updates, search and savings masking are unchanged. New tests cover `CategorySplit`, the narrowed headline and the date tile. The full suite passed: 370 suites and 11,822 tests, with two existing skips.
+
+## Activity, compact timeline
+
+A third Activity pass, drawn from a screenshot of the first timeline running on a phone. That version had made the summary card about 110 dp taller than the compact one it replaced (roughly 221 dp became 330), which pushed the entries down the screen, and its date tiles did not match the height of their cards. This pass keeps the card near its earlier height and replaces the tiles. It supersedes the summary, legend and date-tile parts of the section above.
+
+- **Summary card.** About the height of the compact card. The figure and its comparison share the top row; the comparison is right-aligned, with the amount in colour and "than same days last week" in a quiet line under it. The card has a soft shadow, which is cheap because it is one element.
+- **Week capsules.** Each day is a capsule in the theme's tint, 36 dp tall and up to 26 dp wide. The short amount sits directly over its own capsule, so it no longer floats above a short bar. The picked day rests on a stronger tint and shows its exact amount in bold in the same place; the separate bubble is used only when the short amounts are dropped at large text. Empty days show an empty capsule, future days a dimmed one.
+- **Categories.** The split bar, its "Where it went" title and the tap hint are removed: the chips already carry the colours and amounts. The chips are one row that scrolls sideways, so the card never changes height with the number of categories. A fade marks that more chips lie beyond the edge, and a picked chip is scrolled into view so its ✕ is never hidden. The filter behaviour is unchanged.
+- **Rail.** The date tile is replaced by a date column on the left edge and a thin rail with a dot per day beside one card. Today's dot is filled with the theme colour and ringed and its label reads TODAY; the day picked on the chart has an ink edge. The rail ends at the first and last day. The day's total appears under its date only from two lines up, in short form (+₹9.5k), because with one line it only repeats the entry beside it; the full total stays in the accessible label.
+- **Separators.** Row separators are hairlines that start under the icon, so the icon column stays unbroken. They apply to entries, stacks, open stack entries, transfers and value updates.
+- **Spacing.** Header, card and filter pills are 12 apart, the list starts 16 below the pills, and days are 14 apart.
+- **Unchanged.** Large text, narrow screens and search keep the heading above the entries with no rail. Hand-ordering, stacks, search, filters and masking are unchanged.
+
+### Design references
+
+The search tools could reach only some sources from this environment; Nielsen Norman Group, Material and Monzo's own site were blocked, so those points come from search summaries rather than the full pages and are not treated as verified.
+
+- Keep the list high on the screen: Monzo community feedback on its redesign ([thread](https://community.monzo.com/t/get-to-know-your-new-home-screen/151912)).
+- Spacing inside a card tighter than between groups, with an extra step between groups ([Ramotion](https://www.ramotion.com/blog/proximity-gestalt-principle/), [proximity guide](https://openskillindex.com/skills/intense-visions-harness-engineering-design-gestalt-proximity)); few separators and no boxing of every group ([Guandata](https://docs.guandata.com/product/en/bi/466559634967101440)).
+- People scan down the left edge of a list ([NN/g](https://www.nngroup.com/articles/right-justified-navigation-menus/)).
+- Distinct, consistent category colours with a legend ([case study](https://contra.com/p/ER6X2r7O-budget-tracking-mobile-app)) and tap-to-drill-down ([Lincoln Financial](https://www.lincolnfinancial.com/public/microsite/wellnesspathhelp/managingmyfinances/mymoney/spending)).
+- Scrolling chips: an edge fade, and keep a picked chip in view ([overflow-pattern prototype](https://josh-laurelai.github.io/ux-prototypes/smart-filters/), [Material chips](https://m2.material.io/components/chips)).
+- Timelines: the connector ends at the last item ([PhiaUI timeline](https://hexdocs.pm/phia_ui/PhiaUi.Components.Timeline.html)); charts: tap to select with a persistent value, 44-point targets and a text alternative ([TanStack charts accessibility](https://unpkg.com/@tanstack/charts@1.2.0/docs/guides/accessibility.md)).
+
+The full suite passed with the repository's locale settings: 370 suites and 11,831 tests, with two existing skips. This pass has not been run on a device.
+## Loans
+
+- `LoansHero` is the same flat summary card as the other screens: what you owe, the debt-free month and repaid share beside it, a split bar in each loan's own colour, small facts (EMIs a month, interest to go, owed to you) and the payoff timeline behind a disclosure.
+- `LoanCard` keeps one pale icon tile, a 20 px principal figure, progress and a Next EMI row; that row is tinted when the EMI is within `DUE_SOON_DAYS` (shared with Home, now in `src/lib/dueDate.ts`) or overdue.
+- The "Closed" divider is a normal muted label instead of an eyebrow.
+
+## Savings goals
+
+- `GoalsHero` is the same flat summary card as the other screens: saved so far (20 px), the share of the combined target beside it, a 6 px bar and one line with the monthly amount that keeps the goals on pace. With amounts hidden, the figure is masked and the share, bar and pace are withheld.
+- Goals are rows in one card, separated by hairlines, instead of a tall card each. A row is the name with saved of target, a 6 px bar in the goal's colour, the share and date, and the pace with the monthly amount. "Reserved in…" and "Following…" sit in that second line.
+- The wide Add money pill became a 32 dp round button inside a 44 dp touch area. Its accessibility label still says what it does (Add money, Manage reservation, Move money); a followed goal shows a swap icon.
+
+## Plan, Money plan tab
+
+- The monthly plan is the same flat summary card as the other screens: what is left to plan (20 px), a small "Income ₹x" link that opens the income editor, one bar split into spending and savings, and the two figures under it. "How this is calculated" opens inline; the notes about loans or goals that cannot be estimated stay.
+- Budgets and goals keep their three-column tiles (one column with large text), but the tiles are compact: the icon and the figure share a row, so a tile is about 95 dp instead of at least 166 dp, with a 4 px bar and one small line ("₹1,800 left", "₹38K of ₹60K").
+- Investments and the what-if idea are two tiles of the same kind in one "More" row.
+
+## Plan, Debt tab
+
+- The summary is the same flat card as the other screens, led by the debt-free month. Beside it are what is left and the share repaid; one bar is split by loan in each loan's own colour (the colour it has on Loans); money you lent shows as a green "Lent out" fact. "Compare an extra payment" is a row inside the card, shown when there are two or more borrowed loans, instead of a separate full-width button.
+- Loans and Money lent are compact tiles, two to a row (one with large text): the loan's mark and what is left, the name, a 4 px bar of EMIs paid and "x of y paid · ends Mon YYYY". A tile whose next EMI is within `DUE_SOON_DAYS` (or late) has an amber strip saying when.
+
+## Profile and Settings
+
+- **Identity:** one slim card (about 60 dp) in place of the gradient card: a 40 dp avatar, the name at 16 px with "Member since … · On this phone, works offline" under it, and an edit button. The inline name editor and its Cancel/Save are unchanged.
+- **You:** the money card is the same flat summary card as the other screens (what is in your accounts at 20 px, the account count beside it, a split bar by account type, a compact legend, and the tracked balance as one expandable row at its foot). Entries, Active loans and Friends are one strip of three cells instead of three 118 dp tiles. All accounts sit in one card under quiet type headers ("Bank · 2" with its subtotal), in 56 dp rows with a 32 dp icon; archived accounts are a footer row of that card, and the Plan pointer is a small link.
+- **Settings:** Theme is one row with the swatches under it. The Safety check is a flat card with small tiles (backup, unlock, notifications). Money, Privacy & alerts and Your data keep every row, drawn with the compact `SettingsRow` (a 28 dp round icon, a 12 px line under the label, 52 dp tall) in 16 px-corner cards. `SettingsRow` takes a `compact` prop, so the other pages that use it are unchanged.
+
+## Plan, Upcoming tab
+
+- The tab keeps its structure (a switch between Money out and Scheduled income, a strip of dates, the day's payments) but is cleaner and shows more at once. The switch is a pill switch like Reports and Activity. The date strip is slim 32 dp pills (44 dp touch area) with **All** first and selected by default, so every payment in the 30 days lists at once under day headings; picking a date lists only that day. A date with a payment due now or late (red) or due soon (amber) carries a small dot, and says so in its accessibility label.
+- The list is one flat card with compact 52 dp rows (a 32 dp icon, the title, a line under it, the amount). A day heading shows its date ("Today · …"), what leaves or arrives that day, and "· incl. overdue" when late items are counted in it. The status chips are gone: the line under the title says "Overdue by 2 days", "Due today" or "Due in 3 days" in red or amber. A due or close EMI keeps a small Pay pill; the whole row is the tap target and opens the pay sheet, as before.
+- "Manage recurring" moved up to the section heading. `UpcomingDates` now takes `renderDays(days, mode)` and an optional `today`; `ComingUpSection` draws the list itself (Home's `UpcomingRow` is unchanged).
+- Colors: every payment's icon sits on one neutral tint of the theme color (a 32 dp round tile); only income (pale green, green icon) and late or due-now payments (pale red, red icon) differ. Status wording keeps two meanings, red for overdue or due now and amber for due soon. Each day heading is a soft band: today in a pale tint of the theme color, later days in the neutral tray color, and a day that counts overdue items in pale red with red text.
