@@ -24,7 +24,6 @@ import { LoanCard } from '@/features/loans/LoanCard';
 import { LoanDetailModal } from '@/features/loans/LoanDetailModal';
 import { HomeWallpaper } from '@/features/home/HomeWallpaper';
 import { useAccent } from '@/theme/AccentContext';
-import { Glass } from '@/components/Glass';
 import { LoansHero } from '@/features/loans/LoansHero';
 import { loanHues } from '@/features/loans/loanIdentity';
 import { debtShares, summarizeLoans } from '@/features/loans/loanTotals';
@@ -123,11 +122,11 @@ export default function LoansScreen() {
         )}
         {loading ? (
           [0, 1].map((i) => (
-            <Glass key={i} style={styles.card}>
+            <View key={i} style={[styles.card, { marginHorizontal: SCREEN.gutter }]}>
               <Skeleton width={140} height={14} radius={4} />
               <Skeleton width={100} height={10} radius={4} style={{ marginTop: 8 }} />
               <Skeleton width={220} height={6} radius={3} style={{ marginTop: 12 }} />
-            </Glass>
+            </View>
           ))
         ) : loans.length === 0 ? (
           <EmptyState title="No loans yet" subtitle="Add one and Yume works out the EMI schedule for you.">

@@ -1,12 +1,13 @@
 import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
+import { SCREEN } from '@/components/screenStyles';
 
 // Shared by the Savings Goals screen and its GoalCard / AddGoalModal /
 // ContributeModal / GoalDetailModal.
 export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
   errorBanner: {
-    marginHorizontal: 20,
+    marginHorizontal: SCREEN.gutter,
     marginTop: theme.layout.screenTopGap,
     marginBottom: 4,
     padding: 14,

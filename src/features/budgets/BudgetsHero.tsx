@@ -41,6 +41,8 @@ export function BudgetsHero({ figures: h }: { figures: BudgetsHeroFigures }) {
   const over = h.spentMinor > h.limitMinor;
   const daysLeft = h.daysLeft === 0 ? 'Last day' : `${h.daysLeft} ${h.daysLeft === 1 ? 'day' : 'days'} left`;
   const evenPaceMinor = Math.round((h.limitMinor * h.expectedPct) / 100);
+  // usedPct is capped at 100 for the bar; the words say how far past the limit it really is.
+  const usedPercent = h.limitMinor > 0 ? Math.round((h.spentMinor / h.limitMinor) * 100) : 0;
 
   return (
     <SummaryCard>
@@ -78,7 +80,7 @@ export function BudgetsHero({ figures: h }: { figures: BudgetsHeroFigures }) {
           accessibilityElementsHidden
           importantForAccessibility="no-hide-descendants"
         >
-          <Text style={styles.captionText}>{Math.round(h.usedPct)}% used</Text>
+          <Text style={styles.captionText}>{usedPercent}% used</Text>
           <Text style={styles.captionText}>Even pace {Math.round(h.expectedPct)}%</Text>
         </View>
       </View>

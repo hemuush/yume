@@ -92,45 +92,47 @@ export function RecurringHero({
   const schedule = (
     <>
       {today && marks.length > 0 && (
-        <InsightDisclosure title="Next 30 days timeline">
-          <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-            <Text style={styles.lineLabel}>When they land, next 30 days</Text>
-            <View
-              testID="landLine"
-              style={styles.line}
-              onLayout={(e: LayoutChangeEvent) => setWidth(e.nativeEvent.layout.width)}
-            >
-              <View style={styles.rail} />
-              {width > 0 &&
-                grouped.map((m) => {
-                  const size = Math.round(DOT_MIN + Math.sqrt(m.amountMinor / max) * (DOT_MAX - DOT_MIN));
-                  const x = Math.min(1, Math.max(0, xOf(m.date))) * width;
-                  return (
-                    <View
-                      key={m.key}
-                      style={[
-                        styles.dot,
-                        {
-                          width: size,
-                          height: size,
-                          borderRadius: size / 2,
-                          left: Math.min(width - size, Math.max(0, x - size / 2)),
-                          top: (LINE_HEIGHT - size) / 2,
-                          borderColor: m.incoming ? theme.colors.income : ink,
-                        },
-                      ]}
-                    />
-                  );
-                })}
+        <View style={styles.timeline}>
+          <InsightDisclosure title="Next 30 days timeline">
+            <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+              <Text style={styles.lineLabel}>When they land, next 30 days</Text>
+              <View
+                testID="landLine"
+                style={styles.line}
+                onLayout={(e: LayoutChangeEvent) => setWidth(e.nativeEvent.layout.width)}
+              >
+                <View style={styles.rail} />
+                {width > 0 &&
+                  grouped.map((m) => {
+                    const size = Math.round(DOT_MIN + Math.sqrt(m.amountMinor / max) * (DOT_MAX - DOT_MIN));
+                    const x = Math.min(1, Math.max(0, xOf(m.date))) * width;
+                    return (
+                      <View
+                        key={m.key}
+                        style={[
+                          styles.dot,
+                          {
+                            width: size,
+                            height: size,
+                            borderRadius: size / 2,
+                            left: Math.min(width - size, Math.max(0, x - size / 2)),
+                            top: (LINE_HEIGHT - size) / 2,
+                            borderColor: m.incoming ? theme.colors.income : ink,
+                          },
+                        ]}
+                      />
+                    );
+                  })}
+              </View>
+              <View style={styles.axis}>
+                <Text style={styles.axisText}>Today</Text>
+                {midDate && <Text style={styles.axisText}>{dayMonth(midDate)}</Text>}
+                {endDate && <Text style={styles.axisText}>{dayMonth(endDate)}</Text>}
+              </View>
             </View>
-            <View style={styles.axis}>
-              <Text style={styles.axisText}>Today</Text>
-              {midDate && <Text style={styles.axisText}>{dayMonth(midDate)}</Text>}
-              {endDate && <Text style={styles.axisText}>{dayMonth(endDate)}</Text>}
-            </View>
-          </View>
-          {chips}
-        </InsightDisclosure>
+            {chips}
+          </InsightDisclosure>
+        </View>
       )}
       {!timelineShown && chips}
     </>
@@ -200,6 +202,7 @@ export function RecurringHero({
 const styles = StyleSheet.create({
   // The timeline disclosure row sits flush with the card's bottom edge.
   cardWithDisclosure: { paddingBottom: 4 },
+  timeline: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.divider },
   figureRow: { flexDirection: 'row', alignItems: 'baseline', gap: 6, flexWrap: 'wrap' },
   figureNote: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
   title: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.textPrimary },

@@ -846,7 +846,7 @@ const styles = StyleSheet.create({
   dayHeadDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.borderSoft },
   dayHeadText: { ...EYEBROW, fontFamily: theme.font.bodyBold, fontSize: 11, fontVariant: ['tabular-nums'] },
   errorBanner: {
-    marginHorizontal: 20,
+    marginHorizontal: SCREEN.gutter,
     marginTop: 16,
     padding: 16,
     borderRadius: theme.radius.md,

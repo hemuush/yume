@@ -16,6 +16,9 @@ Approved from the design board (page "Category detail, Recently deleted, Tidy up
 - Spending labels report: the net figure is 20 px (was 28).
 - What-if: its cards are `SummaryCard`s, and its side margins use the 16 gutter instead of 20.
 - Backup: the status card is a `SummaryCard`.
+- Error banners on Home, Plan, Loans and Savings goals, Loans' placeholder cards and its "Closed" header moved from a 20 to the shared 16 side margin, so they line up with the cards they stand in for.
+- Friends & family tile amounts are 20 px (were 21). Budgets' "% used" now says how far past the limit spending really is (the bar stops at 100).
+- Dead code: the `frost` styles for the old hero (`hero`, `list`, `bigValue` and the rest) and `theme.typeSize.hero` were removed; `Frost.tsx` keeps only the icon-disc heading, chips and pace bar.
 - Left as they were: Garden (a decorative screen with its own look) and the Themes live preview.
 
 ## Checks

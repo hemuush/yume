@@ -85,6 +85,8 @@ describe('BudgetsHero', () => {
       })
     );
     expect(shown).toContain('Over this month');
+    // The bar stops at 100, but the words say how far past the limit it is.
+    expect(shown).toContain('105% used');
     expect(shown).not.toContain('₹690 a day');
     expect(shown).toContain('13 days left');
   });
