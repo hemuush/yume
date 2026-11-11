@@ -113,3 +113,8 @@ The full suite passed with the repository's locale settings: 370 suites and 11,8
 - The monthly plan is the same flat summary card as the other screens: what is left to plan (20 px), a small "Income ₹x" link that opens the income editor, one bar split into spending and savings, and the two figures under it. "How this is calculated" opens inline; the notes about loans or goals that cannot be estimated stay.
 - Budgets and goals keep their three-column tiles (one column with large text), but the tiles are compact: the icon and the figure share a row, so a tile is about 95 dp instead of at least 166 dp, with a 4 px bar and one small line ("₹1,800 left", "₹38K of ₹60K").
 - Investments and the what-if idea are two tiles of the same kind in one "More" row.
+
+## Plan, Debt tab
+
+- The summary is the same flat card as the other screens, led by the debt-free month. Beside it are what is left and the share repaid; one bar is split by loan in each loan's own colour (the colour it has on Loans); money you lent shows as a green "Lent out" fact. "Compare an extra payment" is a row inside the card, shown when there are two or more borrowed loans, instead of a separate full-width button.
+- Loans and Money lent are compact tiles, two to a row (one with large text): the loan's mark and what is left, the name, a 4 px bar of EMIs paid and "x of y paid · ends Mon YYYY". A tile whose next EMI is within `DUE_SOON_DAYS` (or late) has an amber strip saying when.

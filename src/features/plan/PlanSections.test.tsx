@@ -187,7 +187,8 @@ describe('Plan sections with nothing in them yet', () => {
     const onOpen = jest.fn();
     const tree = render(<DebtPath loans={loans} today="2026-10-09" onOpen={onOpen} />);
     const shown = texts(tree);
-    expect(shown.some((t) => t.startsWith('Debt-free '))).toBe(true);
+    expect(shown).toContain('Debt-free');
+    expect(shown).toContain('Jan 2045');
     expect(shown).toContain('₹22,540 left');
     expect(shown).toContain('2% repaid · 2 loans');
     // One card, one action: no second link and no loan row repeating what Loans lists.
@@ -197,6 +198,45 @@ describe('Plan sections with nothing in them yet', () => {
       tree.root.find((n) => n.props.onPress && n.props.accessibilityRole === 'button').props.onPress()
     );
     expect(onOpen).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows a compare row only when asked to, and opens the comparison', () => {
+    const loans = {
+      debtLeftMinor: 90000,
+      paidOffMinor: 10000,
+      borrowedPrincipalMinor: 100000,
+      paidFraction: 0.1,
+      borrowedCount: 2,
+      debtFreeDate: '2028-10-09',
+      lentLeftMinor: 5000,
+      rows: [
+        {
+          id: 'b1',
+          name: 'House loan',
+          direction: 'borrowed' as const,
+          leftMinor: 90000,
+          nextDueDate: '2026-11-01',
+          nextEmiMinor: 10000,
+          paidCount: 1,
+          totalCount: 24,
+          endDate: '2028-10-09',
+        },
+      ],
+    };
+    const noCompare = render(<DebtPath loans={loans} today="2026-10-09" onOpen={jest.fn()} />);
+    expect(texts(noCompare)).not.toContain('Compare an extra payment');
+    const onCompare = jest.fn();
+    const withCompare = render(
+      <DebtPath loans={loans} today="2026-10-09" onOpen={jest.fn()} onCompare={onCompare} />
+    );
+    expect(texts(withCompare)).toContain('Compare an extra payment');
+    expect(texts(withCompare)).toContain('Lent out');
+    act(() =>
+      withCompare.root
+        .find((n) => n.props.accessibilityLabel === 'Compare an extra payment' && n.props.onPress)
+        .props.onPress()
+    );
+    expect(onCompare).toHaveBeenCalledTimes(1);
   });
 
   it('asks for a first budget, and a first EMI (saying what you lent)', () => {

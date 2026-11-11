@@ -145,6 +145,11 @@ export const styles = StyleSheet.create({
   tileWrap: { flex: 1, minWidth: 0 },
   // Compact tiles: the icon and the figure share a row, so a tile is about 95 dp, with no empty space.
   tileFill: { flex: 1, padding: 10, gap: 6, overflow: 'hidden', borderWidth: 1 },
+  // A debt tile's body keeps its padding; the amber due strip runs edge to edge under it.
+  debtTile: { padding: 0, gap: 0, justifyContent: 'space-between' },
+  debtBody: { padding: 10, gap: 6 },
+  debtDue: { paddingHorizontal: 10, paddingVertical: 4, backgroundColor: theme.colors.dueRow },
+  debtDueText: { fontFamily: theme.font.bodyBold, fontSize: 11, lineHeight: 15, color: theme.colors.dueInk },
   tileHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 6 },
   tileIcon: { width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   tilePct: {

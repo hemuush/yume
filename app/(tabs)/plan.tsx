@@ -396,6 +396,8 @@ export default function PlanScreen() {
   };
 
   const scoped = data?.hideAmounts === hideAmounts ? data : null;
+  // The same colour a loan has on Loans, by its place among the borrowed ones.
+  const loanHuesById = loanHues(data?.loanDetails ?? []);
   const selectedLoan =
     detail?.kind === 'loan'
       ? scoped?.loanDetails.find((l) => l.id === detail.id && l.status !== 'closed')
@@ -624,27 +626,24 @@ export default function PlanScreen() {
               )}
               {tab === 'debt' && (
                 <>
-                  {data.loans.rows.filter((loan) => loan.direction === 'borrowed').length >= 2 && (
-                    <View style={{ marginHorizontal: 16, marginTop: 12 }}>
-                      <PrimaryButton
-                        variant="secondary"
-                        compact
-                        title="Compare an extra payment"
-                        onPress={() => setComparisonOpen(true)}
-                      />
-                    </View>
-                  )}
-                  <Section compact title="Debt">
+                  <View style={{ marginTop: 12 }}>
                     <DebtPath
                       loans={data.loans}
                       today={data.today}
+                      hues={loanHuesById}
                       onOpen={() => open('/loans')}
                       onAdd={data.loans.rows.length === 0 ? () => openDetail('new-loan', '') : undefined}
+                      onCompare={
+                        data.loans.rows.filter((loan) => loan.direction === 'borrowed').length >= 2
+                          ? () => setComparisonOpen(true)
+                          : undefined
+                      }
                     />
-                  </Section>
+                  </View>
                   {data.loans.rows.some((loan) => loan.direction === 'borrowed') && (
                     <Section compact title="Loans" onSeeAll={() => open('/loans')}>
                       <DebtLoans
+                        hues={loanHuesById}
                         loans={{
                           ...data.loans,
                           rows: data.loans.rows.filter((loan) => loan.direction === 'borrowed'),
@@ -656,6 +655,7 @@ export default function PlanScreen() {
                   {data.loans.rows.some((loan) => loan.direction === 'lent') && (
                     <Section compact title="Money lent" onSeeAll={() => open('/loans')}>
                       <DebtLoans
+                        hues={loanHuesById}
                         loans={{
                           ...data.loans,
                           rows: data.loans.rows.filter((loan) => loan.direction === 'lent'),
