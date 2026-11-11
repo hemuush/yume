@@ -903,7 +903,7 @@ const styles = StyleSheet.create({
   headLinkText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.link },
   container: { flex: 1, backgroundColor: theme.colors.background },
   errorBanner: {
-    marginHorizontal: 20,
+    marginHorizontal: SCREEN.gutter,
     marginTop: theme.layout.screenTopGap,
     marginBottom: 12,
     padding: 14,

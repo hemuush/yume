@@ -3,7 +3,7 @@ import { themeInk } from '@/theme/interactionColors';
 import { View, Pressable } from 'react-native';
 import { Text } from '@/components/Text';
 import Feather from '@expo/vector-icons/Feather';
-import { Glass } from '@/components/Glass';
+import { ListCard } from '@/components/SummaryCard';
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { MovingRow } from '@/components/MovingRow';
 import { SubscriptionSuggestion } from '@/db/subscriptions';
@@ -34,7 +34,7 @@ export function SuggestionsList({
   return (
     <>
       <SectionHead title="Not set up yet" />
-      <Glass style={styles.list}>
+      <ListCard style={styles.list}>
         {suggestions.map((s, i) => (
           <MovingRow key={s.key} style={[styles.suggestion, i > 0 && styles.rowDivider]}>
             <View style={styles.suggestionHead}>
@@ -69,7 +69,7 @@ export function SuggestionsList({
             </View>
           </MovingRow>
         ))}
-      </Glass>
+      </ListCard>
       <Text style={styles.hint}>
         From your Subscriptions category, and charges seen once a month for 3 months. ✕ hides one; a monthly
         charge can be brought back from Needs you.

@@ -15,7 +15,7 @@ import { RecurringHero } from '@/features/recurring/RecurringHero';
 import { SuggestionsList } from '@/features/recurring/SuggestionsList';
 import { SectionHead } from '@/features/recurring/SectionHead';
 import { costShares, sortRunning, runMarks } from '@/features/recurring/recurring.helpers';
-import { Glass } from '@/components/Glass';
+import { ListCard, SummaryCard } from '@/components/SummaryCard';
 import { HomeWallpaper } from '@/features/home/HomeWallpaper';
 import { useAccent } from '@/theme/AccentContext';
 import { nextMonthlyDateAfter, toLocalIsoDate } from '@/lib/date';
@@ -177,16 +177,22 @@ export default function RecurringScreen() {
         )}
         {!loaded ? (
           <>
-            <Glass style={[styles.card, { height: 118 }]}>
+            <SummaryCard>
               <Skeleton width={110} height={10} radius={4} />
-              <Skeleton width={150} height={26} radius={6} style={{ marginTop: 10 }} />
-            </Glass>
-            {[0, 1, 2].map((i) => (
-              <Glass key={i} style={styles.card}>
-                <Skeleton width={140} height={13} radius={4} />
-                <Skeleton width={100} height={10} radius={4} style={{ marginTop: 8 }} />
-              </Glass>
-            ))}
+              <Skeleton width={150} height={22} radius={6} />
+              <Skeleton width={240} height={8} radius={4} />
+            </SummaryCard>
+            <ListCard style={[styles.list, { marginTop: 16 }]}>
+              {[0, 1, 2].map((i) => (
+                <View key={i} style={styles.skeletonRow}>
+                  <Skeleton width={34} height={34} radius={17} />
+                  <View style={{ flex: 1, gap: 6 }}>
+                    <Skeleton width={140} height={13} radius={4} />
+                    <Skeleton width={100} height={10} radius={4} />
+                  </View>
+                </View>
+              ))}
+            </ListCard>
           </>
         ) : accounts.length === 0 ? (
           <EmptyState
@@ -227,7 +233,7 @@ export default function RecurringScreen() {
             {activeRules.length > 0 && (
               <>
                 <SectionHead title="Running" note={activeRules.length > 1 ? 'Biggest first' : undefined} />
-                <Glass style={styles.list}>
+                <ListCard style={styles.list}>
                   {activeRules.map((rule, i) => (
                     <RuleRow
                       key={rule.id}
@@ -244,7 +250,7 @@ export default function RecurringScreen() {
                       onPress={() => setEditingRule(rule)}
                     />
                   ))}
-                </Glass>
+                </ListCard>
                 <Text style={styles.footnote}>
                   Due entries are added when you open Yume. Paused rules don’t create entries.
                 </Text>
@@ -262,7 +268,7 @@ export default function RecurringScreen() {
                   title="Paused"
                   note={`${pausedRules.length} ${pausedRules.length === 1 ? 'rule' : 'rules'}`}
                 />
-                <Glass style={styles.list}>
+                <ListCard style={styles.list}>
                   {pausedRules.map((rule, i) => (
                     <RuleRow
                       key={rule.id}
@@ -280,7 +286,7 @@ export default function RecurringScreen() {
                       muted
                     />
                   ))}
-                </Glass>
+                </ListCard>
               </>
             )}
           </>

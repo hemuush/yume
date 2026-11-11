@@ -49,7 +49,7 @@ import {
 import { resyncAfterRestore } from '@/lib/restoreSync';
 import { authenticate, withoutRelock } from '@/lib/appLock';
 import { SkyHeader, HeaderSummary } from '@/features/home/SkyHeader';
-import { Glass } from '@/components/Glass';
+import { SummaryCard } from '@/components/SummaryCard';
 import { cardSurface } from '@/components/CardSurface';
 import { HomeWallpaper } from '@/features/home/HomeWallpaper';
 import { BackupShield } from '@/features/backup/BackupShield';
@@ -481,8 +481,8 @@ Restore anyway? Your current data would be replaced with no way back.`,
             <PrimaryButton title="Retry" compact variant="secondary" onPress={() => void load()} />
           </View>
         )}
-        {/* Glass, with a shield in the status's colour (green when safe, amber or red when it needs you). */}
-        <Glass radius={22} tone="strong" style={[styles.statusCard, cardSurface.summary]}>
+        {/* The summary card, with a shield in the status's colour (green when safe, amber or red when it needs you). */}
+        <SummaryCard style={styles.statusCard}>
           {!loaded ? (
             <>
               <Skeleton width={200} height={16} radius={4} />
@@ -555,7 +555,7 @@ Restore anyway? Your current data would be replaced with no way back.`,
               </View>
             </>
           )}
-        </Glass>
+        </SummaryCard>
 
         <View style={[h.card, cardSurface.neutral, styles.fileActions]}>
           <SettingsRow

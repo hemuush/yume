@@ -127,7 +127,6 @@ export function TransactionsHeadline({
           <Text style={styles.sumKicker}>{kicker}</Text>
           <CountUpAmount
             key={`${periodKey}:${narrowedTo ?? ''}`}
-            countFromZero={false}
             minor={shownMinor}
             style={styles.headlineAmt}
             numberOfLines={1}

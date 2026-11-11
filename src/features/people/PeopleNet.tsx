@@ -1,8 +1,13 @@
-import { View, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
-import { Glass } from '@/components/Glass';
-import { cardSurface } from '@/components/CardSurface';
-import { Kicker, frost } from '@/components/Frost';
+import {
+  SummaryCard,
+  SummaryFacts,
+  SummarySide,
+  SummarySplit,
+  SummaryTop,
+  summaryFigure,
+} from '@/components/SummaryCard';
 import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
 
@@ -29,53 +34,41 @@ export function PeopleNet({
       : netMinor < 0
         ? theme.colors.expenseText
         : theme.colors.textPrimary;
-  const total = owedToYouMinor + youOweMinor;
+  const people = owedCount + oweCount;
   return (
-    <Glass radius={28} tone="strong" style={[frost.hero, cardSurface.summary, styles.card]}>
-      <Kicker icon="users">
-        {netMinor > 0 ? 'Net, in your favour' : netMinor < 0 ? 'Net, against you' : 'Net, even'}
-      </Kicker>
-      <Text style={[frost.bigValue, { color }]} numberOfLines={1} adjustsFontSizeToFit>
-        {netMinor > 0 ? '+' : netMinor < 0 ? '−' : ''}
-        {formatMoney(Math.abs(netMinor))}
-      </Text>
-      {total > 0 && (
-        <View style={styles.bar} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-          {owedToYouMinor > 0 && <View style={[styles.side, styles.owed, { flex: owedToYouMinor }]} />}
-          {youOweMinor > 0 && <View style={[styles.side, styles.owe, { flex: youOweMinor }]} />}
-        </View>
-      )}
-      <View style={styles.legend}>
-        <Text style={styles.legendText}>
-          <Text style={[styles.legendBold, { color: theme.colors.incomeText }]}>
-            +{formatMoney(owedToYouMinor)}
-          </Text>{' '}
-          owed to you · {owedCount} {owedCount === 1 ? 'person' : 'people'}
-        </Text>
-        <Text style={styles.legendText}>
-          you owe{' '}
-          <Text style={[styles.legendBold, { color: theme.colors.expenseText }]}>
-            {formatMoney(youOweMinor)}
-          </Text>{' '}
-          · {oweCount}
-        </Text>
-      </View>
-    </Glass>
+    <SummaryCard style={styles.card}>
+      <SummaryTop
+        label={netMinor > 0 ? 'Net, in your favour' : netMinor < 0 ? 'Net, against you' : 'Net, even'}
+        figure={
+          <Text style={[summaryFigure, { color }]} numberOfLines={1} adjustsFontSizeToFit>
+            {netMinor > 0 ? '+' : netMinor < 0 ? '−' : ''}
+            {formatMoney(Math.abs(netMinor))}
+          </Text>
+        }
+        side={
+          <SummarySide
+            main={`${people} ${people === 1 ? 'person' : 'people'}`}
+            note={`${owedCount} owe you · you owe ${oweCount}`}
+          />
+        }
+      />
+      <SummarySplit
+        parts={[
+          { key: 'owed', weight: owedToYouMinor, color: theme.colors.slice.saved },
+          { key: 'owe', weight: youOweMinor, color: theme.colors.slice.spent },
+        ]}
+      />
+      <SummaryFacts
+        facts={[
+          { label: 'Owed to you', value: `+${formatMoney(owedToYouMinor)}`, tone: 'good' },
+          { label: 'You owe', value: formatMoney(youOweMinor), tone: 'bad' },
+        ]}
+      />
+    </SummaryCard>
   );
 }
 
+// The screen's content already clears the header with the usual gap, so the card adds none of its own.
 const styles = StyleSheet.create({
-  card: { marginTop: 0, marginBottom: 6, padding: 14, gap: 8 },
-  bar: { flexDirection: 'row', height: 12, gap: 2, borderRadius: 6, overflow: 'hidden' },
-  side: { height: '100%' },
-  owed: { backgroundColor: theme.colors.slice.saved },
-  owe: { backgroundColor: theme.colors.slice.spent },
-  legend: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 8 },
-  legendText: {
-    flexShrink: 1,
-    fontFamily: theme.font.body,
-    fontSize: 12,
-    color: theme.colors.textSecondary,
-  },
-  legendBold: { fontFamily: theme.font.bodyBold },
+  card: { marginTop: 0, marginBottom: 6 },
 });

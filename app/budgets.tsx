@@ -41,9 +41,7 @@ import { AddBudgetModal } from '@/features/budgets/AddBudgetModal';
 import { styles } from '@/features/budgets/budgets.styles';
 import { HomeWallpaper } from '@/features/home/HomeWallpaper';
 import { useAccent } from '@/theme/AccentContext';
-import { Glass } from '@/components/Glass';
-import { cardSurface } from '@/components/CardSurface';
-import { frost } from '@/components/Frost';
+import { ListCard } from '@/components/SummaryCard';
 import { errorMessage } from '@/lib/errorMessage';
 import { BudgetDetailModal } from '@/features/budgets/BudgetDetailModal';
 import { useToday } from '@/features/budgets/useToday';
@@ -313,7 +311,7 @@ export default function BudgetsScreen() {
           budgets.length > 0 && (
             <>
               <Text style={styles.listTitle}>This month</Text>
-              <Glass style={[frost.list, cardSurface.neutral]}>
+              <ListCard>
                 {budgets.map((progress, i) => (
                   <MovingRow key={progress.budget.id}>
                     <BudgetRow
@@ -329,7 +327,7 @@ export default function BudgetsScreen() {
                     />
                   </MovingRow>
                 ))}
-              </Glass>
+              </ListCard>
             </>
           )
         )}

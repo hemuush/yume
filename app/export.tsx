@@ -247,7 +247,7 @@ const styles = StyleSheet.create({
   content: { paddingHorizontal: 16, gap: 12 },
   intro: { gap: 8, marginBottom: 6 },
   introIcon: { width: 48, height: 48, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
-  introTitle: { fontFamily: theme.font.roundedBold, fontSize: 22, color: theme.colors.textPrimary },
+  introTitle: { fontFamily: theme.font.roundedBold, fontSize: 20, color: theme.colors.textPrimary },
   card: {
     padding: 14,
     gap: 14,

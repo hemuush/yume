@@ -26,7 +26,6 @@ export function GoalsHero({ totals }: { totals: GoalsTotals }) {
           ) : (
             <CountUpAmount
               minor={totals.savedMinor}
-              countFromZero={false}
               style={styles.figure}
               numberOfLines={1}
               adjustsFontSizeToFit

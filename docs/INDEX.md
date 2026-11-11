@@ -8,6 +8,14 @@ The [architecture guide](ARCHITECTURE.md#smoothness-pass--november-2026) describ
 
 The [approved 10 November Home redesign](HOME_REDESIGN_2026_11_10.md) records the separate week card, section summary lines, day-grouped recent activity and the remaining Pixel acceptance checks. It supersedes the chart placement of the 5 November refinement and also records the compact Activity and Reports passes and the Plan overview redesign.
 
+The [11 November Budgets, Recurring, Investments and Friends & family redesign](BUDGETS_RECURRING_INVESTMENTS_PEOPLE_2026_11_11.md) moves those four screens onto the flat summary card and records what each now shows. It does not establish device acceptance.
+
+The [11 November Category detail, Recently deleted, Tidy up and Notifications redesign](CATEGORY_DELETED_TIDY_NOTIFICATIONS_2026_11_11.md) continues the same card on four more screens and tidies a few oversized figures. It does not establish device acceptance.
+
+The [11 November calm motion pass](CALM_MOTION_2026_11_11.md) simplifies the app's motion to short fades and glides (no rolling figures, draw-ins, staggers or springs) and supersedes the motion polish below.
+
+The [11 November motion polish](MOTION_POLISH_2026_11_11.md) and its [per-screen checklist](MOTION_CHECKLIST_2026_11_11.md) record the shared timings, curve and entrance presets.
+
 The [approved 5 November Home refinement](HOME_REFINEMENT_2026_11_05.md) records the implementation of the second screenshot direction, retained financial behavior and remaining Pixel acceptance checks.
 
 The [5 November UI/UX enhancement plan](UX_ENHANCEMENT_PLAN_2026_11_05.md) records the first-use and filter recovery improvements, whole-app design priorities, motion principles and remaining device acceptance work.

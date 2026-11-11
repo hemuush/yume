@@ -1,9 +1,16 @@
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Text } from '@/components/Text';
 import { CountUpAmount } from '@/components/CountUpAmount';
-import { Glass } from '@/components/Glass';
-import { cardSurface } from '@/components/CardSurface';
-import { Kicker, FrostChip, PaceBar, frost } from '@/components/Frost';
+import { PaceBar } from '@/components/Frost';
+import {
+  SummaryCard,
+  SummaryFacts,
+  SummarySide,
+  SummaryTop,
+  summaryFigure,
+  summaryNote,
+  type SummaryFact,
+} from '@/components/SummaryCard';
 import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
 import type { BudgetsHeroFigures, BudgetsTone } from './budgetsOverview';
@@ -15,67 +22,84 @@ const FILL: Record<BudgetsTone, string> = {
   over: theme.colors.slice.spent,
 };
 
+/** What needs a look, in one fact: the budgets over, the ones ahead of pace, or that all is well. */
+function lookFact(h: BudgetsHeroFigures): SummaryFact {
+  const parts = [
+    h.overCount > 0 ? `${h.overCount} over` : null,
+    h.aheadCount > 0 ? `${h.aheadCount} ahead` : null,
+  ].filter((part): part is string => part !== null);
+  if (parts.length === 0) return { label: 'Status', value: 'On track', tone: 'good' };
+  return { label: 'Needs a look', value: parts.join(' · '), tone: h.overCount > 0 ? 'bad' : 'warn' };
+}
+
 /**
- * First card on Budgets: what's left across all limits this month (or what's over), the daily allowance,
- * and a pace bar with a tick where an even month would be today. Chips name what's over or ahead of pace.
+ * First card on Budgets, the same flat summary card as Loans: what's left across all limits this month (or
+ * what's over) with the daily allowance and days left beside it, a pace bar with a tick where an even month
+ * would be today, and the spent, the limit and what needs a look as small facts.
  */
 export function BudgetsHero({ figures: h }: { figures: BudgetsHeroFigures }) {
   const over = h.spentMinor > h.limitMinor;
-  const daysLeft = h.daysLeft === 0 ? 'last day' : `${h.daysLeft} ${h.daysLeft === 1 ? 'day' : 'days'} left`;
+  const daysLeft = h.daysLeft === 0 ? 'Last day' : `${h.daysLeft} ${h.daysLeft === 1 ? 'day' : 'days'} left`;
+  const evenPaceMinor = Math.round((h.limitMinor * h.expectedPct) / 100);
+  // usedPct is capped at 100 for the bar; the words say how far past the limit it really is.
+  const usedPercent = h.limitMinor > 0 ? Math.round((h.spentMinor / h.limitMinor) * 100) : 0;
 
   return (
-    <Glass radius={28} tone="strong" style={[frost.hero, cardSurface.summary, { padding: 14, gap: 8 }]}>
-      <View style={[frost.heroRow, { flexWrap: 'wrap', gap: 8 }]}>
-        <View style={frost.heroMain}>
-          <Kicker icon="pie-chart">{over ? 'Over this month' : 'Left this month'}</Kicker>
+    <SummaryCard>
+      <SummaryTop
+        label={over ? 'Over this month' : 'Left this month'}
+        figure={
           <CountUpAmount
             minor={over ? h.overMinor : h.leftMinor}
-            countFromZero={false}
-            style={[frost.bigValue, over && { color: theme.colors.expenseText }]}
+            style={[summaryFigure, over && { color: theme.colors.expenseText }]}
             numberOfLines={1}
             adjustsFontSizeToFit
           />
-        </View>
-        {h.perDayMinor != null && (
-          <View style={frost.side}>
-            <Text style={frost.sideLabel}>A day</Text>
-            <Text style={frost.sideValue} numberOfLines={1} adjustsFontSizeToFit>
-              {formatMoney(h.perDayMinor)}
-            </Text>
-          </View>
-        )}
-      </View>
-      <Text style={frost.sub}>
-        <Text style={frost.subBold}>{formatMoney(h.spentMinor)}</Text> spent of {formatMoney(h.limitMinor)} ·{' '}
-        {daysLeft}
-      </Text>
-      <PaceBar
-        animKey="budgets:hero"
-        pct={h.usedPct}
-        color={FILL[h.tone]}
-        marker={h.expectedPct}
-        accessibilityLabel={`${formatMoney(h.spentMinor)} spent of ${formatMoney(h.limitMinor)}. An even month would be at ${formatMoney(Math.round((h.limitMinor * h.expectedPct) / 100))} by today.`}
+        }
+        side={
+          h.perDayMinor != null ? (
+            <SummarySide main={`${formatMoney(h.perDayMinor)} a day`} note={daysLeft} />
+          ) : (
+            <SummarySide main={daysLeft} />
+          )
+        }
       />
-      <View style={frost.chips}>
-        {h.overCount > 0 && (
-          <FrostChip icon="alert-triangle" tone="bad">
-            {h.overCount} over
-          </FrostChip>
-        )}
-        {h.aheadCount > 0 && (
-          <FrostChip icon="trending-up" tone="warn">
-            {h.aheadCount} ahead of pace
-          </FrostChip>
-        )}
-        {h.overCount === 0 && h.aheadCount === 0 && (
-          <FrostChip icon="check" tone="ok">
-            On track
-          </FrostChip>
-        )}
+      <View>
+        <PaceBar
+          animKey="budgets:hero"
+          pct={h.usedPct}
+          color={FILL[h.tone]}
+          marker={h.expectedPct}
+          height={8}
+          style={styles.bar}
+          accessibilityLabel={`${formatMoney(h.spentMinor)} spent of ${formatMoney(h.limitMinor)}. An even month would be at ${formatMoney(evenPaceMinor)} by today.`}
+        />
+        <View
+          style={styles.barCaption}
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+        >
+          <Text style={styles.captionText}>{usedPercent}% used</Text>
+          <Text style={styles.captionText}>Even pace {Math.round(h.expectedPct)}%</Text>
+        </View>
       </View>
+      <SummaryFacts
+        facts={[
+          { label: 'Spent', value: formatMoney(h.spentMinor) },
+          { label: 'Limit', value: formatMoney(h.limitMinor) },
+          lookFact(h),
+        ]}
+      />
       {!!h.nestedCount && (
-        <Text style={frost.sub}>Subcategory limits are included in their parent budget totals.</Text>
+        <Text style={styles.note}>Subcategory limits are included in their parent budget totals.</Text>
       )}
-    </Glass>
+    </SummaryCard>
   );
 }
+
+const styles = StyleSheet.create({
+  bar: { marginTop: 0 },
+  barCaption: { flexDirection: 'row', justifyContent: 'space-between', gap: 8, marginTop: 6 },
+  captionText: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted },
+  note: summaryNote,
+});

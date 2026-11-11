@@ -20,7 +20,6 @@ import { heroSlices, withoutSavings, heroPct } from './heroSlices';
 import { daysLeftInMonth, dailyAllowance } from './allowance';
 import { HeroLegend, type LegendItem } from './HeroLegend';
 import { AllowanceTile } from './AllowanceTile';
-import { DURATIONS } from '@/lib/motionTimings';
 import { styles } from './hero.styles';
 import { WorkingRow } from './WorkingRow';
 import { SpendBars } from './SpendBars';
@@ -457,7 +456,6 @@ export function ThisMonthHero({
                 <CountUpAmount
                   key={displayed.periodKey}
                   minor={shownMinor}
-                  duration={DURATIONS.rollUp}
                   style={[styles.headValue, shownNeg && styles.headValueNeg]}
                   numberOfLines={1}
                   adjustsFontSizeToFit

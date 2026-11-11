@@ -8,7 +8,6 @@ import { formatMoney } from '@/lib/money';
 import { roundedMinor } from '@/lib/round';
 import { withPressedTint } from '@/lib/pressed';
 import { useAccent } from '@/theme/AccentContext';
-import { useCardGrow } from '@/lib/cardGrow';
 import { useGrowFrom } from '@/lib/useGrowFrom';
 import type { Category } from '@/types';
 import type { CategoryAgainstUsual } from './reportsInsights';
@@ -23,7 +22,6 @@ const SPARK_PAD = 3;
 const AnimatedPolyline = Animated.createAnimatedComponent(Polyline);
 const AnimatedLine = Animated.createAnimatedComponent(Line);
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
-const SPARK_DRAW_MS = 650;
 
 /** The line draws in from its first month, then the live segment and end dot fade in; still on a revisit. */
 function Sparkline({
@@ -37,7 +35,7 @@ function Sparkline({
   usual: number;
   live: boolean;
 }) {
-  const draw = useGrowFrom(animKey, 1, { drawMs: SPARK_DRAW_MS });
+  const draw = useGrowFrom(animKey, 1);
   const lo = Math.min(...values, usual);
   const hi = Math.max(...values, usual);
   const y = (v: number) => SPARK_H - SPARK_PAD - ((v - lo) / (hi - lo || 1)) * (SPARK_H - 2 * SPARK_PAD);
@@ -105,14 +103,11 @@ function TrackRow({
   onOpen: (categoryId: string) => void;
 }) {
   const { accent } = useAccent();
-  const { ref, growFrom } = useCardGrow();
   const now = formatMoney(roundedMinor(r.nowMinor));
   const usual = formatMoney(roundedMinor(r.usualMinor));
   return (
     <Pressable
-      ref={ref}
-      collapsable={false}
-      onPress={() => growFrom(() => onOpen(r.categoryId))}
+      onPress={() => onOpen(r.categoryId)}
       style={withPressedTint(accent, [styles.trackRow, first && { borderTopWidth: 0 }])}
       accessibilityRole="button"
       accessibilityLabel={`${r.name}, ${now}${inProgress ? ' so far' : ''}, ${r.pct}% of your usual ${usual}. Open`}

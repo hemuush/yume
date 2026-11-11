@@ -1,8 +1,6 @@
 import { View, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
-import { Glass } from '@/components/Glass';
-import { cardSurface } from '@/components/CardSurface';
-import { SCREEN } from '@/components/screenStyles';
+import { ListCard } from '@/components/SummaryCard';
 import { theme } from '@/constants/theme';
 import type { SplitPart } from '@/lib/portfolio';
 
@@ -11,7 +9,7 @@ const SPLIT_COLORS = ['#8FCBFF', '#F0E1A8', '#8FE8C8', '#E2A6D8', '#F6BFD3', '#B
 /** Where the money sits: one bar split by holding (or kind), with each share named below it. */
 export function SplitCard({ parts }: { parts: SplitPart[] }) {
   return (
-    <Glass radius={22} tone="strong" style={[styles.card, cardSurface.neutral, styles.block]}>
+    <ListCard style={styles.card}>
       <Text style={styles.label}>Where it sits</Text>
       <View style={styles.bar} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
         {parts.map((p, i) => (
@@ -38,15 +36,14 @@ export function SplitCard({ parts }: { parts: SplitPart[] }) {
           <Text style={styles.legendShare}>{Math.round(p.share * 100)}%</Text>
         </View>
       ))}
-    </Glass>
+    </ListCard>
   );
 }
 
 const styles = StyleSheet.create({
-  block: { marginTop: 0, marginBottom: 12 },
-  card: { marginHorizontal: SCREEN.gutter, padding: 14, gap: 10 },
+  card: { padding: 14, gap: 10, marginBottom: 12 },
   label: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textSecondary },
-  bar: { flexDirection: 'row', height: 10, borderRadius: 5, overflow: 'hidden', gap: 2 },
+  bar: { flexDirection: 'row', height: 8, borderRadius: 4, overflow: 'hidden', gap: 3 },
   legendRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   dot: { width: 10, height: 10, borderRadius: 5 },
   legendName: {

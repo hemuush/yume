@@ -17,8 +17,7 @@ import { Skeleton } from '@/components/Skeleton';
 import { formatMoney } from '@/lib/money';
 import { groupPeople, inRows, showPeopleSummary } from '@/features/people/people.helpers';
 import { PeopleNet } from '@/features/people/PeopleNet';
-import { Glass } from '@/components/Glass';
-import { cardSurface } from '@/components/CardSurface';
+import { ListCard } from '@/components/SummaryCard';
 import { HomeWallpaper } from '@/features/home/HomeWallpaper';
 import { useAccent } from '@/theme/AccentContext';
 import { PersonQuietRow } from '@/features/people/PersonQuietRow';
@@ -79,11 +78,11 @@ export default function PeopleScreen() {
         {loading ? (
           <View style={styles.tileRow}>
             {[0, 1].map((i) => (
-              <Glass key={i} radius={22} style={[styles.tileCell, styles.personTile, cardSurface.neutral]}>
+              <View key={i} style={[styles.tileCell, styles.personTile]}>
                 <Skeleton width={32} height={32} circle radius={16} />
                 <Skeleton width={80} height={18} radius={5} style={{ marginTop: 12 }} />
                 <Skeleton width={60} height={10} radius={4} style={{ marginTop: 8 }} />
-              </Glass>
+              </View>
             ))}
           </View>
         ) : people.length === 0 ? (
@@ -145,7 +144,7 @@ export default function PeopleScreen() {
             {settled.length > 0 && (
               <>
                 <Text style={styles.settledTitle}>Settled</Text>
-                <Glass style={[styles.settledCard, cardSurface.neutral]}>
+                <ListCard>
                   {settled.map((p, i) => (
                     <PersonQuietRow
                       key={p.id}
@@ -155,7 +154,7 @@ export default function PeopleScreen() {
                       onPress={() => setSelected(p)}
                     />
                   ))}
-                </Glass>
+                </ListCard>
               </>
             )}
           </>

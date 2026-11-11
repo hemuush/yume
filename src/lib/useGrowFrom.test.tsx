@@ -1,6 +1,6 @@
 /**
- * Bars and rings remember what they showed: first sight after launch draws from 0; coming back starts at the
- * old value (nothing moves if nothing changed); a new value glides from the old one.
+ * Bars and rings show their value at once: nothing draws in from empty, coming back starts at the old value
+ * (nothing moves if nothing changed), and only a real change glides from the old value to the new one.
  */
 import { useEffect } from 'react';
 import { create, act } from 'react-test-renderer';
@@ -24,15 +24,12 @@ const valueOf = (v: Animated.Value | null) => (v as unknown as { __getValue: () 
 beforeEach(() => resetGrowMemory());
 
 describe('useGrowFrom', () => {
-  it('starts a new key from zero when the same component changes records', () => {
+  it('shows a new key at its value when the same component changes records', () => {
     let tree!: ReturnType<typeof create>;
     act(() => {
       tree = create(<Probe k="first" value={80} />);
     });
-    act(() => jest.advanceTimersByTime(2000));
     act(() => tree.update(<Probe k="second" value={20} />));
-    expect(valueOf(box.seen)).toBe(0);
-    act(() => jest.advanceTimersByTime(2000));
     expect(valueOf(box.seen)).toBe(20);
     act(() => tree.unmount());
   });
@@ -53,24 +50,27 @@ describe('useGrowFrom', () => {
     act(() => tree.unmount());
   });
 
-  it('stops a pending animation when its owner unmounts', () => {
+  it('stops a pending glide when its owner unmounts', () => {
     let tree!: ReturnType<typeof create>;
     act(() => {
-      tree = create(<Probe k="cancelled" value={60} />);
+      tree = create(<Probe k="cancelled" value={40} />);
     });
     const value = box.seen;
-    expect(valueOf(value)).toBe(0);
+    act(() => tree.update(<Probe k="cancelled" value={60} />));
     act(() => tree.unmount());
+    const frozen = valueOf(value);
     act(() => jest.advanceTimersByTime(2000));
-    expect(valueOf(value)).toBe(0);
+    expect(valueOf(value)).toBe(frozen);
   });
-  it('draws in from 0 the first time', () => {
+
+  it('shows its value at once the first time, with nothing drawn in from empty', () => {
+    const timing = jest.spyOn(Animated, 'timing');
     act(() => {
       create(<Probe k="bar" value={60} />);
     });
-    expect(valueOf(box.seen)).toBe(0);
-    act(() => jest.advanceTimersByTime(2000));
     expect(valueOf(box.seen)).toBe(60);
+    expect(timing).not.toHaveBeenCalled();
+    timing.mockRestore();
   });
 
   it('starts at the old value when you come back', () => {
@@ -108,10 +108,9 @@ describe('useGrowFrom', () => {
     act(() => {
       create(<Probe k="a" value={10} />);
     });
-    act(() => jest.advanceTimersByTime(2000));
     act(() => {
       create(<Probe k="b" value={90} />);
     });
-    expect(valueOf(box.seen)).toBe(0);
+    expect(valueOf(box.seen)).toBe(90);
   });
 });

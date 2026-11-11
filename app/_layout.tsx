@@ -41,8 +41,6 @@ import { PrivacyProvider } from '@/theme/PrivacyContext';
 import { AppLockProvider, useAppLock } from '@/lib/AppLockContext';
 import { UndoToastProvider } from '@/components/UndoToast';
 import { MilestoneNoteProvider, BudgetMonthWatcher } from '@/components/MilestoneNote';
-import { CardGrowHost } from '@/components/CardGrowHost';
-import { isGrowRoute } from '@/lib/cardGrow';
 import { AppDialogHost } from '@/components/AppDialog';
 import { syncAppIcon } from '@/lib/appIcon';
 import { ThemeSaveFeedback } from '@/theme/ThemeSaveFeedback';
@@ -59,10 +57,6 @@ import { errorMessage } from '@/lib/errorMessage';
 export const unstable_settings = {
   anchor: '(tabs)',
 };
-
-const growOptions = ({ route }: { route: { params?: object } }) => ({
-  animation: isGrowRoute(route.params) ? ('fade' as const) : ('slide_from_right' as const),
-});
 
 export default function RootLayout() {
   const [dbReady, setDbReady] = useState(false);
@@ -357,10 +351,9 @@ function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean;
             <Stack.Screen name="tidy-up" />
             <Stack.Screen name="whatif" />
             <Stack.Screen name="garden" />
-            {/* A page opened from a card that grows into it (see CardGrowHost) fades in under the growing card. */}
-            <Stack.Screen name="budgets" options={growOptions} />
-            <Stack.Screen name="savings-goals" options={growOptions} />
-            <Stack.Screen name="category/[id]" options={growOptions} />
+            <Stack.Screen name="budgets" />
+            <Stack.Screen name="savings-goals" />
+            <Stack.Screen name="category/[id]" />
             <Stack.Screen name="loans" />
             <Stack.Screen name="recently-deleted" />
             <Stack.Screen name="themes" />
@@ -368,7 +361,6 @@ function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean;
             <Stack.Screen name="wrap" options={{ animation: 'fade' }} />
           </Stack>
           <BudgetMonthWatcher />
-          <CardGrowHost />
         </MilestoneNoteProvider>
       </UndoToastProvider>
     </ErrorBoundary>

@@ -29,12 +29,11 @@ type Kind = 'spend' | 'netWorth';
 const partialProjection = (v: number | null) => (v == null ? -Infinity : v);
 
 const AnimatedPolyline = Animated.createAnimatedComponent(Polyline);
-const DRAW_MS = 800;
 
 /** The chart's line, drawn in from its first month once after app open; still when you come back to it. */
 function DrawnLine({ animKey, coords }: { animKey: string; coords: { x: number; y: number }[] }) {
   const { accent } = useAccent();
-  const draw = useGrowFrom(animKey, 1, { drawMs: DRAW_MS });
+  const draw = useGrowFrom(animKey, 1);
   let length = 0;
   for (let i = 1; i < coords.length; i++) {
     length += Math.hypot(coords[i].x - coords[i - 1].x, coords[i].y - coords[i - 1].y);
