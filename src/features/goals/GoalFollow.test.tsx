@@ -65,6 +65,11 @@ const pressText = (tree: ReactTestRenderer, label: string) =>
     )
     .at(-1)!
     .props.onPress();
+// The button with that accessibility label.
+const pressLabel = (tree: ReactTestRenderer, label: string) =>
+  tree.root
+    .findAll((n) => n.props.accessibilityLabel === label && typeof n.props.onPress === 'function')[0]
+    .props.onPress();
 const settle = () => act(async () => new Promise((r) => setTimeout(r, 0)));
 
 beforeAll(async () => {
@@ -82,7 +87,7 @@ describe('GoalCard following an account', () => {
       );
     });
     jest.mocked(router.push).mockClear();
-    act(() => pressText(tree, 'Move money'));
+    act(() => pressLabel(tree, 'Move money to Rainy day'));
     expect(router.push).not.toHaveBeenCalled();
     act(() => tree.unmount());
   });
@@ -94,9 +99,9 @@ describe('GoalCard following an account', () => {
         <GoalCard goal={goal} accountName="Pot" onPress={jest.fn()} onContribute={onContribute} />
       );
     });
-    expect(texts(tree)).toContain('Following Pot');
-    expect(texts(tree)).not.toContain('Add money');
-    act(() => pressText(tree, 'Move money'));
+    expect(texts(tree).some((t) => t.includes('Following Pot'))).toBe(true);
+    expect(texts(tree).some((t) => t.startsWith('Add money'))).toBe(false);
+    act(() => pressLabel(tree, 'Move money to Rainy day'));
     expect(router.push).toHaveBeenCalledWith('/add-transaction?type=transfer&toAccountId=pot');
     expect(onContribute).not.toHaveBeenCalled();
   });
@@ -108,8 +113,10 @@ describe('GoalCard following an account', () => {
         <GoalCard goal={{ ...goal, tracksAccount: false }} onPress={jest.fn()} onContribute={jest.fn()} />
       );
     });
-    expect(texts(tree)).toContain('Add money');
-    expect(texts(tree).some((t) => t.startsWith('Following'))).toBe(false);
+    expect(
+      tree.root.findAll((n) => n.props.accessibilityLabel === 'Add money to Rainy day').length
+    ).toBeGreaterThan(0);
+    expect(texts(tree).some((t) => t.includes('Following'))).toBe(false);
   });
 });
 

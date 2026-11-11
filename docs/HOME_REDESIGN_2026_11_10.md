@@ -101,3 +101,9 @@ The full suite passed with the repository's locale settings: 370 suites and 11,8
 - `LoansHero` is the same flat summary card as the other screens: what you owe, the debt-free month and repaid share beside it, a split bar in each loan's own colour, small facts (EMIs a month, interest to go, owed to you) and the payoff timeline behind a disclosure.
 - `LoanCard` keeps one pale icon tile, a 20 px principal figure, progress and a Next EMI row; that row is tinted when the EMI is within `DUE_SOON_DAYS` (shared with Home, now in `src/lib/dueDate.ts`) or overdue.
 - The "Closed" divider is a normal muted label instead of an eyebrow.
+
+## Savings goals
+
+- `GoalsHero` is the same flat summary card as the other screens: saved so far (20 px), the share of the combined target beside it, a 6 px bar and one line with the monthly amount that keeps the goals on pace. With amounts hidden, the figure is masked and the share, bar and pace are withheld.
+- Goals are rows in one card, separated by hairlines, instead of a tall card each. A row is the name with saved of target, a 6 px bar in the goal's colour, the share and date, and the pace with the monthly amount. "Reserved in…" and "Following…" sit in that second line.
+- The wide Add money pill became a 32 dp round button inside a 44 dp touch area. Its accessibility label still says what it does (Add money, Manage reservation, Move money); a followed goal shows a swap icon.

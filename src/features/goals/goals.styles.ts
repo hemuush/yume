@@ -34,6 +34,17 @@ export const styles = StyleSheet.create({
     borderColor: theme.colors.borderSoft,
     boxShadow: 'none',
   },
+  // The one card holding every goal row.
+  list: {
+    marginHorizontal: 16,
+    borderRadius: 16,
+    backgroundColor: theme.colors.surface,
+    borderWidth: 1,
+    borderColor: theme.colors.borderSoft,
+    overflow: 'hidden',
+  },
+  skeletonRow: { padding: 14, gap: 8 },
+  skeletonDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.divider },
   cardArchived: { opacity: 0.6 },
   cardTop: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 11 },
 
