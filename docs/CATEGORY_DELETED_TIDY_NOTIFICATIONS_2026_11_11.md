@@ -33,3 +33,9 @@ Approved from the design board (page "Category detail, Recently deleted, Tidy up
 - The add-entry notices ("Add your first account", "tied to a loan or a person") and the investment sheet's Invested / Gain / Return trio were on `StripCard`, a card with a coloured strip and an older shadow; they are flat cards now and `StripCard` is gone (`KickerDot` stays in `StripCard.tsx`).
 - Investments' split colours moved to `theme.colors.splitPalette`; the Reports placeholder uses the 16 gutter.
 - Left as they were: Garden and its month card (decorative, own look), Themes' live preview, the illustration colours in `HeaderHills`.
+
+## Gap sweep (same day)
+
+- Loading placeholders: a `SummarySkeleton` (label, figure, bar in the summary card) now leads the placeholders on Budgets, Recurring, Category detail, Recently deleted and Tidy up, so the card does not jump when data arrives; `CardRowsSkeleton` uses the 18 radius of the list cards.
+- Dead code removed: `HabitTile` (an unused Plan tile) and its styles, and four unused style keys (`compactIcon`, `sumFlow`, `sumTitle`, `catRight`).
+- `ARCHITECTURE.md` no longer describes the count-up, the card transition or the staggered capsules.

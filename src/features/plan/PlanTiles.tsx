@@ -1,6 +1,5 @@
 import { View, Pressable, Animated } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Text } from '@/components/Text';
 import { Glass } from '@/components/Glass';
 import { cardSurface } from '@/components/CardSurface';
@@ -9,9 +8,8 @@ import { stableIndexFromId } from '@/lib/color';
 import { personInitials } from '@/features/people/people.helpers';
 import { formatMoney } from '@/lib/money';
 import { usePressScale } from '@/lib/usePressScale';
-import { HabitState, PeopleState } from './planOverview';
+import { PeopleState } from './planOverview';
 import { styles } from './plan.styles';
-import { parseLocalIsoDate } from '@/lib/date';
 import { Kicker } from '@/components/Frost';
 
 export { Kicker, FrostChip as PlanChip } from '@/components/Frost';
@@ -168,80 +166,6 @@ export function PeopleTile({
         </View>
         {value}
       </View>
-    </PlanTile>
-  );
-}
-
-/* ---------- Spend streak ---------- */
-
-/** Kept days' sprouts grow a little taller each day; a missed day stays a small grey one. */
-const SPROUT_BASE = 13;
-const SPROUT_STEP = 3;
-
-export function HabitTile({
-  habit,
-  goalMinor,
-  onOpen,
-  today,
-}: {
-  /** Null when no daily spending goal is set. */
-  habit: HabitState | null;
-  goalMinor: number | null;
-  today?: string;
-  onOpen: () => void;
-}) {
-  const sprout = <MaterialCommunityIcons name="sprout" size={14} color={theme.colors.ink} />;
-  if (!habit || goalMinor == null) {
-    return (
-      <PlanTile label="Set a daily goal. Open Suu's garden" onPress={onOpen}>
-        <Kicker icon={sprout} inTile>
-          Spend streak
-        </Kicker>
-        <Text style={styles.title}>Set a daily goal</Text>
-        <Text style={styles.tileSub}>Grow Suu&rsquo;s garden</Text>
-      </PlanTile>
-    );
-  }
-  return (
-    <PlanTile
-      label={`${habit.streakDays}-day streak at ${formatMoney(goalMinor)} or less a day. ${habit.days.map((kept, i) => `${habit.dates?.[i] ?? `Day ${i + 1}`}: ${habit.tracked?.[i] === false ? 'not tracked' : kept ? 'within goal' : 'over goal'}`).join(', ')}. Open Suu's garden`}
-      onPress={onOpen}
-    >
-      <View style={styles.compactSummary}>
-        <Kicker icon={sprout} inTile>
-          Spend streak
-        </Kicker>
-        <Text style={styles.value}>
-          {habit.streakDays} day{habit.streakDays === 1 ? '' : 's'}
-        </Text>
-      </View>
-      <View style={styles.compactSummary}>
-        <View
-          style={styles.sprouts}
-          accessibilityElementsHidden
-          importantForAccessibility="no-hide-descendants"
-        >
-          {habit.days.map((kept, i) => (
-            <View key={i} style={styles.sproutDay}>
-              <MaterialCommunityIcons
-                name="sprout"
-                size={kept ? SPROUT_BASE + i * SPROUT_STEP : SPROUT_BASE - 2}
-                color={kept ? theme.colors.incomeText : theme.colors.textMuted}
-                style={!kept && { opacity: 0.45 }}
-              />
-              <Text style={[styles.dayLabel, habit.dates?.[i] === today && styles.income]}>
-                {habit.tracked?.[i] === false
-                  ? '—'
-                  : habit.dates?.[i]
-                    ? parseLocalIsoDate(habit.dates[i]).toLocaleDateString(undefined, { weekday: 'narrow' })
-                    : `${i + 1}`}
-              </Text>
-            </View>
-          ))}
-        </View>
-        <Text style={styles.tileSub}>{formatMoney(goalMinor)} or less / day</Text>
-      </View>
-      {habit.tracked?.includes(false) && <Text style={styles.dayLabel}>— Not tracked</Text>}
     </PlanTile>
   );
 }
