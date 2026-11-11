@@ -73,7 +73,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
     borderRadius: 16,
     backgroundColor: theme.colors.surface,
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
     overflow: 'hidden',
   },

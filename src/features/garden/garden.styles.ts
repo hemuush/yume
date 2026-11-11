@@ -42,10 +42,10 @@ export const styles = StyleSheet.create({
   summaryHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   streakValue: { flex: 1, fontFamily: theme.font.roundedBold, fontSize: 22, color: theme.colors.ink },
   editGoal: {
-    minHeight: 36,
+    minHeight: 44,
     paddingHorizontal: 12,
     justifyContent: 'center',
-    borderRadius: 18,
+    borderRadius: 22,
     backgroundColor: theme.colors.surface,
   },
   editGoalText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textPrimary },

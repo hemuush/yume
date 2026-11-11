@@ -164,7 +164,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  ctaText: { fontFamily: theme.font.bodyBold, fontSize: 12.5 },
+  ctaText: { fontFamily: theme.font.bodyBold, fontSize: 13 },
   more: { width: 44, minHeight: 44, marginRight: -10, alignItems: 'center', justifyContent: 'center' },
   menu: { flexDirection: 'row', gap: 8, paddingLeft: 56, paddingBottom: 10, paddingRight: 12 },
   ghost: {
@@ -176,5 +176,5 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.tray,
     boxShadow: `inset 0 0 0 1px ${theme.colors.inkHairline}`,
   },
-  ghostText: { fontFamily: theme.font.bodyMedium, fontSize: 12.5, color: theme.colors.textPrimary },
+  ghostText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
 });

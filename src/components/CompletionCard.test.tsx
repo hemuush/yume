@@ -20,7 +20,7 @@ it('uses one native fade and cancels it when reduced motion is enabled', () => {
   expect(timing).toHaveBeenCalledTimes(1);
   expect(timing).toHaveBeenCalledWith(
     expect.anything(),
-    expect.objectContaining({ duration: 180, useNativeDriver: true })
+    expect.objectContaining({ duration: 150, useNativeDriver: true })
   );
   mockReduce = true;
   act(() => {

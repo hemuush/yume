@@ -138,7 +138,7 @@ const styles = StyleSheet.create({
   },
   fill: { height: '100%', borderRadius: 4 },
   line: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 4, marginTop: 8 },
-  caption: { fontFamily: theme.font.body, fontSize: 12.5, lineHeight: 18, color: theme.colors.textSecondary },
+  caption: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 18, color: theme.colors.textSecondary },
   figure: {
     fontFamily: theme.font.bodyMedium,
     color: theme.colors.textPrimary,
