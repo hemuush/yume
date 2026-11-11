@@ -96,3 +96,8 @@ The search tools could reach only some sources from this environment; Nielsen No
 - Timelines: the connector ends at the last item ([PhiaUI timeline](https://hexdocs.pm/phia_ui/PhiaUi.Components.Timeline.html)); charts: tap to select with a persistent value, 44-point targets and a text alternative ([TanStack charts accessibility](https://unpkg.com/@tanstack/charts@1.2.0/docs/guides/accessibility.md)).
 
 The full suite passed with the repository's locale settings: 370 suites and 11,831 tests, with two existing skips. This pass has not been run on a device.
+## Loans
+
+- `LoansHero` is the same flat summary card as the other screens: what you owe, the debt-free month and repaid share beside it, a split bar in each loan's own colour, small facts (EMIs a month, interest to go, owed to you) and the payoff timeline behind a disclosure.
+- `LoanCard` keeps one pale icon tile, a 20 px principal figure, progress and a Next EMI row; that row is tinted when the EMI is within `DUE_SOON_DAYS` (shared with Home, now in `src/lib/dueDate.ts`) or overdue.
+- The "Closed" divider is a normal muted label instead of an eyebrow.

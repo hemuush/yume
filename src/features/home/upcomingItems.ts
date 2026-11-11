@@ -2,7 +2,7 @@ import type Feather from '@expo/vector-icons/Feather';
 import { investRole, investRuleTitle } from '@/lib/investment';
 import { theme } from '@/constants/theme';
 import { hexToRgba, shade } from '@/lib/color';
-import { dueDateLabel, isDueUrgent } from '@/lib/dueDate';
+import { DUE_SOON_DAYS, dueDateLabel, isDueUrgent } from '@/lib/dueDate';
 import { daysUntilIsoDate } from '@/lib/date';
 import { payCardRoute, PayCardRoute } from '@/lib/payCard';
 import type { PlanCardBillInput } from '@/features/plan/planOverview';
@@ -28,8 +28,7 @@ export interface UpcomingItem {
 
 /** How far ahead Home's Upcoming looks. Overdue items are always included on top of this. */
 export const UPCOMING_DAYS = 7;
-/** An EMI or card bill this close (or late) is pinned to the top of Upcoming as "Due soon". */
-export const DUE_SOON_DAYS = 3;
+export { DUE_SOON_DAYS } from '@/lib/dueDate';
 
 interface UpcomingLoanInput {
   id: string;
