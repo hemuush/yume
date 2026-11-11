@@ -13,6 +13,9 @@ export function dueDateLabel(dateStr: string): string {
   return `Due on ${new Date(`${dateStr}T00:00:00`).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}`;
 }
 
+/** An EMI or card bill this close (or late) counts as due soon: Home pins it, Loans tints its next EMI. */
+export const DUE_SOON_DAYS = 3;
+
 /** Today or already past — the threshold for the "urgent" (coral) treatment on Home's Upcoming list. */
 export function isDueUrgent(dateStr: string): boolean {
   return daysUntilIsoDate(dateStr) <= 0;

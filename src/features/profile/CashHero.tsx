@@ -3,12 +3,8 @@ import { Text } from '@/components/Text';
 import { CountUpAmount } from '@/components/CountUpAmount';
 import { Amount } from '@/components/Amount';
 import { screenStyles as h } from '@/components/screenStyles';
-import { styles as hero } from '@/features/home/hero.styles';
 import { theme } from '@/constants/theme';
 import { formatMaskableMoney } from '@/lib/money';
-import { useAccent } from '@/theme/AccentContext';
-import { shade } from '@/lib/color';
-import Feather from '@expo/vector-icons/Feather';
 
 /** One account type's slice of the money map. */
 export interface MoneyShare {
@@ -42,29 +38,27 @@ export function CashHero({
   shares?: MoneyShare[];
   children?: React.ReactNode;
 }) {
-  const { accent } = useAccent();
   // Only money that's there makes the bar; a card in debt shows in the legend instead.
   const bar = shares.filter((s) => s.minor > 0 && !(masked && s.sensitive));
   return (
-    <View style={[styles.card, { backgroundColor: shade(accent, 93) }]}>
-      <View style={styles.heading}>
-        <View style={styles.headingIcon}>
-          <Feather name="pie-chart" size={16} color={theme.colors.ink} />
+    <View style={styles.card}>
+      <View style={styles.top}>
+        <View style={styles.topMain}>
+          <Text style={styles.label}>{label}</Text>
+          {masked ? (
+            <Text style={styles.figure}>{formatMaskableMoney(0, { masked: true })}</Text>
+          ) : (
+            <CountUpAmount
+              minor={minor}
+              countFromZero={false}
+              style={styles.figure}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+            />
+          )}
         </View>
-        <Text style={styles.label}>{label}</Text>
+        <Text style={styles.sub}>{sub}</Text>
       </View>
-      {masked ? (
-        <Text style={hero.headValue}>{formatMaskableMoney(0, { masked: true })}</Text>
-      ) : (
-        <CountUpAmount
-          minor={minor}
-          countFromZero={false}
-          style={hero.headValue}
-          numberOfLines={1}
-          adjustsFontSizeToFit
-        />
-      )}
-      <Text style={styles.sub}>{sub}</Text>
 
       {bar.length > 1 && (
         <View
@@ -98,36 +92,42 @@ export function CashHero({
 }
 
 const styles = StyleSheet.create({
-  card: { ...h.card, marginTop: 12, padding: 16, borderWidth: 1, gap: 10 },
-  heading: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  headingIcon: {
-    width: 30,
-    height: 30,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: theme.colors.glass,
+  // The flat summary card the other screens lead with.
+  card: {
+    ...h.card,
+    marginTop: 12,
+    paddingHorizontal: 14,
+    paddingTop: 12,
+    gap: 8,
+    borderWidth: 1,
+    boxShadow: '0px 1px 2px rgba(18,19,15,0.04), 0px 8px 24px rgba(18,19,15,0.05)',
+    overflow: 'visible',
   },
-  label: { flex: 1, fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textSecondary },
-  sub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary, marginTop: -6 },
-  shelf: { flexDirection: 'row', gap: 3, height: 6, marginTop: 4 },
-  slice: {
-    flexBasis: 0,
-    minWidth: 8,
-    height: 6,
-    borderRadius: 4,
-    boxShadow: `inset 0 0 0 1px ${theme.colors.inkHairline}`,
+  top: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    columnGap: 12,
+    rowGap: 2,
   },
-  legend: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 14, rowGap: 8, paddingVertical: 4 },
+  topMain: { flexShrink: 1, minWidth: 0 },
+  label: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
+  figure: {
+    fontFamily: theme.font.bodyMedium,
+    fontSize: 20,
+    lineHeight: 26,
+    letterSpacing: -0.2,
+    fontVariant: ['tabular-nums'],
+    color: theme.colors.textPrimary,
+  },
+  sub: { flexShrink: 1, fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
+  shelf: { flexDirection: 'row', gap: 3, height: 8, borderRadius: 4, overflow: 'hidden' },
+  slice: { flexBasis: 0, minWidth: 6, height: 8, borderRadius: 4 },
+  legend: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 12, rowGap: 6 },
   legendItem: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', maxWidth: '100%' },
-  key: {
-    width: 9,
-    height: 9,
-    borderRadius: 5,
-    marginRight: 5,
-    boxShadow: `inset 0 0 0 1px ${theme.colors.inkHairline}`,
-  },
-  legendLabel: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
+  key: { width: 8, height: 8, borderRadius: 4, marginRight: 5 },
+  legendLabel: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
   legendValue: {
     fontVariant: ['tabular-nums'],
     fontFamily: theme.font.bodyBold,

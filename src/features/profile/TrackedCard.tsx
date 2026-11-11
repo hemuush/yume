@@ -6,7 +6,6 @@ import { router } from 'expo-router';
 import ReanimatedAnimated from 'react-native-reanimated';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
-import { EYEBROW } from '@/constants/textStyles';
 import { PANEL_ENTER, ROW_EXIT } from '@/lib/animation';
 import { formatMaskableMoney, formatMoney } from '@/lib/money';
 import { withPressedTint } from '@/lib/pressed';
@@ -74,9 +73,9 @@ export function TrackedCard({
         accessibilityState={{ expanded: open }}
         accessibilityLabel={`Tracked balance, ${signedMoney(totalMinor, false, masked, currency)}, after loans and friends`}
       >
-        <View style={h.mid}>
+        <View style={styles.headText}>
           <Text style={styles.label}>Tracked balance</Text>
-          <Text style={h.sub}>After loans and friends</Text>
+          <Text style={styles.headSub}>after loans and friends</Text>
         </View>
         <Text
           style={[styles.value, !masked && totalMinor < 0 && { color: theme.colors.expenseText }]}
@@ -146,11 +145,13 @@ export function TrackedCard({
 const styles = StyleSheet.create({
   card: { marginTop: 10, paddingBottom: 4 },
   // At the foot of the money map, which draws the glass and the padding.
-  embedded: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: 'rgba(18,19,15,0.14)' },
-  head: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, paddingVertical: 12 },
-  headEmbedded: { paddingHorizontal: 0, paddingBottom: 0 },
-  label: EYEBROW,
-  value: { fontFamily: theme.font.bodyBold, fontSize: 15, color: theme.colors.textPrimary, flexShrink: 1 },
+  embedded: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.divider },
+  head: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, minHeight: 44 },
+  headEmbedded: { paddingHorizontal: 0 },
+  headText: { flex: 1, minWidth: 0, flexDirection: 'row', flexWrap: 'wrap', columnGap: 6 },
+  label: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textPrimary },
+  headSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
+  value: { fontFamily: theme.font.bodyBold, fontSize: 14, color: theme.colors.textPrimary, flexShrink: 1 },
   // The sum, on a brighter pane: each part, then a rule and the total.
   sumLines: {
     marginTop: 10,

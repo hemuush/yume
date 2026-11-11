@@ -22,7 +22,6 @@ import { Skeleton } from '@/components/Skeleton';
 import { GoalCard } from '@/features/goals/GoalCard';
 import { HomeWallpaper } from '@/features/home/HomeWallpaper';
 import { useAccent } from '@/theme/AccentContext';
-import { Glass } from '@/components/Glass';
 import { GoalsHero } from '@/features/goals/GoalsHero';
 import { goalHues, summarizeGoals } from '@/features/goals/goalPlan';
 import { useToday } from '@/features/budgets/useToday';
@@ -161,18 +160,15 @@ export default function SavingsGoalsScreen() {
         <HomeWallpaper accent={accent} secondary={secondary} plain />
         <SkyHeader title="Savings goals" showBack hideUser wallpaper />
         <View style={{ paddingTop: 24 }}>
-          {[0, 1].map((i) => (
-            <Glass key={i} style={styles.card}>
-              <View style={styles.cardTop}>
-                <Skeleton width={46} height={46} circle radius={23} />
-                <View>
-                  <Skeleton width={120} height={13} radius={4} />
-                  <Skeleton width={90} height={9} radius={4} style={{ marginTop: 5 }} />
-                </View>
+          <View style={styles.list}>
+            {[0, 1].map((i) => (
+              <View key={i} style={[styles.skeletonRow, i > 0 && styles.skeletonDivider]}>
+                <Skeleton width={140} height={13} radius={4} />
+                <Skeleton width={280} height={6} radius={3} />
+                <Skeleton width={180} height={10} radius={4} />
               </View>
-              <Skeleton width={280} height={6} radius={3} />
-            </Glass>
-          ))}
+            ))}
+          </View>
         </View>
       </View>
     );
@@ -214,21 +210,24 @@ export default function SavingsGoalsScreen() {
         ) : (
           <>
             {!showArchived && <GoalsHero totals={totals} />}
-            {visibleGoals.map((goal) => (
-              <MovingRow key={goal.id}>
-                <GoalCard
-                  goal={goal}
-                  hue={hues[goal.id]}
-                  accountName={accountsById.get(goal.linkedAccountId ?? '')?.name}
-                  accountAvailable={
-                    !!accountsById.get(goal.linkedAccountId ?? '') &&
-                    !accountsById.get(goal.linkedAccountId ?? '')?.archived
-                  }
-                  onPress={() => setEditingGoal(goal)}
-                  onContribute={() => setContributingGoal(goal)}
-                />
-              </MovingRow>
-            ))}
+            <View style={styles.list}>
+              {visibleGoals.map((goal, i) => (
+                <MovingRow key={goal.id}>
+                  <GoalCard
+                    goal={goal}
+                    hue={hues[goal.id]}
+                    divider={i > 0}
+                    accountName={accountsById.get(goal.linkedAccountId ?? '')?.name}
+                    accountAvailable={
+                      !!accountsById.get(goal.linkedAccountId ?? '') &&
+                      !accountsById.get(goal.linkedAccountId ?? '')?.archived
+                    }
+                    onPress={() => setEditingGoal(goal)}
+                    onContribute={() => setContributingGoal(goal)}
+                  />
+                </MovingRow>
+              ))}
+            </View>
           </>
         )}
       </ReanimatedAnimated.ScrollView>

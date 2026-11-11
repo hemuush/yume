@@ -1,6 +1,6 @@
 import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
-import { EYEBROW, SECTION_TITLE, SECTION_GAP } from '@/constants/textStyles';
+import { SECTION_TITLE, SECTION_GAP } from '@/constants/textStyles';
 
 // Shared by the Loans screen and every loan modal (LoanCard, LoanDetailModal, AssetModal, AccountModal,
 // RateChangeModal, PrepayModal, AddLoanModal), so styling stays in one place.
@@ -43,7 +43,7 @@ export const styles = StyleSheet.create({
     marginTop: 14,
     marginBottom: 6,
   },
-  closedDivider: EYEBROW,
+  closedDivider: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textMuted },
   cardSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 4 },
   errorText: { fontFamily: theme.font.body, color: theme.colors.expenseText, fontSize: 13, marginBottom: 12 },
   // The Overview / Schedule switch under a loan's card.

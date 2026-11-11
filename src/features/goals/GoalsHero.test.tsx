@@ -45,17 +45,18 @@ describe('GoalsHero', () => {
 
   it('shows what is saved, the share saved, the target and the monthly pace', () => {
     const shown = texts(render());
-    expect(shown).toEqual(expect.arrayContaining(['Saved toward goals', '₹50,000', 'Saved', '25%']));
-    const sub = shown.find((t) => t.startsWith('of '));
-    expect(sub).toContain('₹2,00,000');
-    expect(sub).toContain('2 goals');
-    expect(sub).toContain('₹3,000 a month to stay on pace');
+    expect(shown).toEqual(expect.arrayContaining(['Saved toward goals', '₹50,000']));
+    expect(shown.find((t) => t.startsWith('25%'))).toBe('25% of ₹2,00,000');
+    const note = shown.find((t) => t.includes('goals') && !t.startsWith('Saved'));
+    expect(note).toContain('₹3,000 a month to stay on pace');
+    expect(note).toContain('2 goals');
   });
 
   it('leaves the pace out when no goal needs a monthly amount', () => {
-    const sub = texts(render({ perMonthMinor: 0, goalCount: 1 })).find((t) => t.startsWith('of '));
-    expect(sub).toContain('1 goal');
-    expect(sub).not.toContain('a month');
+    const note = texts(render({ perMonthMinor: 0, goalCount: 1 })).find(
+      (t) => t.includes('goal') && !t.startsWith('Saved')
+    );
+    expect(note).toBe('1 goal');
   });
 
   it('withholds the figures, the share and the pace with amounts hidden', () => {
@@ -63,8 +64,8 @@ describe('GoalsHero', () => {
     const shown = texts(render());
     expect(shown).toContain('Saved toward goals');
     expect(shown.some((t) => t.includes('••••'))).toBe(true);
-    expect(shown).not.toContain('25%');
+    expect(shown.some((t) => t.includes('25%'))).toBe(false);
     expect(shown).not.toContain('₹50,000');
-    expect(shown.find((t) => t.startsWith('of '))).not.toContain('a month');
+    expect(shown.some((t) => t.includes('a month'))).toBe(false);
   });
 });

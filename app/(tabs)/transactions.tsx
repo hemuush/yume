@@ -936,7 +936,7 @@ export default function TransactionsScreen() {
                 </>
               )
             }
-            renderItem={({ item: group }) => (
+            renderItem={({ item: group, index }) => (
               <TimelineDay
                 accountCurrency={accountCurrency}
                 date={group.date}
@@ -970,6 +970,15 @@ export default function TransactionsScreen() {
                 onReorder={canReorder ? reorderDay : undefined}
                 onDragActive={setDragging}
                 timeline={!searching}
+                position={
+                  displayedGroups.length === 1
+                    ? 'only'
+                    : index === 0
+                      ? 'first'
+                      : index === displayedGroups.length - 1
+                        ? 'last'
+                        : 'middle'
+                }
                 isToday={group.date === today}
                 selected={!searching && loadedPeriod.scope === 'week' && selectedBar === group.date}
               />

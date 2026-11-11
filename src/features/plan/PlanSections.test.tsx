@@ -60,10 +60,10 @@ afterAll(() => jest.useRealTimers());
 const dueSoon = { totalMinor: 0, emiMinor: 0, billMinor: 0, count: 0, untilDate: '2026-10-22' };
 
 it.each([
-  ['2026-10-08', 'Overdue'],
-  ['2026-10-09', 'Due now'],
-  ['2026-10-10', 'Due soon'],
-])('labels payment status for %s while retaining Pay', (date, label) => {
+  ['2026-10-08', 'Overdue by 1 day'],
+  ['2026-10-09', 'Due today'],
+  ['2026-10-10', 'Due tomorrow'],
+])('says how late or close the payment is for %s while retaining Pay', (date, label) => {
   const pay = jest.fn(),
     open = jest.fn();
   const item = {
@@ -83,7 +83,7 @@ it.each([
       onPay={pay}
     />
   );
-  expect(texts(tree)).toContain(label);
+  expect(texts(tree).some((t) => t.includes(label))).toBe(true);
   // The Pay pill ends the row; the row is the one tap target and opens the pay sheet.
   act(() =>
     tree.root
@@ -187,7 +187,8 @@ describe('Plan sections with nothing in them yet', () => {
     const onOpen = jest.fn();
     const tree = render(<DebtPath loans={loans} today="2026-10-09" onOpen={onOpen} />);
     const shown = texts(tree);
-    expect(shown.some((t) => t.startsWith('Debt-free '))).toBe(true);
+    expect(shown).toContain('Debt-free');
+    expect(shown).toContain('Jan 2045');
     expect(shown).toContain('₹22,540 left');
     expect(shown).toContain('2% repaid · 2 loans');
     // One card, one action: no second link and no loan row repeating what Loans lists.
@@ -197,6 +198,45 @@ describe('Plan sections with nothing in them yet', () => {
       tree.root.find((n) => n.props.onPress && n.props.accessibilityRole === 'button').props.onPress()
     );
     expect(onOpen).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows a compare row only when asked to, and opens the comparison', () => {
+    const loans = {
+      debtLeftMinor: 90000,
+      paidOffMinor: 10000,
+      borrowedPrincipalMinor: 100000,
+      paidFraction: 0.1,
+      borrowedCount: 2,
+      debtFreeDate: '2028-10-09',
+      lentLeftMinor: 5000,
+      rows: [
+        {
+          id: 'b1',
+          name: 'House loan',
+          direction: 'borrowed' as const,
+          leftMinor: 90000,
+          nextDueDate: '2026-11-01',
+          nextEmiMinor: 10000,
+          paidCount: 1,
+          totalCount: 24,
+          endDate: '2028-10-09',
+        },
+      ],
+    };
+    const noCompare = render(<DebtPath loans={loans} today="2026-10-09" onOpen={jest.fn()} />);
+    expect(texts(noCompare)).not.toContain('Compare an extra payment');
+    const onCompare = jest.fn();
+    const withCompare = render(
+      <DebtPath loans={loans} today="2026-10-09" onOpen={jest.fn()} onCompare={onCompare} />
+    );
+    expect(texts(withCompare)).toContain('Compare an extra payment');
+    expect(texts(withCompare)).toContain('Lent out');
+    act(() =>
+      withCompare.root
+        .find((n) => n.props.accessibilityLabel === 'Compare an extra payment' && n.props.onPress)
+        .props.onPress()
+    );
+    expect(onCompare).toHaveBeenCalledTimes(1);
   });
 
   it('asks for a first budget, and a first EMI (saying what you lent)', () => {
@@ -418,6 +458,84 @@ describe('Runway card', () => {
     act(() => tree.unmount());
   });
 
+  it('starts on All, lists every day under its heading, and marks late or close dates with a dot', () => {
+    const { UpcomingDates } = require('./UpcomingDates');
+    const { ComingUpSection } = require('./ComingUpSection');
+    const item = (key: string, title: string, dueDate: string, kind: 'emi' | 'bill' = 'bill') => ({
+      key,
+      title,
+      kind,
+      dueDate,
+      amountMinor: 10000,
+      route: '/recurring' as const,
+    });
+    const runway = buildRunway(
+      0,
+      [item('a', 'Rent', '2026-10-09'), item('b', 'Gym', '2026-10-20'), item('c', 'Streaming', '2026-10-21')],
+      '2026-10-09',
+      30
+    );
+    const tree = render(
+      <UpcomingDates
+        runway={runway}
+        today="2026-10-09"
+        renderDays={(days: typeof runway.days) => (
+          <ComingUpSection
+            today="2026-10-09"
+            onOpen={jest.fn()}
+            groups={days.map((day) => ({ date: day.date, outMinor: day.outMinor, items: day.items }))}
+          />
+        )}
+      />
+    );
+    // Every date's payments show at once, with a heading and total per day.
+    expect(texts(tree)).toEqual(expect.arrayContaining(['Rent', 'Gym', 'Streaming']));
+    expect(texts(tree).some((t) => t.startsWith('Today · '))).toBe(true);
+    expect(texts(tree).filter((t) => t === '₹100 out')).toHaveLength(3);
+    const chip = (date: string) => tree.root.findByProps({ testID: `outgoing-day-${date}` });
+    expect(tree.root.findByProps({ testID: 'outgoing-day-all' }).props.accessibilityState.selected).toBe(
+      true
+    );
+    // Rent is due today, so its date says so; the others carry no warning.
+    expect(chip('2026-10-09').props.accessibilityLabel).toContain('due now or late');
+    expect(chip('2026-10-20').props.accessibilityLabel).not.toContain('due');
+    act(() => chip('2026-10-20').props.onPress());
+    expect(texts(tree)).toContain('Gym');
+    expect(texts(tree)).not.toContain('Rent');
+    act(() => tree.root.findByProps({ testID: 'outgoing-day-all' }).props.onPress());
+    expect(texts(tree)).toEqual(expect.arrayContaining(['Rent', 'Gym']));
+    act(() => tree.unmount());
+  });
+
+  it('notes overdue payments in the day heading that counts them', () => {
+    const { ComingUpSection } = require('./ComingUpSection');
+    const tree = render(
+      <ComingUpSection
+        today="2026-10-09"
+        onOpen={jest.fn()}
+        groups={[
+          {
+            date: '2026-10-09',
+            outMinor: 20000,
+            items: [
+              {
+                key: 'late',
+                title: 'Rent',
+                kind: 'bill' as const,
+                dueDate: '2026-10-07',
+                amountMinor: 20000,
+                route: '/recurring' as const,
+              },
+            ],
+          },
+        ]}
+      />
+    );
+    expect(texts(tree).some((t) => t.includes('incl. overdue'))).toBe(true);
+    expect(texts(tree).some((t) => t.includes('Overdue by 2 days'))).toBe(true);
+    act(() => tree.unmount());
+  });
+
   it('does not net income against outgoing on the same day', () => {
     const { UpcomingDates } = require('./UpcomingDates');
     const runway = buildRunway(
@@ -444,7 +562,7 @@ describe('Runway card', () => {
       1
     );
     const tree = render(<UpcomingDates runway={runway} />);
-    expect(texts(tree)).toContain('₹100');
+    expect(texts(tree).some((t) => t.includes('₹100'))).toBe(true);
     expect(texts(tree)).toContain('Rent');
     expect(texts(tree)).not.toContain('Salary');
     act(() => tree.unmount());

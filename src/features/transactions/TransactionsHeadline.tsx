@@ -122,6 +122,7 @@ export function TransactionsHeadline({
   const shownMinor = narrowed
     ? displayed.bars.reduce((sum, bar) => (bar.state ? sum : sum + bar.totalMinor), 0)
     : displayed.expenseMinor;
+  const compareTo = displayed.compareLabel ?? `last ${displayed.viewScope}`;
   const kicker = narrowed
     ? `Spent on ${narrowedTo}${current ? ` this ${viewScope}` : ''}`
     : current
@@ -143,16 +144,25 @@ export function TransactionsHeadline({
             />
           </View>
           {!narrowed && change != null && change !== 0 && (
-            <View style={[styles.sumChangeRow, change > 0 ? styles.sumChangeUp : styles.sumChangeDown]}>
-              <Feather
-                name={change > 0 ? 'arrow-up-right' : 'arrow-down-right'}
-                size={12}
-                color={change > 0 ? theme.colors.expenseText : theme.colors.incomeText}
-              />
-              <Text style={[styles.sumChange, change > 0 ? styles.expense : styles.income]}>
-                {formatMoney(Math.abs(change))} {change > 0 ? 'more' : 'less'} than{' '}
-                {displayed.compareLabel ?? `last ${displayed.viewScope}`}
-              </Text>
+            <View
+              style={[styles.sumChange, stacked && styles.sumChangeStacked]}
+              accessible
+              accessibilityLabel={`${formatMoney(Math.abs(change))} ${change > 0 ? 'more' : 'less'} than ${compareTo}`}
+            >
+              <View style={styles.sumChangeRow}>
+                <Feather
+                  name={change > 0 ? 'arrow-up-right' : 'arrow-down-right'}
+                  size={13}
+                  color={change > 0 ? theme.colors.expenseText : theme.colors.incomeText}
+                />
+                <Text
+                  style={[styles.sumChangeValue, change > 0 ? styles.expense : styles.income]}
+                  numberOfLines={1}
+                >
+                  {formatMoney(Math.abs(change))} {change > 0 ? 'more' : 'less'}
+                </Text>
+              </View>
+              <Text style={styles.sumChangeCaption}>than {compareTo}</Text>
             </View>
           )}
         </View>
@@ -171,7 +181,6 @@ export function TransactionsHeadline({
             items={displayed.legend}
             selectedIds={selectedCategoryIds}
             onToggle={onToggleCategory}
-            max={LEGEND_MAX}
           />
         ) : (
           <ChartLegend items={displayed.legend} inset={0} max={LEGEND_MAX} />

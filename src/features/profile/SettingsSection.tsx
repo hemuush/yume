@@ -45,7 +45,6 @@ import { withPressedTint } from '@/lib/pressed';
 import { haptics } from '@/lib/haptics';
 import { refreshAllWidgets } from '@/widgets/notifyWidgets';
 import { showAlert } from '@/components/AppDialog';
-import { shade } from '@/lib/color';
 
 /** "today" / "yesterday" / "N days ago" — deliberately coarse, no hours/minutes. */
 export function daysAgoLabel(iso: string, now: Date = new Date()): string {
@@ -290,7 +289,7 @@ export function SettingsSection() {
             {themeSaveError.message}
           </Text>
         )}
-        <View style={[h.card, styles.appearanceCard, { backgroundColor: shade(activeTheme.primary, 95) }]}>
+        <View style={[h.card, cardSurface.neutral, styles.settingsCard]}>
           <Pressable
             onPress={() => router.push('/themes')}
             style={withPressedTint(accent, styles.appearanceHead)}
@@ -299,14 +298,11 @@ export function SettingsSection() {
           >
             <ThemeThumb pack={activeTheme} />
             <View style={h.mid}>
-              <Text style={styles.appearanceTitle}>Make it yours</Text>
-              <View style={styles.themeNameRow}>
-                <Text style={styles.themeName}>{activeTheme.name}</Text>
-              </View>
+              <Text style={styles.appearanceTitle}>Theme</Text>
+              <Text style={styles.themeName}>{activeTheme.name} · tap a colour to switch</Text>
             </View>
-            <Feather name="arrow-up-right" size={18} color={theme.colors.ink} />
+            <Feather name="chevron-right" size={16} color={theme.colors.textMuted} />
           </Pressable>
-          <Text style={styles.appearanceHint}>Tap a color to try a different look.</Text>
           <View style={styles.swatches}>
             {THEMES.map((pack) => {
               const active = pack.id === themeId;
@@ -327,7 +323,7 @@ export function SettingsSection() {
                     <View style={[styles.swatchHalf, { backgroundColor: pack.secondary }]} />
                     {active && (
                       <View style={styles.swatchCheck}>
-                        <Feather name="check" size={16} color={theme.colors.ink} />
+                        <Feather name="check" size={14} color={theme.colors.ink} />
                       </View>
                     )}
                   </View>
@@ -359,6 +355,7 @@ export function SettingsSection() {
       <Section compact title="Money">
         <View style={[h.card, cardSurface.neutral, styles.settingsCard]}>
           <SettingsRow
+            compact
             icon="currency-inr"
             iconBg={theme.colors.goldTint}
             label="Default currency"
@@ -394,6 +391,7 @@ export function SettingsSection() {
           )}
           <MovingRow>
             <SettingsRow
+              compact
               icon="gauge"
               iconBg={theme.colors.goldTint}
               label="Daily spending goal"
@@ -441,6 +439,7 @@ export function SettingsSection() {
           )}
           <MovingRow>
             <SettingsRow
+              compact
               icon="tag-outline"
               iconBg={theme.colors.goldTint}
               label="Categories"
@@ -455,6 +454,7 @@ export function SettingsSection() {
       <Section compact title="Privacy & alerts">
         <View style={[h.card, cardSurface.neutral, styles.settingsCard]}>
           <SettingsRow
+            compact
             icon="fingerprint"
             iconBg={theme.colors.accentTint}
             label="Require unlock"
@@ -464,6 +464,7 @@ export function SettingsSection() {
             }
           />
           <SettingsRow
+            compact
             icon="eye-off-outline"
             iconBg={theme.colors.accentTint}
             label="Hide savings & investment amounts"
@@ -478,6 +479,7 @@ export function SettingsSection() {
             divider
           />
           <SettingsRow
+            compact
             icon="widgets-outline"
             iconBg={theme.colors.accentTint}
             label="Hide widget details"
@@ -493,6 +495,7 @@ export function SettingsSection() {
             divider
           />
           <SettingsRow
+            compact
             icon="bell-outline"
             iconBg={theme.colors.accentTint}
             label="Notifications"
@@ -510,6 +513,7 @@ export function SettingsSection() {
       <Section compact title="Your data">
         <View style={[h.card, cardSurface.neutral, styles.settingsCard]}>
           <SettingsRow
+            compact
             icon="folder-outline"
             iconBg={theme.colors.secondaryTint}
             label="Backup & restore"
@@ -518,6 +522,7 @@ export function SettingsSection() {
             onPress={() => router.push('/backup')}
           />
           <SettingsRow
+            compact
             icon="file-export-outline"
             iconBg={theme.colors.secondaryTint}
             label="Export"
@@ -526,6 +531,7 @@ export function SettingsSection() {
             divider
           />
           <SettingsRow
+            compact
             icon="delete-restore"
             iconBg={theme.colors.secondaryTint}
             label="Recently deleted"
@@ -538,6 +544,7 @@ export function SettingsSection() {
             divider
           />
           <SettingsRow
+            compact
             icon="broom"
             iconBg={theme.colors.secondaryTint}
             label="Tidy up"

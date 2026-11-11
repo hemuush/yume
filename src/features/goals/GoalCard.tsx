@@ -1,4 +1,4 @@
-import { View, Pressable, Animated, StyleSheet } from 'react-native';
+import { View, Pressable, StyleSheet } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { router } from 'expo-router';
 import { Text } from '@/components/Text';
@@ -7,264 +7,198 @@ import { SavingsGoal } from '@/types';
 import { formatMoney, formatMaskableMoney } from '@/lib/money';
 import { theme } from '@/constants/theme';
 import { shade } from '@/lib/color';
-import { softTint } from '@/components/softTint';
-import { selectedFill } from '@/theme/interactionColors';
+import { selectedFill, themeInk } from '@/theme/interactionColors';
 import { goalProgress } from '@/lib/savingsGoalProgress';
-import { usePressScale } from '@/lib/usePressScale';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import { useAccent } from '@/theme/AccentContext';
 import { dayMonthYear } from '@/lib/dateLabels';
 import { toLocalIsoDate } from '@/lib/date';
 import { styles as shared } from './goals.styles';
 import { goalPlan, GOAL_PACE_LABEL } from './goalPlan';
-import { SCREEN } from '@/components/screenStyles';
 
 /**
- * One full-width goal: what's left, progress, monthly amount to finish on time. Tap opens edit/archive/delete;
- * the pill contributes, or for a followed account transfers into it (the only way its progress moves).
+ * One goal as a row in the goals list: name and saved of target, a thin bar in the goal's colour, the share and
+ * date, and the pace with what finishing on time takes. Tap opens edit/archive/delete; the round button adds
+ * money, or for a followed account transfers into it (the only way its progress moves). Rows sit in one card
+ * and are told apart by a hairline, so `divider` is set on every row but the first.
  */
 export function GoalCard({
   goal,
   hue = theme.colors.idTeal,
   accountName,
   accountAvailable = true,
+  divider = false,
   onPress,
   onContribute,
 }: {
   goal: SavingsGoal;
   /** The goal's identity colour (goalHues). */
   hue?: string;
-  /** The linked account's name — shown when the goal follows it. */
+  /** The linked account's name, shown when the goal follows or reserves in it. */
   accountName?: string | null;
   accountAvailable?: boolean;
+  /** A hairline above the row. */
+  divider?: boolean;
   onPress: () => void;
   onContribute: () => void;
 }) {
   const { hideAmounts } = usePrivacy();
-  const { accent, secondary } = useAccent();
+  const { accent } = useAccent();
   const following = goal.tracksAccount && !!goal.linkedAccountId;
-  const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.98);
   const { percent, done } = goalProgress(goal.currentAmountMinor, goal.targetAmountMinor);
   const plan = goalPlan(goal, toLocalIsoDate(new Date()));
   const reached = done && !hideAmounts;
-  const monthsLine =
-    !hideAmounts && plan.perMonthMinor != null && plan.monthsLeft != null
-      ? `${formatMoney(plan.perMonthMinor)} a month · ${plan.monthsLeft} ${plan.monthsLeft === 1 ? 'month' : 'months'} left`
-      : !hideAmounts && plan.pastDue
-        ? 'Past its target date'
-        : null;
-  const showPill = !goal.archived;
+  const showButton = !goal.archived;
+  const blocked = following && !accountAvailable;
 
   const fillPct = hideAmounts ? 0 : Math.min(100, Math.max(0, percent));
   const fillColor = reached ? theme.colors.slice.saved : hue;
-  const tags = (
-    <>
-      {!hideAmounts && plan.pace && (
-        <View style={[styles.tag, plan.pace === 'behind' ? styles.tagWarn : styles.tagOk]}>
-          <Text style={[styles.tagText, plan.pace === 'behind' ? styles.behind : styles.onPace]}>
-            {GOAL_PACE_LABEL[plan.pace]}
-          </Text>
-        </View>
-      )}
-      {monthsLine && (
-        <View style={styles.tag}>
-          <Text style={styles.tagText}>{monthsLine}</Text>
-        </View>
-      )}
-    </>
-  );
+
+  const when = goal.targetDate ? `By ${dayMonthYear(goal.targetDate)}` : 'No target date';
+  const line = [
+    reached ? 'Reached' : hideAmounts ? null : `${Math.round(percent)}%`,
+    reached ? null : when,
+    goal.reservesAccount ? `Reserved in ${accountName ?? 'its account'}` : null,
+    following ? `Following ${accountName ?? 'its account'}` : null,
+  ]
+    .filter(Boolean)
+    .join(' · ');
+  const pace =
+    hideAmounts || reached || !plan.pace
+      ? null
+      : [
+          GOAL_PACE_LABEL[plan.pace],
+          plan.perMonthMinor != null
+            ? `${formatMoney(plan.perMonthMinor)}/mo`
+            : plan.pastDue
+              ? 'Past its target date'
+              : null,
+        ]
+          .filter(Boolean)
+          .join(' · ');
+
+  const label = `${following ? 'Move money to' : goal.reservesAccount ? 'Manage reservation for' : 'Add money to'} ${goal.name}`;
 
   return (
-    <Animated.View style={[styles.wrap, animatedStyle]}>
-      <Pressable
-        onPress={onPress}
-        onPressIn={onPressIn}
-        onPressOut={onPressOut}
-        accessibilityRole="button"
-        style={[styles.card, goal.archived && shared.cardArchived]}
-      >
-        <View style={styles.head}>
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      style={({ pressed }) => [
+        styles.row,
+        divider && styles.divider,
+        goal.archived && shared.cardArchived,
+        pressed && styles.pressed,
+      ]}
+    >
+      <View style={styles.main}>
+        <View style={styles.top}>
           <Text style={styles.name}>{goal.name}</Text>
-          {hideAmounts ? (
-            <Feather name="eye-off" size={20} color={theme.colors.textMuted} />
-          ) : reached ? (
-            <Feather name="check-circle" size={28} color={theme.colors.incomeText} />
-          ) : (
-            <Text style={styles.pct}>
-              {Math.round(percent)}
-              <Text style={styles.pctSign}>%</Text>
-            </Text>
-          )}
-          <View style={styles.figs}>
-            {reached ? (
-              <Text style={styles.reached}>Reached</Text>
-            ) : hideAmounts ? (
-              <Text style={styles.toGo}>{formatMaskableMoney(plan.toGoMinor, { masked: true })}</Text>
+          <Text style={styles.amounts}>
+            {hideAmounts ? (
+              <Text style={styles.saved}>
+                {formatMaskableMoney(goal.currentAmountMinor, { masked: true })}
+              </Text>
             ) : (
-              <>
-                <CountUpAmount
-                  minor={plan.toGoMinor}
-                  countFromZero={false}
-                  style={styles.toGo}
-                  numberOfLines={1}
-                  adjustsFontSizeToFit
-                />
-                <Text style={styles.toGoLabel}>to go</Text>
-              </>
+              <CountUpAmount
+                minor={goal.currentAmountMinor}
+                countFromZero={false}
+                style={styles.saved}
+                numberOfLines={1}
+              />
             )}
-          </View>
+            <Text style={styles.of}> / {formatMoney(goal.targetAmountMinor)}</Text>
+          </Text>
         </View>
-
-        {(goal.reservesAccount || following) && (
-          <View style={styles.accountIdentity}>
-            {goal.reservesAccount && (
-              <View style={styles.tag}>
-                <Text style={styles.tagText}>Reserved in {accountName ?? 'its account'}</Text>
-              </View>
-            )}
-            {following && (
-              <View style={[styles.tag, { backgroundColor: shade(secondary, 94) }]}>
-                <Feather name="refresh-cw" size={10} color={theme.colors.textSecondary} />
-                <Text style={styles.tagText}>Following {accountName ?? 'its account'}</Text>
-              </View>
-            )}
-          </View>
-        )}
-        {following && !accountAvailable && (
-          <Text style={styles.toGoLabel}>
-            Linked account unavailable. Edit this goal to choose another account.
-          </Text>
-        )}
-        <Text style={styles.savedSummary}>
-          {hideAmounts
-            ? formatMaskableMoney(goal.currentAmountMinor, { masked: true })
-            : formatMoney(goal.currentAmountMinor)}{' '}
-          <Text style={styles.targetSummary}>
-            of {formatMoney(goal.targetAmountMinor)} ·{' '}
-            {reached ? 'Reached' : goal.targetDate ? `By ${dayMonthYear(goal.targetDate)}` : 'No target date'}
-          </Text>
-        </Text>
-
         <View style={styles.track}>
           <View style={[styles.fill, { width: `${fillPct}%`, backgroundColor: shade(fillColor, 60) }]} />
         </View>
-
-        <View style={styles.footer}>
-          <View style={styles.tags}>{tags}</View>
-          {showPill && (
-            <Pressable
-              disabled={following && !accountAvailable}
-              accessibilityState={{ disabled: following && !accountAvailable }}
-              onPress={(event) => {
-                event?.stopPropagation();
-                if (following && !accountAvailable) return;
-                if (following)
-                  router.push(`/add-transaction?type=transfer&toAccountId=${goal.linkedAccountId}`);
-                else onContribute();
-              }}
-              accessibilityRole="button"
-              accessibilityLabel={`${following ? 'Move money to' : goal.reservesAccount ? 'Manage reservation for' : 'Add money to'} ${goal.name}`}
-              hitSlop={8}
-              style={({ pressed }) => [
-                styles.pill,
-                // The light theme tint, so the card's main action reads as one; a held press deepens it.
-                { backgroundColor: pressed ? softTint(accent, 0.7) : selectedFill(accent) },
-              ]}
-            >
-              <Text style={styles.pillText}>
-                {following ? 'Move money' : goal.reservesAccount ? 'Reserve / release' : 'Add money'}
-              </Text>
-            </Pressable>
+        <View style={styles.bottom}>
+          <Text style={styles.line}>{line}</Text>
+          {pace && (
+            <Text style={[styles.pace, plan.pace === 'behind' ? styles.behind : styles.onPace]}>{pace}</Text>
           )}
         </View>
-      </Pressable>
-    </Animated.View>
+        {blocked && (
+          <Text style={styles.line}>
+            Linked account unavailable. Edit this goal to choose another account.
+          </Text>
+        )}
+      </View>
+      {showButton && (
+        <Pressable
+          disabled={blocked}
+          accessibilityState={{ disabled: blocked }}
+          onPress={(event) => {
+            event?.stopPropagation();
+            if (blocked) return;
+            if (following) router.push(`/add-transaction?type=transfer&toAccountId=${goal.linkedAccountId}`);
+            else onContribute();
+          }}
+          accessibilityRole="button"
+          accessibilityLabel={label}
+          style={styles.hit}
+        >
+          {({ pressed }) => (
+            <View
+              style={[
+                styles.circle,
+                { backgroundColor: selectedFill(accent) },
+                pressed && styles.circlePressed,
+                blocked && styles.blocked,
+              ]}
+            >
+              <Feather name={following ? 'repeat' : 'plus'} size={18} color={themeInk(accent)} />
+            </View>
+          )}
+        </Pressable>
+      )}
+    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  wrap: { marginHorizontal: SCREEN.gutter, marginBottom: 12 },
-  // A quiet surface with one thin, colour-coded progress bar.
-  card: {
-    padding: 14,
-    gap: 8,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: theme.colors.borderSoft,
-    backgroundColor: theme.colors.surface,
-    overflow: 'hidden',
-  },
-  track: { height: 5, borderRadius: 3, backgroundColor: theme.colors.inkHairline, overflow: 'hidden' },
-  fill: { height: '100%', borderRadius: 3 },
-  head: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    gap: 8,
-  },
-  pct: {
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 14,
-    fontVariant: ['tabular-nums'],
-    lineHeight: 21,
-    color: theme.colors.textPrimary,
-  },
-  pctSign: { fontFamily: theme.font.body, fontSize: 14, letterSpacing: 0, color: theme.colors.textMuted },
-  figs: { flexDirection: 'row', alignItems: 'baseline', gap: 4, flexWrap: 'wrap', flexShrink: 1 },
-  toGo: {
-    fontFamily: theme.font.bodyMedium,
-    fontVariant: ['tabular-nums'],
-    fontSize: 12,
-    color: theme.colors.textSecondary,
-  },
-  toGoLabel: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted, marginTop: 1 },
-  reached: { fontFamily: theme.font.roundedBold, fontSize: 14, color: theme.colors.incomeText },
-  name: {
-    fontFamily: theme.font.roundedBold,
-    fontSize: 15,
-    color: theme.colors.textPrimary,
-    flexGrow: 1,
-    flexBasis: 140,
-    minWidth: 0,
-  },
-  accountIdentity: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  targetSummary: { fontFamily: theme.font.body, color: theme.colors.textSecondary },
-  savedSummary: {
-    fontFamily: theme.font.bodyMedium,
-    fontVariant: ['tabular-nums'],
-    fontSize: 14,
-    lineHeight: 21,
-    color: theme.colors.textPrimary,
-  },
-  footer: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
-  tags: { flexGrow: 1, flexBasis: 140, minWidth: 0, flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  tag: {
+  row: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    minHeight: 20,
-    paddingHorizontal: 0,
-    borderRadius: theme.radius.pill,
-    maxWidth: '100%',
+    gap: 10,
+    paddingVertical: 12,
+    paddingLeft: 14,
+    paddingRight: 8,
   },
-  tagOk: { paddingHorizontal: 8, backgroundColor: theme.colors.secondaryTint },
-  tagWarn: { paddingHorizontal: 8, backgroundColor: theme.colors.dueRow },
-  tagText: {
-    flexShrink: 1,
+  divider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.divider },
+  pressed: { backgroundColor: theme.colors.tray },
+  main: { flex: 1, minWidth: 0, gap: 6 },
+  top: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+    columnGap: 8,
+  },
+  name: { flexShrink: 1, fontFamily: theme.font.roundedBold, fontSize: 14, color: theme.colors.textPrimary },
+  amounts: { flexShrink: 1 },
+  saved: {
     fontFamily: theme.font.bodyBold,
-    fontSize: 12,
-    color: theme.colors.textSecondary,
+    fontSize: 14,
+    fontVariant: ['tabular-nums'],
+    color: theme.colors.textPrimary,
   },
+  of: {
+    fontFamily: theme.font.body,
+    fontSize: 12,
+    fontVariant: ['tabular-nums'],
+    color: theme.colors.textMuted,
+  },
+  track: { height: 6, borderRadius: 3, backgroundColor: theme.colors.inkHairline, overflow: 'hidden' },
+  fill: { height: '100%', borderRadius: 3 },
+  bottom: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', columnGap: 8 },
+  line: { flexShrink: 1, fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
+  pace: { flexShrink: 1, fontFamily: theme.font.bodyBold, fontSize: 12 },
   onPace: { color: theme.colors.incomeText },
   behind: { color: theme.colors.warnInk },
-  pill: {
-    minHeight: 44,
-    justifyContent: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: theme.radius.pill,
-    backgroundColor: theme.colors.surfaceAlt,
-  },
-  pillText: { fontFamily: theme.font.roundedBold, fontSize: 13, color: theme.colors.textPrimary },
+  // A 44 dp touch area around a 32 dp circle.
+  hit: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+  circle: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  circlePressed: { opacity: 0.7 },
+  blocked: { opacity: 0.4 },
 });

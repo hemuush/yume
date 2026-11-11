@@ -124,20 +124,22 @@ function BudgetTile({ budget: b, onPress }: { budget: PlanBudgetInput; onPress: 
         tone === 'near' ? ', near limit' : ''
       }. Open budgets`}
     >
-      <Glass radius={20} style={[styles.tileFill, cardSurface.neutral]}>
-        <View style={[styles.tileIcon, { backgroundColor: softTint(base, 0.6) }]}>
-          <MaterialCommunityIcons
-            name={(b.categoryIcon ?? 'tag') as McIconName}
-            size={18}
-            color={theme.colors.ink}
-          />
+      <Glass radius={16} style={[styles.tileFill, cardSurface.neutral]}>
+        <View style={styles.tileHead}>
+          <View style={[styles.tileIcon, { backgroundColor: softTint(base, 0.6) }]}>
+            <MaterialCommunityIcons
+              name={(b.categoryIcon ?? 'tag') as McIconName}
+              size={14}
+              color={theme.colors.ink}
+            />
+          </View>
+          <Text style={[styles.tilePct, b.overBudget && styles.tileOver]}>
+            {Math.round(pct)}
+            <Text style={styles.tilePctSign}>%</Text>
+          </Text>
         </View>
         <Text style={styles.tileName} numberOfLines={2}>
           {b.categoryName}
-        </Text>
-        <Text style={[styles.tilePct, b.overBudget && styles.tileOver]}>
-          {Math.round(pct)}
-          <Text style={styles.tilePctSign}>%</Text>
         </Text>
         <View style={styles.tileTrack} pointerEvents="none">
           <View style={[styles.tileProgress, { width: `${Math.min(100, pct)}%`, backgroundColor: fill }]} />

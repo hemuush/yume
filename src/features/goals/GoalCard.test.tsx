@@ -40,19 +40,18 @@ const texts = (r: ReactTestRenderer) =>
   r.root.findAllByType(Text).map((t) => [t.props.children].flat().join(''));
 
 describe('GoalCard', () => {
-  it('shows what is left and the saved share', () => {
+  it('shows what is saved of the target, the share and the pace', () => {
     const t = texts(render(goal())).join(' | ');
-    expect(t).toContain('to go');
-    // Saved share stays readable beside the remaining amount.
-    expect(t).toMatch(/(^| )81[^0-9]/);
-    expect(t).toContain(' % ');
-    expect(t).toContain('Add money');
+    expect(t).toContain('/ ₹2,00,000');
+    expect(t).toContain('81% · By 31 Dec 2999');
+    expect(t).toContain('/mo');
+    expect(t).not.toContain('to go');
   });
 
   it('shows no month plan for a goal with no date', () => {
     const t = texts(render(goal({ targetDate: null }))).join(' | ');
     expect(t).toContain('No target date');
-    expect(t).not.toContain('a month');
+    expect(t).not.toContain('/mo');
   });
 
   it('says a goal is past its date', () => {
@@ -71,8 +70,11 @@ describe('GoalCard', () => {
     expect(fills(render(goal())).length).toBeGreaterThan(0);
   });
 
-  it('offers no way to add money to an archived goal', () => {
-    expect(texts(render(goal({ archived: true }))).join(' | ')).not.toContain('Add money');
+  it('has a button to add money, and none on an archived goal', () => {
+    const labels = (r: ReactTestRenderer) =>
+      r.root.findAll((n) => n.props.accessibilityLabel === 'Add money to Rainy day');
+    expect(labels(render(goal())).length).toBeGreaterThan(0);
+    expect(labels(render(goal({ archived: true }))).length).toBe(0);
   });
 
   it('calls the goal reached once the target is met', () => {

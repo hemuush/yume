@@ -31,15 +31,17 @@ import { DraggableLine } from './DraggableLine';
 import { withPressedTint } from '@/lib/pressed';
 import { categorySpoken, joinSub, parentNameOf } from '@/lib/categoryLabel';
 import { compactMoney } from '@/lib/compactMoney';
-import { GLASS } from '@/components/Glass';
-import { selectedFill } from '@/theme/interactionColors';
+import { shade } from '@/lib/color';
 import { parseLocalIsoDate } from '@/lib/date';
 
 /** A compact row: its least height and the category disc it leads with. */
 const ROW_H = 48;
 const ICON = 32;
-/** The date tile's width beside a day's entries. */
-const TILE_W = 52;
+/** The date column's width beside a day's entries. */
+const DATE_W = 36;
+/** The rail: its dot sits level with the first entry's centre, and its line runs through the gap to the next day. */
+const DOT = 12;
+const DOT_TOP = 19;
 
 const NO_ACCOUNTS: ReadonlySet<string> = new Set();
 const NO_NOTES: ValueNote[] = [];
@@ -99,6 +101,7 @@ function TimelineDayView({
   timeline = false,
   isToday = false,
   selected = false,
+  position = 'only',
 }: {
   date: string;
   label: string;
@@ -127,12 +130,14 @@ function TimelineDayView({
   /** Tapping a value update (opens the investments page). */
   onPressNote?: (note: ValueNote) => void;
   accountCurrency?: (id: string) => string;
-  /** Activity's list: the date is a tile beside the day's entries, with the day's total under it. */
+  /** Activity's list: the date sits beside the day's entries, on a rail with a dot per day. */
   timeline?: boolean;
-  /** Tints the date tile. */
+  /** Fills the day's dot in the theme colour and says TODAY. */
   isToday?: boolean;
-  /** The day picked on the chart: its tile takes an ink edge. */
+  /** The day picked on the chart: its dot takes an ink edge. */
   selected?: boolean;
+  /** Where the day sits in the list, so the rail starts and ends at a dot instead of dangling. */
+  position?: 'only' | 'first' | 'middle' | 'last';
 }) {
   const { hideAmounts } = usePrivacy();
   const { width, fontScale } = useWindowDimensions();
@@ -272,7 +277,8 @@ function TimelineDayView({
       const tx = line.tx;
       const cat = tx.categoryId ? categoriesById.get(tx.categoryId) : undefined;
       return (
-        <MovingRow key={tx.id} moving={!settling} style={i > 0 ? styles.divider : undefined}>
+        <MovingRow key={tx.id} moving={!settling}>
+          {i > 0 && <View style={styles.separator} />}
           <Pressable
             onPress={() => onPressTx(tx)}
             {...reorderProps(i)}
@@ -318,7 +324,8 @@ function TimelineDayView({
     // A stack from one account names it, like a single entry does; from several, just the count.
     const sameAccount = line.items.every((t) => t.accountId === first.accountId);
     return (
-      <MovingRow key={line.key} moving={!settling} style={i > 0 ? styles.divider : undefined}>
+      <MovingRow key={line.key} moving={!settling}>
+        {i > 0 && <View style={styles.separator} />}
         <Pressable
           onPress={() => {
             haptics.tap();
@@ -370,7 +377,8 @@ function TimelineDayView({
               const label = tx.note || accountName(tx.accountId);
               const sub = tx.note ? accountName(tx.accountId) : null;
               return (
-                <MovingRow key={tx.id} style={styles.divider}>
+                <MovingRow key={tx.id}>
+                  <View style={styles.separator} />
                   <Pressable
                     onPress={() => onPressTx(tx)}
                     style={withPressedTint(accent, [styles.subLine, stacked && styles.wrapLine])}
@@ -408,36 +416,63 @@ function TimelineDayView({
   // The date beside the entries instead of above them. Narrow screens and large text keep the heading, so a
   // row never loses the width it needs.
   const beside = timeline && !stacked;
+  // With one line the total would only repeat it, so it appears from two lines up.
+  const showTileTotal = lines.length >= 2 && net !== 0;
   const day = parseLocalIsoDate(date);
   return (
     <ReanimatedAnimated.View entering={entering} style={[styles.day, beside && styles.dayBeside]}>
       {beside ? (
-        <View
-          style={[
-            styles.tile,
-            { width: Math.round(TILE_W * Math.min(1.2, Math.max(1, fontScale))) },
-            isToday && { backgroundColor: selectedFill(accent), borderColor: 'transparent' },
-            selected && styles.tileOn,
-          ]}
-          accessible
-          accessibilityRole="header"
-          accessibilityLabel={`${label}, ${dateLabel}${net !== 0 ? `, ${totalText}` : ''}`}
-        >
-          <Text style={styles.tileDay}>
-            {day.toLocaleDateString(undefined, { weekday: 'short' }).toUpperCase()}
-          </Text>
-          <Text style={styles.tileNum}>{day.getDate()}</Text>
-          {net !== 0 && (
-            <Text
-              style={[styles.tileTotal, net > 0 && styles.income]}
-              numberOfLines={1}
-              adjustsFontSizeToFit
-              minimumFontScale={0.75}
-            >
-              {totalText.length > 9 ? compactMoney(net).replace(/^(?!−)/, net > 0 ? '+' : '') : totalText}
+        <>
+          {/* The date on the left edge, where the eye scans a list; the day's total only when it adds something. */}
+          <View
+            style={[styles.dateCol, { width: Math.round(DATE_W * Math.min(1.2, Math.max(1, fontScale))) }]}
+            accessible
+            accessibilityRole="header"
+            accessibilityLabel={`${label}, ${dateLabel}${showTileTotal ? `, ${totalText}` : ''}`}
+          >
+            <Text style={[styles.dateWd, isToday && styles.dateWdToday]}>
+              {isToday ? 'TODAY' : day.toLocaleDateString(undefined, { weekday: 'short' }).toUpperCase()}
             </Text>
-          )}
-        </View>
+            <Text style={styles.dateNum}>{day.getDate()}</Text>
+            {showTileTotal && (
+              <Text
+                style={[styles.dateTotal, net > 0 && styles.income]}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.75}
+              >
+                {net > 0 ? '+' : '−'}
+                {compactMoney(Math.abs(net))}
+              </Text>
+            )}
+          </View>
+          <View
+            style={styles.rail}
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
+          >
+            {position !== 'only' && (
+              <View
+                style={[
+                  styles.railLine,
+                  position === 'first' && { top: DOT_TOP + DOT / 2 },
+                  position === 'last' && { bottom: undefined, height: DOT_TOP + DOT / 2 },
+                ]}
+              />
+            )}
+            <View
+              style={[
+                styles.railDot,
+                isToday && {
+                  backgroundColor: accent,
+                  borderColor: accent,
+                  boxShadow: `0px 0px 0px 4px ${shade(accent, 86)}`,
+                },
+                selected && { borderColor: theme.colors.ink },
+              ]}
+            />
+          </View>
+        </>
       ) : (
         <View style={styles.head}>
           <Text style={styles.title}>
@@ -448,7 +483,13 @@ function TimelineDayView({
           {showTotal && <Text style={[styles.total, net > 0 && styles.income]}>{totalText}</Text>}
         </View>
       )}
-      <View style={[styles.lane, beside && styles.laneBeside]}>
+      <View
+        style={[
+          styles.lane,
+          beside && styles.laneBeside,
+          beside && position !== 'only' && position !== 'last' && styles.laneGap,
+        ]}
+      >
         {shown.map((line, i) => (
           <DraggableLine
             key={laneKey(line)}
@@ -471,43 +512,41 @@ function TimelineDayView({
                 sub: `${tx.note ? `${tx.note} · ` : ''}Transfer`,
               };
           return (
-            <Pressable
-              key={tx.id}
-              onPress={() => onPressTx(tx)}
-              style={withPressedTint(accent, [
-                styles.line,
-                stacked && styles.wrapLine,
-                (lines.length > 0 || i > 0) && styles.divider,
-              ])}
-              accessibilityRole="button"
-              accessibilityLabel={`${money(tx.amountMinor, hidden(tx), tx.accountId)} ${
-                role === 'invest'
-                  ? `invested in ${accountName(tx.toAccountId!)}${tx.ruleId ? ' by SIP' : ''}, from ${accountName(tx.accountId)}`
-                  : role === 'withdraw'
-                    ? `withdrawn from ${accountName(tx.accountId)} to ${accountName(tx.toAccountId!)}`
-                    : `moved from ${accountName(tx.accountId)} to ${accountName(tx.toAccountId!)}`
-              }`}
-            >
-              <JustAddedGlow ids={[tx.id]} surface="activity" />
-              <View style={styles.lead}>
-                <View style={[styles.transferIcon, { backgroundColor: softTint(secondary, 0.35) }]}>
-                  <Feather
-                    name={
-                      role === 'invest' ? 'trending-up' : role === 'withdraw' ? 'trending-down' : 'repeat'
-                    }
-                    size={16}
-                    color={theme.colors.ink}
-                  />
+            <View key={tx.id}>
+              {(lines.length > 0 || i > 0) && <View style={styles.separator} />}
+              <Pressable
+                onPress={() => onPressTx(tx)}
+                style={withPressedTint(accent, [styles.line, stacked && styles.wrapLine])}
+                accessibilityRole="button"
+                accessibilityLabel={`${money(tx.amountMinor, hidden(tx), tx.accountId)} ${
+                  role === 'invest'
+                    ? `invested in ${accountName(tx.toAccountId!)}${tx.ruleId ? ' by SIP' : ''}, from ${accountName(tx.accountId)}`
+                    : role === 'withdraw'
+                      ? `withdrawn from ${accountName(tx.accountId)} to ${accountName(tx.toAccountId!)}`
+                      : `moved from ${accountName(tx.accountId)} to ${accountName(tx.toAccountId!)}`
+                }`}
+              >
+                <JustAddedGlow ids={[tx.id]} surface="activity" />
+                <View style={styles.lead}>
+                  <View style={[styles.transferIcon, { backgroundColor: softTint(secondary, 0.35) }]}>
+                    <Feather
+                      name={
+                        role === 'invest' ? 'trending-up' : role === 'withdraw' ? 'trending-down' : 'repeat'
+                      }
+                      size={16}
+                      color={theme.colors.ink}
+                    />
+                  </View>
                 </View>
-              </View>
-              <View style={[styles.mid, stacked && styles.wideMid]}>
-                <Text style={[styles.name, styles.transferName]}>{text.title}</Text>
-                <Text style={styles.sub}>{text.sub}</Text>
-              </View>
-              <Text style={[styles.amount, styles.transferAmount]} numberOfLines={1}>
-                {money(tx.amountMinor, hidden(tx), tx.accountId)}
-              </Text>
-            </Pressable>
+                <View style={[styles.mid, stacked && styles.wideMid]}>
+                  <Text style={[styles.name, styles.transferName]}>{text.title}</Text>
+                  <Text style={styles.sub}>{text.sub}</Text>
+                </View>
+                <Text style={[styles.amount, styles.transferAmount]} numberOfLines={1}>
+                  {money(tx.amountMinor, hidden(tx), tx.accountId)}
+                </Text>
+              </Pressable>
+            </View>
           );
         })}
         {notes.map((note, i) => {
@@ -515,37 +554,37 @@ function TimelineDayView({
           const change = note.previousMinor == null ? null : note.valueMinor - note.previousMinor;
           const cur = accountCurrency(note.accountId);
           return (
-            <Pressable
-              key={note.id}
-              onPress={onPressNote ? () => onPressNote(note) : undefined}
-              disabled={!onPressNote}
-              accessibilityRole={onPressNote ? 'button' : undefined}
-              accessibilityHint={onPressNote ? 'Opens your investments' : undefined}
-              style={[
-                styles.line,
-                stacked && styles.wrapLine,
-                (lines.length > 0 || transfers.length > 0 || i > 0) && styles.divider,
-              ]}
-              accessibilityLabel={`${accountName(note.accountId)} value updated to ${formatMaskableMoney(note.valueMinor, { masked, currency: cur })}`}
-            >
-              <View style={styles.lead}>
-                <View style={[styles.transferIcon, { backgroundColor: softTint(theme.colors.idGold, 0.35) }]}>
-                  <Feather name="edit-3" size={15} color={theme.colors.ink} />
+            <View key={note.id}>
+              {(lines.length > 0 || transfers.length > 0 || i > 0) && <View style={styles.separator} />}
+              <Pressable
+                onPress={onPressNote ? () => onPressNote(note) : undefined}
+                disabled={!onPressNote}
+                accessibilityRole={onPressNote ? 'button' : undefined}
+                accessibilityHint={onPressNote ? 'Opens your investments' : undefined}
+                style={[styles.line, stacked && styles.wrapLine]}
+                accessibilityLabel={`${accountName(note.accountId)} value updated to ${formatMaskableMoney(note.valueMinor, { masked, currency: cur })}`}
+              >
+                <View style={styles.lead}>
+                  <View
+                    style={[styles.transferIcon, { backgroundColor: softTint(theme.colors.idGold, 0.35) }]}
+                  >
+                    <Feather name="edit-3" size={15} color={theme.colors.ink} />
+                  </View>
                 </View>
-              </View>
-              <View style={[styles.mid, stacked && styles.wideMid]}>
-                <Text style={[styles.name, styles.transferName]}>
-                  {accountName(note.accountId)} now worth{' '}
-                  {formatMaskableMoney(note.valueMinor, { masked, currency: cur })}
-                </Text>
-                <Text style={styles.sub}>
-                  Value update
-                  {change != null && !masked
-                    ? ` · ${change < 0 ? '−' : '+'}${formatMoney(Math.abs(change), cur)} since ${dayMonth(note.previousDate!)}`
-                    : ''}
-                </Text>
-              </View>
-            </Pressable>
+                <View style={[styles.mid, stacked && styles.wideMid]}>
+                  <Text style={[styles.name, styles.transferName]}>
+                    {accountName(note.accountId)} now worth{' '}
+                    {formatMaskableMoney(note.valueMinor, { masked, currency: cur })}
+                  </Text>
+                  <Text style={styles.sub}>
+                    Value update
+                    {change != null && !masked
+                      ? ` · ${change < 0 ? '−' : '+'}${formatMoney(Math.abs(change), cur)} since ${dayMonth(note.previousDate!)}`
+                      : ''}
+                  </Text>
+                </View>
+              </Pressable>
+            </View>
           );
         })}
       </View>
@@ -555,39 +594,53 @@ function TimelineDayView({
 
 const styles = StyleSheet.create({
   day: { paddingHorizontal: 16, paddingBottom: 10 },
-  dayBeside: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, paddingBottom: 8 },
-  laneBeside: { flex: 1, minWidth: 0, borderRadius: 18 },
-  tile: {
-    alignItems: 'center',
-    gap: 1,
-    paddingHorizontal: 3,
-    paddingTop: 6,
-    paddingBottom: 7,
-    borderRadius: 14,
-    backgroundColor: GLASS.fill,
-    borderWidth: 1,
-    borderColor: GLASS.edge,
-  },
-  tileOn: { borderColor: theme.colors.ink },
-  tileDay: {
+  dayBeside: { flexDirection: 'row', alignItems: 'stretch', paddingBottom: 0 },
+  laneBeside: { flex: 1, minWidth: 0 },
+  // The gap to the next day is the card's own margin, so the rail beside it runs through it unbroken.
+  laneGap: { marginBottom: 14 },
+  dateCol: { alignItems: 'center', paddingTop: 8 },
+  dateWd: {
     fontFamily: theme.font.bodyBold,
     fontSize: 11,
-    letterSpacing: 0.5,
+    letterSpacing: 0.6,
     color: theme.colors.textSecondary,
   },
-  tileNum: {
+  dateWdToday: { color: theme.colors.textPrimary },
+  dateNum: {
     fontFamily: theme.font.roundedBold,
-    fontSize: 16,
-    lineHeight: 19,
+    fontSize: 18,
+    lineHeight: 21,
     color: theme.colors.textPrimary,
   },
-  tileTotal: {
+  dateTotal: {
+    marginTop: 3,
     alignSelf: 'stretch',
     textAlign: 'center',
     fontFamily: theme.font.bodyMedium,
     fontSize: 11,
     color: theme.colors.textPrimary,
     fontVariant: ['tabular-nums'],
+  },
+  rail: { width: 20 },
+  railLine: {
+    position: 'absolute',
+    left: 9,
+    width: 2,
+    top: 0,
+    bottom: 0,
+    borderRadius: 1,
+    backgroundColor: theme.colors.inkHairline,
+  },
+  railDot: {
+    position: 'absolute',
+    left: 4,
+    top: DOT_TOP,
+    width: DOT,
+    height: DOT,
+    borderRadius: DOT / 2,
+    borderWidth: 2,
+    backgroundColor: theme.colors.surface,
+    borderColor: theme.colors.inkOff,
   },
   head: {
     flexDirection: 'row',
@@ -636,7 +689,12 @@ const styles = StyleSheet.create({
     // clipping layer per day on Android.
     overflow: 'hidden',
   },
-  divider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.divider },
+  // Starts under the icon, so it separates the text and leaves the icon column unbroken.
+  separator: {
+    height: StyleSheet.hairlineWidth,
+    marginLeft: ICON + 10,
+    backgroundColor: theme.colors.divider,
+  },
   line: {
     flexDirection: 'row',
     alignItems: 'center',

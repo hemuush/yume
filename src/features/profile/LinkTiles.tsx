@@ -1,51 +1,42 @@
-import { Animated, Pressable, View, StyleSheet, useWindowDimensions } from 'react-native';
+import { Pressable, View, StyleSheet, useWindowDimensions } from 'react-native';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
-import { usePressScale } from '@/lib/usePressScale';
-import Feather from '@expo/vector-icons/Feather';
 import { SCREEN } from '@/components/screenStyles';
+import { withPressedTint } from '@/lib/pressed';
 import { useAccent } from '@/theme/AccentContext';
-import { shade } from '@/lib/color';
-
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 function Stat({
   value,
   label,
-  icon,
-  color,
+  first,
+  stacked,
   onPress,
 }: {
   value: number;
   label: string;
-  icon: React.ComponentProps<typeof Feather>['name'];
-  color: string;
+  first?: boolean;
+  stacked: boolean;
   onPress: () => void;
 }) {
-  const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.97);
-  const { fontScale } = useWindowDimensions();
+  const { accent } = useAccent();
   return (
-    <AnimatedPressable
-      style={[styles.stat, fontScale > 1.2 && styles.statStack, animatedStyle]}
+    <Pressable
+      style={withPressedTint(accent, [
+        styles.stat,
+        stacked && styles.statStacked,
+        !first && (stacked ? styles.dividerTop : styles.dividerLeft),
+      ])}
       onPress={onPress}
-      onPressIn={onPressIn}
-      onPressOut={onPressOut}
       accessibilityRole="button"
       accessibilityLabel={`${value} ${label}`}
     >
-      <View style={styles.top}>
-        <View style={[styles.icon, { backgroundColor: color }]}>
-          <Feather name={icon} size={16} color={theme.colors.ink} />
-        </View>
-        <Feather name="arrow-up-right" size={13} color={theme.colors.textMuted} />
-      </View>
       <Text style={styles.value}>{value}</Text>
       <Text style={styles.label}>{label}</Text>
-    </AnimatedPressable>
+    </Pressable>
   );
 }
 
-/** Three explicit shortcuts, with counts and arrows that make their destinations clear. */
+/** Three shortcuts in one strip: the count over its name, each cell opening its screen. */
 export function LinkTiles({
   entries,
   loans,
@@ -61,52 +52,46 @@ export function LinkTiles({
   onLoans: () => void;
   onFriends: () => void;
 }) {
-  const { accent, secondary } = useAccent();
   const { fontScale } = useWindowDimensions();
+  const stacked = fontScale > 1.2;
   return (
-    <View style={[styles.row, fontScale > 1.2 && styles.rowStack]}>
-      <Stat value={entries} label="Entries" icon="list" color={shade(accent, 88)} onPress={onEntries} />
-      <Stat
-        value={loans}
-        label="Active loans"
-        icon="credit-card"
-        color={theme.colors.idGold}
-        onPress={onLoans}
-      />
-      <Stat value={friends} label="Friends" icon="users" color={shade(secondary, 88)} onPress={onFriends} />
+    <View style={[styles.strip, stacked && styles.stripStacked]}>
+      <Stat value={entries} label="Entries" first stacked={stacked} onPress={onEntries} />
+      <Stat value={loans} label="Active loans" stacked={stacked} onPress={onLoans} />
+      <Stat value={friends} label="Friends" stacked={stacked} onPress={onFriends} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginHorizontal: SCREEN.gutter, marginTop: 12 },
-  rowStack: { flexDirection: 'column' },
-  statStack: { flexBasis: 'auto', flexGrow: 0 },
-  stat: {
-    flexGrow: 1,
-    flexBasis: 90,
-    minWidth: 0,
-    minHeight: 118,
-    padding: 12,
-    gap: 4,
-    borderRadius: 20,
+  strip: {
+    flexDirection: 'row',
+    marginHorizontal: SCREEN.gutter,
+    marginTop: 12,
+    borderRadius: 16,
     backgroundColor: theme.colors.surface,
     borderWidth: 1,
     borderColor: theme.colors.borderSoft,
+    overflow: 'hidden',
   },
-  top: {
-    flexDirection: 'row',
+  stripStacked: { flexDirection: 'column' },
+  stat: {
+    flex: 1,
+    minWidth: 0,
+    minHeight: 56,
+    paddingHorizontal: 6,
+    paddingVertical: 8,
     alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 4,
-    marginBottom: 4,
+    justifyContent: 'center',
   },
-  icon: { width: 32, height: 32, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
+  statStacked: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 14 },
+  dividerLeft: { borderLeftWidth: StyleSheet.hairlineWidth, borderLeftColor: theme.colors.divider },
+  dividerTop: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.divider },
   value: {
     fontFamily: theme.font.bodyBold,
-    fontSize: 22,
-    color: theme.colors.textPrimary,
+    fontSize: 16,
     fontVariant: ['tabular-nums'],
+    color: theme.colors.textPrimary,
   },
-  label: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
+  label: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
 });

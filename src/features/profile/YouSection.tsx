@@ -219,24 +219,25 @@ export function YouSection() {
             <PrimaryButton title="Add an account" onPress={() => setAddAccountVisible(true)} />
           </EmptyState>
         ) : (
-          <View style={styles.accountGroups}>
-            {groups.map((group) => (
-              <Animated.View key={group.type} style={[h.card, cardSurface.neutral]}>
-                {groups.length > 1 && (
-                  <View style={styles.groupHead}>
-                    <Text style={styles.groupLabel}>
-                      {ACCOUNT_TYPE_LABEL[group.type as Account['type']] ?? group.type} ·{' '}
-                      {group.accounts.length}
-                    </Text>
-                    {group.subtotalMinor != null && (
-                      <Amount
-                        minor={group.subtotalMinor}
-                        sensitive={group.type === 'savings'}
-                        style={styles.groupTotal}
-                      />
-                    )}
-                  </View>
-                )}
+          <View style={[h.card, cardSurface.neutral, styles.accountsCard]}>
+            {groups.map((group, g) => (
+              <View key={group.type}>
+                <View style={[styles.groupHead, g > 0 && styles.groupHeadGap]}>
+                  <Text style={styles.groupLabel}>
+                    {ACCOUNT_TYPE_LABEL[group.type as Account['type']] ?? group.type} ·{' '}
+                    {group.accounts.length}
+                  </Text>
+                  {group.subtotalMinor != null && (
+                    <Amount
+                      minor={group.subtotalMinor}
+                      sensitive={group.type === 'savings'}
+                      style={[
+                        styles.groupTotal,
+                        group.subtotalMinor < 0 && { color: theme.colors.expenseText },
+                      ]}
+                    />
+                  )}
+                </View>
                 {group.accounts.map((acc, i) => (
                   <AccountRow
                     key={acc.id}
@@ -246,49 +247,44 @@ export function YouSection() {
                     onPress={setDetailAccount}
                   />
                 ))}
-              </Animated.View>
+              </View>
             ))}
-          </View>
-        )}
-
-        {archivedAccounts.length > 0 && (
-          <View style={[h.card, cardSurface.neutral, styles.archivedCard]}>
-            <Pressable
-              style={withPressedTint(accent, h.row)}
-              onPress={() => setArchivedOpen((v) => !v)}
-              accessibilityRole="button"
-              accessibilityState={{ expanded: archivedOpen }}
-              accessibilityLabel={`Archived accounts, ${archivedAccounts.length}. ${archivedOpen ? 'Hide' : 'Show'}`}
-            >
-              <View style={[h.iconTile, styles.archivedIcon]}>
-                <MaterialCommunityIcons name="archive-outline" size={17} color={theme.colors.ink} />
-              </View>
-              <View style={h.mid}>
-                <Text style={h.title}>Archived accounts</Text>
-                <Text style={h.sub}>
-                  {archivedAccounts.length} account{archivedAccounts.length === 1 ? '' : 's'} ·{' '}
-                  {archivedOpen ? 'tap to hide' : 'tap to show'}
-                </Text>
-              </View>
-              <Feather
-                name={archivedOpen ? 'chevron-up' : 'chevron-down'}
-                size={18}
-                color={theme.colors.textMuted}
-              />
-            </Pressable>
-            {archivedOpen && (
-              <ReanimatedAnimated.View entering={PANEL_ENTER} exiting={ROW_EXIT}>
-                {archivedAccounts.map((acc) => (
-                  <AccountRow
-                    key={acc.id}
-                    account={acc}
-                    minor={dispAccountBalance(acc)}
-                    divider
-                    archived
-                    onPress={setDetailAccount}
+            {archivedAccounts.length > 0 && (
+              <>
+                <Pressable
+                  style={withPressedTint(accent, styles.archivedRow)}
+                  onPress={() => setArchivedOpen((v) => !v)}
+                  accessibilityRole="button"
+                  accessibilityState={{ expanded: archivedOpen }}
+                  accessibilityLabel={`Archived accounts, ${archivedAccounts.length}. ${archivedOpen ? 'Hide' : 'Show'}`}
+                >
+                  <MaterialCommunityIcons name="archive-outline" size={15} color={theme.colors.textMuted} />
+                  <Text style={styles.archivedLabel}>Archived accounts</Text>
+                  <Text style={styles.archivedSub}>
+                    {archivedAccounts.length} account{archivedAccounts.length === 1 ? '' : 's'} ·{' '}
+                    {archivedOpen ? 'tap to hide' : 'tap to show'}
+                  </Text>
+                  <Feather
+                    name={archivedOpen ? 'chevron-up' : 'chevron-down'}
+                    size={16}
+                    color={theme.colors.textMuted}
                   />
-                ))}
-              </ReanimatedAnimated.View>
+                </Pressable>
+                {archivedOpen && (
+                  <ReanimatedAnimated.View entering={PANEL_ENTER} exiting={ROW_EXIT}>
+                    {archivedAccounts.map((acc) => (
+                      <AccountRow
+                        key={acc.id}
+                        account={acc}
+                        minor={dispAccountBalance(acc)}
+                        divider
+                        archived
+                        onPress={setDetailAccount}
+                      />
+                    ))}
+                  </ReanimatedAnimated.View>
+                )}
+              </>
             )}
           </View>
         )}
@@ -303,11 +299,8 @@ export function YouSection() {
         accessibilityRole="button"
         accessibilityLabel="Budgets, goals and recurring are in Plan"
       >
-        <View style={[styles.planLinkIcon, { backgroundColor: secondary }]}>
-          <MaterialCommunityIcons name="view-grid-outline" size={16} color={theme.colors.ink} />
-        </View>
         <Text style={styles.planLinkText}>Budgets, goals &amp; recurring are in Plan</Text>
-        <Feather name="chevron-right" size={16} color={theme.colors.textMuted} />
+        <Feather name="chevron-right" size={14} color={theme.colors.link} />
       </Pressable>
 
       <AddAccountModal
@@ -367,13 +360,13 @@ function AccountRow({
       <CategoryIcon
         name={accountIcon(account.type, !!account.investment)}
         color={accountBadgeColor(account.type, accent)}
-        square={40}
-        size={19}
+        square={32}
+        size={16}
       />
       <View style={[styles.accountContent, stacked && styles.accountContentStack]}>
         <View style={[h.mid, stacked && styles.accountNameStack]}>
-          <Text style={h.title}>{account.name}</Text>
-          <Text style={h.sub}>
+          <Text style={styles.accountName}>{account.name}</Text>
+          <Text style={styles.accountSub}>
             {kind}
             {usage && !archived ? ` · ${Math.round(usage.pct)}% of limit used` : ''}
             {archived ? ' · archived' : ''}
@@ -385,11 +378,10 @@ function AccountRow({
             minor={minor}
             currency={account.currency}
             sensitive={account.type === 'savings'}
-            style={[h.amount, !archived && account.currentBalanceMinor < 0 && h.expense]}
+            style={[styles.accountAmount, !archived && account.currentBalanceMinor < 0 && h.expense]}
           />
         </View>
       </View>
-      <Feather name="chevron-right" size={16} color={theme.colors.textMuted} />
     </AnimatedPressable>
   );
 }

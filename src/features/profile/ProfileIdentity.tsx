@@ -4,9 +4,7 @@ import { Text, TextInput } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { withPressed } from '@/lib/pressed';
 import { SCREEN } from '@/components/screenStyles';
-import { shade } from '@/lib/color';
 import { useAccent } from '@/theme/AccentContext';
-import { LinearGradient } from 'expo-linear-gradient';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { styles } from './profile.styles';
 
@@ -40,15 +38,32 @@ export function ProfileIdentity({
 
   return (
     <View style={local.card}>
-      <LinearGradient
-        pointerEvents="none"
-        colors={[shade(accent, 92), theme.colors.surface]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={StyleSheet.absoluteFill}
-      />
-      <View style={local.topRow}>
-        <Text style={local.kicker}>Your space</Text>
+      <View style={local.row}>
+        <View
+          style={[local.avatar, { backgroundColor: accent }]}
+          accessible
+          accessibilityRole="image"
+          accessibilityLabel={name?.trim() ? `${name.trim()}'s avatar` : 'Your avatar'}
+        >
+          <Text style={[local.avatarInitial, { color: onAccent }]}>
+            {(name?.trim().charAt(0) || 'Y').toUpperCase()}
+          </Text>
+        </View>
+        <Pressable
+          style={withPressed(local.text)}
+          accessibilityRole="button"
+          accessibilityLabel={name ? `${name}, your name` : 'Add your name'}
+          accessibilityHint="Edit your name"
+          onPress={onStartEdit}
+          disabled={editing}
+        >
+          <Text style={local.name} numberOfLines={1}>
+            {name || 'Add your name'}
+          </Text>
+          <Text style={local.sub}>
+            Member since {memberSince ?? new Date().getFullYear()} · On this phone, works offline
+          </Text>
+        </Pressable>
         {!editing && (
           <Pressable
             onPress={onStartEdit}
@@ -56,36 +71,9 @@ export function ProfileIdentity({
             accessibilityLabel="Edit profile name"
             style={withPressed(local.editButton)}
           >
-            <Feather name="edit-2" size={13} color={theme.colors.ink} />
-            <Text style={local.editText}>Edit</Text>
+            <Feather name="edit-2" size={16} color={theme.colors.link} />
           </Pressable>
         )}
-      </View>
-      <View style={styles.identityRow}>
-        <View
-          style={[styles.avatar, { backgroundColor: accent }]}
-          accessible
-          accessibilityRole="image"
-          accessibilityLabel={name?.trim() ? `${name.trim()}'s avatar` : 'Your avatar'}
-        >
-          <Text style={[styles.avatarInitial, { color: onAccent }]}>
-            {(name?.trim().charAt(0) || 'Y').toUpperCase()}
-          </Text>
-        </View>
-
-        <View style={styles.identityText}>
-          <Pressable
-            style={withPressed(styles.nameRow)}
-            accessibilityRole="button"
-            accessibilityLabel={name ? `${name}, your name` : 'Add your name'}
-            accessibilityHint="Edit your name"
-            onPress={onStartEdit}
-            disabled={editing}
-          >
-            <Text style={styles.name}>{name || 'Add your name'}</Text>
-          </Pressable>
-          <Text style={local.chipText}>Member since {memberSince ?? new Date().getFullYear()}</Text>
-        </View>
       </View>
       {editing && (
         <View style={local.editForm}>
@@ -123,60 +111,40 @@ export function ProfileIdentity({
           </View>
         </View>
       )}
-      <View style={local.privacyNote}>
-        <Feather name="smartphone" size={13} color={theme.colors.textSecondary} />
-        <Text style={local.chipText}>On this phone · works offline</Text>
-      </View>
     </View>
   );
 }
 
 const local = StyleSheet.create({
+  // One slim card: the avatar, the name with a line under it, and an edit button.
   card: {
     marginHorizontal: SCREEN.gutter,
     marginTop: theme.layout.screenTopGap,
-    padding: 16,
-    borderRadius: 26,
+    paddingVertical: 10,
+    paddingLeft: 12,
+    paddingRight: 4,
+    borderRadius: 22,
     borderWidth: 1,
     borderColor: theme.colors.borderSoft,
     backgroundColor: theme.colors.surface,
+  },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  avatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    // A circular View's background can render clipped to a stale layout on Android.
     overflow: 'hidden',
   },
-  topRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 8,
-    marginBottom: 8,
-  },
-  kicker: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
-  editButton: {
-    minHeight: 44,
-    paddingHorizontal: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    borderRadius: 22,
-    backgroundColor: theme.colors.glass,
-  },
-  editText: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textPrimary },
-  privacyNote: {
-    marginTop: 16,
-    paddingTop: 12,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: theme.colors.inkHairline,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  editForm: { marginTop: 16, gap: 8 },
+  avatarInitial: { fontFamily: theme.font.roundedBold, fontSize: 18 },
+  text: { flex: 1, minWidth: 0, minHeight: 44, justifyContent: 'center' },
+  name: { fontFamily: theme.font.roundedBold, fontSize: 16, color: theme.colors.textPrimary },
+  sub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
+  editButton: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+  editForm: { marginTop: 8, marginRight: 12, gap: 8 },
   inputLabel: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
   editActions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   editAction: { flexGrow: 1, flexBasis: 110 },
-  chipText: {
-    flexShrink: 1,
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 12,
-    color: theme.colors.textSecondary,
-  },
 });

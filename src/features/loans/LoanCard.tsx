@@ -16,6 +16,8 @@ import { payoffMonthShort } from '@/lib/loanPayoff';
 import type { LoanProgress } from '@/db/loans';
 import { loanBarTone, loanGlyph, loanIcon, loanTint } from './loanIdentity';
 import { SCREEN } from '@/components/screenStyles';
+import { DUE_SOON_DAYS } from '@/lib/dueDate';
+import { daysUntilIsoDate } from '@/lib/date';
 
 import { useAccent } from '@/theme/AccentContext';
 import { themeInk } from '@/theme/interactionColors';
@@ -51,6 +53,7 @@ export function LoanCard({
   const lastDueDate = progress?.lastDueDate;
   const nextDueDate = progress ? progress.nextDueDate : loan.nextDueDate;
   const nextEmiMinor = progress?.nextEmiMinor ?? loan.emiAmountMinor;
+  const dueSoon = !!nextDueDate && daysUntilIsoDate(nextDueDate) <= DUE_SOON_DAYS;
   const repaidLine = progress ? `${progress.paidCount} of ${progress.totalCount} EMIs` : null;
 
   return (
@@ -122,10 +125,10 @@ export function LoanCard({
           </View>
 
           {!isClosed && nextDueDate && (
-            <View style={styles.footer}>
+            <View style={[styles.footer, dueSoon && styles.footerDue]}>
               <View style={styles.footerText}>
                 <Text style={styles.nextLine}>
-                  <Text style={styles.nextLabel}>Next EMI · </Text>
+                  <Text style={[styles.nextLabel, dueSoon && styles.nextLabelDue]}>Next EMI · </Text>
                   {weekdayDayMonth(nextDueDate)} ·{' '}
                   <Text style={styles.nextAmount}>{formatMoney(nextEmiMinor)}</Text>
                 </Text>
@@ -160,7 +163,7 @@ const styles = StyleSheet.create({
     marginHorizontal: SCREEN.gutter,
     marginBottom: 12,
     padding: 14,
-    borderRadius: 20,
+    borderRadius: 16,
     backgroundColor: theme.colors.surface,
     borderWidth: 1,
     borderColor: theme.colors.borderSoft,
@@ -215,8 +218,16 @@ const styles = StyleSheet.create({
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: theme.colors.borderSoft,
   },
+  footerDue: {
+    backgroundColor: theme.colors.dueTint,
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingBottom: 6,
+    borderTopWidth: 0,
+  },
   footerText: { flexGrow: 1, flexBasis: 180, minWidth: 0 },
   nextLabel: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.dueInk },
+  nextLabelDue: { fontFamily: theme.font.bodyBold },
   nextLine: {
     fontFamily: theme.font.bodyBold,
     fontSize: 13,

@@ -149,27 +149,29 @@ function GoalCard({ goal, masked, onPress }: { goal: SavingsGoal; masked: boolea
             }. Open savings goals`
       }
     >
-      <Glass radius={20} style={[styles.tileFill, cardSurface.neutral]}>
-        <View style={[styles.tileIcon, { backgroundColor: softTint(hue, 0.75) }]}>
-          <MaterialCommunityIcons
-            name={goal.linkedAccountId ? 'bank-outline' : 'flag-variant-outline'}
-            size={18}
-            color={theme.colors.ink}
-          />
+      <Glass radius={16} style={[styles.tileFill, cardSurface.neutral]}>
+        <View style={styles.tileHead}>
+          <View style={[styles.tileIcon, { backgroundColor: softTint(hue, 0.75) }]}>
+            <MaterialCommunityIcons
+              name={goal.linkedAccountId ? 'bank-outline' : 'flag-variant-outline'}
+              size={14}
+              color={theme.colors.ink}
+            />
+          </View>
+          {masked ? (
+            <Feather name="eye-off" size={16} color={theme.colors.textMuted} />
+          ) : done ? (
+            <StatusBadge label="Completed" tone="complete" />
+          ) : (
+            <Text style={styles.tilePct}>
+              {pct}
+              <Text style={styles.tilePctSign}>%</Text>
+            </Text>
+          )}
         </View>
         <Text style={styles.tileName} numberOfLines={2}>
           {goal.name}
         </Text>
-        {masked ? (
-          <Feather name="eye-off" size={20} color={theme.colors.textMuted} />
-        ) : done ? (
-          <StatusBadge label="Completed" tone="complete" />
-        ) : (
-          <Text style={styles.tilePct}>
-            {pct}
-            <Text style={styles.tilePctSign}>%</Text>
-          </Text>
-        )}
         {!masked && (
           <View style={styles.tileTrack} pointerEvents="none">
             <View style={[styles.tileProgress, { width: `${pct}%`, backgroundColor: hue }]} />
@@ -186,9 +188,9 @@ function GoalCard({ goal, masked, onPress }: { goal: SavingsGoal; masked: boolea
 }
 
 /**
- * What-if as one row: your biggest spending category and what a 10% cut would free up a month. The whole row
- * opens the sandbox with that cut picked, where the sizes can be changed. Too little spending to project from:
- * one line saying so.
+ * What-if as a tile: your biggest spending category and what a 10% cut would free up a month. The tile opens
+ * the sandbox with that cut picked, where the sizes can be changed. Too little spending to project from: one
+ * line saying so.
  */
 export function WhatIfCard({
   whatIf,
@@ -200,28 +202,32 @@ export function WhatIfCard({
   const cut = WHAT_IF_CUTS[1];
   const extra = whatIf ? projectedMonthlySpend(whatIf.avgMonthlyMinor, cut).extraMinor : 0;
   return (
-    <Glass style={[styles.card, cardSurface.neutral, styles.whatIfCard]}>
-      <Pressable
-        onPress={() => onOpen(cut)}
-        style={withPressed(styles.whatIfHead)}
-        accessibilityRole="button"
-        accessibilityLabel="Open the what-if sandbox"
-      >
-        <View style={styles.whatIfIcon}>
-          <MaterialCommunityIcons name="lightbulb-on-outline" size={18} color={theme.colors.dueInk} />
+    <Pressable
+      onPress={() => onOpen(cut)}
+      style={withPressed(styles.tileWrap)}
+      accessibilityRole="button"
+      accessibilityLabel="Open the what-if sandbox"
+    >
+      <Glass radius={16} style={[styles.tileFill, cardSurface.neutral]}>
+        <View style={styles.tileHead}>
+          <View style={[styles.tileIcon, { backgroundColor: theme.colors.dueTint }]}>
+            <MaterialCommunityIcons name="lightbulb-on-outline" size={14} color={theme.colors.dueInk} />
+          </View>
+          {whatIf && (
+            <Text style={styles.tilePct} numberOfLines={1}>
+              {compactMoney(extra)}
+            </Text>
+          )}
         </View>
-        <View style={styles.whatIfHeadCopy}>
-          <Text style={styles.whatIfBold} numberOfLines={1}>
-            {whatIf ? 'Spend a little less' : 'What if you spent less?'}
-          </Text>
-          <Text style={styles.gainNote} numberOfLines={2}>
-            {whatIf
-              ? `${whatIf.categoryName} −${cut}% saves ${formatMoney(extra)} a month`
-              : 'Try a cut once you have logged a few expenses'}
-          </Text>
-        </View>
-        <Feather name="chevron-right" size={16} color={theme.colors.textMuted} />
-      </Pressable>
-    </Glass>
+        <Text style={styles.tileName} numberOfLines={2}>
+          {whatIf ? 'Spend a little less' : 'What if you spent less?'}
+        </Text>
+        <Text style={styles.tileAmt} numberOfLines={2}>
+          {whatIf
+            ? `${whatIf.categoryName} −${cut}% saves ${formatMoney(extra)} a month`
+            : 'Try a cut once you have logged a few expenses'}
+        </Text>
+      </Glass>
+    </Pressable>
   );
 }

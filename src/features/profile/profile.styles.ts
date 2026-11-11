@@ -1,6 +1,5 @@
 import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
-import { EYEBROW } from '@/constants/textStyles';
 import { SCREEN } from '@/components/screenStyles';
 
 // Shared by Profile (shell, YouSection, SettingsSection) and the account modals. Cards, rows and headings
@@ -83,6 +82,7 @@ export const styles = StyleSheet.create({
   tabWrap: { marginHorizontal: SCREEN.gutter, marginTop: 14, marginBottom: 4 },
 
   // ---- You: accounts, grouped by type ----
+  accountsCard: { overflow: 'hidden', paddingBottom: 4 },
   groupHead: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -91,60 +91,71 @@ export const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 14,
     paddingTop: 10,
-    paddingBottom: 6,
+    paddingBottom: 2,
   },
-  groupLabel: { ...EYEBROW },
-  accountGroups: { gap: 10 },
-  accountRow: { minHeight: 76, paddingVertical: 14 },
-  accountContent: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 10 },
-  accountContentStack: { flexDirection: 'column', alignItems: 'stretch', gap: 8 },
-  accountNameStack: { flex: 0 },
-  accountValues: { flexShrink: 1, maxWidth: '52%', alignItems: 'flex-end', gap: 4 },
-  accountValuesStack: { maxWidth: '100%', alignItems: 'flex-start' },
+  groupHeadGap: { marginTop: 2 },
+  groupLabel: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textMuted },
   groupTotal: {
     fontVariant: ['tabular-nums'],
     fontFamily: theme.font.bodyBold,
     fontSize: 12,
-    color: theme.colors.textSecondary,
+    color: theme.colors.textMuted,
   },
-  archivedCard: { marginTop: 10 },
-  archivedIcon: {
-    backgroundColor: theme.colors.surfaceAlt,
-    borderWidth: 1,
-    borderColor: theme.colors.borderSoft,
+  accountRow: { minHeight: 56, paddingVertical: 8 },
+  accountContent: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 10 },
+  accountContentStack: { flexDirection: 'column', alignItems: 'stretch', gap: 4 },
+  accountNameStack: { flex: 0 },
+  accountName: {
+    fontFamily: theme.font.bodyMedium,
+    fontSize: 14,
+    lineHeight: 20,
+    color: theme.colors.textPrimary,
   },
+  accountSub: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textMuted },
+  accountAmount: {
+    fontVariant: ['tabular-nums'],
+    fontFamily: theme.font.bodyBold,
+    fontSize: 14,
+    lineHeight: 20,
+    color: theme.colors.textPrimary,
+  },
+  accountValues: { flexShrink: 1, maxWidth: '52%', alignItems: 'flex-end', gap: 4 },
+  accountValuesStack: { maxWidth: '100%', alignItems: 'flex-start' },
+  archivedRow: {
+    minHeight: 44,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 14,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: theme.colors.divider,
+  },
+  archivedLabel: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textSecondary },
+  archivedSub: { flex: 1, fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
   archivedDim: { opacity: 0.6 },
   planLink: {
+    minHeight: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginHorizontal: SCREEN.gutter + 4,
+    marginTop: 8,
+  },
+  planLinkText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.link },
+
+  // ---- Settings: rows ----
+  settingsCard: { borderWidth: 1, borderRadius: 16, overflow: 'hidden' },
+  themeError: { color: theme.colors.expenseText, padding: theme.space.md },
+  appearanceHead: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    marginHorizontal: SCREEN.gutter,
-    marginTop: 14,
-    backgroundColor: theme.colors.surface,
-    borderWidth: 1,
-    borderColor: theme.colors.borderSoft,
-    borderRadius: 20,
-    boxShadow: 'none',
+    minHeight: 56,
     paddingHorizontal: 14,
-    paddingVertical: 12,
   },
-  planLinkIcon: { width: 32, height: 32, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
-  planLinkText: { flex: 1, fontFamily: theme.font.roundedMedium, fontSize: 13, color: theme.colors.ink },
-
-  // ---- Settings: rows ----
-  settingsCard: { borderWidth: 1, paddingVertical: 4 },
-  themeError: { color: theme.colors.expenseText, padding: theme.space.md },
-  appearanceCard: { borderWidth: 1, padding: 14, gap: 10 },
-  appearanceHead: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 56 },
-  appearanceTitle: { fontFamily: theme.font.roundedBold, fontSize: 18, color: theme.colors.textPrimary },
-  appearanceHint: {
-    fontFamily: theme.font.body,
-    fontSize: 12,
-    color: theme.colors.textSecondary,
-    marginTop: 3,
-  },
-  themeNameRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 },
-  themeName: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textPrimary },
+  appearanceTitle: { fontFamily: theme.font.bodyMedium, fontSize: 14, color: theme.colors.textPrimary },
+  themeName: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
   // Opens in place under the row that opened it, inside the same card.
   accordionBody: {
     paddingHorizontal: 14,
@@ -179,10 +190,17 @@ export const styles = StyleSheet.create({
   dailyGoalBtn: { flexGrow: 1, flexBasis: 120 },
 
   // ---- Settings: inline theme swatches ----
-  swatches: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  swatches: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    paddingHorizontal: 8,
+    paddingBottom: 4,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: theme.colors.divider,
+  },
   swatchHit: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
   swatchActive: { borderWidth: 1.5, borderColor: theme.colors.ink },
-  swatch: { width: 30, height: 30, borderRadius: 15, overflow: 'hidden', justifyContent: 'flex-end' },
+  swatch: { width: 26, height: 26, borderRadius: 13, overflow: 'hidden', justifyContent: 'flex-end' },
   swatchHalf: { height: '50%' },
   swatchCheck: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center' },
 

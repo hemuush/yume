@@ -42,18 +42,11 @@ function Guard({
     >
       <View style={styles.guardHead}>
         <View style={styles.guardIcon}>
-          <Feather name={icon} size={17} color={theme.colors.ink} />
+          <Feather name={icon} size={14} color={theme.colors.ink} />
         </View>
-        <Feather
-          name={checked === undefined ? 'arrow-up-right' : checked ? 'check' : 'plus'}
-          size={13}
-          color={theme.colors.textMuted}
-        />
-      </View>
-      <View style={styles.guardLabel}>
         <View style={[styles.dot, { backgroundColor: color }]} />
-        <Text style={styles.guardTitle}>{title}</Text>
       </View>
+      <Text style={styles.guardTitle}>{title}</Text>
       <Text style={[styles.guardSub, bad && styles.guardSubBad]}>{sub}</Text>
     </Pressable>
   );
@@ -134,10 +127,20 @@ export function SafetyCheck({
 }
 
 const styles = StyleSheet.create({
-  card: { ...h.card, marginTop: 14, padding: 14, borderWidth: 1, gap: 6 },
-  kicker: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textSecondary },
-  headline: { fontFamily: theme.font.roundedBold, fontSize: 18, color: theme.colors.textPrimary },
-  headlineBad: { color: theme.colors.expenseText },
+  // The flat summary card, with the three checks as small tiles under it.
+  card: {
+    ...h.card,
+    marginTop: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderWidth: 1,
+    gap: 4,
+    boxShadow: '0px 1px 2px rgba(18,19,15,0.04), 0px 8px 24px rgba(18,19,15,0.05)',
+    overflow: 'visible',
+  },
+  kicker: { fontFamily: theme.font.bodyBold, fontSize: 15, color: theme.colors.textPrimary },
+  headline: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textSecondary },
+  headlineBad: { fontFamily: theme.font.bodyBold, color: theme.colors.expenseText },
   guards: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 },
   guardsStack: { flexDirection: 'column' },
   guardStack: { flexBasis: 'auto', flexGrow: 0 },
@@ -145,29 +148,21 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     flexBasis: 90,
     minWidth: 0,
-    minHeight: 110,
     padding: 10,
-    gap: 6,
-    borderRadius: 16,
+    gap: 4,
+    borderRadius: 14,
     backgroundColor: theme.colors.tray,
   },
-  guardBad: { borderRadius: 12, backgroundColor: theme.colors.expenseTint },
-  guardHead: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 6,
-    marginBottom: 4,
-  },
+  guardBad: { backgroundColor: theme.colors.expenseTint },
+  guardHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 6 },
   guardIcon: {
-    width: 28,
-    height: 28,
-    borderRadius: 9,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: theme.colors.surface,
   },
-  guardLabel: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   dot: { width: 8, height: 8, borderRadius: 4 },
   guardTitle: {
     flexShrink: 1,
@@ -175,6 +170,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: theme.colors.textPrimary,
   },
-  guardSub: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textSecondary },
+  guardSub: { fontFamily: theme.font.body, fontSize: 11, lineHeight: 15, color: theme.colors.textSecondary },
   guardSubBad: { fontFamily: theme.font.bodyBold, color: theme.colors.expenseText },
 });

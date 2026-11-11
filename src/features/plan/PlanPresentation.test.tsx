@@ -125,12 +125,12 @@ it('reveals income-only dates and passes only the selected mode to its detail re
     '2026-10-20',
     30
   );
-  const detail = jest.fn((day, mode) => (
+  const detail = jest.fn((days, mode) => (
     <Text>
-      {mode}:{day.inMinor}
+      {mode}:{days.map((day: { inMinor: number }) => day.inMinor).join(',')}
     </Text>
   ));
-  const tree = render(<UpcomingDates runway={schedule} renderDay={detail} />);
+  const tree = render(<UpcomingDates runway={schedule} renderDays={detail} />);
   expect(texts(tree)).toContain('No upcoming outgoing payments');
   const income = tree.root.findAll((n) => n.props.accessibilityRole === 'radio' && n.props.onPress)[1];
   act(() => income.props.onPress());
@@ -138,6 +138,6 @@ it('reveals income-only dates and passes only the selected mode to its detail re
     tree.root.findAll((n) => n.props.testID === 'income-day-2026-10-22' && n.props.onPress)
   ).toHaveLength(1);
   expect(detail.mock.calls.at(-1)?.[1]).toBe('income');
-  expect(detail.mock.calls.at(-1)?.[0].inMinor).toBe(500000);
+  expect(detail.mock.calls.at(-1)?.[0][0].inMinor).toBe(500000);
   act(() => tree.unmount());
 });

@@ -41,30 +41,40 @@ function render(node: React.ReactElement) {
   return r;
 }
 
-it('shows each category with its amount and filters to the one tapped', () => {
+it('shows each category with its amount in one row and filters to the one tapped', () => {
   const onToggle = jest.fn();
   const r = render(<CategorySplit items={items} selectedIds={[]} onToggle={onToggle} />);
-  expect(texts(r)).toEqual(expect.arrayContaining(['Where it went', 'Bills', '₹5,000', 'Tap one to filter']));
+  expect(texts(r)).toEqual(expect.arrayContaining(['Bills', '₹5,000', 'Transport', '₹1,000']));
+  const row = r.root.find((n) => n.props.accessibilityLabel === 'Filter by category');
+  expect(row.props.horizontal).toBe(true);
   act(() => chip(r, 'Dining out').props.onPress());
   expect(onToggle).toHaveBeenCalledWith('c1');
   expect(chip(r, 'Dining out').props.accessibilityState).toEqual({ selected: false });
   act(() => r.unmount());
 });
 
-it('marks the picked category and keeps it visible when it would be folded away', () => {
+it('marks the picked category and offers to show everything again', () => {
   const r = render(<CategorySplit items={items} selectedIds={['c4']} onToggle={jest.fn()} />);
-  // Four fit before "+N more"; Transport is fifth but picked, so its chip stays to clear the filter.
   expect(chip(r, 'Transport').props.accessibilityState).toEqual({ selected: true });
-  expect(texts(r)).toContain('Tap again to show all');
-  expect(texts(r)).not.toContain('+1 more');
+  expect(chip(r, 'Transport').props.accessibilityHint).toBe('Shows every category again');
+  expect(chip(r, 'Bills').props.accessibilityState).toEqual({ selected: false });
   act(() => r.unmount());
 });
 
-it('folds the smaller categories behind a control that opens them', () => {
+it('shows a fade at the edge only while more chips lie beyond it', () => {
   const r = render(<CategorySplit items={items} selectedIds={[]} onToggle={jest.fn()} />);
-  expect(texts(r)).not.toContain('Transport');
-  act(() => chip(r, 'Show all 5 categories').props.onPress());
-  expect(texts(r)).toContain('Transport');
+  const row = r.root.find((n) => n.props.accessibilityLabel === 'Filter by category');
+  const fades = () =>
+    r.root.findAll((n) => n.props.pointerEvents === 'none' && Array.isArray(n.props.colors));
+  expect(fades()).toHaveLength(0);
+  act(() => {
+    row.props.onLayout({ nativeEvent: { layout: { width: 300 } } });
+    row.props.onContentSizeChange(620, 40);
+  });
+  expect(fades().length).toBeGreaterThan(0);
+  // Scrolled to the end: nothing more to hint at.
+  act(() => row.props.onScroll({ nativeEvent: { contentOffset: { x: 330 } } }));
+  expect(fades()).toHaveLength(0);
   act(() => r.unmount());
 });
 
