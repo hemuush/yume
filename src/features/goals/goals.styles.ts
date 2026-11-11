@@ -46,7 +46,6 @@ export const styles = StyleSheet.create({
   skeletonRow: { padding: 14, gap: 8 },
   skeletonDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.divider },
   cardArchived: { opacity: 0.6 },
-  cardTop: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 11 },
 
   errorText: { fontFamily: theme.font.body, color: theme.colors.expenseText, fontSize: 13, marginBottom: 12 },
   modalHint: {

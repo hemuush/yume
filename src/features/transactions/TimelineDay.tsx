@@ -30,19 +30,10 @@ import { isSavingsEntry } from '@/lib/privateSummary';
 import { DraggableLine } from './DraggableLine';
 import { withPressedTint } from '@/lib/pressed';
 import { categorySpoken, joinSub, parentNameOf } from '@/lib/categoryLabel';
-import { compactMoney } from '@/lib/compactMoney';
-import { shade } from '@/lib/color';
-import { parseLocalIsoDate } from '@/lib/date';
 
 /** A compact row: its least height and the category disc it leads with. */
 const ROW_H = 48;
 const ICON = 32;
-/** The date column's width beside a day's entries. */
-const DATE_W = 36;
-/** The rail: its dot sits level with the first entry's centre, and its line runs through the gap to the next day. */
-const DOT = 12;
-const DOT_TOP = 19;
-
 const NO_ACCOUNTS: ReadonlySet<string> = new Set();
 const NO_NOTES: ValueNote[] = [];
 
@@ -98,10 +89,8 @@ function TimelineDayView({
   notes = NO_NOTES,
   onPressNote,
   accountCurrency = () => getCachedCurrency(),
-  timeline = false,
-  isToday = false,
-  selected = false,
   position = 'only',
+  selected = false,
 }: {
   date: string;
   label: string;
@@ -130,14 +119,10 @@ function TimelineDayView({
   /** Tapping a value update (opens the investments page). */
   onPressNote?: (note: ValueNote) => void;
   accountCurrency?: (id: string) => string;
-  /** Activity's list: the date sits beside the day's entries, on a rail with a dot per day. */
-  timeline?: boolean;
-  /** Fills the day's dot in the theme colour and says TODAY. */
-  isToday?: boolean;
-  /** The day picked on the chart: its dot takes an ink edge. */
-  selected?: boolean;
-  /** Where the day sits in the list, so the rail starts and ends at a dot instead of dangling. */
+  /** Where the day sits in the list: the days are segments of one card, so the first rounds its top and the last its bottom. */
   position?: 'only' | 'first' | 'middle' | 'last';
+  /** The chart's picked day: its heading turns to ink and bold, so the list answers the tap. */
+  selected?: boolean;
 }) {
   const { hideAmounts } = usePrivacy();
   const { width, fontScale } = useWindowDimensions();
@@ -413,83 +398,28 @@ function TimelineDayView({
 
   const showTotal = net !== 0 && !(lines.length === 1 && transfers.length === 0);
   const totalText = `${net > 0 ? '+' : '−'}${formatMoney(Math.abs(net))}`;
-  // The date beside the entries instead of above them. Narrow screens and large text keep the heading, so a
-  // row never loses the width it needs.
-  const beside = timeline && !stacked;
-  // With one line the total would only repeat it, so it appears from two lines up.
-  const showTileTotal = lines.length >= 2 && net !== 0;
-  const day = parseLocalIsoDate(date);
+  const segment = [
+    styles.day,
+    (position === 'first' || position === 'only') && styles.dayFirst,
+    (position === 'last' || position === 'only') && styles.dayLast,
+    (position === 'middle' || position === 'last') && styles.dayDivider,
+  ];
   return (
-    <ReanimatedAnimated.View entering={entering} style={[styles.day, beside && styles.dayBeside]}>
-      {beside ? (
-        <>
-          {/* The date on the left edge, where the eye scans a list; the day's total only when it adds something. */}
-          <View
-            style={[styles.dateCol, { width: Math.round(DATE_W * Math.min(1.2, Math.max(1, fontScale))) }]}
-            accessible
-            accessibilityRole="header"
-            accessibilityLabel={`${label}, ${dateLabel}${showTileTotal ? `, ${totalText}` : ''}`}
-          >
-            <Text style={[styles.dateWd, isToday && styles.dateWdToday]}>
-              {isToday ? 'TODAY' : day.toLocaleDateString(undefined, { weekday: 'short' }).toUpperCase()}
-            </Text>
-            <Text style={styles.dateNum}>{day.getDate()}</Text>
-            {showTileTotal && (
-              <Text
-                style={[styles.dateTotal, net > 0 && styles.income]}
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.75}
-              >
-                {net > 0 ? '+' : '−'}
-                {compactMoney(Math.abs(net))}
-              </Text>
-            )}
-          </View>
-          <View
-            style={styles.rail}
-            accessibilityElementsHidden
-            importantForAccessibility="no-hide-descendants"
-          >
-            {position !== 'only' && (
-              <View
-                style={[
-                  styles.railLine,
-                  position === 'first' && { top: DOT_TOP + DOT / 2 },
-                  position === 'last' && { bottom: undefined, height: DOT_TOP + DOT / 2 },
-                ]}
-              />
-            )}
-            <View
-              style={[
-                styles.railDot,
-                isToday && {
-                  backgroundColor: accent,
-                  borderColor: accent,
-                  boxShadow: `0px 0px 0px 4px ${shade(accent, 86)}`,
-                },
-                selected && { borderColor: theme.colors.ink },
-              ]}
-            />
-          </View>
-        </>
-      ) : (
-        <View style={styles.head}>
-          <Text style={styles.title}>
-            {label}
-            {'  '}
-            <Text style={styles.date}>{dateLabel}</Text>
-          </Text>
-          {showTotal && <Text style={[styles.total, net > 0 && styles.income]}>{totalText}</Text>}
-        </View>
-      )}
+    <ReanimatedAnimated.View entering={entering} style={segment}>
       <View
-        style={[
-          styles.lane,
-          beside && styles.laneBeside,
-          beside && position !== 'only' && position !== 'last' && styles.laneGap,
-        ]}
+        style={styles.head}
+        accessible
+        accessibilityRole="header"
+        accessibilityLabel={`${label}, ${dateLabel}${showTotal ? `, ${totalText}` : ''}`}
       >
+        <Text style={[styles.title, selected && styles.titleOn]}>
+          {label}
+          {'  '}
+          <Text style={styles.date}>{dateLabel}</Text>
+        </Text>
+        {showTotal && <Text style={[styles.total, net > 0 && styles.income]}>{totalText}</Text>}
+      </View>
+      <View style={styles.lane}>
         {shown.map((line, i) => (
           <DraggableLine
             key={laneKey(line)}
@@ -593,63 +523,39 @@ function TimelineDayView({
 }
 
 const styles = StyleSheet.create({
-  day: { paddingHorizontal: 16, paddingBottom: 10 },
-  dayBeside: { flexDirection: 'row', alignItems: 'stretch', paddingBottom: 0 },
-  laneBeside: { flex: 1, minWidth: 0 },
-  // The gap to the next day is the card's own margin, so the rail beside it runs through it unbroken.
-  laneGap: { marginBottom: 14 },
-  dateCol: { alignItems: 'center', paddingTop: 8 },
-  dateWd: {
-    fontFamily: theme.font.bodyBold,
-    fontSize: 11,
-    letterSpacing: 0.6,
-    color: theme.colors.textSecondary,
-  },
-  dateWdToday: { color: theme.colors.textPrimary },
-  dateNum: {
-    fontFamily: theme.font.roundedBold,
-    fontSize: 18,
-    lineHeight: 21,
-    color: theme.colors.textPrimary,
-  },
-  dateTotal: {
-    marginTop: 3,
-    alignSelf: 'stretch',
-    textAlign: 'center',
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 11,
-    color: theme.colors.textPrimary,
-    fontVariant: ['tabular-nums'],
-  },
-  rail: { width: 20 },
-  railLine: {
-    position: 'absolute',
-    left: 9,
-    width: 2,
-    top: 0,
-    bottom: 0,
-    borderRadius: 1,
-    backgroundColor: theme.colors.inkHairline,
-  },
-  railDot: {
-    position: 'absolute',
-    left: 4,
-    top: DOT_TOP,
-    width: DOT,
-    height: DOT,
-    borderRadius: DOT / 2,
-    borderWidth: 2,
+  // Every day is one segment of a single card: sides always, the top on the first, the bottom on the last.
+  day: {
+    marginHorizontal: 16,
     backgroundColor: theme.colors.surface,
-    borderColor: theme.colors.inkOff,
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
+    borderColor: theme.colors.borderSoft,
   },
+  dayFirst: {
+    marginTop: 4,
+    borderTopWidth: 1,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    // Only the rounded ends need clipping: a clipping layer on every day is costly on Android.
+    overflow: 'hidden',
+  },
+  dayLast: {
+    paddingBottom: 6,
+    borderBottomWidth: 1,
+    borderBottomLeftRadius: 16,
+    borderBottomRightRadius: 16,
+    overflow: 'hidden',
+  },
+  dayDivider: { borderTopWidth: 0 },
   head: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     alignItems: 'baseline',
     justifyContent: 'space-between',
     gap: 8,
-    marginBottom: 4,
-    paddingHorizontal: 4,
+    paddingTop: 14,
+    paddingBottom: 4,
+    paddingHorizontal: 14,
   },
   title: {
     flexGrow: 1,
@@ -659,6 +565,7 @@ const styles = StyleSheet.create({
     fontFamily: theme.font.bodyMedium,
     fontSize: 13,
   },
+  titleOn: { fontFamily: theme.font.bodyBold, color: theme.colors.ink },
   date: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
   // Spending reads in ink with its minus sign; only money in is green.
   total: {
@@ -677,18 +584,8 @@ const styles = StyleSheet.create({
   },
   transferName: { fontFamily: theme.font.bodyMedium, color: theme.colors.textSecondary },
   transferAmount: { color: theme.colors.textSecondary },
-  // Flat cream keeps category colours and amounts prominent, matching Home's supporting cards.
-  lane: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.radius.xl2,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    // Rows sit 12 in from the card's edge, so their dividers are inset like Home's.
-    paddingHorizontal: 12,
-    // No shadow: at 4% it was invisible, and a shadow on a clipped, rounded row in a scrolling list costs a
-    // clipping layer per day on Android.
-    overflow: 'hidden',
-  },
+  // The day's rows sit 14 in from the card's edge, so their dividers are inset like Home's.
+  lane: { paddingHorizontal: 14 },
   // Starts under the icon, so it separates the text and leaves the icon column unbroken.
   separator: {
     height: StyleSheet.hairlineWidth,

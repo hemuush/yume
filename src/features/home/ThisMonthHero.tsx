@@ -24,7 +24,7 @@ import { DURATIONS } from '@/lib/motionTimings';
 import { styles } from './hero.styles';
 import { WorkingRow } from './WorkingRow';
 import { SpendBars } from './SpendBars';
-import { MonthLine } from './MonthLine';
+import { MonthLine, type SliceKey } from './MonthLine';
 import { HeroActions } from './HeroActions';
 import { Section } from '@/components/Section';
 import { weekBars, monthBars } from './spendBarData';
@@ -121,6 +121,8 @@ export function ThisMonthHero({
   });
   // The sum behind "Free after bills", opened from the "still to pay" chip.
   const [showWorking, setShowWorking] = useState(false);
+  // The slice of the month picked on the line or in the legend, tied to the period it was picked in.
+  const [picked, setPicked] = useState<{ period: string; key: SliceKey } | null>(null);
   const prevPeriodKey = useRef(periodKey);
   const tx = useSharedValue(0);
   const dragX = useSharedValue(0);
@@ -305,6 +307,46 @@ export function ThisMonthHero({
         ? 'below zero'
         : `after ${hasDue ? (hideAmounts ? 'deductions and bills' : 'spending, savings and bills') : hideAmounts ? 'deductions' : 'spending and savings'}`;
 
+  // A picked slice takes over the headline (label, figure and caption) until it is picked again, or the period
+  // turns. A slice that is not on the line right now (savings while hidden, bills once paid) cannot be picked.
+  const sliceShown: Record<SliceKey, boolean> = {
+    spent: slices.hasIncome,
+    saved: slices.hasIncome && !hideAmounts && slices.saved > 0,
+    due: slices.hasIncome && billsMinor > 0,
+    free: slices.hasIncome && !over && freeMinor > 0,
+  };
+  const focus: SliceKey | null =
+    picked && picked.period === displayed.periodKey && sliceShown[picked.key] ? picked.key : null;
+  const current = displayed.periodKey === 'month:0';
+  const focused =
+    focus === 'spent'
+      ? {
+          label: current ? 'Spent this month' : 'Spent',
+          minor: displayed.spentMinor,
+          caption: `${heroPct(slices.spent)} of what you had to spend`,
+        }
+      : focus === 'saved'
+        ? {
+            label: current ? 'Saved this month' : 'Saved',
+            minor: displayed.savingsMinor,
+            caption: `${heroPct(slices.saved)} of what you had to spend`,
+          }
+        : focus === 'due'
+          ? { label: 'Bills still to pay', minor: billsMinor, caption: 'before the month ends' }
+          : null;
+  const pick = (key: SliceKey) => {
+    haptics.tap();
+    setPicked((prev) =>
+      prev && prev.period === displayed.periodKey && prev.key === key
+        ? null
+        : { period: displayed.periodKey, key }
+    );
+  };
+  const shownLabel = focused?.label ?? headLabel;
+  const shownMinor = focused?.minor ?? headMinor;
+  const shownNeg = !focused && headNeg;
+  const shownCaption = focused?.caption ?? headCaption;
+
   const shownToday = displayed.today;
   const shownPace = displayed.pace;
   const weekMode = displayed.spendingTrend?.mode !== 'month';
@@ -331,6 +373,9 @@ export function ThisMonthHero({
           color: theme.colors.slice.spent,
           minor: displayed.spentMinor,
           share: heroPct(slices.spent),
+          onPress: () => pick('spent'),
+          selected: focus === 'spent',
+          hint: 'Shows spending in the headline',
         },
         ...(!hideAmounts && slices.saved > 0
           ? [
@@ -340,6 +385,9 @@ export function ThisMonthHero({
                 color: theme.colors.slice.saved,
                 minor: displayed.savingsMinor,
                 share: heroPct(slices.saved),
+                onPress: () => pick('saved'),
+                selected: focus === 'saved',
+                hint: 'Shows savings in the headline',
               },
             ]
           : []),
@@ -352,10 +400,13 @@ export function ThisMonthHero({
                 minor: billsMinor,
                 share: heroPct(slices.due ?? 0),
                 onPress: () => {
-                  haptics.tap();
+                  // Bills left also opens the sum behind the figure; picking it again closes both.
+                  pick('due');
                   setShowWorking((v) => !v);
                 },
                 expanded: showWorking,
+                selected: focus === 'due',
+                hint: 'Shows how this adds up',
               },
             ]
           : []),
@@ -367,6 +418,9 @@ export function ThisMonthHero({
                 color: theme.colors.slice.free,
                 minor: freeMinor,
                 share: heroPct(slices.free),
+                onPress: () => pick('free'),
+                selected: focus === 'free',
+                hint: 'Shows what is free in the headline',
               },
             ]
           : []),
@@ -376,7 +430,7 @@ export function ThisMonthHero({
     <>
       <ReanimatedAnimated.View layout={ROW_LAYOUT} style={styles.card}>
         <View style={styles.bar}>
-          <Text style={styles.headLabel}>{headLabel}</Text>
+          <Text style={styles.headLabel}>{shownLabel}</Text>
           {renderPeriod ? renderPeriod(displayed.periodKey) : period}
         </View>
 
@@ -386,7 +440,7 @@ export function ThisMonthHero({
               style={styles.figure}
               accessible
               accessibilityLabel={
-                slices.hasIncome ? `${headLabel}, ${formatMoney(headMinor)}, ${headCaption}` : headCaption
+                slices.hasIncome ? `${shownLabel}, ${formatMoney(shownMinor)}, ${shownCaption}` : shownCaption
               }
               // The swipe, for a screen reader: swipe up or down on the figure to step the period.
               accessibilityActions={[
@@ -402,9 +456,9 @@ export function ThisMonthHero({
                 // Show the real amount immediately, then interpolate later changes.
                 <CountUpAmount
                   key={displayed.periodKey}
-                  minor={headMinor}
+                  minor={shownMinor}
                   duration={DURATIONS.rollUp}
-                  style={[styles.headValue, headNeg && styles.headValueNeg]}
+                  style={[styles.headValue, shownNeg && styles.headValueNeg]}
                   numberOfLines={1}
                   adjustsFontSizeToFit
                 />
@@ -435,6 +489,8 @@ export function ThisMonthHero({
                 hideSavings={hideAmounts}
                 periodKey={displayed.periodKey}
                 dayShare={isCurrentMonth ? now.getDate() / daysInMonth : null}
+                focus={focus}
+                onPick={pick}
               />
             </>
           )}
@@ -512,7 +568,7 @@ export function ThisMonthHero({
               accessibilityElementsHidden
               importantForAccessibility="no-hide-descendants"
             >
-              {headCaption}
+              {shownCaption}
             </Text>
             {onSeeInsights && !displayed.spendingTrend && (
               <Pressable

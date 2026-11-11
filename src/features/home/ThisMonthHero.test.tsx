@@ -222,6 +222,56 @@ describe('month card with bills still to pay', () => {
     expect(texts(r)).not.toContain('After bills');
   });
 
+  it('puts a picked slice in the headline, and puts free back when it is picked again', () => {
+    const { haptics } = require('@/lib/haptics');
+    haptics.tap.mockClear();
+    const r = render({ dueMinor: 2_000_000 });
+    expect(texts(r)).toContain('Short after bills');
+    // From the legend: spent, then the same slice again.
+    act(() => byLabel(r, 'Spent, ₹').props.onPress());
+    expect(texts(r)).toEqual(expect.arrayContaining(['Spent this month', '₹95,762']));
+    expect(texts(r).some((t) => t.endsWith('of what you had to spend'))).toBe(true);
+    expect(texts(r)).not.toContain('Short after bills');
+    act(() => byLabel(r, 'Spent, ₹').props.onPress());
+    expect(texts(r)).toContain('Short after bills');
+    // From the line itself.
+    act(() =>
+      r.root
+        .find(
+          (n) =>
+            String(n.props.accessibilityLabel).startsWith('Saved, ') &&
+            String(n.props.accessibilityLabel).includes('of the month') &&
+            typeof n.props.onPress === 'function'
+        )
+        .props.onPress()
+    );
+    expect(texts(r)).toEqual(expect.arrayContaining(['Saved this month', '₹99,500']));
+    expect(haptics.tap).toHaveBeenCalledTimes(3);
+    act(() => r.unmount());
+  });
+
+  it('shows what bills are still to pay when that slice is picked, and clears a pick when the month turns', () => {
+    const r = render({ dueMinor: 2_000_000 });
+    act(() => byLabel(r, 'Bills left, ₹').props.onPress());
+    expect(texts(r)).toEqual(
+      expect.arrayContaining(['Bills still to pay', '₹20,000', 'before the month ends'])
+    );
+    act(() => r.update(hero({ dueMinor: 2_000_000, periodKey: 'month:-1' })));
+    expect(texts(r)).not.toContain('Bills still to pay');
+    act(() => r.unmount());
+  });
+
+  it('never offers the saved slice while savings are hidden', () => {
+    mockHideAmounts = true;
+    try {
+      const r = render({ dueMinor: 2_000_000 });
+      expect(r.root.findAll((n) => String(n.props.accessibilityLabel).startsWith('Saved, ')).length).toBe(0);
+      act(() => r.unmount());
+    } finally {
+      mockHideAmounts = false;
+    }
+  });
+
   it('says short when the bills are more than what is free', () => {
     const all = texts(render({ ...base, dueMinor: 7_000_000 }));
     expect(all).toEqual(expect.arrayContaining(['Short after bills', '-₹10,000', '₹70,000']));

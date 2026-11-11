@@ -6,8 +6,6 @@ import { GLASS } from '@/components/Glass';
 // Shared by the Transactions screen and its modals/rows (FilterModal, TransactionRow,
 // TransactionDetailModal).
 /** A 44dp target, 2dp padding per side and the control's border. */
-const CONTROL_H = 50;
-
 export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
   errorBanner: {
@@ -130,14 +128,10 @@ export const styles = StyleSheet.create({
   },
   // The change against the period before, one line under the figure (green when spending is down).
   // The comparison, right-aligned: the figure in colour, what it is against in a quiet line under it.
-  sumChange: { flexShrink: 1, alignItems: 'flex-end' },
-  sumChangeStacked: { alignItems: 'flex-start' },
-  sumChangeRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  sumChangeValue: { fontFamily: theme.font.bodyMedium, fontSize: 13, fontVariant: ['tabular-nums'] },
-  sumChangeCaption: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted },
-  sumChart: { marginTop: 8 },
-  sumTop: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 10 },
-  sumTopStacked: { flexDirection: 'column', alignItems: 'flex-start', gap: 6 },
+  sumChangeRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 4, marginTop: 1 },
+  sumChangeText: { flexShrink: 1, fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
+  sumChangeValue: { fontFamily: theme.font.bodyBold, fontSize: 12, fontVariant: ['tabular-nums'] },
+  sumChart: { marginTop: 10 },
   sumLead: { flexShrink: 1, minWidth: 0 },
   // Money in and Left: one quiet line under the categories.
   sumCashflow: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 16, rowGap: 2, marginTop: 10 },
@@ -148,69 +142,34 @@ export const styles = StyleSheet.create({
     fontSize: 12,
     color: theme.colors.textPrimary,
   },
-  // Week | Month beside the period pill, the picked one on deep ink.
-  scopeSwitch: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-    minHeight: CONTROL_H,
-    padding: 2,
-    borderRadius: theme.radius.pill,
-    backgroundColor: GLASS.fill,
-    borderWidth: 1,
-    borderColor: GLASS.edge,
-  },
-  scopeBtn: {
-    minHeight: 44,
-    justifyContent: 'center',
-    paddingHorizontal: 11,
-    paddingVertical: 6,
-    borderRadius: theme.radius.pill,
-  },
+  // Week | Month as two plain words, the picked one bold with an underline.
+  scopeSwitch: { flexDirection: 'row', alignItems: 'center' },
+  scopeBtn: { minHeight: 44, justifyContent: 'center', paddingHorizontal: 10 },
   scopeBtnStacked: { flex: 1, alignItems: 'center' },
-  scopeText: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textPrimary },
-  scopeTextOn: { color: theme.colors.textPrimary, fontFamily: theme.font.bodyMedium },
+  scopeText: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textMuted },
+  scopeTextOn: { color: theme.colors.textPrimary, fontFamily: theme.font.bodyBold },
+  scopeUnderline: {
+    position: 'absolute',
+    left: 10,
+    right: 10,
+    bottom: 9,
+    height: 2,
+    borderRadius: 1,
+    backgroundColor: theme.colors.ink,
+  },
 
-  // ‹ This week › in a frosted pill, Week | Month beside it.
-  periodBar: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 2 },
+  // ‹ This week 8–14 Nov › on one plain line, Week | Month at its right end.
+  periodBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
   periodBarStacked: { flexDirection: 'column', alignItems: 'stretch' },
   periodRowStacked: { flex: 0 },
-  periodRow: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    minHeight: CONTROL_H,
-    paddingHorizontal: 2,
-    paddingVertical: 2,
-    borderRadius: theme.radius.pill,
-    overflow: 'hidden',
-    backgroundColor: GLASS.fill,
-    borderWidth: 1,
-    borderColor: GLASS.edge,
-  },
-  periodInner: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 4 },
-  periodNav: {
-    width: 44,
-    minHeight: 44,
-    borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: GLASS.fillStrong,
-    borderWidth: 1,
-    borderColor: GLASS.edge,
-  },
+  periodRow: { flexShrink: 1, flexDirection: 'row', alignItems: 'center', minHeight: 44 },
+  periodInner: { flexShrink: 1, flexDirection: 'row', alignItems: 'center' },
+  periodNav: { width: 36, minHeight: 44, alignItems: 'center', justifyContent: 'center' },
   periodNavOff: { opacity: 0.35 },
-  periodTitleBtn: {
-    flex: 1,
-    minWidth: 0,
-    minHeight: 44,
-    paddingVertical: 4,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  periodTitle: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
-  periodSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
+  periodTitleBtn: { flexShrink: 1, minHeight: 44, justifyContent: 'center' },
+  periodTitleRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline', columnGap: 6 },
+  periodTitle: { fontFamily: theme.font.bodyBold, fontSize: 15, color: theme.colors.textPrimary },
+  periodSub: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textSecondary },
 
   listArea: { flex: 1 },
   // Shown while a line is being moved, above the tab bar like the undo bar.
@@ -242,9 +201,17 @@ export const styles = StyleSheet.create({
 
   // Type filter as one segmented bar, then picked categories/accounts on their own line (only when some).
   // The gap below matches the gap between days.
-  typeFilterRow: { flexDirection: 'row', alignItems: 'center', marginTop: 12, paddingLeft: 16, gap: 6 },
+  typeFilterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+    paddingLeft: 16,
+    paddingRight: 12,
+    gap: 6,
+  },
+  typeScroll: { flex: 1 },
   // The type pills scroll sideways under the Filters button; at large text they wrap instead.
-  typeBar: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingRight: 16 },
+  typeBar: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingRight: 8 },
   typeBarWrap: { flex: 1, flexWrap: 'wrap' },
   typeBtn: {
     alignItems: 'center',

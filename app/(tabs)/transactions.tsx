@@ -33,7 +33,7 @@ import { TransactionDetailModal } from '@/features/transactions/TransactionDetai
 import { TransactionsHeadline } from '@/features/transactions/TransactionsHeadline';
 import { TransactionsSkeleton } from '@/features/transactions/TransactionsSkeleton';
 import { HomeWallpaper } from '@/features/home/HomeWallpaper';
-import { buildWeekSpendBars, buildWeeklySpendBars, legendForBars } from '@/features/transactions/spendChart';
+import { buildWeekSpendBars, buildWeeklySpendBars } from '@/features/transactions/spendChart';
 import {
   weekContaining,
   stepWeekAnchor,
@@ -53,7 +53,7 @@ import { savingsAccountIdsOf } from '@/lib/account';
 import { privateComparison, isSavingsEntry } from '@/lib/privateSummary';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import { useAccent } from '@/theme/AccentContext';
-import { themeInk, selectedFill } from '@/theme/interactionColors';
+import { themeInk } from '@/theme/interactionColors';
 import { haptics } from '@/lib/haptics';
 import { errorMessage } from '@/lib/errorMessage';
 import { DURATIONS } from '@/lib/motionTimings';
@@ -447,7 +447,6 @@ export default function TransactionsScreen() {
             ),
     [allBars, narrowedTransactions, chartTransactions, categories, loadedPeriod, today]
   );
-  const legend = useMemo(() => legendForBars(allBars), [allBars]);
 
   // Destructured so the focus effect depends on primitive dates/scope, not the `visibleRange` object
   // rebuilt every render (which would re-run the load each time).
@@ -845,7 +844,6 @@ export default function TransactionsScreen() {
                           : undefined
                       }
                       bars={bars}
-                      legend={legend}
                       onPressDay={onPressBar}
                       selectedKey={selectedBar}
                       current={today >= loadedPeriod.fromDate && today <= loadedPeriod.toDate}
@@ -856,16 +854,6 @@ export default function TransactionsScreen() {
                             ? categoryName(filterCategoryIds[0])
                             : `${filterCategoryIds.length} categories`
                       }
-                      selectedCategoryIds={filterCategoryIds}
-                      onToggleCategory={(id) => {
-                        // One category at a time from the chips; the filter sheet still picks several.
-                        setFilterCategoryIds((ids) =>
-                          ids.includes(id) ? ids.filter((x) => x !== id) : [id]
-                        );
-                        // Chart categories are spending: a type that hides spending would leave an empty list.
-                        if (filterType !== 'all' && filterType !== 'expense') setFilterType('all');
-                        setSelectedBar(null);
-                      }}
                     />
                   </ReanimatedAnimated.View>
 
@@ -969,7 +957,7 @@ export default function TransactionsScreen() {
                 onToggleStack={toggleStack}
                 onReorder={canReorder ? reorderDay : undefined}
                 onDragActive={setDragging}
-                timeline={!searching}
+                selected={!searching && loadedPeriod.scope === 'week' && selectedBar === group.date}
                 position={
                   displayedGroups.length === 1
                     ? 'only'
@@ -979,8 +967,6 @@ export default function TransactionsScreen() {
                         ? 'last'
                         : 'middle'
                 }
-                isToday={group.date === today}
-                selected={!searching && loadedPeriod.scope === 'week' && selectedBar === group.date}
               />
             )}
           />
@@ -1083,14 +1069,16 @@ export default function TransactionsScreen() {
                   accessibilityRole="button"
                   accessibilityLabel={`${heading.title}${heading.sub ? `, ${heading.sub}` : ''}. Pick a month`}
                 >
-                  <Text style={styles.periodTitle} numberOfLines={1}>
-                    {heading.title}
-                  </Text>
-                  {!!heading.sub && (
-                    <Text style={styles.periodSub} numberOfLines={1}>
-                      {periodPending && !loadError ? 'Updating…' : heading.sub}
+                  <View style={styles.periodTitleRow}>
+                    <Text style={styles.periodTitle} numberOfLines={1}>
+                      {heading.title}
                     </Text>
-                  )}
+                    {!!heading.sub && (
+                      <Text style={styles.periodSub} numberOfLines={1}>
+                        {periodPending && !loadError ? 'Updating…' : heading.sub.split(' · ')[0]}
+                      </Text>
+                    )}
+                  </View>
                 </Pressable>
                 <AnimatedPressable
                   onPress={stepForward}
@@ -1115,15 +1103,12 @@ export default function TransactionsScreen() {
                     key={o.value}
                     onPress={() => onChangeViewScope(o.value)}
                     hitSlop={2}
-                    style={withPressedTint(accent, [
-                      styles.scopeBtn,
-                      stackPeriod && styles.scopeBtnStacked,
-                      on && { backgroundColor: selectedFill(accent) },
-                    ])}
+                    style={withPressedTint(accent, [styles.scopeBtn, stackPeriod && styles.scopeBtnStacked])}
                     accessibilityRole="radio"
                     accessibilityState={{ selected: on }}
                   >
                     <Text style={[styles.scopeText, on && styles.scopeTextOn]}>{o.label}</Text>
+                    {on && <View style={styles.scopeUnderline} />}
                   </Pressable>
                 );
               })}

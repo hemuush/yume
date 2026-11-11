@@ -26,7 +26,6 @@ export const styles = StyleSheet.create({
   },
   cardFirst: { marginTop: 0 },
   row: { flexDirection: 'row', gap: GAP, marginHorizontal: SCREEN.gutter },
-  rowStack: { flexDirection: 'column' },
 
   head: {
     flexDirection: 'row',
@@ -134,14 +133,6 @@ export const styles = StyleSheet.create({
   },
   addDiscSmall: { width: 32, height: 32, borderRadius: 16 },
   addText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textSecondary },
-  whatIfIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: theme.colors.dueTint,
-  },
   tileWrap: { flex: 1, minWidth: 0 },
   // Compact tiles: the icon and the figure share a row, so a tile is about 95 dp, with no empty space.
   tileFill: { flex: 1, padding: 10, gap: 6, overflow: 'hidden', borderWidth: 1 },
@@ -179,23 +170,10 @@ export const styles = StyleSheet.create({
   tileOver: { fontFamily: theme.font.bodyBold, color: theme.colors.expenseText },
 
   /* ---------- Debt path ---------- */
-  pathValue: { ...figure, flexShrink: 1 },
-  pathNote: {
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 13,
-    letterSpacing: 0,
-    color: theme.colors.textMuted,
-  },
 
   /* ---------- Goals ---------- */
   title: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.textPrimary },
   sub: { fontFamily: theme.font.body, fontSize: 13, lineHeight: 18, color: theme.colors.textSecondary },
-
-  whatIfCard: { paddingVertical: 8 },
-  whatIfHead: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 10 },
-  whatIfHeadCopy: { flex: 1, minWidth: 0 },
-  whatIfBold: { fontSize: 13, fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
-  gainNote: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
 
   /* ---------- Friends & streak ---------- */
   compactSummary: {
@@ -236,18 +214,4 @@ export const styles = StyleSheet.create({
     paddingTop: 10,
   },
   dayHeadText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textMuted },
-  dueIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: GLASS.fillStrong,
-    borderWidth: 1,
-    borderColor: GLASS.edge,
-  },
-  dueMid: { flex: 1, minWidth: 0 },
-  dueTitle: { fontFamily: theme.font.bodyMedium, fontSize: 14, color: theme.colors.textPrimary },
-  dueSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 1 },
-  emptyRow: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 64, paddingHorizontal: 14 },
 });

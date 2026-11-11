@@ -1,8 +1,7 @@
-import { cardUsage } from '@/lib/cardUsage';
 import { ScreenLoadError } from '@/components/ScreenLoadError';
 import { PrimaryButton } from '@/components/PrimaryButton';
-import { useCallback, useState } from 'react';
-import { View, Pressable, Animated, ActivityIndicator, useWindowDimensions } from 'react-native';
+import { useCallback, useMemo, useState } from 'react';
+import { View, Pressable, ActivityIndicator } from 'react-native';
 import { Text } from '@/components/Text';
 import Feather from '@expo/vector-icons/Feather';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
@@ -17,46 +16,27 @@ import { getDefaultCurrency } from '@/db/settings';
 import { roundedMinor } from '@/lib/round';
 import { Account } from '@/types';
 import { EmptyState } from '@/components/EmptyState';
-import { CategoryIcon } from '@/components/CategoryIcon';
-import { Amount } from '@/components/Amount';
-import { AddButton } from '@/components/AddButton';
 import { theme } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
 import { usePrivacy } from '@/theme/PrivacyContext';
-import { formatMaskableMoney } from '@/lib/money';
 import { useScreenLoad } from '@/lib/useScreenLoad';
-import { usePressScale } from '@/lib/usePressScale';
-import { accountBadgeColor, accountIcon } from '@/lib/account';
-import { GainPill } from '@/features/investments/GainPill';
-import { investmentLabel } from '@/lib/investment';
 import { Section } from '@/components/Section';
-import { screenStyles as h } from '@/components/screenStyles';
 import { styles } from './profile.styles';
 import { trackedSumLines, groupAccountsByType } from './trackedSum';
-import { CashHero, MoneyShare } from './CashHero';
+import { CashHero } from './CashHero';
+import { AccountTiles, tileOrder } from './AccountTiles';
 import { TrackedCard } from './TrackedCard';
 import { LinkTiles } from './LinkTiles';
 import { AddAccountModal } from './AddAccountModal';
 import { AccountDetailModal } from './AccountDetailModal';
 import { withPressedTint } from '@/lib/pressed';
-import { cardSurface } from '@/components/CardSurface';
-
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
-
-const ACCOUNT_TYPE_LABEL: Record<Account['type'], string> = {
-  bank: 'Bank',
-  cash: 'Cash',
-  wallet: 'Wallet',
-  savings: 'Savings',
-  credit_card: 'Credit card',
-};
 
 /**
  * "You": accounts first, tracked balance as one line opening to its sum, tiles for Entries, Loans and Friends,
  * accounts grouped by type. Budgets, goals, recurring, What-if and Garden live on Plan (one row points there).
  */
 export function YouSection() {
-  const { accent, secondary } = useAccent();
+  const { accent } = useAccent();
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [archivedAccounts, setArchivedAccounts] = useState<Account[]>([]);
   const [archivedOpen, setArchivedOpen] = useState(false);
@@ -109,7 +89,10 @@ export function YouSection() {
     .filter((a) => a.currency === defaultCurrency)
     .reduce((sum, a) => sum + dispAccountBalance(a), 0);
   const sum = trackedSumLines(parts, accountsShown);
-  const groups = groupAccountsByType(accounts, defaultCurrency);
+  const tiles = useMemo(
+    () => tileOrder(groupAccountsByType(accounts, defaultCurrency).flatMap((g) => g.accounts)),
+    [accounts, defaultCurrency]
+  );
 
   // Every total that includes savings is hidden along with the savings rows,
   // otherwise subtracting the visible rows gives the savings back.
@@ -128,23 +111,6 @@ export function YouSection() {
   const showPeople = peopleCount > 0 || sum.peopleMinor !== 0;
 
   const showTracked = showLoans || showPeople;
-  // The money map's bar: each type's default-currency total, in the type's own colour.
-  const shareColor: Record<string, string> = {
-    bank: accent,
-    cash: secondary,
-    wallet: theme.colors.slice.due,
-    credit_card: theme.colors.slice.spent,
-    savings: theme.colors.slice.debt,
-  };
-  const shares: MoneyShare[] = groups
-    .filter((g) => g.subtotalMinor != null)
-    .map((g) => ({
-      key: g.type,
-      label: ACCOUNT_TYPE_LABEL[g.type as Account['type']] ?? g.type,
-      color: shareColor[g.type] ?? theme.colors.textMuted,
-      minor: g.subtotalMinor ?? 0,
-      sensitive: g.type === 'savings',
-    }));
   const trackedCard = (embedded: boolean) => (
     <TrackedCard
       totalMinor={sum.totalMinor}
@@ -191,25 +157,46 @@ export function YouSection() {
           label={hasOtherCurrency ? `In your accounts (${defaultCurrency} only)` : 'In your accounts'}
           sub={heroSub}
           masked={masked}
-          shares={shares}
         >
           {showTracked && trackedCard(true)}
+          <LinkTiles
+            embedded
+            entries={txCount}
+            loans={activeLoanCount}
+            friends={peopleCount}
+            onEntries={() => router.navigate('/transactions')}
+            onLoans={() => router.push('/loans')}
+            onFriends={() => router.push('/people')}
+          />
         </CashHero>
       ) : (
-        showTracked && trackedCard(false)
+        <>
+          {showTracked && trackedCard(false)}
+          <LinkTiles
+            entries={txCount}
+            loans={activeLoanCount}
+            friends={peopleCount}
+            onEntries={() => router.navigate('/transactions')}
+            onLoans={() => router.push('/loans')}
+            onFriends={() => router.push('/people')}
+          />
+        </>
       )}
-      <LinkTiles
-        entries={txCount}
-        loans={activeLoanCount}
-        friends={peopleCount}
-        onEntries={() => router.navigate('/transactions')}
-        onLoans={() => router.push('/loans')}
-        onFriends={() => router.push('/people')}
-      />
 
       <Section
+        compact
         title="Accounts"
-        right={<AddButton onPress={() => setAddAccountVisible(true)} label="+ Account" />}
+        right={
+          <Pressable
+            onPress={() => setAddAccountVisible(true)}
+            accessibilityRole="button"
+            accessibilityLabel="Add an account"
+            style={withPressedTint(accent, styles.addLink)}
+          >
+            <Feather name="plus" size={14} color={theme.colors.link} />
+            <Text style={styles.addLinkText}>Add</Text>
+          </Pressable>
+        }
       >
         {accounts.length === 0 ? (
           <EmptyState
@@ -219,72 +206,34 @@ export function YouSection() {
             <PrimaryButton title="Add an account" onPress={() => setAddAccountVisible(true)} />
           </EmptyState>
         ) : (
-          <View style={[h.card, cardSurface.neutral, styles.accountsCard]}>
-            {groups.map((group, g) => (
-              <View key={group.type}>
-                <View style={[styles.groupHead, g > 0 && styles.groupHeadGap]}>
-                  <Text style={styles.groupLabel}>
-                    {ACCOUNT_TYPE_LABEL[group.type as Account['type']] ?? group.type} ·{' '}
-                    {group.accounts.length}
-                  </Text>
-                  {group.subtotalMinor != null && (
-                    <Amount
-                      minor={group.subtotalMinor}
-                      sensitive={group.type === 'savings'}
-                      style={[
-                        styles.groupTotal,
-                        group.subtotalMinor < 0 && { color: theme.colors.expenseText },
-                      ]}
-                    />
-                  )}
-                </View>
-                {group.accounts.map((acc, i) => (
-                  <AccountRow
-                    key={acc.id}
-                    account={acc}
-                    minor={dispAccountBalance(acc)}
-                    divider={i > 0}
-                    onPress={setDetailAccount}
-                  />
-                ))}
-              </View>
-            ))}
-            {archivedAccounts.length > 0 && (
-              <>
-                <Pressable
-                  style={withPressedTint(accent, styles.archivedRow)}
-                  onPress={() => setArchivedOpen((v) => !v)}
-                  accessibilityRole="button"
-                  accessibilityState={{ expanded: archivedOpen }}
-                  accessibilityLabel={`Archived accounts, ${archivedAccounts.length}. ${archivedOpen ? 'Hide' : 'Show'}`}
-                >
-                  <MaterialCommunityIcons name="archive-outline" size={15} color={theme.colors.textMuted} />
-                  <Text style={styles.archivedLabel}>Archived accounts</Text>
-                  <Text style={styles.archivedSub}>
-                    {archivedAccounts.length} account{archivedAccounts.length === 1 ? '' : 's'} ·{' '}
-                    {archivedOpen ? 'tap to hide' : 'tap to show'}
-                  </Text>
-                  <Feather
-                    name={archivedOpen ? 'chevron-up' : 'chevron-down'}
-                    size={16}
-                    color={theme.colors.textMuted}
-                  />
-                </Pressable>
-                {archivedOpen && (
-                  <ReanimatedAnimated.View entering={PANEL_ENTER} exiting={ROW_EXIT}>
-                    {archivedAccounts.map((acc) => (
-                      <AccountRow
-                        key={acc.id}
-                        account={acc}
-                        minor={dispAccountBalance(acc)}
-                        divider
-                        archived
-                        onPress={setDetailAccount}
-                      />
-                    ))}
-                  </ReanimatedAnimated.View>
-                )}
-              </>
+          <AccountTiles accounts={tiles} onPress={setDetailAccount} />
+        )}
+
+        {archivedAccounts.length > 0 && (
+          <View style={styles.archivedWrap}>
+            <Pressable
+              style={withPressedTint(accent, styles.archivedRow)}
+              onPress={() => setArchivedOpen((v) => !v)}
+              accessibilityRole="button"
+              accessibilityState={{ expanded: archivedOpen }}
+              accessibilityLabel={`Archived accounts, ${archivedAccounts.length}. ${archivedOpen ? 'Hide' : 'Show'}`}
+            >
+              <MaterialCommunityIcons name="archive-outline" size={15} color={theme.colors.textMuted} />
+              <Text style={styles.archivedLabel}>Archived accounts</Text>
+              <Text style={styles.archivedSub}>
+                {archivedAccounts.length} account{archivedAccounts.length === 1 ? '' : 's'} ·{' '}
+                {archivedOpen ? 'tap to hide' : 'tap to show'}
+              </Text>
+              <Feather
+                name={archivedOpen ? 'chevron-up' : 'chevron-down'}
+                size={16}
+                color={theme.colors.textMuted}
+              />
+            </Pressable>
+            {archivedOpen && (
+              <ReanimatedAnimated.View entering={PANEL_ENTER} exiting={ROW_EXIT}>
+                <AccountTiles accounts={archivedAccounts} archived onPress={setDetailAccount} />
+              </ReanimatedAnimated.View>
             )}
           </View>
         )}
@@ -320,68 +269,5 @@ export function YouSection() {
         }}
       />
     </>
-  );
-}
-
-function AccountRow({
-  account,
-  minor,
-  divider,
-  archived,
-  onPress,
-}: {
-  account: Account;
-  minor: number;
-  divider: boolean;
-  archived?: boolean;
-  onPress: (account: Account) => void;
-}) {
-  const { accent } = useAccent();
-  const { width, fontScale } = useWindowDimensions();
-  const stacked = width < 360 || fontScale > 1.2;
-  const { hideAmounts } = usePrivacy();
-  const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.98);
-  const kind = account.investment ? investmentLabel(account.investment) : ACCOUNT_TYPE_LABEL[account.type];
-  const usage = cardUsage(account);
-  const balance = formatMaskableMoney(minor, {
-    currency: account.currency,
-    masked: hideAmounts && account.type === 'savings',
-  });
-  return (
-    <AnimatedPressable
-      style={[h.row, styles.accountRow, divider && h.divider, archived && styles.archivedDim, animatedStyle]}
-      onPress={() => onPress(account)}
-      onPressIn={onPressIn}
-      onPressOut={onPressOut}
-      accessibilityRole="button"
-      accessibilityLabel={`${account.name}, ${kind}${archived ? ', archived' : ''}, ${balance}`}
-      accessibilityHint="Edit account"
-    >
-      <CategoryIcon
-        name={accountIcon(account.type, !!account.investment)}
-        color={accountBadgeColor(account.type, accent)}
-        square={32}
-        size={16}
-      />
-      <View style={[styles.accountContent, stacked && styles.accountContentStack]}>
-        <View style={[h.mid, stacked && styles.accountNameStack]}>
-          <Text style={styles.accountName}>{account.name}</Text>
-          <Text style={styles.accountSub}>
-            {kind}
-            {usage && !archived ? ` · ${Math.round(usage.pct)}% of limit used` : ''}
-            {archived ? ' · archived' : ''}
-          </Text>
-        </View>
-        <View style={[styles.accountValues, stacked && styles.accountValuesStack]}>
-          {account.investment && !archived && <GainPill account={account} moneyOnly />}
-          <Amount
-            minor={minor}
-            currency={account.currency}
-            sensitive={account.type === 'savings'}
-            style={[styles.accountAmount, !archived && account.currentBalanceMinor < 0 && h.expense]}
-          />
-        </View>
-      </View>
-    </AnimatedPressable>
   );
 }

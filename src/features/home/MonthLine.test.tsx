@@ -66,3 +66,26 @@ it('is all spent when the month went over', () => {
   expect(segments(r)).toHaveLength(1);
   act(() => r.unmount());
 });
+
+it('turns each slice into a button when it can be picked, and marks the picked one', () => {
+  const onPick = jest.fn();
+  const r = mount(
+    <MonthLine
+      slices={heroSlices(100_000, 40_000, 10_000, 20_000)}
+      hideSavings={false}
+      periodKey="month:0"
+      focus="saved"
+      onPick={onPick}
+    />
+  );
+  const buttons = r.root.findAll((n) => n.props.accessibilityRole === 'button' && n.props.onPress);
+  expect(buttons).toHaveLength(4);
+  expect(buttons.map((b) => b.props.accessibilityState.selected)).toEqual([false, true, false, false]);
+  expect(buttons[0].props.accessibilityLabel).toBe('Spent, 40% of the month. Show this');
+  expect(buttons[1].props.accessibilityLabel).toBe('Saved, 10% of the month. Show free again');
+  act(() => buttons[2].props.onPress());
+  expect(onPick).toHaveBeenCalledWith('due');
+  // The sentence for the whole line is only there while the slices are not buttons.
+  expect(r.root.findAll((n) => n.props.accessibilityRole === 'image')).toHaveLength(0);
+  act(() => r.unmount());
+});

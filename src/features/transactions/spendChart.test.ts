@@ -1,4 +1,4 @@
-import { buildWeekSpendBars, buildWeeklySpendBars, weekRangesInMonth, legendForBars } from './spendChart';
+import { buildWeekSpendBars, buildWeeklySpendBars, weekRangesInMonth } from './spendChart';
 import type { Category, Transaction } from '@/types';
 
 const cat = (id: string, name: string, color: string, parentId: string | null = null): Category => ({
@@ -32,22 +32,6 @@ const tx = (over: Partial<Transaction>): Transaction => ({
 });
 
 describe('weekRangesInMonth', () => {
-  it('omits legend categories whose net-spending bar is empty or outside the visible period', () => {
-    const segment = { categoryId: 'food', name: 'Food', color: '#123456', amountMinor: 100 };
-    expect(
-      legendForBars([
-        { key: '2026-10-01', label: 'T', totalMinor: 0, segments: [segment], isCurrent: false },
-        {
-          key: '2026-10-02',
-          label: 'F',
-          totalMinor: 100,
-          segments: [segment],
-          isCurrent: false,
-          state: 'future',
-        },
-      ])
-    ).toEqual([]);
-  });
   it('splits September 2026 (starts on a Tuesday) into 5 Sunday–Saturday buckets, first and last partial', () => {
     const ranges = weekRangesInMonth('2026-09-01', '2026-09-30');
     expect(ranges).toEqual([
@@ -118,46 +102,6 @@ describe('buildWeeklySpendBars', () => {
     expect(bars[0].segments).toEqual([
       { categoryId: 'food', name: 'Food & Dining', color: '#FF9E7D', amountMinor: 4000 },
     ]);
-  });
-});
-
-describe('legendForBars', () => {
-  it('lists only categories actually present in the bars, each once', () => {
-    const bars = buildWeeklySpendBars(
-      [
-        tx({ id: 'a', categoryId: 'food', amountMinor: 1000, date: '2026-09-10' }),
-        tx({ id: 'b', categoryId: 'food', amountMinor: 500, date: '2026-09-11' }),
-        tx({ id: 'c', categoryId: 'fuel', amountMinor: 700, date: '2026-09-11' }),
-      ],
-      [cat('food', 'Food & Dining', '#FF9E7D'), cat('fuel', 'Fuel', '#A8B8FF')],
-      '2026-09-10',
-      '2026-09-11',
-      '2026-09-10'
-    );
-    const legend = legendForBars(bars);
-    expect(legend).toEqual([
-      { categoryId: 'food', name: 'Food & Dining', color: '#FF9E7D', totalMinor: 1500 },
-      { categoryId: 'fuel', name: 'Fuel', color: '#A8B8FF', totalMinor: 700 },
-    ]);
-  });
-
-  it('puts the biggest spend first', () => {
-    const bars = buildWeeklySpendBars(
-      [
-        tx({ id: 'a', categoryId: 'food', amountMinor: 300, date: '2026-09-10' }),
-        tx({ id: 'b', categoryId: 'fuel', amountMinor: 700, date: '2026-09-11' }),
-      ],
-      [cat('food', 'Food & Dining', '#FF9E7D'), cat('fuel', 'Fuel', '#A8B8FF')],
-      '2026-09-10',
-      '2026-09-11',
-      '2026-09-10'
-    );
-    expect(legendForBars(bars).map((l) => l.categoryId)).toEqual(['fuel', 'food']);
-  });
-
-  it('is empty when nothing was spent', () => {
-    const bars = buildWeeklySpendBars([], [], '2026-09-10', '2026-09-10', '2026-09-10');
-    expect(legendForBars(bars)).toEqual([]);
   });
 });
 

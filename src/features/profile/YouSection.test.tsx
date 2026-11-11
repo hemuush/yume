@@ -168,21 +168,22 @@ describe('Profile · You section', () => {
     );
   });
 
-  it('groups accounts by type, each group with a subtotal that matches its rows', async () => {
+  it('shows each account as a tile with its type, name and balance', async () => {
     const shown = texts(await render());
     expect(shown).toEqual(
       expect.arrayContaining([
         'Accounts',
-        'Bank · 1',
+        'Bank',
         'Salary account',
         '₹84,200',
-        'Savings · 1',
+        'Savings',
         'Rainy day',
         '₹15,799',
       ])
     );
-    // The accounts total is shown once, in the hero, not again as a footer.
+    // The accounts total is shown once, in the card, not again as a footer or a group subtotal.
     expect(shown.some((t) => t.startsWith('Account balance'))).toBe(false);
+    expect(shown.some((t) => t.startsWith('Bank ·'))).toBe(false);
   });
 
   it('counts entries, loans and friends, and each tile opens its screen', async () => {
@@ -227,9 +228,10 @@ describe('Profile · You section', () => {
     expect(shown).toContain('₹1,02,499'); // ₹99,999 + ₹2,500
   });
 
-  it('splits what is in your accounts by type under the big figure', async () => {
+  it('leaves the split bar and its legend out of the summary card', async () => {
     const shown = texts(await render());
-    expect(shown).toEqual(expect.arrayContaining(['Bank ', '₹84,200', 'Savings ', '₹15,799']));
+    expect(shown).not.toContain('Bank ');
+    expect(shown).not.toContain('Savings ');
   });
 
   it('masks every total that includes savings while savings amounts are hidden', async () => {
@@ -271,5 +273,55 @@ describe('Profile · You section', () => {
     expect(texts(tree)).toContain('Budgets, goals & recurring are in Plan');
     press(tree, 'Budgets, goals and recurring are in Plan');
     expect(router.navigate).toHaveBeenCalledWith('/plan');
+  });
+});
+
+describe('tileOrder', () => {
+  const { tileOrder } = require('./AccountTiles');
+  const acc = (id: string, currentBalanceMinor: number) => ({ id, currentBalanceMinor }) as never;
+  it('puts accounts holding something first and the empty ones after, each keeping its own order', () => {
+    const order = tileOrder([acc('a', 0), acc('b', 5000), acc('c', 0), acc('d', -2000)]).map(
+      (x: { id: string }) => x.id
+    );
+    expect(order).toEqual(['b', 'd', 'a', 'c']);
+  });
+});
+
+describe('AccountTiles columns', () => {
+  const { AccountTiles } = require('./AccountTiles');
+  const accounts = ['a', 'b', 'c'].map(
+    (id) =>
+      ({
+        id,
+        name: `Account ${id}`,
+        type: 'bank',
+        currency: 'INR',
+        currentBalanceMinor: 1000,
+        archived: false,
+      }) as never
+  );
+  const rowsAt = (width: number, fontScale: number) => {
+    const dims = jest
+      .spyOn(require('react-native'), 'useWindowDimensions')
+      .mockReturnValue({ width, height: 800, scale: 3, fontScale });
+    let tree!: ReactTestRenderer;
+    act(() => {
+      tree = create(<AccountTiles accounts={accounts} onPress={jest.fn()} />);
+    });
+    const { StyleSheet, View } = require('react-native');
+    // A row is the flex-row view that holds the tiles (and the empty slots), with the 8 dp gap.
+    const count = tree.root.findAll((n) => {
+      if (n.type !== View) return false;
+      const flat = StyleSheet.flatten(n.props.style);
+      return flat?.flexDirection === 'row' && flat?.gap === 8;
+    }).length;
+    act(() => tree.unmount());
+    dims.mockRestore();
+    return count;
+  };
+  it('puts two tiles in a row, and one at large text or on a narrow screen', () => {
+    expect(rowsAt(390, 1)).toBe(2);
+    expect(rowsAt(390, 1.5)).toBe(3);
+    expect(rowsAt(320, 1)).toBe(3);
   });
 });

@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { View, useWindowDimensions } from 'react-native';
+import { View } from 'react-native';
 import { Text } from '@/components/Text';
 import ReanimatedAnimated, {
   useSharedValue,
@@ -10,18 +10,13 @@ import ReanimatedAnimated, {
 import { CountUpAmount } from '@/components/CountUpAmount';
 import { formatMoney } from '@/lib/money';
 import { useReduceMotion } from '@/lib/useReduceMotion';
-import { SpendBarChart, ChartLegend } from './SpendBarChart';
-import { CategorySplit } from './CategorySplit';
-import { SpendBar, ChartLegendItem } from './spendChart';
+import { SpendBarChart } from './SpendBarChart';
+import type { SpendBar } from './spendChart';
 import { styles } from './transactions.styles';
 import { DURATIONS } from '@/lib/motionTimings';
 import Feather from '@expo/vector-icons/Feather';
 import { theme } from '@/constants/theme';
 import { screenStyles } from '@/components/screenStyles';
-
-/** How many categories the legend names before "+N more". */
-const LEGEND_MAX = 4;
-const NO_IDS: readonly string[] = [];
 
 interface HeadlineContent {
   expenseMinor: number;
@@ -32,7 +27,6 @@ interface HeadlineContent {
   /** What the change pill compares with; defaults to "last week"/"last month". */
   compareLabel?: string;
   bars: SpendBar[];
-  legend: ChartLegendItem[];
 }
 
 /**
@@ -48,13 +42,10 @@ export function TransactionsHeadline({
   viewScope,
   compareLabel,
   bars,
-  legend,
   onPressDay,
   selectedKey,
   current = false,
   narrowedTo = null,
-  selectedCategoryIds = NO_IDS,
-  onToggleCategory,
 }: HeadlineContent & {
   periodKey: string;
   direction: -1 | 0 | 1;
@@ -65,13 +56,8 @@ export function TransactionsHeadline({
   current?: boolean;
   /** The category (or "3 categories") the list is filtered to; the bars passed in hold only its spending. */
   narrowedTo?: string | null;
-  selectedCategoryIds?: readonly string[];
-  /** Makes the legend a row of filter chips. */
-  onToggleCategory?: (categoryId: string) => void;
 }) {
   const reduce = useReduceMotion();
-  const { width, fontScale } = useWindowDimensions();
-  const stacked = width < 360 || fontScale > 1.2;
   // Render the committed period immediately so chart taps and timeline rows share one snapshot.
   const displayed: HeadlineContent = {
     expenseMinor,
@@ -80,7 +66,6 @@ export function TransactionsHeadline({
     viewScope,
     compareLabel,
     bars,
-    legend,
   };
   const prevPeriodKey = useRef(periodKey);
   const tx = useSharedValue(0);
@@ -122,6 +107,12 @@ export function TransactionsHeadline({
   const shownMinor = narrowed
     ? displayed.bars.reduce((sum, bar) => (bar.state ? sum : sum + bar.totalMinor), 0)
     : displayed.expenseMinor;
+  // What a day cost so far: the days that have happened, empty ones too (an empty day is a cheap one).
+  const elapsed = displayed.bars.filter((bar) => !bar.state);
+  const averageMinor =
+    elapsed.length > 1
+      ? Math.round(elapsed.reduce((sum, bar) => sum + bar.totalMinor, 0) / elapsed.length)
+      : null;
   const compareTo = displayed.compareLabel ?? `last ${displayed.viewScope}`;
   const kicker = narrowed
     ? `Spent on ${narrowedTo}${current ? ` this ${viewScope}` : ''}`
@@ -131,38 +122,33 @@ export function TransactionsHeadline({
   return (
     <View style={[screenStyles.card, styles.sumCard]}>
       <ReanimatedAnimated.View style={slideStyle}>
-        <View style={[styles.sumTop, stacked && styles.sumTopStacked]}>
-          <View style={styles.sumLead}>
-            <Text style={styles.sumKicker}>{kicker}</Text>
-            <CountUpAmount
-              key={`${periodKey}:${narrowedTo ?? ''}`}
-              countFromZero={false}
-              minor={shownMinor}
-              style={styles.headlineAmt}
-              numberOfLines={1}
-              adjustsFontSizeToFit
-            />
-          </View>
+        <View style={styles.sumLead}>
+          <Text style={styles.sumKicker}>{kicker}</Text>
+          <CountUpAmount
+            key={`${periodKey}:${narrowedTo ?? ''}`}
+            countFromZero={false}
+            minor={shownMinor}
+            style={styles.headlineAmt}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+          />
           {!narrowed && change != null && change !== 0 && (
             <View
-              style={[styles.sumChange, stacked && styles.sumChangeStacked]}
+              style={styles.sumChangeRow}
               accessible
               accessibilityLabel={`${formatMoney(Math.abs(change))} ${change > 0 ? 'more' : 'less'} than ${compareTo}`}
             >
-              <View style={styles.sumChangeRow}>
-                <Feather
-                  name={change > 0 ? 'arrow-up-right' : 'arrow-down-right'}
-                  size={13}
-                  color={change > 0 ? theme.colors.expenseText : theme.colors.incomeText}
-                />
-                <Text
-                  style={[styles.sumChangeValue, change > 0 ? styles.expense : styles.income]}
-                  numberOfLines={1}
-                >
+              <Feather
+                name={change > 0 ? 'arrow-up-right' : 'arrow-down-right'}
+                size={12}
+                color={change > 0 ? theme.colors.expenseText : theme.colors.incomeText}
+              />
+              <Text style={styles.sumChangeText}>
+                <Text style={[styles.sumChangeValue, change > 0 ? styles.expense : styles.income]}>
                   {formatMoney(Math.abs(change))} {change > 0 ? 'more' : 'less'}
-                </Text>
-              </View>
-              <Text style={styles.sumChangeCaption}>than {compareTo}</Text>
+                </Text>{' '}
+                than {compareTo}
+              </Text>
             </View>
           )}
         </View>
@@ -173,18 +159,9 @@ export function TransactionsHeadline({
             selectedKey={selectedKey}
             inset={0}
             dates={viewScope === 'week'}
-            amounts
+            averageMinor={narrowed ? null : averageMinor}
           />
         </View>
-        {onToggleCategory ? (
-          <CategorySplit
-            items={displayed.legend}
-            selectedIds={selectedCategoryIds}
-            onToggle={onToggleCategory}
-          />
-        ) : (
-          <ChartLegend items={displayed.legend} inset={0} max={LEGEND_MAX} />
-        )}
         {!narrowed && displayed.incomeMinor > 0 && (
           <View style={styles.sumCashflow}>
             <View style={styles.sumMetric}>
