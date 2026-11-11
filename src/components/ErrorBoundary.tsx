@@ -57,7 +57,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: theme.font.roundedBold,
-    fontSize: 19,
+    fontSize: 18,
     color: theme.colors.textPrimary,
     marginBottom: 8,
   },
