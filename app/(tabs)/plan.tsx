@@ -1,4 +1,5 @@
 import { MonthlyPlanCheck } from '@/features/plan/MonthlyPlanCheck';
+import { CONTENT_ENTER } from '@/lib/animation';
 import { investRole, investRuleTitle, investmentIdsOf } from '@/lib/investment';
 import { InvestmentsCard } from '@/features/plan/InvestmentsCard';
 import { buildPortfolio, type Portfolio } from '@/lib/portfolio';
@@ -42,7 +43,7 @@ import { theme } from '@/constants/theme';
 import { useTabScrollPad } from '@/lib/uiScale';
 import { addDaysToIsoDate, toLocalIsoDate } from '@/lib/date';
 import { SkyHeader, HeaderSummary } from '@/features/home/SkyHeader';
-import ReanimatedAnimated, { FadeIn, ReduceMotion } from 'react-native-reanimated';
+import ReanimatedAnimated from 'react-native-reanimated';
 import { useCollapsingHeader } from '@/lib/useCollapsingHeader';
 import { formatMoney } from '@/lib/money';
 import { useAccent } from '@/theme/AccentContext';
@@ -448,10 +449,7 @@ export default function PlanScreen() {
             <View style={[styles.tabs, tab === 'money' && { marginBottom: 4 }]}>
               <PlanNavigation value={tab} onChange={selectTab} stacked={stackTiles} />
             </View>
-            <ReanimatedAnimated.View
-              key={tab}
-              entering={FadeIn.duration(140).reduceMotion(ReduceMotion.System)}
-            >
+            <ReanimatedAnimated.View key={tab} entering={CONTENT_ENTER}>
               {tab === 'overview' && (
                 <RunwayCard
                   compact

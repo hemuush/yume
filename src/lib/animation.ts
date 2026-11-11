@@ -78,3 +78,12 @@ export const ROW_EXIT = FadeOut.duration(DURATIONS.rowExit).reduceMotion(ReduceM
 export const PANEL_ENTER = FadeIn.duration(DURATIONS.standard)
   .easing(MOTION.ease)
   .reduceMotion(ReduceMotion.System);
+
+/**
+ * Content swapping in place (a Plan/Reports tab, a picked day's detail): a fade with a small rise on the shared
+ * curve, so the new view settles in instead of popping.
+ */
+export const CONTENT_ENTER = FadeInUp.duration(DURATIONS.standard)
+  .easing(MOTION.ease)
+  .withInitialValues({ opacity: 0, transform: [{ translateY: 8 }] })
+  .reduceMotion(ReduceMotion.System);
