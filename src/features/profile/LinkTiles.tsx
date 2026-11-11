@@ -38,6 +38,7 @@ function Stat({
 
 /** Three shortcuts in one strip: the count over its name, each cell opening its screen. */
 export function LinkTiles({
+  embedded = false,
   entries,
   loans,
   friends,
@@ -45,6 +46,8 @@ export function LinkTiles({
   onLoans,
   onFriends,
 }: {
+  /** Sits at the foot of the summary card, which draws the edge: only a hairline above it. */
+  embedded?: boolean;
   entries: number;
   loans: number;
   friends: number;
@@ -55,7 +58,7 @@ export function LinkTiles({
   const { fontScale } = useWindowDimensions();
   const stacked = fontScale > 1.2;
   return (
-    <View style={[styles.strip, stacked && styles.stripStacked]}>
+    <View style={[styles.strip, embedded && styles.stripEmbedded, stacked && styles.stripStacked]}>
       <Stat value={entries} label="Entries" first stacked={stacked} onPress={onEntries} />
       <Stat value={loans} label="Active loans" stacked={stacked} onPress={onLoans} />
       <Stat value={friends} label="Friends" stacked={stacked} onPress={onFriends} />
@@ -73,6 +76,15 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: theme.colors.borderSoft,
     overflow: 'hidden',
+  },
+  stripEmbedded: {
+    marginHorizontal: 0,
+    marginTop: 0,
+    borderRadius: 0,
+    borderWidth: 0,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: theme.colors.divider,
+    backgroundColor: 'transparent',
   },
   stripStacked: { flexDirection: 'column' },
   stat: {

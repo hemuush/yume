@@ -11,7 +11,7 @@ import { HeaderPrivacyToggle } from '@/components/AppHeader';
 import { SkyHeader } from '@/features/home/SkyHeader';
 import { useCollapsingHeader } from '@/lib/useCollapsingHeader';
 import { AmountPadDock } from '@/components/AmountField';
-import { SegmentedControl } from '@/components/SegmentedControl';
+import { ProfileTabs, type ProfileTab } from '@/features/profile/ProfileTabs';
 import { theme } from '@/constants/theme';
 import { useScreenLoad } from '@/lib/useScreenLoad';
 import { Skeleton } from '@/components/Skeleton';
@@ -25,12 +25,6 @@ import { ProfileIdentity } from '@/features/profile/ProfileIdentity';
 import { errorMessage } from '@/lib/errorMessage';
 import { showAlert } from '@/components/AppDialog';
 import { useSaveOnce } from '@/lib/useSaveOnce';
-
-type ProfileTab = 'you' | 'settings';
-const TABS: { label: string; value: ProfileTab }[] = [
-  { label: 'You', value: 'you' },
-  { label: 'Settings', value: 'settings' },
-];
 
 /**
  * Personal card with inline name editing plus a "You"/"Settings" segment, the shared
@@ -142,9 +136,7 @@ export default function ProfileScreen() {
                 }}
               />
 
-              <View style={styles.tabWrap}>
-                <SegmentedControl options={TABS} value={tab} onChange={setTab} />
-              </View>
+              <ProfileTabs value={tab} onChange={setTab} />
 
               {tab === 'you' ? <YouSection /> : <SettingsSection />}
             </KeyboardAwareScrollView>

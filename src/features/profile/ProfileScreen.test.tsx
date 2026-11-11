@@ -34,7 +34,7 @@ jest.mock('@/db/settings', () => ({
 
 import ProfileScreen from '../../../app/profile';
 import { ProfileIdentity } from './ProfileIdentity';
-import { SegmentedControl } from '@/components/SegmentedControl';
+import { ProfileTabs } from './ProfileTabs';
 import { SettingsSection } from './SettingsSection';
 import { showAlert } from '@/components/AppDialog';
 
@@ -94,6 +94,6 @@ it('keeps a failed name draft available to retry and switches to Settings', asyn
   expect(showAlert).toHaveBeenCalledWith("Couldn't save name", 'write failed');
   expect(input(tree).props.value).toBe('Mira');
   expect(input(tree).props.editable).toBe(true);
-  act(() => tree.root.findByType(SegmentedControl).props.onChange('settings'));
+  act(() => tree.root.findByType(ProfileTabs).props.onChange('settings'));
   expect(tree.root.findAllByType(SettingsSection)).toHaveLength(1);
 });
