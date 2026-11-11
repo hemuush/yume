@@ -259,7 +259,6 @@ Recorded 13 October 2026 after commit `373ea5a`. Every tracked file was read by 
 - `src/components/AmountField.tsx`
 - `src/components/AmountPad.tsx`
 - `src/components/AppDialog.tsx`
-- `src/components/CardGrowHost.tsx`
 - `src/components/CategoryIcon.tsx`
 - `src/components/ErrorBoundary.tsx`
 - `src/components/FormInput.tsx`

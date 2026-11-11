@@ -503,10 +503,10 @@ function ModalSheetBody({
   );
 }
 
-/** The surface rises a few points as the backdrop fades, so a sheet arrives instead of blinking in. */
+/** The surface rises a little as the backdrop fades, so a sheet arrives instead of blinking in. */
 const SHEET_ENTER = FadeInDown.duration(MOTION.slideIn)
   .easing(MOTION.ease)
-  .withInitialValues({ opacity: 0, transform: [{ translateY: 28 }] })
+  .withInitialValues({ opacity: 0, transform: [{ translateY: 16 }] })
   .reduceMotion(ReduceMotion.System);
 
 const SHEET_SHADOW = {

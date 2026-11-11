@@ -121,7 +121,7 @@ export const theme = {
   // The one spacing scale. Gutter and card padding are roles on top of it (see SCREEN in screenStyles).
   space: { xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 24, xxxl: 32 },
   // Captions stay quiet; readable row text and firmer financial figures provide the hierarchy.
-  typeSize: { hero: 32, headline: 30, inputAmount: 36, title: 18, greeting: 16, section: 15, row: 14 },
+  typeSize: { headline: 30, inputAmount: 36, title: 18, greeting: 16, section: 15, row: 14 },
   accessibility: { maxFontScale: 2, reflowFontScale: 1.3, minTouchTarget: 44, lineHeightRatio: 1.4 },
   // Metrics shared with screens that scroll clear of the tab bar: a pushed screen needs `screenScrollPad`
   // bottom padding (callers add `insets.bottom`); a tab screen clears the bar by its height (see uiScale).

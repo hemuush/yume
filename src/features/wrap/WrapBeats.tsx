@@ -91,7 +91,6 @@ function HookBeat({ beat, still }: { beat: BeatOf<'hook'>; still: boolean }) {
         </View>
         <CountUpAmount
           minor={beat.spentMinor}
-          countFromZero={!still}
           style={[styles.huge, styles.gapM]}
           numberOfLines={1}
           adjustsFontSizeToFit

@@ -3,7 +3,6 @@ import { Text } from '@/components/Text';
 import { StatusBadge } from '@/components/StatusBadge';
 import { theme } from '@/constants/theme';
 import { usePressScale } from '@/lib/usePressScale';
-import { useCardGrow } from '@/lib/cardGrow';
 import { screenStyles as h, SCREEN } from '@/components/screenStyles';
 
 import { useAccent } from '@/theme/AccentContext';
@@ -18,8 +17,7 @@ type HomeRowChipTone = 'neutral' | 'due' | 'warning' | 'complete';
 
 /**
  * A leading mark (date tile or progress ring), a title with one grey line under it, and the value on the right
- * with a small status chip under it; an optional pill button ("Pay") takes the chevron's place. `grow`: the page
- * it opens expands out of this row (the caller marks that push with `growHref`).
+ * with a small status chip under it; an optional pill button ("Pay") takes the chevron's place.
  */
 export function HomeRow({
   leading,
@@ -34,7 +32,6 @@ export function HomeRow({
   onPress,
   divider,
   highlight,
-  grow,
   accessibilityLabel,
 }: {
   leading: React.ReactNode;
@@ -56,13 +53,10 @@ export function HomeRow({
 }) {
   const { accent } = useAccent();
   const ink = themeInk(accent);
-  const { ref, growFrom } = useCardGrow();
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.98);
   return (
     <AnimatedPressable
-      ref={ref}
-      collapsable={false}
-      onPress={grow ? () => growFrom(onPress) : onPress}
+      onPress={onPress}
       onPressIn={onPressIn}
       onPressOut={onPressOut}
       accessibilityRole="button"

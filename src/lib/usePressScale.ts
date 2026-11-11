@@ -28,7 +28,7 @@ export function usePressScale(pressedScale = 0.99) {
     Animated.timing(scale, {
       toValue: targetScale,
       useNativeDriver: true,
-      duration: 90,
+      duration: 80,
       easing: Easing.out(Easing.quad),
     }).start();
   };
@@ -38,12 +38,11 @@ export function usePressScale(pressedScale = 0.99) {
       scale.setValue(1);
       return;
     }
-    // A soft spring back, so release feels alive without a visible bounce.
-    Animated.spring(scale, {
+    Animated.timing(scale, {
       toValue: 1,
       useNativeDriver: true,
-      speed: 28,
-      bounciness: 5,
+      duration: 120,
+      easing: Easing.out(Easing.quad),
     }).start();
   };
 

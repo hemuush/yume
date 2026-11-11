@@ -430,7 +430,7 @@ function FlowRow({
   fillColor: string;
 }) {
   const reduce = useReduceMotion();
-  const grow = useSharedValue(0);
+  const grow = useSharedValue(fraction);
   useEffect(() => {
     grow.value = reduce ? fraction : withTiming(fraction, timing(MOTION.draw));
   }, [fraction, reduce, grow]);

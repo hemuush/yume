@@ -1,11 +1,5 @@
-import { Easing, FadeIn, FadeInUp, FadeOut, LinearTransition, ReduceMotion } from 'react-native-reanimated';
+import { Easing, FadeIn, FadeOut, LinearTransition, ReduceMotion } from 'react-native-reanimated';
 import { DURATIONS } from './motionTimings';
-
-/**
- * Cap on a list row's FadeIn stagger delay (`Math.min(i * step, MAX_LIST_STAGGER_MS)`), shared by every plain
- * list. Zero keeps content available together instead of cascading down the screen.
- */
-const MAX_LIST_STAGGER_MS = 0;
 
 /**
  * Home's motion rules: one curve (fast out, soft landing) and a short list of durations so every card moves
@@ -39,29 +33,20 @@ export function markHomeOpeningPlayed(): void {
 }
 
 /**
- * How a Home row fades in: a brief simultaneous fade on the first load after open, or one quick unstaggered fade for rows
- * appearing later (new month, pull-to-refresh) so the screen never replays its whole entrance.
+ * How a Home row arrives: one plain fade, on the first load after open and for rows appearing later (new month,
+ * pull-to-refresh), so the screen never replays an entrance. No stagger, no travel.
  */
-export function homeRowEntering(index: number, opening: boolean) {
-  return opening
-    ? FadeIn.delay(Math.min(index * MOTION.enterStep, MAX_LIST_STAGGER_MS))
-        .duration(MOTION.enter)
-        .easing(MOTION.ease)
-        .reduceMotion(ReduceMotion.System)
-    : FadeIn.duration(MOTION.quick).easing(MOTION.ease).reduceMotion(ReduceMotion.System);
+export function homeRowEntering(_index: number, opening: boolean) {
+  return FadeIn.duration(opening ? MOTION.enter : MOTION.quick)
+    .easing(MOTION.ease)
+    .reduceMotion(ReduceMotion.System);
 }
 
-/**
- * How a Home section arrives: on the first open after the app starts, each rises a few points into place one after the other (the content around it never moves); later (a new month, a refresh) it is one quick fade, so the screen never replays its entrance.
- */
-export function homeSectionEntering(index: number, opening: boolean) {
-  return opening
-    ? FadeInUp.delay(index * DURATIONS.sectionStep)
-        .duration(DURATIONS.section)
-        .easing(MOTION.ease)
-        .withInitialValues({ opacity: 0, transform: [{ translateY: 14 }] })
-        .reduceMotion(ReduceMotion.System)
-    : FadeIn.duration(MOTION.quick).easing(MOTION.ease).reduceMotion(ReduceMotion.System);
+/** How a Home section arrives: the same plain fade as a row, a touch longer on the first open. */
+export function homeSectionEntering(_index: number, opening: boolean) {
+  return FadeIn.duration(opening ? DURATIONS.section : MOTION.quick)
+    .easing(MOTION.ease)
+    .reduceMotion(ReduceMotion.System);
 }
 
 /**
@@ -84,10 +69,9 @@ export const PANEL_ENTER = FadeIn.duration(DURATIONS.standard)
   .reduceMotion(ReduceMotion.System);
 
 /**
- * Content swapping in place (a Plan/Reports tab, a picked day's detail): a fade with a small rise on the shared
- * curve, so the new view settles in instead of popping.
+ * Content swapping in place (a Plan/Reports tab, a picked day's detail): one plain fade, so the new view appears
+ * without moving.
  */
-export const CONTENT_ENTER = FadeInUp.duration(DURATIONS.standard)
+export const CONTENT_ENTER = FadeIn.duration(DURATIONS.quick)
   .easing(MOTION.ease)
-  .withInitialValues({ opacity: 0, transform: [{ translateY: 8 }] })
   .reduceMotion(ReduceMotion.System);

@@ -82,7 +82,6 @@ jest.mock('@/components/MilestoneNote', () => ({
   MilestoneNoteProvider: ({ children }: { children: ReactNode }) => children,
   BudgetMonthWatcher: () => null,
 }));
-jest.mock('@/components/CardGrowHost', () => ({ CardGrowHost: () => null }));
 jest.mock('@/components/LockScreen', () => ({ LockScreen: () => null }));
 jest.mock('@/features/onboarding/Onboarding', () => ({ Onboarding: () => null }));
 

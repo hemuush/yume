@@ -1,7 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
 import { View } from 'react-native';
 import { Text } from '@/components/Text';
-import { Glass } from '@/components/Glass';
+import { SummaryCard } from '@/components/SummaryCard';
 import { AmountField } from '@/components/AmountField';
 import { DateField } from '@/components/DateField';
 import { Chip } from '@/components/Chip';
@@ -79,7 +79,7 @@ export function PurchaseCheck() {
   const money = (minor: number) =>
     formatMaskableMoney(minor, { currency: result?.currency, masked: hideEstimate });
   return (
-    <Glass radius={28} style={[styles.card, { gap: 12 }]}>
+    <SummaryCard style={[styles.card, { gap: 12 }]}>
       <InsightHeader
         title="Can I afford it?"
         subtitle="Check a purchase while keeping your goals aside"
@@ -220,6 +220,6 @@ export function PurchaseCheck() {
           )}
         </>
       )}
-    </Glass>
+    </SummaryCard>
   );
 }

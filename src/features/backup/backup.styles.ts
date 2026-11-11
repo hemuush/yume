@@ -11,7 +11,8 @@ export const styles = StyleSheet.create({
     marginTop: SECTION_GAP.top,
     marginBottom: SECTION_GAP.bottom,
   },
-  statusCard: { marginHorizontal: SCREEN.gutter, marginTop: theme.layout.screenTopGap, padding: 14 },
+  // A SummaryCard: its children bring their own spacing, so the card adds no gap.
+  statusCard: { padding: 14, gap: 0 },
   statusHead: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   statusTitle: { fontFamily: theme.font.roundedBold, fontSize: 18, color: theme.colors.textPrimary },
   errorLine: { color: theme.colors.expenseText },

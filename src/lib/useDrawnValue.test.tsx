@@ -35,11 +35,26 @@ it('restores each record independently and skips unchanged remembered values', (
   act(() => tree.unmount());
 });
 
+it('shows its value at once the first time, and glides only a real change', () => {
+  let tree!: ReactTestRenderer;
+  jest.mocked(withTiming).mockClear();
+  act(() => {
+    tree = create(<Probe id="draw-once" target={50} />);
+  });
+  expect(shown).toBe(50);
+  expect(withTiming).not.toHaveBeenCalled();
+  act(() => tree.update(<Probe id="draw-once" target={70} />));
+  expect(withTiming).toHaveBeenCalledTimes(1);
+  act(() => tree.unmount());
+});
+
 it('jumps to the end with reduced motion and cancels work on unmount', () => {
   let tree!: ReactTestRenderer;
   act(() => {
     tree = create(<Probe id="draw-cancel" target={30} />);
   });
+  // A real change starts a glide, which the next change or an unmount cancels.
+  act(() => tree.update(<Probe id="draw-cancel" target={45} />));
   jest.mocked(cancelAnimation).mockClear();
   mockReduced = true;
   try {

@@ -4,14 +4,13 @@ import { Text } from '@/components/Text';
 import { GLASS } from '@/components/Glass';
 import { GrowFill } from '@/components/GrowFill';
 import { theme } from '@/constants/theme';
-import { SCREEN } from '@/components/screenStyles';
 import { shade } from '@/lib/color';
 import { useAccent } from '@/theme/AccentContext';
 
 /**
- * The pieces every Frost screen shares (Plan and the screens it opens): a card's topic as an icon disc and a
- * name, small chips that carry good or bad news, the hero's compact financial figure, and a pace bar with a tick for
- * where an even pace would be today.
+ * Small pieces Plan and the screens it opens still share: a card's topic as an icon disc and a name, small chips
+ * that carry good or bad news, and a pace bar with a tick for where an even pace would be today. A screen's first
+ * card is a SummaryCard (components/SummaryCard.tsx), not built from these.
  */
 
 type FeatherName = React.ComponentProps<typeof Feather>['name'];
@@ -89,11 +88,14 @@ export function PaceBar({
   animKey,
   style,
   accessibilityLabel,
+  height = 10,
 }: {
   pct: number;
   color: string;
   marker?: number;
   animKey: string;
+  /** The track's thickness; 10 by default, 8 on the flat summary cards. */
+  height?: number;
   style?: StyleProp<ViewStyle>;
   /** Read out for the bar, which is otherwise decorative (the marker has no words of its own). */
   accessibilityLabel?: string;
@@ -104,11 +106,11 @@ export function PaceBar({
       accessible={accessibilityLabel != null}
       accessibilityLabel={accessibilityLabel}
     >
-      <View style={frost.paceTrack}>
+      <View style={[frost.paceTrack, { height, borderRadius: height / 2 }]}>
         <GrowFill
           animKey={animKey}
           pct={Math.max(0, Math.min(100, pct))}
-          style={[frost.paceFill, { backgroundColor: color }]}
+          style={[frost.paceFill, { backgroundColor: color, borderRadius: height / 2 }]}
         />
       </View>
       {marker != null && (
@@ -118,14 +120,7 @@ export function PaceBar({
   );
 }
 
-export const frost = StyleSheet.create({
-  /** A screen's first card (its hero), under the header. */
-  hero: { marginHorizontal: SCREEN.gutter, marginTop: theme.layout.screenTopGap, padding: 14, gap: 8 },
-  /** A glass card holding a list of rows. */
-  list: { marginHorizontal: SCREEN.gutter, overflow: 'hidden' },
-  heroRow: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 },
-  heroMain: { flex: 1, minWidth: 0, gap: 8 },
-
+const frost = StyleSheet.create({
   kickerRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   kickerInTile: { paddingRight: 20 },
   kickerBadge: {
@@ -140,22 +135,6 @@ export const frost = StyleSheet.create({
   },
   kicker: { flexShrink: 1, fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textSecondary },
 
-  bigRow: { flexDirection: 'row', alignItems: 'baseline', gap: 6, flexWrap: 'wrap' },
-  bigValue: {
-    fontFamily: theme.font.bodyMedium,
-    fontSize: theme.typeSize.hero,
-    lineHeight: 40,
-    letterSpacing: -0.3,
-    fontVariant: ['tabular-nums'],
-    color: theme.colors.textPrimary,
-  },
-  bigNote: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textMuted },
-  side: { alignItems: 'flex-end', maxWidth: '45%' },
-  sideLabel: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textMuted },
-  sideValue: { fontFamily: theme.font.body, fontSize: 15, color: theme.colors.textPrimary, marginTop: 1 },
-  sub: { fontFamily: theme.font.body, fontSize: 13, lineHeight: 19, color: theme.colors.textSecondary },
-  subBold: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   chip: {
     flexDirection: 'row',
     alignItems: 'center',

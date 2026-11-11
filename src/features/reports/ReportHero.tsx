@@ -67,7 +67,6 @@ export function ReportHero({
           <Text style={styles.kpiLabel}>{`Spent${inProgress ? ' so far' : ''}`}</Text>
           <CountUpAmount
             minor={roundedMinor(spentMinor)}
-            countFromZero
             style={styles.figure}
             numberOfLines={1}
             adjustsFontSizeToFit

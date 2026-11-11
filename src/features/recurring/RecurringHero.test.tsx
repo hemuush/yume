@@ -63,16 +63,17 @@ describe('RecurringHero', () => {
     )[0];
     act(() => date.props.onPress());
     expect(onDatePress).toHaveBeenCalledWith('2026-11-01');
-    expect(texts(tree)).not.toContain('A year');
+    expect(texts(tree).some((t) => t.endsWith(' a year'))).toBe(false);
     act(() => tree.unmount());
   });
   it('shows the month, the year, how many are running and the next date', () => {
     const shown = texts(render());
-    expect(shown).toEqual(expect.arrayContaining(['Subscriptions & bills', 'A year', '₹12,000']));
-    expect(shown.some((t) => t.startsWith('₹1,000'))).toBe(true);
-    expect(shown.some((t) => t.includes('2 running') && t.includes('Next: ') && t.includes('1 Nov'))).toBe(
-      true
+    expect(shown).toEqual(
+      expect.arrayContaining(['Subscriptions & bills', '₹1,000', 'a month', '₹12,000 a year'])
     );
+    // Running count and the next date are facts under the figure.
+    expect(shown).toEqual(expect.arrayContaining(['Running', '2', 'Next due']));
+    expect(shown.some((t) => t.includes('1 Nov'))).toBe(true);
   });
 
   it('says which one is the biggest slice', () => {
@@ -87,7 +88,8 @@ describe('RecurringHero', () => {
       })
     );
     expect(shown.some((t) => t.includes('of it'))).toBe(false);
-    expect(shown.some((t) => t.startsWith('1 running'))).toBe(true);
+    expect(shown).toEqual(expect.arrayContaining(['Running', '1']));
+    expect(shown).not.toContain('Biggest');
   });
 
   it('is only a line about the page with no expense rule running', () => {
@@ -95,7 +97,7 @@ describe('RecurringHero', () => {
       render({ totals: { monthlyMinor: 0, yearlyMinor: 0, count: 0 }, shares: [], nextDate: null })
     );
     expect(shown.some((t) => t.startsWith('Set up rent'))).toBe(true);
-    expect(shown).not.toContain('A year');
+    expect(shown.some((t) => t.endsWith(' a year'))).toBe(false);
   });
 
   it('puts a dot on each day something lands in the next 30 days, bigger for bigger amounts', () => {

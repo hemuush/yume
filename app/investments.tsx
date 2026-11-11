@@ -4,15 +4,14 @@ import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import ReanimatedAnimated from 'react-native-reanimated';
 import { Text } from '@/components/Text';
-import { Glass } from '@/components/Glass';
+import { ListCard } from '@/components/SummaryCard';
 import { AddButton } from '@/components/AddButton';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { SettingsRow } from '@/components/SettingsRow';
 import { ScreenLoadError } from '@/components/ScreenLoadError';
 import { Section } from '@/components/Section';
-import { cardSurface } from '@/components/CardSurface';
-import { screenStyles as h, SCREEN } from '@/components/screenStyles';
+import { SCREEN } from '@/components/screenStyles';
 import { SkyHeader } from '@/features/home/SkyHeader';
 import { HomeWallpaper } from '@/features/home/HomeWallpaper';
 import { AccountSummarySheet } from '@/features/home/AccountSummarySheet';
@@ -203,7 +202,7 @@ export default function InvestmentsScreen() {
               </View>
 
               {shown.length >= 2 && (
-                <Glass radius={22} tone="strong" style={[styles.card, cardSurface.neutral, styles.block]}>
+                <ListCard style={styles.card}>
                   <SegmentedControl
                     options={[
                       { label: '6 months', value: '6m' },
@@ -219,13 +218,13 @@ export default function InvestmentsScreen() {
                     masked={hideAmounts}
                     color={theme.colors.ink}
                   />
-                </Glass>
+                </ListCard>
               )}
 
               {split.length > 1 && <SplitCard parts={split} />}
 
               <Section compact title="Holdings">
-                <View style={[h.card, cardSurface.neutral]}>
+                <ListCard>
                   {portfolio.holdings.map((holding, i) => (
                     <HoldingRow
                       key={holding.id}
@@ -236,12 +235,12 @@ export default function InvestmentsScreen() {
                       divider={i > 0}
                     />
                   ))}
-                </View>
+                </ListCard>
               </Section>
 
               {portfolio.otherCurrency.length > 0 && (
                 <Section compact title="Other currencies">
-                  <View style={[h.card, cardSurface.neutral]}>
+                  <ListCard>
                     {portfolio.otherCurrency.map((holding, i) => (
                       <HoldingRow
                         key={holding.id}
@@ -252,13 +251,13 @@ export default function InvestmentsScreen() {
                         divider={i > 0}
                       />
                     ))}
-                  </View>
+                  </ListCard>
                   <Text style={[styles.hint, styles.hintPad]}>Not added into the totals above.</Text>
                 </Section>
               )}
 
               <Section compact title="Monthly SIPs">
-                <View style={[h.card, cardSurface.neutral]}>
+                <ListCard>
                   {sips.map(sipRow)}
                   <SettingsRow
                     icon="plus"
@@ -268,7 +267,7 @@ export default function InvestmentsScreen() {
                     onPress={() => choose('sip')}
                     divider={sips.length > 0}
                   />
-                </View>
+                </ListCard>
               </Section>
             </>
           )
@@ -370,8 +369,7 @@ export default function InvestmentsScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
   // Cards sit on the screen gutter like every other screen's; the sections below bring their own.
-  block: { marginTop: 0, marginBottom: 12 },
-  card: { marginHorizontal: SCREEN.gutter, padding: 14, gap: 10 },
+  card: { padding: 14, gap: 10, marginBottom: 12 },
   hint: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textMuted },
   hintPad: { marginHorizontal: SCREEN.gutter, marginTop: 6 },
   mainActions: { flexDirection: 'row', gap: 8, marginHorizontal: SCREEN.gutter, marginBottom: 12 },

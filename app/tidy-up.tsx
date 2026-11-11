@@ -38,9 +38,7 @@ import { categoryPath } from '@/lib/categoryLabel';
 import { showAlert } from '@/components/AppDialog';
 import { useAccent } from '@/theme/AccentContext';
 import Feather from '@expo/vector-icons/Feather';
-import { Glass } from '@/components/Glass';
-import { cardSurface } from '@/components/CardSurface';
-import { Kicker, frost } from '@/components/Frost';
+import { ListCard, SummaryCard, SummaryTop, summaryFigure } from '@/components/SummaryCard';
 import { HomeWallpaper } from '@/features/home/HomeWallpaper';
 
 /** "23 Sep 1:53 pm" from created_at (UTC, "YYYY-MM-DD HH:MM:SS"). */
@@ -242,25 +240,30 @@ export default function TidyUpScreen() {
             <CardRowsSkeleton rows={3} />
           </View>
         ) : allTidy ? (
-          <Glass radius={28} tone="strong" style={frost.hero}>
-            <Kicker icon="check">All tidy</Kicker>
+          <SummaryCard>
+            <SummaryTop label="All tidy" figure={<Text style={summaryFigure}>Nothing to fix</Text>} />
             {checklist}
             <Text style={styles.intro}>Nothing looks off. Suu checks again whenever you open this.</Text>
-          </Glass>
+          </SummaryCard>
         ) : (
           <>
-            <Glass radius={28} tone="strong" style={frost.hero}>
-              <Kicker icon="wind">Tidy up</Kicker>
-              <Text style={styles.headline}>
-                {toLook} {toLook === 1 ? 'thing' : 'things'} might not be what you meant
-              </Text>
+            <SummaryCard>
+              <SummaryTop
+                label="Tidy up"
+                figure={
+                  <Text style={summaryFigure}>
+                    {toLook} {toLook === 1 ? 'thing' : 'things'}
+                  </Text>
+                }
+              />
+              <Text style={styles.headline}>might not be what you meant</Text>
               {checklist}
               <Text style={styles.intro}>Each fix can be undone straight after.</Text>
-            </Glass>
+            </SummaryCard>
 
             {report.repeats.length > 0 && (
               <Section title="Same entry twice?">
-                <View style={[h.card, cardSurface.neutral]}>
+                <ListCard>
                   {report.repeats.map((g, i) => (
                     <View key={g.key} style={[styles.item, i > 0 && h.divider]}>
                       <View style={styles.itemTop}>
@@ -299,13 +302,13 @@ export default function TidyUpScreen() {
                       </View>
                     </View>
                   ))}
-                </View>
+                </ListCard>
               </Section>
             )}
 
             {report.startingBalances.length > 0 && (
               <Section title="Old balances logged as income">
-                <View style={[h.card, cardSurface.neutral]}>
+                <ListCard>
                   {report.startingBalances.map((g, i) => {
                     const one = g.ids.length === 1;
                     const when = one
@@ -353,13 +356,13 @@ export default function TidyUpScreen() {
                       </View>
                     );
                   })}
-                </View>
+                </ListCard>
               </Section>
             )}
 
             {report.fractionalCount > 0 && (
               <Section title="Amounts with paise">
-                <View style={[h.card, cardSurface.neutral]}>
+                <ListCard>
                   <View style={styles.item}>
                     <View style={styles.itemTop}>
                       <CategoryIcon name="calculator-variant-outline" color={accent} />
@@ -387,7 +390,7 @@ export default function TidyUpScreen() {
                       />
                     </View>
                   </View>
-                </View>
+                </ListCard>
               </Section>
             )}
           </>
@@ -400,8 +403,19 @@ export default function TidyUpScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
-  intro: { fontFamily: theme.font.body, fontSize: 13, lineHeight: 19, color: theme.colors.textSecondary },
-  headline: { fontFamily: theme.font.bodyBold, fontSize: 15, color: theme.colors.textPrimary },
+  intro: {
+    fontFamily: theme.font.body,
+    fontSize: 12,
+    lineHeight: 17,
+    color: theme.colors.textSecondary,
+    paddingHorizontal: 2,
+  },
+  headline: {
+    fontFamily: theme.font.body,
+    fontSize: 13,
+    color: theme.colors.textSecondary,
+    paddingHorizontal: 2,
+  },
   checks: { gap: 2 },
   check: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 36 },
   checkMark: { width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },

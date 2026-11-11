@@ -1,12 +1,13 @@
 import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
 import { EYEBROW, FIELD_LABEL } from '@/constants/textStyles';
+import { SCREEN } from '@/components/screenStyles';
 
 export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
   // Same load-error banner shape as Notifications, Transactions, Loans and Recurring, kept consistent.
   errorBanner: {
-    marginHorizontal: 20,
+    marginHorizontal: SCREEN.gutter,
     marginTop: theme.layout.screenTopGap,
     marginBottom: 4,
     padding: 14,
@@ -31,12 +32,9 @@ export const styles = StyleSheet.create({
     lineHeight: 17,
   },
 
-  // Glass cards on the wallpaper: the change you're trying, then where it gets a goal.
-  card: {
-    marginHorizontal: 20,
-    marginTop: theme.layout.screenTopGap,
-    padding: 16,
-  },
+  // Flat summary-style cards (SummaryCard): the change you're trying, then where it gets a goal. The children
+  // bring their own spacing, so the card adds no gap.
+  card: { padding: 16, gap: 0 },
   fieldLabel: {
     ...FIELD_LABEL,
     marginBottom: 6,
@@ -67,11 +65,7 @@ export const styles = StyleSheet.create({
   compareNew: { color: theme.colors.incomeText },
   avgLabel: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
 
-  goalCard: {
-    marginHorizontal: 20,
-    marginTop: 12,
-    padding: 16,
-  },
+  goalCard: { marginTop: 12, padding: 16, gap: 0 },
   extraLabel: { ...EYEBROW, color: theme.colors.incomeText },
 
   paceRow: { marginTop: 14, gap: 7 },
@@ -120,5 +114,5 @@ export const styles = StyleSheet.create({
     color: theme.colors.textMuted,
   },
 
-  footer: { marginHorizontal: 20, marginTop: 18 },
+  footer: { marginHorizontal: SCREEN.gutter, marginTop: 18 },
 });

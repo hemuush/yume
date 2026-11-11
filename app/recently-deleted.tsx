@@ -36,8 +36,7 @@ import { showAlert } from '@/components/AppDialog';
 import { isSavingsEntry } from '@/lib/privateSummary';
 import { savingsAccountIdsOf } from '@/lib/account';
 import { useAccent } from '@/theme/AccentContext';
-import { Glass, GLASS, GLASS_CARD } from '@/components/Glass';
-import { Kicker, frost } from '@/components/Frost';
+import { ListCard, SummaryCard, SummarySide, SummaryTop, summaryFigure } from '@/components/SummaryCard';
 import { HomeWallpaper } from '@/features/home/HomeWallpaper';
 import { DaysLeftRing } from '@/features/profile/DaysLeftRing';
 
@@ -75,6 +74,9 @@ export default function RecentlyDeletedScreen() {
       { title: 'Earlier', items: earlier },
     ].filter((g) => g.items.length > 0);
   }, [entries, today]);
+
+  // The entry closest to its 30 days running out.
+  const soonest = useMemo(() => Math.min(...entries.map((e) => e.daysLeft)), [entries]);
 
   const restore = (entry: DeletedEntry) =>
     runAction(async () => {
@@ -169,20 +171,29 @@ export default function RecentlyDeletedScreen() {
           />
         ) : (
           <>
-            <Glass radius={28} tone="strong" style={frost.hero}>
-              <Kicker icon="trash-2">Waiting to be restored</Kicker>
-              <View style={frost.bigRow}>
-                <Text style={frost.bigValue}>{entries.length}</Text>
-                <Text style={frost.bigNote}>{entries.length === 1 ? 'entry' : 'entries'}</Text>
-              </View>
+            <SummaryCard>
+              <SummaryTop
+                label="Waiting to be restored"
+                figure={
+                  <View style={styles.figureRow}>
+                    <Text style={summaryFigure}>{entries.length}</Text>
+                    <Text style={styles.figureNote}>{entries.length === 1 ? 'entry' : 'entries'}</Text>
+                  </View>
+                }
+                side={
+                  <SummarySide
+                    main={`Oldest leaves in ${soonest} ${soonest === 1 ? 'day' : 'days'}`}
+                    note="then gone for good"
+                  />
+                }
+              />
               <Text style={styles.hint}>
-                Entries you delete wait here for 30 days, then they&rsquo;re gone for good. Each ring is the
-                time left.
+                Entries you delete wait here for 30 days. Each ring is the time left.
               </Text>
-            </Glass>
+            </SummaryCard>
             {groups.map((g) => (
               <Section key={g.title} title={g.title}>
-                <View style={[h.card, GLASS_CARD]}>
+                <ListCard>
                   {g.items.map((entry, i) => {
                     const cat = categoryOf(entry.categoryId);
                     const isTransfer = entry.type === 'transfer';
@@ -242,7 +253,7 @@ export default function RecentlyDeletedScreen() {
                       </View>
                     );
                   })}
-                </View>
+                </ListCard>
               </Section>
             ))}
             <Pressable
@@ -280,7 +291,15 @@ export default function RecentlyDeletedScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
-  hint: { fontFamily: theme.font.body, fontSize: 13, lineHeight: 18, color: theme.colors.textSecondary },
+  hint: {
+    fontFamily: theme.font.body,
+    fontSize: 12,
+    lineHeight: 17,
+    color: theme.colors.textSecondary,
+    paddingHorizontal: 2,
+  },
+  figureRow: { flexDirection: 'row', alignItems: 'baseline', gap: 6, flexWrap: 'wrap' },
+  figureNote: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
   restore: {
     paddingHorizontal: 12,
     paddingVertical: 6,
@@ -295,9 +314,9 @@ const styles = StyleSheet.create({
     marginTop: 24,
     paddingVertical: 13,
     borderRadius: theme.radius.pill,
-    borderWidth: 1,
-    borderColor: GLASS.edge,
-    backgroundColor: GLASS.fill,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
+    backgroundColor: theme.colors.surface,
   },
   emptyAllText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.expenseText },
   errorBanner: {

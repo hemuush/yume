@@ -16,16 +16,14 @@ import { toLocalIsoDate, parseLocalIsoDate, isIsoDate } from '@/lib/date';
 import { ReportWindow, windowRange, windowLabel } from '@/lib/period';
 import { useScreenLoad } from '@/lib/useScreenLoad';
 import { theme } from '@/constants/theme';
-import { EYEBROW } from '@/constants/textStyles';
 import { SkyHeader, HeaderSummary } from '@/features/home/SkyHeader';
-import { Glass, GLASS } from '@/components/Glass';
-import { frost } from '@/components/Frost';
+import { ListCard, SummaryCard, SummaryFacts, SummaryTop, summaryFigure } from '@/components/SummaryCard';
+import { SCREEN } from '@/components/screenStyles';
 import { HomeWallpaper } from '@/features/home/HomeWallpaper';
 import { useAccent } from '@/theme/AccentContext';
 import ReanimatedAnimated from 'react-native-reanimated';
 import { useCollapsingHeader } from '@/lib/useCollapsingHeader';
 import { EmptyState } from '@/components/EmptyState';
-import { CategoryIcon } from '@/components/CategoryIcon';
 import { CardRowsSkeleton } from '@/components/ListSkeleton';
 import { Section } from '@/components/Section';
 import { PeriodRow } from '@/features/reports/PeriodRow';
@@ -221,17 +219,16 @@ export default function CategoryScreen() {
           </View>
         ) : (
           <>
-            {/* Frosted glass, as on Home and Plan; the category's colour is in its icon, bars and split. */}
-            <Glass radius={28} tone="strong" style={styles.hero}>
-              <View style={styles.heroTop}>
-                <View style={styles.heroText}>
-                  <Text style={styles.heroLabel}>
-                    {spend ? 'Spent' : 'Received'} in {periodName}
-                  </Text>
-                  <Text style={frost.bigValue} numberOfLines={1} adjustsFontSizeToFit>
+            <SummaryCard>
+              <SummaryTop
+                label={`${spend ? 'Spent' : 'Received'} in ${periodName}`}
+                figure={
+                  <Text style={summaryFigure} numberOfLines={1} adjustsFontSizeToFit>
                     {formatMoney(overview.totalMinor)}
                   </Text>
-                  {parent && (
+                }
+                side={
+                  parent ? (
                     <Pressable
                       onPress={openParent}
                       hitSlop={8}
@@ -244,42 +241,40 @@ export default function CategoryScreen() {
                       </Text>
                       <Feather name="chevron-right" size={13} color={theme.colors.textMuted} />
                     </Pressable>
-                  )}
-                </View>
-                <CategoryIcon name={category.icon} color={category.color} />
-              </View>
-              <View style={styles.chips}>
-                <Chip>
-                  {overview.count} {overview.count === 1 ? 'entry' : 'entries'}
-                </Chip>
-                {overview.count > 1 && <Chip>{formatMoney(overview.totalMinor / overview.count)} each</Chip>}
-                {overview.totalMinor > 0 && !loanRepayments && (
-                  <Chip>{formatMoney(overview.totalMinor / daysSoFar)} a day</Chip>
-                )}
-              </View>
+                  ) : undefined
+                }
+              />
+              <SummaryFacts
+                facts={[
+                  { label: overview.count === 1 ? 'Entry' : 'Entries', value: String(overview.count) },
+                  ...(overview.count > 1
+                    ? [{ label: 'Each', value: formatMoney(overview.totalMinor / overview.count) }]
+                    : []),
+                  ...(overview.totalMinor > 0 && !loanRepayments
+                    ? [{ label: 'A day', value: formatMoney(overview.totalMinor / daysSoFar) }]
+                    : []),
+                ]}
+              />
               {overview.refundMinor > 0 && (
                 // What it cost is already net of refunds; this says how much came back.
                 <Text style={styles.heroRefund}>
                   {formatMoney(overview.spentMinor)} spent, {formatMoney(overview.refundMinor)} came back
                 </Text>
               )}
+            </SummaryCard>
 
-              <View style={styles.rule} />
-              <View style={styles.cardHead}>
-                <Text style={styles.cardTitle}>Last 6 months</Text>
-                {usual != null && usual > 0 && (
-                  <View style={styles.legend}>
-                    <View style={styles.legendLine} />
-                    <Text style={styles.legendText}>usually {compactMoney(usual)}</Text>
-                  </View>
-                )}
-              </View>
-              <MonthBars months={overview.months} color={category.color} usualMinor={usual} />
+            <Section
+              title="Last 6 months"
+              subtitle={usual != null && usual > 0 ? `usually ${compactMoney(usual)}` : undefined}
+            >
+              <ListCard style={styles.chartCard}>
+                <MonthBars months={overview.months} color={category.color} usualMinor={usual} />
+              </ListCard>
+            </Section>
 
-              {split.length > 1 && (
-                <>
-                  <View style={styles.rule} />
-                  <Text style={[styles.cardTitle, styles.cardHead]}>Where it went</Text>
+            {split.length > 1 && (
+              <Section title="Where it went">
+                <ListCard style={styles.chartCard}>
                   <SplitBreakdown
                     color={category.color}
                     totalMinor={overview.totalMinor}
@@ -302,29 +297,34 @@ export default function CategoryScreen() {
                         : []),
                     ]}
                   />
-                </>
-              )}
-              {spend && (
-                <View style={styles.heroActions}>
-                  {loanRepayments ? (
-                    <ActionChip icon="credit-card" label="View loans" onPress={() => router.push('/loans')} />
-                  ) : (
-                    <ActionChip
-                      icon="scissors"
-                      label="What if I cut this?"
-                      onPress={() => router.push(`/whatif?category=${category.id}`)}
-                    />
-                  )}
-                </View>
-              )}
-            </Glass>
+                </ListCard>
+              </Section>
+            )}
+
+            {spend && (
+              <View style={styles.heroAction}>
+                {loanRepayments ? (
+                  <PrimaryButton
+                    title="View loans"
+                    variant="secondary"
+                    onPress={() => router.push('/loans')}
+                  />
+                ) : (
+                  <PrimaryButton
+                    title="What if I cut this?"
+                    variant="secondary"
+                    onPress={() => router.push(`/whatif?category=${category.id}`)}
+                  />
+                )}
+              </View>
+            )}
 
             {spend && isThisMonth(cursor) && (!loanRepayments || budget) && (
               <Section title="Budget">
                 {budget ? (
-                  <Glass style={styles.glassList}>
+                  <ListCard>
                     <BudgetRow progress={budget} divider={false} onPress={openBudgets} />
-                  </Glass>
+                  </ListCard>
                 ) : (
                   <Pressable
                     style={withPressed(styles.noLimit)}
@@ -359,7 +359,7 @@ export default function CategoryScreen() {
               {entries.length === 0 ? (
                 <Text style={styles.empty}>Nothing in {periodName} yet.</Text>
               ) : (
-                <Glass style={styles.glassList}>
+                <ListCard>
                   {entries.map((tx, i) => (
                     <TransactionRow
                       key={tx.id}
@@ -373,7 +373,7 @@ export default function CategoryScreen() {
                       onPress={() => setDetailTx(tx)}
                     />
                   ))}
-                </Glass>
+                </ListCard>
               )}
             </Section>
           </>
@@ -417,78 +417,30 @@ export default function CategoryScreen() {
   );
 }
 
-function Chip({ children }: { children: React.ReactNode }) {
-  return (
-    <View style={styles.chip}>
-      <Text style={styles.chipText}>{children}</Text>
-    </View>
-  );
-}
-
-function ActionChip({
-  icon,
-  label,
-  onPress,
-}: {
-  icon: React.ComponentProps<typeof Feather>['name'];
-  label: string;
-  onPress: () => void;
-}) {
-  return (
-    <Pressable onPress={onPress} style={withPressed(styles.actionChip)} accessibilityRole="button">
-      <Feather name={icon} size={14} color={theme.colors.ink} />
-      <Text style={styles.actionChipText}>{label}</Text>
-    </Pressable>
-  );
-}
-
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
-  hero: { marginHorizontal: 20, marginTop: theme.layout.screenTopGap, padding: 16 },
-  glassList: { marginHorizontal: 20, overflow: 'hidden' },
-  heroTop: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
-  heroText: { flex: 1, minWidth: 0 },
-  heroLabel: { ...EYEBROW },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10 },
-  chip: {
-    backgroundColor: theme.colors.inkWash,
-    borderWidth: 1,
-    borderColor: GLASS.edge,
-    borderRadius: theme.radius.pill,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-  },
-  chipText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textPrimary },
+  chartCard: { padding: 14 },
   heroRefund: {
-    fontFamily: theme.font.bodyBold,
+    fontFamily: theme.font.body,
     fontSize: 12,
     color: theme.colors.incomeText,
-    marginTop: 8,
+    paddingHorizontal: 2,
   },
-  rule: {
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: theme.colors.borderSoft,
-    marginTop: 14,
-  },
-  cardHead: { marginTop: 12, marginBottom: 8 },
-  cardTitle: { ...EYEBROW },
-  legend: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  legendLine: { width: 14, height: 1.5, backgroundColor: theme.colors.ink, opacity: 0.3 },
-  legendText: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted },
+  heroAction: { marginHorizontal: SCREEN.gutter, marginTop: 12 },
   noLimit: {
-    marginHorizontal: 20,
+    marginHorizontal: SCREEN.gutter,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
+    minHeight: 44,
     paddingHorizontal: 14,
     paddingVertical: 11,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: GLASS.edge,
-    backgroundColor: GLASS.fill,
+    borderRadius: theme.radius.xl,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
+    backgroundColor: theme.colors.surface,
   },
   noLimitText: { flex: 1, fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textSecondary },
-  heroActions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 },
   activityLink: { minHeight: 44, maxWidth: '55%', flexDirection: 'row', alignItems: 'center', gap: 6 },
   activityLinkText: {
     flexShrink: 1,
@@ -496,31 +448,17 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: theme.colors.link,
   },
-  actionChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    minHeight: 44,
-    borderRadius: theme.radius.pill,
-    borderWidth: 1,
-    borderColor: GLASS.edge,
-    backgroundColor: GLASS.fillStrong,
-  },
   parentPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    alignSelf: 'flex-start',
     gap: 2,
-    marginTop: 8,
-    paddingLeft: 10,
-    paddingRight: 6,
-    paddingVertical: 4,
+    minHeight: 32,
+    paddingLeft: 12,
+    paddingRight: 8,
     borderRadius: theme.radius.pill,
-    borderWidth: 1,
-    borderColor: GLASS.edge,
-    backgroundColor: GLASS.fillStrong,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
+    backgroundColor: theme.colors.surface,
     maxWidth: '100%',
   },
   parentPillText: {
@@ -529,10 +467,14 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: theme.colors.textSecondary,
   },
-  actionChipText: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textPrimary },
-  empty: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textMuted, marginHorizontal: 20 },
+  empty: {
+    fontFamily: theme.font.body,
+    fontSize: 13,
+    color: theme.colors.textMuted,
+    marginHorizontal: SCREEN.gutter,
+  },
   errorBanner: {
-    marginHorizontal: 20,
+    marginHorizontal: SCREEN.gutter,
     marginTop: theme.layout.screenTopGap,
     marginBottom: 4,
     padding: 14,

@@ -20,7 +20,7 @@ import { Skeleton } from '@/components/Skeleton';
 import { Chip } from '@/components/Chip';
 import { Amount } from '@/components/Amount';
 import { PrimaryButton } from '@/components/PrimaryButton';
-import { Glass } from '@/components/Glass';
+import { SummaryCard } from '@/components/SummaryCard';
 import { HomeWallpaper } from '@/features/home/HomeWallpaper';
 import { useAccent } from '@/theme/AccentContext';
 import Feather from '@expo/vector-icons/Feather';
@@ -155,10 +155,10 @@ export default function WhatIfScreen() {
       <View style={styles.container}>
         <HomeWallpaper accent={accent} secondary={secondary} />
         <SkyHeader title="What if…?" showBack hideUser wallpaper />
-        <Glass radius={28} tone="strong" style={styles.card}>
+        <SummaryCard style={styles.card}>
           <Skeleton width={120} height={12} radius={4} />
           <Skeleton width={200} height={10} radius={4} style={{ marginTop: 10 }} />
-        </Glass>
+        </SummaryCard>
       </View>
     );
   }
@@ -190,7 +190,7 @@ export default function WhatIfScreen() {
           />
         ) : (
           <Section first compact title="Spend a little less">
-            <Glass radius={28} tone="strong" style={styles.card}>
+            <SummaryCard style={styles.card}>
               <Text style={styles.fieldLabel}>Cut spending on</Text>
               <View style={styles.chipRow}>
                 {shownCategories.map((c) => (
@@ -240,10 +240,10 @@ export default function WhatIfScreen() {
                   </View>
                 </View>
               )}
-            </Glass>
+            </SummaryCard>
 
             {goals.length === 0 ? (
-              <Glass radius={28} tone="strong" style={styles.goalCard}>
+              <SummaryCard style={styles.goalCard}>
                 <Text style={styles.extraLabel}>No open savings goals</Text>
                 <Text style={[styles.avgLabel, { marginTop: 6 }]}>
                   Set a savings goal to see how much sooner this change could get you there.
@@ -255,9 +255,9 @@ export default function WhatIfScreen() {
                   onPress={() => router.push('/savings-goals')}
                   style={{ marginTop: 12, alignSelf: 'flex-start' }}
                 />
-              </Glass>
+              </SummaryCard>
             ) : cut ? (
-              <Glass radius={28} tone="strong" style={styles.goalCard}>
+              <SummaryCard style={styles.goalCard}>
                 <Text style={styles.extraLabel}>
                   Extra <Amount minor={cut.extraMinor} sensitive={selectedCategory?.isSensitive} /> / month
                   toward
@@ -308,7 +308,7 @@ export default function WhatIfScreen() {
                   </View>
                 )}
                 {pace?.alreadyDone && <Text style={styles.soonerText}>Already reached — nice work.</Text>}
-              </Glass>
+              </SummaryCard>
             ) : null}
 
             <View style={styles.footer}>

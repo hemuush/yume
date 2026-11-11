@@ -22,11 +22,18 @@ import { useUndoToast } from '@/components/UndoToast';
 import { theme } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
 import { Section } from '@/components/Section';
-import { screenStyles as h, SCREEN } from '@/components/screenStyles';
+import { SCREEN } from '@/components/screenStyles';
 import { NeedsYouRow } from '@/features/home/NeedsYouRow';
 import { NEEDS_TONE } from '@/features/home/needsTone';
 import { HeaderIconButton } from '@/components/AppHeader';
-import { cardSurface } from '@/components/CardSurface';
+import {
+  ListCard,
+  SummaryCard,
+  SummarySide,
+  SummarySplit,
+  SummaryTop,
+  summaryFigure,
+} from '@/components/SummaryCard';
 import { HomeWallpaper } from '@/features/home/HomeWallpaper';
 import { SuuIllustration } from '@/components/SuuIllustration';
 import { NeedsYouItem, NeedsYouTone } from '@/features/home/needsYou';
@@ -198,25 +205,26 @@ export default function NeedsYouScreen() {
           </EmptyState>
         ) : (
           <>
-            <View style={[h.card, styles.summary]}>
-              <Text style={styles.summaryLabel}>
-                {shown.some((i) => i.tone === 'urgent') ? 'Needs you today' : 'Needs you'}
-              </Text>
-              <View style={styles.bigRow}>
-                <Text style={styles.bigValue}>{shown.length}</Text>
-                <Text style={styles.bigNote}>{shown.length === 1 ? 'thing' : 'things'}</Text>
-              </View>
-              <View style={styles.bar}>
-                {TONES.map((t) => {
-                  const n = shown.filter((i) => i.tone === t).length;
-                  return n > 0 ? (
-                    <View
-                      key={t}
-                      style={[styles.barSeg, { flexGrow: n, backgroundColor: NEEDS_TONE[t].color }]}
-                    />
-                  ) : null;
-                })}
-              </View>
+            <SummaryCard>
+              <SummaryTop
+                label={shown.some((i) => i.tone === 'urgent') ? 'Needs you today' : 'Needs you'}
+                figure={
+                  <View style={styles.figureRow}>
+                    <Text style={summaryFigure}>{shown.length}</Text>
+                    <Text style={styles.figureNote}>{shown.length === 1 ? 'thing' : 'things'}</Text>
+                  </View>
+                }
+                side={
+                  shown.some((i) => i.tone === 'urgent') ? <SummarySide main="Do these first" /> : undefined
+                }
+              />
+              <SummarySplit
+                parts={TONES.map((t) => ({
+                  key: t,
+                  weight: shown.filter((i) => i.tone === t).length,
+                  color: NEEDS_TONE[t].color,
+                }))}
+              />
               <View style={styles.tones}>
                 {TONES.map((t) => {
                   const n = shown.filter((i) => i.tone === t).length;
@@ -230,12 +238,12 @@ export default function NeedsYouScreen() {
                   ) : null;
                 })}
               </View>
-            </View>
+            </SummaryCard>
             {TONES.map((t) => {
               const group = shown.filter((i) => i.tone === t);
               return group.length > 0 ? (
                 <Section key={t} compact title={GROUP_TITLE[t]} badge={group.length}>
-                  <View style={[h.card, cardSurface.neutral]}>
+                  <ListCard>
                     {group.map((item, i) => (
                       <NeedsYouRow
                         key={item.key}
@@ -246,7 +254,7 @@ export default function NeedsYouScreen() {
                         onDismiss={() => void dismiss(item)}
                       />
                     ))}
-                  </View>
+                  </ListCard>
                 </Section>
               ) : null;
             })}
@@ -283,7 +291,7 @@ export default function NeedsYouScreen() {
               </Text>
             </Pressable>
             {showDismissed && (
-              <View style={[h.card, cardSurface.neutral, styles.dismissedList]}>
+              <ListCard style={styles.dismissedList}>
                 {dismissed.map((item, i) => (
                   <NeedsYouRow
                     key={item.key}
@@ -295,7 +303,7 @@ export default function NeedsYouScreen() {
                     dismissLabel="Show again"
                   />
                 ))}
-              </View>
+              </ListCard>
             )}
           </>
         )}
@@ -330,18 +338,8 @@ export default function NeedsYouScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
-  summary: { marginTop: theme.layout.screenTopGap, padding: 16, gap: 6 },
-  summaryLabel: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textSecondary },
-  bigRow: { flexDirection: 'row', alignItems: 'baseline', gap: 8 },
-  bigValue: {
-    fontFamily: theme.font.bodyLight,
-    fontSize: 40,
-    lineHeight: 46,
-    color: theme.colors.textPrimary,
-  },
-  bigNote: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textSecondary },
-  bar: { flexDirection: 'row', gap: 3, height: 10, marginTop: 4 },
-  barSeg: { flexBasis: 0, height: 10, borderRadius: 5, minWidth: 6 },
+  figureRow: { flexDirection: 'row', alignItems: 'baseline', gap: 6, flexWrap: 'wrap' },
+  figureNote: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
   errorBanner: {
     marginHorizontal: SCREEN.gutter,
     marginTop: theme.layout.screenTopGap,
@@ -369,7 +367,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 11,
     borderRadius: theme.radius.pill,
     backgroundColor: theme.colors.surface,
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
   },
   toneDot: { width: 8, height: 8, borderRadius: 4 },

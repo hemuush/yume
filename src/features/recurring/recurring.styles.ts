@@ -29,21 +29,9 @@ export const styles = StyleSheet.create({
     lineHeight: 16,
   },
   // Skeleton rows while the screen loads.
-  card: {
-    marginBottom: 10,
-    padding: 14,
-    backgroundColor: theme.colors.surface,
-    borderColor: theme.colors.borderSoft,
-    boxShadow: 'none',
-  },
   // The Running, Paused and Not set up yet cards: rows with a hairline between.
-  list: {
-    paddingVertical: 2,
-    paddingHorizontal: 14,
-    backgroundColor: theme.colors.surface,
-    borderColor: theme.colors.borderSoft,
-    boxShadow: 'none',
-  },
+  list: { paddingVertical: 2, paddingHorizontal: 14 },
+  skeletonRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10 },
   footnote: {
     fontFamily: theme.font.body,
     fontSize: 12,

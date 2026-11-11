@@ -1,3 +1,5 @@
+> Superseded by [CALM_MOTION_2026_11_11.md](CALM_MOTION_2026_11_11.md): the longer durations, the spring release, the rises and the staggers below were replaced by shorter, plainer motion.
+
 # Motion polish — 2026-11-11
 
 What changed, so behaviour descriptions stay aligned with the code:

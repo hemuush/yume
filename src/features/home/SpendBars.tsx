@@ -1,10 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { View, Pressable, StyleSheet, useWindowDimensions } from 'react-native';
 import Animated, {
   cancelAnimation,
   useSharedValue,
   useAnimatedStyle,
-  withDelay,
   withTiming,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -33,8 +32,6 @@ const TRACK_H = 60;
 const FILL_MIN = 14;
 /** The lightest the capsule fill's second colour gets, so it still reads against the track in every theme. */
 const FILL_END_MAX_L = 72;
-/** Capsules rise one after another on first showing: the gap between one's start and the next. */
-const RISE_STEP = 45;
 /** The picked capsule stands a little taller than the rest. */
 const LIFT = 1.08;
 /** A day this many times the daily goal is a one-off, not a slip: said calmly. */
@@ -47,8 +44,6 @@ function fillHeight(minor: number, maxMinor: number): number {
 }
 
 function Capsule({
-  index,
-  rise,
   bar,
   maxMinor,
   goalMinor,
@@ -57,9 +52,6 @@ function Capsule({
   onSelect,
 }: {
   /** Its place in the row: sets when it starts rising on first showing. */
-  index: number;
-  /** Rises from empty: only the first time the row shows, never again as the period turns. */
-  rise: boolean;
   bar: SpendBar;
   maxMinor: number;
   goalMinor: number | null;
@@ -72,20 +64,13 @@ function Capsule({
   const target = fillHeight(bar.totalMinor, maxMinor);
   // A very light second colour would vanish into the track, so its lightness is capped.
   const fillEnd = hexToHsl(secondary)[2] > FILL_END_MAX_L ? shade(secondary, FILL_END_MAX_L) : secondary;
-  // First showing: rises from empty, each a beat after the last. Afterwards a new value just glides there.
-  const shown = useRef(false);
-  // Whether it rose is decided when it first appears, so a later change of the flag never replays it.
-  const [rises] = useState(rise);
-  const height = useSharedValue(reduce || !rises ? target : 0);
+  // A capsule shows at its height at once; a new value (another day's spending) just glides there.
+  const height = useSharedValue(target);
   const lift = useSharedValue(selected ? LIFT : 1);
   useEffect(() => {
-    const delay = shown.current || !rises ? 0 : 140 + index * RISE_STEP;
-    shown.current = true;
-    height.value = reduce
-      ? target
-      : withDelay(delay, withTiming(target, timing(delay ? DURATIONS.draw : DURATIONS.standard)));
+    height.value = reduce ? target : withTiming(target, timing(DURATIONS.standard));
     return () => cancelAnimation(height);
-  }, [target, reduce, height, index, rises]);
+  }, [target, reduce, height]);
   useEffect(() => {
     lift.value = reduce ? (selected ? LIFT : 1) : withTiming(selected ? LIFT : 1, timing(DURATIONS.standard));
     return () => cancelAnimation(lift);
@@ -168,9 +153,6 @@ export function SpendBars({
     daily: typeof daily;
   } | null>(null);
   const [showWorking, setShowWorking] = useState(false);
-  // The capsules rise only the first time this row shows; a new period's capsules appear at their height.
-  const [firstShow, setFirstShow] = useState(true);
-  useEffect(() => setFirstShow(false), []);
   const bars = useMemo(
     () => (range === 'week' ? weekBars(daily, today) : monthBars(daily, today)),
     [daily, today, range]
@@ -281,8 +263,6 @@ export function SpendBars({
         {bars.map((b, i) => (
           <Capsule
             key={`${range}:${b.key}`}
-            index={i}
-            rise={firstShow}
             bar={b}
             selected={b.key === selectedKey}
             onSelect={() => {

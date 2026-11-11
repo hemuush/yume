@@ -105,7 +105,7 @@ describe('CategoryTracks', () => {
   const rows = ['A', 'B', 'C', 'D', 'E', 'F', 'G'].map((n, i) =>
     row(`id-${n}`, `Cat ${n}`, 900_000 - i * 100_000)
   );
-  // A row opens through useCardGrow, which waits a beat for the card to be measured.
+  // A row opens on press.
   const press = (r: ReactTestRenderer, match: (label?: string) => boolean) => {
     act(() => r.root.findAll((n) => n.props.onPress && match(n.props.accessibilityLabel))[0].props.onPress());
     act(() => {

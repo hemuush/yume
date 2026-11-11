@@ -1,13 +1,14 @@
 import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
 import { SECTION_TITLE, SECTION_GAP } from '@/constants/textStyles';
+import { SCREEN } from '@/components/screenStyles';
 
 // Shared by the Loans screen and every loan modal (LoanCard, LoanDetailModal, AssetModal, AccountModal,
 // RateChangeModal, PrepayModal, AddLoanModal), so styling stays in one place.
 export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
   errorBanner: {
-    marginHorizontal: 20,
+    marginHorizontal: SCREEN.gutter,
     marginTop: theme.layout.screenTopGap,
     marginBottom: 12,
     padding: 14,
@@ -39,7 +40,7 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginHorizontal: 20,
+    marginHorizontal: SCREEN.gutter,
     marginTop: 14,
     marginBottom: 6,
   },

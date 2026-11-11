@@ -99,12 +99,7 @@ export function GoalCard({
                 {formatMaskableMoney(goal.currentAmountMinor, { masked: true })}
               </Text>
             ) : (
-              <CountUpAmount
-                minor={goal.currentAmountMinor}
-                countFromZero={false}
-                style={styles.saved}
-                numberOfLines={1}
-              />
+              <CountUpAmount minor={goal.currentAmountMinor} style={styles.saved} numberOfLines={1} />
             )}
             <Text style={styles.of}> / {formatMoney(goal.targetAmountMinor)}</Text>
           </Text>
