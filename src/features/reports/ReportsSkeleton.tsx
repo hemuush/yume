@@ -11,4 +11,4 @@ export function ReportsSkeleton() {
     </View>
   );
 }
-const styles = StyleSheet.create({ wrap: { paddingHorizontal: 20, gap: 16 } });
+const styles = StyleSheet.create({ wrap: { paddingHorizontal: 16, gap: 16 } });
