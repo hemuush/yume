@@ -2,6 +2,7 @@ import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
 import { listScreenStyles } from '@/features/shared/listScreenStyles';
 import { SECTION_TITLE, SECTION_GAP } from '@/constants/textStyles';
+import { SCREEN } from '@/components/screenStyles';
 
 /** Maximum choices per row; the editor keeps every touch target at least 44dp. */
 export const GRID_COLUMNS = 6;
@@ -16,11 +17,11 @@ export const styles = StyleSheet.create({
   ...listScreenStyles,
   sectionTitle: {
     ...SECTION_TITLE,
-    marginHorizontal: 20,
+    marginHorizontal: SCREEN.gutter,
     marginTop: SECTION_GAP.top,
     marginBottom: SECTION_GAP.bottom,
   },
-  screenIntro: { marginHorizontal: 20, marginTop: theme.layout.screenTopGap },
+  screenIntro: { marginHorizontal: SCREEN.gutter, marginTop: theme.layout.screenTopGap },
   introText: {
     fontFamily: theme.font.body,
     fontSize: 13,
@@ -45,16 +46,18 @@ export const styles = StyleSheet.create({
     color: theme.colors.textMuted,
   },
   emptyCard: {
-    marginHorizontal: 20,
+    marginHorizontal: SCREEN.gutter,
     padding: 20,
     gap: 12,
-    borderRadius: 22,
+    borderRadius: theme.radius.xl2,
     backgroundColor: theme.colors.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
   },
   emptyTitle: { fontFamily: theme.font.roundedBold, fontSize: 18, color: theme.colors.textPrimary },
   emptyText: { fontFamily: theme.font.body, fontSize: 13, lineHeight: 19, color: theme.colors.textSecondary },
   grid: {
-    marginHorizontal: 20,
+    marginHorizontal: SCREEN.gutter,
     gap: 10,
     marginBottom: 4,
   },
@@ -63,9 +66,9 @@ export const styles = StyleSheet.create({
   panelWrap: { marginTop: 10 },
   panel: {
     padding: 14,
-    borderRadius: 20,
+    borderRadius: theme.radius.xl,
     backgroundColor: theme.colors.surface,
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
   },
   panelHeader: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 10 },
@@ -128,7 +131,7 @@ export const styles = StyleSheet.create({
     fontFamily: theme.font.body,
     fontSize: 12,
     color: theme.colors.textMuted,
-    marginHorizontal: 20,
+    marginHorizontal: SCREEN.gutter,
     marginTop: 14,
     lineHeight: 17,
   },
@@ -137,12 +140,12 @@ export const styles = StyleSheet.create({
     minHeight: 126,
     paddingHorizontal: 10,
     paddingVertical: 12,
-    borderRadius: 20,
+    borderRadius: 16,
     backgroundColor: theme.colors.surface,
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
   },
-  tileSelected: { borderColor: theme.colors.textSecondary },
+  tileSelected: { borderWidth: 1, borderColor: theme.colors.textSecondary },
   tileTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 4 },
   tileCount: {
     fontFamily: theme.font.body,

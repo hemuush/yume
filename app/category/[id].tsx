@@ -24,7 +24,7 @@ import { useAccent } from '@/theme/AccentContext';
 import ReanimatedAnimated from 'react-native-reanimated';
 import { useCollapsingHeader } from '@/lib/useCollapsingHeader';
 import { EmptyState } from '@/components/EmptyState';
-import { CardRowsSkeleton } from '@/components/ListSkeleton';
+import { CardRowsSkeleton, SummarySkeleton } from '@/components/ListSkeleton';
 import { Section } from '@/components/Section';
 import { PeriodRow } from '@/features/reports/PeriodRow';
 import { BudgetRow } from '@/features/budgets/BudgetRow';
@@ -214,9 +214,12 @@ export default function CategoryScreen() {
         )}
 
         {loadingScope || !overview || !category ? (
-          <View style={{ marginTop: theme.layout.screenTopGap }}>
-            <CardRowsSkeleton rows={3} />
-          </View>
+          <>
+            <SummarySkeleton />
+            <View style={{ marginTop: 16 }}>
+              <CardRowsSkeleton rows={3} />
+            </View>
+          </>
         ) : (
           <>
             <SummaryCard>

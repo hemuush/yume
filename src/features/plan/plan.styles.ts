@@ -176,13 +176,6 @@ export const styles = StyleSheet.create({
   sub: { fontFamily: theme.font.body, fontSize: 13, lineHeight: 18, color: theme.colors.textSecondary },
 
   /* ---------- Friends & streak ---------- */
-  compactSummary: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 10,
-  },
   balanceLine: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -201,8 +194,6 @@ export const styles = StyleSheet.create({
   person: { maxWidth: 50, alignItems: 'center', gap: 3 },
   avatar: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
   avatarText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.ink },
-  sproutDay: { alignItems: 'center', gap: 3 },
-  dayLabel: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted },
   sprouts: { flexDirection: 'row', alignItems: 'flex-end', gap: 6, minHeight: 32 },
 
   /* ---------- Coming up ---------- */

@@ -2,6 +2,7 @@ import { View, StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
 import { Skeleton } from './Skeleton';
 import { SCREEN } from '@/components/screenStyles';
+import { SummaryCard } from './SummaryCard';
 
 /** One skeleton row inside a list-shaped card — `subtitle` adds a second, shorter line under the title (an Upcoming/Recent-activity row); `meter` adds the thin progress-bar-shaped line a Budget row has underneath. */
 function RowSkeleton({
@@ -48,11 +49,22 @@ export function CardRowsSkeleton({
   );
 }
 
+/** The placeholder for a screen's first summary card: a label, a figure and a bar, in the same card. */
+export function SummarySkeleton() {
+  return (
+    <SummaryCard>
+      <Skeleton width={96} height={10} radius={4} />
+      <Skeleton width={150} height={22} radius={6} />
+      <Skeleton width={240} height={8} radius={4} />
+    </SummaryCard>
+  );
+}
+
 const styles = StyleSheet.create({
   card: {
     marginHorizontal: SCREEN.gutter,
     backgroundColor: theme.colors.surface,
-    borderRadius: theme.radius.xl2,
+    borderRadius: theme.radius.xl,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
     overflow: 'hidden',

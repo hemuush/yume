@@ -128,7 +128,7 @@ function PrepaymentReveal({ summary, lent }: { summary: PrepaymentSummary; lent:
 const revealStyles = StyleSheet.create({
   result: { backgroundColor: theme.colors.incomeTint, borderRadius: 14, padding: 14, gap: 6 },
   label: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
-  value: { fontFamily: theme.font.monoBold, fontSize: 22, color: theme.colors.incomeText },
+  value: { fontFamily: theme.font.monoBold, fontSize: 20, color: theme.colors.incomeText },
   previous: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
 });
 

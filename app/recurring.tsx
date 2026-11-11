@@ -15,7 +15,8 @@ import { RecurringHero } from '@/features/recurring/RecurringHero';
 import { SuggestionsList } from '@/features/recurring/SuggestionsList';
 import { SectionHead } from '@/features/recurring/SectionHead';
 import { costShares, sortRunning, runMarks } from '@/features/recurring/recurring.helpers';
-import { ListCard, SummaryCard } from '@/components/SummaryCard';
+import { ListCard } from '@/components/SummaryCard';
+import { SummarySkeleton } from '@/components/ListSkeleton';
 import { HomeWallpaper } from '@/features/home/HomeWallpaper';
 import { useAccent } from '@/theme/AccentContext';
 import { nextMonthlyDateAfter, toLocalIsoDate } from '@/lib/date';
@@ -177,11 +178,7 @@ export default function RecurringScreen() {
         )}
         {!loaded ? (
           <>
-            <SummaryCard>
-              <Skeleton width={110} height={10} radius={4} />
-              <Skeleton width={150} height={22} radius={6} />
-              <Skeleton width={240} height={8} radius={4} />
-            </SummaryCard>
+            <SummarySkeleton />
             <ListCard style={[styles.list, { marginTop: 16 }]}>
               {[0, 1, 2].map((i) => (
                 <View key={i} style={styles.skeletonRow}>

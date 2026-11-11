@@ -9,7 +9,7 @@ import { SkyHeader, HeaderSummary } from '@/features/home/SkyHeader';
 import ReanimatedAnimated from 'react-native-reanimated';
 import { useCollapsingHeader } from '@/lib/useCollapsingHeader';
 import { EmptyState } from '@/components/EmptyState';
-import { CardRowsSkeleton } from '@/components/ListSkeleton';
+import { CardRowsSkeleton, SummarySkeleton } from '@/components/ListSkeleton';
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { Amount } from '@/components/Amount';
 import { theme } from '@/constants/theme';
@@ -161,9 +161,12 @@ export default function RecentlyDeletedScreen() {
           </View>
         )}
         {!loaded ? (
-          <View style={{ marginTop: theme.layout.screenTopGap }}>
-            <CardRowsSkeleton rows={3} />
-          </View>
+          <>
+            <SummarySkeleton />
+            <View style={{ marginTop: 16 }}>
+              <CardRowsSkeleton rows={3} />
+            </View>
+          </>
         ) : entries.length === 0 ? (
           <EmptyState
             title="Nothing here"

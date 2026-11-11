@@ -58,6 +58,8 @@ export const theme = {
     spentSoft: '#F6A88E',
     idGold: '#FBF0CE',
     idGoldDeep: '#E0AC3F',
+    // The colours a split bar gives its parts in turn (Investments' "Where it sits"), pale and distinct.
+    splitPalette: ['#8FCBFF', '#F0E1A8', '#8FE8C8', '#E2A6D8', '#F6BFD3', '#BEC8D4'],
 
     // A soft warm hairline for the calm card style, separating cards by a thin line and whitespace.
     // This is the default edge for cards, chips, inputs and sheets; `border` (ink) is the rare exception.

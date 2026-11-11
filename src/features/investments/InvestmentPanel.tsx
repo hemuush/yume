@@ -2,7 +2,7 @@ import { View, Pressable, StyleSheet } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
 import { PrimaryButton } from '@/components/PrimaryButton';
-import { StripCard, KickerDot } from '@/components/StripCard';
+import { KickerDot } from '@/components/StripCard';
 import { theme } from '@/constants/theme';
 import { EYEBROW } from '@/constants/textStyles';
 import { withPressed } from '@/lib/pressed';
@@ -58,7 +58,7 @@ export function InvestmentPanel({
 
   return (
     <>
-      <StripCard tone={theme.colors.slice.saved} lifted={false} style={styles.trioCard}>
+      <View style={styles.trioCard}>
         <View style={styles.trio}>
           <Stat label="Invested" value={money(inv.investedMinor)} />
           <Stat
@@ -80,7 +80,7 @@ export function InvestmentPanel({
             divider
           />
         </View>
-      </StripCard>
+      </View>
 
       <View style={styles.pillRow}>
         <StalePill account={account} />
@@ -195,8 +195,15 @@ const styles = StyleSheet.create({
   labelRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8 },
   label: { ...EYEBROW, marginBottom: 0 },
   // A white card with a green strip, like the hero cards on Plan's screens.
-  trioCard: { marginHorizontal: -4 },
-  trio: { flexDirection: 'row', paddingTop: 4 },
+  trioCard: {
+    marginHorizontal: -4,
+    borderRadius: theme.radius.xl,
+    backgroundColor: theme.colors.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
+    overflow: 'hidden',
+  },
+  trio: { flexDirection: 'row' },
   stat: { flex: 1, paddingVertical: 12, paddingHorizontal: 12, gap: 4 },
   statDivider: { borderLeftWidth: StyleSheet.hairlineWidth, borderLeftColor: theme.colors.borderSoft },
   statLabel: { ...EYEBROW, marginBottom: 0 },

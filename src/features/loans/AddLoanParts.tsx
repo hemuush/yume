@@ -138,7 +138,7 @@ const styles = StyleSheet.create({
     minWidth: 48,
     textAlign: 'center',
     fontFamily: theme.font.monoBold,
-    fontSize: 22,
+    fontSize: 20,
     color: theme.colors.textPrimary,
   },
 });

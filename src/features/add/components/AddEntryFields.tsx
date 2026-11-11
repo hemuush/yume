@@ -2,7 +2,6 @@ import { View } from 'react-native';
 import { Text } from '@/components/Text';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { CategoryPicker } from '@/components/CategoryPicker';
-import { StripCard } from '@/components/StripCard';
 import { styles } from '@/features/add/add.styles';
 import { exprFromMinor } from '@/lib/padMath';
 import { FriendFields } from '@/features/add/AddFields';
@@ -25,7 +24,6 @@ type Props = {
     | 'setFriendAccountId'
     | 'setAddPersonVisible'
     | 'pickableAccounts'
-    | 'accent'
     | 'accounts'
     | 'setAddAccountVisible'
     | 'effectiveAccountId'
@@ -63,7 +61,6 @@ export function AddEntryFields({ model }: Props): ReactElement {
     setFriendAccountId,
     setAddPersonVisible,
     pickableAccounts,
-    accent,
     accounts,
     setAddAccountVisible,
     effectiveAccountId,
@@ -109,7 +106,7 @@ export function AddEntryFields({ model }: Props): ReactElement {
           {pickableAccounts.length === 0 && (
             // Nothing to record this against yet (previously only a "Pick an account" error on Save):
             // opens the same Add Account form Profile uses, right here.
-            <StripCard tone={accent} style={[styles.noAccountCard, styles.noteCard]}>
+            <View style={[styles.noteCard, styles.noAccountCard]}>
               <Text style={styles.noAccountTitle}>
                 {accounts.length === 0 ? 'Add your first account' : 'Add a spendable account'}
               </Text>
@@ -123,7 +120,7 @@ export function AddEntryFields({ model }: Props): ReactElement {
                 onPress={() => setAddAccountVisible(true)}
                 style={styles.noAccountBtn}
               />
-            </StripCard>
+            </View>
           )}
 
           {type === 'transfer' ? (

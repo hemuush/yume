@@ -28,7 +28,7 @@ import ReanimatedAnimated from 'react-native-reanimated';
 import { useCollapsingHeader } from '@/lib/useCollapsingHeader';
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { PrimaryButton } from '@/components/PrimaryButton';
-import { CardRowsSkeleton } from '@/components/ListSkeleton';
+import { CardRowsSkeleton, SummarySkeleton } from '@/components/ListSkeleton';
 import { useUndoToast } from '@/components/UndoToast';
 import { Section } from '@/components/Section';
 import { screenStyles as h, SCREEN } from '@/components/screenStyles';
@@ -236,9 +236,12 @@ export default function TidyUpScreen() {
         )}
 
         {!loaded || !report ? (
-          <View style={{ marginTop: theme.layout.screenTopGap }}>
-            <CardRowsSkeleton rows={3} />
-          </View>
+          <>
+            <SummarySkeleton />
+            <View style={{ marginTop: 16 }}>
+              <CardRowsSkeleton rows={3} />
+            </View>
+          </>
         ) : allTidy ? (
           <SummaryCard>
             <SummaryTop label="All tidy" figure={<Text style={summaryFigure}>Nothing to fix</Text>} />

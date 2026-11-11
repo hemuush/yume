@@ -4,7 +4,7 @@ import { ListCard } from '@/components/SummaryCard';
 import { theme } from '@/constants/theme';
 import type { SplitPart } from '@/lib/portfolio';
 
-const SPLIT_COLORS = ['#8FCBFF', '#F0E1A8', '#8FE8C8', '#E2A6D8', '#F6BFD3', '#BEC8D4'];
+const SPLIT_COLORS = theme.colors.splitPalette;
 
 /** Where the money sits: one bar split by holding (or kind), with each share named below it. */
 export function SplitCard({ parts }: { parts: SplitPart[] }) {

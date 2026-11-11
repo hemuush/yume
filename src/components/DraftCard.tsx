@@ -100,8 +100,8 @@ const styles = StyleSheet.create({
   emi: { alignItems: 'flex-end' },
   amount: {
     fontFamily: theme.font.body,
-    fontSize: 22,
-    lineHeight: 28,
+    fontSize: 20,
+    lineHeight: 26,
     fontVariant: ['tabular-nums'],
     color: theme.colors.textPrimary,
   },

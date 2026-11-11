@@ -28,8 +28,7 @@ import { AddButton } from '@/components/AddButton';
 import { EmptyState } from '@/components/EmptyState';
 import { ActionSheet, ActionSheetItem } from '@/components/ActionSheet';
 import { useUndoToast } from '@/components/UndoToast';
-import { Skeleton } from '@/components/Skeleton';
-import { CardRowsSkeleton } from '@/components/ListSkeleton';
+import { CardRowsSkeleton, SummarySkeleton } from '@/components/ListSkeleton';
 import { useScreenLoad } from '@/lib/useScreenLoad';
 import { haptics } from '@/lib/haptics';
 import { BudgetRow } from '@/features/budgets/BudgetRow';
@@ -47,7 +46,6 @@ import { BudgetDetailModal } from '@/features/budgets/BudgetDetailModal';
 import { useToday } from '@/features/budgets/useToday';
 import { getCachedCurrency } from '@/db/settings';
 import { showAlert } from '@/components/AppDialog';
-import { SCREEN } from '@/components/screenStyles';
 import { budgetCategories } from '@/features/budgets/budgetCategories';
 
 export default function BudgetsScreen() {
@@ -245,21 +243,9 @@ export default function BudgetsScreen() {
       <View style={styles.container}>
         <HomeWallpaper accent={accent} secondary={secondary} plain />
         <SkyHeader title="Budgets" showBack hideUser wallpaper />
-        <View style={{ paddingTop: 14 }}>
-          <Skeleton width={110} height={12} radius={4} style={{ marginHorizontal: SCREEN.gutter }} />
-          <Skeleton
-            width={220}
-            height={26}
-            radius={6}
-            style={{ marginHorizontal: SCREEN.gutter, marginTop: 8 }}
-          />
-          <Skeleton
-            width={260}
-            height={9}
-            radius={4}
-            style={{ marginHorizontal: SCREEN.gutter, marginTop: 14 }}
-          />
-          <View style={{ marginTop: 20 }}>
+        <View style={{ paddingTop: 8 }}>
+          <SummarySkeleton />
+          <View style={{ marginTop: 16 }}>
             <CardRowsSkeleton rows={4} meter />
           </View>
         </View>

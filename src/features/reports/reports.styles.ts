@@ -294,7 +294,6 @@ export const styles = StyleSheet.create({
   },
   // The card over "Where it went": its title and group menu, the total and the split as one bar.
   sumCard: { ...CARD, paddingHorizontal: 14, paddingTop: 10, paddingBottom: 4, marginBottom: 10 },
-  sumFlow: { flexGrow: 0, flexShrink: 1 },
   sumKicker: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary, marginTop: 8 },
   sumHead: {
     flexDirection: 'row',
@@ -303,7 +302,6 @@ export const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 8,
   },
-  sumTitle: { ...SECTION_TITLE, flexShrink: 1 },
   breakdownContext: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -383,14 +381,6 @@ export const styles = StyleSheet.create({
     textAlign: 'right',
   },
   // A minimum width, so the row bars end in the same place unless an amount is unusually wide.
-  catRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    gap: 4,
-    minWidth: 88,
-    flexShrink: 0,
-  },
   catAmt: {
     fontVariant: ['tabular-nums'],
     fontFamily: theme.font.bodyMedium,
