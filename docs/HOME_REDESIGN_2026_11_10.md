@@ -107,3 +107,9 @@ The full suite passed with the repository's locale settings: 370 suites and 11,8
 - `GoalsHero` is the same flat summary card as the other screens: saved so far (20 px), the share of the combined target beside it, a 6 px bar and one line with the monthly amount that keeps the goals on pace. With amounts hidden, the figure is masked and the share, bar and pace are withheld.
 - Goals are rows in one card, separated by hairlines, instead of a tall card each. A row is the name with saved of target, a 6 px bar in the goal's colour, the share and date, and the pace with the monthly amount. "Reserved in…" and "Following…" sit in that second line.
 - The wide Add money pill became a 32 dp round button inside a 44 dp touch area. Its accessibility label still says what it does (Add money, Manage reservation, Move money); a followed goal shows a swap icon.
+
+## Plan, Money plan tab
+
+- The monthly plan is the same flat summary card as the other screens: what is left to plan (20 px), a small "Income ₹x" link that opens the income editor, one bar split into spending and savings, and the two figures under it. "How this is calculated" opens inline; the notes about loans or goals that cannot be estimated stay.
+- Budgets and goals keep their three-column tiles (one column with large text), but the tiles are compact: the icon and the figure share a row, so a tile is about 95 dp instead of at least 166 dp, with a 4 px bar and one small line ("₹1,800 left", "₹38K of ₹60K").
+- Investments and the what-if idea are two tiles of the same kind in one "More" row.

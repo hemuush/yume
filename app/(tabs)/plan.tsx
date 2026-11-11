@@ -600,24 +600,23 @@ export default function PlanScreen() {
                       limit={data.goals.length + 1}
                     />
                   </Section>
-                  <Section
-                    compact
-                    title="Investments"
-                    actionLabel="Manage investments"
-                    onSeeAll={() => open('/investments')}
-                  >
-                    <InvestmentsCard portfolio={data.investments} onOpen={() => open('/investments')} />
-                  </Section>
-                  <Section compact title="Ideas">
-                    <WhatIfCard
-                      whatIf={data.whatIf}
-                      onOpen={(cut) =>
-                        data.whatIf
-                          ? router.push({
-                              pathname: '/whatif',
-                              params: { category: data.whatIf.categoryId, cut: String(cut) },
-                            })
-                          : open('/whatif')
+                  <Section compact title="More">
+                    <InvestmentsCard
+                      portfolio={data.investments}
+                      onOpen={() => open('/investments')}
+                      extraTile={
+                        <WhatIfCard
+                          key="what-if"
+                          whatIf={data.whatIf}
+                          onOpen={(cut) =>
+                            data.whatIf
+                              ? router.push({
+                                  pathname: '/whatif',
+                                  params: { category: data.whatIf.categoryId, cut: String(cut) },
+                                })
+                              : open('/whatif')
+                          }
+                        />
                       }
                     />
                   </Section>
