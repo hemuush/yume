@@ -383,7 +383,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderTopLeftRadius: 4,
     backgroundColor: theme.colors.surface,
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
     boxShadow: 'none',
   },

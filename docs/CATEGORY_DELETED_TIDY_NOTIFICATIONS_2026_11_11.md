@@ -39,3 +39,10 @@ Approved from the design board (page "Category detail, Recently deleted, Tidy up
 - Loading placeholders: a `SummarySkeleton` (label, figure, bar in the summary card) now leads the placeholders on Budgets, Recurring, Category detail, Recently deleted and Tidy up, so the card does not jump when data arrives; `CardRowsSkeleton` uses the 18 radius of the list cards.
 - Dead code removed: `HabitTile` (an unused Plan tile) and its styles, and four unused style keys (`compactIcon`, `sumFlow`, `sumTitle`, `catRight`).
 - `ARCHITECTURE.md` no longer describes the count-up, the card transition or the staggered capsules.
+
+## Whole-app consistency pass (same day)
+
+- Text sizes are whole numbers everywhere (twelve 11.5 / 12.5 / 13.5 styles rounded).
+- Content cards and chips that were still translucent glass are solid surface with the soft hairline border: the add-entry transfer card, recent and frequent chips, staged list and repeat button; Activity's search-empty icon and suggestion chips; the Split boxes, footer and split card. Controls that sit on the wallpaper in a header (back and bin discs, period pills, the tab bar) stay frosted on purpose.
+- Friends & family headings use the 16 gutter; the completion card fades on the shared 150 ms timing.
+- Round three: 19 cards (Export, Loans, Goals list, Profile tiles, Plan cards, add-entry and Split cards, Activity search) had a 1 px border while the shared cards use a hairline; all are hairline now.

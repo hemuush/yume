@@ -37,7 +37,7 @@ export const styles = StyleSheet.create({
     gap: 6,
     justifyContent: 'space-between',
     alignItems: 'baseline',
-    marginHorizontal: 24,
+    marginHorizontal: SCREEN.gutter,
     marginTop: 14,
     marginBottom: 8,
   },
@@ -81,7 +81,7 @@ export const styles = StyleSheet.create({
     marginTop: 2,
   },
   tileMeta: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary, marginTop: 2 },
-  settledTitle: { ...SECTION_TITLE, marginHorizontal: 24, marginTop: 12, marginBottom: 8 },
+  settledTitle: { ...SECTION_TITLE, marginHorizontal: SCREEN.gutter, marginTop: 12, marginBottom: 8 },
   quietRow: {
     flexDirection: 'row',
     alignItems: 'center',

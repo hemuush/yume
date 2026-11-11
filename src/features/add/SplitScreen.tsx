@@ -23,7 +23,6 @@ import { useAccent } from '@/theme/AccentContext';
 import { AmountPad } from '@/components/AmountPad';
 import { applyPadKey, PadKey } from '@/lib/padMath';
 import { SplitDonut } from './SplitDonut';
-import { GLASS } from '@/components/Glass';
 import { ListCard, SummaryCard } from '@/components/SummaryCard';
 import { HomeWallpaper } from '@/features/home/HomeWallpaper';
 import { getSplitSession, finishSplitSession, cancelSplitSession } from './splitSession';
@@ -401,9 +400,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 8,
     borderRadius: theme.radius.md,
-    backgroundColor: GLASS.fillStrong,
+    backgroundColor: theme.colors.surface,
     borderWidth: 1,
-    borderColor: GLASS.edge,
+    borderColor: theme.colors.borderSoft,
   },
   boxLive: { borderColor: theme.colors.textSecondary, backgroundColor: theme.colors.surface },
   boxRow: { flexDirection: 'row', alignItems: 'center' },
@@ -444,7 +443,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: theme.radius.xl2,
     borderWidth: 1,
     borderBottomWidth: 0,
-    borderColor: GLASS.edge,
+    borderColor: theme.colors.borderSoft,
     backgroundColor: theme.colors.surface,
     boxShadow: '0px -8px 24px rgba(18,19,15,0.06)',
     paddingHorizontal: 16,
