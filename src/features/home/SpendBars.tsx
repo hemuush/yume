@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Pressable, StyleSheet, useWindowDimensions } from 'react-native';
 import Animated, {
   cancelAnimation,
   useSharedValue,
   useAnimatedStyle,
+  withDelay,
   withTiming,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -32,6 +33,10 @@ const TRACK_H = 60;
 const FILL_MIN = 14;
 /** The lightest the capsule fill's second colour gets, so it still reads against the track in every theme. */
 const FILL_END_MAX_L = 72;
+/** Capsules rise one after another on first showing: the gap between one's start and the next. */
+const RISE_STEP = 45;
+/** The picked capsule stands a little taller than the rest. */
+const LIFT = 1.08;
 /** A day this many times the daily goal is a one-off, not a slip: said calmly. */
 const BIG_DAY_FACTOR = 4;
 
@@ -42,6 +47,7 @@ function fillHeight(minor: number, maxMinor: number): number {
 }
 
 function Capsule({
+  index,
   bar,
   maxMinor,
   goalMinor,
@@ -49,6 +55,8 @@ function Capsule({
   selected,
   onSelect,
 }: {
+  /** Its place in the row: sets when it starts rising on first showing. */
+  index: number;
   bar: SpendBar;
   maxMinor: number;
   goalMinor: number | null;
@@ -61,14 +69,26 @@ function Capsule({
   const target = fillHeight(bar.totalMinor, maxMinor);
   // A very light second colour would vanish into the track, so its lightness is capped.
   const fillEnd = hexToHsl(secondary)[2] > FILL_END_MAX_L ? shade(secondary, FILL_END_MAX_L) : secondary;
-  const height = useSharedValue(target);
+  // First showing: rises from empty, each a beat after the last. Afterwards a new value just glides there.
+  const shown = useRef(false);
+  const height = useSharedValue(reduce ? target : 0);
+  const lift = useSharedValue(selected ? LIFT : 1);
   useEffect(() => {
-    height.value = reduce ? target : withTiming(target, timing(DURATIONS.standard));
+    const delay = shown.current ? 0 : 140 + index * RISE_STEP;
+    shown.current = true;
+    height.value = reduce
+      ? target
+      : withDelay(delay, withTiming(target, timing(delay ? DURATIONS.draw : DURATIONS.standard)));
     return () => cancelAnimation(height);
-  }, [target, reduce, height]);
+  }, [target, reduce, height, index]);
+  useEffect(() => {
+    lift.value = reduce ? (selected ? LIFT : 1) : withTiming(selected ? LIFT : 1, timing(DURATIONS.standard));
+    return () => cancelAnimation(lift);
+  }, [selected, reduce, lift]);
   const fillStyle = useAnimatedStyle(() => ({
     height: height.value,
   }));
+  const liftStyle = useAnimatedStyle(() => ({ transform: [{ scale: lift.value }] }));
   const goalH = goalMinor != null && goalMinor > 0 ? fillHeight(goalMinor, maxMinor) : null;
   return (
     <Pressable
@@ -78,12 +98,19 @@ function Capsule({
       accessibilityState={{ selected }}
       accessibilityLabel={`${dateLabel}, ${formatMoney(bar.totalMinor)}`}
     >
-      <View style={[styles.track, { backgroundColor: hexToRgba(accent, 0.2) }, selected && styles.trackOn]}>
-        <Animated.View style={[styles.fill, { height: target, transformOrigin: 'bottom' }, fillStyle]}>
+      <Animated.View
+        style={[
+          styles.track,
+          { backgroundColor: hexToRgba(accent, 0.2) },
+          selected && styles.trackOn,
+          liftStyle,
+        ]}
+      >
+        <Animated.View style={[styles.fill, { transformOrigin: 'bottom' }, fillStyle]}>
           <LinearGradient colors={[accent, fillEnd]} style={StyleSheet.absoluteFill} />
         </Animated.View>
         {goalH != null && <View pointerEvents="none" style={[styles.goalTick, { bottom: goalH }]} />}
-      </View>
+      </Animated.View>
       <Text
         style={[styles.label, selected && styles.labelOn]}
         numberOfLines={1}
@@ -246,6 +273,7 @@ export function SpendBars({
         {bars.map((b, i) => (
           <Capsule
             key={`${range}:${b.key}`}
+            index={i}
             bar={b}
             selected={b.key === selectedKey}
             onSelect={() => {

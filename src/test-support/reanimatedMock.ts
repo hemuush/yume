@@ -16,6 +16,7 @@ export function createReanimatedMock() {
     default: { View, Text, ScrollView, FlatList, createAnimatedComponent: (Component: unknown) => Component },
     FadeIn: chainableProxy,
     FadeInDown: chainableProxy,
+    FadeInUp: chainableProxy,
     FadeOut: chainableProxy,
     FadeOutDown: chainableProxy,
     LinearTransition: chainableProxy,
