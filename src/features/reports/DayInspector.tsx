@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
+import { CONTENT_ENTER } from '@/lib/animation';
 import { View, Pressable, StyleSheet } from 'react-native';
-import Animated, { FadeIn, ReduceMotion } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
@@ -80,11 +81,7 @@ export function DayInspector({
         : '';
   const date = weekdayDayMonth(iso);
   return (
-    <Animated.View
-      key={iso}
-      entering={FadeIn.duration(180).reduceMotion(ReduceMotion.System)}
-      style={styles.box}
-    >
+    <Animated.View key={iso} entering={CONTENT_ENTER} style={styles.box}>
       <View style={styles.top}>
         <View style={styles.main}>
           <Text style={styles.date}>{date}</Text>

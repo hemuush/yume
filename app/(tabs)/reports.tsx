@@ -1,5 +1,5 @@
-import Animated, { FadeIn, ReduceMotion } from 'react-native-reanimated';
-import { DURATIONS } from '@/lib/motionTimings';
+import Animated from 'react-native-reanimated';
+import { CONTENT_ENTER } from '@/lib/animation';
 import { useLocalDayRefresh } from '@/lib/useLocalDayRefresh';
 import { ExpenseLabelsReport } from '@/features/reports/ExpenseLabelsReport';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -664,10 +664,7 @@ export default function ReportsScreen() {
             <PrimaryButton title="Retry details" variant="secondary" onPress={retryDetails} />
           </View>
         )}
-        <Animated.View
-          key={tab}
-          entering={FadeIn.duration(DURATIONS.standard).reduceMotion(ReduceMotion.System)}
-        >
+        <Animated.View key={tab} entering={CONTENT_ENTER}>
           {tab === 'days' && !hasSpend ? (
             <EmptyState
               title="Nothing spent in this period"

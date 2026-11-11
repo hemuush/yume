@@ -1,5 +1,6 @@
 import { useEffect, useEffectEvent, useRef, useState, useSyncExternalStore } from 'react';
-import { Animated, Easing, StyleSheet } from 'react-native';
+import { EASE_OUT } from '@/lib/motionTimings';
+import { Animated, StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 import { JustAddedSurface, justAddedVersion, subscribeJustAdded, takeJustAdded } from '@/lib/justAdded';
@@ -34,7 +35,7 @@ export function JustAddedGlow({ ids, surface }: { ids: string[]; surface: JustAd
       Animated.timing(glow, {
         toValue: 0,
         duration: reduce ? 0 : FADE_MS,
-        easing: Easing.out(Easing.cubic),
+        easing: EASE_OUT,
         useNativeDriver: true,
       }),
     ]);

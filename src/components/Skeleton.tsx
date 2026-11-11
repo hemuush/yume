@@ -6,6 +6,7 @@ import ReanimatedAnimated, {
   withRepeat,
   withTiming,
   cancelAnimation,
+  Easing,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { theme } from '@/constants/theme';
@@ -33,7 +34,7 @@ export function Skeleton({ width, height, radius = 6, circle = false, style }: P
       sweep.value = 0;
       return;
     }
-    sweep.value = withRepeat(withTiming(1, { duration: 1300 }), -1, false);
+    sweep.value = withRepeat(withTiming(1, { duration: 1400, easing: Easing.linear }), -1, false);
     return () => cancelAnimation(sweep);
   }, [reduce, sweep]);
 

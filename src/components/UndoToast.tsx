@@ -7,6 +7,7 @@ import { theme } from '@/constants/theme';
 import { usePressScale } from '@/lib/usePressScale';
 import { haptics } from '@/lib/haptics';
 import { DURATIONS } from '@/lib/motionTimings';
+import { MOTION } from '@/lib/animation';
 import { useAccent } from '@/theme/AccentContext';
 import { themeInk } from '@/theme/interactionColors';
 import { showAlert } from '@/components/AppDialog';
@@ -127,8 +128,11 @@ function ToastView({
 
   return (
     <ReanimatedAnimated.View
-      entering={FadeInDown.duration(DURATIONS.slideIn).reduceMotion(ReduceMotion.System)}
-      exiting={FadeOutDown.duration(DURATIONS.rowExit).reduceMotion(ReduceMotion.System)}
+      entering={FadeInDown.duration(DURATIONS.slideIn)
+        .easing(MOTION.ease)
+        .withInitialValues({ opacity: 0, transform: [{ translateY: 16 }] })
+        .reduceMotion(ReduceMotion.System)}
+      exiting={FadeOutDown.duration(DURATIONS.rowExit).easing(MOTION.exit).reduceMotion(ReduceMotion.System)}
       // Always clear of the tab bar, which most deletes happen above.
       style={[styles.wrap, { bottom: insets.bottom + theme.layout.tabBar.height + 12 }]}
       pointerEvents="box-none"

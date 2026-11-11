@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
+import { MOTION } from '@/lib/animation';
 import { StyleSheet, useWindowDimensions } from 'react-native';
 import ReanimatedAnimated, {
-  Easing,
   interpolate,
   interpolateColor,
   runOnJS,
@@ -14,9 +14,9 @@ import { theme } from '@/constants/theme';
 import { GrowRect, subscribeCardGrow } from '@/lib/cardGrow';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 
-const GROW_MS = 240;
+const GROW_MS = 300;
 const FADE_DELAY_MS = GROW_MS / 2;
-const FADE_MS = 140;
+const FADE_MS = 180;
 
 /**
  * Mounted once above the Stack. A card that opens a full page registers its rect (see `useCardGrow`); this
@@ -46,7 +46,7 @@ export function CardGrowHost() {
       grow.set(0);
       fade.set(1);
       setActive(true);
-      grow.set(withTiming(1, { duration: GROW_MS, easing: Easing.out(Easing.cubic) }));
+      grow.set(withTiming(1, { duration: GROW_MS, easing: MOTION.ease }));
       fade.set(
         withDelay(
           FADE_DELAY_MS,

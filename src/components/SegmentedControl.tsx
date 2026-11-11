@@ -1,13 +1,13 @@
 import { selectedFill } from '@/theme/interactionColors';
 import { useEffect, useRef, useState } from 'react';
-import { View, Pressable, Animated, Easing, StyleSheet, LayoutChangeEvent } from 'react-native';
+import { View, Pressable, Animated, StyleSheet, LayoutChangeEvent } from 'react-native';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { GLASS } from '@/components/Glass';
 import { haptics } from '@/lib/haptics';
 import { usePressScale } from '@/lib/usePressScale';
 import { useReduceMotion } from '@/lib/useReduceMotion';
-import { DURATIONS } from '@/lib/motionTimings';
+import { DURATIONS, EASE_OUT } from '@/lib/motionTimings';
 
 import { useAccent } from '@/theme/AccentContext';
 
@@ -65,7 +65,7 @@ export function SegmentedControl<T extends string>({
     Animated.timing(x, {
       toValue: to,
       duration: DURATIONS.quick,
-      easing: Easing.out(Easing.cubic),
+      easing: EASE_OUT,
       useNativeDriver: true,
     }).start();
     return () => x.stopAnimation();
