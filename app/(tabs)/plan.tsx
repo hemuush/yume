@@ -505,11 +505,16 @@ export default function PlanScreen() {
                 </>
               )}
               {tab === 'upcoming' && (
-                <Section compact title="Upcoming payments">
+                <Section
+                  compact
+                  title="Upcoming payments"
+                  actionLabel="Manage recurring"
+                  onSeeAll={() => open('/recurring')}
+                >
                   <Text
                     style={{
                       marginHorizontal: 16,
-                      marginBottom: 10,
+                      marginBottom: 8,
                       fontFamily: theme.font.body,
                       fontSize: 12,
                       color: theme.colors.textSecondary,
@@ -519,19 +524,19 @@ export default function PlanScreen() {
                   </Text>
                   <UpcomingDates
                     runway={data.schedule}
-                    renderDay={(day, mode) => (
+                    today={data.today}
+                    renderDays={(days, mode) => (
                       <ComingUpSection
-                        groups={[
-                          {
-                            date: day.date,
-                            outMinor: 0,
-                            items: day.items.filter((item) =>
-                              mode === 'income'
-                                ? item.kind === 'income' || item.transfer?.flow === 'in'
-                                : item.kind === 'emi' || item.kind === 'bill' || item.transfer?.flow === 'out'
-                            ),
-                          },
-                        ]}
+                        flow={mode === 'income' ? 'in' : 'out'}
+                        groups={days.map((day) => ({
+                          date: day.date,
+                          outMinor: mode === 'income' ? day.inMinor : day.outMinor,
+                          items: day.items.filter((item) =>
+                            mode === 'income'
+                              ? item.kind === 'income' || item.transfer?.flow === 'in'
+                              : item.kind === 'emi' || item.kind === 'bill' || item.transfer?.flow === 'out'
+                          ),
+                        }))}
                         today={data.today}
                         onOpen={open}
                         onPay={(id) => void payEmi(id)}
@@ -540,15 +545,6 @@ export default function PlanScreen() {
                       />
                     )}
                   />
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel="Recurring"
-                    onPress={() => open('/recurring')}
-                    style={withPressed(styles.manageRecurring)}
-                  >
-                    <Text style={styles.headLinkText}>Manage recurring</Text>
-                    <Feather name="arrow-right" size={14} color={theme.colors.link} />
-                  </Pressable>
                 </Section>
               )}
               {tab === 'money' && (
@@ -893,14 +889,6 @@ export default function PlanScreen() {
 }
 
 const styles = StyleSheet.create({
-  manageRecurring: {
-    marginHorizontal: 16,
-    minHeight: 44,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    gap: 5,
-  },
   addPlan: {
     minHeight: 44,
     paddingHorizontal: 12,

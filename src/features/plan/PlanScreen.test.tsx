@@ -401,24 +401,26 @@ describe('Plan tab', () => {
       const shown = texts(tree);
       expect(shown).toContain('SIP · Groww');
       expect(shown).toContain('from Bank');
-      // Streaming ₹450 plus the ₹5,000 SIP, the day's chip and heading.
-      expect(shown).toContain(formatMoney(545000));
+      // Streaming ₹450 plus the ₹5,000 SIP, in the day's heading.
+      expect(shown.some((t) => t.includes(`${formatMoney(545000)} out`))).toBe(true);
     } finally {
       mockSip = false;
     }
   });
 
-  it('selects upcoming payment dates and shows only that date’s payments', async () => {
+  it('lists every upcoming payment under All, and only a picked date’s payments after picking it', async () => {
     const tree = await render();
     openTab(tree, 'upcoming');
     expect(texts(tree)).toContain('Streaming');
-    expect(texts(tree)).not.toContain('Home loan');
+    expect(texts(tree)).toContain('Home loan');
     const dates = tree.root.findAll((n) => n.props.testID?.startsWith('outgoing-day-') && n.props.onPress);
-    expect(dates.length).toBeGreaterThan(1);
+    // "All" first, then each date.
+    expect(dates.length).toBeGreaterThan(2);
+    expect(dates[0].props.testID).toBe('outgoing-day-all');
     act(() => dates[dates.length - 1].props.onPress());
     expect(texts(tree)).toContain('Home loan');
     expect(texts(tree)).not.toContain('Streaming');
-    expect(texts(tree)).toContain('₹25,000');
+    expect(texts(tree).some((t) => t.includes('₹25,000'))).toBe(true);
     act(() => tree.unmount());
   });
 
@@ -461,7 +463,7 @@ describe('Plan tab', () => {
     expect(router.push).not.toHaveBeenCalled();
     // Upcoming: Recurring is in the header.
     expect(texts(tree)).toContain('Manage recurring');
-    act(() => byLabel('Recurring').props.onPress());
+    act(() => byLabel('Manage recurring').props.onPress());
     expect(router.push).toHaveBeenLastCalledWith('/recurring');
     // Goals: the full goals page and the what-if sandbox.
     openTab(tree, 'money');
