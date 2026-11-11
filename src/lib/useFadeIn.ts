@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Animated } from 'react-native';
-import { DURATIONS } from './motionTimings';
+import { DURATIONS, EASE_OUT } from './motionTimings';
 import { useReduceMotion } from './useReduceMotion';
 
 /**
@@ -22,6 +22,7 @@ export function useFadeIn() {
     const animation = Animated.timing(value, {
       toValue: 1,
       duration: DURATIONS.enter,
+      easing: EASE_OUT,
       useNativeDriver: true,
     });
     animation.start();

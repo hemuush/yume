@@ -14,3 +14,9 @@ Follow-up audit:
 - Undo toast rises 16 pt instead of travelling its full height; heatmap cells fade on the shared curve.
 - Skeleton shimmer sweeps linearly (1400 ms) so neighbouring skeletons no longer pulse in and out of step.
 - Left as is: height-driven animation of Home capsules and month segments (small, one-off layouts).
+
+Screen-by-screen pass:
+
+- Every core-`Animated` timing (toggle knob, fade-in hook, completion card, loan wizard fill) now uses `EASE_OUT`; the card-grow transition (Budgets, Savings goals, Category) uses `MOTION.ease` and runs 300 ms.
+- Reviewed with no further change needed: secondary screens (Backup, Categories, People, Themes, Recurring, Investments, Notifications, Export, Tidy up, What-if, Split) only scroll with the collapsing header and press-scale controls; Budgets, Goals and Loans lists use `MovingRow`; Settings/You/Tracked panels use `PANEL_ENTER`/`ROW_EXIT`.
+- Not touched: Wrap and Garden (decorative, own timings).

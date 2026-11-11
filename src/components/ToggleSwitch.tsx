@@ -4,7 +4,7 @@ import { theme } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
 import { themeInk } from '@/theme/interactionColors';
 import { haptics } from '@/lib/haptics';
-import { DURATIONS } from '@/lib/motionTimings';
+import { DURATIONS, EASE_OUT } from '@/lib/motionTimings';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 
 interface Props {
@@ -31,6 +31,7 @@ export function ToggleSwitch({ value, onChange, disabled, small, accessibilityLa
     const slide = Animated.timing(anim, {
       toValue: value ? 1 : 0,
       duration: DURATIONS.quick,
+      easing: EASE_OUT,
       useNativeDriver: true,
     });
     slide.start();

@@ -84,7 +84,7 @@ export function CountUpAmount({
       shown = nextText;
       setDisplay(next);
     });
-    // Core Animated here, so the shared curve is spelled out with core Easing.
+    // Core Animated here, so the shared curve (EASE_OUT) is used rather than the Reanimated one.
     const animation = Animated.timing(t, {
       toValue: 1,
       duration: options().duration,
