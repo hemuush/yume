@@ -23,8 +23,8 @@ import { useAccent } from '@/theme/AccentContext';
 import { AmountPad } from '@/components/AmountPad';
 import { applyPadKey, PadKey } from '@/lib/padMath';
 import { SplitDonut } from './SplitDonut';
-import { Glass, GLASS, GLASS_CARD } from '@/components/Glass';
-import { Kicker } from '@/components/Frost';
+import { GLASS } from '@/components/Glass';
+import { ListCard, SummaryCard } from '@/components/SummaryCard';
 import { HomeWallpaper } from '@/features/home/HomeWallpaper';
 import { getSplitSession, finishSplitSession, cancelSplitSession } from './splitSession';
 import {
@@ -189,11 +189,11 @@ export function SplitScreen() {
         ]}
         keyboardShouldPersistTaps="handled"
       >
-        <Glass radius={theme.radius.xl2} tone="strong" style={styles.summary}>
+        <SummaryCard style={styles.summary}>
           <View style={styles.summaryTop}>
             <SplitDonut parts={parts} amounts={amounts} categories={categories} />
             <View style={styles.summaryText}>
-              <Kicker icon="scissors">To split</Kicker>
+              <Text style={styles.toSplit}>To split</Text>
               <Text style={styles.total} numberOfLines={1} adjustsFontSizeToFit>
                 {money(totalMinor)}
               </Text>
@@ -216,9 +216,9 @@ export function SplitScreen() {
               ))}
             </View>
           )}
-        </Glass>
+        </SummaryCard>
 
-        <View style={[h.card, GLASS_CARD, styles.parts]}>
+        <ListCard style={styles.parts}>
           {parts.map((p, i) => {
             const cat = catOf(p);
             const amount = amounts[i];
@@ -313,7 +313,7 @@ export function SplitScreen() {
               <Text style={[styles.addText, parts.length < 2 && styles.addTextLead]}>Add a category</Text>
             </Pressable>
           )}
-        </View>
+        </ListCard>
 
         {overLine ? (
           <Text style={[styles.hint, styles.bad]}>{overLine}</Text>
@@ -382,14 +382,15 @@ export function SplitScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
   content: { paddingTop: theme.layout.screenTopGap },
-  summary: { marginHorizontal: 16, padding: 16, gap: 12 },
+  summary: { marginTop: 0, padding: 16 },
+  toSplit: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
   summaryTop: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   summaryText: { flex: 1, minWidth: 0, gap: 4 },
   legend: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 12, rowGap: 6 },
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: 5, maxWidth: '100%' },
   legendKey: { width: 9, height: 9, borderRadius: 5 },
   legendText: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
-  total: { fontFamily: theme.font.bodyBold, fontSize: 28, color: theme.colors.textPrimary },
+  total: { fontFamily: theme.font.bodyBold, fontSize: 20, color: theme.colors.textPrimary },
   meta: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 4 },
   parts: { marginTop: 14 },
   pickArea: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12, minWidth: 0 },

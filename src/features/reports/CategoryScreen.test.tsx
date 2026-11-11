@@ -188,7 +188,8 @@ describe('Category page', () => {
     // Each place in the split: its share, and how often with the usual amount only when it was more than once.
     expect(shown).toEqual(expect.arrayContaining(['77%', '23%', '3 times · ₹167 each']));
     expect(shown).not.toContain('once');
-    expect(shown).toEqual(expect.arrayContaining(['4 entries', '₹163 each']));
+    // The count, the average and the daily pace are facts under the figure.
+    expect(shown).toEqual(expect.arrayContaining(['Entries', '4', 'Each', '₹163']));
   });
 
   it('opens What-if and Activity on this category', async () => {

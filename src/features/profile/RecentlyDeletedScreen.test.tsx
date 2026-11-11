@@ -75,6 +75,30 @@ describe('Recently deleted screen', () => {
     act(() => r.unmount());
   });
 
+  it('counts what is waiting and says when the oldest one leaves', async () => {
+    mockEntries.current = [
+      entry({ id: 't1', daysLeft: 30 }),
+      entry({ id: 't2', daysLeft: 4 }),
+      entry({ id: 't3', daysLeft: 12 }),
+    ];
+    const r = await render();
+    const shown = texts(r);
+    expect(shown).toContain('Waiting to be restored');
+    expect(shown).toContain('entries');
+    expect(shown).toContain('Oldest leaves in 4 days');
+    expect(shown).toContain('then gone for good');
+    act(() => r.unmount());
+  });
+
+  it('says day, not days, for a single day left, and entry for a single entry', async () => {
+    mockEntries.current = [entry({ daysLeft: 1 })];
+    const r = await render();
+    const shown = texts(r);
+    expect(shown).toContain('Oldest leaves in 1 day');
+    expect(shown).toMatch(/\| 1 \| entry \|/);
+    act(() => r.unmount());
+  });
+
   it("shows why an entry can't come back, with no Restore button", async () => {
     mockEntries.current = [entry({ blockedReason: 'Its account no longer exists' })];
     const r = await render();

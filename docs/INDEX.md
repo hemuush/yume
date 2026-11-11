@@ -10,6 +10,8 @@ The [approved 10 November Home redesign](HOME_REDESIGN_2026_11_10.md) records th
 
 The [11 November Budgets, Recurring, Investments and Friends & family redesign](BUDGETS_RECURRING_INVESTMENTS_PEOPLE_2026_11_11.md) moves those four screens onto the flat summary card and records what each now shows. It does not establish device acceptance.
 
+The [11 November Category detail, Recently deleted, Tidy up and Notifications redesign](CATEGORY_DELETED_TIDY_NOTIFICATIONS_2026_11_11.md) continues the same card on four more screens and tidies a few oversized figures. It does not establish device acceptance.
+
 The [11 November motion polish](MOTION_POLISH_2026_11_11.md) and its [per-screen checklist](MOTION_CHECKLIST_2026_11_11.md) record the shared timings, curve and entrance presets.
 
 The [approved 5 November Home refinement](HOME_REFINEMENT_2026_11_05.md) records the implementation of the second screenshot direction, retained financial behavior and remaining Pixel acceptance checks.
