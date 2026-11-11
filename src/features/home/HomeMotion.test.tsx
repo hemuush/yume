@@ -159,6 +159,7 @@ it('cancels press feedback on reduced-motion changes and unmount', () => {
     feedback = usePressScale(0.92);
     return <Text>Button</Text>;
   }
+  const spring = jest.spyOn(Animated, 'spring');
   const timing = jest
     .spyOn(Animated, 'timing')
     .mockReturnValue({ start: jest.fn(), stop: jest.fn(), reset: jest.fn() });
@@ -170,17 +171,12 @@ it('cancels press feedback on reduced-motion changes and unmount', () => {
     feedback.onPressOut();
   });
   expect(stop).toHaveBeenCalledTimes(2);
-  expect(timing).toHaveBeenCalledTimes(2);
-  expect(timing).toHaveBeenNthCalledWith(
-    1,
+  expect(timing).toHaveBeenCalledTimes(1);
+  expect(timing).toHaveBeenCalledWith(
     scale,
-    expect.objectContaining({ toValue: 0.97, duration: 80, useNativeDriver: true })
+    expect.objectContaining({ toValue: 0.97, duration: 90, useNativeDriver: true })
   );
-  expect(timing).toHaveBeenNthCalledWith(
-    2,
-    scale,
-    expect.objectContaining({ duration: 120, useNativeDriver: true })
-  );
+  expect(spring).toHaveBeenCalledWith(scale, expect.objectContaining({ toValue: 1, useNativeDriver: true }));
   mockReduce = true;
   act(() => r.update(<Button />));
   timing.mockClear();

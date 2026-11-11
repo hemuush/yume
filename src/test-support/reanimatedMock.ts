@@ -62,6 +62,7 @@ export function createReanimatedMock() {
       inOut: (f: unknown) => f,
       cubic: (t: number) => t,
       quad: (t: number) => t,
+      bezier: () => (t: number) => t,
       linear: (t: number) => t,
     },
     // Home's collapsing header: a scroll handler that never fires, and a

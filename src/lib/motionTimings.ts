@@ -4,25 +4,25 @@
  */
 export const DURATIONS = {
   /** Fades and highlight changes. */
-  quick: 140,
+  quick: 180,
   /** Rows opening/closing, a swipe settling back, a bar gliding to a new value. */
-  standard: 180,
+  standard: 240,
   /** A page turn (the month changing): out, then in. */
-  slideOut: 140,
-  slideIn: 220,
+  slideOut: 160,
+  slideIn: 280,
   /** Shapes and bars drawing in, and a goal ring filling. */
-  draw: 320,
+  draw: 420,
   /** Figures counting up. */
-  count: 220,
+  count: 320,
   /** A short interpolation when the month card amount changes. */
-  rollUp: 260,
+  rollUp: 340,
   /** The opening fade-in, and the gap between one row's start and the next. */
-  enter: 160,
+  enter: 220,
   enterStep: 0,
   /** A Home section rising into place on the first open, and the gap between one section's start and the next. */
   section: 340,
   sectionStep: 55,
   /** A list row sliding into its new place / fading out when removed. */
-  rowMove: 180,
-  rowExit: 160,
+  rowMove: 260,
+  rowExit: 200,
 } as const;

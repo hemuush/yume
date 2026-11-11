@@ -12,7 +12,7 @@ const MAX_LIST_STAGGER_MS = 0;
  * alike. Scroll- or finger-driven motion (header collapse, drag) has no duration; it follows the finger.
  */
 export const MOTION = {
-  ease: Easing.out(Easing.cubic),
+  ease: Easing.bezier(0.22, 1, 0.36, 1),
   ...DURATIONS,
 } as const;
 
