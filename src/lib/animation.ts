@@ -12,7 +12,9 @@ const MAX_LIST_STAGGER_MS = 0;
  * alike. Scroll- or finger-driven motion (header collapse, drag) has no duration; it follows the finger.
  */
 export const MOTION = {
-  ease: Easing.out(Easing.cubic),
+  ease: Easing.bezier(0.22, 1, 0.36, 1),
+  /** Leaving: starts gently and speeds away, so exits never feel like they hang. */
+  exit: Easing.bezier(0.4, 0, 1, 1),
   ...DURATIONS,
 } as const;
 
@@ -69,7 +71,9 @@ export function homeSectionEntering(index: number, opening: boolean) {
 export const ROW_LAYOUT = LinearTransition.duration(DURATIONS.rowMove)
   .easing(MOTION.ease)
   .reduceMotion(ReduceMotion.System);
-export const ROW_EXIT = FadeOut.duration(DURATIONS.rowExit).reduceMotion(ReduceMotion.System);
+export const ROW_EXIT = FadeOut.duration(DURATIONS.rowExit)
+  .easing(MOTION.exit)
+  .reduceMotion(ReduceMotion.System);
 
 /**
  * A panel opening in place (Settings accordion, archived accounts): fades in while the rows below slide down
@@ -77,4 +81,13 @@ export const ROW_EXIT = FadeOut.duration(DURATIONS.rowExit).reduceMotion(ReduceM
  */
 export const PANEL_ENTER = FadeIn.duration(DURATIONS.standard)
   .easing(MOTION.ease)
+  .reduceMotion(ReduceMotion.System);
+
+/**
+ * Content swapping in place (a Plan/Reports tab, a picked day's detail): a fade with a small rise on the shared
+ * curve, so the new view settles in instead of popping.
+ */
+export const CONTENT_ENTER = FadeInUp.duration(DURATIONS.standard)
+  .easing(MOTION.ease)
+  .withInitialValues({ opacity: 0, transform: [{ translateY: 8 }] })
   .reduceMotion(ReduceMotion.System);

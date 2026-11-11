@@ -9,6 +9,7 @@ import { listBudgetsForMonth, periodMonthOf } from '@/db/budgets';
 import { getMilestonesSeen, markMilestonesSeen } from '@/db/settings';
 import { haptics } from '@/lib/haptics';
 import { DURATIONS } from '@/lib/motionTimings';
+import { MOTION } from '@/lib/animation';
 import { budgetMonthCopy, budgetMonthHeld, budgetMonthKey, MilestoneCopy } from '@/lib/milestones';
 import { usePrivacy } from '@/theme/PrivacyContext';
 
@@ -74,8 +75,8 @@ function NoteView({ note, onDismiss }: { note: Shown; onDismiss: () => void }) {
   const insets = useSafeAreaInsets();
   return (
     <ReanimatedAnimated.View
-      entering={FadeIn.duration(DURATIONS.slideIn).reduceMotion(ReduceMotion.System)}
-      exiting={FadeOut.duration(DURATIONS.rowExit).reduceMotion(ReduceMotion.System)}
+      entering={FadeIn.duration(DURATIONS.slideIn).easing(MOTION.ease).reduceMotion(ReduceMotion.System)}
+      exiting={FadeOut.duration(DURATIONS.rowExit).easing(MOTION.exit).reduceMotion(ReduceMotion.System)}
       style={[styles.wrap, { top: insets.top + 8 }]}
       pointerEvents="box-none"
     >

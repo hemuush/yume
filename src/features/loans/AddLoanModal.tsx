@@ -22,7 +22,7 @@ import { ToggleSwitch } from '@/components/ToggleSwitch';
 import { OptionCards, CountStepper, Option } from './AddLoanParts';
 import { styles } from './loans.styles';
 import { errorMessage } from '@/lib/errorMessage';
-import { DURATIONS } from '@/lib/motionTimings';
+import { DURATIONS, EASE_OUT } from '@/lib/motionTimings';
 import { dayMonthYear } from '@/lib/dateLabels';
 import { spendableAccountsOf, defaultCurrencyAccountsOf } from '@/lib/account';
 import { rateProblem, tenureProblem } from '@/lib/loanLimits';
@@ -113,6 +113,7 @@ export function AddLoanModal({
     Animated.timing(step2Fill, {
       toValue: wizardStep === 2 ? 1 : 0,
       duration: DURATIONS.standard,
+      easing: EASE_OUT,
       useNativeDriver: true,
     }).start();
   }, [wizardStep, reduceMotion, step2Fill]);

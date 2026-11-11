@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { View, Pressable, StyleSheet, Animated, Easing, useWindowDimensions } from 'react-native';
+import { EASE_OUT } from '@/lib/motionTimings';
+import { View, Pressable, StyleSheet, Animated, useWindowDimensions } from 'react-native';
 import { Text, MAX_FONT_SCALE } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { useReduceMotion } from '@/lib/useReduceMotion';
@@ -51,7 +52,7 @@ function AnimatedBarStack({
       toValue: heightPct,
       duration: first ? 420 : 280,
       delay: first ? delay : 0,
-      easing: Easing.out(Easing.cubic),
+      easing: EASE_OUT,
       useNativeDriver: true,
     });
     anim.start();

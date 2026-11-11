@@ -16,6 +16,7 @@ import { usePressScale } from '@/lib/usePressScale';
 import { haptics } from '@/lib/haptics';
 import { useUiScale } from '@/lib/uiScale';
 import { DURATIONS } from '@/lib/motionTimings';
+import { MOTION } from '@/lib/animation';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 
 import { useAccent } from '@/theme/AccentContext';
@@ -125,7 +126,7 @@ export function PrimaryButton({
       <ReanimatedAnimated.Text
         maxFontSizeMultiplier={MAX_FONT_SCALE}
         key={done ? 'done' : 'label'}
-        entering={done && !reduceMotion ? FadeIn.duration(DURATIONS.quick) : undefined}
+        entering={done && !reduceMotion ? FadeIn.duration(DURATIONS.quick).easing(MOTION.ease) : undefined}
         style={[styles.text, compact && styles.textCompact, textStyle]}
       >
         {done ? `✓ ${doneLabel}` : title}

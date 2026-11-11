@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { Animated, Easing, StyleSheet } from 'react-native';
+import { EASE_OUT } from '@/lib/motionTimings';
+import { Animated, StyleSheet } from 'react-native';
 import { SuuIllustration } from '@/components/SuuIllustration';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 
@@ -20,7 +21,7 @@ export function SuuRefreshBadge({ refreshing }: { refreshing: boolean }) {
       Animated.timing(progress, {
         toValue: 1,
         duration: 1100,
-        easing: Easing.out(Easing.cubic),
+        easing: EASE_OUT,
         useNativeDriver: true,
       }).start(({ finished }) => {
         if (finished) setVisible(false);

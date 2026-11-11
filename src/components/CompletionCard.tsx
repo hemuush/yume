@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { EASE_OUT } from '@/lib/motionTimings';
 import { Animated, StyleSheet, View } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { Text } from './Text';
@@ -23,7 +24,12 @@ export function CompletionCard({
       opacity.setValue(1);
       return;
     }
-    const animation = Animated.timing(opacity, { toValue: 1, duration: 180, useNativeDriver: true });
+    const animation = Animated.timing(opacity, {
+      toValue: 1,
+      duration: 180,
+      easing: EASE_OUT,
+      useNativeDriver: true,
+    });
     animation.start();
     return () => animation.stop();
   }, [opacity, reduce]);

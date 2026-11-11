@@ -1,6 +1,6 @@
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
-import { Animated, Easing } from 'react-native';
-import { DURATIONS } from './motionTimings';
+import { EASE_OUT, DURATIONS } from '@/lib/motionTimings';
+import { Animated } from 'react-native';
 import { useReduceMotion } from './useReduceMotion';
 
 /**
@@ -39,7 +39,7 @@ export function useGrowFrom(
       toValue: target,
       duration: first ? drawMs : changeMs,
       delay: first ? delay : 0,
-      easing: Easing.out(Easing.cubic),
+      easing: EASE_OUT,
       useNativeDriver: false,
     });
     animation.start();

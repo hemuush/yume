@@ -14,6 +14,7 @@ import { SpendBarChart } from './SpendBarChart';
 import type { SpendBar } from './spendChart';
 import { styles } from './transactions.styles';
 import { DURATIONS } from '@/lib/motionTimings';
+import { timing } from '@/lib/animation';
 import Feather from '@expo/vector-icons/Feather';
 import { theme } from '@/constants/theme';
 import { screenStyles } from '@/components/screenStyles';
@@ -85,8 +86,8 @@ export function TransactionsHeadline({
     if (changed && !reduce) {
       tx.value = directionRef.current * 18;
       opacity.value = 0;
-      tx.value = withTiming(0, { duration: DURATIONS.slideIn });
-      opacity.value = withTiming(1, { duration: DURATIONS.slideIn });
+      tx.value = withTiming(0, timing(DURATIONS.slideIn));
+      opacity.value = withTiming(1, timing(DURATIONS.slideIn));
     }
     return () => {
       cancelAnimation(tx);

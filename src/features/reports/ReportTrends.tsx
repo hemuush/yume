@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import Animated, { FadeIn, ReduceMotion } from 'react-native-reanimated';
+import { CONTENT_ENTER } from '@/lib/animation';
+import Animated from 'react-native-reanimated';
 import { View, StyleSheet } from 'react-native';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { EmptyState } from '@/components/EmptyState';
@@ -50,7 +51,7 @@ export function ReportTrends({ cashFlow, ...props }: Props) {
           onBand
         />
       </View>
-      <Animated.View key={selected} entering={FadeIn.duration(140).reduceMotion(ReduceMotion.System)}>
+      <Animated.View key={selected} entering={CONTENT_ENTER}>
         {selected === 'flow' ? (
           <CashFlowCard points={cashFlow} inProgress={!!props.inProgress} monthLink={props.monthLink} />
         ) : (

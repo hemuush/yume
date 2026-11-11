@@ -1,9 +1,9 @@
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
-import { Animated, Easing, StyleProp, TextProps, TextStyle } from 'react-native';
+import { Animated, StyleProp, TextProps, TextStyle } from 'react-native';
 import { Text } from '@/components/Text';
 import { formatMoney } from '@/lib/money';
 import { useReduceMotion } from '@/lib/useReduceMotion';
-import { DURATIONS } from '@/lib/motionTimings';
+import { DURATIONS, EASE_OUT } from '@/lib/motionTimings';
 
 interface Props extends TextProps {
   /** Amount in minor units, same as formatMoney. */
@@ -84,11 +84,11 @@ export function CountUpAmount({
       shown = nextText;
       setDisplay(next);
     });
-    // Core Animated here, so the shared curve is spelled out with core Easing.
+    // Core Animated here, so the shared curve (EASE_OUT) is used rather than the Reanimated one.
     const animation = Animated.timing(t, {
       toValue: 1,
       duration: options().duration,
-      easing: Easing.out(Easing.cubic),
+      easing: EASE_OUT,
       useNativeDriver: false,
     });
     animation.start(({ finished }) => {

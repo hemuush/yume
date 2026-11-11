@@ -1,3 +1,5 @@
+import { MOTION } from '@/lib/animation';
+import { DURATIONS } from '@/lib/motionTimings';
 import { useEffect, useRef, useState } from 'react';
 import { View, Pressable, StyleSheet, PanResponder, GestureResponderEvent, ViewInstance } from 'react-native';
 import Animated, { FadeIn, ReduceMotion } from 'react-native-reanimated';
@@ -75,7 +77,11 @@ function useHeatColors(hue: string) {
   };
 }
 
-const enter = (delay: number) => FadeIn.duration(260).delay(delay).reduceMotion(ReduceMotion.System);
+const enter = (delay: number) =>
+  FadeIn.duration(DURATIONS.draw - 60)
+    .delay(delay)
+    .easing(MOTION.ease)
+    .reduceMotion(ReduceMotion.System);
 
 function CalendarHeat({
   model,

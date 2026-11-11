@@ -1,10 +1,11 @@
 import { useLocalDayRefresh } from '@/lib/useLocalDayRefresh';
+import { CONTENT_ENTER } from '@/lib/animation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { onTransactionsChanged } from '@/lib/dataEvents';
 import { useFreshness } from '@/lib/useFreshness';
 import { View, Pressable, Animated, useWindowDimensions, type FlatListInstance } from 'react-native';
 import { Text, TextInput } from '@/components/Text';
-import ReanimatedAnimated, { FadeIn, ReduceMotion } from 'react-native-reanimated';
+import ReanimatedAnimated from 'react-native-reanimated';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { useFocusEffect, router, useLocalSearchParams } from 'expo-router';
 import Feather from '@expo/vector-icons/Feather';
@@ -56,7 +57,6 @@ import { useAccent } from '@/theme/AccentContext';
 import { themeInk } from '@/theme/interactionColors';
 import { haptics } from '@/lib/haptics';
 import { errorMessage } from '@/lib/errorMessage';
-import { DURATIONS } from '@/lib/motionTimings';
 import { withPressed, withPressedTint } from '@/lib/pressed';
 import { shade } from '@/lib/color';
 import { categoryPath, parentNameOf } from '@/lib/categoryLabel';
@@ -1120,7 +1120,7 @@ export default function TransactionsScreen() {
       {/* While a line is lifted: how to move it. The arrows stay available to screen readers as actions. */}
       {dragging && (
         <ReanimatedAnimated.View
-          entering={FadeIn.duration(DURATIONS.quick).reduceMotion(ReduceMotion.System)}
+          entering={CONTENT_ENTER}
           pointerEvents="none"
           style={[
             styles.dragHint,
