@@ -50,7 +50,7 @@ export function NextDueWidget({ data }: { data: NextDueWidgetData | null }) {
           text={month}
           style={{
             fontFamily: WIDGET_FONT.bodyMedium,
-            fontSize: 8,
+            fontSize: 9,
             letterSpacing: 0.5,
             color: widgetColor.inkSoft,
           }}
