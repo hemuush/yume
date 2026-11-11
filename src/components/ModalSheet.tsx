@@ -14,6 +14,8 @@ import {
 } from 'react-native-keyboard-controller';
 import { SafeAreaProvider, useSafeAreaInsets, initialWindowMetrics } from 'react-native-safe-area-context';
 import { theme } from '@/constants/theme';
+import ReAnimated, { FadeInDown, ReduceMotion } from 'react-native-reanimated';
+import { MOTION } from '@/lib/animation';
 import { usePressScale } from '@/lib/usePressScale';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 import { AmountPadHostProvider, useAmountPadHost } from '@/components/AmountField';
@@ -402,7 +404,8 @@ function ModalSheetBody({
             style={[styles.flex, styles.alignBottom, { paddingTop: insets.top + 8 }]}
             pointerEvents="box-none"
           >
-            <View
+            <ReAnimated.View
+              entering={inFlow ? undefined : SHEET_ENTER}
               testID="sheet-surface"
               onLayout={
                 sharesHeight && visible ? (event) => flow.measure(event.nativeEvent.layout.height) : undefined
@@ -447,7 +450,7 @@ function ModalSheetBody({
                 <View style={{ height: keyboardUp ? 0 : insets.bottom }} />
               )}
               {pad && <View style={[styles.sheetDock, { paddingBottom: 12 + insets.bottom }]}>{pad}</View>}
-            </View>
+            </ReAnimated.View>
           </KeyboardAvoidingView>
         </View>
       </AmountPadHostProvider>
@@ -455,7 +458,8 @@ function ModalSheetBody({
   }
 
   const body = (
-    <View
+    <ReAnimated.View
+      entering={inFlow ? undefined : SHEET_ENTER}
       style={[
         isSheet ? styles.sheet : styles.dialog,
         stripView && styles.dialogStriped,
@@ -467,7 +471,7 @@ function ModalSheetBody({
       {header}
       {children}
       {pad && <View style={styles.inlineDock}>{pad}</View>}
-    </View>
+    </ReAnimated.View>
   );
 
   return (
@@ -498,6 +502,12 @@ function ModalSheetBody({
     </AmountPadHostProvider>
   );
 }
+
+/** The surface rises a few points as the backdrop fades, so a sheet arrives instead of blinking in. */
+const SHEET_ENTER = FadeInDown.duration(MOTION.slideIn)
+  .easing(MOTION.ease)
+  .withInitialValues({ opacity: 0, transform: [{ translateY: 28 }] })
+  .reduceMotion(ReduceMotion.System);
 
 const SHEET_SHADOW = {
   shadowColor: theme.colors.ink,
