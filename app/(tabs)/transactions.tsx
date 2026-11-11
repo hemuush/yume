@@ -957,6 +957,7 @@ export default function TransactionsScreen() {
                 onToggleStack={toggleStack}
                 onReorder={canReorder ? reorderDay : undefined}
                 onDragActive={setDragging}
+                selected={!searching && loadedPeriod.scope === 'week' && selectedBar === group.date}
                 position={
                   displayedGroups.length === 1
                     ? 'only'

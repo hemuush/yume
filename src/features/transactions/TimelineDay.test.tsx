@@ -13,6 +13,7 @@ jest.mock('@/theme/PrivacyContext', () => ({
 
 import { TimelineDay } from './TimelineDay';
 import { Category, Transaction } from '@/types';
+import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
 
 it('shows foreign amounts in their own currency and excludes them from the day total', () => {
@@ -413,6 +414,21 @@ describe('days as segments of one card', () => {
       expect(edges('middle').borderTopLeftRadius).toBeUndefined();
       expect(edges('middle').borderBottomLeftRadius).toBeUndefined();
       expect(edges('only')).toMatchObject({ borderTopWidth: 1, borderBottomWidth: 1 });
+    }));
+
+  it('turns the heading of the picked day of the chart bold', () =>
+    withWidth(() => {
+      const weight = (selected: boolean) => {
+        const tree = day({ selected });
+        const title = tree.root
+          .findAllByType(Text)
+          .find((t) => String(t.props.children[0]).startsWith('Today'))!;
+        const flat = StyleSheet.flatten(title.props.style);
+        act(() => tree.unmount());
+        return flat.fontFamily;
+      };
+      expect(weight(true)).toBe(theme.font.bodyBold);
+      expect(weight(false)).not.toBe(theme.font.bodyBold);
     }));
 
   it('leaves the day total out when one line would only repeat it', () =>

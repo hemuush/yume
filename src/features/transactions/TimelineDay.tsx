@@ -90,6 +90,7 @@ function TimelineDayView({
   onPressNote,
   accountCurrency = () => getCachedCurrency(),
   position = 'only',
+  selected = false,
 }: {
   date: string;
   label: string;
@@ -120,6 +121,8 @@ function TimelineDayView({
   accountCurrency?: (id: string) => string;
   /** Where the day sits in the list: the days are segments of one card, so the first rounds its top and the last its bottom. */
   position?: 'only' | 'first' | 'middle' | 'last';
+  /** The chart's picked day: its heading turns to ink and bold, so the list answers the tap. */
+  selected?: boolean;
 }) {
   const { hideAmounts } = usePrivacy();
   const { width, fontScale } = useWindowDimensions();
@@ -409,7 +412,7 @@ function TimelineDayView({
         accessibilityRole="header"
         accessibilityLabel={`${label}, ${dateLabel}${showTotal ? `, ${totalText}` : ''}`}
       >
-        <Text style={styles.title}>
+        <Text style={[styles.title, selected && styles.titleOn]}>
           {label}
           {'  '}
           <Text style={styles.date}>{dateLabel}</Text>
@@ -527,19 +530,21 @@ const styles = StyleSheet.create({
     borderLeftWidth: 1,
     borderRightWidth: 1,
     borderColor: theme.colors.borderSoft,
-    overflow: 'hidden',
   },
   dayFirst: {
     marginTop: 4,
     borderTopWidth: 1,
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
+    // Only the rounded ends need clipping: a clipping layer on every day is costly on Android.
+    overflow: 'hidden',
   },
   dayLast: {
     paddingBottom: 6,
     borderBottomWidth: 1,
     borderBottomLeftRadius: 16,
     borderBottomRightRadius: 16,
+    overflow: 'hidden',
   },
   dayDivider: { borderTopWidth: 0 },
   head: {
@@ -560,6 +565,7 @@ const styles = StyleSheet.create({
     fontFamily: theme.font.bodyMedium,
     fontSize: 13,
   },
+  titleOn: { fontFamily: theme.font.bodyBold, color: theme.colors.ink },
   date: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
   // Spending reads in ink with its minus sign; only money in is green.
   total: {

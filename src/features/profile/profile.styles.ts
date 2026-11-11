@@ -29,37 +29,15 @@ export const styles = StyleSheet.create({
     lineHeight: 16,
   },
 
-  // ---- identity: avatar beside name and member since ----
-  skeletonCard: { marginHorizontal: SCREEN.gutter, marginTop: 6, paddingTop: 14, paddingBottom: 10 },
-  identity: {
+  // ---- the loading stand-in for the identity line ----
+  skeletonIdentity: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 14,
-    paddingHorizontal: SCREEN.gutter,
-    paddingTop: 8,
-    paddingBottom: 4,
+    gap: 12,
+    marginHorizontal: SCREEN.gutter,
+    marginTop: 8,
   },
-  identityRow: { flexDirection: 'row', alignItems: 'center', gap: 14 },
-  identityText: { flex: 1, minWidth: 0 },
-  avatar: {
-    width: 56,
-    height: 56,
-    borderRadius: 19,
-    alignItems: 'center',
-    justifyContent: 'center',
-    // Without this, a circular View's background can render clipped to a stale layout measurement on Android
-    // (the "half-circle avatar" symptom).
-    overflow: 'hidden',
-  },
-  avatarInitial: { fontFamily: theme.font.roundedBold, fontSize: 25 },
-  nameRow: {
-    minHeight: 44,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    alignSelf: 'flex-start',
-    maxWidth: '100%',
-  },
+  skeletonText: { gap: 6 },
   name: {
     fontFamily: theme.font.roundedBold,
     fontSize: 22,

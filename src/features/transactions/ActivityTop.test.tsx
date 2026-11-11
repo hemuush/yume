@@ -159,6 +159,29 @@ describe('Activity filter bar', () => {
     }
   });
 
+  it('shows an Invest chip only while Invest is the type in use, so the row always shows a choice', () => {
+    let r!: ReactTestRenderer;
+    act(() => {
+      r = create(
+        <ActivityFilterChips
+          filterType="invest"
+          onFilterType={jest.fn()}
+          categoryIds={[]}
+          accountIds={[]}
+          categoryName={(id) => id}
+          accountName={(id) => id}
+          onRemoveCategory={jest.fn()}
+          onRemoveAccount={jest.fn()}
+          onClearAll={jest.fn()}
+        />
+      );
+    });
+    expect(texts(r)).toEqual(expect.arrayContaining(['All', 'Spent', 'Income', 'Transfers', 'Invest']));
+    const invest = r.root.find((n) => n.props.accessibilityLabel === 'Show invest' && n.props.onPress);
+    expect(invest.props.accessibilityState.selected).toBe(true);
+    act(() => r.unmount());
+  });
+
   it('opens Filters beside the type group and retains its active count', () => {
     const open = jest.fn();
     const tree = bar([], open, 2);

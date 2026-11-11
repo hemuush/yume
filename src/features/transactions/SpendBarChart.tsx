@@ -89,7 +89,7 @@ export function SpendBarChart({
   inset?: number;
   /** A week of days: the date sits under each weekday. */
   dates?: boolean;
-  /** The average spent a day so far: a dashed line across the chart, named at its right end. */
+  /** The average spent a bar so far (a day, or a week in Month): a dashed line across the chart, named at its right end. */
   averageMinor?: number | null;
 }) {
   const { accent } = useAccent();
@@ -123,7 +123,9 @@ export function SpendBarChart({
             { bottom: baseline + (averageMinor! / maxTotal) * MAX_BAR_HEIGHT, left: inset, right: inset },
           ]}
         >
-          <Text style={styles.averageText}>avg {formatMoney(averageMinor!)}</Text>
+          <Text style={styles.averageText}>
+            avg {formatMoney(averageMinor!)} {dates ? 'a day' : 'a week'}
+          </Text>
         </View>
       )}
       {bars.map((bar, i) => {

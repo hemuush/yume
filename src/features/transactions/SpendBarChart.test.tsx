@@ -158,7 +158,15 @@ describe('SpendBarChart calm chart', () => {
   });
 
   it('draws the average as a dashed line named at its end, and nothing without one', () => {
-    expect(texts(render(null, 5000))).toContain('avg ₹50');
+    expect(texts(render(null, 5000))).toContain('avg ₹50 a day');
     expect(texts(render(null, null)).some((t) => t.startsWith('avg'))).toBe(false);
+  });
+
+  it('says a week, not a day, when the bars are weeks', () => {
+    let r!: ReactTestRenderer;
+    act(() => {
+      r = create(<SpendBarChart bars={bars} onPressDay={jest.fn()} inset={0} averageMinor={5000} />);
+    });
+    expect(texts(r)).toContain('avg ₹50 a week');
   });
 });

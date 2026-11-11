@@ -16,7 +16,7 @@ import { useAccent } from '@/theme/AccentContext';
 import { screenStyles as h, SCREEN } from '@/components/screenStyles';
 import type { Account } from '@/types';
 
-export const ACCOUNT_TYPE_LABEL: Record<Account['type'], string> = {
+const ACCOUNT_TYPE_LABEL: Record<Account['type'], string> = {
   bank: 'Bank',
   cash: 'Cash',
   wallet: 'Wallet',

@@ -48,6 +48,7 @@ function fillHeight(minor: number, maxMinor: number): number {
 
 function Capsule({
   index,
+  rise,
   bar,
   maxMinor,
   goalMinor,
@@ -57,6 +58,8 @@ function Capsule({
 }: {
   /** Its place in the row: sets when it starts rising on first showing. */
   index: number;
+  /** Rises from empty: only the first time the row shows, never again as the period turns. */
+  rise: boolean;
   bar: SpendBar;
   maxMinor: number;
   goalMinor: number | null;
@@ -71,16 +74,18 @@ function Capsule({
   const fillEnd = hexToHsl(secondary)[2] > FILL_END_MAX_L ? shade(secondary, FILL_END_MAX_L) : secondary;
   // First showing: rises from empty, each a beat after the last. Afterwards a new value just glides there.
   const shown = useRef(false);
-  const height = useSharedValue(reduce ? target : 0);
+  // Whether it rose is decided when it first appears, so a later change of the flag never replays it.
+  const [rises] = useState(rise);
+  const height = useSharedValue(reduce || !rises ? target : 0);
   const lift = useSharedValue(selected ? LIFT : 1);
   useEffect(() => {
-    const delay = shown.current ? 0 : 140 + index * RISE_STEP;
+    const delay = shown.current || !rises ? 0 : 140 + index * RISE_STEP;
     shown.current = true;
     height.value = reduce
       ? target
       : withDelay(delay, withTiming(target, timing(delay ? DURATIONS.draw : DURATIONS.standard)));
     return () => cancelAnimation(height);
-  }, [target, reduce, height, index]);
+  }, [target, reduce, height, index, rises]);
   useEffect(() => {
     lift.value = reduce ? (selected ? LIFT : 1) : withTiming(selected ? LIFT : 1, timing(DURATIONS.standard));
     return () => cancelAnimation(lift);
@@ -163,6 +168,9 @@ export function SpendBars({
     daily: typeof daily;
   } | null>(null);
   const [showWorking, setShowWorking] = useState(false);
+  // The capsules rise only the first time this row shows; a new period's capsules appear at their height.
+  const [firstShow, setFirstShow] = useState(true);
+  useEffect(() => setFirstShow(false), []);
   const bars = useMemo(
     () => (range === 'week' ? weekBars(daily, today) : monthBars(daily, today)),
     [daily, today, range]
@@ -274,6 +282,7 @@ export function SpendBars({
           <Capsule
             key={`${range}:${b.key}`}
             index={i}
+            rise={firstShow}
             bar={b}
             selected={b.key === selectedKey}
             onSelect={() => {

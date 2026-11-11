@@ -15,7 +15,6 @@ import { ProfileTabs, type ProfileTab } from '@/features/profile/ProfileTabs';
 import { theme } from '@/constants/theme';
 import { useScreenLoad } from '@/lib/useScreenLoad';
 import { Skeleton } from '@/components/Skeleton';
-import { Glass } from '@/components/Glass';
 import { HomeWallpaper } from '@/features/home/HomeWallpaper';
 import { useAccent } from '@/theme/AccentContext';
 import { styles } from '@/features/profile/profile.styles';
@@ -75,16 +74,14 @@ export default function ProfileScreen() {
       <View style={styles.container}>
         <HomeWallpaper accent={accent} secondary={secondary} plain />
         <SkyHeader title="Profile" showBack hideUser wallpaper />
-        {/* The identity card's shape while it loads. */}
-        <Glass radius={28} tone="strong" style={styles.skeletonCard}>
-          <View style={styles.identity}>
-            <Skeleton width={58} height={58} circle radius={29} />
-            <View style={styles.identityText}>
-              <Skeleton width={130} height={16} radius={5} />
-              <Skeleton width={100} height={11} radius={4} style={{ marginTop: 8 }} />
-            </View>
+        {/* The identity line's shape while it loads. */}
+        <View style={styles.skeletonIdentity}>
+          <Skeleton width={36} height={36} radius={12} />
+          <View style={styles.skeletonText}>
+            <Skeleton width={110} height={14} radius={5} />
+            <Skeleton width={150} height={10} radius={4} />
           </View>
-        </Glass>
+        </View>
       </View>
     );
   }

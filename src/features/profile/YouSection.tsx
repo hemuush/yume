@@ -1,6 +1,6 @@
 import { ScreenLoadError } from '@/components/ScreenLoadError';
 import { PrimaryButton } from '@/components/PrimaryButton';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { View, Pressable, ActivityIndicator } from 'react-native';
 import { Text } from '@/components/Text';
 import Feather from '@expo/vector-icons/Feather';
@@ -89,7 +89,10 @@ export function YouSection() {
     .filter((a) => a.currency === defaultCurrency)
     .reduce((sum, a) => sum + dispAccountBalance(a), 0);
   const sum = trackedSumLines(parts, accountsShown);
-  const groups = groupAccountsByType(accounts, defaultCurrency);
+  const tiles = useMemo(
+    () => tileOrder(groupAccountsByType(accounts, defaultCurrency).flatMap((g) => g.accounts)),
+    [accounts, defaultCurrency]
+  );
 
   // Every total that includes savings is hidden along with the savings rows,
   // otherwise subtracting the visible rows gives the savings back.
@@ -203,7 +206,7 @@ export function YouSection() {
             <PrimaryButton title="Add an account" onPress={() => setAddAccountVisible(true)} />
           </EmptyState>
         ) : (
-          <AccountTiles accounts={tileOrder(groups.flatMap((g) => g.accounts))} onPress={setDetailAccount} />
+          <AccountTiles accounts={tiles} onPress={setDetailAccount} />
         )}
 
         {archivedAccounts.length > 0 && (

@@ -55,7 +55,11 @@ export function ActivityFilterChips({
   const chipBg = shade(accent, 95);
   const { width, fontScale } = useWindowDimensions();
   const wrapTabs = width < 360 || fontScale > 1.2;
-  const pills = TYPE_CHIPS.map((c) => {
+  // Investments are picked in the sheet, so their chip shows only while that is the type in use: otherwise
+  // the row would show no choice at all (not even All) on a filtered list.
+  const chips =
+    filterType === 'invest' ? [...TYPE_CHIPS, { label: 'Invest', value: 'invest' as const }] : TYPE_CHIPS;
+  const pills = chips.map((c) => {
     const on = filterType === c.value;
     return (
       <Pressable
