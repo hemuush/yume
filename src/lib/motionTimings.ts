@@ -1,3 +1,5 @@
+import { Easing } from 'react-native';
+
 /**
  * App motion durations (ms) without a Reanimated import, so core-`Animated` code (useGrowFrom, CountUpAmount,
  * PaceBar) runs in tests without the Reanimated mock. `MOTION` in animation.ts adds the shared curve.
@@ -26,3 +28,6 @@ export const DURATIONS = {
   rowMove: 260,
   rowExit: 200,
 } as const;
+
+/** The shared fast-out, soft-landing curve for core-`Animated` code (MOTION.ease is the same curve for Reanimated). */
+export const EASE_OUT = Easing.bezier(0.22, 1, 0.36, 1);
