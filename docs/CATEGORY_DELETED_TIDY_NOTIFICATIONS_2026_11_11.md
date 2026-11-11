@@ -24,3 +24,12 @@ Approved from the design board (page "Category detail, Recently deleted, Tidy up
 ## Checks
 
 `tsc`, eslint, prettier, the cycle check and `npm test` pass. Tests were updated for the new wording (Category detail's facts) and added for the Recently deleted summary. docs.expo.dev could not be reached from the build session. Nothing here has been run on a phone.
+
+## Follow-up pass (same day)
+
+- Categories: side margins 16 (were 20); tiles are 16-radius cards, the panel 18, the empty card 22, all with a hairline border (a selected tile keeps its 1 px border).
+- Notification settings: the lists are `ListCard`s and "Your day with Yume" is a `SummaryCard`.
+- Detail-sheet and card figures are 20 px (were 22): Loan, Goal, Budget and Entry heroes, the loan draft card, the insight card, the spending explanation, the prepay result and the loan-term stepper. Home's month figure and Plan's forecast figure were signed off at their sizes and are unchanged.
+- The add-entry notices ("Add your first account", "tied to a loan or a person") and the investment sheet's Invested / Gain / Return trio were on `StripCard`, a card with a coloured strip and an older shadow; they are flat cards now and `StripCard` is gone (`KickerDot` stays in `StripCard.tsx`).
+- Investments' split colours moved to `theme.colors.splitPalette`; the Reports placeholder uses the 16 gutter.
+- Left as they were: Garden and its month card (decorative, own look), Themes' live preview, the illustration colours in `HeaderHills`.
