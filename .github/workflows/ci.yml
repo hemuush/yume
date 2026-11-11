@@ -47,7 +47,7 @@ jobs:
       - run: npm run test:perf
         continue-on-error: true
       # Expo SDK / native-module version mismatches and config problems.
-      - run: npx expo-doctor
+      - run: npx expo-doctor@1.21.6
       # Every high or critical advisory fails the gate; there are currently no exceptions.
       # Router decoding is covered separately by test:security.
       - run: node scripts/auditGate.js
