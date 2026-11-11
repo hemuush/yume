@@ -116,7 +116,7 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
     borderStyle: 'dashed',
     borderColor: theme.colors.borderSoft,
     backgroundColor: theme.colors.surface,

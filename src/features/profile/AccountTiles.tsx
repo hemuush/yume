@@ -142,7 +142,7 @@ const styles = StyleSheet.create({
     gap: 6,
     borderRadius: 16,
     backgroundColor: theme.colors.surface,
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
   },
   head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 6 },

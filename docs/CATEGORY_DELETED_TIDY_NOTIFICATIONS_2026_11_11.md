@@ -45,3 +45,4 @@ Approved from the design board (page "Category detail, Recently deleted, Tidy up
 - Text sizes are whole numbers everywhere (twelve 11.5 / 12.5 / 13.5 styles rounded).
 - Content cards and chips that were still translucent glass are solid surface with the soft hairline border: the add-entry transfer card, recent and frequent chips, staged list and repeat button; Activity's search-empty icon and suggestion chips; the Split boxes, footer and split card. Controls that sit on the wallpaper in a header (back and bin discs, period pills, the tab bar) stay frosted on purpose.
 - Friends & family headings use the 16 gutter; the completion card fades on the shared 150 ms timing.
+- Round three: 19 cards (Export, Loans, Goals list, Profile tiles, Plan cards, add-entry and Split cards, Activity search) had a 1 px border while the shared cards use a hairline; all are hairline now.

@@ -33,7 +33,7 @@ export const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 18,
     backgroundColor: theme.colors.surface,
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
   },
   transferIcon: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
@@ -260,7 +260,7 @@ export const styles = StyleSheet.create({
   staged: {
     marginTop: 0,
     backgroundColor: theme.colors.surface,
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
     borderRadius: 22,
     paddingHorizontal: 14,
