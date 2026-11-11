@@ -70,7 +70,7 @@ export function ThemePreview({
   );
 }
 
-/** A 56 by 38 swatch of a pack: its wash with a blob of each colour. Used where a full preview is too tall. */
+/** A 44 by 30 swatch of a pack: its wash with a blob of each colour. Used where a full preview is too tall. */
 export function ThemeThumb({ pack }: { pack: ThemePack }) {
   return (
     <View style={thumb.wrap} importantForAccessibility="no-hide-descendants">
@@ -78,22 +78,22 @@ export function ThemeThumb({ pack }: { pack: ThemePack }) {
         colors={[wallpaperTop(pack.primary), shade(pack.primary, 96, 2)]}
         style={StyleSheet.absoluteFill}
       />
-      <View style={[thumb.hill, { left: -6, backgroundColor: pack.primary }]} />
-      <View style={[thumb.hill, { left: 22, backgroundColor: pack.secondary }]} />
+      <View style={[thumb.hill, { left: -5, backgroundColor: pack.primary }]} />
+      <View style={[thumb.hill, { left: 17, backgroundColor: pack.secondary }]} />
     </View>
   );
 }
 
 const thumb = StyleSheet.create({
   wrap: {
-    width: 56,
-    height: 38,
-    borderRadius: 11,
+    width: 44,
+    height: 30,
+    borderRadius: 8,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: GLASS.edge,
   },
-  hill: { position: 'absolute', bottom: -6, width: 36, height: 22, borderRadius: 18 },
+  hill: { position: 'absolute', bottom: -5, width: 28, height: 17, borderRadius: 14 },
 });
 
 const styles = StyleSheet.create({
