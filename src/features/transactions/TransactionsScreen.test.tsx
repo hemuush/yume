@@ -322,3 +322,27 @@ it('opens the chart and totals in an Insights sheet from the Spent strip', async
   act(() => tree.unmount());
   dimensions.mockRestore();
 });
+
+it('puts the back arrow and the word Month on the 16 dp gutter, and leaves the stacked layout alone', async () => {
+  const { StyleSheet } = require('react-native');
+  const flush = (tree: ReactTestRenderer) => ({
+    left: tree.root.findAll(
+      (n) => typeof n.type === 'string' && StyleSheet.flatten(n.props.style)?.marginLeft === -10
+    ).length,
+    right: tree.root.findAll(
+      (n) => typeof n.type === 'string' && StyleSheet.flatten(n.props.style)?.marginRight === -10
+    ).length,
+  });
+  const wide = jest
+    .spyOn(require('react-native'), 'useWindowDimensions')
+    .mockReturnValue({ width: 412, height: 900, fontScale: 1, scale: 3 });
+  const tree = await render();
+  expect(flush(tree).left).toBeGreaterThan(0);
+  expect(flush(tree).right).toBeGreaterThan(0);
+  act(() => tree.unmount());
+  wide.mockReturnValue({ width: 412, height: 900, fontScale: 1.5, scale: 3 });
+  const big = await render();
+  expect(flush(big)).toEqual({ left: 0, right: 0 });
+  act(() => big.unmount());
+  wide.mockRestore();
+});

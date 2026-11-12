@@ -1053,7 +1053,7 @@ export default function TransactionsScreen() {
           // below) steps the period, same as the chevrons.
           <View style={[styles.periodBar, stackPeriod && styles.periodBarStacked]}>
             <View
-              style={[styles.periodRow, stackPeriod && styles.periodRowStacked]}
+              style={[styles.periodRow, stackPeriod ? styles.periodRowStacked : styles.periodRowFlush]}
               {...periodSwipe.panHandlers}
             >
               {/* Only the contents follow the finger, inside the clipped pill, so a drag never slides the
@@ -1105,7 +1105,10 @@ export default function TransactionsScreen() {
                 </AnimatedPressable>
               </ReanimatedAnimated.View>
             </View>
-            <View style={styles.scopeSwitch} accessibilityRole="radiogroup">
+            <View
+              style={[styles.scopeSwitch, !stackPeriod && styles.scopeSwitchFlush]}
+              accessibilityRole="radiogroup"
+            >
               {VIEW_SCOPES.map((o) => {
                 const on = viewScope === o.value;
                 return (
