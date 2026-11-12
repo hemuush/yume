@@ -1,4 +1,5 @@
 import { View, Pressable, StyleSheet } from 'react-native';
+import ReanimatedAnimated from 'react-native-reanimated';
 import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
 import { CountUpAmount } from '@/components/CountUpAmount';
@@ -7,6 +8,7 @@ import { formatMoney } from '@/lib/money';
 import { withPressed } from '@/lib/pressed';
 import { screenStyles } from '@/components/screenStyles';
 import type { SpendBar } from './spendChart';
+import { usePeriodSlide } from './usePeriodSlide';
 
 /** The tallest a mini bar is drawn; the rest are in proportion to the biggest day. */
 const BAR_MAX = 34;
@@ -18,6 +20,7 @@ const BAR_MAX = 34;
  */
 export function ActivitySummaryStrip({
   periodKey,
+  direction,
   spentMinor,
   expenseChangeMinor,
   compareLabel,
@@ -28,6 +31,8 @@ export function ActivitySummaryStrip({
   onPress,
 }: {
   periodKey: string;
+  /** The step that led here (+1 forward, -1 back, 0 for a picked period): which way the figures glide in. */
+  direction: -1 | 0 | 1;
   spentMinor: number;
   /** This period's spend less the comparison period's; null when there is nothing to compare. */
   expenseChangeMinor: number | null;
@@ -41,6 +46,7 @@ export function ActivitySummaryStrip({
   narrowedTo: string | null;
   onPress: () => void;
 }) {
+  const slideStyle = usePeriodSlide(periodKey, direction);
   const counted = bars.filter((bar) => !bar.state);
   const peak = Math.max(1, ...counted.map((bar) => bar.totalMinor));
   const kicker = narrowedTo
@@ -60,55 +66,57 @@ export function ActivitySummaryStrip({
       accessibilityRole="button"
       accessibilityLabel={`${kicker}, ${formatMoney(spentMinor)}${changeWords ? `, ${changeWords}` : ''}. Open insights`}
     >
-      <View style={styles.lead}>
-        <Text style={styles.kicker}>{kicker}</Text>
-        <View style={styles.figureRow}>
-          <CountUpAmount
-            key={`${periodKey}:${narrowedTo ?? ''}`}
-            minor={spentMinor}
-            style={styles.figure}
-            numberOfLines={1}
-            adjustsFontSizeToFit
-          />
-          {changeWords && change != null && (
-            <View style={styles.change}>
-              <Feather
-                name={change > 0 ? 'arrow-up-right' : 'arrow-down-right'}
-                size={12}
-                color={change > 0 ? theme.colors.expenseText : theme.colors.incomeText}
-              />
-              <Text style={[styles.changeText, change > 0 ? styles.more : styles.less]} numberOfLines={2}>
-                {changeWords}
-              </Text>
-            </View>
-          )}
-        </View>
-      </View>
-      <View
-        style={styles.preview}
-        accessibilityElementsHidden
-        importantForAccessibility="no-hide-descendants"
-      >
-        <View style={styles.bars}>
-          {bars.map((bar) => (
-            <View
-              key={bar.key}
-              style={[
-                styles.bar,
-                {
-                  height: bar.state ? 4 : Math.max(4, Math.round((BAR_MAX * bar.totalMinor) / peak)),
-                  backgroundColor: bar.isCurrent
-                    ? theme.colors.ink
-                    : bar.state || bar.totalMinor === 0
-                      ? theme.colors.trayTrack
-                      : theme.colors.slice.free,
-                },
-              ]}
+      <ReanimatedAnimated.View style={[styles.glide, slideStyle]}>
+        <View style={styles.lead}>
+          <Text style={styles.kicker}>{kicker}</Text>
+          <View style={styles.figureRow}>
+            <CountUpAmount
+              key={`${periodKey}:${narrowedTo ?? ''}`}
+              minor={spentMinor}
+              style={styles.figure}
+              numberOfLines={1}
+              adjustsFontSizeToFit
             />
-          ))}
+            {changeWords && change != null && (
+              <View style={styles.change}>
+                <Feather
+                  name={change > 0 ? 'arrow-up-right' : 'arrow-down-right'}
+                  size={12}
+                  color={change > 0 ? theme.colors.expenseText : theme.colors.incomeText}
+                />
+                <Text style={[styles.changeText, change > 0 ? styles.more : styles.less]} numberOfLines={2}>
+                  {changeWords}
+                </Text>
+              </View>
+            )}
+          </View>
         </View>
-        <Text style={styles.caption}>{viewScope === 'week' ? 'This week' : 'By week'}</Text>
-      </View>
+        <View
+          style={styles.preview}
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+        >
+          <View style={styles.bars}>
+            {bars.map((bar) => (
+              <View
+                key={bar.key}
+                style={[
+                  styles.bar,
+                  {
+                    height: bar.state ? 4 : Math.max(4, Math.round((BAR_MAX * bar.totalMinor) / peak)),
+                    backgroundColor: bar.isCurrent
+                      ? theme.colors.ink
+                      : bar.state || bar.totalMinor === 0
+                        ? theme.colors.trayTrack
+                        : theme.colors.slice.free,
+                  },
+                ]}
+              />
+            ))}
+          </View>
+          <Text style={styles.caption}>{viewScope === 'week' ? 'This week' : 'By week'}</Text>
+        </View>
+      </ReanimatedAnimated.View>
       <Feather name="chevron-right" size={18} color={theme.colors.textMuted} />
     </Pressable>
   );
@@ -125,6 +133,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
   },
+  // The figure, its comparison and the day bars glide together; the chevron stays put.
+  glide: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 12 },
   lead: { flex: 1, minWidth: 0 },
   kicker: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
   figureRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline', columnGap: 8 },

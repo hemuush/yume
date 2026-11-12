@@ -1,20 +1,12 @@
-import { useEffect, useRef } from 'react';
 import { View } from 'react-native';
 import { Text } from '@/components/Text';
-import ReanimatedAnimated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  cancelAnimation,
-} from 'react-native-reanimated';
+import ReanimatedAnimated from 'react-native-reanimated';
 import { CountUpAmount } from '@/components/CountUpAmount';
 import { formatMoney } from '@/lib/money';
-import { useReduceMotion } from '@/lib/useReduceMotion';
 import { SpendBarChart } from './SpendBarChart';
 import type { SpendBar } from './spendChart';
 import { styles } from './transactions.styles';
-import { DURATIONS } from '@/lib/motionTimings';
-import { timing } from '@/lib/animation';
+import { usePeriodSlide } from './usePeriodSlide';
 import Feather from '@expo/vector-icons/Feather';
 import { theme } from '@/constants/theme';
 import { screenStyles } from '@/components/screenStyles';
@@ -61,7 +53,6 @@ export function TransactionsHeadline({
   /** Without its own card: for use inside a sheet, which is the surface already. */
   bare?: boolean;
 }) {
-  const reduce = useReduceMotion();
   // Render the committed period immediately so chart taps and timeline rows share one snapshot.
   const displayed: HeadlineContent = {
     expenseMinor,
@@ -71,37 +62,7 @@ export function TransactionsHeadline({
     compareLabel,
     bars,
   };
-  const prevPeriodKey = useRef(periodKey);
-  const tx = useSharedValue(0);
-  const opacity = useSharedValue(1);
-  const directionRef = useRef(direction);
-  useEffect(() => {
-    directionRef.current = direction;
-  }, [direction]);
-
-  useEffect(() => {
-    cancelAnimation(tx);
-    cancelAnimation(opacity);
-    const changed = prevPeriodKey.current !== periodKey;
-    prevPeriodKey.current = periodKey;
-    tx.value = 0;
-    opacity.value = 1;
-    if (changed && !reduce) {
-      tx.value = directionRef.current * 18;
-      opacity.value = 0;
-      tx.value = withTiming(0, timing(DURATIONS.slideIn));
-      opacity.value = withTiming(1, timing(DURATIONS.slideIn));
-    }
-    return () => {
-      cancelAnimation(tx);
-      cancelAnimation(opacity);
-    };
-  }, [periodKey, reduce, tx, opacity]);
-
-  const slideStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: tx.value }],
-    opacity: opacity.value,
-  }));
+  const slideStyle = usePeriodSlide(periodKey, direction);
 
   const net = displayed.incomeMinor - displayed.expenseMinor;
   const change = displayed.expenseChangeMinor;

@@ -169,4 +169,27 @@ describe('SpendBarChart calm chart', () => {
     });
     expect(texts(r)).toContain('avg ₹50 a week');
   });
+
+  it("draws the average's name after the capsules, so none of them paints over it", () => {
+    const r = render(null, 5000);
+    type Json = { type: string; props: Record<string, unknown>; children: (Json | string)[] | null };
+    const row = (function find(node: Json | string): Json | null {
+      if (typeof node === 'string') return null;
+      if (node.children?.some((c) => typeof c !== 'string' && c.props.pointerEvents === 'none')) return node;
+      for (const child of node.children ?? []) {
+        const hit = find(child);
+        if (hit) return hit;
+      }
+      return null;
+    })(r.toJSON() as Json)!;
+    const kids = row.children as Json[];
+    const overlays = kids.filter((c) => c.props.pointerEvents === 'none');
+    expect(overlays).toHaveLength(2);
+    // The dashed line first, behind the capsules; its name last, over them.
+    expect(kids[0]).toBe(overlays[0]);
+    expect(kids[kids.length - 1]).toBe(overlays[1]);
+    expect(JSON.stringify(overlays[0])).not.toContain('avg');
+    expect(JSON.stringify(overlays[1])).toContain('avg');
+    act(() => r.unmount());
+  });
 });

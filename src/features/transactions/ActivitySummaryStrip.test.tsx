@@ -3,6 +3,8 @@ import { Text, StyleSheet } from 'react-native';
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
 import { theme } from '@/constants/theme';
 
+jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
+jest.mock('@/lib/useReduceMotion', () => ({ useReduceMotion: () => true }));
 jest.mock('@/components/CountUpAmount', () => ({
   CountUpAmount: ({ minor }: { minor: number }) => {
     const { Text: T } = require('react-native');
@@ -29,6 +31,7 @@ function strip(over: Partial<React.ComponentProps<typeof ActivitySummaryStrip>> 
     r = create(
       <ActivitySummaryStrip
         periodKey="week-1"
+        direction={0}
         spentMinor={617_700}
         expenseChangeMinor={-390_000}
         compareLabel="last week"

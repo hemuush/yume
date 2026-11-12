@@ -72,7 +72,7 @@ export function HeroLegend({ items, stacked = false }: { items: LegendItem[]; st
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 8, rowGap: 4, marginTop: 12, marginBottom: 8 },
   // Beside the ring: one slice per line, name left and amount right.
-  stack: { flex: 1, flexBasis: 130, minWidth: 0 },
+  stack: { flex: 1, flexBasis: 130, maxWidth: 200, minWidth: 0 },
   colStacked: {
     flexDirection: 'row',
     alignItems: 'center',

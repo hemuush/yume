@@ -168,10 +168,27 @@ export const styles = StyleSheet.create({
   periodInner: { flexShrink: 1, flexDirection: 'row', alignItems: 'center' },
   periodNav: { width: 36, minHeight: 44, alignItems: 'center', justifyContent: 'center' },
   periodNavOff: { opacity: 0.35 },
-  periodTitleBtn: { flexShrink: 1, minHeight: 44, justifyContent: 'center' },
-  periodTitleRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline', columnGap: 6 },
-  periodTitle: { fontFamily: theme.font.bodyBold, fontSize: 15, color: theme.colors.textPrimary },
-  periodSub: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textSecondary },
+  // The period reads as Home's calendar pill: icon, the period (with "Week 1 of 5" under it), a chevron.
+  periodTitleBtn: {
+    flexShrink: 1,
+    minHeight: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 12,
+    borderRadius: theme.radius.pill,
+    backgroundColor: GLASS.fillStrong,
+    borderWidth: 1,
+    borderColor: GLASS.edge,
+  },
+  periodTitleCol: { flexShrink: 1, minWidth: 0 },
+  periodTitle: {
+    fontFamily: theme.font.bodyBold,
+    fontSize: 14,
+    lineHeight: 18,
+    color: theme.colors.textPrimary,
+  },
+  periodSub: { fontFamily: theme.font.body, fontSize: 11, lineHeight: 14, color: theme.colors.textSecondary },
 
   listArea: { flex: 1 },
   // Shown while a line is being moved, above the tab bar like the undo bar.
@@ -203,14 +220,16 @@ export const styles = StyleSheet.create({
 
   // The one row of filters: it scrolls sideways, or wraps at large text.
   typeFilterRow: { marginTop: 8, paddingLeft: 16, paddingRight: 16, gap: 6 },
+  pillGroup: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   typeFilterRowWrap: { marginTop: 8, marginHorizontal: 16, flexWrap: 'wrap', paddingRight: 0 },
   typeBar: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingRight: 8 },
   typeBtn: {
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 36,
-    paddingHorizontal: 13,
-    borderRadius: theme.radius.pill,
+    minHeight: 40,
+    paddingHorizontal: 14,
+    // The same rounded-rectangle button Home's Add expense / Income / Transfer use.
+    borderRadius: theme.radius.lg,
     backgroundColor: theme.colors.surface,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
@@ -221,7 +240,7 @@ export const styles = StyleSheet.create({
     fontSize: 13,
     color: theme.colors.textSecondary,
   },
-  typeTextOn: { color: theme.colors.textPrimary, fontFamily: theme.font.bodyMedium },
+  typeTextOn: { color: theme.colors.white, fontFamily: theme.font.bodyMedium },
   filterGap: { height: 10 },
   chip: {
     flexDirection: 'row',
