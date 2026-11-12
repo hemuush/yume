@@ -36,7 +36,7 @@ Generated from a scan of every `.tsx` under `app/` and `src/` (281 files, 76 wit
 - [x] `src/features/home/HomeComingUp.tsx` — 1× entrance, layout slide — reduce-motion via shared constant, shared easing ✓
 - [x] `src/features/home/HomeHeader.tsx` — 1× entrance — reduce-motion ✓, shared easing ✓
 - [x] `src/features/home/HomeRow.tsx` — press feedback (scale+dim, spring release)
-- [x] `src/features/home/MonthLine.tsx` — timed/spring animation, draw/grow fill — reduce-motion ✓, shared easing ✓
+- [x] `src/features/home/MonthRing.tsx` — still ring, no animation — reduce-motion ✓, shared easing ✓
 - [x] `src/features/home/MonthPill.tsx` — press feedback (scale+dim, spring release)
 - [x] `src/features/home/SpendBars.tsx` — 1× entrance, 1× exit, timed/spring animation — reduce-motion ✓, shared easing ✓
 - [x] `src/features/home/SuuRefreshBadge.tsx` — timed/spring animation — reduce-motion ✓, shared easing ✓

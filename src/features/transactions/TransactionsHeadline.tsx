@@ -47,6 +47,7 @@ export function TransactionsHeadline({
   selectedKey,
   current = false,
   narrowedTo = null,
+  bare = false,
 }: HeadlineContent & {
   periodKey: string;
   direction: -1 | 0 | 1;
@@ -57,6 +58,8 @@ export function TransactionsHeadline({
   current?: boolean;
   /** The category (or "3 categories") the list is filtered to; the bars passed in hold only its spending. */
   narrowedTo?: string | null;
+  /** Without its own card: for use inside a sheet, which is the surface already. */
+  bare?: boolean;
 }) {
   const reduce = useReduceMotion();
   // Render the committed period immediately so chart taps and timeline rows share one snapshot.
@@ -121,7 +124,7 @@ export function TransactionsHeadline({
       ? `Spent this ${viewScope}`
       : 'Spent';
   return (
-    <View style={[screenStyles.card, styles.sumCard]}>
+    <View style={bare ? styles.sumBare : [screenStyles.card, styles.sumCard]}>
       <ReanimatedAnimated.View style={slideStyle}>
         <View style={styles.sumLead}>
           <Text style={styles.sumKicker}>{kicker}</Text>

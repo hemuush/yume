@@ -188,7 +188,7 @@ describe('TimelineDay with savings amounts hidden', () => {
       savingsAccountIds: new Set(['cash']),
     });
     const all = texts(r).join(' | ');
-    expect(all).toContain('+₹250');
+    expect(all).toContain('₹250 spent · ₹500 in');
     expect(all).not.toContain('••••');
   });
 
@@ -200,7 +200,7 @@ describe('TimelineDay with savings amounts hidden', () => {
     });
     const all = texts(r).join(' | ');
     // Only salary +500 and travel -50 are left to count.
-    expect(all).toContain('+₹450');
+    expect(all).toContain('₹50 spent · ₹500 in');
     expect(all).not.toContain('₹120');
     expect(all).not.toContain('₹80');
     expect(all).not.toContain('₹200');
@@ -214,13 +214,15 @@ describe('TimelineDay with savings amounts hidden', () => {
 });
 
 describe('TimelineDay', () => {
-  it('shows the day, its date and net, with the transfer as a row in the card', () => {
+  it('shows the day, what it spent and took in, with the transfer as a row', () => {
     const r = render(new Set());
     const all = texts(r).join('\n');
-    expect(all).toContain('25 Sept');
+    expect(
+      r.root.findAll((n) => String(n.props.accessibilityLabel).includes('25 Sept')).length
+    ).toBeGreaterThan(0);
     expect(all).not.toContain('5 entries');
-    // Salary +500, minus food 200 and travel 50; the transfer moves nothing.
-    expect(all).toContain('+₹250');
+    // Food 200 and travel 50 spent, salary 500 in; the transfer moves nothing.
+    expect(all).toContain('₹250 spent · ₹500 in');
     expect(all).toContain('Bank → Cash');
     expect(all).toContain('Transfer');
     expect(byLabel(r, '₹3,000 moved from Bank to Cash')).toHaveLength(1);
@@ -347,7 +349,7 @@ it('does not rebuild an unrelated day when another day expands, but refreshes it
   }
 });
 
-describe('days as segments of one card', () => {
+describe('days as a feed with a marker rail', () => {
   const day = (over: Partial<React.ComponentProps<typeof TimelineDay>> = {}) => {
     let tree!: ReactTestRenderer;
     act(() => {
@@ -385,44 +387,52 @@ describe('days as segments of one card', () => {
       const tree = day();
       const shown = texts(tree);
       expect(shown.some((t) => t.startsWith('Today'))).toBe(true);
-      expect(shown).toContain(`−${formatMoney(15000)}`);
-      // No weekday column: "TODAY" can no longer wrap in a narrow column.
+      expect(shown).toContain(`${formatMoney(15000)} spent`);
+      // The marker rail carries the weekday and date number, not the word Today.
+      expect(shown).toEqual(expect.arrayContaining(['FRI', '25']));
       expect(shown).not.toContain('TODAY');
       const heading = tree.root.find((n) => n.props.accessibilityRole === 'header');
-      expect(heading.props.accessibilityLabel).toBe(`Today, Fri 25 Sept, −${formatMoney(15000)}`);
+      expect(heading.props.accessibilityLabel).toBe(`Today, Fri 25 Sept, ${formatMoney(15000)} spent`);
       act(() => tree.unmount());
     }));
 
-  it('rounds the card at the first and last day only', () =>
+  it('runs the marker line down to the next day, and ends it on the last and only days', () =>
     withWidth(() => {
-      const edges = (position: 'only' | 'first' | 'middle' | 'last') => {
+      const lines = (position: 'only' | 'first' | 'middle' | 'last') => {
         const tree = day({ position });
-        const segment = tree.root.find(
-          (n) =>
-            Array.isArray(n.props.style) &&
-            n.props.style.some(
-              (x: unknown) => !!x && (x as { marginHorizontal?: number }).marginHorizontal === 16
-            )
-        );
-        const flat = StyleSheet.flatten(segment.props.style);
+        const count = tree.root.findAll((n) => {
+          const flat = StyleSheet.flatten(n.props.style);
+          return typeof n.type === 'string' && !!flat && flat.width === 2 && flat.flex === 1;
+        }).length;
         act(() => tree.unmount());
-        return flat;
+        return count;
       };
-      expect(edges('first')).toMatchObject({ borderTopWidth: 1, borderTopLeftRadius: 16 });
-      expect(edges('first').borderBottomWidth).toBeUndefined();
-      expect(edges('last')).toMatchObject({ borderBottomWidth: 1, borderBottomLeftRadius: 16 });
-      expect(edges('middle').borderTopLeftRadius).toBeUndefined();
-      expect(edges('middle').borderBottomLeftRadius).toBeUndefined();
-      expect(edges('only')).toMatchObject({ borderTopWidth: 1, borderBottomWidth: 1 });
+      expect(lines('first')).toBe(1);
+      expect(lines('middle')).toBe(1);
+      expect(lines('last')).toBe(0);
+      expect(lines('only')).toBe(0);
+    }));
+
+  it("puts today's date number in a filled circle", () =>
+    withWidth(() => {
+      const circle = (today: boolean) => {
+        const tree = day({ today });
+        const found = tree.root.findAll((n) => {
+          const flat = StyleSheet.flatten(n.props.style);
+          return !!flat && flat.borderRadius === 17 && flat.backgroundColor === theme.colors.ink;
+        }).length;
+        act(() => tree.unmount());
+        return found;
+      };
+      expect(circle(true)).toBeGreaterThan(0);
+      expect(circle(false)).toBe(0);
     }));
 
   it('turns the heading of the picked day of the chart bold', () =>
     withWidth(() => {
       const weight = (selected: boolean) => {
         const tree = day({ selected });
-        const title = tree.root
-          .findAllByType(Text)
-          .find((t) => String(t.props.children[0]).startsWith('Today'))!;
+        const title = tree.root.findAllByType(Text).find((t) => t.props.children === 'Today')!;
         const flat = StyleSheet.flatten(title.props.style);
         act(() => tree.unmount());
         return flat.fontFamily;

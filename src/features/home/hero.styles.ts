@@ -10,8 +10,9 @@ export const styles = StyleSheet.create({
     flexWrap: 'wrap',
     alignItems: 'center',
     justifyContent: 'space-between',
-    columnGap: 12,
-    rowGap: 8,
+    columnGap: 14,
+    rowGap: 4,
+    marginTop: 4,
   },
   // The week's spending, in its own card under the Add buttons.
   rhythm: { ...h.card, paddingHorizontal: 16, paddingTop: 12, paddingBottom: 12 },
@@ -25,23 +26,6 @@ export const styles = StyleSheet.create({
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: theme.colors.divider,
   },
-  lineHead: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    columnGap: 8,
-    marginTop: 10,
-  },
-  lineHeadText: { fontFamily: theme.font.body, fontSize: 11, lineHeight: 16, color: theme.colors.textMuted },
-  dayTick: {
-    position: 'absolute',
-    top: -1,
-    width: 2,
-    height: 20,
-    marginLeft: -1,
-    borderRadius: 2,
-    backgroundColor: theme.colors.ink,
-  },
   actions: { marginHorizontal: 16, marginTop: 10 },
   bar: {
     flexDirection: 'row',
@@ -52,7 +36,7 @@ export const styles = StyleSheet.create({
     minHeight: 32,
   },
   body: { gap: 2 },
-  figure: { flexShrink: 1, minWidth: 0, marginTop: 2 },
+  figure: { alignSelf: 'stretch', minWidth: 0 },
 
   headLabel: {
     fontFamily: theme.font.body,
@@ -61,9 +45,10 @@ export const styles = StyleSheet.create({
   },
   headValue: {
     fontFamily: theme.font.bodyMedium,
-    fontSize: theme.typeSize.headline,
+    fontSize: 20,
+    textAlign: 'center',
     fontVariant: ['tabular-nums'],
-    lineHeight: 38,
+    lineHeight: 26,
     letterSpacing: -0.3,
     color: theme.colors.textPrimary,
   },
@@ -78,12 +63,6 @@ export const styles = StyleSheet.create({
 
   howLink: { flexDirection: 'row', alignItems: 'center', gap: 5, minHeight: 44 },
   howLinkText: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.link },
-
-  // The month as one line: spent, saved, bills and free, in the colours the legend below uses.
-  line: { flexDirection: 'row', alignItems: 'center', gap: 3, height: 18 },
-  lineWrap: { marginTop: 6 },
-  lineOrigin: { transformOrigin: 'left center' },
-  lineSegment: { height: 12, borderRadius: 6, minWidth: 5 },
 
   insightsLink: {
     minHeight: 44,

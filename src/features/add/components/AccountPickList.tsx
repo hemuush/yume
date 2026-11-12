@@ -3,7 +3,7 @@ import { Pressable, View } from 'react-native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import type { McIconName } from '@/components/iconName';
 import { Amount } from '@/components/Amount';
-import { accountBadgeColor, accountIcon } from '@/lib/account';
+import { accountBadgeColor, accountIcon, accountTypeLabel } from '@/lib/account';
 import { Text } from '@/components/Text';
 import Feather from '@expo/vector-icons/Feather';
 import { theme } from '@/constants/theme';
@@ -45,7 +45,7 @@ export function AccountPickList({
           >
             <View style={[styles.transferIcon, { backgroundColor: accountBadgeColor(a.type, accent) }]}>
               <MaterialCommunityIcons
-                name={accountIcon(a.type) as McIconName}
+                name={accountIcon(a.type, !!a.investment) as McIconName}
                 size={18}
                 color={theme.colors.ink}
               />
@@ -55,7 +55,7 @@ export function AccountPickList({
                 {a.name}
               </Text>
               <Text style={styles.pickSub} numberOfLines={1}>
-                {a.type.replace('_', ' ')} ·{' '}
+                {accountTypeLabel(a)} ·{' '}
                 <Amount
                   minor={a.currentBalanceMinor}
                   currency={a.currency}

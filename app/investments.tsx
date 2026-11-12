@@ -369,9 +369,9 @@ export default function InvestmentsScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
   // Cards sit on the screen gutter like every other screen's; the sections below bring their own.
-  card: { padding: 14, gap: 10, marginBottom: 12 },
+  card: { padding: 14, gap: 10, marginTop: 12 },
   hint: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textMuted },
   hintPad: { marginHorizontal: SCREEN.gutter, marginTop: 6 },
-  mainActions: { flexDirection: 'row', gap: 8, marginHorizontal: SCREEN.gutter, marginBottom: 12 },
+  mainActions: { flexDirection: 'row', gap: 8, marginHorizontal: SCREEN.gutter, marginTop: 12 },
   mainAction: { flex: 1 },
 });

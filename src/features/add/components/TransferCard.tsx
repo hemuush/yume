@@ -35,7 +35,7 @@ export function TransferCard({
         ]}
       >
         <MaterialCommunityIcons
-          name={(account ? accountIcon(account.type) : 'bank-outline') as McIconName}
+          name={(account ? accountIcon(account.type, !!account.investment) : 'bank-outline') as McIconName}
           size={18}
           color={theme.colors.ink}
         />

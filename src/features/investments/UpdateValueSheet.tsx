@@ -176,9 +176,9 @@ export function UpdateValueSheet({
     >
       <DraftCard
         hue={accountHue(account.type, accent)}
-        icon={accountIcon(account.type)}
+        icon={accountIcon(account.type, true)}
         title={account.name}
-        kicker="Tracked savings"
+        kicker="Investment"
         figure={money(account.currentBalanceMinor)}
         per="value now"
         meta={`Invested ${money(inv.investedMinor)}`}

@@ -32,6 +32,8 @@ import { getTransactionById } from '@/db/transactions';
 import { showAlert } from '@/components/AppDialog';
 import { TransactionDetailModal } from '@/features/transactions/TransactionDetailModal';
 import { TransactionsHeadline } from '@/features/transactions/TransactionsHeadline';
+import { ActivitySummaryStrip } from '@/features/transactions/ActivitySummaryStrip';
+import { ModalSheet } from '@/components/ModalSheet';
 import { TransactionsSkeleton } from '@/features/transactions/TransactionsSkeleton';
 import { HomeWallpaper } from '@/features/home/HomeWallpaper';
 import { buildWeekSpendBars, buildWeeklySpendBars } from '@/features/transactions/spendChart';
@@ -97,6 +99,7 @@ export default function TransactionsScreen() {
   const [viewScope, setViewScope] = useState<'week' | 'month'>('week');
   const [monthPickerVisible, setMonthPickerVisible] = useState(false);
   const [filterVisible, setFilterVisible] = useState(false);
+  const [insightsVisible, setInsightsVisible] = useState(false);
   const [filterType, setFilterType] = useState<ActivityType>('all');
   const [filterCategoryIds, setFilterCategoryIds] = useState<string[]>([]);
   const [filterLabel, setFilterLabel] = useState<string | undefined>();
@@ -708,6 +711,18 @@ export default function TransactionsScreen() {
     </>
   );
 
+  // What the Spent strip and the Insights sheet both say about the period shown.
+  const periodIsCurrent = today >= loadedPeriod.fromDate && today <= loadedPeriod.toDate;
+  const narrowedTo =
+    filterCategoryIds.length === 0
+      ? null
+      : filterCategoryIds.length === 1
+        ? categoryName(filterCategoryIds[0])
+        : `${filterCategoryIds.length} categories`;
+  const compareLabel =
+    loadedPeriod.scope === 'week' && loadedPeriod.fromDate
+      ? weekCompareLabel(weekContaining(parseLocalIsoDate(loadedPeriod.fromDate)), today)
+      : `last ${loadedPeriod.scope}`;
   return (
     <View style={styles.container}>
       <HomeWallpaper accent={accent} secondary={secondary} plain />
@@ -831,29 +846,20 @@ export default function TransactionsScreen() {
                 <>
                   {banners}
                   <ReanimatedAnimated.View style={periodSwipe.dragStyle} {...periodSwipe.panHandlers}>
-                    <TransactionsHeadline
+                    <ActivitySummaryStrip
                       periodKey={`${loadedPeriod.scope}-${loadedPeriod.fromDate}`}
-                      direction={direction}
-                      expenseMinor={headline?.current.expenseMinor ?? 0}
-                      incomeMinor={headline?.current.incomeMinor ?? 0}
+                      spentMinor={
+                        narrowedTo
+                          ? bars.reduce((sum, bar) => (bar.state ? sum : sum + bar.totalMinor), 0)
+                          : (headline?.current.expenseMinor ?? 0)
+                      }
                       expenseChangeMinor={expenseChangeMinor}
+                      compareLabel={compareLabel}
                       viewScope={loadedPeriod.scope}
-                      compareLabel={
-                        loadedPeriod.scope === 'week' && loadedPeriod.fromDate
-                          ? weekCompareLabel(weekContaining(parseLocalIsoDate(loadedPeriod.fromDate)), today)
-                          : undefined
-                      }
                       bars={bars}
-                      onPressDay={onPressBar}
-                      selectedKey={selectedBar}
-                      current={today >= loadedPeriod.fromDate && today <= loadedPeriod.toDate}
-                      narrowedTo={
-                        filterCategoryIds.length === 0
-                          ? null
-                          : filterCategoryIds.length === 1
-                            ? categoryName(filterCategoryIds[0])
-                            : `${filterCategoryIds.length} categories`
-                      }
+                      current={periodIsCurrent}
+                      narrowedTo={narrowedTo}
+                      onPress={() => setInsightsVisible(true)}
                     />
                   </ReanimatedAnimated.View>
 
@@ -928,6 +934,7 @@ export default function TransactionsScreen() {
               <TimelineDay
                 accountCurrency={accountCurrency}
                 date={group.date}
+                today={group.date === today}
                 label={
                   group.date === today
                     ? 'Today'
@@ -1131,6 +1138,33 @@ export default function TransactionsScreen() {
           <Text style={styles.dragHintText}>Drag up or down, let go to drop it</Text>
         </ReanimatedAnimated.View>
       )}
+
+      <ModalSheet
+        visible={insightsVisible}
+        onClose={() => setInsightsVisible(false)}
+        title="Insights"
+        subtitle={heading.title}
+      >
+        <TransactionsHeadline
+          bare
+          periodKey={`${loadedPeriod.scope}-${loadedPeriod.fromDate}`}
+          direction={direction}
+          expenseMinor={headline?.current.expenseMinor ?? 0}
+          incomeMinor={headline?.current.incomeMinor ?? 0}
+          expenseChangeMinor={expenseChangeMinor}
+          viewScope={loadedPeriod.scope}
+          compareLabel={compareLabel}
+          bars={bars}
+          // Picking a day answers in the list: the sheet steps aside first so the day is in view.
+          onPressDay={(key) => {
+            setInsightsVisible(false);
+            onPressBar(key);
+          }}
+          selectedKey={selectedBar}
+          current={periodIsCurrent}
+          narrowedTo={narrowedTo}
+        />
+      </ModalSheet>
 
       <TransactionDetailModal
         tx={detailTx}

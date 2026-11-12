@@ -190,7 +190,7 @@ export function FilterModal({
               <Chip
                 key={acc.id}
                 label={acc.name}
-                icon={accountIcon(acc.type)}
+                icon={accountIcon(acc.type, !!acc.investment)}
                 iconColor={shade(accountHue(acc.type, accent), 88)}
                 active={draftAccountIds.includes(acc.id)}
                 onPress={() =>

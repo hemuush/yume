@@ -117,6 +117,8 @@ export const styles = StyleSheet.create({
     boxShadow: '0px 1px 2px rgba(18,19,15,0.04), 0px 8px 24px rgba(18,19,15,0.05)',
     overflow: 'visible',
   },
+  // The same content inside Insights: the sheet is the surface, so no card of its own.
+  sumBare: { paddingBottom: 6 },
   sumKicker: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
   headlineAmt: {
     fontFamily: theme.font.bodyMedium,
@@ -199,20 +201,10 @@ export const styles = StyleSheet.create({
   },
   periodChipText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textPrimary },
 
-  // Type filter as one segmented bar, then picked categories/accounts on their own line (only when some).
-  // The gap below matches the gap between days.
-  typeFilterRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 8,
-    paddingLeft: 16,
-    paddingRight: 12,
-    gap: 6,
-  },
-  typeScroll: { flex: 1 },
-  // The type pills scroll sideways under the Filters button; at large text they wrap instead.
+  // The one row of filters: it scrolls sideways, or wraps at large text.
+  typeFilterRow: { marginTop: 8, paddingLeft: 16, paddingRight: 16, gap: 6 },
+  typeFilterRowWrap: { marginTop: 8, marginHorizontal: 16, flexWrap: 'wrap', paddingRight: 0 },
   typeBar: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingRight: 8 },
-  typeBarWrap: { flex: 1, flexWrap: 'wrap' },
   typeBtn: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -230,7 +222,6 @@ export const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
   },
   typeTextOn: { color: theme.colors.textPrimary, fontFamily: theme.font.bodyMedium },
-  chipsRow: { gap: 8, paddingHorizontal: 16, paddingTop: 8 },
   filterGap: { height: 10 },
   chip: {
     flexDirection: 'row',
