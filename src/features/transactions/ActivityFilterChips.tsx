@@ -79,78 +79,76 @@ export function ActivityFilterChips({
       </Pressable>
     );
   });
+  // One row, in the order of how often it is used: Filters (with its count), what is already picked (a
+  // removable chip each, then Clear all), then the one-tap types. At large text it wraps instead of scrolling.
+  const pickedChips = picked > 0 && (
+    <>
+      {categoryIds.map((id) => (
+        <Pressable
+          key={id}
+          onPress={() => onRemoveCategory(id)}
+          style={withPressedTint(accent, [styles.chip, { backgroundColor: chipBg }])}
+          accessibilityRole="button"
+          accessibilityLabel={`Remove the ${categoryName(id)} filter`}
+        >
+          <Text style={styles.chipText}>{categoryName(id)}</Text>
+          <Feather name="x" size={12} color={theme.colors.textSecondary} />
+        </Pressable>
+      ))}
+      {accountIds.map((id) => (
+        <Pressable
+          key={id}
+          onPress={() => onRemoveAccount(id)}
+          style={withPressedTint(accent, [styles.chip, { backgroundColor: chipBg }])}
+          accessibilityRole="button"
+          accessibilityLabel={`Remove the ${accountName(id)} filter`}
+        >
+          <Feather name="credit-card" size={11} color={theme.colors.textSecondary} />
+          <Text style={styles.chipText}>{accountName(id)}</Text>
+          <Feather name="x" size={12} color={theme.colors.textSecondary} />
+        </Pressable>
+      ))}
+      {picked > 0 && (
+        <Pressable
+          onPress={onClearAll}
+          style={withPressedTint(accent, styles.chip)}
+          accessibilityRole="button"
+          accessibilityLabel="Clear all Activity filters"
+        >
+          <Text style={styles.chipText}>Clear all</Text>
+        </Pressable>
+      )}
+    </>
+  );
+  const filterButton = onOpenFilters && (
+    <HeaderIconButton
+      icon="sliders"
+      size={40}
+      glass
+      onPress={onOpenFilters}
+      label={filterCount > 0 ? `Filters, ${filterCount} on` : 'Filters'}
+      count={filterCount}
+    />
+  );
   return (
     <>
-      <View style={[styles.typeFilterRow, wrapTabs && { alignItems: 'flex-start' }]}>
-        {wrapTabs ? (
-          <View style={[styles.typeBar, styles.typeBarWrap]} accessibilityRole="radiogroup">
-            {pills}
-          </View>
-        ) : (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-            style={styles.typeScroll}
-            contentContainerStyle={styles.typeBar}
-            accessibilityRole="radiogroup"
-          >
-            {pills}
-          </ScrollView>
-        )}
-        {onOpenFilters && (
-          <HeaderIconButton
-            icon="sliders"
-            size={40}
-            glass
-            onPress={onOpenFilters}
-            label={filterCount > 0 ? `Filters, ${filterCount} on` : 'Filters'}
-            count={filterCount}
-          />
-        )}
-      </View>
-      {picked > 0 && (
+      {wrapTabs ? (
+        <View style={[styles.typeBar, styles.typeFilterRowWrap]} accessibilityRole="radiogroup">
+          {filterButton}
+          {pickedChips}
+          {pills}
+        </View>
+      ) : (
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.chipsRow}
           keyboardShouldPersistTaps="handled"
+          contentContainerStyle={[styles.typeBar, styles.typeFilterRow]}
+          accessibilityRole="radiogroup"
         >
-          {categoryIds.map((id) => (
-            <Pressable
-              key={id}
-              onPress={() => onRemoveCategory(id)}
-              style={withPressedTint(accent, [styles.chip, { backgroundColor: chipBg }])}
-              accessibilityRole="button"
-              accessibilityLabel={`Remove the ${categoryName(id)} filter`}
-            >
-              <Text style={styles.chipText}>{categoryName(id)}</Text>
-              <Feather name="x" size={12} color={theme.colors.textSecondary} />
-            </Pressable>
-          ))}
-          {accountIds.map((id) => (
-            <Pressable
-              key={id}
-              onPress={() => onRemoveAccount(id)}
-              style={withPressedTint(accent, [styles.chip, { backgroundColor: chipBg }])}
-              accessibilityRole="button"
-              accessibilityLabel={`Remove the ${accountName(id)} filter`}
-            >
-              <Feather name="credit-card" size={11} color={theme.colors.textSecondary} />
-              <Text style={styles.chipText}>{accountName(id)}</Text>
-              <Feather name="x" size={12} color={theme.colors.textSecondary} />
-            </Pressable>
-          ))}
-          {picked > 0 && (
-            <Pressable
-              onPress={onClearAll}
-              style={withPressedTint(accent, styles.chip)}
-              accessibilityRole="button"
-              accessibilityLabel="Clear all Activity filters"
-            >
-              <Text style={styles.chipText}>Clear all</Text>
-            </Pressable>
-          )}
+          {filterButton}
+          {pickedChips}
+          {pills}
         </ScrollView>
       )}
       <View style={styles.filterGap} />

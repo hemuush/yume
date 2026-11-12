@@ -246,6 +246,7 @@ Recorded 13 October 2026 after commit `373ea5a`. Every tracked file was read by 
 - `src/features/transactions/SpendBarChart.tsx`
 - `src/features/transactions/TimelineDay.tsx`
 - `src/features/transactions/TransactionDetailModal.tsx`
+- `src/features/transactions/ActivitySummaryStrip.tsx`
 - `src/features/transactions/TransactionsHeadline.tsx`
 - `src/features/transactions/TransactionsSkeleton.tsx`
 - `src/features/transactions/transactions.styles.ts`

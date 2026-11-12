@@ -300,3 +300,19 @@ it('recovers from an empty filter result in one action without changing the peri
   expect(tree.root.findAllByType(PrimaryButton).some((n) => n.props.title === 'Clear filters')).toBe(false);
   expect(texts(tree)).toContain('This week');
 });
+
+it('opens the chart and totals in an Insights sheet from the Spent strip', async () => {
+  const { ModalSheet } = require('@/components/ModalSheet');
+  const { ActivitySummaryStrip } = require('./ActivitySummaryStrip');
+  const tree = await render();
+  const insights = () =>
+    tree.root
+      .findAllByType(ModalSheet)
+      .find((sheet: { props: { title?: string } }) => sheet.props.title === 'Insights')!;
+  expect(insights().props.visible).toBe(false);
+  act(() => tree.root.findByType(ActivitySummaryStrip).props.onPress());
+  expect(insights().props.visible).toBe(true);
+  act(() => insights().props.onClose());
+  expect(insights().props.visible).toBe(false);
+  act(() => tree.unmount());
+});
