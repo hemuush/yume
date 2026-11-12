@@ -78,5 +78,7 @@ it('shows an empty search result instead of offering future days', async () => {
   await fireEvent.press(screen.getByRole('button', { name: 'Choose day or month' }));
   await fireEvent.changeText(screen.getByLabelText('Find a day'), '31 Dec 2026');
   expect(screen.getByText('No matching days')).toBeOnTheScreen();
+  // Styled like the app's other quiet empty lines, not the platform's default text.
+  expect(screen.getByText('No matching days')).toHaveStyle({ fontSize: 13, textAlign: 'center' });
   expect(screen.queryByRole('button', { name: /31 Dec/ })).toBeNull();
 });

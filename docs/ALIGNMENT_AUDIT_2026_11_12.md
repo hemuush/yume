@@ -37,6 +37,15 @@ A whole-app code pass after two phone screenshots (Home, Activity) showed edges 
 - Every sheet footer lays out Cancel / Save (or its single action) with the shared 8 dp gap; two use `modalFooterStyles` directly and the rest the same values through `f.footerCol` or a matching local row.
 - The add-entry screen and Split keep the 16 dp gutter, 18 dp corners on field cards and 22 dp on the summary card; nothing off the shared measures.
 
+## Third pass: every screen
+
+Each of the 26 routes was checked for its header, bottom spacing, gutter, section headings and empty states.
+
+- Header: every pushed screen uses SkyHeader; Home has its own header, and Add, Split, Wrap and Reports draw their own by design.
+- Bottom spacing: tab screens clear the floating tab bar (`tabScrollPad + insets.bottom`); pushed screens end with `screenScrollPad + insets.bottom`. Export keeps a pinned footer padded by the inset, and Category detail ends at 48 dp, as recorded before.
+- Section headings: hand-made headings (Loans, Categories, Budgets, Backup, People) all use `SECTION_TITLE` with the shared 16 / 8 gaps; the two without a side gutter render inside sheets, which supply it.
+- Empty states: screens use the shared EmptyState; short in-card notes ("Nothing on this day.", "No entries yet.") stay as captions. Reports' day picker showed "No matching days" as unstyled platform text with no padding; it now uses the quiet caption style, centred with room around it.
+
 ## Not covered
 
 Screens other than Home and Activity have not been compared against a phone screenshot after these changes, and the sheets and the add-entry flow were checked in code only, not on a device.
