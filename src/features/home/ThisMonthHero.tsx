@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { View, Pressable, PanResponder } from 'react-native';
+import { View, Pressable, PanResponder, useWindowDimensions } from 'react-native';
 import { Text } from '@/components/Text';
 import Feather from '@expo/vector-icons/Feather';
 import ReanimatedAnimated, {
@@ -106,6 +106,7 @@ export function ThisMonthHero({
 }) {
   const reduce = useReduceMotion();
   const { hideAmounts } = usePrivacy();
+  const { width: screenWidth, fontScale } = useWindowDimensions();
   const [displayed, setDisplayed] = useState<HeroContent>({
     incomeMinor,
     spentMinor,
@@ -425,6 +426,12 @@ export function ThisMonthHero({
           : []),
       ];
 
+  // The ring is centred in the card with the legend split on either side of it (half the slices each). On a
+  // narrow phone or at large text there is no room beside it, so the ring stays centred and the legend drops
+  // under it.
+  const flanked = screenWidth >= 380 && fontScale <= 1.15 && legend.length > 0;
+  const splitAt = Math.ceil(legend.length / 2);
+
   return (
     <>
       <ReanimatedAnimated.View layout={ROW_LAYOUT} style={styles.card}>
@@ -434,7 +441,8 @@ export function ThisMonthHero({
         </View>
 
         <ReanimatedAnimated.View style={[styles.body, slideStyle]} {...pan.panHandlers}>
-          <View style={styles.heroRow}>
+          <View style={[styles.heroRow, flanked && styles.heroRowFlanked]}>
+            {flanked && <HeroLegend items={legend.slice(0, splitAt)} side="left" />}
             <MonthRing
               slices={slices}
               hideSavings={hideAmounts}
@@ -472,7 +480,11 @@ export function ThisMonthHero({
                 )}
               </View>
             </MonthRing>
-            <HeroLegend items={legend} stacked />
+            {flanked ? (
+              <HeroLegend items={legend.slice(splitAt)} side="right" />
+            ) : (
+              legend.length > 0 && <HeroLegend items={legend} />
+            )}
           </View>
 
           {perDayMinor != null && <AllowanceTile perDayMinor={perDayMinor} daysLeft={daysLeft} />}

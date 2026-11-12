@@ -22,15 +22,18 @@ export interface LegendItem {
 const PAIR_AT = 1.15;
 
 /**
- * Under the month line, one column per slice of it (spent, saved, bills still to pay, free): its colour and
- * name and amount. Shares remain in the accessible label and month line, without a third row competing
- * with the main amount. Bills opens the sum.
+ * One column per slice of the month (spent, saved, bills still to pay, free): its colour and name and amount.
+ * Shares remain in the accessible label, without a third row competing with the main amount. Bills opens the sum.
+ * By default it is a wrapping row under the ring. With `side` it is one half of the legend flanking the ring:
+ * the slices stacked, flush to the card's left or right edge, so the ring between two equal halves sits exactly
+ * in the middle of the card.
  */
-export function HeroLegend({ items, stacked = false }: { items: LegendItem[]; stacked?: boolean }) {
+export function HeroLegend({ items, side }: { items: LegendItem[]; side?: 'left' | 'right' }) {
   const { width, fontScale } = useWindowDimensions();
   const pair = width < 360 || fontScale > PAIR_AT;
+  const edge = side === 'right' ? 'flex-end' : 'flex-start';
   return (
-    <View style={stacked ? styles.stack : styles.row}>
+    <View style={side ? [styles.side, { alignItems: edge }] : styles.row}>
       {items.map((it) => {
         const Container = it.onPress ? Pressable : View;
         const amount = formatMoney(it.minor);
@@ -41,25 +44,26 @@ export function HeroLegend({ items, stacked = false }: { items: LegendItem[]; st
             accessibilityRole={it.onPress ? 'button' : undefined}
             accessibilityState={it.onPress ? { expanded: it.expanded, selected: it.selected } : undefined}
             accessibilityHint={it.onPress ? it.hint : undefined}
-            // Stacked rows are short so four fit beside the ring; the touch area still reaches 44 dp.
-            hitSlop={stacked ? { top: 8, bottom: 8 } : undefined}
             accessible
             accessibilityLabel={`${it.label}, ${amount}, ${it.share}`}
             style={[
               styles.col,
               { minWidth: Math.max(60, amount.length * 7) },
-              !stacked && pair && styles.colPair,
+              !side && pair && styles.colPair,
               it.onPress && styles.tap,
-              stacked && styles.colStacked,
+              side && [styles.colSide, { alignItems: edge }],
             ]}
           >
-            <View style={[styles.head, stacked && { flex: 1, minWidth: 0 }]}>
+            <View style={styles.head}>
               <View style={[styles.dot, { backgroundColor: it.color }]} />
               <Text style={styles.label} numberOfLines={1}>
                 {it.label}
               </Text>
             </View>
-            <Text style={[styles.amount, it.selected && styles.amountOn]} numberOfLines={1}>
+            <Text
+              style={[styles.amount, it.selected && styles.amountOn, side === 'right' && styles.amountEnd]}
+              numberOfLines={1}
+            >
               {amount}
             </Text>
           </Container>
@@ -70,17 +74,18 @@ export function HeroLegend({ items, stacked = false }: { items: LegendItem[]; st
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 8, rowGap: 4, marginTop: 12, marginBottom: 8 },
-  // Beside the ring: one slice per line, name left and amount right.
-  stack: { flex: 1, flexBasis: 130, maxWidth: 200, minWidth: 0 },
-  colStacked: {
+  row: {
+    alignSelf: 'stretch',
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 8,
-    flexBasis: 'auto',
-    minHeight: 28,
+    flexWrap: 'wrap',
+    columnGap: 8,
+    rowGap: 4,
+    marginTop: 12,
+    marginBottom: 8,
   },
+  // Half of the legend beside the ring: the two halves are equal in width, which keeps the ring centred.
+  side: { flex: 1, minWidth: 0, justifyContent: 'center' },
+  colSide: { flexGrow: 0, flexBasis: 'auto', minWidth: 0, justifyContent: 'center' },
   col: { flexGrow: 1, flexBasis: 0, minWidth: 60, gap: 1 },
   colPair: { flexBasis: '45%' },
   tap: { minHeight: 44 },
@@ -99,4 +104,5 @@ const styles = StyleSheet.create({
     fontVariant: ['tabular-nums'],
   },
   amountOn: { fontFamily: theme.font.bodyBold },
+  amountEnd: { textAlign: 'right' },
 });
