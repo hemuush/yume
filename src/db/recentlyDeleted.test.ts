@@ -106,7 +106,7 @@ describe('Recently deleted', () => {
     expect(await countDeletedEntries()).toBe(0);
   });
 
-  it("won't restore an entry whose account is gone, and says why", async () => {
+  it('won’t restore an entry whose account is gone, and says why', async () => {
     const tx = await lunch();
     await deleteTransaction(tx.id);
     await mockTestDb.runAsync('DELETE FROM accounts WHERE id = ?', [bank]);

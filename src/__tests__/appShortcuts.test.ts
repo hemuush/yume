@@ -22,7 +22,7 @@ describe('app shortcuts', () => {
     for (const s of SHORTCUTS) expect(isTxType(s.type)).toBe(true);
   });
 
-  it("link to Add through the app's own scheme and main activity", () => {
+  it('link to Add through the app’s own scheme and main activity', () => {
     const xml: string = shortcutsXml(appJson.expo.android.package, appJson.expo.scheme);
     expect(xml).toContain('android:data="yume://add-transaction?type=expense"');
     expect(xml).toContain('android:targetClass="com.yume.app.MainActivity"');

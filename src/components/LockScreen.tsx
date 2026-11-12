@@ -140,8 +140,8 @@ export function LockScreen({ onUnlocked }: { onUnlocked: () => void }) {
             )}
             {deviceUnsecured && (
               <Text style={styles.failedText} accessibilityLiveRegion="polite">
-                Your device no longer has a screen lock set up, so Yume can't verify you this way. Set one up
-                again in your phone's settings, or turn off Yume's lock below.
+                Your device no longer has a screen lock set up, so Yume can’t verify you this way. Set one up
+                again in your phone’s settings, or turn off Yume’s lock below.
               </Text>
             )}
             <PrimaryButton
@@ -155,7 +155,7 @@ export function LockScreen({ onUnlocked }: { onUnlocked: () => void }) {
             />
             {deviceUnsecured && (
               <PrimaryButton
-                title="Turn off Yume's lock"
+                title="Turn off Yume’s lock"
                 variant="secondary"
                 onPress={turnOffLock}
                 disabled={busy}

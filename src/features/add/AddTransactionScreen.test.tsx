@@ -691,7 +691,7 @@ describe('Add screen', () => {
     }
   });
 
-  it("a saved split can't be switched to income: it says why and stays an expense", async () => {
+  it('a saved split can’t be switched to income: it says why and stays an expense', async () => {
     mockParams.current = { id: 't1' };
     (getTransactionById as jest.Mock).mockResolvedValueOnce({
       id: 't1',
@@ -711,7 +711,7 @@ describe('Add screen', () => {
     ]);
     const tree = await render();
     await press(tree, 'Income');
-    expect(showAlert).toHaveBeenCalledWith("A split can't change type", expect.any(String));
+    expect(showAlert).toHaveBeenCalledWith('A split can’t change type', expect.any(String));
     expect(texts(tree)).toContain('Split 2 ways');
     expect(updateTransaction).not.toHaveBeenCalled();
   });
@@ -1195,7 +1195,7 @@ describe('Add screen — money back', () => {
     expect(session.categories.every((c) => c.kind === 'expense')).toBe(true);
   });
 
-  it("takes the split page's parts back on Done and saves them as one split", async () => {
+  it('takes the split page’s parts back on Done and saves them as one split', async () => {
     (getAddDefaults as jest.Mock).mockResolvedValueOnce({
       expense: { accountId: 'cash', categoryId: 'food' },
     });

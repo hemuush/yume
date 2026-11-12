@@ -194,9 +194,9 @@ describe('AccountSummarySheet', () => {
   it('shows a failure instead of an empty month when the figures cannot be read', async () => {
     mockFlow.mockRejectedValue(new Error('disk'));
     const tree = await render();
-    expect(texts(tree)).toContain("Couldn't load this account's figures.");
+    expect(texts(tree)).toContain('Couldn’t load this account’s figures.');
     await pickTab(tree, 'latest');
-    expect(texts(tree)).toContain("Couldn't load this account's entries.");
+    expect(texts(tree)).toContain('Couldn’t load this account’s entries.');
   });
 
   it('lists the latest entries and opens Activity for the account', async () => {
@@ -370,7 +370,7 @@ describe('AccountSummarySheet — credit card bill', () => {
   it('shows a failure when the bill cannot be read, without hiding the flow', async () => {
     mockCycle.mockRejectedValue(new Error('disk'));
     const tree = await render({ account: card, accounts: [card] });
-    expect(texts(tree)).toContain("Couldn't load this card's bill.");
+    expect(texts(tree)).toContain('Couldn’t load this card’s bill.');
     expect(texts(tree)).toContain('Money in and out');
   });
 });

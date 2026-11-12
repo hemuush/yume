@@ -153,7 +153,7 @@ export default function BudgetsScreen() {
       await load();
     } catch (e) {
       // The category stays in the list to try again; say why this attempt didn't take.
-      if (active.current) showAlert("Couldn't continue budget", errorMessage(e));
+      if (active.current) showAlert('Couldn’t continue budget', errorMessage(e));
     } finally {
       continuing.current = false;
       if (active.current) setContinuingId(null);
@@ -169,7 +169,7 @@ export default function BudgetsScreen() {
       if (!active.current) return;
       haptics.tap();
       await load();
-      if (failures.length) showAlert("Some budgets couldn't continue", failures.join('\n'));
+      if (failures.length) showAlert('Some budgets couldn’t continue', failures.join('\n'));
     } finally {
       continuing.current = false;
       if (active.current) setContinuingAll(false);
@@ -203,7 +203,7 @@ export default function BudgetsScreen() {
     } catch (e) {
       if (active.current)
         showAlert(
-          deleted ? 'Budget deleted' : "Couldn't delete budget",
+          deleted ? 'Budget deleted' : 'Couldn’t delete budget',
           deleted
             ? 'The budget was deleted, but the list could not refresh. Reopen Budgets to see it.'
             : errorMessage(e)
@@ -267,7 +267,7 @@ export default function BudgetsScreen() {
       >
         {loadError && (
           <View style={styles.errorBanner}>
-            <Text style={styles.errorTitle}>Couldn't load your budgets</Text>
+            <Text style={styles.errorTitle}>Couldn’t load your budgets</Text>
             <Text style={styles.errorDetail}>{loadError}</Text>
             <PrimaryButton title="Retry" compact variant="secondary" onPress={() => void load()} />
           </View>

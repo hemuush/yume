@@ -118,7 +118,7 @@ describe('restore safety copy', () => {
     expect(await notes()).toEqual(['Old lunch', 'Today dinner']);
   });
 
-  it("if the copy can't be saved, nothing is replaced and the existing copy is untouched", async () => {
+  it('if the copy can’t be saved, nothing is replaced and the existing copy is untouched', async () => {
     const copyBefore = await getSafetyCopyInfo();
     mockFs.failWrite = true;
     await expect(restoreKeepingSafetyCopy(otherPhone)).rejects.toBeInstanceOf(SafetyCopyError);

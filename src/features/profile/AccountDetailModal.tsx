@@ -217,7 +217,7 @@ export function AccountDetailModal({
                 await archiveAccount(account.id);
                 onChanged();
               } catch (e) {
-                showAlert("Couldn't archive", errorMessage(e));
+                showAlert('Couldn’t archive', errorMessage(e));
               } finally {
                 setBusy(false);
               }
@@ -234,7 +234,7 @@ export function AccountDetailModal({
         await unarchiveAccount(account.id);
         onChanged();
       } catch (e) {
-        showAlert("Couldn't unarchive", errorMessage(e));
+        showAlert('Couldn’t unarchive', errorMessage(e));
       } finally {
         setBusy(false);
       }
@@ -252,7 +252,7 @@ export function AccountDetailModal({
           onChanged();
         });
       } catch (e) {
-        showAlert("Couldn't delete", errorMessage(e));
+        showAlert('Couldn’t delete', errorMessage(e));
       } finally {
         setBusy(false);
       }
@@ -379,7 +379,7 @@ export function AccountDetailModal({
       ) : txCheckFailed ? (
         <>
           <Text style={styles.errorText}>
-            Couldn't check whether this account has entries. You can still archive it.
+            Couldn’t check whether this account has entries. You can still archive it.
           </Text>
           <SheetLink label={busy ? 'Working…' : 'Archive account'} onPress={confirmArchive} disabled={busy} />
         </>

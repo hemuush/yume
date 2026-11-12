@@ -145,7 +145,7 @@ export default function RecurringScreen() {
       setRules((current) => current.map((r) => (r.id === rule.id ? { ...r, active: !rule.active } : r)));
       await load();
     } catch (e) {
-      showAlert("Couldn't update recurring entry", errorMessage(e));
+      showAlert('Couldn’t update recurring entry', errorMessage(e));
     } finally {
       pendingPause.current.delete(rule.id);
       setBusyRuleIds(new Set(pendingPause.current));
@@ -171,7 +171,7 @@ export default function RecurringScreen() {
       >
         {loadError && (
           <View style={styles.errorBanner}>
-            <Text style={styles.errorTitle}>Couldn't load recurring rules</Text>
+            <Text style={styles.errorTitle}>Couldn’t load recurring rules</Text>
             <Text style={styles.errorDetail}>{loadError}</Text>
             <PrimaryButton title="Retry" compact variant="secondary" onPress={() => void load()} />
           </View>

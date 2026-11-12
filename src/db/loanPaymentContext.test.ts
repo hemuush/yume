@@ -42,7 +42,7 @@ beforeAll(async () => {
   await installment(3, '2026-11-05', 'pending');
 });
 
-it("finds the next EMI, the loan's own account and the Loan EMI category", async () => {
+it('finds the next EMI, the loan’s own account and the Loan EMI category', async () => {
   const ctx = await getLoanPaymentContext('l1');
   expect(ctx?.installment).toMatchObject({
     installmentNumber: 2,

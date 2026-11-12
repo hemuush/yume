@@ -141,7 +141,7 @@ export function buildHeat(input: {
 
 /** What a screen reader says for a heatmap day: its date and what was spent. */
 export function heatDayLabel(d: HeatDay): string {
-  if (d.future) return `${dayMonth(d.iso)}, hasn't happened yet`;
+  if (d.future) return `${dayMonth(d.iso)}, hasn’t happened yet`;
   return `${dayMonth(d.iso)}, ${d.minor > 0 ? `spent ${formatMoney(d.minor)}` : 'nothing spent'}`;
 }
 
@@ -405,7 +405,7 @@ export function buildStoryCards(input: StoryInput): StoryCard[] {
         key: 'early',
         kicker: 'Too early to tell',
         big: 'Check back soon',
-        detail: `A few more days of spending and there'll be a story to tell about this ${input.unit}.`,
+        detail: `A few more days of spending and there’ll be a story to tell about this ${input.unit}.`,
         tone: 'mint',
         compact: true,
       },

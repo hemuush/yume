@@ -24,10 +24,10 @@ const C = {
   expenseTint: 'FBE1E4',
   white: 'FFFFFF',
   textMuted: '948E7C',
-  borderSoft: 'E6DFC9', // theme.colors.borderSoft — the app's own hairline colour, used for the grid below
+  borderSoft: 'E6DFC9', // theme.colors.borderSoft — the app’s own hairline colour, used for the grid below
 };
 
-const FONT_NAME = 'Calibri'; // Archivo (the app's own display font) isn't available to Excel — bold + color carries the identity instead.
+const FONT_NAME = 'Calibri'; // Archivo (the app’s own display font) isn’t available to Excel — bold + color carries the identity instead.
 
 // No freeze panes: xlsx-js-style has no `!freeze`/sheetView API, and the alternatives (paid SheetJS Pro or
 // hand-patching the sheet XML) are too fragile for a nice-to-have.

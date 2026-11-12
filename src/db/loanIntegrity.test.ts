@@ -180,7 +180,7 @@ describe('loan integrity', () => {
     expect(after.every((p) => p.emiAmountMinor > 100)).toBe(true);
   });
 
-  it("a lent loan's prepayment charge is money the borrower pays you: income, under Loan Repayment", async () => {
+  it('a lent loan’s prepayment charge is money the borrower pays you: income, under Loan Repayment', async () => {
     const loan = await createLoan({
       direction: 'lent',
       counterparty: 'Lent Charge Friend',
@@ -206,7 +206,7 @@ describe('loan integrity', () => {
     ]);
   });
 
-  it("a borrowed loan's prepayment charge keeps its existing category (unchanged behavior)", async () => {
+  it('a borrowed loan’s prepayment charge keeps its existing category (unchanged behavior)', async () => {
     const loan = await borrowed('Borrowed Charge Bank');
     await applyPrepayment(loan.id, {
       amountMinor: 50000,

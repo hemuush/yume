@@ -197,11 +197,11 @@ describe('Profile · You section', () => {
     expect(router.push).toHaveBeenCalledWith('/people');
   });
 
-  it("says why the balance runs negative when a loan's asset isn't tracked, and links to Loans", async () => {
+  it('says why the balance runs negative when a loan’s asset isn’t tracked, and links to Loans', async () => {
     const tree = await render();
-    expect(texts(tree).some((t) => t.startsWith("A loan's home or vehicle"))).toBe(false);
+    expect(texts(tree).some((t) => t.startsWith('A loan’s home or vehicle'))).toBe(false);
     openTracked(tree);
-    const hint = texts(tree).find((t) => t.startsWith("A loan's home or vehicle isn't counted"));
+    const hint = texts(tree).find((t) => t.startsWith('A loan’s home or vehicle isn’t counted'));
     expect(hint).toBeDefined();
     press(tree, hint!);
     expect(router.push).toHaveBeenCalledWith('/loans');
@@ -215,7 +215,7 @@ describe('Profile · You section', () => {
     expect(shown).toContain(
       'Loans with a tracked asset value count their real equity here, not just the debt.'
     );
-    expect(shown.some((t) => t.startsWith("A loan's home or vehicle"))).toBe(false);
+    expect(shown.some((t) => t.startsWith('A loan’s home or vehicle'))).toBe(false);
     expect(shown).toEqual(expect.arrayContaining(['+₹3,00,000', '₹4,02,499'])); // ₹8,00,000 home − ₹5,00,000 owed
   });
 
@@ -262,7 +262,7 @@ describe('Profile · You section', () => {
       'Savings goals',
       'Recurring',
       'What if?',
-      "Suu's Garden — see what's grown",
+      'Suu’s Garden — see what’s grown',
     ]) {
       expect(shown).not.toContain(gone);
     }

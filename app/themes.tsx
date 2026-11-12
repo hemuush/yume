@@ -46,7 +46,7 @@ export default function ThemesScreen() {
         if (alive) setIconFollows(value);
       },
       () => {
-        if (alive) setIconError("Couldn't load the app icon setting.");
+        if (alive) setIconError('Couldn’t load the app icon setting.');
       }
     );
     return () => {
@@ -110,7 +110,7 @@ export default function ThemesScreen() {
             <Text style={styles.liveKicker}>Now on</Text>
             <Text style={styles.liveName}>{current.name}</Text>
             <Text style={styles.caption}>
-              Tints the wallpaper, buttons, the active tab, highlights, widgets and Suu's dot.
+              Tints the wallpaper, buttons, the active tab, highlights, widgets and Suu’s dot.
             </Text>
             <View style={styles.pair}>
               <View style={styles.pairItem}>
@@ -127,7 +127,7 @@ export default function ThemesScreen() {
         {iconSupported && (
           <SwitchRow
             title="Match the app icon"
-            hint="The launcher icon takes the theme's colours."
+            hint="The launcher icon takes the theme’s colours."
             value={iconFollows ?? false}
             disabled={iconFollows == null || iconSaving}
             onChange={saveIconFollows}

@@ -86,7 +86,7 @@ export function UndoToastProvider({ children }: { children: React.ReactNode }) {
       if (timer.current) clearTimeout(timer.current);
       showNext();
       haptics.tap();
-      const fail = (e: unknown) => showAlert("Couldn't undo", errorMessage(e));
+      const fail = (e: unknown) => showAlert('Couldn’t undo', errorMessage(e));
       try {
         void Promise.resolve(current.onUndo()).catch(fail);
       } catch (e) {
@@ -141,7 +141,7 @@ function ToastView({
         <Text style={styles.message}>
           {toast.message}
           {/* Another delete landed while this toast was still showing — say so,
-              so the still-queued undo doesn't feel like it vanished. */}
+              so the still-queued undo doesn’t feel like it vanished. */}
           {queued > 0 ? ` · +${queued} more` : ''}
         </Text>
         <AnimatedPressable

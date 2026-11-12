@@ -294,7 +294,7 @@ export function AccountSummarySheet({
         )}
 
         {tab === 'flow' && loadError && (
-          <Text style={styles.empty}>Couldn't load this account's figures.</Text>
+          <Text style={styles.empty}>Couldn’t load this account’s figures.</Text>
         )}
 
         {tab === 'flow' && !loadError && (
@@ -344,7 +344,7 @@ export function AccountSummarySheet({
         )}
 
         {tab === 'latest' && loadError && (
-          <Text style={styles.empty}>Couldn't load this account's entries.</Text>
+          <Text style={styles.empty}>Couldn’t load this account’s entries.</Text>
         )}
         {tab === 'latest' &&
           !loadError &&

@@ -426,7 +426,7 @@ describe('days as a feed with a marker rail', () => {
       act(() => tree.unmount());
     }));
 
-  it("puts the day's entries on a card, not straight on the wallpaper", () =>
+  it('puts the day’s entries on a card, not straight on the wallpaper', () =>
     withWidth(() => {
       const tree = day();
       const lane = tree.root.find(
@@ -460,7 +460,7 @@ describe('days as a feed with a marker rail', () => {
       expect(lines('only')).toBe(0);
     }));
 
-  it("puts today's date number in a filled circle", () =>
+  it('puts today’s date number in a filled circle', () =>
     withWidth(() => {
       const circle = (today: boolean) => {
         const tree = day({ today });

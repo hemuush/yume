@@ -41,7 +41,7 @@ describe('getDailyExpenseTotals for one category', () => {
     expect(days.map((d) => d.date)).toEqual(['2026-09-01', '2026-09-03', '2026-09-10']);
   });
 
-  it("keeps only that category's days, subcategories included", async () => {
+  it('keeps only that category’s days, subcategories included', async () => {
     expect(await getDailyExpenseTotals(SEPT, false, food)).toEqual([
       { date: '2026-09-03', totalMinor: 35_000 },
       { date: '2026-09-10', totalMinor: 9_000 },

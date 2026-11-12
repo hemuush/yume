@@ -230,7 +230,7 @@ export function PersonDetailModal({
         await onChanged();
       });
     } catch (e) {
-      showAlert("Couldn't delete entry", errorMessage(e));
+      showAlert('Couldn’t delete entry', errorMessage(e));
     } finally {
       setSaving(false);
       running.current = false;
@@ -345,7 +345,7 @@ export function PersonDetailModal({
       />
       {loadError && (
         <>
-          <Text style={styles.errorText}>Couldn't load the latest details: {loadError}</Text>
+          <Text style={styles.errorText}>Couldn’t load the latest details: {loadError}</Text>
           <PrimaryButton title="Retry" variant="secondary" compact onPress={load} />
         </>
       )}

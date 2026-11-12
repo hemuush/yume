@@ -181,6 +181,6 @@ describe('add loan', () => {
     });
     expect(mockCreateLoan).not.toHaveBeenCalled();
     const shown = tree.root.findAllByType(Text).map((t) => [].concat(t.props.children).join(''));
-    expect(shown).toContain("The loan only has 12 EMIs, so 99 can't be paid already");
+    expect(shown).toContain('The loan only has 12 EMIs, so 99 can’t be paid already');
   });
 });

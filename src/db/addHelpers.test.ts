@@ -85,7 +85,7 @@ describe('Add Transaction helpers', () => {
     expect(entries[0]).toMatchObject({ type: 'expense', accountId: bank, accountCurrency: 'INR' });
   });
 
-  it("can be narrowed to one type, for Add's expense or income side", async () => {
+  it('can be narrowed to one type, for Add’s expense or income side', async () => {
     expect((await getRepeatEntries(3, '2026-09-25', 'expense')).map((e) => e.categoryName)).toEqual([
       'Transport',
       'Food',

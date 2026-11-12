@@ -145,7 +145,7 @@ export function YouSection() {
     <>
       {loadError && (
         <View style={styles.errorBanner}>
-          <Text style={styles.errorTitle}>Couldn't load your data</Text>
+          <Text style={styles.errorTitle}>Couldn’t load your data</Text>
           <Text style={styles.errorDetail}>{loadError}</Text>
           <PrimaryButton title="Retry" compact variant="secondary" onPress={() => void load()} />
         </View>
@@ -239,7 +239,7 @@ export function YouSection() {
         )}
       </Section>
 
-      {/* Budgets, goals, recurring, What-if and Suu's Garden live on Plan,
+      {/* Budgets, goals, recurring, What-if and Suu’s Garden live on Plan,
           each in a fuller screen, so Profile stays about you. This one row
           points there for anyone used to finding them on Profile. */}
       <Pressable

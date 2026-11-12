@@ -101,8 +101,8 @@ describe('pay installment sheet', () => {
     onPaid.mockRejectedValueOnce(new Error('refresh failed'));
     await act(async () => mockShowUndo.mock.calls[0][1]());
     expect(mockUndoPay).toHaveBeenCalledWith('i1');
-    expect(mockAlert).toHaveBeenCalledWith("Payment undone, couldn't refresh", expect.any(String));
-    expect(mockAlert).not.toHaveBeenCalledWith("Couldn't undo", expect.any(String));
+    expect(mockAlert).toHaveBeenCalledWith('Payment undone, couldn’t refresh', expect.any(String));
+    expect(mockAlert).not.toHaveBeenCalledWith('Couldn’t undo', expect.any(String));
   });
   it('defaults the actual payment date to today even when the EMI is overdue', async () => {
     const due = addDaysToIsoDate(todayIso, -10);
@@ -139,8 +139,8 @@ describe('pay installment sheet', () => {
     const { tree } = await render(todayIso, onPaid);
     await press(tree);
     expect(mockPay).toHaveBeenCalledTimes(1);
-    expect(mockAlert).not.toHaveBeenCalledWith("Couldn't record payment", expect.anything());
-    expect(mockAlert.mock.calls[0][0]).toBe("Payment saved, couldn't refresh");
+    expect(mockAlert).not.toHaveBeenCalledWith('Couldn’t record payment', expect.anything());
+    expect(mockAlert.mock.calls[0][0]).toBe('Payment saved, couldn’t refresh');
     expect(mockShowUndo).toHaveBeenCalled();
   });
 

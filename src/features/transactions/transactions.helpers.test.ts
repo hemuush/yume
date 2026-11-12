@@ -112,7 +112,7 @@ describe('periodHeading', () => {
     });
   });
 
-  it("adds the year only when it isn't this year", () => {
+  it('adds the year only when it isn’t this year', () => {
     const anchor = new Date(2025, 11, 31);
     expect(periodHeading({ scope: 'week', week: weekContaining(anchor), anchor, today }).sub).toBe(
       'Week 5 of 5 · 2025'
@@ -159,7 +159,7 @@ describe('filterActivity', () => {
     expect(ids({ accountIds: ['savings'] })).toEqual(['move']);
   });
 
-  it("matches a parent category's subcategories too", () => {
+  it('matches a parent category’s subcategories too', () => {
     expect(ids({ categoryIds: ['food'] })).toEqual(['lunch', 'order']);
   });
 

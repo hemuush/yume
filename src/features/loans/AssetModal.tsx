@@ -97,8 +97,8 @@ export function AssetModal({
         placeholder="e.g. 3500000"
       />
       <Text style={styles.hintText}>
-        Value minus what's still owed ({formatMoney(loan.outstandingPrincipalMinor)}) counts toward Net Worth.
-        Leave the value blank if you don't have one yet, and update it when it changes.
+        Value minus what’s still owed ({formatMoney(loan.outstandingPrincipalMinor)}) counts toward Net Worth.
+        Leave the value blank if you don’t have one yet, and update it when it changes.
       </Text>
       {(!!loan.assetLabel || loan.assetValueMinor != null) && (
         <SheetLink label="Stop tracking this asset" onPress={stopTracking} disabled={saving} />

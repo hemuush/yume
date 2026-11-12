@@ -120,30 +120,30 @@ export default function TidyUpScreen() {
         emitTransactionsChanged();
         await reload();
       });
-    }, "Couldn't delete it");
+    }, 'Couldn’t delete it');
 
   const keepBoth = (group: RepeatGroup) =>
     act(async () => {
       await keepRepeatGroup(group.key);
       haptics.tap();
-    }, "Couldn't save that");
+    }, 'Couldn’t save that');
 
   const moveBalance = (group: StartingBalanceGroup) =>
     act(async () => {
       const move = await moveToOpeningBalance(group);
       haptics.confirm();
-      showUndo(`Moved to ${group.accountName}'s opening balance`, async () => {
+      showUndo(`Moved to ${group.accountName}’s opening balance`, async () => {
         await undoMoveToOpeningBalance(move);
         emitTransactionsChanged();
         await reload();
       });
-    }, "Couldn't move it");
+    }, 'Couldn’t move it');
 
   const keepIncome = (group: StartingBalanceGroup) =>
     act(async () => {
       await keepAsIncome(group.key);
       haptics.tap();
-    }, "Couldn't save that");
+    }, 'Couldn’t save that');
 
   const roundAmounts = (count: number) =>
     showAlert(
@@ -169,7 +169,7 @@ export default function TidyUpScreen() {
                   await reload();
                 }
               );
-            }, "Couldn't round amounts"),
+            }, 'Couldn’t round amounts'),
         },
       ]
     );
@@ -229,7 +229,7 @@ export default function TidyUpScreen() {
       >
         {loadError && (
           <View style={styles.errorBanner}>
-            <Text style={styles.errorTitle}>Couldn't check your data</Text>
+            <Text style={styles.errorTitle}>Couldn’t check your data</Text>
             <Text style={styles.errorDetail}>{loadError}</Text>
             <PrimaryButton title="Retry" compact variant="secondary" onPress={() => void reload()} />
           </View>
@@ -338,12 +338,12 @@ export default function TidyUpScreen() {
                           <Text style={styles.afterText}>
                             Income {one ? `in ${longMonth(g.firstDate)}` : 'across those months'}{' '}
                             <Text style={styles.afterBold}>−{money(g.totalMinor, g.isSavings)}</Text> ·{' '}
-                            {g.accountName}'s balance <Text style={styles.afterBold}>stays the same</Text>
+                            {g.accountName}’s balance <Text style={styles.afterBold}>stays the same</Text>
                           </Text>
                         </View>
                         <View style={styles.actions}>
                           <PrimaryButton
-                            title={one ? "It's real income" : "They're real income"}
+                            title={one ? 'It’s real income' : 'They’re real income'}
                             variant="secondary"
                             onPress={() => keepIncome(g)}
                             disabled={busy}

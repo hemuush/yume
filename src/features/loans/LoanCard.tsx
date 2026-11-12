@@ -241,6 +241,6 @@ const styles = StyleSheet.create({
     borderRadius: theme.radius.pill,
     backgroundColor: theme.colors.ink,
   },
-  pillPressed: { opacity: 0.8 },
+  pillPressed: { opacity: theme.opacity.pressed },
   pillText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.white },
 });

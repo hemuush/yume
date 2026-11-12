@@ -107,8 +107,8 @@ describe('Tidy up screen', () => {
     const tree = await render();
     await tap(tree, 'Move to opening balance');
     expect(moveToOpeningBalance).toHaveBeenCalledWith(oldBalance);
-    expect(mockShowUndo).toHaveBeenCalledWith("Moved to Bank's opening balance", expect.any(Function));
-    await tap(tree, "They're real income");
+    expect(mockShowUndo).toHaveBeenCalledWith('Moved to Bank’s opening balance', expect.any(Function));
+    await tap(tree, 'They’re real income');
     expect(keepAsIncome).toHaveBeenCalledWith('bank|prev');
   });
 

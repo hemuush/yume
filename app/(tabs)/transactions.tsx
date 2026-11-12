@@ -236,7 +236,7 @@ export default function TransactionsScreen() {
       })
       .catch(() => {
         if (live) {
-          showAlert("Couldn't open entry", 'Reopen it from Reports to retry.');
+          showAlert('Couldn’t open entry', 'Reopen it from Reports to retry.');
           router.setParams({ entry: undefined });
         }
       });
@@ -707,7 +707,7 @@ export default function TransactionsScreen() {
     <>
       {loadError && (
         <View style={styles.errorBanner}>
-          <Text style={styles.errorTitle}>Couldn't load your transactions</Text>
+          <Text style={styles.errorTitle}>Couldn’t load your transactions</Text>
           <Text style={styles.errorDetail}>{loadError}</Text>
           <PrimaryButton title="Try again" compact variant="secondary" onPress={retryLoad} />
         </View>
@@ -715,7 +715,7 @@ export default function TransactionsScreen() {
 
       {comparisonFailed && !loadError && (
         <View style={styles.errorBanner}>
-          <Text style={styles.errorTitle}>Couldn't load this period's totals</Text>
+          <Text style={styles.errorTitle}>Couldn’t load this period’s totals</Text>
           <Text style={styles.errorDetail}>Your entries are below.</Text>
           <PrimaryButton title="Try again" compact variant="secondary" onPress={retryLoad} />
         </View>

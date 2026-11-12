@@ -87,8 +87,8 @@ export default function NeedsYouScreen() {
     if (prefs.suuCheckins && pct != null) {
       lines.push(
         pct <= 0
-          ? `You're spending ${formatPctChange(pct)} less than last month — nice pace.`
-          : `You're spending ${formatPctChange(pct)} more than last month. A lighter week would even it out.`
+          ? `You’re spending ${formatPctChange(pct)} less than last month — nice pace.`
+          : `You’re spending ${formatPctChange(pct)} more than last month. A lighter week would even it out.`
       );
     }
     const reminder = prefs.suuCheckins ? valueReminderLine(accounts, toLocalIsoDate(new Date())) : null;
@@ -128,7 +128,7 @@ export default function NeedsYouScreen() {
       // Nothing was saved, so the list goes back to how it was rather than claiming a dismissal.
       putBack();
       setDismissed((prev) => prev.filter((i) => i.key !== item.key));
-      showAlert("Couldn't dismiss", errorMessage(e));
+      showAlert('Couldn’t dismiss', errorMessage(e));
       return;
     }
     showUndo(`Dismissed ${item.title}`, async () => {
@@ -142,7 +142,7 @@ export default function NeedsYouScreen() {
     try {
       await restoreNeedsYou(item.key);
     } catch (e) {
-      showAlert("Couldn't show it again", errorMessage(e));
+      showAlert('Couldn’t show it again', errorMessage(e));
       return;
     }
     await reload();
@@ -154,7 +154,7 @@ export default function NeedsYouScreen() {
       await snoozeBackupReminder();
     } catch (e) {
       putBack();
-      showAlert("Couldn't snooze", errorMessage(e));
+      showAlert('Couldn’t snooze', errorMessage(e));
       return;
     }
     // Same as dismiss: a mis-tap can be taken back.
@@ -178,7 +178,7 @@ export default function NeedsYouScreen() {
       >
         {loadError && (
           <View style={styles.errorBanner}>
-            <Text style={styles.errorTitle}>Couldn't load what needs you</Text>
+            <Text style={styles.errorTitle}>Couldn’t load what needs you</Text>
             <Text style={styles.errorDetail}>{loadError}</Text>
             <PrimaryButton title="Retry" compact variant="secondary" onPress={() => void reload()} />
           </View>

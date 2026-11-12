@@ -114,7 +114,7 @@ describe('net worth calculation matrix — every loan direction × status combin
 });
 
 describe('getNetWorthTrend historical cutoff correctness', () => {
-  it("a transaction dated in a later month never leaks into an earlier month's net worth snapshot", async () => {
+  it('a transaction dated in a later month never leaks into an earlier month’s net worth snapshot', async () => {
     // Reuses the file's shared mocked db; dates are in a year no other test touches so earlier running
     // totals can't contaminate this snapshot.
     const account = await createAccount({

@@ -117,11 +117,11 @@ export function TrackedCard({
               style={withPressedTint(secondary, [styles.hint, styles.hintWarn, styles.inset])}
               onPress={() => router.push('/loans')}
               accessibilityRole="button"
-              accessibilityLabel="A loan's home or vehicle isn't counted yet. Open loans to add its value"
+              accessibilityLabel="A loan’s home or vehicle isn’t counted yet. Open loans to add its value"
             >
               <MaterialCommunityIcons name="home-outline" size={16} color={theme.colors.ink} />
               <Text style={styles.hintText}>
-                A loan's home or vehicle isn't counted until you add its value on the loan, so this can run
+                A loan’s home or vehicle isn’t counted until you add its value on the loan, so this can run
                 negative for a completely normal loan.
               </Text>
               <Feather name="chevron-right" size={16} color={theme.colors.textMuted} />

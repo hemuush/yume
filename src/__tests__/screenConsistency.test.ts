@@ -125,7 +125,7 @@ describe('Profile / Loans tab / Home all agree after a realistic create-delete-p
     expect(loans[0].outstandingPrincipalMinor).toBe(remaining);
   });
 
-  it("every screen's Promise.all batch (Profile's YouSection, and Home's) resolves and lands on the hand-calculated total", async () => {
+  it('every screen’s Promise.all batch (Profile’s YouSection, and Home’s) resolves and lands on the hand-calculated total', async () => {
     // The core of YouSection's load() (accounts/loans/people/currency, feeding computeTrackedBalance): if any
     // call throws, Promise.all rejects and the screen silently keeps its zero/empty defaults.
     const [profileAccounts, profileLoans, profilePeople, , , currency] = await Promise.all([

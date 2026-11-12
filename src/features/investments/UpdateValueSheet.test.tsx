@@ -111,7 +111,7 @@ describe('UpdateValueSheet', () => {
   it('offers the accounts own figure as the estimate and explains it', () => {
     const { r } = render();
     expect(shown(r)).toContain('Use ₹44,560');
-    expect(shown(r)).toContain("Your last update plus the ₹1,500 you've put in since.");
+    expect(shown(r)).toContain('Your last update plus the ₹1,500 you’ve put in since.');
     press(r, 'Use the estimate ₹44,560');
     expect(r.root.findAllByType(TextInput)[0].props.value).toBe('44560');
   });
@@ -240,7 +240,7 @@ describe('deposit estimate', () => {
     } as unknown as Account;
     const { r } = render({ account: fd });
     expect(shown(r)).toContain('grown at 7% a year');
-    expect(shown(r)).toContain("An estimate: use your bank's figure when you have it.");
+    expect(shown(r)).toContain('An estimate: use your bank’s figure when you have it.');
     expect(shown(r)).not.toContain('Use ₹10,00,000');
   });
 });

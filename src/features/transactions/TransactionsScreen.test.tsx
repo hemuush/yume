@@ -118,11 +118,11 @@ it('clears search in place and ignores results from the cleared query', async ()
 });
 
 describe('Activity when the totals query fails', () => {
-  it("leaves the skeleton and says the totals couldn't load", async () => {
+  it('leaves the skeleton and says the totals couldn’t load', async () => {
     mockComparison.fail = true;
     const shown = texts(await render());
     expect(shown).not.toContain('SKELETON');
-    expect(shown).toContain("Couldn't load this period's totals");
+    expect(shown).toContain('Couldn’t load this period’s totals');
     expect(shown).toContain('Nothing logged this week');
   });
 
@@ -130,7 +130,7 @@ describe('Activity when the totals query fails', () => {
     mockComparison.fail = false;
     const shown = texts(await render());
     expect(shown).not.toContain('SKELETON');
-    expect(shown).not.toContain("Couldn't load this period's totals");
+    expect(shown).not.toContain('Couldn’t load this period’s totals');
   });
 });
 

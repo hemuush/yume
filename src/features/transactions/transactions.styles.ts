@@ -172,7 +172,7 @@ export const styles = StyleSheet.create({
   periodRowFlush: { marginLeft: -10 },
   periodInner: { flexShrink: 1, flexDirection: 'row', alignItems: 'center' },
   periodNav: { width: 36, minHeight: 44, alignItems: 'center', justifyContent: 'center' },
-  periodNavOff: { opacity: 0.35 },
+  periodNavOff: { opacity: theme.opacity.limit },
   // The period reads as Home's calendar pill: icon, the period (with "Week 1 of 5" under it), a chevron.
   periodTitleBtn: {
     flexShrink: 1,

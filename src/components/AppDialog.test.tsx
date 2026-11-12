@@ -108,8 +108,8 @@ describe('showAlert', () => {
 
   it('shows a notice with one OK that closes it', async () => {
     const tree = await render();
-    act(() => showAlert("Couldn't save", 'The disk is full.'));
-    expect(texts(tree)).toEqual(expect.arrayContaining(["Couldn't save", 'The disk is full.']));
+    act(() => showAlert('Couldn’t save', 'The disk is full.'));
+    expect(texts(tree)).toEqual(expect.arrayContaining(['Couldn’t save', 'The disk is full.']));
     expect(tree.root.findByType(ModalSheet).props.scrollable).toBe(true);
     expect(tree.root.findByType(ModalSheet).props.footer).toBeDefined();
     const [ok] = buttons(tree);

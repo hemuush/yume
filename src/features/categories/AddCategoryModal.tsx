@@ -182,7 +182,7 @@ export function AddCategoryModal({
         </Text>
       ) : category ? (
         <Text style={styles.modalHint}>
-          Type ({kind}) can't be changed once a category exists — archive and recreate it instead.
+          Type ({kind}) can’t be changed once a category exists — archive and recreate it instead.
         </Text>
       ) : (
         <>
@@ -231,7 +231,7 @@ export function AddCategoryModal({
           {parentId && (
             <Text style={styles.modalHint}>
               {category?.parentId && parentId !== category.parentId ? 'Will move to' : 'A subcategory of'}{' '}
-              {allCategories.find((c) => c.id === parentId)?.name} — its spend rolls up into that category's
+              {allCategories.find((c) => c.id === parentId)?.name} — its spend rolls up into that category’s
               total in Reports.
             </Text>
           )}

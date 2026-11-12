@@ -7,7 +7,7 @@ export function AppLockSaveFeedback(): null {
   const { lockSaveError, acknowledgeLockSaveError } = useAppLock();
   useEffect(() => {
     if (!lockSaveError) return;
-    showAlert("Couldn't change the app lock", lockSaveError.message);
+    showAlert('Couldn’t change the app lock', lockSaveError.message);
     acknowledgeLockSaveError(lockSaveError.attempt);
   }, [lockSaveError, acknowledgeLockSaveError]);
   return null;

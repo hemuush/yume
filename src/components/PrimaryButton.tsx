@@ -157,5 +157,5 @@ const styles = StyleSheet.create({
   text: { fontFamily: theme.font.bodyMedium, fontSize: 14, textAlign: 'center', flexShrink: 1 },
   textPrimary: { color: theme.colors.surface },
   textSecondary: { color: theme.colors.textPrimary },
-  disabled: { opacity: 0.45 },
+  disabled: { opacity: theme.opacity.disabled },
 });

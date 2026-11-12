@@ -79,7 +79,7 @@ export function MinDueFields({
         </View>
       </View>
       <Text style={styles.hint}>
-        An estimate from your card's terms (often about 5%). Your statement shows the exact minimum. Leave
+        An estimate from your card’s terms (often about 5%). Your statement shows the exact minimum. Leave
         empty to skip.
       </Text>
     </View>

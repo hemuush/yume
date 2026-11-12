@@ -304,7 +304,9 @@ export function WrapPlayer({
               accessibilityLabel="Next part"
               accessibilityState={{ disabled: index === last }}
             >
-              <Text style={[styles.controlText, index === last && { opacity: 0.4 }]}>Next</Text>
+              <Text style={[styles.controlText, index === last && { opacity: theme.opacity.disabled }]}>
+                Next
+              </Text>
               <Feather name="chevron-right" size={18} color={theme.colors.ink} />
             </Pressable>
           </View>

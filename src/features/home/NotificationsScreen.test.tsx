@@ -106,7 +106,7 @@ it('puts a row back in its place, with an error and no Undo, when saving the dis
     await rows(tree)[1].props.onDismiss();
   });
   expect(keys(tree)).toEqual(['a', 'b', 'c']);
-  expect(mockShowAlert).toHaveBeenCalledWith("Couldn't dismiss", expect.stringContaining('disk full'));
+  expect(mockShowAlert).toHaveBeenCalledWith('Couldn’t dismiss', expect.stringContaining('disk full'));
   expect(mockShowUndo).not.toHaveBeenCalled();
 });
 
@@ -123,7 +123,7 @@ it('snoozes a row away, and brings it back if the snooze cannot be saved', async
     await rows(again)[1].props.onSnooze();
   });
   expect(keys(again)).toEqual(['a', 'b', 'c']);
-  expect(mockShowAlert).toHaveBeenCalledWith("Couldn't snooze", expect.stringContaining('locked'));
+  expect(mockShowAlert).toHaveBeenCalledWith('Couldn’t snooze', expect.stringContaining('locked'));
 });
 
 it('counts what needs you by urgency at the top', async () => {

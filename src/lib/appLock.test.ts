@@ -42,7 +42,7 @@ describe('withoutRelock', () => {
   afterEach(() => jest.useRealTimers());
 
   it('marks the app as returning from its own activity while it is open and briefly after', async () => {
-    jest.advanceTimersByTime(10000); // well past any earlier activity's grace period
+    jest.advanceTimersByTime(10000); // well past any earlier activity’s grace period
     expect(isReturningFromOwnActivity()).toBe(false);
 
     let finish!: () => void;
@@ -71,7 +71,7 @@ describe('withoutRelock', () => {
     expect(shouldRelock(Date.now() - RELOCK_AFTER_MS, Date.now())).toBe(true);
   });
 
-  it("the unlock prompt itself counts as the app's own activity", async () => {
+  it('the unlock prompt itself counts as the app’s own activity', async () => {
     jest.advanceTimersByTime(10000);
     (LocalAuthentication.authenticateAsync as jest.Mock).mockResolvedValue({ success: true });
     expect(await authenticate()).toBe(true);
@@ -94,7 +94,7 @@ describe('shouldRelock', () => {
     expect(shouldRelock(now - 10 * 60_000, now)).toBe(true);
   });
 
-  it("doesn't lock when the app never really went to the background (notifications, app switcher)", () => {
+  it('doesn’t lock when the app never really went to the background (notifications, app switcher)', () => {
     expect(shouldRelock(null, now)).toBe(false);
   });
 });

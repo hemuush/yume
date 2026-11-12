@@ -89,7 +89,7 @@ describe('AccountDetailModal usage check', () => {
     mockCount.mockRejectedValue(new Error('db locked'));
     const t = texts(await render());
     expect(t).not.toContain('Checking usage…');
-    expect(t.some((s) => s.startsWith("Couldn't check whether this account has entries"))).toBe(true);
+    expect(t.some((s) => s.startsWith('Couldn’t check whether this account has entries'))).toBe(true);
     expect(t).toContain('link:Archive account');
     expect(t).not.toContain('link:Delete account');
   });

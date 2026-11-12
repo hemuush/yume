@@ -242,7 +242,7 @@ describe('tracked accounts', () => {
     expect(again.currentBalanceMinor).toBe(4_300_000);
   });
 
-  it("won't delete an account that has value updates", async () => {
+  it('won’t delete an account that has value updates', async () => {
     const { fund } = await indexFund();
     await addValuation(fund.id, { date: '2026-09-28', valueMinor: 4_300_000 });
     await expect(deleteAccount(fund.id)).rejects.toThrow(/archive/);

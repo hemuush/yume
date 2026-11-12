@@ -232,7 +232,7 @@ describe('Backup & restore · restore points', () => {
   it('keeps a file it cannot read in the list, with nothing to restore', async () => {
     mockState.files = [{ ...file(5), summary: null }];
     const tree = await render();
-    expect(texts(tree)).toContain("Couldn't read this file");
+    expect(texts(tree)).toContain('Couldn’t read this file');
     expect(buttons(tree, 'Restore')[0].props.disabled).toBe(true);
   });
 });

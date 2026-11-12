@@ -251,8 +251,8 @@ export function SearchStatus({
   if (failed) {
     return (
       <View style={styles.searchEmpty}>
-        <Text style={styles.searchEmptyTitle}>Couldn't search</Text>
-        <Text style={styles.searchEmptySub}>Your entries haven't changed. Please try again.</Text>
+        <Text style={styles.searchEmptyTitle}>Couldn’t search</Text>
+        <Text style={styles.searchEmptySub}>Your entries haven’t changed. Please try again.</Text>
         <Pressable onPress={onRetry} accessibilityRole="button" style={withPressed(styles.searchSuggestChip)}>
           <Text style={styles.searchSuggestText}>Retry search</Text>
         </Pressable>
@@ -263,7 +263,7 @@ export function SearchStatus({
     return (
       <EmptyState
         title={`No matches for "${query}"`}
-        subtitle="Try a shorter word, or check the spelling — search looks at each transaction's note, category, account, amount and day."
+        subtitle="Try a shorter word, or check the spelling — search looks at each transaction’s note, category, account, amount and day."
       />
     );
   }

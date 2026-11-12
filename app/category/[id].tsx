@@ -207,7 +207,7 @@ export default function CategoryScreen() {
       >
         {loadError && (
           <View style={styles.errorBanner}>
-            <Text style={styles.errorTitle}>Couldn't load this category</Text>
+            <Text style={styles.errorTitle}>Couldn’t load this category</Text>
             <Text style={styles.errorDetail}>{loadError}</Text>
             <PrimaryButton title="Retry" compact variant="secondary" onPress={() => void reload()} />
           </View>

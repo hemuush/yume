@@ -184,7 +184,7 @@ describe('entry detail', () => {
     const tree = await render();
     const text = JSON.stringify(tree.toJSON());
     expect(text).not.toContain('Checking…');
-    expect(text).toContain("Couldn't check whether this entry is tied to a loan or a person");
+    expect(text).toContain('Couldn’t check whether this entry is tied to a loan or a person');
     expect(
       tree.root.findAll((n) => n.props.title === 'Edit' && typeof n.props.onPress === 'function').length
     ).toBeGreaterThan(0);
@@ -207,7 +207,7 @@ describe('entry detail', () => {
     expect(rows(tree, 'Log again today').length).toBeGreaterThan(0);
   });
 
-  it("just closes when opened from that category's own page", async () => {
+  it('just closes when opened from that category’s own page', async () => {
     mockStack.routes = [{ name: '(tabs)' }, { name: 'category/[id]', params: { id: 'food' } }];
     try {
       const tree = await render();
@@ -221,7 +221,7 @@ describe('entry detail', () => {
     }
   });
 
-  it("opens the entry's category page", async () => {
+  it('opens the entry’s category page', async () => {
     const tree = await render();
     const link = rows(tree, 'Open Food category')[0];
     act(() => link.props.onPress());

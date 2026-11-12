@@ -250,7 +250,7 @@ async function render() {
   await act(async () => {
     tree = create(<PlanScreen />);
   });
-  await act(async () => {}); // let the load's promises settle
+  await act(async () => {}); // let the load’s promises settle
   return tree;
 }
 
@@ -364,7 +364,7 @@ describe('Plan tab', () => {
     expect(positions.every((p) => p >= 0)).toBe(true);
   });
 
-  it("shows each section's own figures", async () => {
+  it('shows each section’s own figures', async () => {
     const shown = texts(await render());
     expect(shown).toEqual(expect.arrayContaining(['₹500', '4 days', 'Your plans', 'Food', '₹30,000']));
     expect(shown.some((t) => t.endsWith('over budget'))).toBe(true);

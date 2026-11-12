@@ -87,7 +87,7 @@ describe('Categories · tile grid', () => {
     expect(texts(tree)).not.toContain('Swiggy');
   });
 
-  it("edits the parent from the panel's header and a subcategory from its pill", async () => {
+  it('edits the parent from the panel’s header and a subcategory from its pill', async () => {
     const { tree, onEdit } = await render();
     act(() => pressable(tree, 'Food & Dining, 2 subcategories').props.onPress());
 

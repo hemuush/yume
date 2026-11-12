@@ -71,7 +71,7 @@ export function InvestmentFields({
             maxLength={5}
           />
           <Text style={styles.hintText}>
-            With a rate, Yume estimates today's value between your updates. Your bank's figure is always the
+            With a rate, Yume estimates today’s value between your updates. Your bank’s figure is always the
             one to enter.
           </Text>
           {kind === 'fixed_deposit' &&

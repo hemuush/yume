@@ -284,7 +284,7 @@ function MedalTile({
       accessibilityLabel={hint ? `${name}, ${hint}` : name}
       accessibilityState={{ selected: active }}
     >
-      {/* The fade sits on the contents, not the pressable: the press animation drives the pressable's own opacity. */}
+      {/* The fade sits on the contents, not the pressable: the press animation drives the pressable’s own opacity. */}
       <View
         style={[
           styles.medalBody,

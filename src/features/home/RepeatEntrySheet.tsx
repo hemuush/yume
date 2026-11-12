@@ -81,11 +81,11 @@ export function RepeatEntrySheet({
           await deleteTransaction(tx.id, { keep: false });
           emitTransactionsChanged();
         } catch (e) {
-          showAlert("Couldn't undo", errorMessage(e));
+          showAlert('Couldn’t undo', errorMessage(e));
         }
       });
     } catch (e) {
-      showAlert("Couldn't log it", errorMessage(e));
+      showAlert('Couldn’t log it', errorMessage(e));
     } finally {
       saving.current = false;
     }

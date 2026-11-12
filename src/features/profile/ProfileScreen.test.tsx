@@ -91,7 +91,7 @@ it('keeps a failed name draft available to retry and switches to Settings', asyn
   await act(async () => {
     await identity(tree).props.onSave();
   });
-  expect(showAlert).toHaveBeenCalledWith("Couldn't save name", 'write failed');
+  expect(showAlert).toHaveBeenCalledWith('Couldn’t save name', 'write failed');
   expect(input(tree).props.value).toBe('Mira');
   expect(input(tree).props.editable).toBe(true);
   act(() => tree.root.findByType(ProfileTabs).props.onChange('settings'));

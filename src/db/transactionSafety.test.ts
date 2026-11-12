@@ -216,7 +216,7 @@ describe('transaction-wrapped writes against a real SQLite engine', () => {
 
     await expect(
       applyRateChange(loan.id, { newAnnualRateBp: 800, effectiveDate: '2025-12-01' })
-    ).rejects.toThrow("can't be before the loan itself started");
+    ).rejects.toThrow('can’t be before the loan itself started');
 
     // A backdated but valid effective date (the bank actually applied this
     // two "months" ago, only now being entered into Yume).

@@ -226,7 +226,7 @@ function LoanDetailContent({ loan, onClose, onChanged, startWithPay = false, hue
           onChanged();
         });
       } catch (e) {
-        showAlert("Couldn't delete loan", errorMessage(e));
+        showAlert('Couldn’t delete loan', errorMessage(e));
       } finally {
         setBusy(false);
       }
@@ -317,7 +317,7 @@ function LoanDetailContent({ loan, onClose, onChanged, startWithPay = false, hue
           <>
             {loadError && (
               <View>
-                <Text style={styles.errorText}>Couldn't load the latest details: {loadError}</Text>
+                <Text style={styles.errorText}>Couldn’t load the latest details: {loadError}</Text>
                 <PrimaryButton title="Retry" compact variant="secondary" onPress={() => void load()} />
               </View>
             )}
@@ -485,7 +485,7 @@ function LoanDetailContent({ loan, onClose, onChanged, startWithPay = false, hue
                 )}
                 {linkedAccountMissing && defaultAccount && (
                   <Text style={styles.hintText}>
-                    This loan's original account is unavailable — payments will go through{' '}
+                    This loan’s original account is unavailable — payments will go through{' '}
                     {defaultAccount.name} instead.
                   </Text>
                 )}

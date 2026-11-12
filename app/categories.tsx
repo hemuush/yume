@@ -83,7 +83,7 @@ export default function CategoriesScreen() {
               await unarchiveCategory(cat.id, showPrivacyReminderWarning);
               await load();
             } catch (e) {
-              showAlert("Couldn't restore category", errorMessage(e));
+              showAlert('Couldn’t restore category', errorMessage(e));
             } finally {
               setActionBusy(false);
             }
@@ -112,7 +112,7 @@ export default function CategoriesScreen() {
                 await archiveCategory(cat.id, showPrivacyReminderWarning);
                 await load();
               } catch (e) {
-                showAlert("Couldn't archive category", errorMessage(e));
+                showAlert('Couldn’t archive category', errorMessage(e));
               } finally {
                 setActionBusy(false);
               }
@@ -135,7 +135,7 @@ export default function CategoriesScreen() {
           await load();
         });
       } catch (e) {
-        showAlert("Couldn't delete category", errorMessage(e));
+        showAlert('Couldn’t delete category', errorMessage(e));
       } finally {
         setActionBusy(false);
       }
@@ -165,7 +165,7 @@ export default function CategoriesScreen() {
     if (cat.isSystem) {
       showAlert(
         'Built-in category',
-        `"${cat.name}" is used by Yume to auto-categorise loan EMIs, fees and Friends & Family entries, so it can't be archived, deleted, or renamed. You can still change its icon and colour.`
+        `"${cat.name}" is used by Yume to auto-categorise loan EMIs, fees and Friends & Family entries, so it can’t be archived, deleted, or renamed. You can still change its icon and colour.`
       );
       return;
     }
@@ -270,7 +270,7 @@ export default function CategoriesScreen() {
       >
         {loadError && (
           <View style={styles.errorBanner}>
-            <Text style={styles.errorTitle}>Couldn't load your categories</Text>
+            <Text style={styles.errorTitle}>Couldn’t load your categories</Text>
             <Text style={styles.errorDetail}>{loadError}</Text>
             <PrimaryButton title="Retry" compact variant="secondary" onPress={() => void load()} />
           </View>

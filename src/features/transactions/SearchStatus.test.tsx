@@ -50,7 +50,7 @@ describe('search, before typing', () => {
   it('distinguishes failed queries from no matches and lets the user retry', () => {
     const onRetry = jest.fn();
     const tree = render({ query: 'food', failed: true, onRetry });
-    expect(texts(tree)).toContain("Couldn't search");
+    expect(texts(tree)).toContain('Couldn’t search');
     expect(texts(tree)).not.toContain('No matches for "food"');
     const retry = tree.root.findAll((n) => n.props.onPress === onRetry)[0];
     act(() => retry.props.onPress());

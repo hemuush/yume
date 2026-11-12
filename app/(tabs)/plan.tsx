@@ -374,7 +374,7 @@ export default function PlanScreen() {
       if (context) setPaying(context);
       else showAlert('Nothing to pay', 'This loan has no installment due right now.');
     } catch (e) {
-      if (ticket === paymentRequest.current) showAlert("Couldn't open the payment", errorMessage(e));
+      if (ticket === paymentRequest.current) showAlert('Couldn’t open the payment', errorMessage(e));
     } finally {
       if (ticket === paymentRequest.current) openingPayment.current = false;
     }

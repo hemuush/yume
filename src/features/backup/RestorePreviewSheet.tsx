@@ -73,7 +73,7 @@ export function RestorePreviewSheet({
       }
     >
       {/* The calm-sheets sign-off (Direction C): the backup as a card — when
-          it was made and what's in it — then what's on the phone now. */}
+          it was made and what’s in it — then what’s on the phone now. */}
       <DraftCard
         hue={accent}
         icon="backup-restore"
@@ -95,7 +95,7 @@ export function RestorePreviewSheet({
           {preview.lostCount > 0
             ? `${preview.lostCount} ${preview.lostCount === 1 ? 'entry' : 'entries'} you added after that backup would be lost. `
             : 'Nothing you added since would be lost. '}
-          A copy of today's data is kept first, so you can undo this.
+          A copy of today’s data is kept first, so you can undo this.
         </Text>
       </View>
     </ModalSheet>

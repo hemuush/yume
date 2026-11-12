@@ -177,7 +177,7 @@ export function TransactionDetailModal({
           onChanged();
         });
       } catch (e) {
-        showAlert("Couldn't log it", errorMessage(e));
+        showAlert('Couldn’t log it', errorMessage(e));
       } finally {
         setBusy(false);
       }
@@ -206,7 +206,7 @@ export function TransactionDetailModal({
           onChanged();
         });
       } catch (e) {
-        showAlert("Couldn't delete", errorMessage(e));
+        showAlert('Couldn’t delete', errorMessage(e));
       } finally {
         setBusy(false);
       }
@@ -215,7 +215,7 @@ export function TransactionDetailModal({
   const confirmUndoLoan = (loanPaymentId: string) => {
     showAlert(
       'Undo this EMI payment',
-      "The installment goes back to pending and the loan's outstanding balance is restored. You can then re-enter it correctly.",
+      'The installment goes back to pending and the loan’s outstanding balance is restored. You can then re-enter it correctly.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -228,7 +228,7 @@ export function TransactionDetailModal({
                 await undoInstallmentPayment(loanPaymentId);
                 onChanged();
               } catch (e) {
-                showAlert("Couldn't undo", errorMessage(e));
+                showAlert('Couldn’t undo', errorMessage(e));
               } finally {
                 setBusy(false);
               }
@@ -254,7 +254,7 @@ export function TransactionDetailModal({
                 await undoPersonTransaction(tx.id);
                 onChanged();
               } catch (e) {
-                showAlert("Couldn't undo", errorMessage(e));
+                showAlert('Couldn’t undo', errorMessage(e));
               } finally {
                 setBusy(false);
               }
@@ -422,7 +422,7 @@ export function TransactionDetailModal({
                             emitTransactionsChanged();
                             onChanged();
                           } catch (e) {
-                            showAlert("Couldn't undo", errorMessage(e));
+                            showAlert('Couldn’t undo', errorMessage(e));
                           } finally {
                             setBusy(false);
                           }
@@ -576,7 +576,7 @@ export function TransactionDetailModal({
           ) : link === null ? (
             linkFailed ? (
               <Text style={styles.hintText}>
-                Couldn't check whether this entry is tied to a loan or a person. You can still edit it.
+                Couldn’t check whether this entry is tied to a loan or a person. You can still edit it.
               </Text>
             ) : null
           ) : link.kind === 'refund-expected' || link.kind === 'refund-received' ? (
@@ -586,17 +586,17 @@ export function TransactionDetailModal({
             </Text>
           ) : link.kind === 'loan' ? (
             <Text style={styles.hintText}>
-              A loan EMI payment — it can't be edited directly. Undo it to put the installment back to
+              A loan EMI payment — it can’t be edited directly. Undo it to put the installment back to
               pending.
             </Text>
           ) : link.kind === 'person' ? (
             <Text style={styles.hintText}>
-              A Friends & Family entry — it can't be edited directly. Undo it to remove it from their balance
+              A Friends & Family entry — it can’t be edited directly. Undo it to remove it from their balance
               too.
             </Text>
           ) : (
             <Text style={styles.hintText}>
-              This is a loan disbursement or prepayment — editing isn't supported yet.
+              This is a loan disbursement or prepayment — editing isn’t supported yet.
             </Text>
           )}
         </>

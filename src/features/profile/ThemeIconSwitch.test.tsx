@@ -49,7 +49,7 @@ describe('Match the app icon', () => {
     const tree = await render();
     expect(toggle(tree).props.disabled).toBe(true);
     expect(
-      tree.root.findAll((node) => node.props.children === "Couldn't load the app icon setting.").length
+      tree.root.findAll((node) => node.props.children === 'Couldn’t load the app icon setting.').length
     ).toBeGreaterThan(0);
     const retry = tree.root.findAll(
       (node) => node.props.onPress && node.props.title === 'Retry app icon setting'

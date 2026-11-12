@@ -364,11 +364,11 @@ export default function NotificationSettingsScreen() {
             <SettingsRow
               icon="sprout"
               iconBg={shade(secondary, 94)}
-              label="Suu's check-ins"
+              label="Suu’s check-ins"
               sub="Two lines on the bell screen"
               right={
                 <ToggleSwitch
-                  accessibilityLabel="Suu's check-ins"
+                  accessibilityLabel="Suu’s check-ins"
                   value={prefs.suuCheckins}
                   onChange={(v) => void save({ suuCheckins: v })}
                 />

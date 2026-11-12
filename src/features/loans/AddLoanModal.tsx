@@ -244,7 +244,7 @@ export function AddLoanModal({
   const nextStep = () => {
     setError(null);
     if (step1Invalid) {
-      setError("Fill in who it's with, the amount, the tenure and a valid interest rate");
+      setError('Fill in who it’s with, the amount, the tenure and a valid interest rate');
       return;
     }
     const limit = rateProblem(rateBp) ?? tenureProblem(tenureMonths);
@@ -258,7 +258,7 @@ export function AddLoanModal({
   const submit = async () => {
     setError(null);
     if (step1Invalid) {
-      setError("Fill in who it's with, the amount, the tenure and a valid interest rate");
+      setError('Fill in who it’s with, the amount, the tenure and a valid interest rate');
       return;
     }
     const limit = rateProblem(rateBp) ?? tenureProblem(tenureMonths);
@@ -285,7 +285,7 @@ export function AddLoanModal({
       return;
     }
     if (loanTiming === 'existing' && alreadyPaidCount > tenureMonths) {
-      setError(`The loan only has ${tenureMonths} EMIs, so ${alreadyPaidCount} can't be paid already`);
+      setError(`The loan only has ${tenureMonths} EMIs, so ${alreadyPaidCount} can’t be paid already`);
       return;
     }
     if (loanTiming === 'existing' && alreadyPaidCount > 0) {
@@ -458,7 +458,7 @@ export function AddLoanModal({
             </View>
           </View>
           {rateType === 'floating' && (
-            <Text style={styles.hintText}>When the rate changes, update it from the loan's menu.</Text>
+            <Text style={styles.hintText}>When the rate changes, update it from the loan’s menu.</Text>
           )}
           <Text style={styles.fieldLabel}>Tenure</Text>
           <View style={styles.chipRow}>
@@ -492,7 +492,7 @@ export function AddLoanModal({
                   <Text style={styles.assetTitle}>Track what it paid for</Text>
                   <Text style={styles.assetHint}>
                     {trackAsset
-                      ? "Its value minus what's still owed counts toward your net worth."
+                      ? 'Its value minus what’s still owed counts toward your net worth.'
                       : 'Leave off for a personal loan or card: it counts as plain debt.'}
                   </Text>
                 </View>
@@ -554,7 +554,7 @@ export function AddLoanModal({
                 </View>
               </View>
               <Text style={styles.hintText}>
-                Change the dates if you're catching up. The first EMI is usually a month after the money is
+                Change the dates if you’re catching up. The first EMI is usually a month after the money is
                 paid out.
               </Text>
               <Text style={styles.fieldLabel}>

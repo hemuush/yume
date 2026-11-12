@@ -213,7 +213,7 @@ describe('the This Month widget with savings hidden', () => {
     expect((await getThisMonthWidgetData(month)).spentMinor).toBe(200000);
   });
 
-  it("Suu's widget line stops naming a saved share while hiding is on", async () => {
+  it('Suu’s widget line stops naming a saved share while hiding is on', async () => {
     await setHideSensitiveAmounts(true);
     for (let i = 0; i < 30; i++) {
       const { line } = await getSuuWidgetData();

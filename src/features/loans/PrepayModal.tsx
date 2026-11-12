@@ -49,7 +49,7 @@ function PrepaymentPreview({
         {lent ? 'If they prepay this today' : 'If you prepay this today'}
       </Text>
       <PreviewRow
-        label={lent ? "Interest you won't receive" : 'Interest saved'}
+        label={lent ? 'Interest you won’t receive' : 'Interest saved'}
         value={formatMoney(preview.interestSavedMinor)}
         strong={!lent}
       />
@@ -212,7 +212,7 @@ export function PrepayModal({
       }
       if (amountMinor > roundedMinor(loan.outstandingPrincipalMinor)) {
         setError(
-          `Amount can't exceed the outstanding balance of ${formatMoney(roundedMinor(loan.outstandingPrincipalMinor))}`
+          `Amount can’t exceed the outstanding balance of ${formatMoney(roundedMinor(loan.outstandingPrincipalMinor))}`
         );
         return;
       }

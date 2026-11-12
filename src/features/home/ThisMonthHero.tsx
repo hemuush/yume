@@ -578,7 +578,7 @@ export function ThisMonthHero({
       <View style={styles.actions}>
         <HeroActions />
       </View>
-      {/* The week's spending has its own card, so the figure above keeps the summary card to itself. */}
+      {/* The week’s spending has its own card, so the figure above keeps the summary card to itself. */}
       {displayed.spendingTrend && (
         <Section
           compact

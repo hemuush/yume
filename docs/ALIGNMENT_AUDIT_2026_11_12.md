@@ -91,6 +91,12 @@ After the Home ring turned out to be off-centre, every other screen that pairs a
 - Home's account tiles are a fixed 148 dp (192 at large text), tested. On a very wide phone the third tile nearly fits and ends a few dp past the right gutter; narrower phones show a clear peek of the next tile. Left as is: it is a scrolling row and the sizes are part of the tested design.
 - Found: the Home legend's figures were cut to one line with an ellipsis; they now shrink to fit.
 
+## Eighth pass: small details
+
+- Faded states. Disabled controls used 0.4, 0.45, 0.5 or 0.55 opacity, arrows at the end of their range 0.25, 0.35 or 0.4, and pressed states 0.6, 0.65, 0.7 or 0.8. They now come from `theme.opacity` (disabled 0.45, limit 0.35, pressed 0.6), and `src/__tests__/opacityScale.test.ts` fails if a style named for one of those states uses its own number.
+- Apostrophes. Copy mixed the straight apostrophe (don't, Suu's) with the typographic one (don’t, Suu’s): about 230 straight against 44 typographic. All user-facing copy now uses the typographic one (the PDF report, which has its own embedded font, and the home-screen widgets are left out), and `src/__tests__/typography.test.ts` keeps it that way.
+- Checked and left: button and title capitalisation (sentence case throughout; "Which Wrap?" is a name), ellipsis characters (none typed as three dots), chevron and icon sizes (they vary by context: 16 in rows, 14 in links, 18 and 20 in headers).
+
 ## Not covered
 
 Screens other than Home and Activity have not been compared against a phone screenshot after these changes, and the sheets and the add-entry flow were checked in code only, not on a device.

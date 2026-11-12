@@ -176,7 +176,7 @@ export function PurchaseCheck() {
                 <InsightRow label="Kept for your goals" value={money(result.reservedMinor)} />
               )}
               <Text style={insight.caption}>
-                Checked through {dayMonthYear(result.through)}. Expected refunds aren't counted.
+                Checked through {dayMonthYear(result.through)}. Expected refunds aren’t counted.
               </Text>
               {result.incompleteSchedule && (
                 <Text style={styles.errorDetail}>

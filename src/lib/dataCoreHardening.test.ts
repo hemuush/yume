@@ -132,7 +132,7 @@ describe('workbook export', () => {
     createdAt: '2026-03-01',
   });
 
-  it("each Transactions total's stored value equals the sum of the column its formula adds up", () => {
+  it('each Transactions total’s stored value equals the sum of the column its formula adds up', () => {
     const wb = buildExportWorkbook({
       ...base,
       transactions: [tx('1', 30000, 'expense'), tx('2', 50000, 'income')],

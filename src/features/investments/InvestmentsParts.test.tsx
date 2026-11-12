@@ -151,7 +151,7 @@ describe('Plan Overview Investments row', () => {
   it('invites tracking when there are none, and opens the page', () => {
     const open = jest.fn();
     const tree = panel(buildPortfolio([], 'INR', TODAY), open);
-    expect(texts(tree)).toContain("Track what you've invested");
+    expect(texts(tree)).toContain('Track what you’ve invested');
     act(() => tree.root.find((n) => n.props.accessibilityLabel?.startsWith('Investments.')).props.onPress());
     expect(open).toHaveBeenCalled();
   });

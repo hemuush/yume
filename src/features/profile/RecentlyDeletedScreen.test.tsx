@@ -99,7 +99,7 @@ describe('Recently deleted screen', () => {
     act(() => r.unmount());
   });
 
-  it("shows why an entry can't come back, with no Restore button", async () => {
+  it('shows why an entry can’t come back, with no Restore button', async () => {
     mockEntries.current = [entry({ blockedReason: 'Its account no longer exists' })];
     const r = await render();
     expect(texts(r)).toContain('Its account no longer exists');

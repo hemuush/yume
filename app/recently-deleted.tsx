@@ -87,7 +87,7 @@ export default function RecentlyDeletedScreen() {
         emitTransactionsChanged();
         await reload();
       } catch (e) {
-        showAlert("Couldn't restore it", errorMessage(e));
+        showAlert('Couldn’t restore it', errorMessage(e));
       } finally {
         setBusyId(null);
       }
@@ -96,7 +96,7 @@ export default function RecentlyDeletedScreen() {
   const emptyAll = () => {
     showAlert(
       'Delete all for good?',
-      `${entries.length} ${entries.length === 1 ? 'entry' : 'entries'} will be gone for good. This can't be undone.`,
+      `${entries.length} ${entries.length === 1 ? 'entry' : 'entries'} will be gone for good. This can’t be undone.`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -110,7 +110,7 @@ export default function RecentlyDeletedScreen() {
                 haptics.warn();
                 await reload();
               } catch (e) {
-                showAlert("Couldn't empty it", errorMessage(e));
+                showAlert('Couldn’t empty it', errorMessage(e));
               } finally {
                 setBusyId(null);
               }
@@ -170,7 +170,7 @@ export default function RecentlyDeletedScreen() {
         ) : entries.length === 0 ? (
           <EmptyState
             title="Nothing here"
-            subtitle="Entries you delete wait here for 30 days, then they're gone for good."
+            subtitle="Entries you delete wait here for 30 days, then they’re gone for good."
           />
         ) : (
           <>

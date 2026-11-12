@@ -117,7 +117,7 @@ export function RuleRow({
           accessibilityElementsHidden
         >
           <Text style={[styles.ruleAmount, rule.type === 'income' && styles.income]}>
-            {/* Bills read in ink with no sign, as on Plan's Coming up; only money in is green with a "+". */}
+            {/* Bills read in ink with no sign, as on Plan’s Coming up; only money in is green with a "+". */}
             {rule.type === 'income' ? '+' : ''}
             {formatMaskableMoney(rule.nextAmountMinor ?? rule.amountMinor, { masked, currency })}
           </Text>

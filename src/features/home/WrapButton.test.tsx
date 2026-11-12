@@ -61,7 +61,7 @@ describe('Wrap button', () => {
   it('plays the one ready Wrap in a tap', () => {
     const onPlay = jest.fn();
     const tree = render([week], onPlay);
-    act(() => byLabel(tree, "Play last week's Wrap").props.onPress());
+    act(() => byLabel(tree, 'Play last week’s Wrap').props.onPress());
     expect(onPlay).toHaveBeenCalledWith(week);
   });
 
@@ -79,7 +79,7 @@ describe('Wrap button', () => {
     expect(texts(tree)).toEqual(
       expect.arrayContaining(['September', 'Your month · 15 sec', 'Your week · 8 sec'])
     );
-    act(() => byLabel(tree, "Play last week's Wrap, ₹6,150 spent").props.onPress());
+    act(() => byLabel(tree, 'Play last week’s Wrap, ₹6,150 spent').props.onPress());
     expect(onPlay).toHaveBeenCalledWith(week);
   });
 });

@@ -18,7 +18,7 @@ const BLOCK_GAP = SCREEN.sectionGap;
 // Shared by the Reports screen and its pieces (PeriodRow, HeatmapCard, DayCard, ReportInsights, CategoryBar, CategoryList, TrendChart, DayTotal).
 export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
-  dimmed: { opacity: 0.55 },
+  dimmed: { opacity: theme.opacity.disabled },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
   errTitle: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.expenseText },
   errDetail: {
@@ -54,7 +54,7 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: 'rgba(255,255,255,0.7)',
   },
-  periodArrowOff: { opacity: 0.35 },
+  periodArrowOff: { opacity: theme.opacity.limit },
   // Reports' own header: a slimmer row; the arrows keep their 44 touch size.
   periodPillCompact: { minHeight: 44, paddingHorizontal: 0 },
   granChipCompact: { minHeight: 44, paddingHorizontal: 13 },

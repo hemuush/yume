@@ -186,7 +186,7 @@ export function createAddEntrySaveActions(input: Input) {
     if ((editing || splitParts || expr !== '') && !dateUnchanged) pendingDates.push(date);
     const futureDate = pendingDates.find((d) => d > addDaysToIsoDate(today, FUTURE_DATE_CHECK_DAYS));
     if (!dateChecked && futureDate) {
-      showAlert(`Save it for ${dateChipLabel(futureDate)}?`, "That's more than a week from today.", [
+      showAlert(`Save it for ${dateChipLabel(futureDate)}?`, 'That’s more than a week from today.', [
         { text: 'Change date', style: 'cancel' },
         { text: 'Save', onPress: () => void runSave(save, true) },
       ]);
