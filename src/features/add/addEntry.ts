@@ -81,8 +81,16 @@ export function isTxType(v: string | undefined): v is TransactionType {
   return v === 'expense' || v === 'income' || v === 'transfer';
 }
 
-export function dateChipLabel(iso: string): string {
-  return parseLocalIsoDate(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+/**
+ * The date as the Add form's chip says it: "12 Nov", and "12 Nov 2025" once it is not this year. A date picked in
+ * the wrong year is the likeliest mistake on this form, and "12 Nov" alone would look like today's day and month.
+ */
+export function dateChipLabel(iso: string, now: Date = new Date()): string {
+  const sameYear = iso.slice(0, 4) === String(now.getFullYear());
+  return parseLocalIsoDate(iso).toLocaleDateString(
+    undefined,
+    sameYear ? { day: 'numeric', month: 'short' } : { day: 'numeric', month: 'short', year: 'numeric' }
+  );
 }
 
 /** Everything on the Add form that a staged entry is built from. */

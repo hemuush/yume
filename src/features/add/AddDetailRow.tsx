@@ -4,6 +4,7 @@ import { withPressedTint } from '@/lib/pressed';
 import { useAccent } from '@/theme/AccentContext';
 import { ExpenseLabelSheet } from './ExpenseLabelSheet';
 import { TextInput } from '@/components/Text';
+import { NOTE_MAX_LENGTH } from '@/lib/textLimits';
 import { theme } from '@/constants/theme';
 import { dateChipLabel, EntryType } from './addEntry';
 import { DetailBar, DetailChip } from './AddFields';
@@ -70,6 +71,7 @@ export function AddDetailRow({
         onSubmitEditing={() => onNoteEditing(false)}
         onBlur={() => onNoteEditing(false)}
         accessibilityLabel="Note"
+        maxLength={NOTE_MAX_LENGTH}
       />
     );
   }

@@ -1,9 +1,9 @@
 import { emitTransactionsChanged } from '@/lib/dataEvents';
 import { updateTransaction } from '@/db/ledger';
 import { formatMoney } from '@/lib/money';
-import { addDaysToIsoDate } from '@/lib/date';
+import { addDaysToIsoDate, daysUntilIsoDate } from '@/lib/date';
+import { weekdayDayMonthMaybeYear } from '@/lib/dateLabels';
 import { markJustAdded } from '@/lib/justAdded';
-import { dateChipLabel } from '@/features/add/addEntry';
 import { errorMessage } from '@/lib/errorMessage';
 import { getSplitParts, saveSplit } from '@/db/splits';
 import { splitProblem, splitProblemText, toSplitParts } from '@/features/add/splitDraft';
@@ -186,10 +186,16 @@ export function createAddEntrySaveActions(input: Input) {
     if ((editing || splitParts || expr !== '') && !dateUnchanged) pendingDates.push(date);
     const futureDate = pendingDates.find((d) => d > addDaysToIsoDate(today, FUTURE_DATE_CHECK_DAYS));
     if (!dateChecked && futureDate) {
-      showAlert(`Save it for ${dateChipLabel(futureDate)}?`, 'That’s more than a week from today.', [
-        { text: 'Change date', style: 'cancel' },
-        { text: 'Save', onPress: () => void runSave(save, true) },
-      ]);
+      // The year is named (a wrong year is what this check is for), and how far off the date is.
+      const ahead = daysUntilIsoDate(futureDate);
+      showAlert(
+        `Save it for ${weekdayDayMonthMaybeYear(futureDate)}?`,
+        `That’s ${ahead} ${ahead === 1 ? 'day' : 'days'} from today.`,
+        [
+          { text: 'Change date', style: 'cancel' },
+          { text: 'Save', onPress: () => void runSave(save, true) },
+        ]
+      );
       return;
     }
     saveInFlightRef.current = true;
