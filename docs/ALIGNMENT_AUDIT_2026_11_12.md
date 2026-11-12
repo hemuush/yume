@@ -31,6 +31,12 @@ A whole-app code pass after two phone screenshots (Home, Activity) showed edges 
 - Chart axis labels and widget captions keep 10 px: they are dense by design.
 - Small inner radii (bars, dots, cells) are not cards and keep their own sizes.
 
+## Second pass: sheets and the add-entry flow
+
+- 51 files render a sheet. Sheets pad their content 20 dp, so a card inside one uses `cardInSheet` (no side margin). The investment picker and Update values sheets used the screen card (16 dp side margin) on top of that padding, so their lists were 32 dp narrower than every other sheet's. Both now use `cardInSheet`.
+- Every sheet footer lays out Cancel / Save (or its single action) with the shared 8 dp gap; two use `modalFooterStyles` directly and the rest the same values through `f.footerCol` or a matching local row.
+- The add-entry screen and Split keep the 16 dp gutter, 18 dp corners on field cards and 22 dp on the summary card; nothing off the shared measures.
+
 ## Not covered
 
-Screens other than Home and Activity have not been compared against a phone screenshot after these changes, and the add-entry flow and the 50 sheets have not been reviewed visually.
+Screens other than Home and Activity have not been compared against a phone screenshot after these changes, and the sheets and the add-entry flow were checked in code only, not on a device.
