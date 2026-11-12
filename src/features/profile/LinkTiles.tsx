@@ -71,7 +71,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     marginHorizontal: SCREEN.gutter,
     marginTop: 12,
-    borderRadius: 16,
+    borderRadius: theme.radius.xl,
     backgroundColor: theme.colors.surface,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,

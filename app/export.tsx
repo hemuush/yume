@@ -264,7 +264,7 @@ const styles = StyleSheet.create({
     padding: 14,
     gap: 12,
     minHeight: 86,
-    borderRadius: 20,
+    borderRadius: theme.radius.xl,
     backgroundColor: theme.colors.surface,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,

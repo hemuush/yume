@@ -120,7 +120,7 @@ export const styles = StyleSheet.create({
     borderStyle: 'dashed',
     borderColor: theme.colors.borderSoft,
     backgroundColor: theme.colors.surface,
-    borderRadius: 20,
+    borderRadius: theme.radius.xl,
   },
   tileSlim: { minHeight: 48, flexDirection: 'row', padding: 6 },
   addDisc: {

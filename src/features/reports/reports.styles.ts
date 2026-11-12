@@ -48,7 +48,8 @@ export const styles = StyleSheet.create({
   periodArrow: {
     width: 44,
     height: 44,
-    borderRadius: 20,
+    // Half the size: a true circle, like every other round icon button.
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'rgba(255,255,255,0.7)',

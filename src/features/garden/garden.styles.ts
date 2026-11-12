@@ -5,7 +5,7 @@ export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
   // Same load-error banner shape as Notifications, Transactions, Loans and Recurring, kept consistent.
   errorBanner: {
-    marginHorizontal: 20,
+    marginHorizontal: 16,
     marginTop: theme.layout.screenTopGap,
     marginBottom: 4,
     padding: 14,
@@ -26,14 +26,14 @@ export const styles = StyleSheet.create({
     fontFamily: theme.font.body,
     fontSize: 12,
     color: theme.colors.textSecondary,
-    marginHorizontal: 20,
+    marginHorizontal: 16,
     marginTop: theme.layout.screenTopGap,
     lineHeight: 17,
   },
 
   streakSummary: {
     gap: 8,
-    marginHorizontal: 20,
+    marginHorizontal: 16,
     marginTop: 10,
     borderWidth: StyleSheet.hairlineWidth,
     paddingHorizontal: 14,
@@ -61,7 +61,7 @@ export const styles = StyleSheet.create({
   },
   summaryGoal: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textSecondary },
 
-  bedCard: { marginHorizontal: 20, marginTop: 10, overflow: 'hidden' },
+  bedCard: { marginHorizontal: 16, marginTop: 10, overflow: 'hidden' },
   bed: {
     paddingHorizontal: 14,
     paddingTop: 12,

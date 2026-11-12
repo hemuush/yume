@@ -131,7 +131,7 @@ const styles = StyleSheet.create({
   // Frosted, like the category card it stands in for.
   card: {
     backgroundColor: theme.colors.surface,
-    borderRadius: 24,
+    borderRadius: theme.radius.xl2,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
     padding: 16,

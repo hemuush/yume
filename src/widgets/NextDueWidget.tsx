@@ -62,7 +62,7 @@ export function NextDueWidget({ data }: { data: NextDueWidgetData | null }) {
           text={title}
           truncate="END"
           maxLines={1}
-          style={{ fontFamily: WIDGET_FONT.bodyMedium, fontSize: 13.5, color: widgetColor.ink }}
+          style={{ fontFamily: WIDGET_FONT.bodyMedium, fontSize: 14, color: widgetColor.ink }}
         />
         <TextWidget
           text={subtitle}

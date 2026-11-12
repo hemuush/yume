@@ -38,7 +38,7 @@ export const styles = StyleSheet.create({
     marginTop: 6,
     marginBottom: 12,
   },
-  collectionTitle: { ...SECTION_TITLE, fontFamily: theme.font.roundedBold, fontSize: 17 },
+  collectionTitle: { ...SECTION_TITLE, fontFamily: theme.font.roundedBold, fontSize: 18 },
   collectionCount: {
     flexShrink: 1,
     fontFamily: theme.font.body,
@@ -140,7 +140,7 @@ export const styles = StyleSheet.create({
     minHeight: 126,
     paddingHorizontal: 10,
     paddingVertical: 12,
-    borderRadius: 16,
+    borderRadius: theme.radius.xl,
     backgroundColor: theme.colors.surface,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
