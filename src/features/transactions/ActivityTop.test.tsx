@@ -194,6 +194,44 @@ describe('Activity filter bar', () => {
     act(() => tree.unmount());
   });
 
+  it('puts only the type choices in the radio group, not Filters or the removable chips', () => {
+    const dimensions = jest
+      .spyOn(require('react-native'), 'useWindowDimensions')
+      .mockReturnValue({ width: 390, height: 800, fontScale: 1, scale: 3 });
+    const tree = bar(['groc'], jest.fn(), 1);
+    const group = tree.root.find(
+      (n) => typeof n.type === 'string' && n.props.accessibilityRole === 'radiogroup'
+    );
+    const labels = group
+      .findAll((n) => typeof n.props.accessibilityLabel === 'string' && n.props.onPress)
+      .map((n) => n.props.accessibilityLabel);
+    expect(new Set(labels)).toEqual(new Set(['Show all', 'Show spent', 'Show income', 'Show transfers']));
+    act(() => tree.unmount());
+    dimensions.mockRestore();
+  });
+
+  it("draws the picked type as a dark rounded button, like Home's Add expense", () => {
+    const { themeInk } = require('@/theme/interactionColors');
+    const { theme } = require('@/constants/theme');
+    const dimensions = jest
+      .spyOn(require('react-native'), 'useWindowDimensions')
+      .mockReturnValue({ width: 390, height: 800, fontScale: 1, scale: 3 });
+    const tree = bar([]);
+    const style = (label: string) => {
+      const raw = tree.root.find(
+        (n) => n.props.accessibilityLabel === label && typeof n.props.onPress === 'function'
+      ).props.style;
+      return StyleSheet.flatten(typeof raw === 'function' ? raw({ pressed: false }) : raw);
+    };
+    expect(style('Show all')).toMatchObject({
+      borderRadius: theme.radius.lg,
+      backgroundColor: themeInk('#8FCBFF'),
+    });
+    expect(style('Show spent').backgroundColor).not.toBe(style('Show all').backgroundColor);
+    act(() => tree.unmount());
+    dimensions.mockRestore();
+  });
+
   it('adds a removable chip for a picked category', () => {
     expect(texts(bar(['groc']))).toContain('Groceries');
   });

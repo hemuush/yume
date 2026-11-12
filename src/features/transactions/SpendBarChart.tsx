@@ -111,23 +111,19 @@ export function SpendBarChart({
   // Where the capsules rest: column padding, the gap and the weekday and date lines under them.
   const baseline = 4 + 6 + labelLine + dateLine;
   const showAverage = averageMinor != null && averageMinor > 0 && averageMinor <= maxTotal;
+  const averageBottom = showAverage ? baseline + (averageMinor / maxTotal) * MAX_BAR_HEIGHT : 0;
 
   return (
     <View style={[styles.row, { paddingHorizontal: inset, height: rowHeight }]}>
       {showAverage && (
+        // The dashed line runs behind the capsules; its name is drawn after them (below), so a capsule never
+        // paints over the words.
         <View
           pointerEvents="none"
           accessibilityElementsHidden
           importantForAccessibility="no-hide-descendants"
-          style={[
-            styles.average,
-            { bottom: baseline + (averageMinor! / maxTotal) * MAX_BAR_HEIGHT, left: inset, right: inset },
-          ]}
-        >
-          <Text style={styles.averageText}>
-            avg {formatMoney(averageMinor!)} {dates ? 'a day' : 'a week'}
-          </Text>
-        </View>
+          style={[styles.average, { bottom: averageBottom, left: inset, right: inset }]}
+        />
       )}
       {bars.map((bar, i) => {
         const barPx =
@@ -195,6 +191,18 @@ export function SpendBarChart({
           </Pressable>
         );
       })}
+      {showAverage && (
+        <View
+          pointerEvents="none"
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+          style={[styles.averageLabel, { bottom: averageBottom, left: inset, right: inset }]}
+        >
+          <Text style={styles.averageText}>
+            avg {formatMoney(averageMinor!)} {dates ? 'a day' : 'a week'}
+          </Text>
+        </View>
+      )}
     </View>
   );
 }
@@ -269,8 +277,9 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderStyle: 'dashed',
     borderColor: theme.colors.inkOff,
-    alignItems: 'flex-end',
   },
+  // Sits on the line's right end, above the capsules.
+  averageLabel: { position: 'absolute', alignItems: 'flex-end' },
   averageText: {
     marginTop: -16,
     paddingLeft: 4,

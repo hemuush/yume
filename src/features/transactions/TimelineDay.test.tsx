@@ -255,6 +255,22 @@ describe('TimelineDay', () => {
     expect(onPress.mock.calls.map(([t]) => t.id).sort()).toEqual(['t1', 't2', 't3', 't4', 't5']);
   });
 
+  it('opens and closes a stack with the panel motion, and lets the day grow and the days below slide', () => {
+    const { PANEL_ENTER, ROW_EXIT, ROW_LAYOUT } = require('@/lib/animation');
+    const open = render(new Set([`${DATE}|expense|food`]));
+    const panels = open.root.findAll(
+      (n) => typeof n.type === 'string' && n.props.entering === PANEL_ENTER && n.props.exiting === ROW_EXIT
+    );
+    expect(panels.length).toBeGreaterThan(0);
+    expect(
+      open.root.findAll((n) => typeof n.type === 'string' && n.props.layout === ROW_LAYOUT).length
+    ).toBeGreaterThan(1);
+    act(() => open.unmount());
+    const closed = render(new Set());
+    expect(closed.root.findAll((n) => n.props.entering === PANEL_ENTER)).toHaveLength(0);
+    act(() => closed.unmount());
+  });
+
   it('moves a line up or down for TalkBack, saving the day with stacks whole and transfers last', async () => {
     const onReorder = jest.fn().mockResolvedValue(undefined);
     const r = render(new Set(), jest.fn(), jest.fn(), onReorder);
@@ -393,6 +409,23 @@ describe('days as a feed with a marker rail', () => {
       expect(shown).not.toContain('TODAY');
       const heading = tree.root.find((n) => n.props.accessibilityRole === 'header');
       expect(heading.props.accessibilityLabel).toBe(`Today, Fri 25 Sept, ${formatMoney(15000)} spent`);
+      act(() => tree.unmount());
+    }));
+
+  it("puts the day's entries on a card, not straight on the wallpaper", () =>
+    withWidth(() => {
+      const tree = day();
+      const lane = tree.root.find(
+        (n) =>
+          typeof n.type === 'string' &&
+          StyleSheet.flatten(n.props.style)?.backgroundColor === theme.colors.surface &&
+          StyleSheet.flatten(n.props.style)?.borderRadius === theme.radius.xl
+      );
+      expect(StyleSheet.flatten(lane.props.style)).toMatchObject({
+        borderWidth: StyleSheet.hairlineWidth,
+        borderColor: theme.colors.borderSoft,
+        paddingHorizontal: 14,
+      });
       act(() => tree.unmount());
     }));
 

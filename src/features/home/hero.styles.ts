@@ -9,7 +9,9 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    // The ring and its legend sit together in the middle; the legend is capped so a name and its figure stay
+    // close instead of a hand's width apart.
+    justifyContent: 'center',
     columnGap: 14,
     rowGap: 4,
     marginTop: 4,
