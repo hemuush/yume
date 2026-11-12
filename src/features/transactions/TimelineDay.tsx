@@ -570,10 +570,11 @@ const styles = StyleSheet.create({
     letterSpacing: 0.6,
     color: theme.colors.textMuted,
   },
-  railNumber: { minWidth: 34, height: 34, alignItems: 'center', justifyContent: 'center' },
+  // Minimum, not fixed, so the date number is never clipped at large text sizes.
+  railNumber: { minWidth: 34, minHeight: 34, alignItems: 'center', justifyContent: 'center' },
   railNumberToday: {
     minWidth: 34,
-    height: 34,
+    minHeight: 34,
     paddingHorizontal: 6,
     borderRadius: 17,
     alignItems: 'center',

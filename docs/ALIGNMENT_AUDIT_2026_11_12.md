@@ -63,6 +63,25 @@ Each of the 26 routes was checked for its header, bottom spacing, gutter, sectio
 - Bundle: the Android Hermes bundle is 8.3 MB (2,374 modules).
 - Size: `app/(tabs)/transactions.tsx` is 1,213 lines and the biggest screen file; its period bar and search bar are the natural pieces to extract next. Left alone now to avoid a large refactor on a working screen.
 
+## Sixth pass: every file, one rule per concern
+
+Each rule was run over all non-test source files (app and src); a hit is listed only if it was a real finding.
+
+| Rule | Result |
+| --- | --- |
+| Text and TextInput come from the app wrapper, never straight from react-native | clean (only the wrapper itself imports them) |
+| No hardcoded "₹" in components (every amount goes through the money helpers, so privacy masking applies) | clean |
+| Manual number formatting (`toFixed`, `toLocaleString`) | only rates, file sizes, chart coordinates and timestamps; no money |
+| UTC date slicing (`toISOString().slice`) | only database timestamps, which are stored in UTC on purpose |
+| List keys by index | only skeletons, fixed day-of-week labels and fixed-length series; no reorderable data |
+| FlatList without `keyExtractor` | none |
+| TextInput without an accessibility label | none |
+| ScrollView with inputs without `keyboardShouldPersistTaps` | none (the custom number pad and the sheet bodies set it) |
+| Icon-only buttons without a label | none |
+| Loading, error and empty states on all 26 screens | **Investments showed an empty screen while loading**: it now shows the shared summary and list placeholders |
+| Section titles as headings for screen readers | **not marked**: `Section` titles ("This week", "Your accounts" and every other) now have the header role, so TalkBack can jump between sections |
+| Fixed heights on text-bearing boxes (clipped at large text) | **Activity's date number was a fixed 34 dp tall**: now a minimum, so it cannot clip at 200% text |
+
 ## Not covered
 
 Screens other than Home and Activity have not been compared against a phone screenshot after these changes, and the sheets and the add-entry flow were checked in code only, not on a device.
