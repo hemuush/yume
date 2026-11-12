@@ -53,3 +53,7 @@ ink); the slice colours keep their meaning. Text follows the phone's font settin
 capsules grow taller and drop the amounts over them (the picked day's is still in the row above), so nothing is
 cut off. The daily-goal meter and the separate "Spent · last 7 days" header are gone; the goal, its working and
 Insights moved into the week.
+
+## 2026-11-12: the month ring
+
+The month card now shows the month as a 112 dp ring (spent, saved, bills left, free) with the headline figure in its middle and a one-line-per-slice legend beside it, replacing the full-width month line and the separate 30 px figure. This keeps the card compact on Pixel-width phones (360-412 dp); at large text sizes the legend wraps under the ring. A thin outer ring marks the day of the month. The slices are picked from the legend (the ring itself is a single image for screen readers). The ring does not animate. This supersedes the month-line and 18 dp grow notes above and in `HOME_REDESIGN_2026_11_10.md`.

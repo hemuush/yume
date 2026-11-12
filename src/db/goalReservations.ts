@@ -72,9 +72,7 @@ export async function assertReservableAccount(db: AppDb, accountId: string, exce
     account.tracked ||
     account.currency !== account.default_currency
   )
-    throw new Error(
-      'Choose an active bank, cash, wallet or plain savings account in your default currency.'
-    );
+    throw new Error('Choose an active bank, cash, wallet or plain savings account in your default currency.');
   const following = await db.getFirstAsync<{ id: string }>(
     `SELECT id FROM savings_goals WHERE linked_account_id = ? AND track_account = 1 AND archived = 0 AND id != ? LIMIT 1`,
     [accountId, exceptGoalId]

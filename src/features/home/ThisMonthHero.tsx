@@ -23,7 +23,7 @@ import { AllowanceTile } from './AllowanceTile';
 import { styles } from './hero.styles';
 import { WorkingRow } from './WorkingRow';
 import { SpendBars } from './SpendBars';
-import { MonthLine, type SliceKey } from './MonthLine';
+import { MonthRing, type SliceKey } from './MonthRing';
 import { HeroActions } from './HeroActions';
 import { Section } from '@/components/Section';
 import { weekBars, monthBars } from './spendBarData';
@@ -435,66 +435,47 @@ export function ThisMonthHero({
 
         <ReanimatedAnimated.View style={[styles.body, slideStyle]} {...pan.panHandlers}>
           <View style={styles.heroRow}>
-            <View
-              style={styles.figure}
-              accessible
-              accessibilityLabel={
-                slices.hasIncome ? `${shownLabel}, ${formatMoney(shownMinor)}, ${shownCaption}` : shownCaption
-              }
-              // The swipe, for a screen reader: swipe up or down on the figure to step the period.
-              accessibilityActions={[
-                { name: 'decrement', label: 'Previous period' },
-                ...(canStepForward ? [{ name: 'increment', label: 'Next period' }] : []),
-              ]}
-              onAccessibilityAction={(e) => {
-                if (e.nativeEvent.actionName === 'decrement') onStep(-1);
-                else if (e.nativeEvent.actionName === 'increment' && canStepForward) onStep(1);
-              }}
+            <MonthRing
+              slices={slices}
+              hideSavings={hideAmounts}
+              dayShare={isCurrentMonth && slices.hasIncome ? now.getDate() / daysInMonth : null}
+              focus={focus}
             >
-              {slices.hasIncome ? (
-                // Show the real amount immediately, then interpolate later changes.
-                <CountUpAmount
-                  key={displayed.periodKey}
-                  minor={shownMinor}
-                  style={[styles.headValue, shownNeg && styles.headValueNeg]}
-                  numberOfLines={1}
-                  adjustsFontSizeToFit
-                />
-              ) : (
-                <Text style={styles.headValue}>—</Text>
-              )}
-            </View>
+              <View
+                accessible
+                accessibilityLabel={
+                  slices.hasIncome
+                    ? `${shownLabel}, ${formatMoney(shownMinor)}, ${shownCaption}`
+                    : shownCaption
+                }
+                // The swipe, for a screen reader: swipe up or down on the figure to step the period.
+                accessibilityActions={[
+                  { name: 'decrement', label: 'Previous period' },
+                  ...(canStepForward ? [{ name: 'increment', label: 'Next period' }] : []),
+                ]}
+                onAccessibilityAction={(e) => {
+                  if (e.nativeEvent.actionName === 'decrement') onStep(-1);
+                  else if (e.nativeEvent.actionName === 'increment' && canStepForward) onStep(1);
+                }}
+                style={styles.figure}
+              >
+                {slices.hasIncome ? (
+                  <CountUpAmount
+                    key={displayed.periodKey}
+                    minor={shownMinor}
+                    style={[styles.headValue, shownNeg && styles.headValueNeg]}
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                  />
+                ) : (
+                  <Text style={styles.headValue}>—</Text>
+                )}
+              </View>
+            </MonthRing>
+            <HeroLegend items={legend} stacked />
           </View>
 
           {perDayMinor != null && <AllowanceTile perDayMinor={perDayMinor} daysLeft={daysLeft} />}
-
-          {slices.hasIncome && (
-            <>
-              <View
-                style={styles.lineHead}
-                accessibilityElementsHidden
-                importantForAccessibility="no-hide-descendants"
-              >
-                <Text style={styles.lineHeadText}>Where the money stands</Text>
-                {isCurrentMonth && (
-                  <Text style={styles.lineHeadText}>
-                    Day {now.getDate()} of {daysInMonth}
-                  </Text>
-                )}
-              </View>
-              <MonthLine
-                slices={slices}
-                hideSavings={hideAmounts}
-                periodKey={displayed.periodKey}
-                dayShare={isCurrentMonth ? now.getDate() / daysInMonth : null}
-                focus={focus}
-                onPick={pick}
-              />
-            </>
-          )}
-
-          {/* The legend describes this period; total debt belongs in Plan. */}
-          <HeroLegend items={legend} />
 
           {slices.hasIncome && showWorking && (
             <ReanimatedAnimated.View entering={PANEL_ENTER} exiting={ROW_EXIT} style={styles.working}>
