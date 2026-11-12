@@ -488,7 +488,7 @@ describe('days as a feed with a marker rail', () => {
       const tree = day();
       const separators = tree.root.findAll((n) => {
         const flat = StyleSheet.flatten(n.props.style);
-        return !!flat && flat.height === StyleSheet.hairlineWidth && flat.marginLeft === 42;
+        return !!flat && flat.height === StyleSheet.hairlineWidth && flat.marginLeft === 44;
       });
       expect(separators.length).toBeGreaterThan(0);
       act(() => tree.unmount());

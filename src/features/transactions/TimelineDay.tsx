@@ -18,6 +18,7 @@ import { useAccent } from '@/theme/AccentContext';
 import { softTint } from '@/components/softTint';
 import { haptics } from '@/lib/haptics';
 import { theme } from '@/constants/theme';
+import { SCREEN } from '@/components/screenStyles';
 import {
   buildDayLane,
   dropIndex,
@@ -34,7 +35,8 @@ import { categorySpoken, joinSub, parentNameOf } from '@/lib/categoryLabel';
 
 /** A compact row: its least height and the category disc it leads with. */
 const ROW_H = 48;
-const ICON = 32;
+// The same 34 dp category mark as Home's Recent activity and every other entry row (SCREEN.iconTile).
+const ICON = SCREEN.iconTile;
 const NO_ACCOUNTS: ReadonlySet<string> = new Set();
 const NO_NOTES: ValueNote[] = [];
 

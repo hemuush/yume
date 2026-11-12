@@ -46,6 +46,14 @@ Each of the 26 routes was checked for its header, bottom spacing, gutter, sectio
 - Section headings: hand-made headings (Loans, Categories, Budgets, Backup, People) all use `SECTION_TITLE` with the shared 16 / 8 gaps; the two without a side gutter render inside sheets, which supply it.
 - Empty states: screens use the shared EmptyState; short in-card notes ("Nothing on this day.", "No entries yet.") stay as captions. Reports' day picker showed "No matching days" as unstyled platform text with no padding; it now uses the quiet caption style, centred with room around it.
 
+## Fourth pass: icons, padding, shadows, dividers
+
+- Entry rows: Home's Recent activity and the shared transaction row use a 34 dp category mark; Activity's feed used 32 and Reports' category list 32. Both now use `SCREEN.iconTile` (34), and Activity's row hairline starts under the wider mark. Recently deleted keeps 38 because its mark sits inside a days-left ring.
+- Card padding: Home's month card pads its sides 16 dp; Activity's Spent strip padded 14 while its own loading placeholder used 16, so it shifted when data arrived. The strip now uses 16.
+- Shadows: one lifted hero card per screen shares the same soft shadow; every other card is flat. Consistent.
+- Dividers: in-card row dividers use `divider` and card or section edges `borderSoft`, as intended.
+- Left as is, by design: the add-entry hero card and footers (16), the Split summary (16), and wide empty cards (20).
+
 ## Not covered
 
 Screens other than Home and Activity have not been compared against a phone screenshot after these changes, and the sheets and the add-entry flow were checked in code only, not on a device.
