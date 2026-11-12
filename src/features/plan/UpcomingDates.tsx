@@ -209,7 +209,7 @@ const s = StyleSheet.create({
     padding: 12,
     gap: 8,
     backgroundColor: theme.colors.surface,
-    borderRadius: 16,
+    borderRadius: theme.radius.xl,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
   },

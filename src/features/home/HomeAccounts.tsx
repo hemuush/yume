@@ -162,7 +162,9 @@ const AccountTile = memo(function AccountTile({
 });
 
 const styles = StyleSheet.create({
-  row: { paddingHorizontal: 16, paddingVertical: 4, gap: TILE_GAP },
+  // No vertical padding: the tiles sit exactly where the section's other cards do (the cards have no shadow to
+  // make room for).
+  row: { paddingHorizontal: 16, gap: TILE_GAP },
   tile: { ...h.card, marginHorizontal: 0, minHeight: 112, padding: 12 },
   tileHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
   icon: { width: 32, height: 32, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },

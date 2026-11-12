@@ -3,6 +3,7 @@ import { DateRange } from '@/types';
 import { View, Pressable, ActivityIndicator } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { CategoryIcon } from '@/components/CategoryIcon';
+import { SCREEN } from '@/components/screenStyles';
 import { Text } from '@/components/Text';
 import { Amount } from '@/components/Amount';
 import { ModalSheet } from '@/components/ModalSheet';
@@ -84,7 +85,7 @@ export function CategoryList({
               accessibilityState={{ selected: selectedId === row.categoryId }}
             >
               {icon ? (
-                <CategoryIcon name={icon} color={row.color} size={16} square={32} round />
+                <CategoryIcon name={icon} color={row.color} size={16} square={SCREEN.iconTile} round />
               ) : (
                 <View style={[styles.catDot, { backgroundColor: row.color }]} />
               )}

@@ -87,7 +87,11 @@ export function HeatmapDayPicker({
             initialNumToRender={12}
             maxToRenderPerBatch={12}
             windowSize={5}
-            ListEmptyComponent={<Text accessibilityLiveRegion="polite">No matching days</Text>}
+            ListEmptyComponent={
+              <Text style={styles.empty} accessibilityLiveRegion="polite">
+                No matching days
+              </Text>
+            }
             renderItem={({ item }) => (
               <Pressable
                 onPress={() => select(item)}
@@ -140,4 +144,14 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.borderSoft,
   },
   month: { backgroundColor: theme.colors.tray },
+  // The same quiet caption every other in-sheet empty line uses, with room around it.
+  empty: {
+    paddingVertical: theme.space.lg,
+    paddingHorizontal: theme.space.md,
+    fontFamily: theme.font.body,
+    fontSize: 13,
+    lineHeight: 18,
+    color: theme.colors.textSecondary,
+    textAlign: 'center',
+  },
 });

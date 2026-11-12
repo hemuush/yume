@@ -50,7 +50,9 @@ export function Section({
         {heading ?? (
           <View style={styles.titleRow}>
             <View style={styles.titleCol}>
-              <Text style={styles.title}>{title}</Text>
+              <Text style={styles.title} accessibilityRole="header">
+                {title}
+              </Text>
               {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
             </View>
             {badge != null && badge > 0 && (

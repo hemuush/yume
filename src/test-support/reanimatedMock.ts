@@ -5,7 +5,7 @@ import { useRef } from 'react';
  * Stand-in for react-native-reanimated (its own mock needs the native worklets runtime): Animated.View,
  * chainable FadeIn builders, ReduceMotion, no-op hooks. Use via jest.mock factory; `require` it lazily inside.
  */
-export const mockCancelAnimation = jest.fn();
+const mockCancelAnimation = jest.fn();
 
 export function createReanimatedMock() {
   const chainable = () => chainableProxy;

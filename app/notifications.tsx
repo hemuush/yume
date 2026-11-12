@@ -380,7 +380,7 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingHorizontal: 14,
     paddingVertical: 12,
-    borderRadius: 20,
+    borderRadius: theme.radius.xl,
     borderTopLeftRadius: 4,
     backgroundColor: theme.colors.surface,
     borderWidth: StyleSheet.hairlineWidth,

@@ -57,3 +57,8 @@ Insights moved into the week.
 ## 2026-11-12: the month ring
 
 The month card now shows the month as a 112 dp ring (spent, saved, bills left, free) with the headline figure in its middle and a one-line-per-slice legend beside it, replacing the full-width month line and the separate 30 px figure. This keeps the card compact on Pixel-width phones (360-412 dp); at large text sizes the legend wraps under the ring. A thin outer ring marks the day of the month. The slices are picked from the legend (the ring itself is a single image for screen readers). The ring does not animate. This supersedes the month-line and 18 dp grow notes above and in `HOME_REDESIGN_2026_11_10.md`.
+
+## 2026-11-12: alignment fixes from a phone screenshot
+
+- Very small slices of the month ring (Bills left and Free late in the month, a few percent of the ring) were drawn as round dots a whole stroke wide, so they overlapped each other and Free was hidden. A slice too small for round caps now draws as a thin flat bar (at least 2 dp) centred in its own slot, so every slice stays visible and none overlap.
+- The account tiles had 4 dp of vertical padding the other cards lack, which put them 4 dp lower than the cards above and gave Coming up an extra 4 dp. The padding is gone.

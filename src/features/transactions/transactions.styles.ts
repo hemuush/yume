@@ -146,6 +146,9 @@ export const styles = StyleSheet.create({
   },
   // Week | Month as two plain words, the picked one bold with an underline.
   scopeSwitch: { flexDirection: 'row', alignItems: 'center' },
+  // The buttons carry 10 dp of side padding for their touch area; pulling the row out by that much puts the word
+  // "Month" on the 16 dp gutter, where the cards' right edge is.
+  scopeSwitchFlush: { marginRight: -10 },
   scopeBtn: { minHeight: 44, justifyContent: 'center', paddingHorizontal: 10 },
   scopeBtnStacked: { flex: 1, alignItems: 'center' },
   scopeText: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textMuted },
@@ -165,6 +168,8 @@ export const styles = StyleSheet.create({
   periodBarStacked: { flexDirection: 'column', alignItems: 'stretch' },
   periodRowStacked: { flex: 0 },
   periodRow: { flexShrink: 1, flexDirection: 'row', alignItems: 'center', minHeight: 44 },
+  // The back arrow sits centred in a 36 dp button: pulled out by 10 dp, the arrow itself is on the gutter.
+  periodRowFlush: { marginLeft: -10 },
   periodInner: { flexShrink: 1, flexDirection: 'row', alignItems: 'center' },
   periodNav: { width: 36, minHeight: 44, alignItems: 'center', justifyContent: 'center' },
   periodNavOff: { opacity: 0.35 },

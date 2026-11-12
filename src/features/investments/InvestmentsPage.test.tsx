@@ -178,6 +178,25 @@ beforeEach(() => {
 });
 
 describe('Investments page', () => {
+  it('shows the shared loading placeholders while the data loads, not an empty screen', async () => {
+    const { Skeleton } = require('@/components/Skeleton');
+    let release!: (accounts: Account[]) => void;
+    mockAccounts.mockReturnValueOnce(new Promise<Account[]>((resolve) => (release = resolve)));
+    let tree!: ReactTestRenderer;
+    act(() => {
+      tree = create(<InvestmentsScreen />);
+    });
+    expect(tree.root.findAllByType(Skeleton).length).toBeGreaterThan(0);
+    expect(texts(tree)).not.toContain('Invest money');
+    expect(texts(tree)).not.toContain('Start tracking');
+    await act(async () => {
+      release([bank, fund, gold]);
+    });
+    expect(tree.root.findAllByType(Skeleton)).toHaveLength(0);
+    expect(texts(tree)).toContain('Invest money');
+    act(() => tree.unmount());
+  });
+
   it('keeps holdings visible after a failed refresh and offers a working retry', async () => {
     const tree = await render();
     mockAccounts.mockRejectedValueOnce(new Error('Refresh failed'));
