@@ -187,3 +187,12 @@ it('ends the row with an Add account tile', () => {
   );
   expect(add).toHaveBeenCalledTimes(1);
 });
+
+it('sits the tiles flush under the section heading, with no extra vertical padding of their own', () => {
+  const tree = render({ accounts: [account('sbi', 'bank', 207_800)] });
+  const { ScrollView } = require('react-native');
+  const row = StyleSheet.flatten(tree.root.findByType(ScrollView).props.contentContainerStyle);
+  expect(row.paddingHorizontal).toBe(16);
+  expect(row.paddingVertical).toBeUndefined();
+  act(() => tree.unmount());
+});

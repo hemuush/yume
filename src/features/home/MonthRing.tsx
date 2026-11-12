@@ -13,6 +13,8 @@ const OUTER_STROKE = 2.5;
 const R = (RING_SIZE - STROKE - OUTER_STROKE * 2 - 2) / 2;
 const R_OUTER = RING_SIZE / 2 - OUTER_STROKE / 2;
 const GAP = 2.5;
+/** The shortest a flat bar for a very small slice is drawn, so it can still be seen. */
+const MIN_BAR = 2;
 /** The slices that were not picked step back. */
 const DIM = 0.35;
 
@@ -90,8 +92,14 @@ export function MonthRing({
           {parts.map((part) => {
             const start = used;
             used += part.share;
-            // Round caps add half a stroke to each end, so take a whole stroke off along with the gap.
-            const length = Math.max(0.01, circumference * part.share - STROKE - GAP);
+            const slot = circumference * part.share;
+            // A slice with room draws a round-capped arc (the caps add half a stroke to each end, so a whole
+            // stroke comes off along with the gap). A slice too small for that, like Free or Bills left late in
+            // the month, draws a thin flat bar centred in its own slot at least 2 dp long, so it stays visible
+            // and never overlaps its neighbours as a dot would.
+            const roomy = slot - GAP >= STROKE + 1;
+            const length = roomy ? slot - GAP - STROKE : Math.max(MIN_BAR, slot - GAP);
+            const lead = roomy ? (STROKE + GAP) / 2 : (slot - length) / 2;
             return (
               <Circle
                 key={part.key}
@@ -100,11 +108,11 @@ export function MonthRing({
                 r={R}
                 stroke={part.color}
                 strokeWidth={STROKE}
-                strokeLinecap={whole ? 'butt' : 'round'}
+                strokeLinecap={whole || !roomy ? 'butt' : 'round'}
                 fill="none"
                 opacity={focus != null && focus !== part.key ? DIM : 1}
                 strokeDasharray={whole ? undefined : `${length} ${circumference}`}
-                strokeDashoffset={whole ? undefined : -(circumference * start + (STROKE + GAP) / 2)}
+                strokeDashoffset={whole ? undefined : -(circumference * start + lead)}
                 transform={`rotate(-90 ${c} ${c})`}
               />
             );
