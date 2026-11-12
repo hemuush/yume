@@ -57,6 +57,7 @@ These remain available for decisions and previous evidence. Old source lists and
 | [Spacing and alignment audit](ALIGNMENT_AUDIT_2026_11_12.md) | Dated review or implementation record |
 | [Home review](HOME_REVIEW_2026_11_12.md) | Dated review or implementation record |
 | [Reports review](REPORTS_REVIEW_2026_11_12.md) | Dated review or implementation record |
+| [Plan review](PLAN_REVIEW_2026_11_12.md) | Dated review or implementation record |
 | [Add transaction flow review — 21 October 2026](ADD_TRANSACTION_FLOW_REVIEW_2026_10_21.md)         | Dated review or implementation record |
 | [Android audit fixes and verification — 23 October 2026](ANDROID_AUDIT_VERIFICATION_2026_10_23.md) | Dated review or implementation record |
 | [Android production audit — 23 October 2026](ANDROID_PRODUCTION_AUDIT_2026_10_23.md)               | Dated review or implementation record |

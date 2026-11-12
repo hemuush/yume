@@ -4,7 +4,7 @@ import type { ValuationEvent } from '@/db/valuations';
 import { getCachedCurrency } from '@/db/settings';
 import type { ActivityFilter } from './activityFilter';
 import { toLocalIsoDate, parseLocalIsoDate, addDaysToIsoDate } from '@/lib/date';
-import { dayMonth, dayMonthYear, weekdayDayMonth, weekdayDayMonthYear } from '@/lib/dateLabels';
+import { dayMonth, dayMonthYear, weekdayDayMonthMaybeYear } from '@/lib/dateLabels';
 import { weekRangesInMonth } from './spendChart';
 
 /** One Sunday-to-Saturday week of a calendar month, cut at the month's own first and last day. */
@@ -168,7 +168,7 @@ export function emptyPeriodTitle(input: {
  * picked month can open one from years back, and "Thu 1 Oct" alone would not say which).
  */
 export function entryDateLabel(iso: string, today: Date): string {
-  return iso.slice(0, 4) === String(today.getFullYear()) ? weekdayDayMonth(iso) : weekdayDayMonthYear(iso);
+  return weekdayDayMonthMaybeYear(iso, today);
 }
 
 /**

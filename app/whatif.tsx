@@ -1,3 +1,4 @@
+import { isFixedCategoryName } from '@/lib/fixedCategory';
 import { PurchaseCheck } from '@/features/whatif/PurchaseCheck';
 import { ScreenLoadError } from '@/components/ScreenLoadError';
 import { useCallback, useState } from 'react';
@@ -119,7 +120,8 @@ export default function WhatIfScreen() {
     setCategoryId((prev) => {
       if (prev && spendable.some((c) => c.categoryId === prev)) return prev;
       if (askedCategoryId && spendable.some((c) => c.categoryId === askedCategoryId)) return askedCategoryId;
-      return spendable[0]?.categoryId ?? null;
+      // Starts on the biggest category that is a choice (not rent or an EMI); any of them can still be picked.
+      return (spendable.find((c) => !isFixedCategoryName(c.name)) ?? spendable[0])?.categoryId ?? null;
     });
     setGoalId((prev) => (prev && openGoals.some((g) => g.id === prev) ? prev : (openGoals[0]?.id ?? null)));
   }, [askedCategoryId]);

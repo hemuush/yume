@@ -26,7 +26,7 @@ import { ActionList, ActionSheetItem } from '@/components/ActionSheet';
 import { theme, modalFooterStyles as f } from '@/constants/theme';
 import { screenStyles as h } from '@/components/screenStyles';
 import { toLocalIsoDate } from '@/lib/date';
-import { dayMonthYear, weekdayDayMonth } from '@/lib/dateLabels';
+import { dayMonthYear, weekdayDayMonthMaybeYear } from '@/lib/dateLabels';
 import { styles } from './loans.styles';
 import { AssetModal } from './AssetModal';
 import { AccountModal } from './AccountModal';
@@ -378,7 +378,7 @@ function LoanDetailContent({ loan, onClose, onChanged, startWithPay = false, hue
                             ? 'Schedule unavailable'
                             : 'None left',
                       sub: nextInstallment
-                        ? `${weekdayDayMonth(nextInstallment.dueDate)}${nextOverdue ? ' · overdue' : ''}`
+                        ? `${weekdayDayMonthMaybeYear(nextInstallment.dueDate)}${nextOverdue ? ' · overdue' : ''}`
                         : undefined,
                     },
                     {

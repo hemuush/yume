@@ -99,3 +99,18 @@ describe('a recurring transfer that touches an investment', () => {
     expect(lines.some((t) => t.endsWith('Transfer'))).toBe(true);
   });
 });
+
+describe('the next date on a rule', () => {
+  const year = new Date().getFullYear();
+  const line = (nextRunDate: string) => {
+    const { tree } = render({ rule: { ...rule, nextRunDate } });
+    const shown = tree.root.findAllByType(Text).map((t) => [t.props.children].flat(Infinity).join(''));
+    act(() => tree.unmount());
+    return shown.find((t) => t.includes('Next ')) ?? '';
+  };
+
+  it('names the year of a run that is not this year (a yearly bill), and leaves it off this year', () => {
+    expect(line(`${year + 1}-03-03`)).toContain(String(year + 1));
+    expect(line(`${year}-12-28`)).not.toContain(String(year));
+  });
+});

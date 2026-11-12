@@ -180,13 +180,16 @@ jest.mock('@/db/ledger', () => ({
     { id: 'food', name: 'Food', isSystem: false },
   ],
 }));
+// What the what-if tile is chosen from: the biggest categories first (a test may add rent above food).
+const mockAverages: { rows: { categoryId: string; name: string; totalMinor: number }[] } = { rows: [] };
+const defaultAverages = () => [
+  { categoryId: 'emi', name: 'Loan EMI', totalMinor: 3000000 },
+  { categoryId: 'food', name: 'Food', totalMinor: 2000000 },
+];
 jest.mock('@/db/reports', () => ({
   getDailyGoalStreakSeries: async () => [0, 1, 2, 3, 4].map((n) => ({ streakDays: n })),
   // Loan EMI is the biggest, but it's a built-in category — What-if skips it.
-  getCategoryMonthlyAverages: async () => [
-    { categoryId: 'emi', name: 'Loan EMI', totalMinor: 3000000 },
-    { categoryId: 'food', name: 'Food', totalMinor: 2000000 },
-  ],
+  getCategoryMonthlyAverages: async () => (mockAverages.rows.length ? mockAverages.rows : defaultAverages()),
 }));
 jest.mock('@/db/monthlyPlan', () => ({
   getMonthlyPlanIncome: async () => null,
@@ -362,6 +365,38 @@ describe('Plan tab', () => {
     const positions: number[] = [];
     for (const h of headings) positions.push(shown.indexOf(h, (positions.at(-1) ?? -1) + 1));
     expect(positions.every((p) => p >= 0)).toBe(true);
+  });
+
+  it('shows its tabs from the first frame, so the page does not drop by their height when the data lands', async () => {
+    const { PlanNavigation } = require('./PlanNavigation');
+    const { CardRowsSkeleton } = require('@/components/ListSkeleton');
+    let tree!: ReactTestRenderer;
+    // A synchronous act: the load has started but none of its promises have settled.
+    act(() => {
+      tree = create(<PlanScreen />);
+    });
+    expect(tree.root.findAllByType(CardRowsSkeleton).length).toBeGreaterThan(0);
+    expect(tree.root.findAllByType(PlanNavigation)).toHaveLength(1);
+    await act(async () => {});
+    expect(tree.root.findAllByType(CardRowsSkeleton)).toHaveLength(0);
+    expect(tree.root.findAllByType(PlanNavigation)).toHaveLength(1);
+    act(() => tree.unmount());
+  });
+
+  it('does not suggest cutting rent, insurance or a subscription: they are fixed, like an EMI', async () => {
+    mockAverages.rows = [
+      { categoryId: 'rent', name: 'Rent', totalMinor: 2500000 },
+      { categoryId: 'ins', name: 'Insurance', totalMinor: 2200000 },
+      { categoryId: 'food', name: 'Food', totalMinor: 2000000 },
+    ];
+    try {
+      const tab = await render();
+      await openTabAndSettle(tab, 'money');
+      expect(texts(tab)).toContain('Food −10% saves ₹2,000 a month');
+      expect(texts(tab).some((t) => t.startsWith('Rent −') || t.startsWith('Insurance −'))).toBe(false);
+    } finally {
+      mockAverages.rows = [];
+    }
   });
 
   it('shows each section’s own figures', async () => {

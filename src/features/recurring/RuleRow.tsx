@@ -11,7 +11,7 @@ import { styles } from './recurring.styles';
 import { ruleCadenceLabel } from './recurring.helpers';
 import { ROW_LAYOUT, ROW_EXIT } from '@/lib/animation';
 import { withPressed } from '@/lib/pressed';
-import { weekdayDayMonth } from '@/lib/dateLabels';
+import { weekdayDayMonthMaybeYear } from '@/lib/dateLabels';
 import { joinSub } from '@/lib/categoryLabel';
 
 /**
@@ -63,7 +63,7 @@ export function RuleRow({
       ? `${accountName(rule.accountId)} → ${rule.toAccountId ? accountName(rule.toAccountId) : '—'}`
       : (category?.name ?? '—');
   const title = !transfer && rule.note ? rule.note : name;
-  const when = `${ruleCadenceLabel(rule)} · Next ${weekdayDayMonth(rule.nextRunDate)}${rule.postingMode === 'confirm' ? ' · Confirm first' : ''}${rule.nextAmountMinor != null ? ' · One-off amount' : ''}`;
+  const when = `${ruleCadenceLabel(rule)} · Next ${weekdayDayMonthMaybeYear(rule.nextRunDate)}${rule.postingMode === 'confirm' ? ' · Confirm first' : ''}${rule.nextAmountMinor != null ? ' · One-off amount' : ''}`;
   return (
     <Animated.View
       layout={ROW_LAYOUT}

@@ -222,3 +222,16 @@ describe('pay installment sheet', () => {
     act(() => tree.unmount());
   });
 });
+
+describe('the due date in the pay sheet', () => {
+  it('names the year of an EMI due in another year, so "Tue 3 Mar" is not ambiguous, and not this year’s', async () => {
+    const year = new Date().getFullYear();
+    const next = await render(`${year + 1}-03-03`);
+    expect(next.tree.root.findByType(DraftCard).props.kicker).toContain(String(year + 1));
+    act(() => next.tree.unmount());
+    const now = await render(addDaysToIsoDate(todayIso, 2));
+    expect(now.tree.root.findByType(DraftCard).props.kicker).not.toContain(String(year + 1));
+    expect(now.tree.root.findByType(DraftCard).props.kicker).toMatch(/^EMI #3 · due /);
+    act(() => now.tree.unmount());
+  });
+});

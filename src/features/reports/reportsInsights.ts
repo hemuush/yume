@@ -1,3 +1,4 @@
+import { isFixedCategoryName } from '@/lib/fixedCategory';
 import { addDaysToIsoDate, parseLocalIsoDate, toLocalIsoDate } from '@/lib/date';
 import { formatMoney } from '@/lib/money';
 import { formatPctChange } from '@/lib/format';
@@ -11,9 +12,6 @@ import type {
 } from '@/db/reports';
 import { roundedMinor } from '@/lib/round';
 import { dayMonth } from '@/lib/dateLabels';
-
-/** Which categories count as a fixed monthly load rather than a choice. */
-const FIXED_CATEGORY_NAMES = ['Loan EMI', 'Rent', 'Insurance', 'Subscriptions'];
 
 /**
  * The day-detail popup's footer figure: net (income − expense, signed) when the day has income, else the
@@ -165,7 +163,7 @@ export function recurringVsDiscretionary(breakdown: CategoryBreakdownItem[]): {
   let recurringMinor = 0;
   let discretionaryMinor = 0;
   for (const c of breakdown) {
-    if (FIXED_CATEGORY_NAMES.includes(c.name)) recurringMinor += c.totalMinor;
+    if (isFixedCategoryName(c.name)) recurringMinor += c.totalMinor;
     else discretionaryMinor += c.totalMinor;
   }
   return { recurringMinor, discretionaryMinor };

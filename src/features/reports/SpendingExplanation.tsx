@@ -113,7 +113,7 @@ export function SpendingExplanation({
               <EffectRow
                 label="Purchase frequency"
                 value={money(effects[0])}
-                detail={`${result.previous.count} → ${result.current.count} purchases`}
+                detail={`${result.previous.count} → ${result.current.count} ${result.current.count === 1 ? 'purchase' : 'purchases'}`}
               />
               <EffectRow
                 label="Purchase size"
