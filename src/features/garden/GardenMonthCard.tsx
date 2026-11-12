@@ -106,7 +106,7 @@ export function GardenMonthCard({ month, today }: { month: GardenMonth; today: s
 }
 
 const styles = StyleSheet.create({
-  card: { marginHorizontal: 20, marginTop: 10, paddingHorizontal: 14, paddingVertical: 12, gap: 6 },
+  card: { marginHorizontal: 16, marginTop: 10, paddingHorizontal: 14, paddingVertical: 12, gap: 6 },
   grid: { gap: 4 },
   head: {
     flexDirection: 'row',

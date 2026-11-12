@@ -18,6 +18,7 @@ import { useAccent } from '@/theme/AccentContext';
 import { softTint } from '@/components/softTint';
 import { haptics } from '@/lib/haptics';
 import { theme } from '@/constants/theme';
+import { SCREEN } from '@/components/screenStyles';
 import {
   buildDayLane,
   dropIndex,
@@ -34,7 +35,8 @@ import { categorySpoken, joinSub, parentNameOf } from '@/lib/categoryLabel';
 
 /** A compact row: its least height and the category disc it leads with. */
 const ROW_H = 48;
-const ICON = 32;
+// The same 34 dp category mark as Home's Recent activity and every other entry row (SCREEN.iconTile).
+const ICON = SCREEN.iconTile;
 const NO_ACCOUNTS: ReadonlySet<string> = new Set();
 const NO_NOTES: ValueNote[] = [];
 
@@ -100,6 +102,7 @@ function TimelineDayView({
   position = 'only',
   selected = false,
   today: isToday = false,
+  animateLayout = false,
 }: {
   date: string;
   label: string;
@@ -134,6 +137,8 @@ function TimelineDayView({
   selected?: boolean;
   /** This is today: its date number is drawn in a filled circle. */
   today?: boolean;
+  /** True just after a group opened or closed: the day then animates its height and its place in the list. */
+  animateLayout?: boolean;
 }) {
   const { hideAmounts } = usePrivacy();
   const { width, fontScale } = useWindowDimensions();
@@ -420,8 +425,13 @@ function TimelineDayView({
   const segment = [styles.day];
   const hasNext = position === 'first' || position === 'middle';
   return (
-    // The day grows and shrinks with its stacks open or closed, and the days below slide with it.
-    <ReanimatedAnimated.View entering={entering} layout={settling ? undefined : ROW_LAYOUT} style={segment}>
+    // The day grows and shrinks with its stacks open or closed, and the days below slide with it (only just after a
+    // toggle, see `animateLayout`).
+    <ReanimatedAnimated.View
+      entering={entering}
+      layout={animateLayout && !settling ? ROW_LAYOUT : undefined}
+      style={segment}
+    >
       <View style={styles.rail} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
         <Text style={styles.railWeekday}>{shortWeekday(date).toUpperCase()}</Text>
         <View
@@ -560,10 +570,11 @@ const styles = StyleSheet.create({
     letterSpacing: 0.6,
     color: theme.colors.textMuted,
   },
-  railNumber: { minWidth: 34, height: 34, alignItems: 'center', justifyContent: 'center' },
+  // Minimum, not fixed, so the date number is never clipped at large text sizes.
+  railNumber: { minWidth: 34, minHeight: 34, alignItems: 'center', justifyContent: 'center' },
   railNumberToday: {
     minWidth: 34,
-    height: 34,
+    minHeight: 34,
     paddingHorizontal: 6,
     borderRadius: 17,
     alignItems: 'center',

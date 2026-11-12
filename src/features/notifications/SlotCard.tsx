@@ -107,7 +107,7 @@ const styles = StyleSheet.create({
   clock: {
     flexShrink: 1,
     fontFamily: theme.font.roundedBold,
-    fontSize: 17,
+    fontSize: 18,
     color: theme.colors.textPrimary,
     textAlign: 'center',
   },

@@ -54,7 +54,7 @@ export function UpdateValuesSheet({
         >
           The longest ago first. Update the ones that have changed and leave the rest.
         </Text>
-        <View style={[h.card, cardSurface.neutral]}>
+        <View style={[h.card, h.cardInSheet, cardSurface.neutral]}>
           {ordered.map((holding, i) => {
             const updated = done.has(holding.id);
             return (

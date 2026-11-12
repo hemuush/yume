@@ -127,7 +127,8 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     marginTop: 8,
     minHeight: 64,
-    paddingHorizontal: 14,
+    // The same side padding as Home's month card and as this strip's loading placeholder.
+    paddingHorizontal: 16,
     paddingVertical: 10,
     flexDirection: 'row',
     alignItems: 'center',

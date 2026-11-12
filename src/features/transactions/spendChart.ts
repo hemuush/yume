@@ -29,7 +29,7 @@ const WEEKDAY_INITIAL = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
 // Bucket for expenses with no (or unresolvable) category, e.g. loan EMIs from raw SQL (payInstallment): they
 // still count toward `totalMinor` (as in Home/Reports); only the *segment* depends on a resolved category.
-export const UNCATEGORIZED_ID = '__uncategorized__';
+const UNCATEGORIZED_ID = '__uncategorized__';
 
 function summariseExpenses(
   transactions: Transaction[],

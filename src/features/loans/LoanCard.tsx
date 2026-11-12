@@ -162,7 +162,7 @@ const styles = StyleSheet.create({
     marginHorizontal: SCREEN.gutter,
     marginBottom: 12,
     padding: 14,
-    borderRadius: 16,
+    borderRadius: theme.radius.xl,
     backgroundColor: theme.colors.surface,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,

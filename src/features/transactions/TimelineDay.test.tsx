@@ -148,6 +148,7 @@ function render(
     categories?: Category[];
     savingsAccountIds?: Set<string>;
     onDragActive?: (active: boolean) => void;
+    animateLayout?: boolean;
   } = {}
 ) {
   let r!: ReactTestRenderer;
@@ -167,6 +168,7 @@ function render(
         onToggleStack={onToggleStack}
         onReorder={onReorder}
         onDragActive={opts.onDragActive}
+        animateLayout={opts.animateLayout}
       />
     );
   });
@@ -255,17 +257,29 @@ describe('TimelineDay', () => {
     expect(onPress.mock.calls.map(([t]) => t.id).sort()).toEqual(['t1', 't2', 't3', 't4', 't5']);
   });
 
-  it('opens and closes a stack with the panel motion, and lets the day grow and the days below slide', () => {
+  it('opens and closes a stack with the panel motion, and lets days animate only just after a toggle', () => {
     const { PANEL_ENTER, ROW_EXIT, ROW_LAYOUT } = require('@/lib/animation');
     const open = render(new Set([`${DATE}|expense|food`]));
     const panels = open.root.findAll(
       (n) => typeof n.type === 'string' && n.props.entering === PANEL_ENTER && n.props.exiting === ROW_EXIT
     );
     expect(panels.length).toBeGreaterThan(0);
-    expect(
-      open.root.findAll((n) => typeof n.type === 'string' && n.props.layout === ROW_LAYOUT).length
-    ).toBeGreaterThan(1);
+    const dayLayouts = (tree: ReactTestRenderer) =>
+      tree.root.findAll(
+        (n) =>
+          typeof n.type === 'string' &&
+          n.props.layout === ROW_LAYOUT &&
+          StyleSheet.flatten(n.props.style)?.flexDirection === 'row' &&
+          StyleSheet.flatten(n.props.style)?.marginTop === 14
+      ).length;
+    // At rest the day carries no layout animation of its own, so a shift in a long list lands at once.
+    expect(dayLayouts(open)).toBe(0);
     act(() => open.unmount());
+    const moving = render(new Set([`${DATE}|expense|food`]), jest.fn(), jest.fn(), undefined, {
+      animateLayout: true,
+    });
+    expect(dayLayouts(moving)).toBe(1);
+    act(() => moving.unmount());
     const closed = render(new Set());
     expect(closed.root.findAll((n) => n.props.entering === PANEL_ENTER)).toHaveLength(0);
     act(() => closed.unmount());
@@ -488,7 +502,7 @@ describe('days as a feed with a marker rail', () => {
       const tree = day();
       const separators = tree.root.findAll((n) => {
         const flat = StyleSheet.flatten(n.props.style);
-        return !!flat && flat.height === StyleSheet.hairlineWidth && flat.marginLeft === 42;
+        return !!flat && flat.height === StyleSheet.hairlineWidth && flat.marginLeft === 44;
       });
       expect(separators.length).toBeGreaterThan(0);
       act(() => tree.unmount());

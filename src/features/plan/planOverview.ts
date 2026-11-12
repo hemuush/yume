@@ -150,7 +150,7 @@ export interface PlanRuleInput {
 }
 
 /** What a scheduled transfer does to the money you can spend, and how its row describes it. */
-export interface DueTransfer {
+interface DueTransfer {
   flow: 'out' | 'in';
   /** The row's second line: "SIP", "To savings", "From Groww". */
   sub: string;

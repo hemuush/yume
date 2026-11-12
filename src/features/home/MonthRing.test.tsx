@@ -77,6 +77,32 @@ it('keeps round-capped arcs from running into each other, and draws one slice as
   act(() => whole.unmount());
 });
 
+it('draws very small slices as thin flat bars in their own slots, so Free is always seen and none overlap', () => {
+  // The screenshot month: spent 46,312, saved 35,000, bills 299, free 1,778 of 83,389.
+  const r = mount(
+    <MonthRing slices={heroSlices(83_389_00, 46_312_00, 35_000_00, 299_00)} hideSavings={false} />
+  );
+  const arcs = r.root.findAllByType(Circle).filter((c) => c.props.opacity != null);
+  expect(arcs).toHaveLength(4);
+  const circumference = 2 * Math.PI * ((112 - 10 - 5 - 2) / 2);
+  const spans = arcs.map((c) => {
+    const length = parseFloat(String(c.props.strokeDasharray));
+    const start = -Number(c.props.strokeDashoffset);
+    // What is drawn on the ring: round caps reach half a stroke past each end.
+    const reach = c.props.strokeLinecap === 'round' ? 5 : 0;
+    return { from: start - reach, to: start + length + reach, cap: c.props.strokeLinecap, length };
+  });
+  // Bills left (0.4%) and Free (2.1%) are too small for round caps: flat, at least 2 dp, visible.
+  expect(spans[2].cap).toBe('butt');
+  expect(spans[3].cap).toBe('butt');
+  expect(spans[2].length).toBeGreaterThanOrEqual(2);
+  expect(spans[3].length).toBeGreaterThanOrEqual(2);
+  // Each arc ends before the next begins, and the last stays on the ring.
+  for (let i = 1; i < spans.length; i++) expect(spans[i - 1].to).toBeLessThanOrEqual(spans[i].from + 0.01);
+  expect(spans[3].to).toBeLessThanOrEqual(circumference + 0.01);
+  act(() => r.unmount());
+});
+
 it('hides the picture from screen readers when there is no income', () => {
   const r = mount(<MonthRing slices={heroSlices(0, 0, 0, 0)} hideSavings={false} />);
   expect(image(r).props.accessibilityElementsHidden).toBe(true);

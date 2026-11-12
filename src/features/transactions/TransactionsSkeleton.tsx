@@ -66,7 +66,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.surface,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
-    borderRadius: 16,
+    borderRadius: theme.radius.xl,
     overflow: 'hidden',
     paddingBottom: 6,
   },

@@ -36,7 +36,7 @@ export interface CategoryRow {
   subs: { name: string; totalMinor: number; count: number }[];
 }
 
-export interface BarPoint {
+interface BarPoint {
   label: string;
   spentMinor: number;
   incomeMinor: number;

@@ -32,7 +32,7 @@ export function LoanStatGrid({ stats }: { stats: LoanStat[] }) {
 const styles = StyleSheet.create({
   card: {
     flexDirection: 'row',
-    borderRadius: 20,
+    borderRadius: theme.radius.xl,
     marginBottom: 10,
     backgroundColor: theme.colors.surface,
     borderWidth: StyleSheet.hairlineWidth,

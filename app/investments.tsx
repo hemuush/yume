@@ -9,6 +9,7 @@ import { AddButton } from '@/components/AddButton';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { SettingsRow } from '@/components/SettingsRow';
+import { CardRowsSkeleton, SummarySkeleton } from '@/components/ListSkeleton';
 import { ScreenLoadError } from '@/components/ScreenLoadError';
 import { Section } from '@/components/Section';
 import { SCREEN } from '@/components/screenStyles';
@@ -175,7 +176,15 @@ export default function InvestmentsScreen() {
         {loadError && (
           <ScreenLoadError title="Investments" message={loadError} onRetry={() => void reload()} embedded />
         )}
-        {none ? (
+        {!loaded && !loadError ? (
+          // The same placeholders every other screen shows while it loads, instead of an empty screen.
+          <>
+            <SummarySkeleton />
+            <View style={{ marginTop: 16 }}>
+              <CardRowsSkeleton rows={3} subtitle />
+            </View>
+          </>
+        ) : none ? (
           <StartTracking onAdd={() => setAdding(true)} />
         ) : (
           loaded && (

@@ -27,7 +27,7 @@ export function HoldingPickerSheet({
   const { hideAmounts } = usePrivacy();
   return (
     <ModalSheet visible={visible} title={title} onClose={onClose}>
-      <View style={[h.card, cardSurface.neutral]}>
+      <View style={[h.card, h.cardInSheet, cardSurface.neutral]}>
         {holdings.map((holding, i) => (
           <SettingsRow
             key={holding.id}

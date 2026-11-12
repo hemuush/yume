@@ -26,7 +26,7 @@ export const styles = StyleSheet.create({
   },
 
   card: {
-    marginHorizontal: 20,
+    marginHorizontal: 16,
     marginBottom: 12,
     padding: 16,
     borderRadius: theme.radius.xl2,
@@ -38,7 +38,7 @@ export const styles = StyleSheet.create({
   // The one card holding every goal row.
   list: {
     marginHorizontal: 16,
-    borderRadius: 16,
+    borderRadius: theme.radius.xl,
     backgroundColor: theme.colors.surface,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,

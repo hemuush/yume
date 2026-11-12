@@ -195,7 +195,7 @@ export function ComingUpSection({
 const s = StyleSheet.create({
   card: {
     marginHorizontal: 16,
-    borderRadius: 16,
+    borderRadius: theme.radius.xl,
     backgroundColor: theme.colors.surface,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
