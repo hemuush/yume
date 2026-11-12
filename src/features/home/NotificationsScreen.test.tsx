@@ -27,10 +27,17 @@ jest.mock('@/components/AppDialog', () => ({ showAlert: (...a: unknown[]) => moc
 jest.mock('@/features/home/NeedsYouRow', () => ({
   NeedsYouRow: () => null,
 }));
-jest.mock('@/db/reports', () => ({ getPeriodComparison: async () => ({ expenseChangePct: null }) }));
+const mockSpend: { pct: number | null; checkins: boolean } = { pct: null, checkins: false };
+jest.mock('@/db/reports', () => ({
+  getMonthToDateComparison: async () => ({
+    expenseChangePct: mockSpend.pct,
+    current: { expenseMinor: 0, incomeMinor: 0, categoryBreakdown: [], savingsContributionMinor: 0 },
+    previous: { expenseMinor: 0, incomeMinor: 0, categoryBreakdown: [], savingsContributionMinor: 0 },
+  }),
+}));
 jest.mock('@/db/ledger', () => ({ listAccounts: async () => [] }));
 jest.mock('@/db/settings', () => ({
-  getNotificationPrefs: async () => ({ suuCheckins: false }),
+  getNotificationPrefs: async () => ({ suuCheckins: mockSpend.checkins }),
   getCachedHideSensitiveAmounts: () => false,
 }));
 const mockData = {
@@ -73,6 +80,8 @@ const keys = (tree: ReactTestRenderer) => rows(tree).map((r) => r.props.item.key
 
 beforeEach(() => {
   jest.clearAllMocks();
+  mockSpend.pct = null;
+  mockSpend.checkins = false;
   mockData.loadNeedsYou.mockResolvedValue({
     shown: [item('a'), item('b', { snoozable: true, action: 'backup' }), item('c')],
     dismissed: [],
@@ -157,4 +166,50 @@ it('groups what needs you by urgency, most pressing first', async () => {
   expect(keys(tree)).toEqual(['u', 'w', 'i']);
   const shown = tree.root.findAllByType(Text).map((t) => [].concat(t.props.children).join(''));
   expect(shown).toEqual(expect.arrayContaining(['Do first', 'Coming up', 'When you can']));
+});
+
+describe('Suu’s check-in about spending', () => {
+  // Only the date is faked, so the screen's own promises and timers still run.
+  const onDay = (day: number) =>
+    jest.useFakeTimers({
+      now: new Date(2026, 10, day, 12),
+      doNotFake: [
+        'hrtime',
+        'nextTick',
+        'performance',
+        'queueMicrotask',
+        'requestAnimationFrame',
+        'cancelAnimationFrame',
+        'requestIdleCallback',
+        'cancelIdleCallback',
+        'setImmediate',
+        'clearImmediate',
+        'setInterval',
+        'clearInterval',
+        'setTimeout',
+        'clearTimeout',
+      ],
+    });
+  afterEach(() => jest.useRealTimers());
+  const shownText = (tree: ReactTestRenderer) =>
+    tree.root.findAllByType(Text).map((t) => [].concat(t.props.children as never).join(''));
+
+  it('compares with the same point last month, not all of last month, so it cannot praise a month that has barely begun', async () => {
+    onDay(12);
+    mockSpend.checkins = true;
+    mockSpend.pct = -20;
+    const less = shownText(await render());
+    expect(less.some((t) => t.includes('less than at this point last month'))).toBe(true);
+    expect(less.some((t) => t.endsWith('less than last month — nice pace.'))).toBe(false);
+    mockSpend.pct = 15;
+    const more = shownText(await render());
+    expect(more.some((t) => t.includes('more than at this point last month'))).toBe(true);
+  });
+
+  it('says nothing about pace before the 5th, when a few days are too little to go on', async () => {
+    onDay(3);
+    mockSpend.checkins = true;
+    mockSpend.pct = -90;
+    expect(shownText(await render()).some((t) => t.includes('last month'))).toBe(false);
+  });
 });

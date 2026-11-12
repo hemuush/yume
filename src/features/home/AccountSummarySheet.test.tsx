@@ -191,6 +191,20 @@ describe('AccountSummarySheet', () => {
     expect(texts(tree)).toContain('Nothing moved in or out this year.');
   });
 
+  it('names a past month instead of saying "this month", and a past year likewise', async () => {
+    mockFlow.mockResolvedValue({ ...flow, inMinor: 0, outMinor: 0 });
+    const { periodLabel } = require('@/lib/period');
+    const month = await render({ cursor: { granularity: 'month', offset: -1 } });
+    expect(texts(month)).toContain(
+      `Nothing moved in or out during ${periodLabel({ granularity: 'month', offset: -1 })}.`
+    );
+    expect(texts(month)).not.toContain('Nothing moved in or out this month.');
+    const year = await render({ cursor: { granularity: 'year', offset: -1 } });
+    expect(texts(year)).toContain(
+      `Nothing moved in or out during ${periodLabel({ granularity: 'year', offset: -1 })}.`
+    );
+  });
+
   it('shows a failure instead of an empty month when the figures cannot be read', async () => {
     mockFlow.mockRejectedValue(new Error('disk'));
     const tree = await render();

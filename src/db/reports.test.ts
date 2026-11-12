@@ -1,5 +1,6 @@
 import {
   getPeriodRanges,
+  getMonthToDateRanges,
   findTopGrowingCategory,
   loanNetWorthContribution,
   computeTrackedBalance,
@@ -36,6 +37,40 @@ describe('getPeriodRanges', () => {
     const { current, previous } = getPeriodRanges('year', new Date('2024-06-15T12:00:00'));
     expect(current).toEqual({ start: '2024-01-01', end: '2024-12-31' });
     expect(previous).toEqual({ start: '2023-01-01', end: '2023-12-31' });
+  });
+});
+
+describe('getMonthToDateRanges', () => {
+  it('sets this month so far against the same days of last month', () => {
+    const { current, previous } = getMonthToDateRanges(new Date(2026, 10, 12, 15));
+    expect(current).toEqual({ start: '2026-11-01', end: '2026-11-12' });
+    expect(previous).toEqual({ start: '2026-10-01', end: '2026-10-12' });
+  });
+
+  it('takes all of last month when it was shorter than this month is so far', () => {
+    expect(getMonthToDateRanges(new Date(2026, 2, 31)).previous).toEqual({
+      start: '2026-02-01',
+      end: '2026-02-28',
+    });
+    // A leap year's February has its 29th.
+    expect(getMonthToDateRanges(new Date(2024, 2, 30)).previous).toEqual({
+      start: '2024-02-01',
+      end: '2024-02-29',
+    });
+    expect(getMonthToDateRanges(new Date(2026, 4, 31)).previous).toEqual({
+      start: '2026-04-01',
+      end: '2026-04-30',
+    });
+  });
+
+  it('reaches back across the year end, and the first day compares one day with one day', () => {
+    expect(getMonthToDateRanges(new Date(2026, 0, 15)).previous).toEqual({
+      start: '2025-12-01',
+      end: '2025-12-15',
+    });
+    const first = getMonthToDateRanges(new Date(2026, 5, 1));
+    expect(first.current).toEqual({ start: '2026-06-01', end: '2026-06-01' });
+    expect(first.previous).toEqual({ start: '2026-05-01', end: '2026-05-01' });
   });
 });
 

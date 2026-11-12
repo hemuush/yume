@@ -191,6 +191,8 @@ export function AccountSummarySheet({
   const isSavings = account.type === 'savings';
   const nameOf = (id: string | null) => accounts.find((a) => a.id === id)?.name;
   const unit = cursor.granularity === 'year' ? 'year' : 'month';
+  // "this month" is only true of the current one; a past period is named (browsing October, it is not "this month").
+  const when = cursor.offset === 0 ? `this ${unit}` : `during ${periodLabel(cursor)}`;
   const parts = (own: number, ownLabel: string, moved: number, movedLabel: string) =>
     [own > 0 ? `${ownLabel} ${money(own)}` : null, moved > 0 ? `${movedLabel} ${money(moved)}` : null]
       .filter(Boolean)
@@ -203,7 +205,7 @@ export function AccountSummarySheet({
   const netLine = !flow
     ? ''
     : flow.inMinor === 0 && flow.outMinor === 0
-      ? `Nothing moved in or out this ${unit}.`
+      ? `Nothing moved in or out ${when}.`
       : net === 0
         ? 'Everything that came in went out.'
         : net > 0

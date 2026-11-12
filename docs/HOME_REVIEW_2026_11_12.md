@@ -9,6 +9,21 @@ A review of what a person sees on Home, how it moves, and what they would think,
 - **An empty period said "Try another period".** It now says what the period is: "Nothing logged this month yet. Tap + to add an entry." for the current one, and "Nothing logged in October. Step to another month to look elsewhere." for a past one, with the year when it is not this year ([emptyRecentCopy](../src/features/home/recentActivity.ts)).
 - **Changing the month from the shrunk header left the page where it was.** The month card the chip describes was scrolled out of sight, so the new month changed only the list far below. Changed from the chip (the page scrolled more than 80 dp), Home now scrolls back to the card; changed on the card itself (its own pill or a swipe) it stays put.
 
+## A second, harder pass
+
+The first pass was mostly reading. This one rendered Home with real data (amounts shown and hidden), checked the figures against each other, and read what the first had skipped.
+
+- **Rendered and cross-checked, nothing wrong:** the month legend adds up to its entries, "About ₹14,884 a day for 18 days" is the free figure over the days counted, Today's total agrees between the day heading and the week bars, and with amounts hidden savings, sensitive spending and goals are masked everywhere they appear (including the in-hand line and the day total).
+- **The account sheet said "this month" for any month.** Browsing October and opening an account read "Nothing moved in or out this month." It now says "during October" (and "this month" only for the current one).
+- **The Notifications screen's Suu line praised a month that had barely begun.** It set this month so far against all of last month, so on the 4th it said "You're spending 85% less than last month — nice pace." It now compares the same days of last month ([getMonthToDateRanges](../src/db/reports.ts), which takes all of a shorter month), words it "than at this point last month", and says nothing before the 5th, the same rule the month forecast uses. The home-screen Suu widget and the "growing category" alert compare the same two spans the old way, but they only speak when spending is already *up*, which stays true, so they were left.
+- **The loading placeholder named the wrong section.** Under the account tiles it drew "Recent activity"; the page puts Coming up there. It is now titled Coming up, so the heading does not change as the data lands.
+
+## Looked at and not changed
+
+- The Suu "welcome back" pop after a pull-down is placed 4 dp from the top of the screen. The app draws under the status bar (the header pads by the top inset), so the pop probably sits partly behind it. Not changed without seeing it: it needs a look on a phone.
+- The bell lists only the nearest EMI across loans, so two overdue loans count once on the bell; Coming up lists them all.
+- "₹27,480 still to pay this month" includes an EMI that was due in March (it is overdue, so it is still owed); "this month" is loose for that part.
+
 ## Looked at and left, for a decision
 
 - **A first account with no opening balance does not appear on Home.** Accounts holding nothing stay under View all by design ([redesign, 22 October](HOME_REDESIGN_2026_10_22.md); `HomeAccounts.test.tsx` states it for exactly this case), so someone who has just added "Bank" with ₹0 sees a row with only "Add account". The alternative is to show the empty accounts when none holds a balance. Not changed: it reverses a recorded decision.

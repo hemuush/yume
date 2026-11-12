@@ -657,7 +657,8 @@ export default function DashboardScreen() {
             <View style={{ marginTop: SCREEN.sectionGap }}>
               <AccountTilesSkeleton />
             </View>
-            <Section title="Recent activity">
+            {/* Coming up is what follows the accounts on the loaded page; Recent activity is below it. */}
+            <Section title="Coming up">
               <CardRowsSkeleton rows={3} subtitle />
             </Section>
           </>
