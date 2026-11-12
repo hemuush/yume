@@ -46,63 +46,71 @@ export function MonthRing({
   const circumference = 2 * Math.PI * R;
   const outerC = 2 * Math.PI * R_OUTER;
   let used = 0;
+  // A single slice is the whole ring, with no gap to leave.
+  const whole = parts.length === 1;
   const label = `Where the month went: spent ${heroPct(slices.spent)}${
     hideSavings ? '' : `, saved ${heroPct(slices.saved)}`
   }${slices.due ? `, bills ${heroPct(slices.due)}` : ''}, free ${heroPct(slices.free)}`;
   return (
-    <View
-      style={{ width: RING_SIZE, height: RING_SIZE, alignItems: 'center', justifyContent: 'center' }}
-      accessible
-      accessibilityRole="image"
-      accessibilityLabel={label}
-    >
-      <Svg width={RING_SIZE} height={RING_SIZE} style={{ position: 'absolute' }}>
-        {dayShare != null && (
-          <>
-            <Circle
-              cx={c}
-              cy={c}
-              r={R_OUTER}
-              stroke={theme.colors.divider}
-              strokeWidth={OUTER_STROKE}
-              fill="none"
-            />
-            <Circle
-              cx={c}
-              cy={c}
-              r={R_OUTER}
-              stroke={theme.colors.ink}
-              strokeWidth={OUTER_STROKE}
-              strokeLinecap="round"
-              fill="none"
-              strokeDasharray={`${Math.max(0, outerC * Math.min(1, dayShare))} ${outerC}`}
-              transform={`rotate(-90 ${c} ${c})`}
-            />
-          </>
-        )}
-        <Circle cx={c} cy={c} r={R} stroke={theme.colors.trayTrack} strokeWidth={STROKE} fill="none" />
-        {parts.map((part) => {
-          const start = used;
-          used += part.share;
-          const length = Math.max(0.01, circumference * part.share - GAP);
-          return (
-            <Circle
-              key={part.key}
-              cx={c}
-              cy={c}
-              r={R}
-              stroke={part.color}
-              strokeWidth={STROKE}
-              strokeLinecap="round"
-              fill="none"
-              opacity={focus != null && focus !== part.key ? DIM : 1}
-              strokeDasharray={`${length} ${circumference}`}
-              strokeDashoffset={-circumference * start}
-              transform={`rotate(-90 ${c} ${c})`}
-            />
-          );
-        })}
-      </Svg>
+    <View style={{ width: RING_SIZE, height: RING_SIZE, alignItems: 'center', justifyContent: 'center' }}>
+      <View
+        pointerEvents="none"
+        style={{ position: 'absolute', width: RING_SIZE, height: RING_SIZE }}
+        accessible={slices.hasIncome}
+        accessibilityElementsHidden={!slices.hasIncome}
+        importantForAccessibility={slices.hasIncome ? 'yes' : 'no-hide-descendants'}
+        accessibilityRole="image"
+        accessibilityLabel={label}
+      >
+        <Svg width={RING_SIZE} height={RING_SIZE} style={{ position: 'absolute' }}>
+          {dayShare != null && (
+            <>
+              <Circle
+                cx={c}
+                cy={c}
+                r={R_OUTER}
+                stroke={theme.colors.divider}
+                strokeWidth={OUTER_STROKE}
+                fill="none"
+              />
+              <Circle
+                cx={c}
+                cy={c}
+                r={R_OUTER}
+                stroke={theme.colors.ink}
+                strokeWidth={OUTER_STROKE}
+                strokeLinecap="round"
+                fill="none"
+                strokeDasharray={`${Math.max(0, outerC * Math.min(1, dayShare))} ${outerC}`}
+                transform={`rotate(-90 ${c} ${c})`}
+              />
+            </>
+          )}
+          <Circle cx={c} cy={c} r={R} stroke={theme.colors.trayTrack} strokeWidth={STROKE} fill="none" />
+          {parts.map((part) => {
+            const start = used;
+            used += part.share;
+            // Round caps add half a stroke to each end, so take a whole stroke off along with the gap.
+            const length = Math.max(0.01, circumference * part.share - STROKE - GAP);
+            return (
+              <Circle
+                key={part.key}
+                cx={c}
+                cy={c}
+                r={R}
+                stroke={part.color}
+                strokeWidth={STROKE}
+                strokeLinecap={whole ? 'butt' : 'round'}
+                fill="none"
+                opacity={focus != null && focus !== part.key ? DIM : 1}
+                strokeDasharray={whole ? undefined : `${length} ${circumference}`}
+                strokeDashoffset={whole ? undefined : -(circumference * start + (STROKE + GAP) / 2)}
+                transform={`rotate(-90 ${c} ${c})`}
+              />
+            );
+          })}
+        </Svg>
+      </View>
       <View style={{ width: R * 2 - STROKE - 6, alignItems: 'center' }}>{children}</View>
     </View>
   );

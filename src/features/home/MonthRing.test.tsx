@@ -59,3 +59,27 @@ it('dims the slices that were not picked', () => {
   expect(arcs.map((c) => c.props.opacity)).toEqual([1, 0.35, 0.35]);
   act(() => r.unmount());
 });
+
+it('keeps round-capped arcs from running into each other, and draws one slice as a closed ring', () => {
+  const r = mount(<MonthRing slices={heroSlices(100_000, 40_000, 0, 0)} hideSavings={false} />);
+  const arcs = r.root.findAllByType(Circle).filter((c) => c.props.opacity != null);
+  const circumference = 2 * Math.PI * ((112 - 10 - 5 - 2) / 2);
+  const [spent, free] = arcs.map((c) => c.props);
+  const len = (p: Record<string, unknown>) => parseFloat(String(p.strokeDasharray));
+  // Each arc's visible length (dash plus its two round caps) leaves a gap before the next one starts.
+  expect(len(spent) + 10).toBeLessThan(circumference * 0.4);
+  expect(len(free) + 10).toBeLessThan(circumference * 0.6);
+  act(() => r.unmount());
+  const whole = mount(<MonthRing slices={heroSlices(100_000, 100_000, 0, 0)} hideSavings={false} />);
+  const only = whole.root.findAllByType(Circle).filter((c) => c.props.opacity != null);
+  expect(only).toHaveLength(1);
+  expect(only[0].props.strokeDasharray).toBeUndefined();
+  act(() => whole.unmount());
+});
+
+it('hides the picture from screen readers when there is no income', () => {
+  const r = mount(<MonthRing slices={heroSlices(0, 0, 0, 0)} hideSavings={false} />);
+  expect(image(r).props.accessibilityElementsHidden).toBe(true);
+  expect(image(r).props.accessible).toBe(false);
+  act(() => r.unmount());
+});

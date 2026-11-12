@@ -41,14 +41,16 @@ export function HeroLegend({ items, stacked = false }: { items: LegendItem[]; st
             accessibilityRole={it.onPress ? 'button' : undefined}
             accessibilityState={it.onPress ? { expanded: it.expanded, selected: it.selected } : undefined}
             accessibilityHint={it.onPress ? it.hint : undefined}
+            // Stacked rows are short so four fit beside the ring; the touch area still reaches 44 dp.
+            hitSlop={stacked ? { top: 8, bottom: 8 } : undefined}
             accessible
             accessibilityLabel={`${it.label}, ${amount}, ${it.share}`}
             style={[
               styles.col,
               { minWidth: Math.max(60, amount.length * 7) },
               !stacked && pair && styles.colPair,
-              stacked && styles.colStacked,
               it.onPress && styles.tap,
+              stacked && styles.colStacked,
             ]}
           >
             <View style={[styles.head, stacked && { flex: 1, minWidth: 0 }]}>
@@ -77,7 +79,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 8,
     flexBasis: 'auto',
-    minHeight: 36,
+    minHeight: 28,
   },
   col: { flexGrow: 1, flexBasis: 0, minWidth: 60, gap: 1 },
   colPair: { flexBasis: '45%' },
