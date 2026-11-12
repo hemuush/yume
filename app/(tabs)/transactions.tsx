@@ -79,7 +79,7 @@ const SEARCH_RESULT_LIMIT = 50;
 
 export default function TransactionsScreen() {
   const insets = useSafeAreaInsets();
-  const { width, fontScale } = useWindowDimensions();
+  const { width, height, fontScale } = useWindowDimensions();
   const stackPeriod = width < 380 || fontScale > 1.15;
   const tabScrollPad = useTabScrollPad();
   const { hideAmounts } = usePrivacy();
@@ -1077,7 +1077,8 @@ export default function TransactionsScreen() {
                   accessibilityRole="button"
                   accessibilityLabel={`${heading.title}${heading.sub ? `, ${heading.sub}` : ''}. Pick a month`}
                 >
-                  <View style={styles.periodTitleRow}>
+                  <Feather name="calendar" size={14} color={theme.colors.ink} />
+                  <View style={styles.periodTitleCol}>
                     <Text style={styles.periodTitle} numberOfLines={1}>
                       {heading.title}
                     </Text>
@@ -1087,6 +1088,7 @@ export default function TransactionsScreen() {
                       </Text>
                     )}
                   </View>
+                  <Feather name="chevron-down" size={14} color={theme.colors.ink} />
                 </Pressable>
                 <AnimatedPressable
                   onPress={stepForward}
@@ -1145,6 +1147,9 @@ export default function TransactionsScreen() {
         onClose={() => setInsightsVisible(false)}
         title="Insights"
         subtitle={heading.title}
+        // A short sheet with nothing to type into: it sits flush at the bottom. It scrolls only when large
+        // text or a short screen would make it taller than the phone.
+        scrollable={fontScale > 1.2 || height < 700}
       >
         <TransactionsHeadline
           bare

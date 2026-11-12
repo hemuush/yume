@@ -1,4 +1,4 @@
-import { selectedFill } from '@/theme/interactionColors';
+import { themeInk } from '@/theme/interactionColors';
 import { View, Pressable, ScrollView, ActivityIndicator, useWindowDimensions } from 'react-native';
 import { HeaderIconButton } from '@/components/AppHeader';
 import { Text } from '@/components/Text';
@@ -53,6 +53,7 @@ export function ActivityFilterChips({
   const picked = categoryIds.length + accountIds.length + (filterType === 'all' ? 0 : 1);
   const { accent } = useAccent();
   const chipBg = shade(accent, 95);
+  const ink = themeInk(accent);
   const { width, fontScale } = useWindowDimensions();
   const wrapTabs = width < 360 || fontScale > 1.2;
   // Investments are picked in the sheet, so their chip shows only while that is the type in use: otherwise
@@ -65,12 +66,9 @@ export function ActivityFilterChips({
       <Pressable
         key={c.value}
         onPress={() => onFilterType(c.value)}
-        // Drawn 36 tall; the touch area stays 44.
+        // Drawn 40 tall; the touch area stays 48.
         hitSlop={{ top: 4, bottom: 4 }}
-        style={withPressedTint(accent, [
-          styles.typeBtn,
-          on && { backgroundColor: selectedFill(accent), borderColor: 'transparent' },
-        ])}
+        style={withPressedTint(accent, [styles.typeBtn, on && { backgroundColor: ink, borderColor: ink }])}
         accessibilityRole="radio"
         accessibilityState={{ selected: on }}
         accessibilityLabel={`Show ${c.label.toLowerCase()}`}

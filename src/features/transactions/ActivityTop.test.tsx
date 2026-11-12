@@ -210,6 +210,28 @@ describe('Activity filter bar', () => {
     dimensions.mockRestore();
   });
 
+  it("draws the picked type as a dark rounded button, like Home's Add expense", () => {
+    const { themeInk } = require('@/theme/interactionColors');
+    const { theme } = require('@/constants/theme');
+    const dimensions = jest
+      .spyOn(require('react-native'), 'useWindowDimensions')
+      .mockReturnValue({ width: 390, height: 800, fontScale: 1, scale: 3 });
+    const tree = bar([]);
+    const style = (label: string) => {
+      const raw = tree.root.find(
+        (n) => n.props.accessibilityLabel === label && typeof n.props.onPress === 'function'
+      ).props.style;
+      return StyleSheet.flatten(typeof raw === 'function' ? raw({ pressed: false }) : raw);
+    };
+    expect(style('Show all')).toMatchObject({
+      borderRadius: theme.radius.lg,
+      backgroundColor: themeInk('#8FCBFF'),
+    });
+    expect(style('Show spent').backgroundColor).not.toBe(style('Show all').backgroundColor);
+    act(() => tree.unmount());
+    dimensions.mockRestore();
+  });
+
   it('adds a removable chip for a picked category', () => {
     expect(texts(bar(['groc']))).toContain('Groceries');
   });
