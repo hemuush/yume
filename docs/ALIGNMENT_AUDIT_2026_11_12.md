@@ -82,6 +82,15 @@ Each rule was run over all non-test source files (app and src); a hit is listed 
 | Section titles as headings for screen readers | **not marked**: `Section` titles ("This week", "Your accounts" and every other) now have the header role, so TalkBack can jump between sections |
 | Fixed heights on text-bearing boxes (clipped at large text) | **Activity's date number was a fixed 34 dp tall**: now a minimum, so it cannot clip at 200% text |
 
+## Seventh pass: other places with a visual beside text
+
+After the Home ring turned out to be off-centre, every other screen that pairs a ring, donut, arc or chart with text was checked.
+
+- Hero cards on Loans, Savings goals, Profile (cash), Investments and Budgets are text-led: the figure on the left and facts on the right or below; no centred visual to drift off-centre.
+- Split's donut is the leading mark of a row (donut, then text), by design, like a list row's icon. The notification day arc, Runway, Portfolio and Trend charts run the full card width. Garden's pots fill the row and wrap.
+- Home's account tiles are a fixed 148 dp (192 at large text), tested. On a very wide phone the third tile nearly fits and ends a few dp past the right gutter; narrower phones show a clear peek of the next tile. Left as is: it is a scrolling row and the sizes are part of the tested design.
+- Found: the Home legend's figures were cut to one line with an ellipsis; they now shrink to fit.
+
 ## Not covered
 
 Screens other than Home and Activity have not been compared against a phone screenshot after these changes, and the sheets and the add-entry flow were checked in code only, not on a device.

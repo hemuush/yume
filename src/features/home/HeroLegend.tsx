@@ -63,6 +63,9 @@ export function HeroLegend({ items, side }: { items: LegendItem[]; side?: 'left'
             <Text
               style={[styles.amount, it.selected && styles.amountOn, side === 'right' && styles.amountEnd]}
               numberOfLines={1}
+              // A big figure shrinks to fit its half of the legend instead of being cut to "₹1,23,45…".
+              adjustsFontSizeToFit
+              minimumFontScale={0.75}
             >
               {amount}
             </Text>

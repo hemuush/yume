@@ -670,6 +670,20 @@ describe('the ring in the middle of the card', () => {
     }
   });
 
+  it('lets a big figure shrink to fit its half of the legend rather than being cut off', () =>
+    withScreen({ width: 412, fontScale: 1 }, () => {
+      // The shared Text only shrinks a figure at normal text sizes (above 130% it wraps instead).
+      const scale = jest.spyOn(require('@/lib/useFontScale'), 'useFontScale').mockReturnValue(1);
+      const r = render({ dueMinor: 10_000, spentMinor: 123_456_789_00, incomeMinor: 200_000_000_00 });
+      const amount = r.root
+        .findAllByType(Text)
+        .find((t) => [t.props.children].flat().join('').startsWith('₹12,34,56'));
+      expect(amount?.props.adjustsFontSizeToFit).toBe(true);
+      expect(amount?.props.numberOfLines).toBe(1);
+      act(() => r.unmount());
+      scale.mockRestore();
+    }));
+
   it('shows no legend at all, and keeps the ring centred, before there is any income', () =>
     withScreen({ width: 412, fontScale: 1 }, () => {
       const r = render({ incomeMinor: 0 });
