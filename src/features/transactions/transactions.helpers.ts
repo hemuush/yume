@@ -4,7 +4,7 @@ import type { ValuationEvent } from '@/db/valuations';
 import { getCachedCurrency } from '@/db/settings';
 import type { ActivityFilter } from './activityFilter';
 import { toLocalIsoDate, parseLocalIsoDate, addDaysToIsoDate } from '@/lib/date';
-import { dayMonth } from '@/lib/dateLabels';
+import { dayMonth, dayMonthYear } from '@/lib/dateLabels';
 import { weekRangesInMonth } from './spendChart';
 
 /** One Sunday-to-Saturday week of a calendar month, cut at the month's own first and last day. */
@@ -141,6 +141,34 @@ export function periodHeading(input: {
     title: range,
     sub: anchor.getFullYear() === today.getFullYear() ? position : `${position} · ${anchor.getFullYear()}`,
   };
+}
+
+/**
+ * What an empty period says. The one in progress is "this week"; any other is named, because "this week" is
+ * wrong for a week that is over: "Nothing logged in 3–9 Nov", "Nothing logged in October 2024".
+ */
+export function emptyPeriodTitle(input: {
+  scope: 'week' | 'month';
+  /** The period shown is the current week or month. */
+  current: boolean;
+  /** The period's heading ("3–9 Nov", "October"). */
+  title: string;
+  /** The first day of the period, as an ISO date. */
+  from: string;
+  today: Date;
+}): string {
+  if (input.current) return `Nothing logged this ${input.scope}`;
+  const year = input.from.slice(0, 4);
+  const showYear = year !== '' && year !== String(input.today.getFullYear());
+  return `Nothing logged in ${input.title}${showYear ? ` ${year}` : ''}`;
+}
+
+/**
+ * A day's heading in search results, which span the whole ledger: the year is named unless it is this year,
+ * so "11 Nov" in 2024 and "11 Nov" in 2025 can be told apart.
+ */
+export function searchDayLabel(iso: string, today: Date): string {
+  return iso.slice(0, 4) === String(today.getFullYear()) ? dayMonth(iso) : dayMonthYear(iso);
 }
 
 /**

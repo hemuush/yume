@@ -106,7 +106,8 @@ it('clears search in place and ignores results from the cleared query', async ()
   await act(async () => {
     await new Promise((resolve) => setTimeout(resolve, 350));
   });
-  expect(mockSearchTransactions).toHaveBeenCalledWith('coffee', 50);
+  // One more than the list holds, so "there are more" is known rather than guessed.
+  expect(mockSearchTransactions).toHaveBeenCalledWith('coffee', 51);
   act(() => headerAction('Clear search').props.onPress());
   expect(tree.root.findByType(TextInput).props.value).toBe('');
   expect(headerAction('Close search')).toBeDefined();
@@ -370,4 +371,127 @@ it('lets the days animate only for a moment after a group opens or closes', asyn
   });
   expect(day().props.animateLayout).toBe(false);
   act(() => tree.unmount());
+});
+
+describe('Activity search results', () => {
+  const entry = (id: string, date: string): Transaction =>
+    ({
+      id,
+      type: 'expense',
+      accountId: 'bank',
+      categoryId: null,
+      amountMinor: 10000,
+      date,
+      note: '',
+    }) as Transaction;
+
+  async function searchFor(rows: Transaction[]) {
+    const { HeaderIconButton } = require('@/components/AppHeader');
+    const { TextInput } = require('@/components/Text');
+    mockComparison.fail = false;
+    mockSearchTransactions.mockResolvedValue(rows);
+    const tree = await render();
+    act(() =>
+      tree.root
+        .findAllByType(HeaderIconButton)
+        .find((n) => n.props.label === 'Search transactions')!
+        .props.onPress()
+    );
+    act(() => tree.root.findByType(TextInput).props.onChangeText('coffee'));
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 350));
+    });
+    return tree;
+  }
+
+  it('says how many entries matched', async () => {
+    const tree = await searchFor([
+      entry('a', '2026-03-04'),
+      entry('b', '2026-03-03'),
+      entry('c', '2026-03-03'),
+    ]);
+    expect(texts(tree)).toContain('3 matches');
+    act(() => tree.unmount());
+    const one = await searchFor([entry('a', '2026-03-04')]);
+    expect(texts(one)).toContain('1 match');
+  });
+
+  it('shows the newest 50 and says there are more, when more matched', async () => {
+    const { SearchStatus } = require('./ActivityFilterChips');
+    const rows = Array.from({ length: 51 }, (_, i) => entry(`e${i}`, '2026-03-04'));
+    const tree = await searchFor(rows);
+    expect(tree.root.findByType(SearchStatus).props.resultCount).toBe(50);
+    expect(texts(tree)).toContain('Newest 50 matches. Add a word to narrow it.');
+  });
+
+  it('names the year of a result that is not from this year, since search spans the whole ledger', async () => {
+    const { dayMonth, dayMonthYear } = require('@/lib/dateLabels');
+    const year = new Date().getFullYear();
+    const tree = await searchFor([entry('now', `${year}-01-05`), entry('old', `${year - 2}-03-04`)]);
+    const shown = texts(tree);
+    expect(shown).toContain(dayMonth(`${year}-01-05`));
+    expect(shown).toContain(dayMonthYear(`${year - 2}-03-04`));
+  });
+});
+
+describe('Activity page states', () => {
+  it('names a past period when it is empty, instead of calling it "this week"', async () => {
+    mockComparison.fail = false;
+    const tree = await render();
+    expect(texts(tree)).toContain('Nothing logged this week');
+    const back = tree.root.findAll(
+      (n) => n.props.accessibilityLabel === 'Previous week' && typeof n.props.onPress === 'function'
+    )[0];
+    await act(async () => back.props.onPress());
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    const shown = texts(tree);
+    expect(shown.some((t) => t.startsWith('Nothing logged in '))).toBe(true);
+    expect(shown).not.toContain('Nothing logged this week');
+  });
+
+  it('fades a period’s days in as they land, so they follow the Spent strip instead of snapping', async () => {
+    const { toLocalIsoDate } = require('@/lib/date');
+    mockComparison.fail = false;
+    mockLedger.transactions = [
+      {
+        id: 'e1',
+        type: 'expense',
+        accountId: 'bank',
+        categoryId: null,
+        amountMinor: 10000,
+        date: toLocalIsoDate(new Date()),
+        note: '',
+      },
+    ] as Transaction[];
+    const tree = await render();
+    const day = tree.root.findAll((n) => typeof n.props.date === 'string' && Array.isArray(n.props.items))[0];
+    expect(day.props.entering).toBeDefined();
+  });
+
+  it('shows an expense label as a chip in the filter row, removable like the others', async () => {
+    const { FilterModal } = require('./FilterModal');
+    const { ActivityFilterChips } = require('./ActivityFilterChips');
+    mockComparison.fail = false;
+    const tree = await render();
+    act(() =>
+      tree.root
+        .findByType(FilterModal)
+        .props.onApply({ type: 'all', categoryIds: [], accountIds: [], expenseLabel: 'Lunch' })
+    );
+    expect(tree.root.findByType(ActivityFilterChips).props.expenseLabel).toBe('Lunch');
+    expect(texts(tree)).toContain('Label: Lunch');
+    const press = (label: string) =>
+      tree.root
+        .findAll((n) => n.props.accessibilityLabel === label && typeof n.props.onPress === 'function')[0]
+        .props.onPress();
+    // It counts as a picked filter, so Clear all is offered with it.
+    expect(
+      tree.root.findAll((n) => n.props.accessibilityLabel === 'Clear all Activity filters')
+    ).not.toHaveLength(0);
+    act(() => press('Remove expense label filter'));
+    expect(tree.root.findByType(ActivityFilterChips).props.expenseLabel).toBeUndefined();
+    expect(texts(tree).some((t) => t.startsWith('Label:'))).toBe(false);
+  });
 });

@@ -47,6 +47,8 @@ import {
   filterActivity,
   chartTransactionsFor,
   groupWithNotes,
+  emptyPeriodTitle,
+  searchDayLabel,
   type ValueNote,
 } from '@/features/transactions/transactions.helpers';
 import type { ActivityType } from '@/features/transactions/activityFilter';
@@ -60,7 +62,6 @@ import { themeInk } from '@/theme/interactionColors';
 import { haptics } from '@/lib/haptics';
 import { errorMessage } from '@/lib/errorMessage';
 import { withPressed, withPressedTint } from '@/lib/pressed';
-import { shade } from '@/lib/color';
 import { categoryPath, parentNameOf } from '@/lib/categoryLabel';
 import { EmptyState } from '@/components/EmptyState';
 import { useReduceMotion } from '@/lib/useReduceMotion';
@@ -111,6 +112,8 @@ export default function TransactionsScreen() {
   const [searchResults, setSearchResults] = useState<Transaction[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchFailed, setSearchFailed] = useState(false);
+  // More matched than the list shows (it holds the newest SEARCH_RESULT_LIMIT), so the list says so.
+  const [searchCapped, setSearchCapped] = useState(false);
   // Shared by the typing effect and edits/deletes made from a search result, so the list never shows a
   // stale or deleted row. Only the newest query may write results: closing/clearing the box bumps it too.
   const searchSeq = useRef(0);
@@ -119,16 +122,22 @@ export default function TransactionsScreen() {
     setSearchFailed(false);
     if (trimmed.length < SEARCH_MIN_CHARS) {
       setSearchResults([]);
+      setSearchCapped(false);
       setSearchLoading(false);
       return;
     }
     setSearchLoading(true);
     try {
-      const results = await searchTransactions(trimmed, SEARCH_RESULT_LIMIT);
-      if (seq === searchSeq.current) setSearchResults(results);
+      // One more than the list holds: getting it back is how we know the list is not everything.
+      const results = await searchTransactions(trimmed, SEARCH_RESULT_LIMIT + 1);
+      if (seq === searchSeq.current) {
+        setSearchResults(results.slice(0, SEARCH_RESULT_LIMIT));
+        setSearchCapped(results.length > SEARCH_RESULT_LIMIT);
+      }
     } catch {
       if (seq === searchSeq.current) {
         setSearchResults([]);
+        setSearchCapped(false);
         setSearchFailed(true);
       }
     } finally {
@@ -161,9 +170,15 @@ export default function TransactionsScreen() {
   // scroll) lands at once instead of being animated on every day.
   const [stackMoving, setStackMoving] = useState(false);
   const stackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // True for a moment after a period's entries land: the days mounted then fade in with the Spent strip's glide,
+  // instead of snapping in under it (and instead of replacing the loading placeholder in one frame). Days that
+  // scroll into view later mount with it off, so scrolling a long month never flickers.
+  const [arriving, setArriving] = useState(false);
+  const arriveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(
     () => () => {
       if (stackTimer.current) clearTimeout(stackTimer.current);
+      if (arriveTimer.current) clearTimeout(arriveTimer.current);
     },
     []
   );
@@ -410,6 +425,9 @@ export default function TransactionsScreen() {
     setComparison(cmp);
     setComparisonFailed(cmp == null);
     setLoadedPeriod({ fromDate: range.fromDate, toDate: range.toDate, scope });
+    setArriving(true);
+    if (arriveTimer.current) clearTimeout(arriveTimer.current);
+    arriveTimer.current = setTimeout(() => setArriving(false), 400);
     return cmp != null;
   }, []);
 
@@ -528,6 +546,7 @@ export default function TransactionsScreen() {
     searchSeq.current++;
     if (trimmed.length < SEARCH_MIN_CHARS) {
       setSearchResults([]);
+      setSearchCapped(false);
       setSearchLoading(false);
       return;
     }
@@ -569,6 +588,7 @@ export default function TransactionsScreen() {
     setSearching(false);
     setSearchQuery('');
     setSearchResults([]);
+    setSearchCapped(false);
     setSearchLoading(false);
   };
 
@@ -800,6 +820,8 @@ export default function TransactionsScreen() {
           <ReanimatedAnimated.FlatList
             // A search result opens on the first tap, even with the keyboard up.
             keyboardShouldPersistTaps="handled"
+            // Scrolling the results puts the keyboard away, so the lower entries are not hidden behind it.
+            keyboardDismissMode={searching ? 'on-drag' : 'none'}
             ref={scrollRef}
             onScroll={scrollHandler}
             scrollEventThrottle={16}
@@ -845,6 +867,8 @@ export default function TransactionsScreen() {
                     failed={searchFailed}
                     onRetry={() => runSearch(trimmedQuery)}
                     resultCount={searchResults.length}
+                    capped={searchCapped}
+                    limit={SEARCH_RESULT_LIMIT}
                     suggestions={searchSuggestions}
                     recent={recentSearches}
                     onPick={setSearchQuery}
@@ -876,25 +900,6 @@ export default function TransactionsScreen() {
                     />
                   </ReanimatedAnimated.View>
 
-                  {filterLabel && (
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityLabel="Remove expense label filter"
-                      onPress={() => setFilterLabel(undefined)}
-                      style={withPressedTint(accent, [
-                        styles.chip,
-                        {
-                          alignSelf: 'flex-start',
-                          marginHorizontal: 16,
-                          marginTop: 8,
-                          backgroundColor: shade(accent, 95),
-                        },
-                      ])}
-                    >
-                      <Text style={styles.chipText}>Label: {filterLabel}</Text>
-                      <Feather name="x" size={12} color={theme.colors.textSecondary} />
-                    </Pressable>
-                  )}
                   <ActivityFilterChips
                     onOpenFilters={() => setFilterVisible(true)}
                     filterCount={filterCount}
@@ -911,6 +916,8 @@ export default function TransactionsScreen() {
                     }}
                     categoryIds={filterCategoryIds}
                     accountIds={filterAccountIds}
+                    expenseLabel={filterLabel}
+                    onRemoveLabel={() => setFilterLabel(undefined)}
                     categoryName={categoryPathName}
                     accountName={accountName}
                     onRemoveCategory={(id) => setFilterCategoryIds((ids) => ids.filter((x) => x !== id))}
@@ -932,11 +939,13 @@ export default function TransactionsScreen() {
                   )}
                   {accounts.length > 0 && transactions.length === 0 && (
                     <EmptyState
-                      title={
-                        loadedPeriod.scope === 'month'
-                          ? 'Nothing logged this month'
-                          : 'Nothing logged this week'
-                      }
+                      title={emptyPeriodTitle({
+                        scope: loadedPeriod.scope,
+                        current: periodIsCurrent,
+                        title: heading.title,
+                        from: loadedPeriod.fromDate,
+                        today: todayDate,
+                      })}
                       subtitle="Tap + to add an entry, or look at another period."
                     />
                   )}
@@ -954,16 +963,17 @@ export default function TransactionsScreen() {
                     : group.date === yesterday
                       ? 'Yesterday'
                       : searching
-                        ? dayMonth(group.date)
+                        ? searchDayLabel(group.date, todayDate)
                         : longWeekday(group.date)
                 }
                 dateLabel={
                   searching && group.date !== today
-                    ? group.date.slice(0, 4)
+                    ? longWeekday(group.date)
                     : group.date === today || group.date === yesterday
                       ? weekdayDayMonth(group.date)
                       : dayMonth(group.date)
                 }
+                entering={arriving ? CONTENT_ENTER : undefined}
                 items={group.items}
                 categories={categories}
                 accountName={accountName}

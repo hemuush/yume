@@ -8,8 +8,10 @@ import {
   periodHeading,
   filterActivity,
   chartTransactionsFor,
+  emptyPeriodTitle,
+  searchDayLabel,
 } from './transactions.helpers';
-import { dayMonth } from '@/lib/dateLabels';
+import { dayMonth, dayMonthYear } from '@/lib/dateLabels';
 import { toLocalIsoDate } from '@/lib/date';
 import type { ActivityFilter } from './activityFilter';
 
@@ -211,4 +213,36 @@ it('filters expenses and their refunds by the single label, excluding income not
       (row) => row.id
     )
   ).toEqual(['expense', 'refund']);
+});
+
+describe('emptyPeriodTitle', () => {
+  const today = new Date(2026, 10, 12);
+  it('says "this week" or "this month" only for the one in progress', () => {
+    expect(
+      emptyPeriodTitle({ scope: 'week', current: true, title: 'This week', from: '2026-11-08', today })
+    ).toBe('Nothing logged this week');
+    expect(
+      emptyPeriodTitle({ scope: 'month', current: true, title: 'November', from: '2026-11-01', today })
+    ).toBe('Nothing logged this month');
+  });
+  it('names a period that is over, and its year when it is not this year', () => {
+    expect(
+      emptyPeriodTitle({ scope: 'week', current: false, title: '1–7 Nov', from: '2026-11-01', today })
+    ).toBe('Nothing logged in 1–7 Nov');
+    expect(
+      emptyPeriodTitle({ scope: 'month', current: false, title: 'October', from: '2026-10-01', today })
+    ).toBe('Nothing logged in October');
+    expect(
+      emptyPeriodTitle({ scope: 'month', current: false, title: 'October', from: '2025-10-01', today })
+    ).toBe('Nothing logged in October 2025');
+  });
+});
+
+describe('searchDayLabel', () => {
+  const today = new Date(2026, 10, 12);
+  it('leaves the year off this year and names it for any other', () => {
+    expect(searchDayLabel('2026-03-04', today)).toBe(dayMonth('2026-03-04'));
+    expect(searchDayLabel('2025-03-04', today)).toBe(dayMonthYear('2025-03-04'));
+    expect(searchDayLabel('2025-03-04', today)).toContain('2025');
+  });
 });
