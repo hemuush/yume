@@ -136,6 +136,13 @@ describe('Notification settings', () => {
     );
   });
 
+  it('counts scheduled reminders in the singular and the plural', async () => {
+    mockScheduledCount = 1;
+    expect(texts(await render())).toContain('1 reminder scheduled');
+    mockScheduledCount = 4;
+    expect(texts(await render())).toContain('4 reminders scheduled');
+  });
+
   it('never claims readiness with zero scheduled reminders', async () => {
     mockScheduledCount = 0;
     expect(texts(await render())).toContain('Nothing scheduled');

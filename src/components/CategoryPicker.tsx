@@ -149,6 +149,9 @@ export function CategoryPicker({
         placeholder="Find a category"
         placeholderTextColor={theme.colors.textMuted}
         style={styles.searchInput}
+        // A search box, not a sentence: no capital at the start, no autocorrect.
+        autoCapitalize="none"
+        autoCorrect={false}
         returnKeyType="done"
         onFocus={() => onSearchFocusChange?.(true)}
         onBlur={() => onSearchFocusChange?.(false)}

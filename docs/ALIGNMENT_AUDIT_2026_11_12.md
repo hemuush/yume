@@ -95,6 +95,8 @@ After the Home ring turned out to be off-centre, every other screen that pairs a
 
 - Faded states. Disabled controls used 0.4, 0.45, 0.5 or 0.55 opacity, arrows at the end of their range 0.25, 0.35 or 0.4, and pressed states 0.6, 0.65, 0.7 or 0.8. They now come from `theme.opacity` (disabled 0.45, limit 0.35, pressed 0.6), and `src/__tests__/opacityScale.test.ts` fails if a style named for one of those states uses its own number.
 - Apostrophes. Copy mixed the straight apostrophe (don't, Suu's) with the typographic one (don’t, Suu’s): about 230 straight against 44 typographic. All user-facing copy now uses the typographic one (the PDF report, which has its own embedded font, and the home-screen widgets are left out), and `src/__tests__/typography.test.ts` keeps it that way.
+- Plurals: "1 entries" (a backup with one entry) and "1 reminders scheduled" are now "1 entry" and "1 reminder scheduled"; every other count in copy is either handled or cannot be one.
+- Keyboards: search boxes (Find a category, Search report labels, Find a day, Search transactions) no longer capitalise the first letter or autocorrect, and a person's name or a lender's name capitalises each word. `src/__tests__/searchInputs.test.ts` keeps search boxes that way.
 - Checked and left: button and title capitalisation (sentence case throughout; "Which Wrap?" is a name), ellipsis characters (none typed as three dots), chevron and icon sizes (they vary by context: 16 in rows, 14 in links, 18 and 20 in headers).
 
 ## Not covered

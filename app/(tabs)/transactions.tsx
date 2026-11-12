@@ -1038,6 +1038,7 @@ export default function TransactionsScreen() {
                 style={styles.searchInput}
                 autoFocus
                 autoCapitalize="none"
+                autoCorrect={false}
                 returnKeyType="search"
                 onSubmitEditing={() => rememberSearch(searchQuery)}
                 accessibilityLabel="Search transactions"

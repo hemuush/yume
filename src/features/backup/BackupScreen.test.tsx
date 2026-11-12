@@ -229,6 +229,13 @@ describe('Backup & restore · restore points', () => {
     expect(readLocalBackup).toHaveBeenCalledWith('content://backups/5');
   });
 
+  it('says "1 entry", not "1 entries", for a backup with a single entry', async () => {
+    mockState.files = [{ ...file(5), summary: { entries: 1 } }];
+    const tree = await render();
+    expect(texts(tree).some((t) => t.startsWith('1 entry ·'))).toBe(true);
+    expect(texts(tree).some((t) => t.includes('1 entries'))).toBe(false);
+  });
+
   it('keeps a file it cannot read in the list, with nothing to restore', async () => {
     mockState.files = [{ ...file(5), summary: null }];
     const tree = await render();

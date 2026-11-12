@@ -436,6 +436,7 @@ export function AddLoanModal({
             value={counterparty}
             onChangeText={setCounterparty}
             placeholder="e.g. HDFC Bank"
+            autoCapitalize="words"
           />
           <AmountField
             label="Principal amount"

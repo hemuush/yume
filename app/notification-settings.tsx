@@ -219,7 +219,7 @@ export default function NotificationSettingsScreen() {
   const deliverySub = !delivery
     ? 'Tap for details'
     : delivery.permitted && !delivery.channelBlocked
-      ? `${delivery.scheduledCount} reminders scheduled`
+      ? `${delivery.scheduledCount} ${delivery.scheduledCount === 1 ? 'reminder' : 'reminders'} scheduled`
       : 'Tap to see how to fix it';
   const noTimes = !prefs.morningEnabled && !prefs.eveningEnabled;
   const onCount = MENTION_KEYS.filter((k) => prefs[k] === true).length;

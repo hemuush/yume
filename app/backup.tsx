@@ -637,7 +637,7 @@ Restore anyway? Your current data would be replaced with no way back.`,
                   </View>
                   <Text style={h.sub}>
                     {file.summary
-                      ? `${file.summary.entries} entries · ${formatBytes(file.sizeBytes)}`
+                      ? `${file.summary.entries} ${file.summary.entries === 1 ? 'entry' : 'entries'} · ${formatBytes(file.sizeBytes)}`
                       : 'Couldn’t read this file'}
                   </Text>
                 </View>
