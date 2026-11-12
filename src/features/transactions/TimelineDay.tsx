@@ -7,6 +7,7 @@ import { CategoryIcon } from '@/components/CategoryIcon';
 import { SECTION_TITLE } from '@/constants/textStyles';
 import { StatusBadge } from '@/components/StatusBadge';
 import { MovingRow } from '@/components/MovingRow';
+import { PANEL_ENTER, ROW_EXIT, ROW_LAYOUT } from '@/lib/animation';
 import { JustAddedGlow } from '@/components/JustAddedGlow';
 import { Category, Transaction } from '@/types';
 import { dayMonth, shortWeekday } from '@/lib/dateLabels';
@@ -366,7 +367,9 @@ function TimelineDayView({
           />
         </Pressable>
         {open && (
-          <View>
+          // The entries fade in as the rows below slide down, and fade out as they slide back (the same panel
+          // motion as Settings' accordion), instead of popping in and out.
+          <ReanimatedAnimated.View entering={PANEL_ENTER} exiting={ROW_EXIT}>
             {line.items.map((tx) => {
               // The category is already named above: note over account, or just the account with no note.
               const label = tx.note || accountName(tx.accountId);
@@ -400,7 +403,7 @@ function TimelineDayView({
                 </MovingRow>
               );
             })}
-          </View>
+          </ReanimatedAnimated.View>
         )}
       </MovingRow>
     );
@@ -417,7 +420,8 @@ function TimelineDayView({
   const segment = [styles.day];
   const hasNext = position === 'first' || position === 'middle';
   return (
-    <ReanimatedAnimated.View entering={entering} style={segment}>
+    // The day grows and shrinks with its stacks open or closed, and the days below slide with it.
+    <ReanimatedAnimated.View entering={entering} layout={settling ? undefined : ROW_LAYOUT} style={segment}>
       <View style={styles.rail} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
         <Text style={styles.railWeekday}>{shortWeekday(date).toUpperCase()}</Text>
         <View

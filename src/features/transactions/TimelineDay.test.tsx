@@ -255,6 +255,22 @@ describe('TimelineDay', () => {
     expect(onPress.mock.calls.map(([t]) => t.id).sort()).toEqual(['t1', 't2', 't3', 't4', 't5']);
   });
 
+  it('opens and closes a stack with the panel motion, and lets the day grow and the days below slide', () => {
+    const { PANEL_ENTER, ROW_EXIT, ROW_LAYOUT } = require('@/lib/animation');
+    const open = render(new Set([`${DATE}|expense|food`]));
+    const panels = open.root.findAll(
+      (n) => typeof n.type === 'string' && n.props.entering === PANEL_ENTER && n.props.exiting === ROW_EXIT
+    );
+    expect(panels.length).toBeGreaterThan(0);
+    expect(
+      open.root.findAll((n) => typeof n.type === 'string' && n.props.layout === ROW_LAYOUT).length
+    ).toBeGreaterThan(1);
+    act(() => open.unmount());
+    const closed = render(new Set());
+    expect(closed.root.findAll((n) => n.props.entering === PANEL_ENTER)).toHaveLength(0);
+    act(() => closed.unmount());
+  });
+
   it('moves a line up or down for TalkBack, saving the day with stacks whole and transfers last', async () => {
     const onReorder = jest.fn().mockResolvedValue(undefined);
     const r = render(new Set(), jest.fn(), jest.fn(), onReorder);

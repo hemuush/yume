@@ -14,3 +14,8 @@ Unchanged: the Week | Month switch and the date pill stay in the header, the ent
 ## Checks
 
 `TimelineDay.test.tsx` (totals, privacy, marker line, today circle), `ActivitySummaryStrip.test.tsx`, `ActivityTop.test.tsx` (one filter row, wrap) and `TransactionsScreen.test.tsx` (the strip opens Insights). These are unit tests; the screen has not been seen on a device.
+
+## After the first look on a phone
+
+- The "avg ₹… a week" name on the dashed line was drawn before the capsules, so a capsule painted over part of it in the wider Insights sheet. The line still runs behind the capsules; its name is now drawn after them ([SpendBarChart](../src/features/transactions/SpendBarChart.tsx)).
+- Opening or closing a group ("Home 2 ⌄") popped its entries in and out and made the days below jump. The entries now fade in with the shared panel motion and fade out on close, the day grows and shrinks with `ROW_LAYOUT`, and the days below slide with it. Reduce-motion turns all of it off, as everywhere else.
