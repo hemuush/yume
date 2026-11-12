@@ -18,9 +18,10 @@ jest.mock('@/components/AppHeader', () => ({
 }));
 jest.mock('@/lib/useReduceMotion', () => ({ useReduceMotion: () => true }));
 jest.mock('@/components/CountUpAmount', () => ({ CountUpAmount: () => null }));
+let mockParams: Record<string, string> = {};
 jest.mock('expo-router', () => ({
   router: { setParams: jest.fn(), push: jest.fn(), navigate: jest.fn() },
-  useLocalSearchParams: () => ({}),
+  useLocalSearchParams: () => mockParams,
   useNavigation: () => ({ getState: () => ({ routes: [], index: 0 }) }),
   useFocusEffect: (cb: () => void) => require('react').useEffect(cb, [cb]),
 }));
@@ -69,6 +70,7 @@ let mounted: ReactTestRenderer | null = null;
 afterEach(() => {
   if (mounted) act(() => mounted!.unmount());
   mounted = null;
+  mockParams = {};
   mockLedger.transactions = [];
   mockLedger.accounts = [{ id: 'bank', name: 'Bank', type: 'bank' }] as Account[];
   mockSearchTransactions.mockReset();
@@ -523,6 +525,49 @@ describe('Activity search and the back button', () => {
       expect(remove).toHaveBeenCalled();
     } finally {
       add.mockRestore();
+    }
+  });
+});
+
+describe('Activity opened on a month from a link', () => {
+  const selectedScope = (tree: ReactTestRenderer) => [
+    ...new Set(
+      tree.root
+        .findAll(
+          (n) =>
+            n.props.accessibilityRole === 'radio' &&
+            n.props.accessibilityState?.selected &&
+            typeof n.props.onPress === 'function'
+        )
+        .flatMap((n) => n.findAllByType(Text).map((t) => t.props.children))
+        .filter((l) => l === 'Week' || l === 'Month')
+    ),
+  ];
+
+  it('opens a past month on its own (Home’s View all), with the filters clear', async () => {
+    const { router } = require('expo-router');
+    mockComparison.fail = false;
+    const past = new Date(new Date().getFullYear(), new Date().getMonth() - 2, 1);
+    mockParams = { month: `${past.getFullYear()}-${String(past.getMonth() + 1).padStart(2, '0')}` };
+    const tree = await render();
+    expect(selectedScope(tree)).toEqual(['Month']);
+    expect(texts(tree)).toContain(past.toLocaleDateString(undefined, { month: 'long' }));
+    // The link is spent: it does not reopen that month the next time Activity is shown.
+    expect(router.setParams).toHaveBeenCalledWith(expect.objectContaining({ month: undefined }));
+  });
+
+  it('ignores a month that is not real or not yet here, and stays on this week', async () => {
+    const { router } = require('expo-router');
+    mockComparison.fail = false;
+    for (const month of ['2999-01', '2026-13', 'nonsense']) {
+      router.setParams.mockClear();
+      mockParams = { month };
+      const tree = await render();
+      expect(selectedScope(tree)).toEqual(['Week']);
+      expect(texts(tree)).toContain('This week');
+      expect(router.setParams).toHaveBeenCalledWith({ month: undefined });
+      act(() => tree.unmount());
+      mounted = null;
     }
   });
 });

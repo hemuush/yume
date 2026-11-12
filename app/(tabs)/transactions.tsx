@@ -205,7 +205,8 @@ export default function TransactionsScreen() {
   // (crossfade) unless it is a one-step move; a picked month or Week↔Month switch has no direction.
   const [direction, setDirection] = useState<-1 | 0 | 1>(0);
   // A link can open Activity already filtered: ?category= (a category page's
-  // "See all") or ?account= (Home's account sheet), with ?month=YYYY-MM.
+  // "See all") or ?account= (Home's account sheet), with ?month=YYYY-MM; a month alone (Home's "View all" on a
+  // past month) opens that month.
   const linkParams = useLocalSearchParams<{
     category?: string;
     account?: string;
@@ -214,7 +215,20 @@ export default function TransactionsScreen() {
   }>();
   useEffect(() => {
     const { category, account, month } = linkParams;
-    if (!category && !account) return;
+    // A real month that isn't in the future; anything else keeps the current view.
+    const [y, m] = month && /^\d{4}-\d{2}$/.test(month) ? month.split('-').map(Number) : [0, 0];
+    const now = new Date();
+    const validMonth =
+      m >= 1 && m <= 12 && (y < now.getFullYear() || (y === now.getFullYear() && m <= now.getMonth() + 1));
+    // A month on its own (Home's "View all" on a past month) opens that month; a bad one is dropped and the view
+    // stays as it is.
+    if (!category && !account) {
+      if (!month) return;
+      if (!validMonth) {
+        router.setParams({ month: undefined });
+        return;
+      }
+    }
     // A link shows its filter, not search results left open from before.
     searchSeq.current++;
     setSearching(false);
@@ -224,14 +238,7 @@ export default function TransactionsScreen() {
     setFilterCategoryIds(category ? [category] : []);
     setFilterAccountIds(account ? [account] : []);
     setFilterLabel(undefined);
-    const [y, m] = month && /^\d{4}-\d{2}$/.test(month) ? month.split('-').map(Number) : [0, 0];
-    // A real month that isn't in the future; anything else keeps the current view.
-    const now = new Date();
-    if (
-      m >= 1 &&
-      m <= 12 &&
-      (y < now.getFullYear() || (y === now.getFullYear() && m <= now.getMonth() + 1))
-    ) {
+    if (validMonth) {
       setDirection(0);
       setAnchor(new Date(y, m - 1, 1));
       setViewScope('month');
