@@ -137,7 +137,7 @@ const AccountTile = memo(function AccountTile({
       <View style={styles.tileHead}>
         <View style={[styles.icon, { backgroundColor: shade(hue, 88) }]}>
           <MaterialCommunityIcons
-            name={accountIcon(a.type) as McIconName}
+            name={accountIcon(a.type, !!a.investment) as McIconName}
             size={17}
             color={shade(hue, 30, 10)}
           />

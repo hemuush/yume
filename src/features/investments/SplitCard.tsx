@@ -41,7 +41,7 @@ export function SplitCard({ parts }: { parts: SplitPart[] }) {
 }
 
 const styles = StyleSheet.create({
-  card: { padding: 14, gap: 10, marginBottom: 12 },
+  card: { padding: 14, gap: 10, marginTop: 12 },
   label: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textSecondary },
   bar: { flexDirection: 'row', height: 8, borderRadius: 4, overflow: 'hidden', gap: 3 },
   legendRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },

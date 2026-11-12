@@ -234,19 +234,13 @@ describe('month card with bills still to pay', () => {
     expect(texts(r)).not.toContain('Short after bills');
     act(() => byLabel(r, 'Spent, ₹').props.onPress());
     expect(texts(r)).toContain('Short after bills');
-    // From the line itself.
-    act(() =>
-      r.root
-        .find(
-          (n) =>
-            String(n.props.accessibilityLabel).startsWith('Saved, ') &&
-            String(n.props.accessibilityLabel).includes('of the month') &&
-            typeof n.props.onPress === 'function'
-        )
-        .props.onPress()
-    );
+    // Another slice, from the legend.
+    act(() => byLabel(r, 'Saved, ₹').props.onPress());
     expect(texts(r)).toEqual(expect.arrayContaining(['Saved this month', '₹99,500']));
     expect(haptics.tap).toHaveBeenCalledTimes(3);
+    expect(r.root.find((n) => n.props.accessibilityRole === 'image').props.accessibilityLabel).toMatch(
+      /^Where the month went/
+    );
     act(() => r.unmount());
   });
 

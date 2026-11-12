@@ -79,7 +79,7 @@ Recorded 13 October 2026 after commit `373ea5a`. Every tracked file was read by 
 - `src/features/home/allowance.ts`
 - `src/features/home/comingUp.ts`
 - `src/features/home/upcomingItems.ts`
-- `src/features/home/MonthLine.tsx`
+- `src/features/home/MonthRing.tsx`
 - `src/features/home/HomeHeader.tsx`
 - `src/features/home/HomeSkeleton.tsx`
 - `src/features/home/HomeSwipeCard.tsx`
@@ -246,6 +246,7 @@ Recorded 13 October 2026 after commit `373ea5a`. Every tracked file was read by 
 - `src/features/transactions/SpendBarChart.tsx`
 - `src/features/transactions/TimelineDay.tsx`
 - `src/features/transactions/TransactionDetailModal.tsx`
+- `src/features/transactions/ActivitySummaryStrip.tsx`
 - `src/features/transactions/TransactionsHeadline.tsx`
 - `src/features/transactions/TransactionsSkeleton.tsx`
 - `src/features/transactions/transactions.styles.ts`

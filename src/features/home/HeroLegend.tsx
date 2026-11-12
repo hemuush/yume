@@ -26,11 +26,11 @@ const PAIR_AT = 1.15;
  * name and amount. Shares remain in the accessible label and month line, without a third row competing
  * with the main amount. Bills opens the sum.
  */
-export function HeroLegend({ items }: { items: LegendItem[] }) {
+export function HeroLegend({ items, stacked = false }: { items: LegendItem[]; stacked?: boolean }) {
   const { width, fontScale } = useWindowDimensions();
   const pair = width < 360 || fontScale > PAIR_AT;
   return (
-    <View style={styles.row}>
+    <View style={stacked ? styles.stack : styles.row}>
       {items.map((it) => {
         const Container = it.onPress ? Pressable : View;
         const amount = formatMoney(it.minor);
@@ -41,16 +41,19 @@ export function HeroLegend({ items }: { items: LegendItem[] }) {
             accessibilityRole={it.onPress ? 'button' : undefined}
             accessibilityState={it.onPress ? { expanded: it.expanded, selected: it.selected } : undefined}
             accessibilityHint={it.onPress ? it.hint : undefined}
+            // Stacked rows are short so four fit beside the ring; the touch area still reaches 44 dp.
+            hitSlop={stacked ? { top: 8, bottom: 8 } : undefined}
             accessible
             accessibilityLabel={`${it.label}, ${amount}, ${it.share}`}
             style={[
               styles.col,
               { minWidth: Math.max(60, amount.length * 7) },
-              pair && styles.colPair,
+              !stacked && pair && styles.colPair,
               it.onPress && styles.tap,
+              stacked && styles.colStacked,
             ]}
           >
-            <View style={styles.head}>
+            <View style={[styles.head, stacked && { flex: 1, minWidth: 0 }]}>
               <View style={[styles.dot, { backgroundColor: it.color }]} />
               <Text style={styles.label} numberOfLines={1}>
                 {it.label}
@@ -68,6 +71,16 @@ export function HeroLegend({ items }: { items: LegendItem[] }) {
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 8, rowGap: 4, marginTop: 12, marginBottom: 8 },
+  // Beside the ring: one slice per line, name left and amount right.
+  stack: { flex: 1, flexBasis: 130, minWidth: 0 },
+  colStacked: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+    flexBasis: 'auto',
+    minHeight: 28,
+  },
   col: { flexGrow: 1, flexBasis: 0, minWidth: 60, gap: 1 },
   colPair: { flexBasis: '45%' },
   tap: { minHeight: 44 },
