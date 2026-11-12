@@ -250,6 +250,9 @@ export function FilterModal({
             onChangeText={setDraftLabel}
             placeholder="Find a label (optional)"
             accessibilityLabel="Filter expense label"
+            // A label is matched exactly as it was typed: no capital the keyboard adds, no word it corrects.
+            autoCapitalize="none"
+            autoCorrect={false}
             returnKeyType="done"
             onSubmitEditing={() => Keyboard.dismiss()}
             style={{
@@ -261,6 +264,11 @@ export function FilterModal({
               color: theme.colors.textPrimary,
             }}
           />
+          {/* Typing narrows the labels below; the filter is a label picked from them, so say so rather than let a
+              half-typed word apply as "Show 0 entries". */}
+          {draftLabel.trim() !== '' && matchingLabels.length > 0 && !labels.includes(draftLabel.trim()) && (
+            <Text style={styles.hintText}>Tap a label below to filter by it.</Text>
+          )}
           <View style={styles.chipRow}>
             {matchingLabels.slice(0, 10).map((label) => (
               <Chip

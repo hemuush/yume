@@ -40,3 +40,17 @@ Left as is, on purpose: Insights' bars still grow from empty each time the sheet
 
 Checks: `TransactionsSkeleton.test.tsx`, `SearchStatus.test.tsx` (count, newest-50 note, live region), `TransactionsScreen.test.tsx` (the 51-row ask, the year, the past-period title, the days' fade, the label chip) and `transactions.helpers.test.ts`. Unit tests only: the fade and the skeleton's fit are unconfirmed until seen on a phone.
 
+## Second review: the sheets, search and the gestures (2026-11-12)
+
+The same kind of review for what the first one did not cover: the filter sheet, the entry sheet, the back button, scrolling and reordering. Again each item was a fault.
+
+- **A new period opened wherever the last one was scrolled to.** A list keeps its offset when its data is replaced, so picking a month from the shrunk header landed mid-way down it (or at its end) with the Spent strip out of view. [useScrollToTopOnChange](../src/lib/useScrollToTopOnChange.ts) returns the list to its top when the period shown changes, and leaves it alone when the same period reloads (after an edit, say).
+- **Back left the tab with search open.** On Android the back button or gesture now leaves search, as Cancel does (a listener that exists only while search is open and the tab is in view). Only onboarding handled back before.
+- **The filter sheet's label box corrected and capitalised what was typed**, though a label matches exactly as written ("Lunch" and "lunch" are two labels everywhere in the app). It now turns both off, and says "Tap a label below to filter by it." while a half-typed word narrows the list, so it no longer applies as "Show 0 entries". `searchInputs.test.ts` now finds search boxes by their placeholder as well as their accessibility label, which is how this one had been missed; it also found Add's "Find or create a label", which stops autocorrecting (it still capitalises, as it makes new names).
+- **An old entry's date had no year.** The entry sheet read "Thu 1 Oct" for an entry from any year, and search or a picked month can open one from years back. The year now shows unless it is this year ([entryDateLabel](../src/features/transactions/transactions.helpers.ts)).
+- **Dropping a reordered line made no feel.** Lifting and each place passed over tick; landing in a new place now confirms with the usual completion haptic. Letting go where it started stays silent.
+
+Looked at and left: Spent / Expense and Transfers / Transfer are different words in the filter row and the filter sheet (the row follows the Spent strip, the sheet follows Add); the bar chart's day totals are floored at zero when a refund exceeds the day's spending, so a week's bars can add to a little more than the strip's figure; a swipe on the Spent strip needs 60 dp of travel and ignores speed.
+
+Checks: `useScrollToTopOnChange.test.tsx`, the back-button test in `TransactionsScreen.test.tsx`, the label box tests in `FilterModal.test.tsx`, the old-entry year in `TransactionDetailModal.test.tsx`, the haptic on drop in `TimelineDay.test.tsx`, and the widened `searchInputs.test.ts`. As before these are unit tests: the screen has not been run on a device since.
+

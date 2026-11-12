@@ -1,6 +1,6 @@
 /**
  * A search box is not a sentence: it must not capitalise the first letter or autocorrect what you type. Every
- * TextInput labelled "Find …" or "Search …" turns both off.
+ * TextInput labelled "Find …" or "Search …" (by its accessibility label or its placeholder) turns both off.
  */
 import fs from 'fs';
 import path from 'path';
@@ -25,11 +25,14 @@ it('turns off capitals and autocorrect on every search box', () => {
     const src = fs.readFileSync(f, 'utf8');
     for (const m of src.matchAll(/<TextInput\b([\s\S]*?)\/>/g)) {
       const tag = m[1];
-      if (!/accessibilityLabel=["'{`]*\s*["'`]?(Find|Search)\b/.test(tag)) continue;
+      if (!/(accessibilityLabel|placeholder)=["'{`]*\s*["'`]?(Find|Search)\b/.test(tag)) continue;
       seen += 1;
-      if (!/autoCapitalize="none"/.test(tag) || !/autoCorrect=\{false\}/.test(tag)) offenders.push(rel(f));
+      // "Find or create a label" also makes new names, so it may capitalise them; it still must not autocorrect.
+      const creates = /placeholder=["'{`]*\s*["'`]?Find or create\b/.test(tag);
+      if (!/autoCorrect=\{false\}/.test(tag) || (!creates && !/autoCapitalize="none"/.test(tag)))
+        offenders.push(rel(f));
     }
   }
-  expect(seen).toBeGreaterThanOrEqual(4);
+  expect(seen).toBeGreaterThanOrEqual(5);
   expect(offenders).toEqual([]);
 });

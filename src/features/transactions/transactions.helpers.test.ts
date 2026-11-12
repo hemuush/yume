@@ -10,8 +10,9 @@ import {
   chartTransactionsFor,
   emptyPeriodTitle,
   searchDayLabel,
+  entryDateLabel,
 } from './transactions.helpers';
-import { dayMonth, dayMonthYear } from '@/lib/dateLabels';
+import { dayMonth, dayMonthYear, weekdayDayMonth, weekdayDayMonthYear } from '@/lib/dateLabels';
 import { toLocalIsoDate } from '@/lib/date';
 import type { ActivityFilter } from './activityFilter';
 
@@ -244,5 +245,14 @@ describe('searchDayLabel', () => {
     expect(searchDayLabel('2026-03-04', today)).toBe(dayMonth('2026-03-04'));
     expect(searchDayLabel('2025-03-04', today)).toBe(dayMonthYear('2025-03-04'));
     expect(searchDayLabel('2025-03-04', today)).toContain('2025');
+  });
+});
+
+describe('entryDateLabel', () => {
+  const today = new Date(2026, 10, 12);
+  it('names the year of an entry that is not from this year, so an old one is not mistaken for a recent one', () => {
+    expect(entryDateLabel('2026-03-04', today)).toBe(weekdayDayMonth('2026-03-04'));
+    expect(entryDateLabel('2024-03-04', today)).toBe(weekdayDayMonthYear('2024-03-04'));
+    expect(entryDateLabel('2024-03-04', today)).toContain('2024');
   });
 });

@@ -83,6 +83,8 @@ export function ExpenseLabelSheet({
         onChangeText={setDraft}
         placeholder="Find or create a label"
         accessibilityLabel="Expense label"
+        // A new label is a name (a shop, a person): the keyboard may capitalise it, but must not "correct" it.
+        autoCorrect={false}
         returnKeyType="done"
         onSubmitEditing={() => pick(draft.trim())}
         style={{

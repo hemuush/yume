@@ -3,7 +3,14 @@ import { CONTENT_ENTER } from '@/lib/animation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { onTransactionsChanged } from '@/lib/dataEvents';
 import { useFreshness } from '@/lib/useFreshness';
-import { View, Pressable, Animated, useWindowDimensions, type FlatListInstance } from 'react-native';
+import {
+  View,
+  Pressable,
+  Animated,
+  BackHandler,
+  useWindowDimensions,
+  type FlatListInstance,
+} from 'react-native';
 import { Text, TextInput } from '@/components/Text';
 import ReanimatedAnimated from 'react-native-reanimated';
 import { PrimaryButton } from '@/components/PrimaryButton';
@@ -66,6 +73,7 @@ import { categoryPath, parentNameOf } from '@/lib/categoryLabel';
 import { EmptyState } from '@/components/EmptyState';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 import { useTabScrollToTop } from '@/lib/useTabScrollToTop';
+import { useScrollToTopOnChange } from '@/lib/useScrollToTopOnChange';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -381,6 +389,9 @@ export default function TransactionsScreen() {
         today: todayDate,
       })
     : requestedHeading;
+  // A new period opens at its top: the list keeps its offset when its data is replaced, so picking a month from the
+  // shrunk header would otherwise land mid-way down it with the Spent strip out of view.
+  useScrollToTopOnChange(scrollRef, `${loadedPeriod.scope}-${loadedPeriod.fromDate}`);
   const load = useCallback(async (range: { fromDate: string; toDate: string }, scope: 'week' | 'month') => {
     const seq = ++loadSeq.current;
     let tx: Transaction[];
@@ -583,14 +594,25 @@ export default function TransactionsScreen() {
       .then(showRecentSearches)
       .catch(() => {});
   };
-  const closeSearch = () => {
+  const closeSearch = useCallback(() => {
     searchSeq.current++;
     setSearching(false);
     setSearchQuery('');
     setSearchResults([]);
     setSearchCapped(false);
     setSearchLoading(false);
-  };
+  }, []);
+  // The phone's back button (or gesture) leaves search, as Cancel does, instead of leaving the tab with it open.
+  useFocusEffect(
+    useCallback(() => {
+      if (!searching) return;
+      const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+        closeSearch();
+        return true;
+      });
+      return () => sub.remove();
+    }, [searching, closeSearch])
+  );
 
   // Things to try, from this period's own entries: a category or two, an amount, a day.
   const searchSuggestions = useMemo(() => {

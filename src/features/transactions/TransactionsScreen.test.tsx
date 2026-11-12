@@ -3,7 +3,7 @@
  * skeleton hanging forever.
  */
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
-import { Text } from 'react-native';
+import { Text, BackHandler } from 'react-native';
 import type { Account, Transaction } from '@/types';
 
 jest.setTimeout(60000);
@@ -493,5 +493,36 @@ describe('Activity page states', () => {
     act(() => press('Remove expense label filter'));
     expect(tree.root.findByType(ActivityFilterChips).props.expenseLabel).toBeUndefined();
     expect(texts(tree).some((t) => t.startsWith('Label:'))).toBe(false);
+  });
+});
+
+describe('Activity search and the back button', () => {
+  it('closes search instead of leaving the tab, and lets back through when search is closed', async () => {
+    const { HeaderIconButton } = require('@/components/AppHeader');
+    const remove = jest.fn();
+    const add = jest.spyOn(BackHandler, 'addEventListener').mockReturnValue({ remove });
+    try {
+      mockComparison.fail = false;
+      const tree = await render();
+      expect(add).not.toHaveBeenCalledWith('hardwareBackPress', expect.any(Function));
+      const action = (label: string) =>
+        tree.root.findAllByType(HeaderIconButton).find((n) => n.props.label === label);
+      act(() => action('Search transactions')!.props.onPress());
+      const registered = add.mock.calls.filter(([name]) => name === 'hardwareBackPress');
+      expect(registered.length).toBeGreaterThan(0);
+      const handler = registered[registered.length - 1][1] as () => boolean;
+      let handled = false;
+      act(() => {
+        handled = handler();
+      });
+      // Back was taken (it did not leave), and search is closed again.
+      expect(handled).toBe(true);
+      expect(action('Search transactions')).toBeDefined();
+      expect(action('Close search')).toBeUndefined();
+      // The listener goes with the search it belonged to.
+      expect(remove).toHaveBeenCalled();
+    } finally {
+      add.mockRestore();
+    }
   });
 });

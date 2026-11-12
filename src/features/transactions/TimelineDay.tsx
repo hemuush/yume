@@ -243,7 +243,11 @@ function TimelineDayView({
     setDrag(null);
     dy.setValue(0);
     onDragActive?.(false);
-    if (cur.to !== cur.from) void reorder(moveLine(shown, cur.from, cur.to));
+    if (cur.to !== cur.from) {
+      // Lift and each place passed over tick; landing in a new place confirms, so the drop is felt as well as seen.
+      haptics.confirm();
+      void reorder(moveLine(shown, cur.from, cur.to));
+    }
   };
   // Move up / move down, for TalkBack and switch access, where dragging isn't possible.
   const a11yMove = (index: number, by: -1 | 1) => {

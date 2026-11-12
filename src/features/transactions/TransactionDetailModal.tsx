@@ -28,7 +28,7 @@ import { savingsAccountIdsOf } from '@/lib/account';
 import { isSavingsEntry } from '@/lib/privateSummary';
 import { shade } from '@/lib/color';
 import { categorySentence, parentNameOf } from '@/lib/categoryLabel';
-import { weekdayDayMonth } from '@/lib/dateLabels';
+import { entryDateLabel } from './transactions.helpers';
 import { useUndoToast } from '@/components/UndoToast';
 import { haptics } from '@/lib/haptics';
 import { emitTransactionsChanged } from '@/lib/dataEvents';
@@ -468,7 +468,9 @@ export function TransactionDetailModal({
           }
           title={route ?? cat?.name ?? kind}
           meta={
-            route ? weekdayDayMonth(tx.date) : `${weekdayDayMonth(tx.date)} · ${accountName(tx.accountId)}`
+            route
+              ? entryDateLabel(tx.date, new Date())
+              : `${entryDateLabel(tx.date, new Date())} · ${accountName(tx.accountId)}`
           }
           onPressTitle={cat && !transfer ? openCategory : undefined}
           titleLabel={cat ? `Open ${cat.name} category` : undefined}

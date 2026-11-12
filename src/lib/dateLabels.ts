@@ -18,6 +18,10 @@ export const dayMonthYear = (iso: string) => fmt(iso, { day: 'numeric', month: '
 export const weekdayDayMonth = (iso: string) =>
   fmt(iso, { weekday: 'short', day: 'numeric', month: 'short' });
 
+/** "Thu 1 Oct 2026" */
+export const weekdayDayMonthYear = (iso: string) =>
+  fmt(iso, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+
 /** "Thursday" */
 /** "THU": the short weekday, for a day's marker in Activity's feed. */
 export const shortWeekday = (iso: string) => fmt(iso, { weekday: 'short' });

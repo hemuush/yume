@@ -255,6 +255,14 @@ describe('the entry card', () => {
     expect(shownText(tree).some((t) => t.includes('Bank') && t.includes('15'))).toBe(true);
   });
 
+  it('names the year of an entry from an earlier year, and leaves it off this year’s', async () => {
+    const year = new Date().getFullYear();
+    const old = await render({ ...lunch, date: `${year - 2}-03-04` });
+    expect(shownText(old).some((t) => t.includes('Bank') && t.includes(String(year - 2)))).toBe(true);
+    const recent = await render({ ...lunch, date: `${year}-01-15` });
+    expect(shownText(recent).some((t) => t.includes('Bank') && t.includes(String(year)))).toBe(false);
+  });
+
   it('keeps the label as its own row only when the entry has one', async () => {
     const withLabel = await render();
     expect(shownText(withLabel)).toContain('Label');
