@@ -848,6 +848,7 @@ export default function TransactionsScreen() {
                   <ReanimatedAnimated.View style={periodSwipe.dragStyle} {...periodSwipe.panHandlers}>
                     <ActivitySummaryStrip
                       periodKey={`${loadedPeriod.scope}-${loadedPeriod.fromDate}`}
+                      direction={direction}
                       spentMinor={
                         narrowedTo
                           ? bars.reduce((sum, bar) => (bar.state ? sum : sum + bar.totalMinor), 0)

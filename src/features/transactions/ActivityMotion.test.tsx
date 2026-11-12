@@ -15,6 +15,7 @@ jest.mock('@/components/CountUpAmount', () => ({ CountUpAmount: () => null }));
 
 import { TransactionsHeadline } from './TransactionsHeadline';
 import { SpendBarChart } from './SpendBarChart';
+import { ActivitySummaryStrip } from './ActivitySummaryStrip';
 import type { SpendBar } from './spendChart';
 
 const bar = (key: string, totalMinor: number): SpendBar => ({
@@ -91,4 +92,33 @@ it('grows bars with the native driver and stops an interrupted animation', () =>
     root.update(<SpendBarChart bars={[bar('2026-10-01', 10000)]} onPressDay={jest.fn()} />);
   });
   expect(stops[0]).toHaveBeenCalledTimes(1);
+});
+
+it('glides the Spent strip when the period steps, and holds still on first show, a refresh and reduce-motion', () => {
+  const strip = (key: string, direction: -1 | 0 | 1 = 1) => (
+    <ActivitySummaryStrip
+      periodKey={key}
+      direction={direction}
+      spentMinor={10000}
+      expenseChangeMinor={null}
+      compareLabel="last week"
+      viewScope="week"
+      bars={[bar(key, 10000)]}
+      current
+      narrowedTo={null}
+      onPress={jest.fn()}
+    />
+  );
+  act(() => {
+    root = create(strip('2026-10-01'));
+  });
+  expect(mockTiming).not.toHaveBeenCalled();
+  act(() => root.update(strip('2026-10-01')));
+  expect(mockTiming).not.toHaveBeenCalled();
+  act(() => root.update(strip('2026-10-02')));
+  expect(mockTiming).toHaveBeenCalledWith(0);
+  mockTiming.mockClear();
+  mockReduce = true;
+  act(() => root.update(strip('2026-10-03')));
+  expect(mockTiming).not.toHaveBeenCalled();
 });

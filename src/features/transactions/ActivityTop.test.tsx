@@ -194,6 +194,22 @@ describe('Activity filter bar', () => {
     act(() => tree.unmount());
   });
 
+  it('puts only the type choices in the radio group, not Filters or the removable chips', () => {
+    const dimensions = jest
+      .spyOn(require('react-native'), 'useWindowDimensions')
+      .mockReturnValue({ width: 390, height: 800, fontScale: 1, scale: 3 });
+    const tree = bar(['groc'], jest.fn(), 1);
+    const group = tree.root.find(
+      (n) => typeof n.type === 'string' && n.props.accessibilityRole === 'radiogroup'
+    );
+    const labels = group
+      .findAll((n) => typeof n.props.accessibilityLabel === 'string' && n.props.onPress)
+      .map((n) => n.props.accessibilityLabel);
+    expect(new Set(labels)).toEqual(new Set(['Show all', 'Show spent', 'Show income', 'Show transfers']));
+    act(() => tree.unmount());
+    dimensions.mockRestore();
+  });
+
   it('adds a removable chip for a picked category', () => {
     expect(texts(bar(['groc']))).toContain('Groceries');
   });

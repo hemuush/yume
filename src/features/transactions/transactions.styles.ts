@@ -203,6 +203,7 @@ export const styles = StyleSheet.create({
 
   // The one row of filters: it scrolls sideways, or wraps at large text.
   typeFilterRow: { marginTop: 8, paddingLeft: 16, paddingRight: 16, gap: 6 },
+  pillGroup: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   typeFilterRowWrap: { marginTop: 8, marginHorizontal: 16, flexWrap: 'wrap', paddingRight: 0 },
   typeBar: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingRight: 8 },
   typeBtn: {

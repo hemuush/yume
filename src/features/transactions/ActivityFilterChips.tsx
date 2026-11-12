@@ -22,8 +22,8 @@ const TYPE_CHIPS: { label: string; value: ActivityType }[] = [
 ];
 
 /**
- * Activity's filter: type segmented bar (the sheet's `filterType`), then a chip per filtered
- * category/account. "Clear all" appears once there's more than one chip.
+ * Activity's filter row: the Filters button, a removable chip per picked category/account (with Clear all),
+ * then the one-tap type choices (the sheet's `filterType`). Only the type choices form the radio group.
  */
 export function ActivityFilterChips({
   filterType,
@@ -133,7 +133,7 @@ export function ActivityFilterChips({
   return (
     <>
       {wrapTabs ? (
-        <View style={[styles.typeBar, styles.typeFilterRowWrap]} accessibilityRole="radiogroup">
+        <View style={[styles.typeBar, styles.typeFilterRowWrap]}>
           {filterButton}
           {pickedChips}
           {pills}
@@ -144,11 +144,12 @@ export function ActivityFilterChips({
           showsHorizontalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={[styles.typeBar, styles.typeFilterRow]}
-          accessibilityRole="radiogroup"
         >
           {filterButton}
           {pickedChips}
-          {pills}
+          <View style={styles.pillGroup} accessibilityRole="radiogroup">
+            {pills}
+          </View>
         </ScrollView>
       )}
       <View style={styles.filterGap} />

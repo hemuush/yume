@@ -19,3 +19,5 @@ Unchanged: the Week | Month switch and the date pill stay in the header, the ent
 
 - The "avg ₹… a week" name on the dashed line was drawn before the capsules, so a capsule painted over part of it in the wider Insights sheet. The line still runs behind the capsules; its name is now drawn after them ([SpendBarChart](../src/features/transactions/SpendBarChart.tsx)).
 - Opening or closing a group ("Home 2 ⌄") popped its entries in and out and made the days below jump. The entries now fade in with the shared panel motion and fade out on close, the day grows and shrinks with `ROW_LAYOUT`, and the days below slide with it. Reduce-motion turns all of it off, as everywhere else.
+- The Spent strip lost the glide the old card made when the period stepped. [usePeriodSlide](../src/features/transactions/usePeriodSlide.ts) is that glide as one hook (18 dp from the side it came from with a fade, a plain fade for a picked period, nothing under reduce-motion); the strip and the Insights figures both use it.
+- In the filter row only the four type choices form the radio group. The Filters button and the removable chips were inside it, which read wrongly to a screen reader.
