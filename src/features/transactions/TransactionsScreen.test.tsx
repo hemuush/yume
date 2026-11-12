@@ -346,3 +346,28 @@ it('puts the back arrow and the word Month on the 16 dp gutter, and leaves the s
   act(() => big.unmount());
   wide.mockRestore();
 });
+
+it('lets the days animate only for a moment after a group opens or closes', async () => {
+  const { toLocalIsoDate } = require('@/lib/date');
+  const { TimelineDay } = require('./TimelineDay');
+  mockComparison.fail = false;
+  mockLedger.transactions = ['a', 'b'].map((id) => ({
+    id,
+    type: 'expense',
+    accountId: 'bank',
+    categoryId: null,
+    amountMinor: 10_000,
+    date: toLocalIsoDate(new Date()),
+    note: '',
+  })) as Transaction[];
+  const tree = await render();
+  const day = () => tree.root.findAllByType(TimelineDay)[0];
+  expect(day().props.animateLayout).toBe(false);
+  act(() => day().props.onToggleStack('some-group'));
+  expect(day().props.animateLayout).toBe(true);
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 450));
+  });
+  expect(day().props.animateLayout).toBe(false);
+  act(() => tree.unmount());
+});

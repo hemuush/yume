@@ -54,6 +54,15 @@ Each of the 26 routes was checked for its header, bottom spacing, gutter, sectio
 - Dividers: in-card row dividers use `divider` and card or section edges `borderSoft`, as intended.
 - Left as is, by design: the add-entry hero card and footers (16), the Split summary (16), and wide empty cards (20).
 
+## Fifth pass: code and flow
+
+- Dead code (knip): five exports nothing imported (`RING_SIZE`, `UNCATEGORIZED_ID`, `DueTransfer`, `BarPoint`, the animation mock's cancel spy) are no longer exported. Knip also lists `expo-updates`, `xcode`, `@expo/image-utils` and `expo-modules-autolinking` as unlisted: they come with Expo or are used only by build scripts, so nothing to add.
+- Promises: every fire-and-forget (`void load()`, `void reload()`, `void tryUnlock()`) calls a function that catches (the screen-load hook, or its own try/catch); nothing can reject unhandled.
+- Timers and listeners: every `setTimeout` is cleared or is a one-off wait, and every Animated or accessibility listener is removed on cleanup (`useReduceMotion` is a module-level singleton by design).
+- Activity's day layout animation was on for every day all the time; it is now on only just after a group opens or closes, so shifts while scrolling a long list are not animated.
+- Bundle: the Android Hermes bundle is 8.3 MB (2,374 modules).
+- Size: `app/(tabs)/transactions.tsx` is 1,213 lines and the biggest screen file; its period bar and search bar are the natural pieces to extract next. Left alone now to avoid a large refactor on a working screen.
+
 ## Not covered
 
 Screens other than Home and Activity have not been compared against a phone screenshot after these changes, and the sheets and the add-entry flow were checked in code only, not on a device.

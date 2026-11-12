@@ -7,7 +7,7 @@ import { heroPct, type HeroSlices } from './heroSlices';
 export type SliceKey = 'spent' | 'saved' | 'due' | 'free';
 
 /** The ring's width and height; the same on every phone, so the card stays small. */
-export const RING_SIZE = 112;
+const RING_SIZE = 112;
 const STROKE = 10;
 const OUTER_STROKE = 2.5;
 const R = (RING_SIZE - STROKE - OUTER_STROKE * 2 - 2) / 2;

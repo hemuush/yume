@@ -102,6 +102,7 @@ function TimelineDayView({
   position = 'only',
   selected = false,
   today: isToday = false,
+  animateLayout = false,
 }: {
   date: string;
   label: string;
@@ -136,6 +137,8 @@ function TimelineDayView({
   selected?: boolean;
   /** This is today: its date number is drawn in a filled circle. */
   today?: boolean;
+  /** True just after a group opened or closed: the day then animates its height and its place in the list. */
+  animateLayout?: boolean;
 }) {
   const { hideAmounts } = usePrivacy();
   const { width, fontScale } = useWindowDimensions();
@@ -422,8 +425,13 @@ function TimelineDayView({
   const segment = [styles.day];
   const hasNext = position === 'first' || position === 'middle';
   return (
-    // The day grows and shrinks with its stacks open or closed, and the days below slide with it.
-    <ReanimatedAnimated.View entering={entering} layout={settling ? undefined : ROW_LAYOUT} style={segment}>
+    // The day grows and shrinks with its stacks open or closed, and the days below slide with it (only just after a
+    // toggle, see `animateLayout`).
+    <ReanimatedAnimated.View
+      entering={entering}
+      layout={animateLayout && !settling ? ROW_LAYOUT : undefined}
+      style={segment}
+    >
       <View style={styles.rail} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
         <Text style={styles.railWeekday}>{shortWeekday(date).toUpperCase()}</Text>
         <View

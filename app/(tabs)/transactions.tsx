@@ -156,16 +156,28 @@ export default function TransactionsScreen() {
   // Which stacked lines ("Food & Dining ×5") are open lives here, not in TimelineDay: FlatList unmounts
   // off-screen rows, and local state there would silently close a stack the user opened.
   const [openStacks, setOpenStacks] = useState<Set<string>>(new Set());
-  const toggleStack = useCallback(
-    (key: string) =>
-      setOpenStacks((prev) => {
-        const next = new Set(prev);
-        if (next.has(key)) next.delete(key);
-        else next.add(key);
-        return next;
-      }),
+  // True for a moment after a group opens or closes: only then do the days animate their height and position,
+  // so the days below slide with it. At any other time a shift in a long list (rows being measured as you
+  // scroll) lands at once instead of being animated on every day.
+  const [stackMoving, setStackMoving] = useState(false);
+  const stackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(
+    () => () => {
+      if (stackTimer.current) clearTimeout(stackTimer.current);
+    },
     []
   );
+  const toggleStack = useCallback((key: string) => {
+    setOpenStacks((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+    setStackMoving(true);
+    if (stackTimer.current) clearTimeout(stackTimer.current);
+    stackTimer.current = setTimeout(() => setStackMoving(false), 400);
+  }, []);
   // Slide direction of the headline/chart on the next period change (read by TransactionsHeadline): 0
   // (crossfade) unless it is a one-step move; a picked month or Week↔Month switch has no direction.
   const [direction, setDirection] = useState<-1 | 0 | 1>(0);
@@ -963,6 +975,7 @@ export default function TransactionsScreen() {
                 onPressNote={openInvestments}
                 openStacks={openStacks}
                 onToggleStack={toggleStack}
+                animateLayout={stackMoving}
                 onReorder={canReorder ? reorderDay : undefined}
                 onDragActive={setDragging}
                 selected={!searching && loadedPeriod.scope === 'week' && selectedBar === group.date}
