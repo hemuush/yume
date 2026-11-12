@@ -504,7 +504,7 @@ export default function TransactionsScreen() {
       // the query so the list doesn't show the row as it was before. Read through a ref: typing must go
       // through the debounced search below, not re-run this on every keystroke.
       const live = searchState.current;
-      if (live.searching) runSearch(live.query.trim());
+      if (live.searching) void runSearch(live.query.trim());
     }, [load, rangeFromDate, rangeToDate, viewScope, runSearch, freshness])
   );
   // A save that doesn't leave this screen (the + long-press sheet) — reload in place.
@@ -514,7 +514,7 @@ export default function TransactionsScreen() {
         if (!focused.current) return;
         void load({ fromDate: rangeFromDate, toDate: rangeToDate }, viewScope);
         const live = searchState.current;
-        if (live.searching) runSearch(live.query.trim());
+        if (live.searching) void runSearch(live.query.trim());
       }),
     [load, rangeFromDate, rangeToDate, viewScope, runSearch]
   );

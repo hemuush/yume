@@ -146,7 +146,7 @@ export default function CategoriesScreen() {
     // tap, which the undo toast alone doesn't make obvious, so that case gets an extra confirm step first.
     const childCount = allCategories.filter((c) => c.parentId === cat.id).length;
     if (childCount === 0) {
-      runDelete(cat);
+      void runDelete(cat);
       return;
     }
     showAlert(

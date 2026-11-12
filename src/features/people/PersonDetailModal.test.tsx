@@ -43,7 +43,14 @@ jest.mock('@/db/loans', () => ({ listLoansForPerson: jest.fn(async () => []) }))
 import { PersonDetailModal } from './PersonDetailModal';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { SheetTabs } from '@/components/SheetTabs';
-import { getPersonLedger, addLedgerEntry } from '@/db/people';
+import {
+  getPersonLedger,
+  addLedgerEntry,
+  recordMoneyGivenToPerson,
+  recordMoneyReceivedFromPerson,
+} from '@/db/people';
+import { Chip } from '@/components/Chip';
+import { listAccounts, listCategories } from '@/db/ledger';
 
 const ledger = [
   {
@@ -152,4 +159,102 @@ it('can open directly on history, with settlement available as an explicit next 
   act(() => button(tree, 'Settle up').props.onPress());
   expect(tree.root.findByType(SheetTabs).props.value).toBe('settle');
   expect(button(tree, 'They repaid')).toBeDefined();
+});
+
+describe('recording money with an account', () => {
+  const bank = { id: 'bank', name: 'SBI', currency: 'INR', type: 'bank' };
+  const categories = [
+    { id: 'misc', kind: 'expense', name: 'Miscellaneous', isSystem: false },
+    { id: 'ff-out', kind: 'expense', name: 'Friends & Family', isSystem: true },
+    { id: 'other-in', kind: 'income', name: 'Other Income', isSystem: false },
+    { id: 'ff-in', kind: 'income', name: 'Friends & Family', isSystem: true },
+  ];
+  async function renderWithAccount() {
+    (listAccounts as jest.Mock).mockResolvedValue([bank]);
+    (listCategories as jest.Mock).mockResolvedValue(categories);
+    const tree = await render();
+    act(() => tree.root.findByProps({ testID: 'amount' }).props.onChangeText('250'));
+    const chip = (label: string) => tree.root.findAllByType(Chip).find((c) => c.props.label === label)!;
+    return { tree, chip };
+  }
+
+  it('files money you gave under the Friends & Family expense category, taken from that account', async () => {
+    const { tree, chip } = await renderWithAccount();
+    act(() => chip('SBI').props.onPress());
+    await act(async () => {
+      await button(tree, 'They owe more').props.onPress();
+    });
+    expect(recordMoneyGivenToPerson).toHaveBeenCalledWith(
+      expect.objectContaining({
+        personId: 'person',
+        accountId: 'bank',
+        categoryId: 'ff-out',
+        amountMinor: 25000,
+      })
+    );
+    expect(addLedgerEntry).not.toHaveBeenCalled();
+  });
+
+  it('files money you got back under the Friends & Family income category, added to that account', async () => {
+    const { tree, chip } = await renderWithAccount();
+    act(() => chip('SBI').props.onPress());
+    await act(async () => {
+      await button(tree, 'They repaid').props.onPress();
+    });
+    expect(recordMoneyReceivedFromPerson).toHaveBeenCalledWith(
+      expect.objectContaining({ accountId: 'bank', categoryId: 'ff-in', amountMinor: 25000 })
+    );
+    expect(addLedgerEntry).not.toHaveBeenCalled();
+  });
+
+  it('only adjusts the balance, signed, when no cash moved', async () => {
+    const { tree, chip } = await renderWithAccount();
+    act(() => chip('Just adjust balance').props.onPress());
+    await act(async () => {
+      await button(tree, 'They owe more').props.onPress();
+    });
+    expect(addLedgerEntry).toHaveBeenLastCalledWith(
+      expect.objectContaining({ personId: 'person', amountMinor: 25000 })
+    );
+    expect(recordMoneyGivenToPerson).not.toHaveBeenCalled();
+  });
+
+  it('refuses, and says why, when the Friends & Family category is missing, instead of misfiling it', async () => {
+    (listAccounts as jest.Mock).mockResolvedValue([bank]);
+    (listCategories as jest.Mock).mockResolvedValue([categories[0]]); // only an unrelated expense category
+    const tree = await render();
+    act(() => tree.root.findByProps({ testID: 'amount' }).props.onChangeText('250'));
+    act(() =>
+      tree.root
+        .findAllByType(Chip)
+        .find((c) => c.props.label === 'SBI')!
+        .props.onPress()
+    );
+    await act(async () => {
+      await button(tree, 'They repaid').props.onPress();
+    });
+    expect(recordMoneyReceivedFromPerson).not.toHaveBeenCalled();
+    expect(recordMoneyGivenToPerson).not.toHaveBeenCalled();
+    const shown = tree.root
+      .findAll((n) => typeof n.props.children === 'string')
+      .map((n) => n.props.children as string);
+    expect(
+      shown.some((t) => t.includes('Friends & Family') && t.includes('income') && t.includes('missing'))
+    ).toBe(true);
+  });
+
+  it('asks for a valid amount, and records nothing, when it is empty or zero', async () => {
+    const tree = await render();
+    for (const value of ['', '0']) {
+      act(() => tree.root.findByProps({ testID: 'amount' }).props.onChangeText(value));
+      await act(async () => {
+        await button(tree, 'They repaid').props.onPress();
+      });
+      const shown = tree.root
+        .findAll((n) => typeof n.props.children === 'string')
+        .map((n) => n.props.children);
+      expect(shown).toContain('Enter a valid amount');
+    }
+    expect(addLedgerEntry).not.toHaveBeenCalled();
+  });
 });

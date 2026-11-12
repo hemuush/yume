@@ -48,7 +48,8 @@ export function PersonDetailModal({
 }: {
   person: PersonWithBalance;
   onClose: () => void;
-  onChanged: () => void;
+  /** May be async: the sheet waits for it before it finishes. */
+  onChanged: () => void | Promise<void>;
   initialTab?: 'settle' | 'history';
 }) {
   const { show: showUndo } = useUndoToast();
@@ -110,7 +111,7 @@ export function PersonDetailModal({
 
   useFocusEffect(
     useCallback(() => {
-      load();
+      void load();
     }, [load])
   );
 
@@ -246,7 +247,7 @@ export function PersonDetailModal({
 
   const onDeleteEntry = (entry: PersonLedgerEntry) => {
     if (!entry.transactionId) {
-      runDeleteEntry(entry);
+      void runDeleteEntry(entry);
       return;
     }
     showAlert(

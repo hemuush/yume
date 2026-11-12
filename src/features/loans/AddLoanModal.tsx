@@ -129,7 +129,7 @@ export function AddLoanModal({
   useEffect(() => {
     if (!visible) return;
     let live = true;
-    (async () => {
+    void (async () => {
       try {
         const [accs, cats, ppl] = await Promise.all([listAccounts(), listCategories(), listPeople()]);
         if (!live) return;

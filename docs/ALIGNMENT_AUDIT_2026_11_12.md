@@ -99,6 +99,30 @@ After the Home ring turned out to be off-centre, every other screen that pairs a
 - Keyboards: search boxes (Find a category, Search report labels, Find a day, Search transactions) no longer capitalise the first letter or autocorrect, and a person's name or a lender's name capitalises each word. `src/__tests__/searchInputs.test.ts` keeps search boxes that way.
 - Checked and left: button and title capitalisation (sentence case throughout; "Which Wrap?" is a name), ellipsis characters (none typed as three dots), chevron and icon sizes (they vary by context: 16 in rows, 14 in links, 18 and 20 in headers).
 
+## Ninth pass: tools instead of reading
+
+The earlier passes each took one category and read the code for it. This one used broad tooling over all of `app/` and `src/`, to find what reading misses.
+
+| Scan | Result |
+| --- | --- |
+| Type-aware lint: `no-floating-promises`, `await-thenable` | **10 floating promises** (screen loads, two searches, two deletes, a refresh after delete and after undo), all handled; none of them could crash, but a failure in them would have been silent. 0 left |
+| Type-aware lint: `no-misused-promises` | 68 async handlers passed to `onPress`-style props. Not changed: each handler reports its own failure through the alert or toast, and a typed wrapper around every one of them would only move the same code |
+| Refresh callbacks after loan, person and refund changes | Typed as `() => void`, though the screens pass an async refresh. Now `() => void \| Promise<void>`, so the sheet can wait for it |
+| SQL | Every helper interpolates only fixed fragments (table, column and order names); every value is bound with `?`. No injection path |
+| Dates and money | Month offsets, end-of-month clamping and whole-rupee rounding re-checked against their tests; no drift found |
+| Unused files, exports and dependencies (knip) | None. It lists five "unlisted" packages: `@expo/image-utils` (used by the app-icon plugin; it arrives through `expo`), `xcode` and the autolinking binary (build scripts), and `expo-updates` (named by the tool's Expo plugin, not by this project) |
+| Cycles | None among 527 modules |
+
+Coverage was 89% of lines. The weakest files that move money or delete data were given tests:
+
+- `MonthPill`: the month and year picker, including the offsets for a past and a future year (10 tests).
+- `AddLoanParts`: the term stepper (step, clamp at both ends, pull back from an over-large value) and the option cards (4 tests).
+- `PersonDetailModal`, the money flows: money given or received with an account goes to the Friends & Family expense or income category and the right account; "Just adjust balance" writes one signed entry and no transaction; a missing Friends & Family category refuses and says why, rather than filing it under another category; an empty or zero amount asks for a valid one and records nothing (5 tests).
+
+Still thin: the less common branches of the transaction sheet, the delete flow on Categories, Budgets and Recurring screens, the chart scrub hook, the draggable line, and the Suu refresh badge.
+
+No crash-class bug was found by this pass. That is a result of the scans above, not a promise that none exist: nothing here has been run on a device.
+
 ## Not covered
 
 Screens other than Home and Activity have not been compared against a phone screenshot after these changes, and the sheets and the add-entry flow were checked in code only, not on a device.

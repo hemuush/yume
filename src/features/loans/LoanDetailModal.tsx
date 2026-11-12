@@ -50,7 +50,8 @@ const PAYOFF_LINE_HEIGHT = 40;
 type LoanDetailProps = {
   loan: Loan;
   onClose: () => void;
-  onChanged: () => void;
+  /** May be async: the sheet waits for it before it finishes. */
+  onChanged: () => void | Promise<void>;
   startWithPay?: boolean;
   hue?: string;
 };
@@ -136,7 +137,7 @@ function LoanDetailContent({ loan, onClose, onChanged, startWithPay = false, hue
 
   useFocusEffect(
     useCallback(() => {
-      load();
+      void load();
     }, [load])
   );
 
@@ -219,11 +220,11 @@ function LoanDetailContent({ loan, onClose, onChanged, startWithPay = false, hue
       try {
         const snapshot = await deleteLoan(liveLoan.id);
         haptics.warn();
-        onChanged();
+        void onChanged();
         onClose();
         showUndo(`Deleted "${liveLoan.counterparty}"`, async () => {
           await restoreLoan(snapshot);
-          onChanged();
+          await onChanged();
         });
       } catch (e) {
         showAlert('Couldn’t delete loan', errorMessage(e));

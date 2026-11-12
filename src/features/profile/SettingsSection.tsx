@@ -164,7 +164,7 @@ export function SettingsSection() {
 
   useFocusEffect(
     useCallback(() => {
-      load();
+      void load();
     }, [load])
   );
 
