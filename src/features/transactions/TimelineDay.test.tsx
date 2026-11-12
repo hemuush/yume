@@ -412,6 +412,23 @@ describe('days as a feed with a marker rail', () => {
       act(() => tree.unmount());
     }));
 
+  it("puts the day's entries on a card, not straight on the wallpaper", () =>
+    withWidth(() => {
+      const tree = day();
+      const lane = tree.root.find(
+        (n) =>
+          typeof n.type === 'string' &&
+          StyleSheet.flatten(n.props.style)?.backgroundColor === theme.colors.surface &&
+          StyleSheet.flatten(n.props.style)?.borderRadius === theme.radius.xl
+      );
+      expect(StyleSheet.flatten(lane.props.style)).toMatchObject({
+        borderWidth: StyleSheet.hairlineWidth,
+        borderColor: theme.colors.borderSoft,
+        paddingHorizontal: 14,
+      });
+      act(() => tree.unmount());
+    }));
+
   it('runs the marker line down to the next day, and ends it on the last and only days', () =>
     withWidth(() => {
       const lines = (position: 'only' | 'first' | 'middle' | 'last') => {

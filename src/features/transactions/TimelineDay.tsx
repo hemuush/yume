@@ -613,7 +613,15 @@ const styles = StyleSheet.create({
   },
   transferName: { fontFamily: theme.font.bodyMedium, color: theme.colors.textSecondary },
   transferAmount: { color: theme.colors.textSecondary },
-  lane: {},
+  // The day's entries sit on a card (the same surface, hairline and corner as Home's list cards), so amounts read
+  // on a solid ground instead of straight on the wallpaper.
+  lane: {
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radius.xl,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
+    paddingHorizontal: 14,
+  },
   // Starts under the icon, so it separates the text and leaves the icon column unbroken.
   separator: {
     height: StyleSheet.hairlineWidth,
