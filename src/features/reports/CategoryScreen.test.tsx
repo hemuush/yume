@@ -192,6 +192,35 @@ describe('Category page', () => {
     expect(shown).toEqual(expect.arrayContaining(['Entries', '4', 'Each', '₹163']));
   });
 
+  it('says "yet" about an empty period only while it is still going', async () => {
+    (listTransactions as jest.Mock).mockResolvedValue([]);
+    try {
+      const current = texts(await render()).filter((t) => t.startsWith('Nothing in'));
+      expect(current).toHaveLength(1);
+      expect(current[0]).toMatch(/ yet\.$/);
+      mockParams.current = { id: 'food', g: 'month', o: '-3' };
+      const past = texts(await render()).filter((t) => t.startsWith('Nothing in'));
+      expect(past).toHaveLength(1);
+      expect(past[0]).not.toContain('yet');
+      expect(past[0]).toMatch(/^Nothing in .+\.$/);
+    } finally {
+      mockParams.current = { id: 'food' };
+      (listTransactions as jest.Mock).mockReset();
+      (listTransactions as jest.Mock).mockResolvedValue([
+        {
+          id: 't1',
+          type: 'expense',
+          accountId: 'bank',
+          toAccountId: null,
+          categoryId: 'bistro',
+          amountMinor: 30000,
+          date: '2026-09-10',
+          note: '',
+        },
+      ]);
+    }
+  });
+
   it('opens What-if and Activity on this category', async () => {
     const tree = await render();
     press(tree, 'What if I cut this?');

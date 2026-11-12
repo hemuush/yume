@@ -153,6 +153,18 @@ describe('getNetWorthTrend historical cutoff correctness', () => {
   });
 });
 
+describe('getNetWorthTrend labels', () => {
+  it('calls the last point "Now" only when the window ends in the month in progress', async () => {
+    const current = await getNetWorthTrend(3);
+    expect(current[2].label).toBe('Now');
+    // Reports on a past month or year ends its window there: that point is that month, not "Now".
+    const reference = new Date(2020, 5, 30);
+    const past = await getNetWorthTrend(3, reference);
+    expect(past.map((p) => p.label)).not.toContain('Now');
+    expect(past[2].label).toBe(reference.toLocaleDateString(undefined, { month: 'short' }));
+  });
+});
+
 describe('applyRateChange: negative-amortization guard', () => {
   it('a floating rate raised high enough that the old EMI no longer covers interest is rejected outright, leaving the loan exactly as it was', async () => {
     const account = await createAccount({

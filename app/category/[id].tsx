@@ -360,7 +360,10 @@ export default function CategoryScreen() {
               }
             >
               {entries.length === 0 ? (
-                <Text style={styles.empty}>Nothing in {periodName} yet.</Text>
+                <Text style={styles.empty}>
+                  Nothing in {periodName}
+                  {range.end >= today ? ' yet' : ''}.
+                </Text>
               ) : (
                 <ListCard>
                   {entries.map((tx, i) => (

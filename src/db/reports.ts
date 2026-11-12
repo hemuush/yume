@@ -1099,7 +1099,13 @@ export async function getNetWorthTrend(months = 6, reference: Date = new Date())
   );
 
   for (let k = 0; k < months; k++) {
-    const isCurrentMonth = k === months - 1;
+    // The last point is "Now" only when the window ends in the month in progress; ending in a past month (Reports
+    // on October, or on last year) it is that month, named like the rest.
+    const today = new Date();
+    const isCurrentMonth =
+      k === months - 1 &&
+      reference.getFullYear() === today.getFullYear() &&
+      reference.getMonth() === today.getMonth();
     const cutoff = cutoffs[k];
     const cutoffIso = toIso(cutoff);
     const cutoffMonth = cutoffIso.slice(0, 7);

@@ -219,6 +219,10 @@ export function patternFacts(
     addDaysToIsoDate(range.end, 1).endsWith('-01') &&
     range.start.slice(0, 7) === range.end.slice(0, 7);
   const span = wholeMonth ? 'the month' : 'the period';
+  // The period is still going: shares are of what has been spent so far, and say so.
+  const live = range.end >= today;
+  // The last day there is anything to count: today for the period in progress, else its end.
+  const lastDay = today < range.end ? today : range.end;
 
   // 1 — heaviest day
   const heaviest = spent.reduce((a, b) => (b.totalMinor > a.totalMinor ? b : a));
@@ -230,7 +234,7 @@ export function patternFacts(
       key: 'heaviest',
       kicker: 'Heaviest day',
       big: day,
-      detail: `${formatMoney(heaviest.totalMinor)} went out — ${pct}% of ${span} in one day.`,
+      detail: `${formatMoney(heaviest.totalMinor)} went out — ${pct}% of ${span}${live ? ' so far' : ''} in one day.`,
       date: heaviest.date,
     });
   }
@@ -238,7 +242,9 @@ export function patternFacts(
   // 2 — front-loaded (bills week)
   const eighthDay = addDaysToIsoDate(range.start, 7);
   const firstWeek = spent.filter((d) => d.date <= eighthDay).reduce((s, d) => s + d.totalMinor, 0);
-  if (total > 0 && firstWeek / total > 0.55) {
+  // Only once there is a day after the first eight to compare them with: on the 3rd, everything so far is in the
+  // "first eight days", and so is every day of a trip shorter than that.
+  if (total > 0 && lastDay > eighthDay && firstWeek / total > 0.55) {
     const pct = Math.round((firstWeek / total) * 100);
     facts.push({
       key: 'frontLoaded',
@@ -251,7 +257,6 @@ export function patternFacts(
   // 3 — weekday vs weekend
   const wk = { wdSum: 0, wdN: 0, weSum: 0, weN: 0 };
   const spentOn = new Map(daily.map((d) => [d.date, d.totalMinor]));
-  const lastDay = today < range.end ? today : range.end;
   for (let d = parseLocalIsoDate(range.start); toLocalIsoDate(d) <= lastDay; d.setDate(d.getDate() + 1)) {
     const day = d.getDay();
     const amount = spentOn.get(toLocalIsoDate(d)) ?? 0;
@@ -418,7 +423,14 @@ export function buildStoryCards(input: StoryInput): StoryCard[] {
       key: 'mover',
       kicker: 'What moved',
       big: `${input.mover.name} +${formatPctChange(input.mover.pctChange)}`,
-      detail: `The biggest jump on ${input.comparisonLabel}. It took ${formatMoney(input.mover.totalMinor)} this ${input.unit}.`,
+      // "this month" is only true of the one in progress: a past month (or year) is "that" one.
+      detail: `The biggest jump on ${input.comparisonLabel}. It took ${formatMoney(input.mover.totalMinor)} ${
+        input.isCurrentPeriod
+          ? `this ${input.unit}`
+          : input.unit === 'period'
+            ? 'in the period'
+            : `that ${input.unit}`
+      }.`,
       tone: 'coral',
       action: { type: 'category', id: input.mover.categoryId },
       cta: 'Show in categories',

@@ -85,7 +85,8 @@ export function ReportHero({
           />
           {incomeChange != null && incomeChange !== 0 && (
             <Text style={[styles.kpiSub, incomeChange > 0 && styles.good]}>
-              {`${incomeChange > 0 ? '↑' : '↓'} ${Math.abs(incomeChange)}% vs ${comparedTo}`}
+              {/* A period in progress is set against the whole one before: "so far" says it is not like for like. */}
+              {`${incomeChange > 0 ? '↑' : '↓'} ${Math.abs(incomeChange)}%${inProgress ? ' so far' : ''} vs ${comparedTo}`}
             </Text>
           )}
         </View>

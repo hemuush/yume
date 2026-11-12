@@ -54,3 +54,37 @@ it.each([
   expect(keptText).toEqual(expect.arrayContaining(['Kept', '−₹50', '-50% of income']));
   act(() => tree.unmount());
 });
+
+describe('the income comparison', () => {
+  const texts = (inProgress: boolean) => {
+    let tree!: ReactTestRenderer;
+    act(() => {
+      tree = create(
+        <ReportHero
+          periodName="November"
+          inProgress={inProgress}
+          spentMinor={15000}
+          perDayMinor={5000}
+          budget={null}
+          incomeMinor={6000}
+          previousIncomeMinor={10000}
+          comparedTo="the month before"
+          animKey="November"
+        />
+      );
+    });
+    const out = tree.root.findAllByType(Text).map((t) => [t.props.children].flat(Infinity).join(''));
+    act(() => tree.unmount());
+    return out;
+  };
+
+  it('says "so far" when the period is still going, since it is set against all of the one before', () => {
+    expect(texts(true)).toContain('↓ 40% so far vs the month before');
+  });
+
+  it('is a plain comparison once the period is over', () => {
+    const shown = texts(false);
+    expect(shown).toContain('↓ 40% vs the month before');
+    expect(shown.some((t) => t.includes('so far vs'))).toBe(false);
+  });
+});
