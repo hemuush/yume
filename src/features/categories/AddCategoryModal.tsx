@@ -239,7 +239,7 @@ export function AddCategoryModal({
       )}
       <View style={styles.appearance}>
         <Text style={styles.appearanceTitle}>Make it yours</Text>
-        <Text style={styles.pickerLabel}>Color</Text>
+        <Text style={styles.pickerLabel}>Colour</Text>
         <View style={styles.colorRow} onLayout={(e) => setGridWidth(Math.round(e.nativeEvent.layout.width))}>
           {gridWidth > 0 &&
             CATEGORY_COLOR_PALETTE.map((c, i) => (
