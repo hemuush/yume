@@ -174,7 +174,9 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 44,
     paddingVertical: 6,
-    paddingHorizontal: 6,
+    // Little side padding: the pill is drawn behind the whole segment, and a label such as "Money plan" in the
+    // heavier selected weight must stay on one line in a quarter of a 360 dp phone.
+    paddingHorizontal: 2,
     borderRadius: theme.radius.pill,
     alignItems: 'center',
     justifyContent: 'center',

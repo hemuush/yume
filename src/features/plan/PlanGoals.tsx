@@ -222,9 +222,10 @@ export function WhatIfCard({
         <Text style={styles.tileName} numberOfLines={2}>
           {whatIf ? 'Spend a little less' : 'What if you spent less?'}
         </Text>
-        <Text style={styles.tileAmt} numberOfLines={2}>
+        {/* Three lines: on a 360 dp phone this tile is about 100 dp wide and the sentence needs them all. */}
+        <Text style={styles.tileAmt} numberOfLines={3}>
           {whatIf
-            ? `${whatIf.categoryName} −${cut}% saves ${formatMoney(extra)} a month`
+            ? `${whatIf.categoryName} −${cut}% saves ${formatMoney(extra)} a\u00A0month`
             : 'Try a cut once you have logged a few expenses'}
         </Text>
       </Glass>

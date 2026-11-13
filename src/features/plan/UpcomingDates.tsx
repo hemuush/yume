@@ -111,9 +111,7 @@ export function UpcomingDates({
                         pressed && !active && s.pillPressed,
                       ]}
                     >
-                      <Text style={[s.pillText, active && s.activeText]}>
-                        {day ? dayMonth(day.date) : 'All'}
-                      </Text>
+                      <Text style={s.pillText}>{day ? dayMonth(day.date) : 'All'}</Text>
                       {tone && (
                         <View
                           style={[
@@ -200,7 +198,8 @@ const s = StyleSheet.create({
     backgroundColor: theme.colors.surface,
   },
   pillPressed: { backgroundColor: theme.colors.tray },
-  pillText: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textPrimary },
+  // The same weight picked or not, so picking a date never changes the width of the pills beside it.
+  pillText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
   dot: { width: 7, height: 7, borderRadius: 4 },
   activeText: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
   dateLabel: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
