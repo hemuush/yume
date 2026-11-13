@@ -57,3 +57,22 @@ Checks: `useScrollToTopOnChange.test.tsx`, the back-button test in `Transactions
 ## Seen on a device: Clear all came first (2026-11-13)
 
 The first look at Activity on a phone showed the filter row as Filters, Clear all, All, Spent, Income, Transfers. A picked type counts as a filter, so tapping Spent made Clear all appear in front of the type choices and moved them to the right under the thumb that had just tapped one. It now comes last, after the types, in the scrolling row and in the wrapped row at large text: the types never move, and the chips picked in the filter sheet stay beside the Filters button where they show what is on. It still appears for a type on its own, as before, although All does the same there; that, and whether it should wait until two filters are on, is a choice left open. [ActivityFilterChips.test.tsx](../src/features/transactions/ActivityFilterChips.test.tsx) reads the row's tappable things in order in both layouts.
+
+## Rendered on a real database (2026-11-13)
+
+Activity was rendered from the real screen in a browser on a real database (the app's own db layer on SQLite compiled to JavaScript, built with the app's own write functions: 75 days of spending, groups of entries in one category on one day, a transfer, a long-noted income, a refund), with the real fonts, at 360, 390 and 412 dp, in week and month scope, with a group expanded, with search open, a past week and with no data. Positions were measured and every cut-off text and small target was listed by script. The harness lives outside the repository and approximates Android; the filter sheet and period picker need native pieces it lacks and were not rendered.
+
+- **The filter row, and the list under it, dropped 2 dp when "Clear all" arrived.** Clear all and a picked chip are 44 dp tall and the pills 40, so the row grew by 4 dp when one of them appeared and centred the pills lower. The row is 44 dp tall from the start; picking a type moves nothing (measured: every pill and the first entry keep their position).
+- **Picking a type changed the width of the pills** (the picked one went from regular to medium), moving its neighbours by up to 1 dp. All pills use one weight.
+- **Switching Week | Month moved the words** by about 2.5 dp (the picked one was bold, and the row is right-aligned). Both are one weight; the underline and the darker ink show the pick.
+- **A transfer's title stranded its last word** ("SBI → Emergency / fund"). The arrow stays with where it goes, so it wraps as "SBI →" over "Emergency fund".
+
+Nothing is cut off at 360, 390 or 412 dp. Expanding a group leaves its own row where it is (measured). The figures agree: the strip's total is the days' spending less the refund, and month and Reports agree.
+
+### Looked at and left
+
+- At 360 dp the period bar stacks (the pill on one line, Week | Month on a second line of two equal halves with a long underline). That is the designed narrow layout (`stackPeriod`, under 380 dp); on one line the pill and the switch do not fit at 360.
+- The previous and next week arrows are 36 dp wide (40 with their slop) and 44 tall: a little under 44 across.
+- The week's label is built as "8–" plus a day and month, so a phone set to a US locale reads "8–Nov 14" where an Indian one reads "8–14 Nov". Fine for the app's audience; the locale's own range format would settle it.
+- A day's heading wraps its totals under the name when they are long ("₹5,625 spent · ₹450 back"); it is left-aligned and one line taller, by design.
+

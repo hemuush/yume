@@ -98,3 +98,56 @@ describe.each(LAYOUTS)('filter row, %s', (_name, width, fontScale) => {
     }
   });
 });
+
+describe('the filter row does not change size when it is used', () => {
+  const mount = (over: Partial<Parameters<typeof ActivityFilterChips>[0]>) => {
+    jest
+      .spyOn(require('react-native'), 'useWindowDimensions')
+      .mockReturnValue({ width: 390, height: 800, scale: 3, fontScale: 1 });
+    let tree!: ReactTestRenderer;
+    act(() => {
+      tree = create(
+        <ActivityFilterChips
+          filterType={'all' as ActivityType}
+          onFilterType={jest.fn()}
+          categoryIds={[]}
+          accountIds={[]}
+          categoryName={(id) => id}
+          accountName={(id) => id}
+          onRemoveCategory={jest.fn()}
+          onRemoveAccount={jest.fn()}
+          onClearAll={jest.fn()}
+          onOpenFilters={jest.fn()}
+          {...over}
+        />
+      );
+    });
+    return tree;
+  };
+
+  it('is as tall as its tallest chip from the start, so "Clear all" arriving does not move the pills or the list', () => {
+    const { StyleSheet, ScrollView } = require('react-native');
+    const tree = mount({});
+    const row = StyleSheet.flatten(tree.root.findByType(ScrollView).props.contentContainerStyle);
+    // Clear all and a picked chip are 44 tall; the pills are 40.
+    expect(row.minHeight).toBeGreaterThanOrEqual(44);
+    act(() => tree.unmount());
+  });
+
+  it('writes a picked pill and an unpicked one in the same weight, so picking one moves none of the others', () => {
+    const { StyleSheet, Text } = require('react-native');
+    const weight = (tree: ReactTestRenderer, label: string) =>
+      StyleSheet.flatten(
+        tree.root
+          .find((n) => n.props.accessibilityLabel === label && typeof n.props.onPress === 'function')
+          .findByType(Text).props.style
+      ).fontFamily;
+    const all = mount({ filterType: 'all' as ActivityType });
+    const spent = mount({ filterType: 'expense' as ActivityType });
+    // "Show all" picked in one and not in the other: the same weight either way.
+    expect(weight(all, 'Show all')).toBe(weight(spent, 'Show all'));
+    expect(weight(spent, 'Show spent')).toBe(weight(spent, 'Show all'));
+    act(() => all.unmount());
+    act(() => spent.unmount());
+  });
+});

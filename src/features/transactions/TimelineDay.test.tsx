@@ -225,7 +225,7 @@ describe('TimelineDay', () => {
     expect(all).not.toContain('5 entries');
     // Food 200 and travel 50 spent, salary 500 in; the transfer moves nothing.
     expect(all).toContain('₹250 spent · ₹500 in');
-    expect(all).toContain('Bank → Cash');
+    expect(all).toContain('Bank →\u00A0Cash');
     expect(all).toContain('Transfer');
     expect(byLabel(r, '₹3,000 moved from Bank to Cash')).toHaveLength(1);
   });
