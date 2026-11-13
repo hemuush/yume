@@ -1,6 +1,10 @@
-import { View } from 'react-native';
-import Svg, { Circle } from 'react-native-svg';
+import { StyleSheet, View } from 'react-native';
+import Animated from 'react-native-reanimated';
+import Svg, { Circle, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { theme } from '@/constants/theme';
+import { glide } from '@/lib/animation';
+import { hexToHsl, shade } from '@/lib/color';
+import { useReduceMotion } from '@/lib/useReduceMotion';
 import { heroPct, type HeroSlices } from './heroSlices';
 
 /** The four slices of the month, in the order the ring draws them. */
@@ -17,12 +21,15 @@ const GAP = 2.5;
 const MIN_BAR = 2;
 /** The slices that were not picked step back. */
 const DIM = 0.35;
+/** How much lighter a slice's first colour is than its own: the ring gets a little depth, still flat in feel. */
+const SHEEN = 5;
+const brighter = (hex: string) => shade(hex, Math.min(88, hexToHsl(hex)[2] + SHEEN));
 
 /**
  * The month as one ring: spent, saved, bills still to pay and free, in the colours of the legend beside it. A
  * thin outer ring shows how far through the month today is, so spending reads against time. It is still: it
- * draws at once and only dims the slices that were not picked. The figure for the picked slice sits in the
- * middle (`children`).
+ * draws at once, each slice a touch lighter along one side, and the slices that were not picked glide back (a CSS
+ * transition on each slice's own view). The figure for the picked slice sits in the middle (`children`).
  */
 export function MonthRing({
   slices,
@@ -44,6 +51,7 @@ export function MonthRing({
     { key: 'due' as const, share: slices.due ?? 0, color: theme.colors.slice.due },
     { key: 'free' as const, share: slices.free, color: theme.colors.slice.free },
   ].filter((part) => part.share > 0);
+  const reduce = useReduceMotion();
   const c = RING_SIZE / 2;
   const circumference = 2 * Math.PI * R;
   const outerC = 2 * Math.PI * R_OUTER;
@@ -89,35 +97,52 @@ export function MonthRing({
             </>
           )}
           <Circle cx={c} cy={c} r={R} stroke={theme.colors.trayTrack} strokeWidth={STROKE} fill="none" />
-          {parts.map((part) => {
-            const start = used;
-            used += part.share;
-            const slot = circumference * part.share;
-            // A slice with room draws a round-capped arc (the caps add half a stroke to each end, so a whole
-            // stroke comes off along with the gap). A slice too small for that, like Free or Bills left late in
-            // the month, draws a thin flat bar centred in its own slot at least 2 dp long, so it stays visible
-            // and never overlaps its neighbours as a dot would.
-            const roomy = slot - GAP >= STROKE + 1;
-            const length = roomy ? slot - GAP - STROKE : Math.max(MIN_BAR, slot - GAP);
-            const lead = roomy ? (STROKE + GAP) / 2 : (slot - length) / 2;
-            return (
-              <Circle
-                key={part.key}
-                cx={c}
-                cy={c}
-                r={R}
-                stroke={part.color}
-                strokeWidth={STROKE}
-                strokeLinecap={whole || !roomy ? 'butt' : 'round'}
-                fill="none"
-                opacity={focus != null && focus !== part.key ? DIM : 1}
-                strokeDasharray={whole ? undefined : `${length} ${circumference}`}
-                strokeDashoffset={whole ? undefined : -(circumference * start + lead)}
-                transform={`rotate(-90 ${c} ${c})`}
-              />
-            );
-          })}
         </Svg>
+        {parts.map((part) => {
+          const start = used;
+          used += part.share;
+          const slot = circumference * part.share;
+          // A slice with room draws a round-capped arc (the caps add half a stroke to each end, so a whole
+          // stroke comes off along with the gap). A slice too small for that, like Free or Bills left late in
+          // the month, draws a thin flat bar centred in its own slot at least 2 dp long, so it stays visible
+          // and never overlaps its neighbours as a dot would.
+          const roomy = slot - GAP >= STROKE + 1;
+          const length = roomy ? slot - GAP - STROKE : Math.max(MIN_BAR, slot - GAP);
+          const lead = roomy ? (STROKE + GAP) / 2 : (slot - length) / 2;
+          return (
+            <Animated.View
+              key={part.key}
+              pointerEvents="none"
+              style={[
+                StyleSheet.absoluteFill,
+                { opacity: focus != null && focus !== part.key ? DIM : 1 },
+                glide('opacity', reduce),
+              ]}
+            >
+              <Svg width={RING_SIZE} height={RING_SIZE}>
+                <Defs>
+                  <LinearGradient id={`ring-${part.key}`} x1="0" y1="0" x2="1" y2="0">
+                    {/* The ring is turned a quarter, so offset 0 is its bottom: its own colour there, lighter at the top. */}
+                    <Stop offset="0" stopColor={part.color} />
+                    <Stop offset="1" stopColor={brighter(part.color)} />
+                  </LinearGradient>
+                </Defs>
+                <Circle
+                  cx={c}
+                  cy={c}
+                  r={R}
+                  stroke={`url(#ring-${part.key})`}
+                  strokeWidth={STROKE}
+                  strokeLinecap={whole || !roomy ? 'butt' : 'round'}
+                  fill="none"
+                  strokeDasharray={whole ? undefined : `${length} ${circumference}`}
+                  strokeDashoffset={whole ? undefined : -(circumference * start + lead)}
+                  transform={`rotate(-90 ${c} ${c})`}
+                />
+              </Svg>
+            </Animated.View>
+          );
+        })}
       </View>
       <View style={{ width: R * 2 - STROKE - 6, alignItems: 'center' }}>{children}</View>
     </View>

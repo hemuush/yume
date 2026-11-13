@@ -99,3 +99,13 @@ If the sheet still stands above the bottom after this, the numbers above (and wh
 - **`@expo/image-utils`**, which the app-icon plugin requires, is a dev dependency instead of a package Expo happens to bring.
 - **Not done:** the 1,254-line Activity route (56 hooks) is left until it is next changed; splitting it now would be a large change with nothing to prove it, and no bug lives in it.
 
+### Sixth pass: trying the newer animation tools on Home
+
+Asked for modern animation packages that are safe to use, for Home first. Checked against Expo SDK 58's own version list, npm (versions, peer dependencies, licences) and a clean-room `npm audit` (0 vulnerabilities for Skia 2.14.0, Lottie 7.5.0, `@expo/ui` 58.0.28, `expo-glass-effect` 58.0.5):
+
+- **Reanimated 4 CSS transitions** (already installed, unused until now): used. No new dependency.
+- **Skia 2.14.0** (Expo's pick for SDK 58; v3 has no stable release): not added. A soft gradient on the ring needs only `react-native-svg`, which is already here; Skia is for blur, glow and shaders, and adds a native engine to the APK whose size was not measured.
+- **Rive** (0.5.14, pre-1.0, needs `react-native-nitro-modules` below 0.37 while the latest is 0.37.2) and **`expo-glass-effect`** (Apple platforms only): not suitable. **Lottie** and **`@expo/ui`**: safe, but for one-off moments and native-looking controls, not Home's dashboard.
+
+What changed on Home, measured in the browser render at 390 dp: 1,348 of 351,000 pixels (0.4%), all inside the month ring; nothing else moved. Tapping a legend slice dims the others from 100% to 35% in about 200 ms (frames sampled at 100%, 78%, 50%, 35%), where before they switched in one frame. In code: the capsules lost their shared values, effects and cancellations. Not checked on a phone: it is the app's first use of CSS transitions on Android, so the next build is the test; a transition that does not run would leave the final value, not a wrong one.
+

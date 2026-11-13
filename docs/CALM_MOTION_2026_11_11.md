@@ -15,6 +15,10 @@ Replaces the "longer, softer" direction of [MOTION_POLISH_2026_11_11.md](MOTION_
 - Screens open the same way everywhere: the standard slide. The card-grow transition (a card expanding into Budgets, Savings goals and Category detail) and its overlay (`CardGrowHost`, `cardGrow`) were removed.
 - Everything still turns off with the phone's reduce-motion setting.
 
+## Follow-up, 14 November 2026: CSS transitions for state changes on Home
+
+Reanimated 4's CSS transitions (already installed, first used here) replace hand-written shared values for a state change. `glide(property, reduce)` in [animation.ts](../src/lib/animation.ts) is one style property that transitions to its new value on the shared curve, `'200ms'`, and `'0ms'` with the phone's reduce-motion. Home's day capsules (height, and the picked one's lift) use it: about 20 lines of shared values, effects and cancellations came out of `SpendBars`. The month ring's unpicked slices now glide back over 200 ms (they used to switch in one frame), and each slice is a touch lighter along its top, from its own colour. Nothing draws in, rolls, staggers or springs; the calm rule stands. See [the review](SECONDARY_SCREENS_REVIEW_2026_11_13.md).
+
 ## Not changed
 
 Interactions that answer a tap or a drag (tapping a Home month slice, the picked capsule's lift, swipes, the collapsing header), list add/remove sliding, panels opening, the loading shimmer, and the decorative Wrap and Garden flows.

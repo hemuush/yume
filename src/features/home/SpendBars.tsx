@@ -1,11 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { View, Pressable, StyleSheet, useWindowDimensions } from 'react-native';
-import Animated, {
-  cancelAnimation,
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-} from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
@@ -13,9 +8,8 @@ import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
 import { compactMoney } from '@/lib/compactMoney';
 import { haptics } from '@/lib/haptics';
-import { timing, PANEL_ENTER, ROW_EXIT } from '@/lib/animation';
+import { glide, PANEL_ENTER, ROW_EXIT } from '@/lib/animation';
 import { useReduceMotion } from '@/lib/useReduceMotion';
-import { DURATIONS } from '@/lib/motionTimings';
 import { useAccent } from '@/theme/AccentContext';
 import { hexToRgba, hexToHsl, shade } from '@/lib/color';
 import { withPressed } from '@/lib/pressed';
@@ -64,21 +58,8 @@ function Capsule({
   const target = fillHeight(bar.totalMinor, maxMinor);
   // A very light second colour would vanish into the track, so its lightness is capped.
   const fillEnd = hexToHsl(secondary)[2] > FILL_END_MAX_L ? shade(secondary, FILL_END_MAX_L) : secondary;
-  // A capsule shows at its height at once; a new value (another day's spending) just glides there.
-  const height = useSharedValue(target);
-  const lift = useSharedValue(selected ? LIFT : 1);
-  useEffect(() => {
-    height.value = reduce ? target : withTiming(target, timing(DURATIONS.standard));
-    return () => cancelAnimation(height);
-  }, [target, reduce, height]);
-  useEffect(() => {
-    lift.value = reduce ? (selected ? LIFT : 1) : withTiming(selected ? LIFT : 1, timing(DURATIONS.standard));
-    return () => cancelAnimation(lift);
-  }, [selected, reduce, lift]);
-  const fillStyle = useAnimatedStyle(() => ({
-    height: height.value,
-  }));
-  const liftStyle = useAnimatedStyle(() => ({ transform: [{ scale: lift.value }] }));
+  // A capsule shows at its height at once; a new value (another day's spending) and being picked just glide
+  // there, as CSS transitions on the style itself.
   const goalH = goalMinor != null && goalMinor > 0 ? fillHeight(goalMinor, maxMinor) : null;
   return (
     <Pressable
@@ -93,10 +74,13 @@ function Capsule({
           styles.track,
           { backgroundColor: hexToRgba(accent, 0.2) },
           selected && styles.trackOn,
-          liftStyle,
+          { transform: [{ scale: selected ? LIFT : 1 }] },
+          glide('transform', reduce),
         ]}
       >
-        <Animated.View style={[styles.fill, { transformOrigin: 'bottom' }, fillStyle]}>
+        <Animated.View
+          style={[styles.fill, { transformOrigin: 'bottom', height: target }, glide('height', reduce)]}
+        >
           <LinearGradient colors={[accent, fillEnd]} style={StyleSheet.absoluteFill} />
         </Animated.View>
         {goalH != null && <View pointerEvents="none" style={[styles.goalTick, { bottom: goalH }]} />}

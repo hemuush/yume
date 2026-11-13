@@ -1,7 +1,8 @@
 /** The month ring: one arc per share in the legend colours, nothing that leaks hidden savings. */
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
-import { Circle } from 'react-native-svg';
+import { StyleSheet, View } from 'react-native';
+import { Circle, Stop } from 'react-native-svg';
 import { theme } from '@/constants/theme';
 import { heroSlices } from './heroSlices';
 import { MonthRing } from './MonthRing';
@@ -14,13 +15,27 @@ const mount = (node: React.ReactElement) => {
   return r;
 };
 const strokes = (r: ReactTestRenderer) => r.root.findAllByType(Circle).map((c) => c.props.stroke);
+/** Each slice is a circle painted by its own gradient; its own colour is the gradient's first stop (offset 0). */
+const sliceColours = (r: ReactTestRenderer) =>
+  r.root
+    .findAllByType(Stop)
+    .filter((s) => s.props.offset === '0')
+    .map((s) => s.props.stopColor);
+const arcsOf = (r: ReactTestRenderer) =>
+  r.root.findAllByType(Circle).filter((c) => String(c.props.stroke).startsWith('url(#ring-'));
+/** The views the slices sit in: the one that is dimmed, with the glide on it. */
+const sliceViews = (r: ReactTestRenderer) =>
+  r.root
+    .findAllByType(View)
+    .map((v) => StyleSheet.flatten(v.props.style))
+    .filter((st) => st?.transitionProperty === 'opacity');
 const image = (r: ReactTestRenderer) => r.root.find((n) => n.props.accessibilityRole === 'image');
 
 it('draws spent, saved, bills and free arcs in the legend colours', () => {
   const r = mount(
     <MonthRing slices={heroSlices(100_000, 40_000, 10_000, 20_000)} hideSavings={false} dayShare={0.4} />
   );
-  expect(strokes(r).slice(-4)).toEqual([
+  expect(sliceColours(r)).toEqual([
     theme.colors.slice.spent,
     theme.colors.slice.saved,
     theme.colors.slice.due,
@@ -46,7 +61,7 @@ it('draws the day ring only for the current month', () => {
 
 it('does not say or draw savings while they are hidden', () => {
   const r = mount(<MonthRing slices={heroSlices(100_000, 40_000, 10_000, 0)} hideSavings />);
-  expect(strokes(r)).not.toContain(theme.colors.slice.saved);
+  expect(sliceColours(r)).not.toContain(theme.colors.slice.saved);
   expect(image(r).props.accessibilityLabel).not.toMatch(/saved/);
   act(() => r.unmount());
 });
@@ -55,14 +70,15 @@ it('dims the slices that were not picked', () => {
   const r = mount(
     <MonthRing slices={heroSlices(100_000, 40_000, 10_000, 0)} hideSavings={false} focus="spent" />
   );
-  const arcs = r.root.findAllByType(Circle).filter((c) => c.props.opacity != null);
-  expect(arcs.map((c) => c.props.opacity)).toEqual([1, 0.35, 0.35]);
+  expect(sliceViews(r).map((st) => st.opacity)).toEqual([1, 0.35, 0.35]);
+  // Picking another slice glides: a CSS transition on each slice's view, not a hard switch.
+  expect(sliceViews(r).every((st) => st.transitionDuration === '200ms')).toBe(true);
   act(() => r.unmount());
 });
 
 it('keeps round-capped arcs from running into each other, and draws one slice as a closed ring', () => {
   const r = mount(<MonthRing slices={heroSlices(100_000, 40_000, 0, 0)} hideSavings={false} />);
-  const arcs = r.root.findAllByType(Circle).filter((c) => c.props.opacity != null);
+  const arcs = arcsOf(r);
   const circumference = 2 * Math.PI * ((112 - 10 - 5 - 2) / 2);
   const [spent, free] = arcs.map((c) => c.props);
   const len = (p: Record<string, unknown>) => parseFloat(String(p.strokeDasharray));
@@ -71,7 +87,7 @@ it('keeps round-capped arcs from running into each other, and draws one slice as
   expect(len(free) + 10).toBeLessThan(circumference * 0.6);
   act(() => r.unmount());
   const whole = mount(<MonthRing slices={heroSlices(100_000, 100_000, 0, 0)} hideSavings={false} />);
-  const only = whole.root.findAllByType(Circle).filter((c) => c.props.opacity != null);
+  const only = arcsOf(whole);
   expect(only).toHaveLength(1);
   expect(only[0].props.strokeDasharray).toBeUndefined();
   act(() => whole.unmount());
@@ -82,7 +98,7 @@ it('draws very small slices as thin flat bars in their own slots, so Free is alw
   const r = mount(
     <MonthRing slices={heroSlices(83_389_00, 46_312_00, 35_000_00, 299_00)} hideSavings={false} />
   );
-  const arcs = r.root.findAllByType(Circle).filter((c) => c.props.opacity != null);
+  const arcs = arcsOf(r);
   expect(arcs).toHaveLength(4);
   const circumference = 2 * Math.PI * ((112 - 10 - 5 - 2) / 2);
   const spans = arcs.map((c) => {
