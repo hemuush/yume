@@ -193,33 +193,24 @@ describe('the scrolling row after what is picked is cleared', () => {
   };
   const { ScrollView } = require('react-native');
 
-  it('is brought back inside its content when the content gets shorter than where it was scrolled to', () => {
+  it('goes back to its start when its content shrinks to fit the screen, so it is not left scrolled past the end', () => {
     const tree = mountRow({ categoryIds: ['a', 'b', 'c'] });
     const row = tree.root.findByType(ScrollView);
     const scrollTo = jest.fn();
     // The row's own ref is the ScrollView instance; stand in for its scrollTo.
     row.instance.scrollTo = scrollTo;
-    act(() => {
-      row.props.onLayout({ nativeEvent: { layout: { width: 390 } } });
-      // Scrolled to the far end of a long row of chips.
-      row.props.onScroll({ nativeEvent: { contentOffset: { x: 340 } } });
-      // The picks are cleared: the row is now 377 wide, 13 more than the screen, so it can only scroll 0 to 0.
-      row.props.onContentSizeChange(377, 44);
-    });
+    // The picks are cleared: the row is now 377 wide on a 390 screen.
+    act(() => row.props.onContentSizeChange(377, 44));
     expect(scrollTo).toHaveBeenCalledWith({ x: 0, animated: false });
     act(() => tree.unmount());
   });
 
-  it('leaves a row alone while it is still inside its content', () => {
+  it('leaves a row alone while it is still longer than the screen', () => {
     const tree = mountRow({ categoryIds: ['a', 'b', 'c'] });
     const row = tree.root.findByType(ScrollView);
     const scrollTo = jest.fn();
     row.instance.scrollTo = scrollTo;
-    act(() => {
-      row.props.onLayout({ nativeEvent: { layout: { width: 390 } } });
-      row.props.onScroll({ nativeEvent: { contentOffset: { x: 60 } } });
-      row.props.onContentSizeChange(600, 44);
-    });
+    act(() => row.props.onContentSizeChange(600, 44));
     expect(scrollTo).not.toHaveBeenCalled();
     act(() => tree.unmount());
   });

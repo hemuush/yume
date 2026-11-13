@@ -71,18 +71,9 @@ export function ActivityFilterChips({
   const ink = themeInk(accent);
   const { width, fontScale } = useWindowDimensions();
   const wrapTabs = width < 360 || fontScale > 1.2;
-  // Where the row is scrolled to, so that when what is picked is cleared (and the row gets shorter) it is brought
-  // back inside its content instead of staying scrolled past the end: a blank row with the last chip's edge.
+  // When what is picked is cleared the row can shrink to fit the screen: take it back to its start, so it is never
+  // left scrolled past its own content (a blank strip with the edge of one chip).
   const scroller = useRef<ScrollViewInstance>(null);
-  const offset = useRef(0);
-  const viewport = useRef(0);
-  const keepInside = (contentWidth: number) => {
-    const farthest = Math.max(0, contentWidth - viewport.current);
-    if (offset.current > farthest) {
-      offset.current = farthest;
-      scroller.current?.scrollTo({ x: farthest, animated: false });
-    }
-  };
   // Investments are picked in the sheet, so their chip shows only while that is the type in use: otherwise
   // the row would show no choice at all (not even All) on a filtered list.
   const chips =
@@ -181,14 +172,9 @@ export function ActivityFilterChips({
       ) : (
         <ScrollView
           ref={scroller}
-          onScroll={(event) => {
-            offset.current = event.nativeEvent.contentOffset.x;
+          onContentSizeChange={(contentWidth) => {
+            if (contentWidth <= width) scroller.current?.scrollTo({ x: 0, animated: false });
           }}
-          scrollEventThrottle={16}
-          onLayout={(event) => {
-            viewport.current = event.nativeEvent.layout.width;
-          }}
-          onContentSizeChange={keepInside}
           horizontal
           showsHorizontalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
