@@ -166,9 +166,8 @@ describe('the filter row does not change size when it is used', () => {
   });
 });
 
-describe('what is picked comes and goes with a fade', () => {
-  it('wraps each picked chip and Clear all in Appear, so none of them pops in or out', () => {
-    const { CONTENT_ENTER } = require('@/lib/animation');
+describe('the scrolling row after what is picked is cleared', () => {
+  const mountRow = (over: Partial<Parameters<typeof ActivityFilterChips>[0]> = {}) => {
     jest
       .spyOn(require('react-native'), 'useWindowDimensions')
       .mockReturnValue({ width: 390, height: 800, scale: 3, fontScale: 1 });
@@ -176,29 +175,50 @@ describe('what is picked comes and goes with a fade', () => {
     act(() => {
       tree = create(
         <ActivityFilterChips
-          filterType={'expense' as ActivityType}
+          filterType={'all' as ActivityType}
           onFilterType={jest.fn()}
-          categoryIds={['food', 'fuel']}
-          accountIds={['SBI']}
-          expenseLabel="Lunch"
+          categoryIds={[]}
+          accountIds={[]}
           categoryName={(id) => id}
           accountName={(id) => id}
           onRemoveCategory={jest.fn()}
           onRemoveAccount={jest.fn()}
-          onRemoveLabel={jest.fn()}
           onClearAll={jest.fn()}
           onOpenFilters={jest.fn()}
+          {...over}
         />
       );
     });
+    return tree;
+  };
+  const { ScrollView } = require('react-native');
+
+  it('goes back to its start when its content shrinks to fit the screen, so it is not left scrolled past the end', () => {
+    const tree = mountRow({ categoryIds: ['a', 'b', 'c'] });
+    const row = tree.root.findByType(ScrollView);
+    const scrollTo = jest.fn();
+    // The row's own ref is the ScrollView instance; stand in for its scrollTo.
+    row.instance.scrollTo = scrollTo;
+    // The picks are cleared: the row is now 377 wide on a 390 screen.
+    act(() => row.props.onContentSizeChange(377, 44));
+    expect(scrollTo).toHaveBeenCalledWith({ x: 0, animated: false });
+    act(() => tree.unmount());
+  });
+
+  it('leaves a row alone while it is still longer than the screen', () => {
+    const tree = mountRow({ categoryIds: ['a', 'b', 'c'] });
+    const row = tree.root.findByType(ScrollView);
+    const scrollTo = jest.fn();
+    row.instance.scrollTo = scrollTo;
+    act(() => row.props.onContentSizeChange(600, 44));
+    expect(scrollTo).not.toHaveBeenCalled();
+    act(() => tree.unmount());
+  });
+
+  it('does not animate what is picked in and out: chips arriving and leaving inside a scrolling row stay plain', () => {
+    const tree = mountRow({ filterType: 'expense' as ActivityType, categoryIds: ['food', 'fuel'] });
     const { View } = require('react-native');
-    const fading = tree.root.findAll((n) => n.type === View && n.props.entering === CONTENT_ENTER);
-    // Two categories, an account, a label and Clear all.
-    expect(fading).toHaveLength(5);
-    // The type pills are not among them: they never come or go.
-    expect(
-      fading.every((n) => n.findAll((c) => /^Show /.test(String(c.props.accessibilityLabel))).length === 0)
-    ).toBe(true);
+    expect(tree.root.findAll((n) => n.type === View && n.props.exiting != null)).toHaveLength(0);
     act(() => tree.unmount());
   });
 });

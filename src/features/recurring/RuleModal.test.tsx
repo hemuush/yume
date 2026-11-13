@@ -105,7 +105,13 @@ describe('recurring sheet', () => {
     const tree = await render(rule);
     expect(texts(tree)).toEqual(expect.arrayContaining(['Every month', 'YouTube Premium']));
     expect(tree.root.findByType(AmountField).props.value).toBe('299');
-    expect(texts(tree)).toContain(`From SBI · next ${weekdayDayMonth('2026-10-01')}`);
+    // Glued with non-breaking spaces, so a wrap falls between "From SBI" and "next …", never inside the date.
+    expect(texts(tree).map((t) => t.replace(/\u00A0/g, ' '))).toContain(
+      `From SBI · next ${weekdayDayMonth('2026-10-01')}`
+    );
+    expect(texts(tree)).toContain(
+      `From\u00A0SBI · next\u00A0${weekdayDayMonth('2026-10-01').replace(/ /g, '\u00A0')}`
+    );
   });
 
   it('opens a new rule on the category grid', async () => {

@@ -8,7 +8,7 @@ import { dayMonth, weekdayDayMonth } from '@/lib/dateLabels';
 import { shade } from '@/lib/color';
 import { useAccent } from '@/theme/AccentContext';
 import { useScrub } from '@/features/reports/useScrub';
-import { Runway } from './runway';
+import { Runway, runwayTicks, TICK_DATE_WIDTH } from './runway';
 
 /** The balance line's height; the pips and date labels sit under it. */
 const LINE_H = 62;
@@ -64,8 +64,7 @@ export function RunwayRibbon({ runway }: { runway: Runway }) {
       }`
     : 'Nothing scheduled';
   const labelW = Math.round(48 * scale);
-  const ticks: number[] = [0];
-  for (let i = 7; i <= n - 4; i += 7) ticks.push(i);
+  const ticks = runwayTicks(n, x, TICK_DATE_WIDTH * scale);
   const stroke = negative ? theme.colors.expenseText : shade(accent, 50);
 
   return (

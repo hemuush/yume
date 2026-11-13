@@ -18,6 +18,7 @@ import { ToggleSwitch } from '@/components/ToggleSwitch';
 import { GoalAccountField } from './GoalAccountField';
 import { styles } from './goals.styles';
 import { useSheetMutation } from '@/lib/useSheetMutation';
+import { noBreak } from '@/lib/keepTogether';
 
 export function AddGoalModal(props: AddGoalProps) {
   return props.visible ? <AddGoalForm {...props} /> : null;
@@ -123,12 +124,16 @@ function AddGoalForm({ visible, accounts, onClose, onCreated }: AddGoalProps) {
           hue={theme.colors.secondary}
           icon="piggy-bank-outline"
           title={name.trim() || 'New goal'}
-          kicker={hasTargetDate ? `Savings goal · by ${dayMonthYear(targetDateValue)}` : 'Savings goal'}
+          kicker={
+            hasTargetDate
+              ? `Savings goal · ${noBreak(`by ${dayMonthYear(targetDateValue)}`)}`
+              : 'Savings goal'
+          }
           figure={targetMinor > 0 ? formatMoney(targetMinor) : undefined}
           per="target"
           meta={
             pace != null
-              ? `${formatMoney(pace)} a month to get there by ${dayMonthYear(targetDateValue)}`
+              ? `${formatMoney(pace)} a month to get there ${noBreak(`by ${dayMonthYear(targetDateValue)}`)}`
               : undefined
           }
         />

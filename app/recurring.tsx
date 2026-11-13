@@ -135,7 +135,13 @@ export default function RecurringScreen() {
 
   const hideSuggestion = async (s: SubscriptionSuggestion) => {
     setSuggestions((prev) => prev.filter((x) => x.key !== s.key));
-    await hideSubscriptionSuggestion(s.key).catch(() => {});
+    try {
+      await hideSubscriptionSuggestion(s.key);
+    } catch (e) {
+      // It was not saved, so it would be back on the next visit with no word why: say so, and show it again now.
+      showAlert('Couldn’t hide it', errorMessage(e));
+      void load();
+    }
   };
 
   const togglePause = async (rule: RecurringRule) => {

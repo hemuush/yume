@@ -165,6 +165,39 @@ describe('Recently deleted screen', () => {
   });
 });
 
+describe('a big tidy-up', () => {
+  const restoreButtons = (r: ReactTestRenderer) =>
+    r.root.findAll((n) => /^Restore /.test(String(n.props.accessibilityLabel)) && !!n.props.onPress);
+
+  it('draws a hundred rows at a time, while the count and Delete all still cover every entry', async () => {
+    mockEntries.current = Array.from({ length: 250 }, (_, i) => entry({ id: `bulk${i}`, daysLeft: 30 }));
+    const r = await render();
+    expect(restoreButtons(r)).toHaveLength(100);
+    expect(texts(r)).toContain('250');
+    const more = () =>
+      r.root.find(
+        (n) =>
+          typeof n.props.onPress === 'function' &&
+          n.findAllByType(Text).some((t) => /^Show \d+ more$/.test(String(t.props.children)))
+      );
+    expect(more().findByType(Text).props.children).toBe('Show 100 more');
+    await act(async () => more().props.onPress());
+    expect(restoreButtons(r)).toHaveLength(200);
+    await act(async () => more().props.onPress());
+    expect(restoreButtons(r)).toHaveLength(250);
+    expect(texts(r)).not.toMatch(/Show \d+ more/);
+    act(() => r.unmount());
+  });
+
+  it('offers no Show more when everything fits', async () => {
+    mockEntries.current = Array.from({ length: 100 }, (_, i) => entry({ id: `fit${i}` }));
+    const r = await render();
+    expect(restoreButtons(r)).toHaveLength(100);
+    expect(texts(r)).not.toMatch(/Show \d+ more/);
+    act(() => r.unmount());
+  });
+});
+
 describe('a long note', () => {
   it('is cut on its own line, so the date and the days left are still shown whole', async () => {
     mockEntries.current = [entry({ id: 'n1', note: 'x'.repeat(120), date: '2025-03-04' })];

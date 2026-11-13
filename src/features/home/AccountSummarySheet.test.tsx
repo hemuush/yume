@@ -153,6 +153,24 @@ describe('AccountSummarySheet', () => {
     expect(t).toContain('more came in than went out');
   });
 
+  it.each([
+    [1, 30],
+    [2, 60],
+  ])('keeps In, Out and Net on one line at text scale %s: a label column of %i dp', async (scale, width) => {
+    const spy = jest
+      .spyOn(require('react-native'), 'useWindowDimensions')
+      .mockReturnValue({ width: 360, height: 800, fontScale: scale, scale: 1 });
+    const tree = await render();
+    const labels = tree.root
+      .findAllByType(require('react-native').Text)
+      .filter((t) => ['In', 'Out', 'Net'].includes(String(t.props.children)));
+    expect(labels).toHaveLength(3);
+    for (const label of labels) {
+      expect(require('react-native').StyleSheet.flatten(label.props.style).width).toBe(width);
+    }
+    spy.mockRestore();
+  });
+
   it('names a transfer-only side without repeating its amount', async () => {
     mockFlow.mockResolvedValue({ ...flow, inMinor: 100_000, incomeMinor: 0, transferInMinor: 100_000 });
     const tree = await render();

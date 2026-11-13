@@ -11,6 +11,7 @@ import { withPressedTint } from '@/lib/pressed';
 import { useAccent } from '@/theme/AccentContext';
 import { weekdayDayMonth } from '@/lib/dateLabels';
 import type { Category, Transaction } from '@/types';
+import { noBreak } from '@/lib/keepTogether';
 
 interface DayMixPart {
   id: string;
@@ -84,7 +85,7 @@ export function DayInspector({
     <Animated.View key={iso} entering={CONTENT_ENTER} style={styles.box}>
       <View style={styles.top}>
         <View style={styles.main}>
-          <Text style={styles.date}>{date}</Text>
+          <Text style={styles.date}>{noBreak(date)}</Text>
           <View style={styles.figure}>
             <Text style={styles.amount}>
               {future ? '—' : spentMinor > 0 ? formatMoney(roundedMinor(spentMinor)) : 'No spending'}

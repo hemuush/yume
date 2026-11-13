@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
@@ -6,6 +6,7 @@ import { theme } from '@/constants/theme';
 import type { McIconName } from '@/components/iconName';
 import { withPressedTint } from '@/lib/pressed';
 import { useAccent } from '@/theme/AccentContext';
+import { useStacked } from '@/lib/useStacked';
 
 /** Compact budget/goal row; large text moves its amount below the name instead of truncating it. */
 export function PlanSummaryRow({
@@ -27,8 +28,7 @@ export function PlanSummaryRow({
   accessibilityLabel: string;
   onPress: () => void;
 }) {
-  const { width, fontScale } = useWindowDimensions();
-  const stacked = width < 360 || fontScale > 1.2;
+  const stacked = useStacked();
   const { accent } = useAccent();
   return (
     <Pressable

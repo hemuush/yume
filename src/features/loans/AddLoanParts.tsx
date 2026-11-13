@@ -4,6 +4,7 @@ import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { haptics } from '@/lib/haptics';
+import { useFontScale } from '@/lib/useFontScale';
 import type { McIconName } from '@/components/iconName';
 import { useAccent } from '@/theme/AccentContext';
 
@@ -14,7 +15,10 @@ export interface Option<T extends string> {
   icon: string;
 }
 
-/** Two big choices side by side, for a decision that deserves a line of explanation. */
+/**
+ * Two big choices side by side, for a decision that deserves a line of explanation. Past the reflow text size
+ * each is half a phone's width, too narrow for "borrowed", so they sit one above the other.
+ */
 export function OptionCards<T extends string>({
   options,
   value,
@@ -25,8 +29,9 @@ export function OptionCards<T extends string>({
   onChange: (next: T) => void;
 }) {
   const { accent } = useAccent();
+  const stacked = useFontScale() > theme.accessibility.reflowFontScale;
   return (
-    <View style={styles.row}>
+    <View style={[styles.row, stacked && styles.rowStacked]}>
       {options.map((o) => {
         const active = o.value === value;
         return (
@@ -37,6 +42,7 @@ export function OptionCards<T extends string>({
             accessibilityState={{ selected: active }}
             style={({ pressed }) => [
               styles.card,
+              !stacked && styles.cardShared,
               active && { backgroundColor: selectedFill(accent), borderColor: selectedFill(accent) },
               pressed && styles.pressed,
             ]}
@@ -103,8 +109,10 @@ export function CountStepper({
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', gap: 8, marginBottom: 12 },
+  rowStacked: { flexDirection: 'column' },
+  // Shared only side by side: in a column a zero flex basis has no height to share.
+  cardShared: { flex: 1 },
   card: {
-    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,

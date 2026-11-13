@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { View, Pressable, useWindowDimensions } from 'react-native';
+import { View, Pressable } from 'react-native';
 import { Text } from '@/components/Text';
 import { getCachedCurrency } from '@/db/settings';
 import Feather from '@expo/vector-icons/Feather';
@@ -38,6 +38,7 @@ import { errorMessage } from '@/lib/errorMessage';
 import { withPressed } from '@/lib/pressed';
 import { showAlert } from '@/components/AppDialog';
 import { useAccent } from '@/theme/AccentContext';
+import { useStacked } from '@/lib/useStacked';
 
 /** One person: their live balance, linked loans, a form to record money either way, and history. */
 export function PersonDetailModal({
@@ -54,8 +55,7 @@ export function PersonDetailModal({
 }) {
   const { show: showUndo } = useUndoToast();
   const { accent } = useAccent();
-  const { width, fontScale } = useWindowDimensions();
-  const stacked = width < 360 || fontScale > 1.2;
+  const stacked = useStacked();
   const [ledger, setLedger] = useState<PersonLedgerEntry[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);

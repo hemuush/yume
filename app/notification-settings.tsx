@@ -151,7 +151,7 @@ export default function NotificationSettingsScreen() {
     try {
       await Linking.sendIntent('android.settings.IGNORE_BATTERY_OPTIMIZATION_SETTINGS');
     } catch {
-      await Linking.openSettings().catch(() => {});
+      await Linking.openSettings().catch((e) => showAlert('Phone settings', errorMessage(e)));
     }
   };
 

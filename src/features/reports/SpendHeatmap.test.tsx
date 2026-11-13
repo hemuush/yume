@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { StyleSheet } from 'react-native';
 import type { ReactNode } from 'react';
 import { SpendHeatmap } from './SpendHeatmap';
@@ -35,6 +35,36 @@ it('gives calendar day buttons at least 44dp in each direction', async () => {
   expect(style.minHeight).toBeGreaterThanOrEqual(44);
   await fireEvent.press(day);
   expect(select).toHaveBeenCalledWith('2026-10-05');
+});
+
+describe('the calendar on a narrow card', () => {
+  const calendar = buildHeat({
+    range: { start: '2026-10-01', end: '2026-10-31' },
+    daily: [],
+    today: '2026-10-23',
+  });
+  const dayWidthAt = async (cardWidth: number) => {
+    await render(
+      <SpendHeatmap model={calendar} selectedIso={null} onSelect={jest.fn()} usualMinor={0} hue="#8FCBFF" />
+    );
+    // The card tells the grid how wide it is: the first view above a day that listens for its layout.
+    let grid = screen.getByRole('button', { name: '5 Oct, nothing spent' }).parent;
+    while (grid && !grid.props.onLayout) grid = grid.parent;
+    await act(async () =>
+      grid!.props.onLayout({ nativeEvent: { layout: { width: cardWidth, height: 300 } } })
+    );
+    return StyleSheet.flatten(screen.getByRole('button', { name: '5 Oct, nothing spent' }).props.style)
+      .minWidth;
+  };
+
+  it('keeps all seven days on a card too narrow for 44 dp each, instead of pushing Saturday off it', async () => {
+    // 260 dp of card on a 320 dp phone: seven days and six 1 dp gaps leave 36 dp a day.
+    expect(await dayWidthAt(260)).toBe(36);
+  });
+
+  it('keeps the 44 dp width wherever there is room for it', async () => {
+    expect(await dayWidthAt(344)).toBe(44);
+  });
 });
 
 it('selects a year-view day through a full-size searchable row', async () => {

@@ -52,3 +52,35 @@ it('draws nothing for an empty runway', () => {
   expect(tree.toJSON()).toBeNull();
   act(() => tree.unmount());
 });
+
+describe('the weekly dates under the line', () => {
+  const datesAt = (fontScale: number) => {
+    const spy = jest
+      .spyOn(require('react-native'), 'useWindowDimensions')
+      .mockReturnValue({ width: 320, height: 800, scale: 2, fontScale });
+    let tree!: ReturnType<typeof create>;
+    act(() => {
+      tree = create(<RunwayRibbon runway={buildRunway(10000, [], '2026-10-22', 30)} />);
+    });
+    act(() =>
+      tree.root
+        .find((n) => n.props.accessibilityRole === 'adjustable')
+        .props.onLayout({ nativeEvent: { layout: { width: 288, height: 62 } } })
+    );
+    const labels = texts(tree).filter((t) => t === 'Today' || /^\d{1,2} [A-Z][a-z]{2}$/.test(t));
+    act(() => tree.unmount());
+    spy.mockRestore();
+    return labels;
+  };
+
+  it('keeps all four at normal and 130% text', () => {
+    expect(datesAt(1)).toHaveLength(4);
+    expect(datesAt(1.3)).toHaveLength(4);
+  });
+
+  it('leaves out the ones that would print over their neighbour at 200% on a small phone', () => {
+    const labels = datesAt(2);
+    expect(labels[0]).toBe('Today');
+    expect(labels).toHaveLength(2);
+  });
+});

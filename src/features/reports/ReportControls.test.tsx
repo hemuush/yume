@@ -1,5 +1,6 @@
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
 import { act, create, ReactTestRenderer } from 'react-test-renderer';
+import { Text } from 'react-native';
 import { GroupPicker, ReportTabs, ComparisonNote } from './ReportControls';
 import { ActionSheet } from '@/components/ActionSheet';
 jest.mock('@/components/ActionSheet', () => ({ ActionSheet: () => null }));
@@ -43,6 +44,10 @@ it('does not offer expense labels in income or when no label action is provided'
 });
 
 it('keeps every report tab selectable and marks the active destination', () => {
+  // The test renderer's default text scale is 2, which stacks the tabs; this is the one-row switch.
+  const spy = jest
+    .spyOn(require('react-native'), 'useWindowDimensions')
+    .mockReturnValue({ width: 360, height: 800, fontScale: 1, scale: 1 });
   const onChange = jest.fn();
   act(() => {
     tree = create(<ReportTabs value="cats" onChange={onChange} />);
@@ -55,7 +60,37 @@ it('keeps every report tab selectable and marks the active destination', () => {
   expect(tabs.map((n) => n.props.accessibilityState.selected)).toEqual([false, true, false]);
   act(() => tabs[2].props.onPress());
   expect(onChange).toHaveBeenCalledWith('trends');
+  spy.mockRestore();
 });
+
+it.each([
+  [1, 3],
+  [1.3, 3],
+  [2, 2],
+])(
+  'at text scale %s the report tabs are %i blocks in the tab list, and Trends still opens',
+  (fontScale, blocks) => {
+    const spy = jest
+      .spyOn(require('react-native'), 'useWindowDimensions')
+      .mockReturnValue({ width: 360, height: 800, fontScale, scale: 1 });
+    const onChange = jest.fn();
+    act(() => {
+      tree = create(<ReportTabs value="days" onChange={onChange} />);
+    });
+    // One row of three tabs, or (past 130%, when "Breakdown" no longer fits a third of the track) two rows.
+    const list = tree.root.find((n) => typeof n.type === 'string' && n.props.accessibilityRole === 'tablist');
+    expect(list.children).toHaveLength(blocks);
+    const trends = tree.root.findAll(
+      (n) =>
+        n.props.accessibilityRole === 'tab' &&
+        typeof n.props.onPress === 'function' &&
+        n.findAllByType(Text).some((t) => t.props.children === 'Trends')
+    )[0];
+    act(() => trends.props.onPress());
+    expect(onChange).toHaveBeenCalledWith('trends');
+    spy.mockRestore();
+  }
+);
 
 it('gives the comparison note a 44 dp touch area though its row is drawn 36 tall', () => {
   const { StyleSheet } = require('react-native');

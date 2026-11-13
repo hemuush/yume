@@ -1,4 +1,4 @@
-import { buildRunway, runwayStartMinor, transferFlow } from './runway';
+import { buildRunway, runwayStartMinor, runwayTicks, transferFlow } from './runway';
 import { buildDueItems, groupDueItems } from './planOverview';
 import type { PlanDueItem } from './planOverview';
 import type { Account } from '@/types';
@@ -160,5 +160,20 @@ describe('scheduled transfers in the runway and Upcoming', () => {
   it('totals a SIP in the day heading but not a sweep', () => {
     const [day] = groupDueItems(items, '2026-11-01', 3);
     expect(day.outMinor).toBe(500000);
+  });
+});
+
+describe('runwayTicks', () => {
+  const along = (i: number) => i * 10;
+  it('is today then every seventh day, leaving the last few days without a label', () => {
+    expect(runwayTicks(30, along, 0)).toEqual([0, 7, 14, 21]);
+    expect(runwayTicks(10, along, 0)).toEqual([0]);
+    expect(runwayTicks(1, along, 0)).toEqual([0]);
+  });
+
+  it('drops a date that would sit closer than the gap to the one before', () => {
+    // A week is 70 apart: a 100 gap keeps today and day 14, and skips 7 and 21.
+    expect(runwayTicks(30, along, 100)).toEqual([0, 14]);
+    expect(runwayTicks(30, along, 70)).toEqual([0, 7, 14, 21]);
   });
 });

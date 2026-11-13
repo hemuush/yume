@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { Appear } from '@/components/Appear';
-import { View, Pressable, useWindowDimensions } from 'react-native';
+import { View, Pressable } from 'react-native';
 import { Text } from '@/components/Text';
 import { useFocusEffect, router } from 'expo-router';
 import Feather from '@expo/vector-icons/Feather';
@@ -46,6 +46,7 @@ import { withPressedTint } from '@/lib/pressed';
 import { haptics } from '@/lib/haptics';
 import { refreshAllWidgets } from '@/widgets/notifyWidgets';
 import { showAlert } from '@/components/AppDialog';
+import { useStacked } from '@/lib/useStacked';
 
 /** "today" / "yesterday" / "N days ago" — deliberately coarse, no hours/minutes. */
 export function daysAgoLabel(iso: string, now: Date = new Date()): string {
@@ -92,8 +93,7 @@ function AboutFact({ icon, text }: { icon: string; text: string }) {
  * Settings starts with theme choices, then a safety overview and grouped preferences.
  */
 export function SettingsSection() {
-  const { width, fontScale } = useWindowDimensions();
-  const stackValues = width < 360 || fontScale > 1.2;
+  const stackValues = useStacked();
   const { accent, themeId, setTheme, themeSaveError } = useAccent();
   const { lockEnabled, setLockEnabled } = useAppLock();
   const { hideAmounts, toggleHideAmounts } = usePrivacy();

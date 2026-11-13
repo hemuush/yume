@@ -1,4 +1,4 @@
-import { View, Pressable, useWindowDimensions } from 'react-native';
+import { View, Pressable } from 'react-native';
 import { investRuleTitle, type InvestRole } from '@/lib/investment';
 import { Text } from '@/components/Text';
 import Animated from 'react-native-reanimated';
@@ -14,6 +14,7 @@ import { withPressed } from '@/lib/pressed';
 import { weekdayDayMonthMaybeYear } from '@/lib/dateLabels';
 import { joinSub } from '@/lib/categoryLabel';
 import { gluePiece, noBreak } from '@/lib/keepTogether';
+import { useStacked } from '@/lib/useStacked';
 
 /**
  * One rule in the Running or Paused card: category icon, what and when, amount, and a pause switch. Tapping
@@ -51,8 +52,7 @@ export function RuleRow({
   currency?: string;
 }) {
   const { secondary } = useAccent();
-  const { width, fontScale } = useWindowDimensions();
-  const stacked = width < 360 || fontScale > 1.2;
+  const stacked = useStacked();
   const transfer = rule.type === 'transfer';
   const name = investRole
     ? investRuleTitle(

@@ -6,7 +6,7 @@ import { InvestmentsCard } from '@/features/plan/InvestmentsCard';
 import { buildPortfolio, type Portfolio } from '@/lib/portfolio';
 import { LoanComparison } from '@/features/loans/LoanComparison';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { View, Pressable, StyleSheet, useWindowDimensions } from 'react-native';
+import { View, Pressable, StyleSheet } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -97,6 +97,7 @@ import { PrimaryButton } from '@/components/PrimaryButton';
 import { TransactionDetailModal } from '@/features/transactions/TransactionDetailModal';
 import { PendingRefunds } from '@/features/transactions/PendingRefunds';
 import { AddAccountModal } from '@/features/profile/AddAccountModal';
+import { useStacked } from '@/lib/useStacked';
 
 interface PlanData {
   hideAmounts: boolean;
@@ -138,8 +139,7 @@ const TAB_GAP: Record<PlanTab, number> = { overview: 16, upcoming: 12, money: 8,
 
 /** Plan previews open item sheets directly; collection links keep the full-screen routes. */
 export default function PlanScreen() {
-  const { width, fontScale } = useWindowDimensions();
-  const stackTiles = width < 360 || fontScale > 1.2;
+  const stackTiles = useStacked();
   const insets = useSafeAreaInsets();
   const tabScrollPad = useTabScrollPad();
   const { hideAmounts } = usePrivacy();

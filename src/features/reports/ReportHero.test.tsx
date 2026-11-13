@@ -126,3 +126,50 @@ it('gives Income the most room of the three columns: it carries the long line, s
   expect(grow('Income')).toBeGreaterThan(grow('Spent so far'));
   act(() => tree.unmount());
 });
+
+it.each([
+  [320, 1],
+  [390, 1.3],
+  [390, 2],
+])(
+  'lets each stacked column take its own height at width %i and text scale %s, so no line is drawn over another',
+  (width, fontScale) => {
+    jest.spyOn(require('react-native'), 'useWindowDimensions').mockReturnValue({
+      width,
+      height: 800,
+      fontScale,
+      scale: 1,
+    });
+    let tree!: ReactTestRenderer;
+    act(() => {
+      tree = create(
+        <ReportHero
+          periodName="November"
+          inProgress
+          spentMinor={15000}
+          perDayMinor={5000}
+          budget={null}
+          incomeMinor={10000}
+          previousIncomeMinor={9000}
+          comparedTo="the month before"
+          animKey="November"
+        />
+      );
+    });
+    const columns = tree.root.findAllByType(View).filter((n) => {
+      const labels = n.findAllByType(Text).map((t) => t.props.children);
+      return (
+        ['Spent so far', 'Income', 'Kept'].filter((l) => labels.includes(l)).length === 1 &&
+        StyleSheet.flatten(n.props.style)?.minWidth === 0
+      );
+    });
+    expect(columns).toHaveLength(3);
+    for (const column of columns) {
+      const style = StyleSheet.flatten(column.props.style);
+      // A zero basis in a column has no height to share: the content draws over its neighbours.
+      expect(style.flexBasis).not.toBe(0);
+      expect(style.flexGrow ?? 0).toBe(0);
+    }
+    act(() => tree.unmount());
+  }
+);

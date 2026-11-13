@@ -1,4 +1,4 @@
-import { View, Pressable, Animated, StyleSheet, useWindowDimensions } from 'react-native';
+import { View, Pressable, Animated, StyleSheet } from 'react-native';
 import { keepTogether } from '@/lib/keepTogether';
 import { Text } from '@/components/Text';
 import { Category, Transaction } from '@/types';
@@ -12,6 +12,7 @@ import { formatMaskableMoney } from '@/lib/money';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import { useAccent } from '@/theme/AccentContext';
 import { dayMonthYear, shortMonth } from '@/lib/dateLabels';
+import { useStacked } from '@/lib/useStacked';
 
 const AnimatedRowPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -40,8 +41,7 @@ export function TransactionRow({
   currency?: string;
 }) {
   const { hideAmounts } = usePrivacy();
-  const { width, fontScale } = useWindowDimensions();
-  const stacked = width < 360 || fontScale > 1.2;
+  const stacked = useStacked();
   const title = tx.note?.trim() || categoryName(tx.categoryId);
   const { secondary } = useAccent();
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.98);

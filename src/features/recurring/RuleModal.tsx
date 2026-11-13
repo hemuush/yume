@@ -40,7 +40,8 @@ import { styles } from './recurring.styles';
 import { cadenceLabel, frequencyNoun } from './recurring.helpers';
 import { errorMessage } from '@/lib/errorMessage';
 import { showAlert } from '@/components/AppDialog';
-import { categorySentence, parentNameOf } from '@/lib/categoryLabel';
+import { categorySentence, parentNameOf, joinSub } from '@/lib/categoryLabel';
+import { gluePiece } from '@/lib/keepTogether';
 import { spendableAccountsOf } from '@/lib/account';
 import { AnnualBillPreparation } from './AnnualBillPreparation';
 import { useSaveOnce } from '@/lib/useSaveOnce';
@@ -394,7 +395,13 @@ export function RuleModal({
                   ? 'Recurring entry'
                   : 'New recurring entry')
           }
-          meta={`${type === 'income' ? 'Into' : 'From'} ${accountName(effectiveAccountId) ?? '—'} · next ${weekdayDayMonth(startDate)}`}
+          // Each piece stays whole when the line wraps: never "Nov" on one line and "16" on the next.
+          meta={joinSub(
+            [
+              `${type === 'income' ? 'Into' : 'From'} ${accountName(effectiveAccountId) ?? '—'}`,
+              `next ${weekdayDayMonth(startDate)}`,
+            ].map(gluePiece)
+          )}
         />
         {editing && editing.type === 'expense' && editing.frequency === 'yearly' && (
           <AnnualBillPreparation

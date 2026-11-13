@@ -43,6 +43,9 @@ import { ListCard, SummaryCard, SummarySide, SummaryTop, summaryFigure } from '@
 import { HomeWallpaper } from '@/features/home/HomeWallpaper';
 import { DaysLeftRing } from '@/features/profile/DaysLeftRing';
 
+/** Rows drawn at a time; "Show more" adds another page. The count and Delete all still cover every entry. */
+const PAGE = 100;
+
 /**
  * Entries deleted in the last 30 days, newest first, each with a Restore button that puts it back exactly
  * as it was. Reached from Profile › Settings › Alerts & backup.
@@ -59,6 +62,9 @@ export default function RecentlyDeletedScreen() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [busyId, setBusyId] = useState<string | null>(null);
+  // shortcut: a page of rows at a time, since a big tidy-up can leave thousands; swap for a virtualised list if
+  // anyone needs to scroll through more than a few hundred at once.
+  const [shown, setShown] = useState(PAGE);
 
   const load = useCallback(async () => {
     const [e, c, a] = await Promise.all([listDeletedEntries(), listCategories(true), listAccounts(true)]);
@@ -70,13 +76,14 @@ export default function RecentlyDeletedScreen() {
 
   const today = toLocalIsoDate(new Date());
   const groups = useMemo(() => {
-    const todays = entries.filter((e) => toLocalIsoDate(new Date(e.deletedAt)) === today);
-    const earlier = entries.filter((e) => toLocalIsoDate(new Date(e.deletedAt)) !== today);
+    const visible = entries.slice(0, shown);
+    const todays = visible.filter((e) => toLocalIsoDate(new Date(e.deletedAt)) === today);
+    const earlier = visible.filter((e) => toLocalIsoDate(new Date(e.deletedAt)) !== today);
     return [
       { title: 'Today', items: todays },
       { title: 'Earlier', items: earlier },
     ].filter((g) => g.items.length > 0);
-  }, [entries, today]);
+  }, [entries, shown, today]);
 
   // The entry closest to its 30 days running out.
   const soonest = useMemo(() => Math.min(...entries.map((e) => e.daysLeft)), [entries]);
@@ -275,6 +282,16 @@ export default function RecentlyDeletedScreen() {
                   </ListCard>
                 </Section>
               ))}
+              {entries.length > shown && (
+                <Pressable
+                  onPress={() => setShown((n) => n + PAGE)}
+                  accessibilityRole="button"
+                  style={withPressed(styles.more)}
+                  hitSlop={8}
+                >
+                  <Text style={styles.moreText}>{`Show ${Math.min(PAGE, entries.length - shown)} more`}</Text>
+                </Pressable>
+              )}
               <Pressable
                 onPress={emptyAll}
                 disabled={busyId != null}
@@ -340,6 +357,8 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.borderSoft,
     backgroundColor: theme.colors.surface,
   },
+  more: { alignSelf: 'center', marginTop: 16, paddingVertical: 10, paddingHorizontal: 16 },
+  moreText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.link },
   emptyAllText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.expenseText },
   errorBanner: {
     marginHorizontal: SCREEN.gutter,
