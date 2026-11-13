@@ -34,9 +34,10 @@ export const styles = StyleSheet.create({
   groupHead: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 6,
-    justifyContent: 'space-between',
-    alignItems: 'baseline',
+    // The colour dot and the title read as one label: together at the start, not at opposite edges.
+    gap: 8,
+    justifyContent: 'flex-start',
+    alignItems: 'center',
     marginHorizontal: SCREEN.gutter,
     marginTop: 14,
     marginBottom: 8,

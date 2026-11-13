@@ -7,10 +7,6 @@ import { create, act, ReactTestRenderer } from 'react-test-renderer';
 jest.mock('@/lib/haptics', () => ({ haptics: { tap: jest.fn() } }));
 jest.mock('@/lib/useReduceMotion', () => ({ useReduceMotion: () => true }));
 // Bars and lines show their settled value, so nothing is still animating when a test ends.
-jest.mock('@/lib/useGrowFrom', () => ({
-  useGrowFrom: (_key: string, target: number) => new (require('react-native').Animated.Value)(target),
-  resetGrowMemory: () => {},
-}));
 
 import { CashFlowCard } from './CashFlowCard';
 import { CategoryTracks } from './CategoryTracks';

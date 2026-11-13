@@ -1,4 +1,6 @@
 import { ScreenLoadError } from '@/components/ScreenLoadError';
+import { Appear } from '@/components/Appear';
+import { LoadFade } from '@/components/LoadFade';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
@@ -205,185 +207,187 @@ export default function CategoryScreen() {
           paddingBottom: Math.max(48, theme.layout.screenScrollPad) + insets.bottom,
         }}
       >
-        {loadError && (
-          <View style={styles.errorBanner}>
-            <Text style={styles.errorTitle}>Couldn’t load this category</Text>
-            <Text style={styles.errorDetail}>{loadError}</Text>
-            <PrimaryButton title="Retry" compact variant="secondary" onPress={() => void reload()} />
-          </View>
-        )}
+        <LoadFade loaded={!loadingScope && !!overview && !!category}>
+          {loadError && (
+            <Appear style={styles.errorBanner}>
+              <Text style={styles.errorTitle}>Couldn’t load this category</Text>
+              <Text style={styles.errorDetail}>{loadError}</Text>
+              <PrimaryButton title="Retry" compact variant="secondary" onPress={() => void reload()} />
+            </Appear>
+          )}
 
-        {loadingScope || !overview || !category ? (
-          <>
-            <SummarySkeleton />
-            <View style={{ marginTop: 16 }}>
-              <CardRowsSkeleton rows={3} />
-            </View>
-          </>
-        ) : (
-          <>
-            <SummaryCard>
-              <SummaryTop
-                label={`${spend ? 'Spent' : 'Received'} in ${periodName}`}
-                figure={
-                  <Text style={summaryFigure} numberOfLines={1} adjustsFontSizeToFit>
-                    {formatMoney(overview.totalMinor)}
+          {loadingScope || !overview || !category ? (
+            <>
+              <SummarySkeleton />
+              <View style={{ marginTop: 16 }}>
+                <CardRowsSkeleton rows={3} />
+              </View>
+            </>
+          ) : (
+            <>
+              <SummaryCard>
+                <SummaryTop
+                  label={`${spend ? 'Spent' : 'Received'} in ${periodName}`}
+                  figure={
+                    <Text style={summaryFigure} numberOfLines={1} adjustsFontSizeToFit>
+                      {formatMoney(overview.totalMinor)}
+                    </Text>
+                  }
+                  side={
+                    parent ? (
+                      <Pressable
+                        onPress={openParent}
+                        hitSlop={8}
+                        style={withPressed(styles.parentPill)}
+                        accessibilityRole="link"
+                        accessibilityLabel={`In ${parent.name}. Open ${parent.name}`}
+                      >
+                        <Text style={styles.parentPillText} numberOfLines={1}>
+                          {inParent(parent.name)}
+                        </Text>
+                        <Feather name="chevron-right" size={13} color={theme.colors.textMuted} />
+                      </Pressable>
+                    ) : undefined
+                  }
+                />
+                <SummaryFacts
+                  facts={[
+                    { label: overview.count === 1 ? 'Entry' : 'Entries', value: String(overview.count) },
+                    ...(overview.count > 1
+                      ? [{ label: 'Each', value: formatMoney(overview.totalMinor / overview.count) }]
+                      : []),
+                    ...(overview.totalMinor > 0 && !loanRepayments
+                      ? [{ label: 'A day', value: formatMoney(overview.totalMinor / daysSoFar) }]
+                      : []),
+                  ]}
+                />
+                {overview.refundMinor > 0 && (
+                  // What it cost is already net of refunds; this says how much came back.
+                  <Text style={styles.heroRefund}>
+                    {formatMoney(overview.spentMinor)} spent, {formatMoney(overview.refundMinor)} came back
                   </Text>
-                }
-                side={
-                  parent ? (
+                )}
+              </SummaryCard>
+
+              <Section
+                title="Last 6 months"
+                subtitle={usual != null && usual > 0 ? `usually ${compactMoney(usual)}` : undefined}
+              >
+                <ListCard style={styles.chartCard}>
+                  <MonthBars months={overview.months} color={category.color} usualMinor={usual} />
+                </ListCard>
+              </Section>
+
+              {split.length > 1 && (
+                <Section title="Where it went">
+                  <ListCard style={styles.chartCard}>
+                    <SplitBreakdown
+                      color={category.color}
+                      totalMinor={overview.totalMinor}
+                      items={[
+                        ...splitShown.map((s) => ({
+                          key: s.categoryId,
+                          name: s.name,
+                          minor: s.totalMinor,
+                          count: s.count,
+                        })),
+                        ...(splitRest.length > 1
+                          ? [
+                              {
+                                key: `rest:${params.id}`,
+                                name: splitRest.map((s) => s.name).join(' · '),
+                                minor: splitRest.reduce((sum, s) => sum + s.totalMinor, 0),
+                                visits: timesLabel(splitRest.reduce((sum, s) => sum + (s.count ?? 0), 0)),
+                              },
+                            ]
+                          : []),
+                      ]}
+                    />
+                  </ListCard>
+                </Section>
+              )}
+
+              {spend && (
+                <View style={styles.heroAction}>
+                  {loanRepayments ? (
+                    <PrimaryButton
+                      title="View loans"
+                      variant="secondary"
+                      onPress={() => router.push('/loans')}
+                    />
+                  ) : (
+                    <PrimaryButton
+                      title="What if I cut this?"
+                      variant="secondary"
+                      onPress={() => router.push(`/whatif?category=${category.id}`)}
+                    />
+                  )}
+                </View>
+              )}
+
+              {spend && isThisMonth(cursor) && (!loanRepayments || budget) && (
+                <Section title="Budget">
+                  {budget ? (
+                    <ListCard>
+                      <BudgetRow progress={budget} divider={false} onPress={openBudgets} />
+                    </ListCard>
+                  ) : (
                     <Pressable
-                      onPress={openParent}
-                      hitSlop={8}
-                      style={withPressed(styles.parentPill)}
-                      accessibilityRole="link"
-                      accessibilityLabel={`In ${parent.name}. Open ${parent.name}`}
+                      style={withPressed(styles.noLimit)}
+                      onPress={openBudgets}
+                      accessibilityRole="button"
                     >
-                      <Text style={styles.parentPillText} numberOfLines={1}>
-                        {inParent(parent.name)}
-                      </Text>
-                      <Feather name="chevron-right" size={13} color={theme.colors.textMuted} />
+                      <Feather name="pie-chart" size={16} color={theme.colors.textSecondary} />
+                      <Text style={styles.noLimitText}>Set a monthly limit</Text>
+                      <Feather name="chevron-right" size={16} color={theme.colors.textMuted} />
+                    </Pressable>
+                  )}
+                </Section>
+              )}
+
+              <Section
+                title="Latest entries"
+                onSeeAll={singleActivityMonth ? openActivity : undefined}
+                right={
+                  !singleActivityMonth ? (
+                    <Pressable
+                      onPress={openActivity}
+                      style={withPressed(styles.activityLink)}
+                      accessibilityRole="button"
+                      accessibilityLabel={`See ${monthLong(activityMonth)} in Activity`}
+                    >
+                      <Text style={styles.activityLinkText}>See {monthLong(activityMonth)} in Activity</Text>
+                      <Feather name="arrow-right" size={14} color={theme.colors.link} />
                     </Pressable>
                   ) : undefined
                 }
-              />
-              <SummaryFacts
-                facts={[
-                  { label: overview.count === 1 ? 'Entry' : 'Entries', value: String(overview.count) },
-                  ...(overview.count > 1
-                    ? [{ label: 'Each', value: formatMoney(overview.totalMinor / overview.count) }]
-                    : []),
-                  ...(overview.totalMinor > 0 && !loanRepayments
-                    ? [{ label: 'A day', value: formatMoney(overview.totalMinor / daysSoFar) }]
-                    : []),
-                ]}
-              />
-              {overview.refundMinor > 0 && (
-                // What it cost is already net of refunds; this says how much came back.
-                <Text style={styles.heroRefund}>
-                  {formatMoney(overview.spentMinor)} spent, {formatMoney(overview.refundMinor)} came back
-                </Text>
-              )}
-            </SummaryCard>
-
-            <Section
-              title="Last 6 months"
-              subtitle={usual != null && usual > 0 ? `usually ${compactMoney(usual)}` : undefined}
-            >
-              <ListCard style={styles.chartCard}>
-                <MonthBars months={overview.months} color={category.color} usualMinor={usual} />
-              </ListCard>
-            </Section>
-
-            {split.length > 1 && (
-              <Section title="Where it went">
-                <ListCard style={styles.chartCard}>
-                  <SplitBreakdown
-                    color={category.color}
-                    totalMinor={overview.totalMinor}
-                    items={[
-                      ...splitShown.map((s) => ({
-                        key: s.categoryId,
-                        name: s.name,
-                        minor: s.totalMinor,
-                        count: s.count,
-                      })),
-                      ...(splitRest.length > 1
-                        ? [
-                            {
-                              key: `rest:${params.id}`,
-                              name: splitRest.map((s) => s.name).join(' · '),
-                              minor: splitRest.reduce((sum, s) => sum + s.totalMinor, 0),
-                              visits: timesLabel(splitRest.reduce((sum, s) => sum + (s.count ?? 0), 0)),
-                            },
-                          ]
-                        : []),
-                    ]}
-                  />
-                </ListCard>
-              </Section>
-            )}
-
-            {spend && (
-              <View style={styles.heroAction}>
-                {loanRepayments ? (
-                  <PrimaryButton
-                    title="View loans"
-                    variant="secondary"
-                    onPress={() => router.push('/loans')}
-                  />
+              >
+                {entries.length === 0 ? (
+                  <Text style={styles.empty}>
+                    Nothing in {periodName}
+                    {range.end >= today ? ' yet' : ''}.
+                  </Text>
                 ) : (
-                  <PrimaryButton
-                    title="What if I cut this?"
-                    variant="secondary"
-                    onPress={() => router.push(`/whatif?category=${category.id}`)}
-                  />
-                )}
-              </View>
-            )}
-
-            {spend && isThisMonth(cursor) && (!loanRepayments || budget) && (
-              <Section title="Budget">
-                {budget ? (
                   <ListCard>
-                    <BudgetRow progress={budget} divider={false} onPress={openBudgets} />
+                    {entries.map((tx, i) => (
+                      <TransactionRow
+                        key={tx.id}
+                        tx={tx}
+                        contextCategoryId={category.id}
+                        currency={accounts.find((a) => a.id === tx.accountId)?.currency}
+                        cat={categories.find((c) => c.id === tx.categoryId)}
+                        accountName={accountName}
+                        categoryName={categoryName}
+                        divider={i > 0}
+                        onPress={() => setDetailTx(tx)}
+                      />
+                    ))}
                   </ListCard>
-                ) : (
-                  <Pressable
-                    style={withPressed(styles.noLimit)}
-                    onPress={openBudgets}
-                    accessibilityRole="button"
-                  >
-                    <Feather name="pie-chart" size={16} color={theme.colors.textSecondary} />
-                    <Text style={styles.noLimitText}>Set a monthly limit</Text>
-                    <Feather name="chevron-right" size={16} color={theme.colors.textMuted} />
-                  </Pressable>
                 )}
               </Section>
-            )}
-
-            <Section
-              title="Latest entries"
-              onSeeAll={singleActivityMonth ? openActivity : undefined}
-              right={
-                !singleActivityMonth ? (
-                  <Pressable
-                    onPress={openActivity}
-                    style={withPressed(styles.activityLink)}
-                    accessibilityRole="button"
-                    accessibilityLabel={`See ${monthLong(activityMonth)} in Activity`}
-                  >
-                    <Text style={styles.activityLinkText}>See {monthLong(activityMonth)} in Activity</Text>
-                    <Feather name="arrow-right" size={14} color={theme.colors.link} />
-                  </Pressable>
-                ) : undefined
-              }
-            >
-              {entries.length === 0 ? (
-                <Text style={styles.empty}>
-                  Nothing in {periodName}
-                  {range.end >= today ? ' yet' : ''}.
-                </Text>
-              ) : (
-                <ListCard>
-                  {entries.map((tx, i) => (
-                    <TransactionRow
-                      key={tx.id}
-                      tx={tx}
-                      contextCategoryId={category.id}
-                      currency={accounts.find((a) => a.id === tx.accountId)?.currency}
-                      cat={categories.find((c) => c.id === tx.categoryId)}
-                      accountName={accountName}
-                      categoryName={categoryName}
-                      divider={i > 0}
-                      onPress={() => setDetailTx(tx)}
-                    />
-                  ))}
-                </ListCard>
-              )}
-            </Section>
-          </>
-        )}
+            </>
+          )}
+        </LoadFade>
       </ReanimatedAnimated.ScrollView>
       {/* Over the page, with the period control in its band; it shrinks as the page scrolls. */}
       <SkyHeader

@@ -39,6 +39,8 @@ function render(over: Partial<Parameters<typeof RuleRow>[0]> = {}) {
   });
   return { tree, edit, toggle };
 }
+// The line under the title glues each piece together with non-breaking spaces; people read them as spaces.
+const plain = (text: string) => text.replace(/\u00A0/g, ' ');
 it.each([true, false])('keeps the switch separate from editing for active=%s', (active) => {
   const { tree, edit, toggle } = render({ rule: { ...rule, active } });
   const control = tree.root.findByProps({ testID: 'rule-switch' });
@@ -69,7 +71,7 @@ it('uses the account currency and retains the readable schedule line', () => {
   const { tree } = render({ currency: 'USD' });
   const text = tree.root
     .findAllByType(Text)
-    .map((n) => [n.props.children].flat().join(''))
+    .map((n) => plain([n.props.children].flat().join('')))
     .join(' ');
   expect(text).toContain('$707');
   expect(text).toContain('Next');
@@ -82,7 +84,7 @@ describe('a recurring transfer that touches an investment', () => {
   const names = (id: string | null | undefined) => (id === 'fund' ? 'Nifty 50' : 'SBI');
   const shown = (investRole: 'invest' | 'withdraw' | null) => {
     const { tree } = render({ rule: sip, accountName: names, investRole });
-    return tree.root.findAllByType(Text).map((t) => [].concat(t.props.children).join(''));
+    return tree.root.findAllByType(Text).map((t) => plain([].concat(t.props.children).join('')));
   };
 
   it('is listed as a SIP, naming the holding and where the money comes from', () => {
@@ -104,7 +106,7 @@ describe('the next date on a rule', () => {
   const year = new Date().getFullYear();
   const line = (nextRunDate: string) => {
     const { tree } = render({ rule: { ...rule, nextRunDate } });
-    const shown = tree.root.findAllByType(Text).map((t) => [t.props.children].flat(Infinity).join(''));
+    const shown = tree.root.findAllByType(Text).map((t) => plain([t.props.children].flat(Infinity).join('')));
     act(() => tree.unmount());
     return shown.find((t) => t.includes('Next ')) ?? '';
   };
@@ -112,5 +114,39 @@ describe('the next date on a rule', () => {
   it('names the year of a run that is not this year (a yearly bill), and leaves it off this year', () => {
     expect(line(`${year + 1}-03-03`)).toContain(String(year + 1));
     expect(line(`${year}-12-28`)).not.toContain(String(year));
+  });
+});
+
+describe('the lines under the title of a rule', () => {
+  const subLines = (
+    over: Partial<RecurringRule> = {},
+    props: Partial<Parameters<typeof RuleRow>[0]> = {}
+  ) => {
+    const { tree } = render({ rule: { ...rule, ...over }, ...props });
+    const lines = tree.root.findAllByType(Text).map((t) => [t.props.children].flat(Infinity).join(''));
+    act(() => tree.unmount());
+    const when = lines.findIndex((t) => t.includes('Next'));
+    return { when: lines[when] ?? '', where: lines[when + 1] ?? '' };
+  };
+
+  it('are two: when it runs, then where it comes from, so a separator never ends the first', () => {
+    const { when, where } = subLines(
+      { nextRunDate: '2026-12-01', note: 'Diya' },
+      { accountName: () => 'Google Play' }
+    );
+    expect(plain(when)).toMatch(/^Every month · Next \w+, 1 Dec$/);
+    expect(plain(where)).toBe('— · From Google Play');
+  });
+
+  it('wrap between their pieces, never inside one, so a date or an account is not split across lines', () => {
+    const { when, where } = subLines(
+      { nextRunDate: '2026-12-01', note: 'Diya' },
+      { accountName: () => 'Google Play' }
+    );
+    for (const line of [when, where]) {
+      for (const piece of line.split(' · ')) expect(piece).not.toMatch(/ /);
+    }
+    expect(when.split(' · ').some((p) => p.startsWith('Next\u00A0'))).toBe(true);
+    expect(where.split(' · ').pop()).toBe('From\u00A0Google\u00A0Play');
   });
 });

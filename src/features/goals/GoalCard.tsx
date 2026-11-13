@@ -170,10 +170,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     columnGap: 8,
   },
-  name: { flexShrink: 1, fontFamily: theme.font.roundedBold, fontSize: 14, color: theme.colors.textPrimary },
+  name: { flexShrink: 1, fontFamily: theme.font.bodyMedium, fontSize: 14, color: theme.colors.textPrimary },
   amounts: { flexShrink: 1 },
   saved: {
-    fontFamily: theme.font.bodyBold,
+    fontFamily: theme.font.bodyMedium,
     fontSize: 14,
     fontVariant: ['tabular-nums'],
     color: theme.colors.textPrimary,

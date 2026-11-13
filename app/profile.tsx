@@ -1,4 +1,6 @@
 import { ScreenLoadError } from '@/components/ScreenLoadError';
+import { Appear } from '@/components/Appear';
+import { LoadFade } from '@/components/LoadFade';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { useCallback, useEffect, useState } from 'react';
 import { useLocalSearchParams } from 'expo-router';
@@ -107,35 +109,37 @@ export default function ProfileScreen() {
               keyboardShouldPersistTaps="handled"
               bottomOffset={20}
             >
-              {loadError && (
-                <View style={styles.errorBanner}>
-                  <Text style={styles.errorTitle}>Couldn’t load your data</Text>
-                  <Text style={styles.errorDetail}>{loadError}</Text>
-                  <PrimaryButton title="Retry" compact variant="secondary" onPress={() => void reload()} />
-                </View>
-              )}
+              <LoadFade loaded>
+                {loadError && (
+                  <Appear style={styles.errorBanner}>
+                    <Text style={styles.errorTitle}>Couldn’t load your data</Text>
+                    <Text style={styles.errorDetail}>{loadError}</Text>
+                    <PrimaryButton title="Retry" compact variant="secondary" onPress={() => void reload()} />
+                  </Appear>
+                )}
 
-              <ProfileIdentity
-                name={name}
-                memberSince={memberSince}
-                editing={editing}
-                draft={draft}
-                onDraftChange={setDraft}
-                onStartEdit={() => {
-                  setDraft(name ?? '');
-                  setEditing(true);
-                }}
-                onSave={saveName}
-                saving={savingName}
-                onCancel={() => {
-                  setEditing(false);
-                  Keyboard.dismiss();
-                }}
-              />
+                <ProfileIdentity
+                  name={name}
+                  memberSince={memberSince}
+                  editing={editing}
+                  draft={draft}
+                  onDraftChange={setDraft}
+                  onStartEdit={() => {
+                    setDraft(name ?? '');
+                    setEditing(true);
+                  }}
+                  onSave={saveName}
+                  saving={savingName}
+                  onCancel={() => {
+                    setEditing(false);
+                    Keyboard.dismiss();
+                  }}
+                />
 
-              <ProfileTabs value={tab} onChange={setTab} />
+                <ProfileTabs value={tab} onChange={setTab} />
 
-              {tab === 'you' ? <YouSection /> : <SettingsSection />}
+                {tab === 'you' ? <YouSection /> : <SettingsSection />}
+              </LoadFade>
             </KeyboardAwareScrollView>
             <SkyHeader
               title="Profile"

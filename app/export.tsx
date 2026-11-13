@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
+import { SECTION_TITLE } from '@/constants/textStyles';
 import { View, Pressable, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
@@ -129,7 +130,7 @@ export default function ExportScreen() {
         contentContainerStyle={[
           styles.content,
           {
-            paddingTop: headerHeight + theme.layout.screenTopGap,
+            paddingTop: headerHeight,
             paddingBottom: 24,
           },
         ]}
@@ -137,15 +138,8 @@ export default function ExportScreen() {
         {loadError && (
           <ScreenLoadError title="Export" message={loadError} onRetry={() => void reload()} embedded />
         )}
-        <View style={styles.intro}>
-          <View style={[styles.introIcon, { backgroundColor: shade(accent, 88) }]}>
-            <Feather name="download" size={22} color={theme.colors.ink} />
-          </View>
-          <Text style={styles.introTitle}>Export your entries</Text>
-          <Text style={styles.hint}>Create a report or spreadsheet in two steps.</Text>
-        </View>
+        <Text style={styles.label}>1. Choose a period</Text>
         <View style={styles.card}>
-          <Text style={styles.label}>1. Choose a period</Text>
           <SegmentedControl
             options={[
               { label: 'Month', value: 'month' },
@@ -236,7 +230,9 @@ export default function ExportScreen() {
         />
         <Text style={styles.foot}>Choose where to save or share. Nothing is uploaded automatically.</Text>
       </View>
-      <SkyHeader collapse={collapse} title="Export" showBack hideUser wallpaper />
+      <SkyHeader collapse={collapse} title="Export" showBack hideUser wallpaper>
+        <Text style={styles.intro}>Create a report or spreadsheet in two steps.</Text>
+      </SkyHeader>
     </View>
   );
 }
@@ -245,9 +241,8 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
   scroll: { flex: 1 },
   content: { paddingHorizontal: 16, gap: 12 },
-  intro: { gap: 8, marginBottom: 6 },
-  introIcon: { width: 48, height: 48, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
-  introTitle: { fontFamily: theme.font.roundedBold, fontSize: 20, color: theme.colors.textPrimary },
+  // In the sky header, under the title, as on What-if and Suu's garden.
+  intro: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textSecondary },
   card: {
     padding: 14,
     gap: 14,
@@ -256,7 +251,8 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
   },
-  label: { fontFamily: theme.font.roundedBold, fontSize: 16, color: theme.colors.textPrimary },
+  // A step's heading above its block, in the same type as every other section heading.
+  label: SECTION_TITLE,
   formats: { gap: 10 },
   format: {
     flexDirection: 'row',

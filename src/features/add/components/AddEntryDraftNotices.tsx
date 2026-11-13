@@ -1,4 +1,5 @@
 import { View } from 'react-native';
+import { Appear } from '@/components/Appear';
 import { Text } from '@/components/Text';
 import Feather from '@expo/vector-icons/Feather';
 import { theme } from '@/constants/theme';
@@ -44,10 +45,10 @@ export function AddEntryDraftNotices({ model }: Props): ReactElement {
         <Text style={{ marginHorizontal: 16, color: theme.colors.textSecondary }}>{recovery.error}</Text>
       )}
       {repeatWarning && (
-        <View style={styles.repeatNote} accessibilityLiveRegion="polite">
+        <Appear style={styles.repeatNote} accessibilityLiveRegion="polite">
           <Feather name="alert-triangle" size={14} color={theme.colors.idGoldDeep} />
           <Text style={styles.repeatNoteText}>{repeatWarning.message}</Text>
-        </View>
+        </Appear>
       )}
     </>
   );

@@ -1,4 +1,6 @@
 import { isFixedCategoryName } from '@/lib/fixedCategory';
+import { Appear } from '@/components/Appear';
+import { CONTENT_ENTER } from '@/lib/animation';
 import { PurchaseCheck } from '@/features/whatif/PurchaseCheck';
 import { ScreenLoadError } from '@/components/ScreenLoadError';
 import { useCallback, useState } from 'react';
@@ -169,6 +171,8 @@ export default function WhatIfScreen() {
     <View style={styles.container}>
       <HomeWallpaper accent={accent} secondary={secondary} />
       <ReanimatedAnimated.ScrollView
+        // The data arriving after the placeholders: one short fade, the header and wallpaper stay solid.
+        entering={CONTENT_ENTER}
         ref={scrollRef}
         onScroll={scrollHandler}
         scrollEventThrottle={16}
@@ -178,11 +182,11 @@ export default function WhatIfScreen() {
         }}
       >
         {loadError && (
-          <View style={styles.errorBanner}>
+          <Appear style={styles.errorBanner}>
             <Text style={styles.errorTitle}>Couldn’t load your data</Text>
             <Text style={styles.errorDetail}>{loadError}</Text>
             <PrimaryButton title="Retry" compact variant="secondary" onPress={() => void reload()} />
-          </View>
+          </Appear>
         )}
 
         {categories.length === 0 ? (
@@ -318,7 +322,7 @@ export default function WhatIfScreen() {
             </View>
           </Section>
         )}
-        <Section compact first={categories.length === 0} title="Can I afford it?">
+        <Section compact first={categories.length === 0} title="Before you buy">
           <PurchaseCheck />
         </Section>
       </ReanimatedAnimated.ScrollView>
