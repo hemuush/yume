@@ -1,4 +1,5 @@
 import { View, Pressable, Animated, StyleSheet, useWindowDimensions } from 'react-native';
+import { keepTogether } from '@/lib/keepTogether';
 import { Text } from '@/components/Text';
 import { Category, Transaction } from '@/types';
 import { CategoryIcon } from '@/components/CategoryIcon';
@@ -92,7 +93,9 @@ export function TransactionRow({
       )}
       <View style={[h.mid, stacked && local.wideMid]}>
         <Text style={h.title} numberOfLines={2}>
-          {isTransfer ? `${accountName(tx.accountId)} → ${accountName(tx.toAccountId!)}` : title}
+          {isTransfer
+            ? keepTogether(`${accountName(tx.accountId)} → ${accountName(tx.toAccountId!)}`)
+            : title}
         </Text>
         <Text style={h.sub} numberOfLines={1}>
           {tx.isRefund && <Text style={styles.rowRefund}>Refund · </Text>}

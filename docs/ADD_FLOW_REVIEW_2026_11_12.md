@@ -31,3 +31,21 @@ Add is where money enters the app, so this review did not stop at reading. [AddF
 ## Checks
 
 `AddFlowRealData.test.tsx` (41 tests against the real database), `addEntry.test.ts` (the date chip's year), and the existing `AddTransactionScreen`, `formToStaged`, `AddDetailRow` and `ExpenseLabelSheet` tests. Each new test that guards a fix fails without it.
+
+## Validation and layout, seen on the real screen (2026-11-13)
+
+The Add form was rendered from the real screen on a real database in a browser (the app's own db layer on SQLite compiled to JavaScript, the real fonts, 360 and 390 dp) and driven key by key; the dock's real styling was included this time. Every message, every state of Save and Add more, and the positions of the content under the card were read back by script. The harness approximates Android; the keyboard, sheets and the device's own services were not rendered, and nothing was seen on a phone.
+
+### Fixed
+
+- **A disabled Save looked exactly like a live one.** Save was disabled (it ignored taps and announced itself as disabled) but kept its full dark colour, while "Add more" beside it dimmed, so someone tapping Save on an unfinished form got nothing and no sign why. The cause was in the shared button, not in Add: the press feedback eases an opacity between 0.92 and 1, and it was written after the "disabled" dim, so it won. Moving the dim after the press feedback fixes **every disabled primary button in the app**, and the same ordering fault in four more controls: the **+ Add** pill, a **dimmed settings row**, a **sheet's Close button while it saves**, and Activity's **next-period arrow** at the current period. (`DimmedControls.test.tsx`, `PrimaryButton.test.tsx`, `TransactionsScreen.test.tsx`.)
+- **Typing a zero showed an error and a dash.** The first key of "0.5" (a "0", or "0.") put a red "Enter a positive amount. Check the calculation." on the card, replaced the figure with "₹—", and pushed "Your usual" and the whole category grid down 26 dp, then pulled them back on the next key. A zero typed on its way to a number now reads "₹0", the card stays as it was, and the dock says "Enter an amount above zero". A sum that falls to zero or below ("5−5", "5÷0") still gets the dash and "Check the calculation", since that is a calculation to check.
+- **"Enter an amount" beside a Save that was ready.** After "Add more", the empty form said "Enter an amount" while "Save 1 entry" was live, which read as a missing requirement. It says "Enter an amount to add another" (what Add more is waiting for), and shares one line with "1 on your list" (the status row was built for both; they had been stacked on two lines, which made the dock taller).
+- **The dock's hint was 11 dp.** It matches the rest of the form's hints at 12 dp.
+
+### Seen and left
+
+- **A failed sum (or a decimal) still adds a line to the card** ("Check the calculation", "Saved in whole units: ₹13"), which moves "Your usual" and the grid down by one line (two for the long whole-units note). It only happens once a sum has been typed or a decimal point has been used, and the pad and Save do not move, so the thumb is never under a moving control; reserving the line would cost every form a blank 26 dp on a screen that is already short. The alternative is to move these messages into the dock's status row, which is already bottom-anchored. Left as a decision.
+- **On the first open the dock says "Enter an amount"** before anything has been typed. It is guidance (muted, one line) and not a red error; it is the only explanation of a dimmed Save, so it stays.
+- The Friend form's account chips measure 32 dp tall in the browser; like every `Chip`, they carry touch slop that lifts the target to 48 dp.
+

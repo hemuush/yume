@@ -50,12 +50,16 @@ function FilterChip({
   return (
     <Pressable
       onPress={onPress}
+      // Drawn 36 tall; the touch area is 44, as on Activity's filter chips.
+      hitSlop={{ top: 4, bottom: 4 }}
       accessibilityRole="button"
       accessibilityState={{ selected: active }}
       accessibilityLabel={attention ? `${label}, needs a look` : label}
       style={withPressedTint(accent, [styles.chip, active && { backgroundColor: selectedFill(accent) }])}
     >
       <Text style={[styles.chipText, active && styles.chipTextOn]}>{label}</Text>
+      {/* A corner badge, not a part of the row: it comes and goes without changing the width of the chip, so
+          tapping one chip never moves the ones beside it. */}
       {attention && !active && <View style={styles.chipDot} />}
     </Pressable>
   );
@@ -299,23 +303,32 @@ const styles = StyleSheet.create({
   chips: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: 6,
     paddingTop: 10,
     paddingBottom: 6,
     paddingHorizontal: 14,
   },
+  // Sized so All, Payments, Budgets and Goals share one line on a 360 dp phone; the same weight selected or not,
+  // so picking one never changes its width either.
   chip: {
     minHeight: 36,
-    paddingHorizontal: 14,
+    paddingHorizontal: 10,
     borderRadius: theme.radius.pill,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 7,
     backgroundColor: theme.colors.tray,
   },
   chipText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textSecondary },
-  chipTextOn: { color: theme.colors.textPrimary, fontFamily: theme.font.bodyBold },
-  chipDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: theme.colors.slice.due },
+  chipTextOn: { color: theme.colors.textPrimary },
+  chipDot: {
+    position: 'absolute',
+    top: 4,
+    right: 3,
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: theme.colors.slice.due,
+  },
   ringText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textPrimary },
   refunds: { marginTop: 4, marginHorizontal: -12, borderRadius: 20, backgroundColor: theme.colors.surface },
   empty: { minHeight: 80, flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14 },

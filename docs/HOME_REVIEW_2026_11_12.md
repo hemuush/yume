@@ -34,3 +34,36 @@ The first pass was mostly reading. This one rendered Home with real data (amount
 ## Checks
 
 `recentActivity.test.ts` (the two labels' rules), `screens.smoke.test.tsx` against a real database (View all on a past and the current month, the empty past month, the header chip and the scroll, the failed load and its retry), and `TransactionsScreen.test.tsx` (a month link on its own, and a bad one). Unit and in-memory tests only; nothing here has been run on a phone.
+
+## Seen rendered, and things that jump (2026-11-13)
+
+After a device screenshot of Activity showed "Clear all" arriving in front of the type pills and pushing them aside, Home was checked for the same kind of fault: a control that moves, or changes size, when it is used. This time Home was **rendered from its real components with sample data in a browser** (Chromium, the app's own Archivo and Fredoka fonts and icon fonts, 360, 390 and 412 dp wide, the first-run, no-income, quiet, past-month and year states, and a tap through the chips and the sum), so the fixes below were measured, not guessed. The harness lives outside the repository; it approximates Android (text metrics and flex layout are close, shadows and gestures are not), so it finds layout faults but does not replace a look on a phone.
+
+- **Tapping a Coming up chip moved the chips after it.** Its "needs a look" dot sat inside the chip, so picking Payments removed the dot and narrowed the chip, and Budgets and Goals slid left under the thumb. The dot is now a corner badge (it takes no room), and a picked chip is the same weight as an unpicked one, so no chip changes size. (Measured: every chip's position and width are identical before and after a tap.)
+- **The chip row did not fit.** At 360 and 390 dp All, Payments, Budgets and Goals wrapped, leaving Goals alone on a second line. The chips are tighter (10 dp sides, 6 dp apart) and share one line at 360, 390 and 412 dp. They are also 44 dp to touch, as on Activity (drawn 36).
+- **"How it adds up" opened its sum above its own link,** so the link jumped about 200 dp down, away from the finger that had just tapped it (closing it meant chasing it). The sum now opens under the link; the link does not move.
+- **In a year, "See insights" sat alone on a third line,** under "How it adds up", with the caption between them. The two links share the first line and the caption sits under them.
+
+### The same fault elsewhere (not yet changed)
+
+Controls that change width when selected because the selected label is a heavier weight, so their neighbours shift a little on every tap: Activity's Week | Month tabs, Profile's You | Settings tabs, the person chips in Add, and the pickers in Reports' range sheet; Home's legend amounts do it too but sit flush to their edge, so nothing beside them moves. To be done area by area, with the same render-and-measure check.
+
+### Seen and left
+
+- "Ahead" means opposite things in one Coming up card: a budget "Ahead of pace" (spending faster than planned, amber) and a goal "Ahead" (saving faster, green). Colour and the budget's own line tell them apart; a different word for the budget pill would settle it.
+- At 360 dp the budget line "Ahead of pace · ₹1,800 left" wraps with "left" alone on a second line.
+- Home's account tiles caption the type in lower case ("bank", "cash"); Profile's tiles say "Bank", "Cash".
+
+## Rendered on a real database (2026-11-13)
+
+The earlier rendered pass drew Home from sample data. This one rendered the real Home screen on a real database (the app's own db layer on SQLite compiled to JavaScript, built with the app's own write functions: an account of each kind including a tracked fund and a card, nine months of entries, budgets, goals, repeating bills, loans, friends), with the real fonts, at 360, 390 and 412 dp, and for a new user with no accounts and one with accounts but no entries. Positions were measured and every cut-off text and small target was listed by script. The harness lives outside the repository and approximates Android: it does not shrink text that asks for `adjustsFontSizeToFit` (the ring's centre figure and the legend read "₹373,…" there and are shrunk to fit on a phone, which this could not confirm for a seven-digit figure), and the period picker and account sheet were not rendered.
+
+- **An investment tile cut its caption** to "investment · mu…": the full label is about 125 dp and the icon leaves 84. The tile says the kind alone ("mutual fund", "fixed deposit"), since the trending-up icon already says it is an investment; a screen reader still hears "investment · mutual fund".
+- **A month with no income sat its caption on the card's edge,** and the card grew by 27 dp when the first income arrived, because the footer was one line (17 dp) where the filled-in card's is 44. The footer is 44 dp with the caption centred in it. This is the first thing someone sees after adding accounts.
+- Confirmed on the real screen: tapping a Coming up chip leaves every chip where it was; "How it adds up" opens under its link and the link stays put; tapping a legend slice changes the headline and not the footer; the Add buttons, week bars, accounts, Coming up and Recent activity share the 16 dp gutter; nothing else is cut off at 360, 390 or 412 dp.
+
+### Seen and left
+
+- At 360 dp the seven bars of "This week" are 37 dp wide (they cannot be 44 with seven across); each is also a button.
+- An account in credit-card-style overdraft (Cash at −₹64,650 in the sample) is left out of "in hand across N accounts", which counts only positive balances; the sample's cash account was overspent by the sample, not by the app.
+

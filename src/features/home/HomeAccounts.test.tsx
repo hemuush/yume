@@ -196,3 +196,22 @@ it('sits the tiles flush under the section heading, with no extra vertical paddi
   expect(row.paddingVertical).toBeUndefined();
   act(() => tree.unmount());
 });
+
+it('captions an investment tile with its kind alone, which fits beside the icon, and keeps the full label for a screen reader', () => {
+  const fund = {
+    ...account('Index fund', 'savings', 1_720_000),
+    investment: { kind: 'mutual_fund', investedMinor: 1_500_000, takenOutMinor: 0, gainMinor: 220_000 },
+  } as unknown as Account;
+  const tree = render({ accounts: [fund], currency: 'INR' });
+  expect(texts(tree)).toContain('mutual fund');
+  // The full "investment · mutual fund" is about 125 dp in the 84 dp the icon leaves, so it was cut to "investment · mu…".
+  expect(texts(tree)).not.toContain('investment · mutual fund');
+  const tile = tree.root.find(
+    (n) =>
+      n.props.onPress &&
+      typeof n.props.accessibilityLabel === 'string' &&
+      n.props.accessibilityLabel.startsWith('Index fund,')
+  );
+  expect(tile.props.accessibilityLabel).toBe('Index fund, investment · mutual fund. Open summary');
+  act(() => tree.unmount());
+});

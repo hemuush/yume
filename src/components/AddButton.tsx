@@ -28,8 +28,9 @@ export function AddButton({ label = '+ Add', disabled, style, ...rest }: Props) 
       style={[
         styles.btn,
         { backgroundColor: themeInk(accent) },
-        disabled && styles.disabled,
         animatedStyle,
+        // After the press feedback, which writes opacity as well and would otherwise undo the dim.
+        disabled && styles.disabled,
         style,
       ]}
       accessibilityRole="button"

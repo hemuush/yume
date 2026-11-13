@@ -138,6 +138,29 @@ describe('Activity when the totals query fails', () => {
 });
 
 describe('Activity period controls', () => {
+  it('writes Week and Month in the same weight, picked or not, so switching never moves the word beside it', async () => {
+    const { StyleSheet } = require('react-native');
+    mockComparison.fail = false;
+    const tree = await render();
+    const weightOf = (label: string) =>
+      StyleSheet.flatten(tree.root.findAllByType(Text).find((t) => t.props.children === label)!.props.style)
+        .fontFamily;
+    const week = weightOf('Week');
+    expect(weightOf('Month')).toBe(week);
+    const month = tree.root.find(
+      (n) =>
+        n.props.accessibilityRole === 'radio' &&
+        typeof n.props.onPress === 'function' &&
+        n.findAllByType(Text).some((t) => t.props.children === 'Month')
+    );
+    await act(async () => month.props.onPress());
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    expect(weightOf('Week')).toBe(week);
+    expect(weightOf('Month')).toBe(week);
+  });
+
   it('switches Week to Month from beside the period pill', async () => {
     mockComparison.fail = false;
     const tree = await render();
@@ -165,6 +188,22 @@ describe('Activity period controls', () => {
     // The type filter (All · Spent · …) is a radio group too; only the period switch is checked here.
     expect([...selected].filter((l) => l === 'Week' || l === 'Month')).toEqual(['Month']);
     expect(texts(tree)).toContain('Nothing logged this month');
+  });
+
+  it('dims the arrow to a period that has not started, even though a press eases opacity too', async () => {
+    const { StyleSheet } = require('react-native');
+    const { theme } = require('@/constants/theme');
+    mockComparison.fail = false;
+    const tree = await render();
+    const next = tree.root.find(
+      (n) =>
+        n.props.accessibilityLabel === 'Next week' &&
+        typeof n.props.onPressIn === 'function' &&
+        typeof n.type !== 'string'
+    );
+    // Today is in the current week, so there is nothing after it: disabled and visibly so.
+    expect(next.props.disabled).toBe(true);
+    expect(StyleSheet.flatten(next.props.style).opacity).toBe(theme.opacity.limit);
   });
 });
 

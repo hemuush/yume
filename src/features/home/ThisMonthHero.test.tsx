@@ -2,7 +2,7 @@
  * Home's month card: the free-to-use headline with income and carry-over under it, chips for the spent
  * share, today and bills still to pay, the Add buttons, and stepping the period. All figures are made up.
  */
-import { Text } from 'react-native';
+import { Text, StyleSheet } from 'react-native';
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
 // The allowance and the day tick read the date: fix it (22 October, 9 days left) so the figures are steady.
 beforeAll(() => {
@@ -334,6 +334,16 @@ describe('month card with savings hidden', () => {
 });
 
 describe('month card with no income', () => {
+  it('keeps its footer as tall as the populated card’s, so the caption does not sit on the card’s edge', () => {
+    const r = render({ incomeMinor: 0, spentMinor: 0, savingsMinor: 0, surplusMinor: 0 });
+    const caption = r.root.findAll(
+      (n) => n.type === Text && [n.props.children].flat().join('') === 'Add income to see what is free'
+    )[0];
+    let footer = caption.parent;
+    while (footer && !StyleSheet.flatten(footer.props.style)?.borderTopWidth) footer = footer.parent;
+    expect(StyleSheet.flatten(footer!.props.style).minHeight).toBeGreaterThanOrEqual(44);
+  });
+
   it('asks for income instead of showing a figure', () => {
     const all = texts(render({ incomeMinor: 0, spentMinor: 0, savingsMinor: 0, surplusMinor: 0 }));
     expect(all).toEqual(expect.arrayContaining(['Free to use', '—', 'Add income to see what is free']));
@@ -691,4 +701,38 @@ describe('the ring in the middle of the card', () => {
       expect(r.root.findAllByType(MonthRing)).toHaveLength(1);
       act(() => r.unmount());
     }));
+});
+
+describe('month card: nothing jumps under the finger', () => {
+  const order = (r: ReactTestRenderer) => r.root.findAll(() => true);
+  const indexOf = (r: ReactTestRenderer, test: (n: ReturnType<typeof order>[number]) => boolean) =>
+    order(r).findIndex(test);
+  const link = (n: { props: Record<string, unknown> }) => n.props.accessibilityLabel === 'How this adds up';
+  const flatStyle = (n: { props: Record<string, unknown> }) =>
+    StyleSheet.flatten(n.props.style as never) as Record<string, unknown> | undefined;
+
+  it('opens the sum under the link that opens it, so the link stays where the finger is', () => {
+    const r = render();
+    act(() => byLabel(r, 'How this adds up').props.onPress());
+    const linkAt = indexOf(r, link);
+    const sumAt = indexOf(r, (n) => n.type === Text && [n.props.children].flat().join('') === 'Income');
+    expect(linkAt).toBeGreaterThan(-1);
+    expect(sumAt).toBeGreaterThan(linkAt);
+  });
+
+  it('keeps both links on one line in a year, the caption under them, never a link alone on a line', () => {
+    const r = render({ spendingTrend: null, onSeeInsights: jest.fn() });
+    const how = indexOf(r, link);
+    const insights = indexOf(r, (n) => n.props.accessibilityLabel === 'See spending insights');
+    const caption = indexOf(r, (n) => n.type === Text && flatStyle(n)?.flexBasis === '100%');
+    expect(how).toBeGreaterThan(-1);
+    expect(insights).toBeGreaterThan(how);
+    expect(caption).toBeGreaterThan(insights);
+  });
+
+  it('leaves the caption beside the link when there is only the one link', () => {
+    const r = render();
+    expect(r.root.findAll((n) => n.type === Text && flatStyle(n)?.flexBasis === '100%')).toHaveLength(0);
+    expect(r.root.findAll((n) => n.props.accessibilityLabel === 'See spending insights')).toHaveLength(0);
+  });
 });

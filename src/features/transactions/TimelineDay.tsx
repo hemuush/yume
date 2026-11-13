@@ -1,4 +1,5 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { keepTogether } from '@/lib/keepTogether';
 import { Animated, Pressable, View, StyleSheet, useWindowDimensions } from 'react-native';
 import ReanimatedAnimated from 'react-native-reanimated';
 import Feather from '@expo/vector-icons/Feather';
@@ -478,7 +479,8 @@ function TimelineDayView({
             const text = role
               ? investLines(tx, role, accountName)
               : {
-                  title: `${accountName(tx.accountId)} → ${accountName(tx.toAccountId!)}`,
+                  // The arrow stays with where it goes: "SBI → Emergency fund" wraps after "SBI", never leaving "fund" alone.
+                  title: keepTogether(`${accountName(tx.accountId)} → ${accountName(tx.toAccountId!)}`),
                   sub: `${tx.note ? `${tx.note} · ` : ''}Transfer`,
                 };
             return (

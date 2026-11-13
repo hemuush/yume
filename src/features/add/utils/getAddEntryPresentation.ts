@@ -42,15 +42,19 @@ export function getAddEntryPresentation(input: Input) {
 
   const sum = hasOperator(expr);
 
+  // A zero typed on the way to something else ("0", "0.") is not a mistake: it reads as typed, with no red
+  // message and no dash, and the dock says what is still missing. A sum that fails is the one to check.
+  const typedZero = !sum && /^0(\.0*)?$/.test(expr);
+
   const shownAmount = sum
     ? amountValue === null
       ? '—'
       : formatTyped(String(amountValue))
-    : expr !== '' && amountValue === null
+    : expr !== '' && amountValue === null && !typedZero
       ? '—'
       : formatTyped(expr);
 
-  const invalidAmount = expr !== '' && amountMinor <= 0;
+  const invalidAmount = expr !== '' && amountMinor <= 0 && !typedZero;
 
   // Typed amounts are kept in whole units. One that rounds to nothing ("0.4") is not a calculation to check: say
   // what happened.
@@ -64,12 +68,21 @@ export function getAddEntryPresentation(input: Input) {
   const currentValidation = formToStaged();
 
   // Nothing typed yet is "Enter an amount", not "a valid amount": nothing has been entered to be invalid.
+  // A zero says what would make it one.
   const currentProblem =
     'error' in currentValidation
-      ? expr === '' && currentValidation.error === 'Enter a valid amount'
-        ? 'Enter an amount'
-        : currentValidation.error
+      ? currentValidation.error !== 'Enter a valid amount'
+        ? currentValidation.error
+        : expr === ''
+          ? 'Enter an amount'
+          : typedZero
+            ? 'Enter an amount above zero'
+            : currentValidation.error
       : undefined;
+
+  // With entries already on the list, an empty form is not missing anything: Save works, and only Add more is
+  // waiting. Say what it waits for, not "Enter an amount" beside a Save that is ready.
+  const dockHint = rows.length > 0 && expr === '' ? 'Enter an amount to add another' : currentProblem;
 
   const cannotSave = splitParts
     ? !!splitProblem(amountMinor, splitParts) || !effectiveAccountId
@@ -105,6 +118,7 @@ export function getAddEntryPresentation(input: Input) {
     invalidAmount,
     roundingNote,
     currentProblem,
+    dockHint,
     cannotSave,
     saveTitle,
     padVisible,

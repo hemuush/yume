@@ -82,7 +82,9 @@ export function SlotCard({
 const styles = StyleSheet.create({
   card: {
     flexGrow: 1,
-    flexBasis: 150,
+    // Wide enough that two never share a phone's row: side by side each had about 49 dp for the time, and "9:00 AM"
+    // ended "9:0…". Stacked, the time has room, and so has the 44 dp pair of buttons.
+    flexBasis: 200,
     backgroundColor: theme.colors.surface,
     borderRadius: theme.radius.xl2,
     borderWidth: StyleSheet.hairlineWidth,

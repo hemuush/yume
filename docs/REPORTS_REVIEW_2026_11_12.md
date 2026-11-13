@@ -26,3 +26,20 @@ The same check as [Home's second pass](HOME_REVIEW_2026_11_12.md): Reports was r
 ## Checks
 
 `reportsInsights.test.ts` (the share's wording, front-loaded on the 3rd, the 8th and 9th day and a short trip, "that month"), `ReportHero.test.tsx` (so far), `networth.scenarios.test.ts` (the last point's label), `CategoryScreen.test.tsx` ("yet"), `ReportsSkeleton.test.tsx`. Each new test fails without its fix.
+
+## Rendered on a real database (2026-11-13)
+
+Reports was rendered from the real screen in a browser on a real database (the app's own db layer on SQLite compiled to JavaScript, built with the app's own write functions: nine months of entries, daily spending for 75 days, budgets, income, a refund), with the real fonts, at 360, 390 and 412 dp: Overview, Breakdown (spending, income, expanded), Trends (spending, cash flow, net worth), a past month, a custom range and an empty month. Positions were measured and every cut-off text was listed by script. The harness lives outside the repository and approximates Android; the sheets (period picker, day sheet) need native pieces it lacks and were not rendered.
+
+- **The Income caption took three lines at 360 dp** ("↑ 8% so far vs / the month / before") and made the card taller. The three columns are no longer equal: Income has the most room, and the caption takes two lines while "48% of income" stays on one at 360, 390 and 412 dp (measured).
+- **Cash flow's third figure sat lower than the other two.** Its label, "Left after spending", took two lines and pushed the figure down. It is "Kept", as on Overview (the same figure had two names), and the three share a baseline.
+- **Two phrases stranded words:** "Kept ₹41,530, 48% / of it." and, in the Trends rows, "₹18,000 so far · usual / ₹18,000". The last words of each stay together.
+- **Date ranges split in the middle:** "Your longest run was 33 days, Jan 1 – / Feb 2." and the comparison line "1 Oct – 12 Oct vs 1 Sept – 12 Sept". Each range is one unbreakable piece now (`noBreak`).
+- **The comparison note** ("So far vs the whole month before ⓘ") was 36 dp tall to touch; it is 44.
+
+### Looked at and left
+
+- **A future-dated entry is counted in "Spent so far" and left out of the Trends chart.** With two entries dated later this month the Overview read ₹44,870 and the Trends caption ₹40,870 (the gap was exactly those two); with them dated today the two agree. Future-dated entries are rare (Add asks first), and which total is right, "so far" or "this month", is a decision.
+- Breakdown puts its Spending | Income switch inside the card, and Trends puts its three-way switch above its card as a band. The same kind of control, placed two ways.
+- Net worth uses Western digit grouping in the harness only because the browser's locale was en-US; the app groups by the phone's locale.
+

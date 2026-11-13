@@ -966,6 +966,47 @@ describe('what the form says is missing', () => {
     expect(texts(sum)).toContain('Enter a positive amount. Check the calculation.');
     act(() => sum.unmount());
   });
+
+  it('does not say "Enter an amount" beside a Save that is ready: with entries on the list it says what Add more waits for', async () => {
+    const tree = await render();
+    await press(tree, 'Food');
+    await typeAmount(tree, '120');
+    await press(tree, 'Add more');
+    expect(texts(tree)).toContain('1 on your list');
+    // The list can be saved as it is; only Add more is waiting on an amount.
+    expect(hint(tree)).toEqual([]);
+    expect(texts(tree)).toContain('Enter an amount to add another');
+    const saveBtn = tree.root.find(
+      (n) => isSaveTitle(n.props.title) && typeof n.props.onPress === 'function'
+    );
+    expect(saveBtn.props.title).toBe('Save 1 entry');
+    expect(saveBtn.props.disabled).toBeFalsy();
+    // Once something is typed it is about that entry again.
+    await typeAmount(tree, '5');
+    expect(texts(tree)).not.toContain('Enter an amount to add another');
+    act(() => tree.unmount());
+  });
+
+  it('treats a zero typed on the way to a number as typed: it reads ₹0, says what is missing, and is not red', async () => {
+    for (const typed of ['0', '0.', '0.0']) {
+      const tree = await render();
+      await press(tree, 'Food');
+      await typeAmount(tree, typed);
+      // Not the dash a failed sum shows, and not "check the calculation" for a number nobody calculated.
+      expect(texts(tree)).toContain('₹0');
+      expect(texts(tree)).not.toContain('₹—');
+      expect(texts(tree)).not.toContain('Enter a positive amount. Check the calculation.');
+      expect(texts(tree)).toContain('Enter an amount above zero');
+      act(() => tree.unmount());
+    }
+    // A sum that falls to zero is still a calculation to check, with the dash.
+    const sum = await render();
+    await press(sum, 'Food');
+    await typeAmount(sum, '5−5');
+    expect(texts(sum)).toContain('₹—');
+    expect(texts(sum)).toContain('Enter a positive amount. Check the calculation.');
+    act(() => sum.unmount());
+  });
 });
 
 describe('a very long note or label', () => {

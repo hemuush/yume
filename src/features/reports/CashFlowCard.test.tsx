@@ -42,6 +42,13 @@ describe('CashFlowCard', () => {
     expect(shown).toContain('5 of 6');
   });
 
+  it('names the three figures of the month as one-line labels, Kept as on Overview, so they share a baseline', () => {
+    const shown = texts(render(<CashFlowCard points={flow} inProgress />));
+    expect(shown).toEqual(expect.arrayContaining(['Income', 'Spent', 'Kept']));
+    // A two-line label ("Left after spending") dropped the third figure below the other two.
+    expect(shown).not.toContain('Left after spending');
+  });
+
   it('reads the month in full for a screen reader, with what was kept', () => {
     const r = render(<CashFlowCard points={flow} inProgress />);
     const labels = r.root
@@ -126,6 +133,14 @@ describe('CategoryTracks', () => {
     press(r, (l) => l === undefined);
     expect(texts(r)).toContain('Cat G');
     expect(texts(r)).toContain('Show less');
+  });
+
+  it('keeps the usual amount with its word, so a wrapped line never strands the figure', () => {
+    const r = render(
+      <CategoryTracks rows={rows.slice(0, 1)} inProgress={false} catById={new Map()} onOpen={jest.fn()} />
+    );
+    const sub = texts(r).find((t) => t.includes('· usual'));
+    expect(sub).toMatch(/· usual\u00A0₹/);
   });
 
   it('says "so far" while the month is still going', () => {

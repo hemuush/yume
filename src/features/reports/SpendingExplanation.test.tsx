@@ -65,8 +65,10 @@ it('shows matching dates, explains the three effects and opens a contributing en
     tree = create(<SpendingExplanation categoryId="food" current={current} previous={previous} />);
   });
   expect(getSpendingExplanation).toHaveBeenCalledWith('food', current, previous, false);
+  // Each range is one unbreakable piece, so a wrapped line never splits "1 Oct –" from "12 Oct".
+  const range = (a: string, b: string) => `${dayMonth(a)} – ${dayMonth(b)}`.replace(/ /g, '\u00A0');
   expect(words(tree)).toContain(
-    `${dayMonth('2026-10-01')} – ${dayMonth('2026-10-12')} vs ${dayMonth('2026-09-01')} – ${dayMonth('2026-09-12')} · 12 days each`
+    `${range('2026-10-01', '2026-10-12')} vs ${range('2026-09-01', '2026-09-12')} · 12 days each`
   );
   expect(words(tree)).toContain('The three effects add up to the change');
   expect(words(tree)).not.toContain('Comparison details');

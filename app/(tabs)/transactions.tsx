@@ -1149,7 +1149,7 @@ export default function TransactionsScreen() {
                   onPressOut={stepForwardPress.onPressOut}
                   hitSlop={2}
                   disabled={atCurrent}
-                  style={[styles.periodNav, atCurrent && styles.periodNavOff, stepForwardPress.animatedStyle]}
+                  style={[styles.periodNav, stepForwardPress.animatedStyle, atCurrent && styles.periodNavOff]}
                   accessibilityRole="button"
                   accessibilityLabel={viewScope === 'month' ? 'Next month' : 'Next week'}
                   accessibilityState={{ disabled: atCurrent }}

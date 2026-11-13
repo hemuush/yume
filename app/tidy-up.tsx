@@ -33,6 +33,7 @@ import { useUndoToast } from '@/components/UndoToast';
 import { Section } from '@/components/Section';
 import { screenStyles as h, SCREEN } from '@/components/screenStyles';
 import { dayMonthMaybeYear, longMonth, shortMonthYear } from '@/lib/dateLabels';
+import { noBreak } from '@/lib/keepTogether';
 import { errorMessage } from '@/lib/errorMessage';
 import { categoryPath } from '@/lib/categoryLabel';
 import { showAlert } from '@/components/AppDialog';
@@ -316,7 +317,7 @@ export default function TidyUpScreen() {
                     const one = g.ids.length === 1;
                     const when = one
                       ? dayMonthMaybeYear(g.firstDate)
-                      : `${g.ids.length} entries, ${shortMonthYear(g.firstDate)} – ${shortMonthYear(g.lastDate)}`;
+                      : `${g.ids.length} entries, ${noBreak(`${shortMonthYear(g.firstDate)} – ${shortMonthYear(g.lastDate)}`)}`;
                     return (
                       <View key={g.key} style={[styles.item, i > 0 && h.divider]}>
                         <View style={styles.itemTop}>

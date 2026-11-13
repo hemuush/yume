@@ -128,6 +128,13 @@ interface PlanData {
   /** What the active SIPs add up to a month, in the default currency. */
 }
 
+/**
+ * The gap under the tabs, per tab. Each tab's first block carries its own top margin (the runway card 4, the Upcoming
+ * section 8, the plan check 12, the debt card 4 here), so this makes up the rest: the first block starts 20 dp
+ * under the tabs on every tab, and switching tabs does not shift the content.
+ */
+const TAB_GAP: Record<PlanTab, number> = { overview: 16, upcoming: 12, money: 8, debt: 16 };
+
 /** Plan previews open item sheets directly; collection links keep the full-screen routes. */
 export default function PlanScreen() {
   const { width, fontScale } = useWindowDimensions();
@@ -445,7 +452,7 @@ export default function PlanScreen() {
         {/* The tabs are there from the first frame, as on Reports, so the page does not drop by their height when the
             data lands. After a failed first load only the notice above shows. */}
         {(!loadError || (loaded && data)) && (
-          <View style={[styles.tabs, tab === 'money' && { marginBottom: 4 }]}>
+          <View style={[styles.tabs, { marginBottom: TAB_GAP[tab] }]}>
             <PlanNavigation value={tab} onChange={selectTab} stacked={stackTiles} />
           </View>
         )}
@@ -514,21 +521,13 @@ export default function PlanScreen() {
               {tab === 'upcoming' && (
                 <Section
                   compact
+                  first
                   title="Upcoming payments"
+                  // One short line: beside "Manage recurring" it has about 190 dp on a 360 dp phone, and the rows say what each is.
+                  subtitle={`Next ${PLAN_DAYS} days`}
                   actionLabel="Manage recurring"
                   onSeeAll={() => open('/recurring')}
                 >
-                  <Text
-                    style={{
-                      marginHorizontal: 16,
-                      marginBottom: 8,
-                      fontFamily: theme.font.body,
-                      fontSize: 12,
-                      color: theme.colors.textSecondary,
-                    }}
-                  >
-                    Bills, EMIs, SIPs and income · next {PLAN_DAYS} days
-                  </Text>
                   <UpcomingDates
                     runway={data.schedule}
                     today={data.today}
@@ -629,7 +628,7 @@ export default function PlanScreen() {
               )}
               {tab === 'debt' && (
                 <>
-                  <View style={{ marginTop: 12 }}>
+                  <View style={{ marginTop: 4 }}>
                     <DebtPath
                       loans={data.loans}
                       today={data.today}

@@ -14,6 +14,7 @@ import { dayMonth } from '@/lib/dateLabels';
 import { parseLocalIsoDate } from '@/lib/date';
 import { gainLabel } from '@/lib/investment';
 import { goalProgress } from '@/lib/savingsGoalProgress';
+import { keepTogether } from '@/lib/keepTogether';
 import type { Portfolio } from '@/lib/portfolio';
 
 type Alert = { key: string; title: string; detail: string; onPress: () => void };
@@ -160,7 +161,7 @@ export function PlanOverviewPanels({
         note:
           budgets.overCount > 0
             ? `${count(budgets.rows.length, 'budget')} · ${budgets.overCount} over`
-            : `${count(budgets.rows.length, 'budget')} · all within limits`,
+            : keepTogether(`${count(budgets.rows.length, 'budget')} · all within limits`),
         noteTone: budgets.overCount > 0 ? 'bad' : undefined,
         onPress: () => onTab('money'),
       }
@@ -229,7 +230,7 @@ export function PlanOverviewPanels({
         unit: 'left',
         bar: [{ share: Math.min(1, Math.max(0, loans.paidFraction)), color: theme.colors.slice.debt }],
         note: debtFree
-          ? `${count(borrowed.length, 'loan')} · free by ${debtFree}`
+          ? keepTogether(`${count(borrowed.length, 'loan')} · free by ${debtFree}`)
           : `${count(borrowed.length, 'active loan')}`,
         onPress: () => onTab('debt'),
       }

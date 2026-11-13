@@ -12,6 +12,7 @@ import type {
 } from '@/db/reports';
 import { roundedMinor } from '@/lib/round';
 import { dayMonth } from '@/lib/dateLabels';
+import { noBreak } from '@/lib/keepTogether';
 
 /**
  * The day-detail popup's footer figure: net (income − expense, signed) when the day has income, else the
@@ -478,7 +479,7 @@ export function buildStoryCards(input: StoryInput): StoryCard[] {
           ? `Something went out on each of the ${q.countedDays} days${input.isCurrentPeriod ? ' so far' : ''}.`
           : `Out of ${q.countedDays}${input.isCurrentPeriod ? ' so far' : ''}.${
               q.longestRun
-                ? ` Your longest run was ${q.longestRun.days} days, ${dayMonth(q.longestRun.start)} – ${dayMonth(q.longestRun.end)}.`
+                ? ` Your longest run was ${q.longestRun.days} days, ${noBreak(`${dayMonth(q.longestRun.start)} – ${dayMonth(q.longestRun.end)}`)}.`
                 : ''
             }`,
       tone: 'mint',
@@ -592,7 +593,8 @@ export function cashFlowReadLine(p: CashFlowPoint, live: boolean, usualRatePct: 
   const share = `${rate}%`;
   if (live && usualRatePct != null)
     return `${flow} You have kept ${share} of it, your usual is ${usualRatePct}%.`;
-  return `${flow} Kept ${formatMoney(roundedMinor(kept))}, ${share} of it.`;
+  // The last words stay together: "48% of it." never leaves "of it." alone on a line.
+  return `${flow} Kept ${formatMoney(roundedMinor(kept))}, ${share}\u00A0of\u00A0it.`;
 }
 
 export interface CategoryAgainstUsual {

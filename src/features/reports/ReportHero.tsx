@@ -75,7 +75,7 @@ export function ReportHero({
             <Text style={styles.kpiSub}>{`${money(perDayMinor)} a day`}</Text>
           )}
         </View>
-        <View style={styles.kpi}>
+        <View style={[styles.kpi, styles.kpiIncome]}>
           <Text style={styles.kpiLabel}>Income</Text>
           <Amount
             minor={roundedMinor(incomeMinor)}
@@ -144,7 +144,9 @@ const styles = StyleSheet.create({
   kpis: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
   kpisStacked: { flexDirection: 'column', alignItems: 'stretch', gap: 8 },
   kpi: { flexGrow: 1, flexShrink: 1, flexBasis: 0, minWidth: 0 },
-  kpiLead: { flexGrow: 1.3 },
+  kpiLead: { flexGrow: 1.1 },
+  // Income carries the long line ("↑ 8% so far vs the month before"): the width it needs to stay on two lines at 360 dp.
+  kpiIncome: { flexGrow: 1.25 },
   kpiLabel: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
   kpiValue: {
     fontFamily: theme.font.bodyMedium,

@@ -10,6 +10,8 @@ export const GRID_GAP = 8;
 
 /** Tiles per row on the Categories grid (a cell is one column wide). */
 export const TILE_COLUMNS = 3;
+/** Below this width (dp) the tiles go two to a row: three would break the longer names mid-word. */
+export const NARROW_TILES = 370;
 
 // Shared by the Categories screen, its list section (CategorySection /
 // CategoryTile / SubcategoryPill) and AddCategoryModal.

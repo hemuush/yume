@@ -9,6 +9,7 @@ import { usePrivacy } from '@/theme/PrivacyContext';
 import { allocateRoundedMinor } from '@/lib/round';
 import { errorMessage } from '@/lib/errorMessage';
 import { dayMonth, dayMonthYear } from '@/lib/dateLabels';
+import { noBreak } from '@/lib/keepTogether';
 import { router } from 'expo-router';
 import { InsightRow, InsightDisclosure, insight } from '@/components/InsightCard';
 
@@ -20,7 +21,7 @@ function comparedLabel(ranges: { current: DateRange; previous: DateRange }): str
     )
   );
   const label = years.size === 1 ? dayMonth : dayMonthYear;
-  const range = (r: DateRange) => `${label(r.start)} – ${label(r.end)}`;
+  const range = (r: DateRange) => noBreak(`${label(r.start)} – ${label(r.end)}`);
   return `${range(ranges.current)} vs ${range(ranges.previous)}`;
 }
 

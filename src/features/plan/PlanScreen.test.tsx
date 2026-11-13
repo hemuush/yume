@@ -392,7 +392,7 @@ describe('Plan tab', () => {
     try {
       const tab = await render();
       await openTabAndSettle(tab, 'money');
-      expect(texts(tab)).toContain('Food −10% saves ₹2,000 a month');
+      expect(texts(tab)).toContain('Food −10% saves ₹2,000 a\u00A0month');
       expect(texts(tab).some((t) => t.startsWith('Rent −') || t.startsWith('Insurance −'))).toBe(false);
     } finally {
       mockAverages.rows = [];
@@ -408,7 +408,7 @@ describe('Plan tab', () => {
     // The Goals tab holds what-if: it cuts the biggest category it can, not the EMI (10% of Food's ₹20,000).
     const goalsTab = await render();
     await openTabAndSettle(goalsTab, 'money');
-    expect(texts(goalsTab)).toContain('Food −10% saves ₹2,000 a month');
+    expect(texts(goalsTab)).toContain('Food −10% saves ₹2,000 a\u00A0month');
     // 25% of the home loan's principal repaid.
     expect(shown.some((t) => t.includes('25% repaid'))).toBe(false);
   });
@@ -456,6 +456,50 @@ describe('Plan tab', () => {
     expect(texts(tree)).toContain('Home loan');
     expect(texts(tree)).not.toContain('Streaming');
     expect(texts(tree).some((t) => t.includes('₹25,000'))).toBe(true);
+    act(() => tree.unmount());
+  });
+
+  it('puts the first block the same distance under the tabs on every tab, so switching tabs shifts nothing', async () => {
+    const { StyleSheet } = require('react-native');
+    const { PlanNavigation } = require('./PlanNavigation');
+    const tree = await render();
+    const gap = () => {
+      const nav = tree.root.findByType(PlanNavigation);
+      let node = nav.parent;
+      while (node && !StyleSheet.flatten(node.props.style)?.marginHorizontal) node = node.parent;
+      return StyleSheet.flatten(node!.props.style).marginBottom as number;
+    };
+    // The runway card carries 4 above itself, the Upcoming section 8, the plan check 12 and the debt card 4 (its
+    // wrapper): with the gap under the tabs they all come to 20.
+    const OWN_TOP = { overview: 4, upcoming: 8, money: 12, debt: 4 } as const;
+    for (const tab of ['overview', 'upcoming', 'money', 'debt'] as const) {
+      openTab(tree, tab);
+      expect(gap() + OWN_TOP[tab]).toBe(20);
+    }
+    act(() => tree.unmount());
+  });
+
+  it('keeps the Upcoming subtitle with its heading, as one short line the link beside it cannot wrap', async () => {
+    const tree = await render();
+    openTab(tree, 'upcoming');
+    expect(texts(tree)).toContain('Next 30 days');
+    expect(texts(tree).some((t) => t.startsWith('Bills, EMIs, SIPs'))).toBe(false);
+    act(() => tree.unmount());
+  });
+
+  it('writes a picked date and an unpicked one in the same weight, so picking one moves none of the others', async () => {
+    const { StyleSheet } = require('react-native');
+    const tree = await render();
+    openTab(tree, 'upcoming');
+    const weights = () =>
+      tree.root
+        .findAll((n) => n.props.testID?.startsWith('outgoing-day-') && n.props.onPress)
+        .map((chip) => StyleSheet.flatten(chip.findByType(Text).props.style).fontFamily);
+    const before = weights();
+    expect(new Set(before).size).toBe(1);
+    const dates = tree.root.findAll((n) => n.props.testID?.startsWith('outgoing-day-') && n.props.onPress);
+    act(() => dates[dates.length - 1].props.onPress());
+    expect(weights()).toEqual(before);
     act(() => tree.unmount());
   });
 

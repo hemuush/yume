@@ -166,7 +166,7 @@ function ModalCloseButton({
   const { animatedStyle, onPressIn, onPressOut } = usePressScale();
   return (
     <AnimatedPressable
-      style={[styles.closeBtn, disabled && styles.disabled, animatedStyle]}
+      style={[styles.closeBtn, animatedStyle, disabled && styles.disabled]}
       disabled={disabled}
       accessibilityState={{ disabled }}
       onPress={onClose}
@@ -257,7 +257,7 @@ function RoundFooterButton({
   const { animatedStyle, onPressIn, onPressOut } = usePressScale();
   return (
     <AnimatedPressable
-      style={[styles.roundBtn, danger && styles.roundBtnDanger, disabled && styles.disabled, animatedStyle]}
+      style={[styles.roundBtn, danger && styles.roundBtnDanger, animatedStyle, disabled && styles.disabled]}
       onPress={onPress}
       onPressIn={onPressIn}
       onPressOut={onPressOut}

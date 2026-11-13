@@ -489,6 +489,52 @@ export function ThisMonthHero({
 
           {perDayMinor != null && <AllowanceTile perDayMinor={perDayMinor} daysLeft={daysLeft} />}
 
+          <View style={styles.footer}>
+            {slices.hasIncome && (
+              <Pressable
+                onPress={() => {
+                  haptics.tap();
+                  setShowWorking((v) => !v);
+                }}
+                style={withPressed(styles.howLink)}
+                accessibilityRole="button"
+                accessibilityState={{ expanded: showWorking }}
+                accessibilityLabel="How this adds up"
+              >
+                <Text style={styles.howLinkText}>How it adds up</Text>
+                <Feather
+                  name={showWorking ? 'chevron-up' : 'chevron-down'}
+                  size={14}
+                  color={theme.colors.link}
+                />
+              </Pressable>
+            )}
+            {onSeeInsights && !displayed.spendingTrend && (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="See spending insights"
+                onPress={() => onSeeInsights(displayed.periodKey)}
+                style={withPressed(styles.insightsLink)}
+              >
+                <Text style={styles.insightsText}>See insights</Text>
+                <Feather name="arrow-up-right" size={14} color={theme.colors.link} />
+              </Pressable>
+            )}
+            {/* Beside the link when it is alone, on its own line under the two links when there are both, so the
+                second link is never left by itself on a line of its own. */}
+            <Text
+              style={[
+                styles.headCaption,
+                onSeeInsights && !displayed.spendingTrend && styles.headCaptionFull,
+              ]}
+              accessibilityElementsHidden
+              importantForAccessibility="no-hide-descendants"
+            >
+              {shownCaption}
+            </Text>
+          </View>
+
+          {/* Under the link that opens it, so the link stays where the finger is. */}
           {slices.hasIncome && showWorking && (
             <ReanimatedAnimated.View entering={PANEL_ENTER} exiting={ROW_EXIT} style={styles.working}>
               <WorkingRow label="Income" value={formatMoney(displayed.incomeMinor)} />
@@ -533,46 +579,6 @@ export function ThisMonthHero({
               ))}
             </ReanimatedAnimated.View>
           )}
-
-          <View style={styles.footer}>
-            {slices.hasIncome && (
-              <Pressable
-                onPress={() => {
-                  haptics.tap();
-                  setShowWorking((v) => !v);
-                }}
-                style={withPressed(styles.howLink)}
-                accessibilityRole="button"
-                accessibilityState={{ expanded: showWorking }}
-                accessibilityLabel="How this adds up"
-              >
-                <Text style={styles.howLinkText}>How it adds up</Text>
-                <Feather
-                  name={showWorking ? 'chevron-up' : 'chevron-down'}
-                  size={14}
-                  color={theme.colors.link}
-                />
-              </Pressable>
-            )}
-            <Text
-              style={styles.headCaption}
-              accessibilityElementsHidden
-              importantForAccessibility="no-hide-descendants"
-            >
-              {shownCaption}
-            </Text>
-            {onSeeInsights && !displayed.spendingTrend && (
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="See spending insights"
-                onPress={() => onSeeInsights(displayed.periodKey)}
-                style={withPressed(styles.insightsLink)}
-              >
-                <Text style={styles.insightsText}>See insights</Text>
-                <Feather name="arrow-up-right" size={14} color={theme.colors.link} />
-              </Pressable>
-            )}
-          </View>
         </ReanimatedAnimated.View>
       </ReanimatedAnimated.View>
       <View style={styles.actions}>
