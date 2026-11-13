@@ -1,6 +1,6 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { keepTogether } from '@/lib/keepTogether';
-import { Animated, Pressable, View, StyleSheet, useWindowDimensions } from 'react-native';
+import { Animated, Pressable, View, StyleSheet } from 'react-native';
 import ReanimatedAnimated from 'react-native-reanimated';
 import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
@@ -33,6 +33,7 @@ import { isSavingsEntry } from '@/lib/privateSummary';
 import { DraggableLine } from './DraggableLine';
 import { withPressedTint } from '@/lib/pressed';
 import { categorySpoken, joinSub, parentNameOf } from '@/lib/categoryLabel';
+import { useStacked } from '@/lib/useStacked';
 
 /** A compact row: its least height and the category disc it leads with. */
 const ROW_H = 48;
@@ -142,8 +143,7 @@ function TimelineDayView({
   animateLayout?: boolean;
 }) {
   const { hideAmounts } = usePrivacy();
-  const { width, fontScale } = useWindowDimensions();
-  const stacked = width < 360 || fontScale > 1.2;
+  const stacked = useStacked();
   const { accent, secondary } = useAccent();
   const categoriesById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
   // Parent context for a subcategory; top-level categories need no extra label.

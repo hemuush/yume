@@ -1,8 +1,8 @@
 import { useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
 import { investRole, investmentIdsOf } from '@/lib/investment';
-import { View, StyleSheet, Pressable } from 'react-native';
+import { View, StyleSheet, Pressable, useWindowDimensions } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
-import { Text } from '@/components/Text';
+import { Text, MAX_FONT_SCALE } from '@/components/Text';
 import ReanimatedAnimated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import { getAccountFlow, listTransactions, AccountFlow } from '@/db/ledger';
 import { Account, Category, Transaction } from '@/types';
@@ -101,6 +101,7 @@ export function AccountSummarySheet({
 
   // A different account starts on its own first tab; stepping the period keeps the tab you're on.
   const [tabFor, setTabFor] = useState(accountId);
+  const labelWidth = useFlowLabelWidth();
   if (tabFor !== accountId) {
     setTabFor(accountId);
     setTab(tracked ? 'value' : 'flow');
@@ -328,7 +329,7 @@ export function AccountSummarySheet({
             </View>
             {!!netLine && (
               <View style={styles.netRow}>
-                <Text style={styles.netLabel}>Net</Text>
+                <Text style={[styles.netLabel, { width: labelWidth }]}>Net</Text>
                 <Text
                   style={[
                     styles.netValue,
@@ -413,6 +414,12 @@ export function AccountSummarySheet({
  * One in/out line: label, bar sized against the larger of the two sides, amount, and what it was made of.
  * Bar is full colour for real income/spending, pale for transfers between your own accounts (pass-through).
  */
+/** The In / Out / Net label column: 30 dp at normal text, growing with it so "Out" is never split in two. */
+function useFlowLabelWidth() {
+  const { fontScale } = useWindowDimensions();
+  return Math.round(30 * Math.min(MAX_FONT_SCALE, Math.max(1, fontScale)));
+}
+
 function FlowRow({
   label,
   value,
@@ -431,6 +438,7 @@ function FlowRow({
   color: string;
   fillColor: string;
 }) {
+  const labelWidth = useFlowLabelWidth();
   const reduce = useReduceMotion();
   const grow = useSharedValue(fraction);
   useEffect(() => {
@@ -441,7 +449,7 @@ function FlowRow({
   return (
     <View>
       <View style={styles.flowRow}>
-        <Text style={styles.flowLabel}>{label}</Text>
+        <Text style={[styles.flowLabel, { width: labelWidth }]}>{label}</Text>
         <View style={styles.track}>
           <ReanimatedAnimated.View style={[styles.fill, fillStyle]}>
             <View style={{ flex: ownShare, backgroundColor: fillColor }} />

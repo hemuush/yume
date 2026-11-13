@@ -519,7 +519,8 @@ describe('Reports screen', () => {
     await pressText(tree, '5');
     await settle();
     const shown = texts(tree);
-    expect(shown).toContain('Mon, 5 Oct');
+    // The day is one unbreakable piece, so a wrap never leaves "Oct" or the number alone.
+    expect(shown).toContain('Mon,\u00A05\u00A0Oct');
     expect(shown.some((t) => t.endsWith('× your usual day'))).toBe(true);
     expect(shown.some((t) => t.startsWith('Food '))).toBe(true);
   });

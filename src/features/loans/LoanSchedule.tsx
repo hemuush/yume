@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Pressable, StyleSheet, useWindowDimensions } from 'react-native';
+import { View, Pressable, StyleSheet } from 'react-native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
@@ -15,6 +15,7 @@ import { toLocalIsoDate } from '@/lib/date';
 import { shade } from '@/lib/color';
 import { useAccent } from '@/theme/AccentContext';
 import { softTint } from '@/components/softTint';
+import { useStacked } from '@/lib/useStacked';
 
 function Marker({ status, isNext }: { status: LoanPayment['status']; isNext: boolean }) {
   const { accent } = useAccent();
@@ -43,8 +44,7 @@ export function LoanSchedule({
   schedule: LoanPayment[];
   direction?: 'borrowed' | 'lent';
 }) {
-  const { width, fontScale } = useWindowDimensions();
-  const stacked = width < 360 || fontScale > 1.2;
+  const stacked = useStacked();
   const years = groupScheduleByYear(schedule);
   const nextId = nextUnpaidInstallment(schedule)?.id;
   const todayIso = toLocalIsoDate(new Date());

@@ -1,6 +1,7 @@
-import { View, StyleSheet, useWindowDimensions } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
+import { useStacked } from '@/lib/useStacked';
 
 interface LoanStat {
   label: string;
@@ -11,8 +12,7 @@ interface LoanStat {
 
 /** Headline facts in one card, side by side; they stack on narrow screens or with larger text. */
 export function LoanStatGrid({ stats }: { stats: LoanStat[] }) {
-  const { width, fontScale } = useWindowDimensions();
-  const stacked = width < 360 || fontScale > 1.2;
+  const stacked = useStacked();
   return (
     <View style={[styles.card, stacked && styles.cardStacked]}>
       {stats.map((s, i) => (

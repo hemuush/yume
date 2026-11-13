@@ -155,7 +155,9 @@ it('puts the spent-of-limit figures, month and status in the one header card', a
   expect(text).toContain('₹300');
   expect(text).toContain('spent of');
   expect(text).toContain('₹1,000');
-  expect(text).toContain('Remaining for this month · Feb 2026');
+  // The month is glued with a non-breaking space so a wrap never leaves the year alone on a line.
+  expect(text.replace(/\u00A0/g, ' ')).toContain('Remaining for this month · Feb 2026');
+  expect(text).toContain('Feb\u00A02026');
   expect(text).toContain('Monthly budget');
   expect(text).not.toContain('Available limit');
   expect(text).not.toContain('No rollover');

@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { View, Pressable } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { withPressed } from '@/lib/pressed';
+import { useFontScale } from '@/lib/useFontScale';
 import { Text } from '@/components/Text';
 import {
   createTransaction,
@@ -80,6 +81,8 @@ export function TransactionDetailModal({
   }>();
   // Delete asks once in place before it deletes; it settles back after a moment untouched.
   const [askDelete, setAskDelete] = useState(false);
+  // Three across leave "Recurring" less than a third of the row; past the reflow size each gets its own row.
+  const wideActions = useFontScale() > theme.accessibility.reflowFontScale;
   useEffect(() => {
     if (!askDelete) return;
     const t = setTimeout(() => setAskDelete(false), 3000);
@@ -510,7 +513,7 @@ export function TransactionDetailModal({
                 key={a.label}
                 onPress={busy ? undefined : a.onPress}
                 disabled={busy}
-                style={withPressed(styles.quickBtn)}
+                style={withPressed([styles.quickBtn, wideActions && styles.quickBtnWide])}
                 accessibilityRole="button"
                 accessibilityLabel={a.label}
                 accessibilityHint={a.sub}

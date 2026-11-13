@@ -356,6 +356,9 @@ function ModalSheetBody({
           />
           <KeyboardAvoidingView
             behavior="padding"
+            // Only while the keyboard is really up: the library starts from the last keyboard height it saw, and a
+            // stale one (an earlier sheet closed while the keyboard was moving) lifted the sheet off the bottom.
+            enabled={keyboardUp}
             style={[
               styles.flex,
               styles.alignCenter,
@@ -401,6 +404,7 @@ function ModalSheetBody({
           />
           <KeyboardAvoidingView
             behavior="padding"
+            enabled={keyboardUp}
             style={[styles.flex, styles.alignBottom, { paddingTop: insets.top + 8 }]}
             pointerEvents="box-none"
           >

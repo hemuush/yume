@@ -5,6 +5,7 @@ import { Text } from '@/components/Text';
 import type { McIconName } from '@/components/iconName';
 import { theme } from '@/constants/theme';
 import { shade } from '@/lib/color';
+import { noBreak } from '@/lib/keepTogether';
 
 /**
  * The top card of a goal's overview: the goal's name and what it is on the first line, the saved amount beside
@@ -82,7 +83,7 @@ export function GoalHero({
                 <Text style={styles.figure}>Target reached</Text>
               ))}
             {toGo && date ? ' · ' : ''}
-            {date ? `by ${date}` : ''}
+            {date ? noBreak(`by ${date}`) : ''}
           </Text>
           {!!status && <Text style={[styles.caption, styles.status]}>{status}</Text>}
         </View>

@@ -63,6 +63,37 @@ describe('CountStepper', () => {
 });
 
 describe('OptionCards', () => {
+  it.each([
+    [1, 'row', 1],
+    [2, 'column', undefined],
+  ])(
+    'at text scale %s sits %s, each card sharing the row only when side by side',
+    (scale, direction, flex) => {
+      const spy = jest.spyOn(require('@/lib/useFontScale'), 'useFontScale').mockReturnValue(scale);
+      const { StyleSheet } = require('react-native');
+      let r!: ReactTestRenderer;
+      act(() => {
+        r = create(
+          <OptionCards
+            value="borrowed"
+            onChange={jest.fn()}
+            options={[
+              { value: 'borrowed', title: 'I borrowed', sub: 'You owe it', icon: 'arrow-down' },
+              { value: 'lent', title: 'I lent', sub: 'They owe you', icon: 'arrow-up' },
+            ]}
+          />
+        );
+      });
+      const radio = r.root.findAll((n) => n.props.accessibilityRole === 'radio' && n.props.onPress)[0];
+      const card = StyleSheet.flatten(radio.props.style({ pressed: false }));
+      const row = StyleSheet.flatten(radio.parent!.props.style);
+      expect(row.flexDirection).toBe(direction);
+      expect(card.flex).toBe(flex);
+      act(() => r.unmount());
+      spy.mockRestore();
+    }
+  );
+
   it('marks the chosen option and reports a different pick', () => {
     const onChange = jest.fn();
     let r!: ReactTestRenderer;

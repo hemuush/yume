@@ -1,13 +1,17 @@
-import { View, Pressable, StyleSheet } from 'react-native';
+import { View, Pressable, StyleSheet, useWindowDimensions } from 'react-native';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { haptics } from '@/lib/haptics';
 import { withPressed } from '@/lib/pressed';
+import { tooTight } from '@/lib/tooTight';
 
 import { useAccent } from '@/theme/AccentContext';
 import { interactionColors, selectedFill } from '@/theme/interactionColors';
 
-/** Match the main page filters, with a clear selected state and light tap feedback. */
+/**
+ * Match the main page filters, with a clear selected state and light tap feedback. When the longest word would not
+ * fit a choice's share of the row (five types on a phone at large text), the tabs wrap two to a row.
+ */
 export function SheetTabs<T extends string>({
   options,
   value,
@@ -21,8 +25,13 @@ export function SheetTabs<T extends string>({
 }) {
   const { accent } = useAccent();
   const colors = interactionColors(accent);
+  const { width, fontScale } = useWindowDimensions();
+  const wrap = tooTight(options, width, fontScale);
   return (
-    <View style={[styles.row, variant === 'pill' && styles.pillRow]} accessibilityRole="tablist">
+    <View
+      style={[styles.row, variant === 'pill' && styles.pillRow, wrap && styles.rowWrap]}
+      accessibilityRole="tablist"
+    >
       {options.map((option) => (
         <Pressable
           key={option.value}
@@ -35,6 +44,7 @@ export function SheetTabs<T extends string>({
           accessibilityState={{ selected: option.value === value }}
           style={withPressed([
             styles.tab,
+            wrap && styles.tabWrap,
             variant === 'pill' && styles.pillTab,
             option.value === value &&
               (variant === 'pill'
@@ -80,6 +90,9 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 12,
     borderTopRightRadius: 12,
   },
+  rowWrap: { flexWrap: 'wrap' },
+  // A share of the row that fits two to a line (a zero basis would let all of them squeeze onto one).
+  tabWrap: { flex: undefined, flexGrow: 1, flexBasis: '45%' },
   pillRow: {
     borderBottomWidth: 0,
     padding: 3,

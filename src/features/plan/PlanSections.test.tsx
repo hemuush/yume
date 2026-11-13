@@ -412,6 +412,47 @@ describe('Runway card', () => {
     expect(tree.root.findAllByType(ForecastDetails)).toHaveLength(0);
   });
 
+  it.each([
+    [390, 1, 64],
+    [320, 1, '45%'],
+    [390, 2, '45%'],
+  ])(
+    'sets Now, Going out, Coming in and the end figure four across or two to a row (width %i, text %s)',
+    (width, fontScale, basis) => {
+      const spy = jest
+        .spyOn(require('react-native'), 'useWindowDimensions')
+        .mockReturnValue({ width, height: 800, fontScale, scale: 1 });
+      const runway = buildRunway(
+        10000,
+        [
+          {
+            key: 'rent',
+            title: 'Rent',
+            kind: 'bill',
+            dueDate: '2026-10-10',
+            amountMinor: 2500,
+            route: '/recurring',
+          },
+        ],
+        '2026-10-09',
+        30
+      );
+      const tree = render(<RunwayCard dueSoon={dueSoon} runway={runway} hasAccounts days={30} compact />);
+      // The figures under the line are the views that share the row (grow, no minimum width).
+      const bases = tree.root
+        .findAll((n) => typeof n.type === 'string' && n.props.style != null)
+        .map((n) => StyleSheet.flatten(n.props.style))
+        .filter(
+          (st) => st.flexGrow === 1 && st.minWidth === 0 && (st.flexBasis === 64 || st.flexBasis === '45%')
+        )
+        .map((st) => st.flexBasis);
+      expect(bases).toHaveLength(4);
+      expect(new Set(bases)).toEqual(new Set([basis]));
+      act(() => tree.unmount());
+      spy.mockRestore();
+    }
+  );
+
   it('shows only outgoing dates in a scrollable row and preserves the selected date on refresh', () => {
     const items = [
       {

@@ -13,10 +13,13 @@ jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 24, bottom: 24, left: 0, right: 0 }),
   initialWindowMetrics: null,
 }));
+let mockKeyboardUp = false;
 jest.mock('react-native-keyboard-controller', () => ({
   KeyboardAvoidingView: require('react-native').View,
   KeyboardProvider: ({ children }: { children: unknown }) => children,
-  useKeyboardState: () => false,
+  // Controllable: `mockKeyboardUp` says whether the keyboard is really up.
+  useKeyboardState: (select: (state: { isVisible: boolean }) => unknown) =>
+    select({ isVisible: mockKeyboardUp }),
   KeyboardAwareScrollView: require('react').forwardRef((props: object, ref: unknown) =>
     require('react').createElement(require('react-native').ScrollView, { ...props, ref })
   ),
@@ -40,7 +43,10 @@ function render(over: Partial<Parameters<typeof ModalSheet>[0]> = {}) {
   });
   return { tree, close };
 }
-afterEach(() => jest.restoreAllMocks());
+afterEach(() => {
+  jest.restoreAllMocks();
+  mockKeyboardUp = false;
+});
 
 describe('related tasks in one native sheet', () => {
   it('does not mount an unopened page, and retains its content after returning', () => {
@@ -364,4 +370,23 @@ it('labels a child task as Back and returns through the same dismissal handler',
   act(() => back.props.onPress());
   expect(close).toHaveBeenCalledTimes(1);
   act(() => tree.unmount());
+});
+
+describe.each(['sheet', 'center'] as const)('the %s making room for the keyboard', (variant) => {
+  const avoiding = (tree: ReactTestRenderer) =>
+    tree.root.findAll((n) => n.props.behavior === 'padding' && typeof n.type !== 'string')[0];
+
+  it('does not, while no keyboard is up, so a stale keyboard height cannot lift it off the bottom', () => {
+    mockKeyboardUp = false;
+    const { tree } = render({ variant });
+    expect(avoiding(tree).props.enabled).toBe(false);
+    act(() => tree.unmount());
+  });
+
+  it('does, once the keyboard is up', () => {
+    mockKeyboardUp = true;
+    const { tree } = render({ variant });
+    expect(avoiding(tree).props.enabled).toBe(true);
+    act(() => tree.unmount());
+  });
 });

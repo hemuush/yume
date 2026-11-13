@@ -46,3 +46,34 @@ The same method (the real screens in a browser on a real database, at 360, 390 a
 
 Tests: `people.styles.test.ts`, `captionPieces.test.ts`, `keepTogether.test.ts` (`gluePiece`), `RecentlyDeletedScreen.test.tsx` (two lines, a long note), `RuleRow.test.tsx`. Each new test fails without its fix.
 
+## Whole-repo audit follow-up
+
+A read-only audit of the whole repository (data layer, backup and restore, reminders, CI, then a browser render of every screen at 320, 360 and 412 dp and 1, 1.3 and 2 times text on extreme data) found five things. All five are fixed, each with a test that fails without it.
+
+- **A test I added in the previous commit broke 126 others.** It restored its `AppState` spy, which also cleared React Native's own mocked `addEventListener`, and it ran before the groups that need it. It now sits at the end of `screens.smoke.test.tsx` with a comment; the file passes (144 of 144).
+- **Reports' three tabs shared the track in thirds**, so at 2 times text "Breakdown" was wider than its third. Past 130% the switch now stacks two to a row, the way Plan's four tabs already did; that stacked layout moved into `SegmentedControl` (`stacked`), and `PlanNavigation` is a thin wrapper over it. Other switches (Add's type, Export, Backup, Investments, Trends) can opt in the same way; none was seen to break.
+- **Plan's runway dates printed over each other** on a 320 to 360 dp phone at 2 times text (the weeks sit 56 to 67 dp apart, a date needs about 77). The Overview's ribbon and Forecast details' chart now share `runwayTicks` ([runway.ts](../src/features/plan/runway.ts)), which leaves out a date closer than six characters to the last one shown. At 1 and 1.3 times text all four stay. In the same card, Now / Going out / Coming in / On (date) broke "Coming in" inside the word at 2 times text; on a narrow phone or at large text they go two to a row.
+- **The "narrow phone or large text" rule was copied 15 times** (`width < 360 || fontScale > 1.2`). It is `useStacked` now, and `stackRule.test.ts` fails if a component writes it out again. Left as they were, because they differ on purpose or I could not tell: Add's amount card and Activity's period row (380 dp, 1.15), Plan's status tiles (340 dp, 1.3), the Home legend and the Reports summary strip (own font-scale constants), and the dialog buttons.
+- **Recently deleted drew every row at once.** A big tidy-up can leave thousands. It draws a hundred and offers "Show 100 more"; the count, "Oldest leaves in" and Delete all still cover every entry (the list is not cut in the database, so nothing becomes unreachable).
+
+Seen in the browser and not a fault: Recurring's rows at large text overlapped there only because the browser reads `flex: 0` as a zero starting size; Android reads it as "size by content". Not checked on a phone.
+
+### Second pass: the sheets, at 2 times text
+
+Every sheet and dialog (filter, entry details, budget, goal, loan, recurring, person, category, account, investment) was opened in the browser at 360 and 412 dp, at 1, 1.3 and 2 times text. It found five more faults at large text, all fixed with a test that fails without the fix, and one mistake of mine on the way (a hook placed after an early return, which crashed Entry details when it opened; `TransactionDetailModal.test.tsx` now opens it from nothing).
+
+- **Switches of three or more choices squeezed each label into its share of one row.** Activity's filter Type row (five choices) ran together from 130% text on a 360 dp phone; "Expense / Income / Transfer" and Reports' tabs from 200%. `SegmentedControl` and `SheetTabs` now work out whether the longest word fits (`tooTight` in [tooTight.ts](../src/lib/tooTight.ts): letters at about 6.8 dp, the text scale, the window width less 48 dp) and, if not, lay the choices two to a row. Two choices never stack. It is an estimate from the window, not a measurement of the track (marked `shortcut:` in the code).
+- **Entry details' three actions ("Log today", "Recurring", "Refund") clipped "Recurring"** at 200%. Past 130% each gets its own row.
+- **The budget sheet's category tiles split names mid-word** ("Entertainm" over "ent") at 200%, because the grid kept four columns. Past 130% text, where the names stop shrinking to fit, the grid uses fewer, wider columns (`CategoryPicker`; this also covers Add, Split and the recurring form).
+- **Account details' "Out" and "Net" split into "O / ut" and "N / et"** at 200%: the label column was a fixed 30 dp. It grows with the text.
+- **Loan setup's "I borrowed / I lent" cards** broke "borrowed" at 200%. Past 130% they sit one above the other.
+
+At 1.3 times text the category tiles looked split in the browser too, but they shrink their names to fit on a phone (the browser cannot show that), so only the sizes above 130% were treated as faults.
+
+### Third pass: what the first two had missed
+
+- **CI does not run on a feature branch** (only on pushes to main and on pull requests), so the branch's commits had not been through its CI-only steps. Run here: `expo export --platform android` bundles; `expo prebuild` plus `check:native` ("Native configuration looks right"); the audit gate finds no high or critical advisory; `expo-doctor@1.21.6` passes 18 of 20 checks, and the other two (the config schema and the React Native Directory) need `exp.host`, which this sandbox cannot reach. `expo prebuild` rewrites the `android` script in `package.json`; that edit was reverted.
+- **Dates split across two lines.** A script now opens every screen and sheet at 1.3 and 2 times text and finds a month followed by a day or year that wraps ("Nov" over "16"). It found Recurring's preview card ("next Mon, Nov / 16"), the Pay EMI sheet ("due Wed, Nov / 25"), Plan's runway line ("on Sun, Nov / 22"), Reports' tapped-day heading, the budget overview ("Nov / 2026") and the goal card ("by Mar 13, / 2027"). Each date is glued with non-breaking spaces (`noBreak`, `gluePiece`). Export's large "November / 2026" title is left: two words of a display heading may break between them.
+- **Wide screens.** The app is portrait-only, but Android 16 ignores that on tablets and unfolded foldables. At 600 and 840 dp every main screen renders without a fault, stretched to the full width. A maximum content width is a design decision and has not been made here.
+- **The browser harness** read `flex: 0` as a zero basis, which drew Recurring's rows over each other; it now reads it as Android does. With that, Recurring and its rule sheets were rendered at large text for the first time: no fault beyond the dates above.
+

@@ -14,8 +14,10 @@ import { formatMoney } from '@/lib/money';
 import { dayMonth, weekdayDayMonth } from '@/lib/dateLabels';
 import { DueSoon } from './planOverview';
 import { Runway } from './runway';
+import { useStacked } from '@/lib/useStacked';
 import { Kicker } from './PlanTiles';
 import { styles } from './plan.styles';
+import { noBreak } from '@/lib/keepTogether';
 
 /**
  * Spending balance, scoped inflow/outflow and a compact forecast verdict. Without an account,
@@ -76,7 +78,7 @@ export function RunwayCard({
     // One line under the verdict: when it bites, or how low it gets.
     const verdictSub = none
       ? `No payments in the next ${days} days`
-      : `Lowest ${formatMoney(runway.lowMinor)} on ${runway.lowDate === days0 ? 'today' : weekdayDayMonth(runway.lowDate)}`;
+      : `Lowest ${formatMoney(runway.lowMinor)} ${noBreak(`on ${runway.lowDate === days0 ? 'today' : weekdayDayMonth(runway.lowDate)}`)}`;
     return (
       <>
         <View style={[screenStyles.card, local.card]}>
@@ -215,8 +217,11 @@ export function RunwayCard({
 }
 
 function Fact({ label, value, bad, good }: { label: string; value: string; bad?: boolean; good?: boolean }) {
+  // Four across leave a label such as "Coming in" a quarter of the row; on a narrow phone or at large text the
+  // four go two to a row instead of breaking inside a word.
+  const stacked = useStacked();
   return (
-    <View style={local.fact}>
+    <View style={[local.fact, stacked && local.factHalf]}>
       <Text style={styles.forecastFact}>{label}</Text>
       <Text
         style={[
@@ -250,6 +255,7 @@ const local = StyleSheet.create({
   // Now − out + in = the closing balance, read left to right.
   sum: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 4, rowGap: 6 },
   fact: { flexGrow: 1, flexBasis: 64, minWidth: 0 },
+  factHalf: { flexBasis: '45%' },
   factValue: {
     fontFamily: theme.font.bodyMedium,
     fontSize: 14,

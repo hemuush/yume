@@ -99,3 +99,22 @@ export function buildRunway(startMinor: number, items: PlanDueItem[], today: str
   }
   return { startMinor, days, endMinor: balance, lowMinor, lowDate, short, inMinor: inTotal };
 }
+
+/** Room a weekly date such as "Nov 27" needs under a runway, per unit of text scale. */
+export const TICK_DATE_WIDTH = 6 * 6.4;
+
+/**
+ * The days that get a date label under a runway: today, then every seventh day, leaving out any whose label would
+ * sit closer than `minGap` to the one before (a narrow phone with large text puts the weeks closer than a date is
+ * wide). `x` is the day's position along the row.
+ */
+export function runwayTicks(n: number, x: (day: number) => number, minGap: number): number[] {
+  const ticks: number[] = [];
+  let lastX = -Infinity;
+  for (let i = 0; i === 0 || i <= n - 4; i += 7) {
+    if (x(i) - lastX < minGap) continue;
+    ticks.push(i);
+    lastX = x(i);
+  }
+  return ticks;
+}

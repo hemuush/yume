@@ -115,4 +115,33 @@ describe('large text', () => {
   it('never grows past the supported text scale', () => {
     expect(heightAt(5).height).toBe(heightAt(2).height);
   });
+
+  const dateLabelsAt = (fontScale: number) => {
+    const spy = jest
+      .spyOn(require('react-native'), 'useWindowDimensions')
+      .mockReturnValue({ width: 360, height: 800, scale: 2, fontScale });
+    let tree!: ReturnType<typeof create>;
+    act(() => {
+      tree = create(<RunwayChart runway={buildRunway(10000, [], '2026-10-22', 30)} />);
+    });
+    act(() =>
+      tree.root
+        .find((n) => n.props.accessibilityRole === 'adjustable')
+        .props.onLayout({ nativeEvent: { layout: { width: 320, height: 176 } } })
+    );
+    const labels = texts(tree).filter((t) => t === 'Today' || /^\d{1,2} [A-Z][a-z]{2}$/.test(t));
+    spy.mockRestore();
+    return labels;
+  };
+
+  it('keeps all four weekly dates at normal and 130% text', () => {
+    expect(dateLabelsAt(1)).toHaveLength(4);
+    expect(dateLabelsAt(1.3)).toHaveLength(4);
+  });
+
+  it('leaves out a weekly date that would print over the one before it, at 200% on a small phone', () => {
+    const labels = dateLabelsAt(2);
+    expect(labels[0]).toBe('Today');
+    expect(labels).toHaveLength(2);
+  });
 });

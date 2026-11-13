@@ -20,6 +20,7 @@ import { shortMonthYear } from '@/lib/dateLabels';
 import { budgetPace, BUDGET_PACE_LABEL } from '@/lib/pace';
 import { errorMessage } from '@/lib/errorMessage';
 import { theme } from '@/constants/theme';
+import { noBreak } from '@/lib/keepTogether';
 
 /** A budget opens for reading; changing its limit is a separate, reversible step. */
 export function BudgetDetailModal({
@@ -116,7 +117,7 @@ export function BudgetDetailModal({
               : periodMonth === today.slice(0, 7)
                 ? 'Remaining this month'
                 : 'Remaining for this month'
-          } · ${shortMonthYear(`${periodMonth}-01`)}`}
+          } · ${noBreak(shortMonthYear(`${periodMonth}-01`))}`}
           remaining={formatMoney(Math.abs(progress.remainingMinor), currency)}
           over={progress.overBudget}
           pct={Math.min(100, Math.max(0, progress.percentUsed))}

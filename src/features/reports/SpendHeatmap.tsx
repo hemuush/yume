@@ -92,6 +92,10 @@ function CalendarHeat({
   const [headHeight, setHeadHeight] = useState(HEAD_H);
   const rows = gridRows(model.days, model.leadingPad, 7);
   const cellW = (width - COLUMN_GAP * 6) / 7;
+  // Seven days across at 44 dp wide need about 314 dp; a phone with less room (320 dp) used to push Saturday off the
+  // card. The cells give up width there, and keep their 44 dp height.
+  const narrow =
+    width > 0 ? { minWidth: Math.min(theme.accessibility.minTouchTarget, Math.floor(cellW)) } : null;
   const { box, handlers } = useGridScrub((x, y) => {
     if (width <= 0) return null;
     const col = Math.floor(x / (cellW + COLUMN_GAP));
@@ -104,7 +108,7 @@ function CalendarHeat({
     const selected = d.iso === selectedIso;
     const big = usualMinor > 0 && d.minor > usualMinor * BIG_DAY_FACTOR;
     return (
-      <View key={d.iso} style={styles.slot}>
+      <View key={d.iso} style={[styles.slot, narrow]}>
         <Pressable
           disabled={d.future}
           onPress={() => onSelect(d.iso)}
@@ -117,6 +121,7 @@ function CalendarHeat({
             d.future && styles.cellFuture,
             selected && styles.cellSelected,
             { backgroundColor: scale[d.level] },
+            narrow,
             selected && { borderColor: ring },
           ])}
         >
@@ -133,14 +138,14 @@ function CalendarHeat({
     <View ref={box} onLayout={(e) => setWidth(e.nativeEvent.layout.width)} {...handlers}>
       <View style={styles.weekRow} onLayout={(e) => setHeadHeight(e.nativeEvent.layout.height + CELL_GAP)}>
         {WEEKDAYS.map((w, i) => (
-          <Text key={i} style={[styles.slot, styles.weekday]}>
+          <Text key={i} style={[styles.slot, styles.weekday, narrow]}>
             {w}
           </Text>
         ))}
       </View>
       {rows.map((row, r) => (
         <View key={r} style={styles.weekRow}>
-          {row.map((d, c) => (d ? renderDay(d) : <View key={`b${c}`} style={styles.slot} />))}
+          {row.map((d, c) => (d ? renderDay(d) : <View key={`b${c}`} style={[styles.slot, narrow]} />))}
         </View>
       ))}
     </View>
