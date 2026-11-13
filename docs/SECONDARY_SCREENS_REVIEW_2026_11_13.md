@@ -103,18 +103,18 @@ If the sheet still stands above the bottom after this, the numbers above (and wh
 
 Asked for modern animation packages that are safe to use, for Home first. Checked against Expo SDK 58's own version list, npm (versions, peer dependencies, licences) and a clean-room `npm audit` (0 vulnerabilities for Skia 2.14.0, Lottie 7.5.0, `@expo/ui` 58.0.28, `expo-glass-effect` 58.0.5):
 
-- **Reanimated 4 CSS transitions** (already installed, unused until now): used. No new dependency.
+- **Reanimated 4 CSS transitions** (already installed, unused until now): used, then withdrawn (see the eleventh pass). No new dependency.
 - **Skia 2.14.0** (Expo's pick for SDK 58; v3 has no stable release): not added. A soft gradient on the ring needs only `react-native-svg`, which is already here; Skia is for blur, glow and shaders, and adds a native engine to the APK whose size was not measured.
 - **Rive** (0.5.14, pre-1.0, needs `react-native-nitro-modules` below 0.37 while the latest is 0.37.2) and **`expo-glass-effect`** (Apple platforms only): not suitable. **Lottie** and **`@expo/ui`**: safe, but for one-off moments and native-looking controls, not Home's dashboard.
 
-What changed on Home, measured in the browser render at 390 dp: 1,348 of 351,000 pixels (0.4%), all inside the month ring; nothing else moved. Tapping a legend slice dims the others from 100% to 35% in about 200 ms (frames sampled at 100%, 78%, 50%, 35%), where before they switched in one frame. In code: the capsules lost their shared values, effects and cancellations. Not checked on a phone: it is the app's first use of CSS transitions on Android, so the next build is the test; a transition that does not run would leave the final value, not a wrong one.
+What changed on Home, measured in the browser render at 390 dp: 1,348 of 351,000 pixels (0.4%), all inside the month ring; nothing else moved. Tapping a legend slice dims the others from 100% to 35% in about 200 ms (frames sampled at 100%, 78%, 50%, 35%), where before they switched in one frame. In code: the capsules lost their shared values, effects and cancellations. Not checked on a phone: it is the app's first use of CSS transitions on Android, so the next build is the test; a transition that does not run would leave the final value, not a wrong one. (Wrong: a height glide did leave a group panel unopened on a phone. Withdrawn, see the eleventh pass.)
 
 ### Seventh pass: the same on Activity
 
 Looked for where Activity still hand-animates a state change or breaks the calm rule. Found and changed two things; the rest was left.
 
 - **Insights' bar chart drew in from empty, staggered** (`SpendBarChart`: 420 ms per bar, up to 220 ms apart): sampled in the browser, at 166 ms the bars read 0.67, 0.08, 0, 0, 0, 0 of their height and they settled at about 450 ms. They are now at their height on the first frame and glide (200 ms) only when a day's spending changes. Kept on core `Animated`: this chart is in the Insights sheet, a Modal window, and the app's Reanimated use inside Modals is a suspect in the floating-sheet bug (fourth pass).
-- **The Week | Month underline** appeared and disappeared; it now crossfades (0.4 / 0.6 at 70 ms, 0.13 / 0.87 at 100 ms, done by 200 ms), as a CSS transition on an always-present underline. The screen at rest is pixel-identical to before (0 differing pixels at 390 dp).
+- **The Week | Month underline** (withdrawn, see the eleventh pass) appeared and disappeared; it then crossfaded (0.4 / 0.6 at 70 ms, 0.13 / 0.87 at 100 ms, done by 200 ms), as a CSS transition on an always-present underline. The screen at rest is pixel-identical to before (0 differing pixels at 390 dp).
 - **Left alone:** the Spent strip's period slide (`usePeriodSlide`: a from-and-to entrance that a CSS transition cannot express without a remount, and it already runs on the UI thread) and the type pills (their fill and their white text would have to glide together; a white word on a pale pill for 150 ms would read worse than the switch).
 
 ### Eighth pass: Plan
@@ -138,3 +138,13 @@ Two things seen on a phone (screenshots), both on Activity.
 ### Tenth pass: Home's month ring loses its black arc
 
 A thin black arc ran round the outside of the month ring for how far through the month today is (13 of 30 days read as an arc to about 5 o'clock). Nothing in the legend or the labels said so, it sat against the end of the Spent slice so it read as data, it was the darkest mark on the card, and the "About ₹61 a day for 17 days" pill already names the days left. It is removed, with the faint track under it; the ring now fills its 112 dp box (radius 51 instead of 47.5, so the figure in the middle has 7 dp more room) and the card's size and the legend are unchanged. `MonthRing` no longer takes `dayShare`. A test on the month card checks that no circle is stroked in the ink or divider colour; it fails on the previous code.
+
+### Eleventh pass: no CSS transitions left in the app
+
+After the group panel failed on a phone (ninth pass), every other use of the same mechanism was found and removed, because none of it had been run on a device and a failure there would not show in the browser render or the tests. The found uses: Home's week capsules (a fill height glide and the picked capsule's lift), the month ring's dimmed slices, and Activity's Week | Month underline. In Reanimated 4 a height or width transition goes through the shadow tree while opacity and transform take other routes, so a height glide in particular could leave a capsule at an old height after its day's spending changed.
+
+- **Home's week capsules** are `SpendBars` as in #79 again (shared values and `withTiming`, the path already on phones). **The month ring's slices** dim at once and the **underline** appears and disappears, as before; the ring keeps its sheen (an SVG gradient) and its lost black arc.
+- `glide` and the test mock's `cubicBezier` are deleted. `grep transitionProperty src app` finds nothing.
+- **Checked:** every screen (22) rendered at 390 dp and at 360 dp with 1.3× text on #79 and on the current code, compared pixel by pixel: identical except Home's ring box, plus random demo-data avatar colours on Plan and People (the same regions differ between two renders of #79 itself). The group opens and closes with its entries, the amount bubble is whole.
+- **Not checked, and cannot be here:** anything on an Android device. `GrowFill` (Plan, Loans, Goals bars) uses `useAnimatedStyle` and was already on phones.
+

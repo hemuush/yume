@@ -1,6 +1,6 @@
 import { useLocalDayRefresh } from '@/lib/useLocalDayRefresh';
 import { Appear } from '@/components/Appear';
-import { CONTENT_ENTER, glide } from '@/lib/animation';
+import { CONTENT_ENTER } from '@/lib/animation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { onTransactionsChanged } from '@/lib/dataEvents';
 import { useFreshness } from '@/lib/useFreshness';
@@ -1176,10 +1176,7 @@ export default function TransactionsScreen() {
                     accessibilityState={{ selected: on }}
                   >
                     <Text style={[styles.scopeText, on && styles.scopeTextOn]}>{o.label}</Text>
-                    <ReanimatedAnimated.View
-                      pointerEvents="none"
-                      style={[styles.scopeUnderline, { opacity: on ? 1 : 0 }, glide('opacity', reduceMotion)]}
-                    />
+                    {on && <View style={styles.scopeUnderline} />}
                   </Pressable>
                 );
               })}

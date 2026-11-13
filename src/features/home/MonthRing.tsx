@@ -1,10 +1,7 @@
 import { StyleSheet, View } from 'react-native';
-import Animated from 'react-native-reanimated';
 import Svg, { Circle, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { theme } from '@/constants/theme';
-import { glide } from '@/lib/animation';
 import { hexToHsl, shade } from '@/lib/color';
-import { useReduceMotion } from '@/lib/useReduceMotion';
 import { heroPct, type HeroSlices } from './heroSlices';
 
 /** The four slices of the month, in the order the ring draws them. */
@@ -25,8 +22,8 @@ const brighter = (hex: string) => shade(hex, Math.min(88, hexToHsl(hex)[2] + SHE
 
 /**
  * The month as one ring: spent, saved, bills still to pay and free, in the colours of the legend beside it. It is
- * still: it draws at once, each slice a touch lighter along one side, and the slices that were not picked glide
- * back (a CSS transition on each slice's own view). The figure for the picked slice sits in the middle (`children`).
+ * still: it draws at once, each slice a touch lighter along one side, and the slices that were not picked are
+ * dimmed. The figure for the picked slice sits in the middle (`children`).
  */
 export function MonthRing({
   slices,
@@ -45,7 +42,6 @@ export function MonthRing({
     { key: 'due' as const, share: slices.due ?? 0, color: theme.colors.slice.due },
     { key: 'free' as const, share: slices.free, color: theme.colors.slice.free },
   ].filter((part) => part.share > 0);
-  const reduce = useReduceMotion();
   const c = RING_SIZE / 2;
   const circumference = 2 * Math.PI * R;
   let used = 0;
@@ -80,14 +76,10 @@ export function MonthRing({
           const length = roomy ? slot - GAP - STROKE : Math.max(MIN_BAR, slot - GAP);
           const lead = roomy ? (STROKE + GAP) / 2 : (slot - length) / 2;
           return (
-            <Animated.View
+            <View
               key={part.key}
               pointerEvents="none"
-              style={[
-                StyleSheet.absoluteFill,
-                { opacity: focus != null && focus !== part.key ? DIM : 1 },
-                glide('opacity', reduce),
-              ]}
+              style={[StyleSheet.absoluteFill, { opacity: focus != null && focus !== part.key ? DIM : 1 }]}
             >
               <Svg width={RING_SIZE} height={RING_SIZE}>
                 <Defs>
@@ -110,7 +102,7 @@ export function MonthRing({
                   transform={`rotate(-90 ${c} ${c})`}
                 />
               </Svg>
-            </Animated.View>
+            </View>
           );
         })}
       </View>
