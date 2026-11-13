@@ -54,3 +54,16 @@ Controls that change width when selected because the selected label is a heavier
 - At 360 dp the budget line "Ahead of pace · ₹1,800 left" wraps with "left" alone on a second line.
 - Home's account tiles caption the type in lower case ("bank", "cash"); Profile's tiles say "Bank", "Cash".
 
+## Rendered on a real database (2026-11-13)
+
+The earlier rendered pass drew Home from sample data. This one rendered the real Home screen on a real database (the app's own db layer on SQLite compiled to JavaScript, built with the app's own write functions: an account of each kind including a tracked fund and a card, nine months of entries, budgets, goals, repeating bills, loans, friends), with the real fonts, at 360, 390 and 412 dp, and for a new user with no accounts and one with accounts but no entries. Positions were measured and every cut-off text and small target was listed by script. The harness lives outside the repository and approximates Android: it does not shrink text that asks for `adjustsFontSizeToFit` (the ring's centre figure and the legend read "₹373,…" there and are shrunk to fit on a phone, which this could not confirm for a seven-digit figure), and the period picker and account sheet were not rendered.
+
+- **An investment tile cut its caption** to "investment · mu…": the full label is about 125 dp and the icon leaves 84. The tile says the kind alone ("mutual fund", "fixed deposit"), since the trending-up icon already says it is an investment; a screen reader still hears "investment · mutual fund".
+- **A month with no income sat its caption on the card's edge,** and the card grew by 27 dp when the first income arrived, because the footer was one line (17 dp) where the filled-in card's is 44. The footer is 44 dp with the caption centred in it. This is the first thing someone sees after adding accounts.
+- Confirmed on the real screen: tapping a Coming up chip leaves every chip where it was; "How it adds up" opens under its link and the link stays put; tapping a legend slice changes the headline and not the footer; the Add buttons, week bars, accounts, Coming up and Recent activity share the 16 dp gutter; nothing else is cut off at 360, 390 or 412 dp.
+
+### Seen and left
+
+- At 360 dp the seven bars of "This week" are 37 dp wide (they cannot be 44 with seven across); each is also a button.
+- An account in credit-card-style overdraft (Cash at −₹64,650 in the sample) is left out of "in hand across N accounts", which counts only positive balances; the sample's cash account was overspent by the sample, not by the app.
+

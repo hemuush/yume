@@ -334,6 +334,16 @@ describe('month card with savings hidden', () => {
 });
 
 describe('month card with no income', () => {
+  it('keeps its footer as tall as the populated card’s, so the caption does not sit on the card’s edge', () => {
+    const r = render({ incomeMinor: 0, spentMinor: 0, savingsMinor: 0, surplusMinor: 0 });
+    const caption = r.root.findAll(
+      (n) => n.type === Text && [n.props.children].flat().join('') === 'Add income to see what is free'
+    )[0];
+    let footer = caption.parent;
+    while (footer && !StyleSheet.flatten(footer.props.style)?.borderTopWidth) footer = footer.parent;
+    expect(StyleSheet.flatten(footer!.props.style).minHeight).toBeGreaterThanOrEqual(44);
+  });
+
   it('asks for income instead of showing a figure', () => {
     const all = texts(render({ incomeMinor: 0, spentMinor: 0, savingsMinor: 0, surplusMinor: 0 }));
     expect(all).toEqual(expect.arrayContaining(['Free to use', '—', 'Add income to see what is free']));

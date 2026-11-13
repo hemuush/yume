@@ -33,6 +33,17 @@ export function accountTypeLabel(account: Pick<Account, 'type' | 'investment'>):
     : 'investment';
 }
 
+/**
+ * The kind in the fewest words, for a tile too narrow for the full label ("investment · mutual fund" is cut off in
+ * the 84 dp beside the icon on Home): an investment is its kind, since its trending-up icon already says it is one.
+ */
+export function accountKindShort(account: Pick<Account, 'type' | 'investment'>): string {
+  if (!account.investment) return account.type.replace(/_/g, ' ');
+  return account.investment.kind
+    ? INVESTMENT_KIND_LABEL[account.investment.kind].toLowerCase()
+    : 'investment';
+}
+
 export function accountIcon(type: Account['type'], investment = false): string {
   return investment ? 'trending-up' : (ACCOUNT_ICON[type] ?? 'credit-card');
 }

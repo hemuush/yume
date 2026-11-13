@@ -7,7 +7,7 @@ import { Amount } from '@/components/Amount';
 import type { McIconName } from '@/components/iconName';
 import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
-import { accountHue, accountIcon, accountTypeLabel } from '@/lib/account';
+import { accountHue, accountIcon, accountKindShort, accountTypeLabel } from '@/lib/account';
 import { shade } from '@/lib/color';
 import { withPressed, withPressedTint } from '@/lib/pressed';
 import { useAccent } from '@/theme/AccentContext';
@@ -143,7 +143,7 @@ const AccountTile = memo(function AccountTile({
           />
         </View>
         <Text style={styles.kind} numberOfLines={1}>
-          {accountTypeLabel(a)}
+          {accountKindShort(a)}
         </Text>
       </View>
       <Text style={styles.name} numberOfLines={1}>
