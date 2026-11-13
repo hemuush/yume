@@ -117,10 +117,7 @@ function TrackRow({
         <Text style={styles.trackName} numberOfLines={2}>
           {r.name}
         </Text>
-        <Text style={styles.trackSub}>
-          {now}
-          {inProgress ? ' so far' : ''} · usual {usual}
-        </Text>
+        <Text style={styles.trackSub}>{`${now}${inProgress ? ' so far' : ''} · usual\u00A0${usual}`}</Text>
       </View>
       <View style={styles.trackEnd}>
         <Sparkline
