@@ -110,6 +110,8 @@ export function ComparisonNote({ label, partial }: { label: string; partial: boo
         onPress={() => setOpen(true)}
         accessibilityRole="button"
         accessibilityLabel={`${label}. About comparisons`}
+        // Drawn 36 tall; the touch area is 44.
+        hitSlop={{ top: 4, bottom: 4 }}
         style={withPressedTint(accent, s.comparison)}
       >
         <Text style={s.note}>{label}</Text>

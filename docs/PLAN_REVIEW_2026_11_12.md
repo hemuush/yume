@@ -39,3 +39,21 @@ Every empty state on Plan and its linked screens offers the way forward (add an 
 ## Checks
 
 `PlanScreen.test.tsx` (the tab bar before the data lands; no rent suggestion), `WhatIfScreen.test.tsx` (opens on a choice; rent still pickable), `MonthlyPlanCheck.test.tsx`, `LoanCard.test.tsx` (overdue, year, "1 EMI"), `RuleRow.test.tsx`, `PayInstallmentSheet.test.tsx`, `SpendingExplanation.test.tsx`, `dateLabels.test.ts`, `fixedCategory.test.ts`. Each test that guards a fix fails without it.
+
+## Rendered on a real database, and what jumped (2026-11-13)
+
+Plan was rendered from the real screen in a browser: the app's own database layer (its `expo-sqlite` replaced by SQLite compiled to JavaScript), a dataset built with the app's own write functions (accounts including a card and a tracked fund, three months of entries, budgets, goals, repeating bills, a SIP, two borrowed loans and one lent, two friends), the real Archivo and Fredoka fonts, at 360, 390 and 412 dp, on all four tabs, with taps. Positions were measured in the page and every text that was cut off was listed by script, so each item below was read off a number. The harness lives outside the repository; it approximates Android (text and flex layout are close, gestures and shadows are not).
+
+- **Switching tabs shifted the content.** The first block started 20, about 42, 16 and 28 dp under the tab bar on Overview, Upcoming, Money plan and Debt, because each block carries its own top margin. The gap under the tabs is now set per tab (`TAB_GAP`) and the first block starts 20 dp down on all four (measured: the same card top, 140 px, on three tabs and the Upcoming heading on the fourth).
+- **Upcoming's subtitle was a separate line** about 20 dp under its heading, unlike every other heading with a total or a note. It is the section's own subtitle now, and one short line ("Next 30 days"), because beside "Manage recurring" the longer line wrapped at 360 dp and left "30 days" alone on a second line.
+- **Picking an Upcoming date moved the dates beside it** by up to 3 dp (the picked pill went bold, so it widened). The pills use one weight; the fill shows the pick. (Measured: identical positions before and after.)
+- **"Money plan" wrapped onto two lines when selected at 360 dp.** It fits in its quarter of the track in the regular weight and not in the heavier selected one. The tabs' side padding is 2 dp instead of 6, so the label stays on one line (the shared segmented control, so every screen that uses it benefits).
+- **A tile cut its own sentence.** "Shopping −10% saves ₹745 a month" ended "saves ₹745 a…" in the Spend a little less tile at 360 and 390 dp; it has three lines now. Nothing else on any tab is cut off at 360, 390 or 412 dp.
+- **Captions split a date or stranded a word:** "free by Feb / 2036", "ends Feb / 2036", "all within / limits". The last two words of those captions are joined (`keepTogether`) so they wrap together.
+
+### Looked at and left
+
+- The "Needs attention" block that appears with overdue payments was not in view in the cleaned-up dataset (only a lent loan is overdue there); it was seen once with 13 overdue EMIs and read fine.
+- The two friends' avatars on Overview are 30 dp wide with 2 dp of extra touch on each side (46 tall): small because they overlap. 
+- At large text the tabs stack two by two, as before; that layout was not rendered here.
+

@@ -6,7 +6,7 @@ Activity now leads with its entries. The summary is one slim strip, the filters 
 
 - **Spent strip** ([ActivitySummaryStrip](../src/features/transactions/ActivitySummaryStrip.tsx)) replaces the big Spent card. It shows the kicker ("Spent this week", "Spent on Food this week", or just "Spent" for a past period), the figure, the change against the period before (dropped while the list is narrowed to a category) and a small bar per day (per week in a month) with the current day in ink. It is a button that opens Insights. The figure is a plain amount that never counts up; the strip as a whole glides in when the period steps (see below).
 - **Insights sheet** holds what the card used to: the figure and change, the full day chart (tap a day to see only it, which closes the sheet and scrolls the list), the daily average, and Money in / Left. It is the same [TransactionsHeadline](../src/features/transactions/TransactionsHeadline.tsx) with `bare`, so the chart, scaling and privacy logic are not duplicated.
-- **One filter row** ([ActivityFilterChips](../src/features/transactions/ActivityFilterChips.tsx)): the Filters button (with its count), then the picked category and account chips with Clear all, then All / Spent / Income / Transfers. It scrolls sideways, and wraps at 360 dp or above 1.2 font scale. The second chip line is gone.
+- **One filter row** ([ActivityFilterChips](../src/features/transactions/ActivityFilterChips.tsx)): the Filters button (with its count), then the picked category, account and label chips, then All / Spent / Income / Transfers, and Clear all last (see the device note below). It scrolls sideways, and wraps at 360 dp or above 1.2 font scale. The second chip line is gone.
 - **Flat dated feed** ([TimelineDay](../src/features/transactions/TimelineDay.tsx)): each day is a block on the page, not a segment of one card. A marker rail on the left shows the weekday and date number (today's in a filled circle) and a line down to the next day, which the last day ends. The day's heading names what it did instead of one unlabelled net: "₹1,420 spent · ₹82,000 in · ₹899 back" (refunds are counted as "back", not as income, and transfers move nothing). It is omitted when one line would only repeat it, and savings amounts are left out while hidden, as before.
 
 Unchanged: the Week | Month switch and the date pill stay in the header, the entry rows (a note leads with the category, parent and account under it), stacks, drag ordering, search, the filter sheet and the detail sheet.
@@ -53,4 +53,26 @@ The same kind of review for what the first one did not cover: the filter sheet, 
 Looked at and left: Spent / Expense and Transfers / Transfer are different words in the filter row and the filter sheet (the row follows the Spent strip, the sheet follows Add); the bar chart's day totals are floored at zero when a refund exceeds the day's spending, so a week's bars can add to a little more than the strip's figure; a swipe on the Spent strip needs 60 dp of travel and ignores speed.
 
 Checks: `useScrollToTopOnChange.test.tsx`, the back-button test in `TransactionsScreen.test.tsx`, the label box tests in `FilterModal.test.tsx`, the old-entry year in `TransactionDetailModal.test.tsx`, the haptic on drop in `TimelineDay.test.tsx`, and the widened `searchInputs.test.ts`. As before these are unit tests: the screen has not been run on a device since.
+
+## Seen on a device: Clear all came first (2026-11-13)
+
+The first look at Activity on a phone showed the filter row as Filters, Clear all, All, Spent, Income, Transfers. A picked type counts as a filter, so tapping Spent made Clear all appear in front of the type choices and moved them to the right under the thumb that had just tapped one. It now comes last, after the types, in the scrolling row and in the wrapped row at large text: the types never move, and the chips picked in the filter sheet stay beside the Filters button where they show what is on. It still appears for a type on its own, as before, although All does the same there; that, and whether it should wait until two filters are on, is a choice left open. [ActivityFilterChips.test.tsx](../src/features/transactions/ActivityFilterChips.test.tsx) reads the row's tappable things in order in both layouts.
+
+## Rendered on a real database (2026-11-13)
+
+Activity was rendered from the real screen in a browser on a real database (the app's own db layer on SQLite compiled to JavaScript, built with the app's own write functions: 75 days of spending, groups of entries in one category on one day, a transfer, a long-noted income, a refund), with the real fonts, at 360, 390 and 412 dp, in week and month scope, with a group expanded, with search open, a past week and with no data. Positions were measured and every cut-off text and small target was listed by script. The harness lives outside the repository and approximates Android; the filter sheet and period picker need native pieces it lacks and were not rendered.
+
+- **The filter row, and the list under it, dropped 2 dp when "Clear all" arrived.** Clear all and a picked chip are 44 dp tall and the pills 40, so the row grew by 4 dp when one of them appeared and centred the pills lower. The row is 44 dp tall from the start; picking a type moves nothing (measured: every pill and the first entry keep their position).
+- **Picking a type changed the width of the pills** (the picked one went from regular to medium), moving its neighbours by up to 1 dp. All pills use one weight.
+- **Switching Week | Month moved the words** by about 2.5 dp (the picked one was bold, and the row is right-aligned). Both are one weight; the underline and the darker ink show the pick.
+- **A transfer's title stranded its last word** ("SBI → Emergency / fund"). The arrow stays with where it goes, so it wraps as "SBI →" over "Emergency fund".
+
+Nothing is cut off at 360, 390 or 412 dp. Expanding a group leaves its own row where it is (measured). The figures agree: the strip's total is the days' spending less the refund, and month and Reports agree.
+
+### Looked at and left
+
+- At 360 dp the period bar stacks (the pill on one line, Week | Month on a second line of two equal halves with a long underline). That is the designed narrow layout (`stackPeriod`, under 380 dp); on one line the pill and the switch do not fit at 360.
+- The previous and next week arrows are 36 dp wide (40 with their slop) and 44 tall: a little under 44 across.
+- The week's label is built as "8–" plus a day and month, so a phone set to a US locale reads "8–Nov 14" where an Indian one reads "8–14 Nov". Fine for the app's audience; the locale's own range format would settle it.
+- A day's heading wraps its totals under the name when they are long ("₹5,625 spent · ₹450 back"); it is left-aligned and one line taller, by design.
 

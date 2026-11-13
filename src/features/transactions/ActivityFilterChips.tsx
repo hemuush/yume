@@ -22,8 +22,8 @@ const TYPE_CHIPS: { label: string; value: ActivityType }[] = [
 ];
 
 /**
- * Activity's filter row: the Filters button, a removable chip per picked category/account (with Clear all),
- * then the one-tap type choices (the sheet's `filterType`). Only the type choices form the radio group.
+ * Activity's filter row: the Filters button, a removable chip per picked category/account/label, the one-tap
+ * type choices (the sheet's `filterType`), and Clear all last. Only the type choices form the radio group.
  */
 export function ActivityFilterChips({
   filterType,
@@ -83,8 +83,10 @@ export function ActivityFilterChips({
       </Pressable>
     );
   });
-  // One row, in the order of how often it is used: Filters (with its count), what is already picked (a
-  // removable chip each, then Clear all), then the one-tap types. At large text it wraps instead of scrolling.
+  // One row, in the order of how often it is used: Filters (with its count), what the sheet picked (a
+  // removable chip each), then the one-tap types, and Clear all at the end. Picking a type must not move the
+  // types under the thumb, so the only thing that appears with it, Clear all, appears after them, never in
+  // front. At large text it wraps instead of scrolling.
   const pickedChips = picked > 0 && (
     <>
       {categoryIds.map((id) => (
@@ -123,17 +125,17 @@ export function ActivityFilterChips({
           <Feather name="x" size={12} color={theme.colors.textSecondary} />
         </Pressable>
       )}
-      {picked > 0 && (
-        <Pressable
-          onPress={onClearAll}
-          style={withPressedTint(accent, styles.chip)}
-          accessibilityRole="button"
-          accessibilityLabel="Clear all Activity filters"
-        >
-          <Text style={styles.chipText}>Clear all</Text>
-        </Pressable>
-      )}
     </>
+  );
+  const clearAll = picked > 0 && (
+    <Pressable
+      onPress={onClearAll}
+      style={withPressedTint(accent, styles.chip)}
+      accessibilityRole="button"
+      accessibilityLabel="Clear all Activity filters"
+    >
+      <Text style={styles.chipText}>Clear all</Text>
+    </Pressable>
   );
   const filterButton = onOpenFilters && (
     <HeaderIconButton
@@ -152,6 +154,7 @@ export function ActivityFilterChips({
           {filterButton}
           {pickedChips}
           {pills}
+          {clearAll}
         </View>
       ) : (
         <ScrollView
@@ -165,6 +168,7 @@ export function ActivityFilterChips({
           <View style={styles.pillGroup} accessibilityRole="radiogroup">
             {pills}
           </View>
+          {clearAll}
         </ScrollView>
       )}
       <View style={styles.filterGap} />

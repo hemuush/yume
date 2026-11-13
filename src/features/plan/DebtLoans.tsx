@@ -14,6 +14,7 @@ import { loanBarTone, loanGlyph, loanTint } from '@/features/loans/loanIdentity'
 import { LoansSummary } from './planOverview';
 import { TileGrid } from './PlanGrid';
 import { styles } from './plan.styles';
+import { keepTogether } from '@/lib/keepTogether';
 
 /**
  * The Debt tab's loans as compact tiles, two to a row (one with large text): the loan's mark and what is left,
@@ -44,7 +45,9 @@ export function DebtLoans({
         const hue = hues[r.id] ?? (lent ? theme.colors.secondary : theme.colors.idGold);
         const progress =
           r.totalCount > 0 ? `${r.paidCount} of ${r.totalCount} paid` : lent ? 'Lent out' : 'Loan';
-        const subtitle = r.endDate ? `${progress} · ends ${shortMonthYear(r.endDate)}` : progress;
+        const subtitle = r.endDate
+          ? keepTogether(`${progress} · ends ${shortMonthYear(r.endDate)}`)
+          : progress;
         const left = formatMoney(r.leftMinor);
         const fraction = r.totalCount > 0 ? Math.min(1, Math.max(0, r.paidCount / r.totalCount)) : 0;
         const soon = !!r.nextDueDate && daysUntilIsoDate(r.nextDueDate) <= DUE_SOON_DAYS;

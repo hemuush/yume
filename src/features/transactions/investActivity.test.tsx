@@ -139,7 +139,7 @@ describe('a day with investing on it', () => {
   it('reads a withdrawal, and leaves an ordinary transfer as it was', () => {
     const shown = texts(render({ items: [tx('w', { accountId: 'gold', toAccountId: 'bank' }), plain] }));
     expect(shown).toContain('Withdrawn from Gold');
-    expect(shown).toContain('HDFC → Cash');
+    expect(shown).toContain('HDFC →\u00A0Cash');
   });
 
   it('keeps invested money out of the day total', () => {

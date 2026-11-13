@@ -159,8 +159,10 @@ export const styles = StyleSheet.create({
   scopeSwitchFlush: { marginRight: -10 },
   scopeBtn: { minHeight: 44, justifyContent: 'center', paddingHorizontal: 10 },
   scopeBtnStacked: { flex: 1, alignItems: 'center' },
-  scopeText: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textMuted },
-  scopeTextOn: { color: theme.colors.textPrimary, fontFamily: theme.font.bodyBold },
+  // One weight picked or not: the underline and the darker ink show the pick, so switching never changes the width
+  // of either word (the right-hand word would otherwise step 2 dp each time).
+  scopeText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textMuted },
+  scopeTextOn: { color: theme.colors.textPrimary },
   scopeUnderline: {
     position: 'absolute',
     left: 10,
@@ -235,7 +237,9 @@ export const styles = StyleSheet.create({
   typeFilterRow: { marginTop: 8, paddingLeft: 16, paddingRight: 16, gap: 6 },
   pillGroup: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   typeFilterRowWrap: { marginTop: 8, marginHorizontal: 16, flexWrap: 'wrap', paddingRight: 0 },
-  typeBar: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingRight: 8 },
+  // As tall as its tallest chip (44): "Clear all" and a picked chip are taller than the 40 dp pills, and a row that
+  // grew when one arrived moved the pills and the whole list under them.
+  typeBar: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingRight: 8, minHeight: 44 },
   typeBtn: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -247,13 +251,14 @@ export const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
   },
+  // The same weight picked or not, so picking a type never changes the width of the pills beside it.
   typeText: {
     textAlign: 'center',
-    fontFamily: theme.font.body,
+    fontFamily: theme.font.bodyMedium,
     fontSize: 13,
     color: theme.colors.textSecondary,
   },
-  typeTextOn: { color: theme.colors.white, fontFamily: theme.font.bodyMedium },
+  typeTextOn: { color: theme.colors.white },
   filterGap: { height: 10 },
   chip: {
     flexDirection: 'row',

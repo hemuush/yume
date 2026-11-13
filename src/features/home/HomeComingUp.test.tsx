@@ -1,5 +1,5 @@
 /** Home's Coming up on screen: one ranked list, filter chips, hidden amounts, and the way on to each page. */
-import { Text } from 'react-native';
+import { Text, View, StyleSheet } from 'react-native';
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
 
 jest.mock('@expo/vector-icons/Feather', () => () => null);
@@ -151,4 +151,49 @@ it('says when nothing is coming up and still opens Plan', () => {
   press(r, 'Nothing coming up. Open Plan');
   expect(onSeeAll).toHaveBeenCalledWith('all');
   act(() => r.unmount());
+});
+
+describe('filter chips do not change size when they are used', () => {
+  const chip = (r: ReactTestRenderer, label: string) =>
+    r.root.find((n) => n.props.accessibilityLabel === label && typeof n.props.onPress === 'function');
+  const flat = (style: unknown) =>
+    StyleSheet.flatten(
+      typeof style === 'function' ? (style as (s: object) => never)({ pressed: false }) : (style as never)
+    ) ?? {};
+
+  it('gives each chip a 44 dp touch area though it is drawn 36 tall', () => {
+    const r = render();
+    const node = chip(r, 'All');
+    const drawn = flat(node.props.style).minHeight as number;
+    const slop = node.props.hitSlop as { top: number; bottom: number };
+    expect(drawn + slop.top + slop.bottom).toBeGreaterThanOrEqual(44);
+    act(() => r.unmount());
+  });
+
+  it('draws the needs-a-look dot as a corner badge that takes no room in the row', () => {
+    const r = render();
+    const dots = chip(r, 'Budgets, needs a look')
+      .findAllByType(View)
+      .filter((n) => n.props.style && flat(n.props.style).width === 7 && flat(n.props.style).height === 7)
+      .map((n) => flat(n.props.style));
+    expect(dots).toHaveLength(1);
+    // In the row it would make this chip wider than the others and narrower again once picked, moving every
+    // chip after it under the finger.
+    expect(dots[0].position).toBe('absolute');
+    act(() => r.unmount());
+  });
+
+  it('writes a picked chip and an unpicked one in the same weight, so picking one moves none of the others', () => {
+    const r = render();
+    const weight = (label: string) => flat(chip(r, label).findByType(Text).props.style).fontFamily;
+    const sizeOf = (label: string) => {
+      const style = flat(chip(r, label).props.style);
+      return [style.paddingHorizontal, style.minHeight];
+    };
+    expect(weight('All')).toBe(weight('Budgets, needs a look'));
+    expect(sizeOf('All')).toEqual(sizeOf('Budgets, needs a look'));
+    press(r, 'Budgets, needs a look');
+    expect(weight('Budgets, needs a look')).toBe(weight('All'));
+    act(() => r.unmount());
+  });
 });

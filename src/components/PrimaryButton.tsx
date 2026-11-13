@@ -98,8 +98,10 @@ export function PrimaryButton({
         variantStyle,
         variant === 'primary' && { backgroundColor: colors.ink },
         (icon || loading) && !done && styles.withIcon,
-        unavailable && !loading && !done && styles.disabled,
         animatedStyle,
+        // After the press feedback: that writes opacity too (0.92 to 1), and written later it would win and
+        // leave a disabled button looking as live as an enabled one.
+        unavailable && !loading && !done && styles.disabled,
         style,
       ]}
       accessibilityRole="button"

@@ -114,6 +114,16 @@ describe('Tidy up screen', () => {
     expect(shown.some((t) => t.includes('₹'))).toBe(false);
   });
 
+  it('keeps the months of a group of old balances together, so a wrapped line never splits "Aug 2026 – Sep 2026"', async () => {
+    const shown = texts(await render());
+    const line = shown.find((t) => t.startsWith('2 entries, '));
+    expect(line).toBeDefined();
+    // "2 entries," breaks where it likes; the range after it is one piece.
+    const range = line!.split('2 entries, ')[1].split('. If')[0];
+    expect(range).toMatch(/\u00A0–\u00A0/);
+    expect(range.replace(/\u00A0/g, '').includes(' ')).toBe(false);
+  });
+
   it('deletes one of a pair with an undo, or keeps both', async () => {
     const tree = await render();
     await tap(tree, 'Delete one');

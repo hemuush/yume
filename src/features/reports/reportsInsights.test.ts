@@ -393,6 +393,10 @@ describe('buildStoryCards', () => {
     const quiet = buildStoryCards(base).find((c) => c.key === 'quiet')!;
     expect(quiet.big).toBe('5 no-spend days');
     expect(quiet.detail).toMatch(/^Out of 26 so far\. Your longest run was 2 days, /);
+    // The run's dates are one unbreakable piece, so a wrapped line never leaves "Jan 1 –" at the end of a line.
+    const range = quiet.detail!.split('days, ')[1];
+    expect(range).toMatch(/\u00A0–\u00A0/);
+    expect(range.replace(/\u00A0/g, '').includes(' ')).toBe(false);
   });
 
   it('leaves out the fixed card when nothing fixed was paid', () => {
@@ -603,8 +607,14 @@ describe('cashFlowReadLine', () => {
 
   it('reads a finished month that kept something', () => {
     expect(cashFlowReadLine(p(8000000, 5000000), false, 30)).toMatch(
-      /^Oct: .* in, .* out\. Kept .*, 38% of it\.$/
+      /^Oct: .* in, .* out\. Kept .*, 38%\u00A0of\u00A0it\.$/
     );
+  });
+
+  it('keeps the share and its last words together, so a wrapped line never strands "of it."', () => {
+    const line = cashFlowReadLine(p(8000000, 5000000), false, 30);
+    expect(line.endsWith('38%\u00A0of\u00A0it.')).toBe(true);
+    expect(line).not.toMatch(/ of it\.$/);
   });
 
   it('reads a month still going against the usual rate', () => {

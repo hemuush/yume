@@ -47,7 +47,9 @@ const styles = StyleSheet.create({
     borderBottomColor: theme.colors.borderSoft,
   },
   tab: { flex: 1, minHeight: 44, alignItems: 'center', justifyContent: 'center' },
-  label: { fontFamily: theme.font.body, fontSize: 14, color: theme.colors.textMuted },
-  labelOn: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
+  // One weight picked or not: the underline and the darker ink show the pick, and the word does not change width
+  // (the picked one stepped about 2 dp each time).
+  label: { fontFamily: theme.font.bodyMedium, fontSize: 14, color: theme.colors.textMuted },
+  labelOn: { color: theme.colors.textPrimary },
   underline: { position: 'absolute', left: '30%', right: '30%', bottom: -1, height: 3, borderRadius: 2 },
 });

@@ -166,7 +166,8 @@ export function CashFlowCard({
           {[
             { label: 'Income', value: points[selI].incomeMinor },
             { label: 'Spent', value: points[selI].expenseMinor },
-            { label: 'Left after spending', value: keptOf(points[selI]) },
+            // "Kept", as on Overview: one word, so the three figures share a baseline instead of the third dropping under a two-line label.
+            { label: 'Kept', value: keptOf(points[selI]) },
           ].map((item) => (
             <View key={item.label} style={styles.stripCell}>
               <Text style={styles.stripLabel}>{item.label}</Text>

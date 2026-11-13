@@ -88,3 +88,41 @@ describe('the income comparison', () => {
     expect(shown.some((t) => t.includes('so far vs'))).toBe(false);
   });
 });
+
+it('gives Income the most room of the three columns: it carries the long line, so it stays on two lines at 360 dp', () => {
+  jest.spyOn(require('react-native'), 'useWindowDimensions').mockReturnValue({
+    width: 360,
+    height: 800,
+    fontScale: 1,
+    scale: 1,
+  });
+  let tree!: ReactTestRenderer;
+  act(() => {
+    tree = create(
+      <ReportHero
+        periodName="November"
+        inProgress
+        spentMinor={15000}
+        perDayMinor={5000}
+        budget={null}
+        incomeMinor={10000}
+        previousIncomeMinor={9000}
+        comparedTo="the month before"
+        animKey="November"
+      />
+    );
+  });
+  const columnOf = (label: string) =>
+    tree.root
+      .findAllByType(View)
+      .find(
+        (n) =>
+          n.findAllByType(Text).some((t) => t.props.children === label) &&
+          StyleSheet.flatten(n.props.style)?.flexBasis === 0 &&
+          !n.findAllByType(View).some((m) => m !== n && StyleSheet.flatten(m.props.style)?.flexBasis === 0)
+      )!;
+  const grow = (label: string) => StyleSheet.flatten(columnOf(label).props.style).flexGrow as number;
+  expect(grow('Income')).toBeGreaterThan(grow('Kept'));
+  expect(grow('Income')).toBeGreaterThan(grow('Spent so far'));
+  act(() => tree.unmount());
+});
