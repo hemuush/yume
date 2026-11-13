@@ -1,5 +1,6 @@
-import { View, StyleSheet, useWindowDimensions } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { Skeleton } from '@/components/Skeleton';
+import { useContentWidth } from '@/components/ColumnFrame';
 
 const SUMMARY_H = 124;
 const CALENDAR_H = 440;
@@ -7,7 +8,7 @@ const CALENDAR_H = 440;
 /** A few chart-sized placeholders avoid an animation per calendar cell. */
 export function ReportsSkeleton() {
   // The cards' width: the screen less the 16 dp gutter on each side, as on the loaded page.
-  const width = Math.max(0, useWindowDimensions().width - 32);
+  const width = Math.max(0, useContentWidth() - 32);
   return (
     <View style={styles.wrap} accessibilityLabel="Loading report">
       {/* Two cards at about the heights of the loaded Overview: the summary (three figures and a budget line), then

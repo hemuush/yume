@@ -1,6 +1,7 @@
-import { View, StyleSheet, useWindowDimensions } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { Skeleton } from '@/components/Skeleton';
 import { screenStyles as h } from '@/components/screenStyles';
+import { useContentWidth } from '@/components/ColumnFrame';
 
 export { CardRowsSkeleton } from '@/components/ListSkeleton';
 
@@ -9,7 +10,7 @@ export { CardRowsSkeleton } from '@/components/ListSkeleton';
  * ring with its legend, allowance pill, then the Add buttons and the week card).
  */
 export function ThisMonthHeroSkeleton() {
-  const innerWidth = Math.max(0, useWindowDimensions().width - 66);
+  const innerWidth = Math.max(0, useContentWidth() - 66);
   const actionWidth = Math.max(0, Math.floor((innerWidth + 32 - 16) / 3));
   return (
     <>

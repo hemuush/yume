@@ -75,6 +75,7 @@ import { EmptyState } from '@/components/EmptyState';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 import { useTabScrollToTop } from '@/lib/useTabScrollToTop';
 import { useScrollToTopOnChange } from '@/lib/useScrollToTopOnChange';
+import { useStacked } from '@/lib/useStacked';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -89,8 +90,8 @@ const SEARCH_RESULT_LIMIT = 50;
 
 export default function TransactionsScreen() {
   const insets = useSafeAreaInsets();
-  const { width, height, fontScale } = useWindowDimensions();
-  const stackPeriod = width < 380 || fontScale > 1.15;
+  const { height, fontScale } = useWindowDimensions();
+  const stackPeriod = useStacked('early');
   const tabScrollPad = useTabScrollPad();
   const { hideAmounts } = usePrivacy();
   const { accent, secondary } = useAccent();

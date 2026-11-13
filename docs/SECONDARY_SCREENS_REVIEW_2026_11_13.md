@@ -91,3 +91,11 @@ What is established and what is not. The two sheet layouts are `ModalSheet`'s fr
 
 If the sheet still stands above the bottom after this, the numbers above (and which sheet, whether the keyboard was used before it, the build) say which of the three is left.
 
+### Fifth pass: the audit's code-level findings
+
+- **Wide screens.** The app is one centred column of at most 600 dp (`ColumnFrame` in the root layout); a phone is untouched. Sheets and dialogs are their own windows and cap themselves to it (a dialog's 24 dp sides moved from the dialog to its container, so a dialog can be `width: 100%` and still centred). The Home and Reports placeholders take their width from the column. Seen in the browser at 840 dp: the sheets are a 600 dp column; a screen cannot be checked at that width without the root layout, which the browser harness does not render, so the column itself is covered by a unit test only.
+- **Cut-offs that differ.** `useStacked` now names the three it knows (`normal`, `early`, `late`); Add's amount card, Activity's period bar and Plan's status tiles use the named ones, with the same numbers as before. The guard test looks for any inline `width < N || fontScale > X`.
+- **CI** can be run on a branch with no pull request (`workflow_dispatch`), without a second run on every push once the pull request is open.
+- **`@expo/image-utils`**, which the app-icon plugin requires, is a dev dependency instead of a package Expo happens to bring.
+- **Not done:** the 1,254-line Activity route (56 hooks) is left until it is next changed; splitting it now would be a large change with nothing to prove it, and no bug lives in it.
+

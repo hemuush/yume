@@ -14,6 +14,7 @@ import {
 } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ModalSafeArea } from './ModalSafeArea';
+import { dialogWidth, sheetWidth } from './ColumnFrame';
 import { theme } from '@/constants/theme';
 import { usePressScale } from '@/lib/usePressScale';
 import { useReduceMotion } from '@/lib/useReduceMotion';
@@ -361,11 +362,18 @@ function ModalSheetBody({
             style={[
               styles.flex,
               styles.alignCenter,
-              { paddingTop: insets.top + 12, paddingBottom: (keyboardUp ? 0 : insets.bottom) + 12 },
+              {
+                paddingTop: insets.top + 12,
+                paddingBottom: (keyboardUp ? 0 : insets.bottom) + 12,
+                paddingHorizontal: 24,
+              },
             ]}
             pointerEvents="box-none"
           >
-            <View testID="sheet-surface" style={[styles.dialog, styles.dialogFramed, { maxHeight }]}>
+            <View
+              testID="sheet-surface"
+              style={[styles.dialog, styles.dialogFramed, dialogWidth, { maxHeight }]}
+            >
               <SheetWash />
               {stripView}
               <View style={styles.framedPad}>{header}</View>
@@ -412,7 +420,7 @@ function ModalSheetBody({
               onLayout={
                 sharesHeight && visible ? (event) => flow.measure(event.nativeEvent.layout.height) : undefined
               }
-              style={[styles.framedSheet, { maxHeight }, flowFrame]}
+              style={[styles.framedSheet, sheetWidth, { maxHeight }, flowFrame]}
             >
               <SheetWash />
               <View
@@ -462,7 +470,7 @@ function ModalSheetBody({
   const body = (
     <View
       style={[
-        isSheet ? styles.sheet : styles.dialog,
+        isSheet ? [styles.sheet, sheetWidth] : [styles.dialog, dialogWidth],
         stripView && styles.dialogStriped,
         { paddingBottom: isSheet ? 24 + insets.bottom : 20 },
       ]}
@@ -493,7 +501,7 @@ function ModalSheetBody({
             isSheet ? styles.alignBottom : styles.alignCenter,
             isSheet
               ? { paddingTop: insets.top + 8 }
-              : { paddingTop: insets.top + 12, paddingBottom: insets.bottom + 12 },
+              : { paddingTop: insets.top + 12, paddingBottom: insets.bottom + 12, paddingHorizontal: 24 },
           ]}
           pointerEvents="box-none"
         >
@@ -618,7 +626,6 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.surface,
     borderRadius: 28,
     padding: 20,
-    marginHorizontal: 24,
     shadowColor: theme.colors.ink,
     shadowOffset: { width: 0, height: 16 },
     shadowOpacity: 0.2,
