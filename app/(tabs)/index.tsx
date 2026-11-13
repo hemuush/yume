@@ -1,4 +1,5 @@
 import { runWhenIdle } from '@/lib/runWhenIdle';
+import { Appear } from '@/components/Appear';
 import { useLocalDayRefresh } from '@/lib/useLocalDayRefresh';
 import { investHref, withdrawHref } from '@/lib/investRoutes';
 import { investRole, investmentIdsOf } from '@/lib/investment';
@@ -581,7 +582,7 @@ export default function DashboardScreen() {
         }
       >
         {loadError && (
-          <View style={styles.errorBanner}>
+          <Appear style={styles.errorBanner}>
             <Text style={styles.errorTitle}>Couldn&rsquo;t load your data</Text>
             <Text style={styles.errorDetail}>{loadError}</Text>
             {/* Pulling down also retries, but nothing says so: offer it where the problem is said. */}
@@ -592,7 +593,7 @@ export default function DashboardScreen() {
               onPress={() => void load(cursorRef.current)}
               style={styles.errorRetry}
             />
-          </View>
+          </Appear>
         )}
 
         <View style={styles.heroGap}>

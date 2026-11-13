@@ -60,6 +60,7 @@ These remain available for decisions and previous evidence. Old source lists and
 | [Plan review](PLAN_REVIEW_2026_11_12.md) | Dated review or implementation record |
 | [Add flow review](ADD_FLOW_REVIEW_2026_11_12.md) | Dated review or implementation record |
 | [Profile review](PROFILE_REVIEW_2026_11_12.md) | Dated review or implementation record |
+| [Goals, Budgets, Loans, Recurring and the Activity filter row](SECONDARY_SCREENS_REVIEW_2026_11_13.md) | Dated review or implementation record |
 | [Add transaction flow review — 21 October 2026](ADD_TRANSACTION_FLOW_REVIEW_2026_10_21.md)         | Dated review or implementation record |
 | [Android audit fixes and verification — 23 October 2026](ANDROID_AUDIT_VERIFICATION_2026_10_23.md) | Dated review or implementation record |
 | [Android production audit — 23 October 2026](ANDROID_PRODUCTION_AUDIT_2026_10_23.md)               | Dated review or implementation record |

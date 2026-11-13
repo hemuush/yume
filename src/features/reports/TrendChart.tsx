@@ -1,6 +1,6 @@
 import { themeInk } from '@/theme/interactionColors';
 import { useState } from 'react';
-import { Animated, View, Pressable } from 'react-native';
+import { View, Pressable } from 'react-native';
 import Svg, { Circle, Line, Polygon, Polyline, Text as SvgText } from 'react-native-svg';
 import { Text } from '@/components/Text';
 import { ModalSheet } from '@/components/ModalSheet';
@@ -12,7 +12,6 @@ import { theme } from '@/constants/theme';
 import { haptics } from '@/lib/haptics';
 import { styles } from './reports.styles';
 import { withPressed } from '@/lib/pressed';
-import { useGrowFrom } from '@/lib/useGrowFrom';
 import { useAccent } from '@/theme/AccentContext';
 import { toLocalIsoDate } from '@/lib/date';
 
@@ -28,19 +27,11 @@ type Kind = 'spend' | 'netWorth';
 
 const partialProjection = (v: number | null) => (v == null ? -Infinity : v);
 
-const AnimatedPolyline = Animated.createAnimatedComponent(Polyline);
-
-/** The chart's line, drawn in from its first month once after app open; still when you come back to it. */
-function DrawnLine({ animKey, coords }: { animKey: string; coords: { x: number; y: number }[] }) {
+/** One run of the chart's line. */
+function TrendLine({ coords }: { coords: { x: number; y: number }[] }) {
   const { accent } = useAccent();
-  const draw = useGrowFrom(animKey, 1);
-  let length = 0;
-  for (let i = 1; i < coords.length; i++) {
-    length += Math.hypot(coords[i].x - coords[i - 1].x, coords[i].y - coords[i - 1].y);
-  }
-  length = Math.ceil(length) + 1;
   return (
-    <AnimatedPolyline
+    <Polyline
       points={coords.map((c) => `${c.x},${c.y}`).join(' ')}
       fill="none"
       stroke={themeInk(accent)}
@@ -48,8 +39,6 @@ function DrawnLine({ animKey, coords }: { animKey: string; coords: { x: number; 
       strokeWidth={2.2}
       strokeLinejoin="round"
       strokeLinecap="round"
-      strokeDasharray={length}
-      strokeDashoffset={draw.interpolate({ inputRange: [0, 1], outputRange: [length, 0] })}
     />
   );
 }
@@ -239,7 +228,7 @@ export function TrendChart({
                 )
             )}
             {solidSegments.map((coords, i) => (
-              <DrawnLine key={i} animKey={`trend:${showing}:${points.length}:${i}`} coords={coords} />
+              <TrendLine key={i} coords={coords} />
             ))}
             {partial && points[lastI - 1].available && (
               <Line

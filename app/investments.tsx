@@ -1,4 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
+import { joinSub } from '@/lib/categoryLabel';
+import { gluePiece } from '@/lib/keepTogether';
 import { View, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -11,6 +13,7 @@ import { SegmentedControl } from '@/components/SegmentedControl';
 import { SettingsRow } from '@/components/SettingsRow';
 import { CardRowsSkeleton, SummarySkeleton } from '@/components/ListSkeleton';
 import { ScreenLoadError } from '@/components/ScreenLoadError';
+import { LoadFade } from '@/components/LoadFade';
 import { Section } from '@/components/Section';
 import { SCREEN } from '@/components/screenStyles';
 import { SkyHeader } from '@/features/home/SkyHeader';
@@ -148,9 +151,14 @@ export default function InvestmentsScreen() {
       icon="repeat"
       round
       label={sip.holdingName}
-      sub={`${ruleCadenceLabel(sip.rule)} · from ${sip.fromName}${
-        sip.active ? ` · next ${weekdayDayMonth(sip.rule.nextRunDate)}` : ' · paused'
-      }`}
+      // Wraps between its pieces, never inside a date ("next Sun, Nov" over "22").
+      sub={joinSub(
+        [
+          ruleCadenceLabel(sip.rule),
+          `from ${sip.fromName}`,
+          sip.active ? `next ${weekdayDayMonth(sip.rule.nextRunDate)}` : 'paused',
+        ].map(gluePiece)
+      )}
       subColor={sip.active ? undefined : theme.colors.warnInk}
       value={money(
         sip.rule.amountMinor,
@@ -169,88 +177,74 @@ export default function InvestmentsScreen() {
         onScroll={scrollHandler}
         scrollEventThrottle={16}
         contentContainerStyle={{
-          paddingTop: headerHeight + theme.layout.screenTopGap,
+          // The first card brings the top gap itself (as on Budgets, Goals and Loans), so the page adds none.
+          paddingTop: headerHeight,
           paddingBottom: theme.layout.screenScrollPad + insets.bottom,
         }}
       >
-        {loadError && (
-          <ScreenLoadError title="Investments" message={loadError} onRetry={() => void reload()} embedded />
-        )}
-        {!loaded && !loadError ? (
-          // The same placeholders every other screen shows while it loads, instead of an empty screen.
-          <>
-            <SummarySkeleton />
-            <View style={{ marginTop: 16 }}>
-              <CardRowsSkeleton rows={3} subtitle />
-            </View>
-          </>
-        ) : none ? (
-          <StartTracking onAdd={() => setAdding(true)} />
-        ) : (
-          loaded && (
+        <LoadFade loaded={loaded || !!loadError}>
+          {loadError && (
+            <ScreenLoadError title="Investments" message={loadError} onRetry={() => void reload()} embedded />
+          )}
+          {!loaded && !loadError ? (
+            // The same placeholders every other screen shows while it loads, instead of an empty screen.
             <>
-              <InvestmentsHero
-                portfolio={portfolio}
-                rate={rate}
-                currency={currency}
-                sipMonthly={sipMonthly}
-              />
-
-              <View style={styles.mainActions}>
-                <PrimaryButton
-                  title="Invest money"
-                  style={styles.mainAction}
-                  onPress={() => choose('invest')}
-                />
-                <PrimaryButton
-                  title="Update values"
-                  variant="secondary"
-                  style={styles.mainAction}
-                  onPress={() => setUpdating(true)}
-                />
+              <SummarySkeleton />
+              <View style={{ marginTop: 16 }}>
+                <CardRowsSkeleton rows={3} subtitle />
               </View>
+            </>
+          ) : none ? (
+            <StartTracking onAdd={() => setAdding(true)} />
+          ) : (
+            loaded && (
+              <>
+                <InvestmentsHero
+                  portfolio={portfolio}
+                  rate={rate}
+                  currency={currency}
+                  sipMonthly={sipMonthly}
+                />
 
-              {shown.length >= 2 && (
-                <ListCard style={styles.card}>
-                  <SegmentedControl
-                    options={[
-                      { label: '6 months', value: '6m' },
-                      { label: '1 year', value: '1y' },
-                      { label: 'All', value: 'all' },
-                    ]}
-                    value={range}
-                    onChange={setRange}
+                <View style={styles.mainActions}>
+                  <PrimaryButton
+                    title="Invest money"
+                    style={styles.mainAction}
+                    onPress={() => choose('invest')}
                   />
-                  <PortfolioChart
-                    points={shown}
-                    currency={currency}
-                    masked={hideAmounts}
-                    color={theme.colors.ink}
+                  <PrimaryButton
+                    title="Update values"
+                    variant="secondary"
+                    style={styles.mainAction}
+                    onPress={() => setUpdating(true)}
                   />
-                </ListCard>
-              )}
+                </View>
 
-              {split.length > 1 && <SplitCard parts={split} />}
-
-              <Section compact title="Holdings">
-                <ListCard>
-                  {portfolio.holdings.map((holding, i) => (
-                    <HoldingRow
-                      key={holding.id}
-                      holding={holding}
-                      today={today}
-                      masked={hideAmounts}
-                      onPress={() => setSummary(holding.account)}
-                      divider={i > 0}
+                {shown.length >= 2 && (
+                  <ListCard style={styles.card}>
+                    <SegmentedControl
+                      options={[
+                        { label: '6 months', value: '6m' },
+                        { label: '1 year', value: '1y' },
+                        { label: 'All', value: 'all' },
+                      ]}
+                      value={range}
+                      onChange={setRange}
                     />
-                  ))}
-                </ListCard>
-              </Section>
+                    <PortfolioChart
+                      points={shown}
+                      currency={currency}
+                      masked={hideAmounts}
+                      color={theme.colors.ink}
+                    />
+                  </ListCard>
+                )}
 
-              {portfolio.otherCurrency.length > 0 && (
-                <Section compact title="Other currencies">
+                {split.length > 1 && <SplitCard parts={split} />}
+
+                <Section compact title="Holdings">
                   <ListCard>
-                    {portfolio.otherCurrency.map((holding, i) => (
+                    {portfolio.holdings.map((holding, i) => (
                       <HoldingRow
                         key={holding.id}
                         holding={holding}
@@ -261,26 +255,43 @@ export default function InvestmentsScreen() {
                       />
                     ))}
                   </ListCard>
-                  <Text style={[styles.hint, styles.hintPad]}>Not added into the totals above.</Text>
                 </Section>
-              )}
 
-              <Section compact title="Monthly SIPs">
-                <ListCard>
-                  {sips.map(sipRow)}
-                  <SettingsRow
-                    icon="plus"
-                    round
-                    label="Add a SIP"
-                    sub="The same amount into an investment every month"
-                    onPress={() => choose('sip')}
-                    divider={sips.length > 0}
-                  />
-                </ListCard>
-              </Section>
-            </>
-          )
-        )}
+                {portfolio.otherCurrency.length > 0 && (
+                  <Section compact title="Other currencies">
+                    <ListCard>
+                      {portfolio.otherCurrency.map((holding, i) => (
+                        <HoldingRow
+                          key={holding.id}
+                          holding={holding}
+                          today={today}
+                          masked={hideAmounts}
+                          onPress={() => setSummary(holding.account)}
+                          divider={i > 0}
+                        />
+                      ))}
+                    </ListCard>
+                    <Text style={[styles.hint, styles.hintPad]}>Not added into the totals above.</Text>
+                  </Section>
+                )}
+
+                <Section compact title="Monthly SIPs">
+                  <ListCard>
+                    {sips.map(sipRow)}
+                    <SettingsRow
+                      icon="plus"
+                      round
+                      label="Add a SIP"
+                      sub="The same amount into an investment every month"
+                      onPress={() => choose('sip')}
+                      divider={sips.length > 0}
+                    />
+                  </ListCard>
+                </Section>
+              </>
+            )
+          )}
+        </LoadFade>
       </ReanimatedAnimated.ScrollView>
       <SkyHeader
         collapse={collapse}

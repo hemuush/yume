@@ -1,5 +1,7 @@
 import { useSaveOnce } from '@/lib/useSaveOnce';
+import { Appear } from '@/components/Appear';
 import { ScreenLoadError } from '@/components/ScreenLoadError';
+import { LoadFade } from '@/components/LoadFade';
 import { useCallback, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
@@ -228,180 +230,182 @@ export default function TidyUpScreen() {
           paddingBottom: theme.layout.screenScrollPad + insets.bottom,
         }}
       >
-        {loadError && (
-          <View style={styles.errorBanner}>
-            <Text style={styles.errorTitle}>Couldn’t check your data</Text>
-            <Text style={styles.errorDetail}>{loadError}</Text>
-            <PrimaryButton title="Retry" compact variant="secondary" onPress={() => void reload()} />
-          </View>
-        )}
+        <LoadFade loaded={loaded && !!report}>
+          {loadError && (
+            <Appear style={styles.errorBanner}>
+              <Text style={styles.errorTitle}>Couldn’t check your data</Text>
+              <Text style={styles.errorDetail}>{loadError}</Text>
+              <PrimaryButton title="Retry" compact variant="secondary" onPress={() => void reload()} />
+            </Appear>
+          )}
 
-        {!loaded || !report ? (
-          <>
-            <SummarySkeleton />
-            <View style={{ marginTop: 16 }}>
-              <CardRowsSkeleton rows={3} />
-            </View>
-          </>
-        ) : allTidy ? (
-          <SummaryCard>
-            <SummaryTop label="All tidy" figure={<Text style={summaryFigure}>Nothing to fix</Text>} />
-            {checklist}
-            <Text style={styles.intro}>Nothing looks off. Suu checks again whenever you open this.</Text>
-          </SummaryCard>
-        ) : (
-          <>
+          {!loaded || !report ? (
+            <>
+              <SummarySkeleton />
+              <View style={{ marginTop: 16 }}>
+                <CardRowsSkeleton rows={3} />
+              </View>
+            </>
+          ) : allTidy ? (
             <SummaryCard>
-              <SummaryTop
-                label="Tidy up"
-                figure={
-                  <Text style={summaryFigure}>
-                    {toLook} {toLook === 1 ? 'thing' : 'things'}
-                  </Text>
-                }
-              />
-              <Text style={styles.headline}>might not be what you meant</Text>
+              <SummaryTop label="All tidy" figure={<Text style={summaryFigure}>Nothing to fix</Text>} />
               {checklist}
-              <Text style={styles.intro}>Each fix can be undone straight after.</Text>
+              <Text style={styles.intro}>Nothing looks off. Suu checks again whenever you open this.</Text>
             </SummaryCard>
+          ) : (
+            <>
+              <SummaryCard>
+                <SummaryTop
+                  label="Tidy up"
+                  figure={
+                    <Text style={summaryFigure}>
+                      {toLook} {toLook === 1 ? 'thing' : 'things'}
+                    </Text>
+                  }
+                />
+                <Text style={styles.headline}>might not be what you meant</Text>
+                {checklist}
+                <Text style={styles.intro}>Each fix can be undone straight after.</Text>
+              </SummaryCard>
 
-            {report.repeats.length > 0 && (
-              <Section title="Same entry twice?">
-                <ListCard>
-                  {report.repeats.map((g, i) => (
-                    <View key={g.key} style={[styles.item, i > 0 && h.divider]}>
-                      <View style={styles.itemTop}>
-                        <CategoryIcon
-                          name={g.type === 'transfer' ? 'swap-horizontal' : (g.categoryIcon ?? 'tag')}
-                          color={g.type === 'transfer' ? secondary : (g.categoryColor ?? undefined)}
-                        />
-                        <View style={h.mid}>
-                          <Text style={h.title} numberOfLines={2}>
-                            {money(g.amountMinor, g.isSavings, g.currency)} ·{' '}
-                            {g.type === 'transfer'
-                              ? `${g.accountName} → ${g.toAccountName ?? '—'}`
-                              : `${g.categoryName ? categoryPath(g.categoryName, g.parentName) : '—'} · ${g.accountName}`}
-                          </Text>
-                          <Text style={h.sub}>
-                            {dayMonthMaybeYear(g.date)} ·{' '}
-                            {g.ids.length === 2 ? 'saved' : `${g.ids.length} times, saved`}{' '}
-                            {g.savedAt.map(savedLabel).join(' and ')}
-                          </Text>
-                        </View>
-                      </View>
-                      <View style={styles.actions}>
-                        <PrimaryButton
-                          title="Keep both"
-                          onPress={() => keepBoth(g)}
-                          disabled={busy}
-                          style={styles.action}
-                        />
-                        <PrimaryButton
-                          title={g.ids.length === 2 ? 'Delete one' : 'Delete newest'}
-                          variant="secondary"
-                          onPress={() => deleteOne(g)}
-                          disabled={busy}
-                          style={styles.action}
-                        />
-                      </View>
-                    </View>
-                  ))}
-                </ListCard>
-              </Section>
-            )}
-
-            {report.startingBalances.length > 0 && (
-              <Section title="Old balances logged as income">
-                <ListCard>
-                  {report.startingBalances.map((g, i) => {
-                    const one = g.ids.length === 1;
-                    const when = one
-                      ? dayMonthMaybeYear(g.firstDate)
-                      : `${g.ids.length} entries, ${noBreak(`${shortMonthYear(g.firstDate)} – ${shortMonthYear(g.lastDate)}`)}`;
-                    return (
+              {report.repeats.length > 0 && (
+                <Section title="Same entry twice?">
+                  <ListCard>
+                    {report.repeats.map((g, i) => (
                       <View key={g.key} style={[styles.item, i > 0 && h.divider]}>
                         <View style={styles.itemTop}>
-                          <CategoryIcon name="arrow-collapse-down" color={theme.colors.idCoralDeep} />
+                          <CategoryIcon
+                            name={g.type === 'transfer' ? 'swap-horizontal' : (g.categoryIcon ?? 'tag')}
+                            color={g.type === 'transfer' ? secondary : (g.categoryColor ?? undefined)}
+                          />
                           <View style={h.mid}>
                             <Text style={h.title} numberOfLines={2}>
-                              {money(g.totalMinor, g.isSavings, g.currency)} · {g.categoryName} ·{' '}
-                              {g.accountName}
+                              {money(g.amountMinor, g.isSavings, g.currency)} ·{' '}
+                              {g.type === 'transfer'
+                                ? `${g.accountName} → ${g.toAccountName ?? '—'}`
+                                : `${g.categoryName ? categoryPath(g.categoryName, g.parentName) : '—'} · ${g.accountName}`}
                             </Text>
                             <Text style={h.sub}>
-                              {when}. If {one ? 'this is' : 'these are'} money {g.accountName} already had,
-                              move {one ? 'it' : 'them'} to its opening balance: the balance stays the same,
-                              and income drops by {money(g.totalMinor, g.isSavings, g.currency)}
-                              {one ? ` in ${longMonth(g.firstDate)}` : ' across those months'}.
+                              {dayMonthMaybeYear(g.date)} ·{' '}
+                              {g.ids.length === 2 ? 'saved' : `${g.ids.length} times, saved`}{' '}
+                              {g.savedAt.map(savedLabel).join(' and ')}
                             </Text>
                           </View>
                         </View>
-                        <View style={styles.after}>
-                          <Feather name="bar-chart-2" size={13} color={theme.colors.textMuted} />
-                          <Text style={styles.afterText}>
-                            Income {one ? `in ${longMonth(g.firstDate)}` : 'across those months'}{' '}
-                            <Text style={styles.afterBold}>
-                              −{money(g.totalMinor, g.isSavings, g.currency)}
-                            </Text>{' '}
-                            · {g.accountName}’s balance <Text style={styles.afterBold}>stays the same</Text>
-                          </Text>
-                        </View>
                         <View style={styles.actions}>
                           <PrimaryButton
-                            title={one ? 'It’s real income' : 'They’re real income'}
-                            variant="secondary"
-                            onPress={() => keepIncome(g)}
+                            title="Keep both"
+                            onPress={() => keepBoth(g)}
                             disabled={busy}
                             style={styles.action}
                           />
                           <PrimaryButton
-                            title="Move to opening balance"
-                            onPress={() => moveBalance(g)}
+                            title={g.ids.length === 2 ? 'Delete one' : 'Delete newest'}
+                            variant="secondary"
+                            onPress={() => deleteOne(g)}
                             disabled={busy}
                             style={styles.action}
                           />
                         </View>
                       </View>
-                    );
-                  })}
-                </ListCard>
-              </Section>
-            )}
+                    ))}
+                  </ListCard>
+                </Section>
+              )}
 
-            {report.fractionalCount > 0 && (
-              <Section title="Amounts with paise">
-                <ListCard>
-                  <View style={styles.item}>
-                    <View style={styles.itemTop}>
-                      <CategoryIcon name="calculator-variant-outline" color={accent} />
-                      <View style={h.mid}>
-                        <Text style={h.title}>
-                          {report.fractionalCount} old amount{report.fractionalCount === 1 ? '' : 's'} still
-                          carry paise
+              {report.startingBalances.length > 0 && (
+                <Section title="Old balances logged as income">
+                  <ListCard>
+                    {report.startingBalances.map((g, i) => {
+                      const one = g.ids.length === 1;
+                      const when = one
+                        ? dayMonthMaybeYear(g.firstDate)
+                        : `${g.ids.length} entries, ${noBreak(`${shortMonthYear(g.firstDate)} – ${shortMonthYear(g.lastDate)}`)}`;
+                      return (
+                        <View key={g.key} style={[styles.item, i > 0 && h.divider]}>
+                          <View style={styles.itemTop}>
+                            <CategoryIcon name="arrow-collapse-down" color={theme.colors.idCoralDeep} />
+                            <View style={h.mid}>
+                              <Text style={h.title} numberOfLines={2}>
+                                {money(g.totalMinor, g.isSavings, g.currency)} · {g.categoryName} ·{' '}
+                                {g.accountName}
+                              </Text>
+                              <Text style={h.sub}>
+                                {when}. If {one ? 'this is' : 'these are'} money {g.accountName} already had,
+                                move {one ? 'it' : 'them'} to its opening balance: the balance stays the same,
+                                and income drops by {money(g.totalMinor, g.isSavings, g.currency)}
+                                {one ? ` in ${longMonth(g.firstDate)}` : ' across those months'}.
+                              </Text>
+                            </View>
+                          </View>
+                          <View style={styles.after}>
+                            <Feather name="bar-chart-2" size={13} color={theme.colors.textMuted} />
+                            <Text style={styles.afterText}>
+                              Income {one ? `in ${longMonth(g.firstDate)}` : 'across those months'}{' '}
+                              <Text style={styles.afterBold}>
+                                −{money(g.totalMinor, g.isSavings, g.currency)}
+                              </Text>{' '}
+                              · {g.accountName}’s balance <Text style={styles.afterBold}>stays the same</Text>
+                            </Text>
+                          </View>
+                          <View style={styles.actions}>
+                            <PrimaryButton
+                              title={one ? 'It’s real income' : 'They’re real income'}
+                              variant="secondary"
+                              onPress={() => keepIncome(g)}
+                              disabled={busy}
+                              style={styles.action}
+                            />
+                            <PrimaryButton
+                              title="Move to opening balance"
+                              onPress={() => moveBalance(g)}
+                              disabled={busy}
+                              style={styles.action}
+                            />
+                          </View>
+                        </View>
+                      );
+                    })}
+                  </ListCard>
+                </Section>
+              )}
+
+              {report.fractionalCount > 0 && (
+                <Section title="Amounts with paise">
+                  <ListCard>
+                    <View style={styles.item}>
+                      <View style={styles.itemTop}>
+                        <CategoryIcon name="calculator-variant-outline" color={accent} />
+                        <View style={h.mid}>
+                          <Text style={h.title}>
+                            {report.fractionalCount} old amount{report.fractionalCount === 1 ? '' : 's'} still
+                            carry paise
+                          </Text>
+                          <Text style={h.sub}>Rounding them makes totals line up with their parts.</Text>
+                        </View>
+                      </View>
+                      <View style={styles.after}>
+                        <Feather name="hash" size={13} color={theme.colors.textMuted} />
+                        <Text style={styles.afterText}>
+                          Each goes to the <Text style={styles.afterBold}>nearest rupee</Text> · loan
+                          schedules stay as they are
                         </Text>
-                        <Text style={h.sub}>Rounding them makes totals line up with their parts.</Text>
+                      </View>
+                      <View style={styles.actions}>
+                        <PrimaryButton
+                          title="Round them"
+                          onPress={() => roundAmounts(report.fractionalCount)}
+                          disabled={busy}
+                          style={styles.action}
+                        />
                       </View>
                     </View>
-                    <View style={styles.after}>
-                      <Feather name="hash" size={13} color={theme.colors.textMuted} />
-                      <Text style={styles.afterText}>
-                        Each goes to the <Text style={styles.afterBold}>nearest rupee</Text> · loan schedules
-                        stay as they are
-                      </Text>
-                    </View>
-                    <View style={styles.actions}>
-                      <PrimaryButton
-                        title="Round them"
-                        onPress={() => roundAmounts(report.fractionalCount)}
-                        disabled={busy}
-                        style={styles.action}
-                      />
-                    </View>
-                  </View>
-                </ListCard>
-              </Section>
-            )}
-          </>
-        )}
+                  </ListCard>
+                </Section>
+              )}
+            </>
+          )}
+        </LoadFade>
       </ReanimatedAnimated.ScrollView>
       <SkyHeader collapse={collapse} title="Tidy up" showBack hideUser wallpaper />
     </View>

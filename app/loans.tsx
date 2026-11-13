@@ -1,4 +1,6 @@
 import { ScreenLoadError } from '@/components/ScreenLoadError';
+import { Appear } from '@/components/Appear';
+import { LoadFade } from '@/components/LoadFade';
 import { useCallback, useEffect, useState } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
 import { View, Pressable } from 'react-native';
@@ -110,73 +112,75 @@ export default function LoansScreen() {
           paddingBottom: theme.layout.screenScrollPad + insets.bottom,
         }}
       >
-        {loadError && (
-          <View style={styles.errorBanner}>
-            <Text style={styles.errorTitle}>Couldn’t load your loans</Text>
-            <Text style={styles.errorDetail}>{loadError}</Text>
-            <PrimaryButton title="Retry" compact variant="secondary" onPress={() => void load()} />
-          </View>
-        )}
-        {(loading || loans.length > 0) && (
-          <LoansHero totals={totals} shares={shares} hues={hues} timeline={timeline} loading={loading} />
-        )}
-        {loading ? (
-          [0, 1].map((i) => (
-            <View key={i} style={[styles.card, { marginHorizontal: SCREEN.gutter }]}>
-              <Skeleton width={140} height={14} radius={4} />
-              <Skeleton width={100} height={10} radius={4} style={{ marginTop: 8 }} />
-              <Skeleton width={220} height={6} radius={3} style={{ marginTop: 12 }} />
-            </View>
-          ))
-        ) : loans.length === 0 ? (
-          <EmptyState title="No loans yet" subtitle="Add one and Yume works out the EMI schedule for you.">
-            <PrimaryButton title="Add a loan" onPress={() => setModalVisible(true)} />
-          </EmptyState>
-        ) : (
-          <>
-            {activeLoans.length > 0 && <Text style={listTitle}>Your loans</Text>}
-            {activeLoans.map((loan) => (
-              <MovingRow key={loan.id}>
-                <LoanCard
-                  loan={loan}
-                  hue={hues[loan.id]}
-                  progress={progress[loan.id]}
-                  onPress={() => setSelectedLoan(loan)}
-                  onPay={() => payLoan(loan)}
-                />
-              </MovingRow>
-            ))}
-            {closedLoans.length > 0 && (
-              <>
-                <Pressable
-                  onPress={() => setClosedOpen((v) => !v)}
-                  accessibilityRole="button"
-                  accessibilityState={{ expanded: closedOpen }}
-                  style={styles.closedHeader}
-                >
-                  <Text style={styles.closedDivider}>Closed · {closedLoans.length}</Text>
-                  <MaterialCommunityIcons
-                    name={closedOpen ? 'chevron-up' : 'chevron-down'}
-                    size={18}
-                    color={theme.colors.textMuted}
+        <LoadFade loaded={!loading}>
+          {loadError && (
+            <Appear style={styles.errorBanner}>
+              <Text style={styles.errorTitle}>Couldn’t load your loans</Text>
+              <Text style={styles.errorDetail}>{loadError}</Text>
+              <PrimaryButton title="Retry" compact variant="secondary" onPress={() => void load()} />
+            </Appear>
+          )}
+          {(loading || loans.length > 0) && (
+            <LoansHero totals={totals} shares={shares} hues={hues} timeline={timeline} loading={loading} />
+          )}
+          {loading ? (
+            [0, 1].map((i) => (
+              <View key={i} style={[styles.card, { marginHorizontal: SCREEN.gutter }]}>
+                <Skeleton width={140} height={14} radius={4} />
+                <Skeleton width={100} height={10} radius={4} style={{ marginTop: 8 }} />
+                <Skeleton width={220} height={6} radius={3} style={{ marginTop: 12 }} />
+              </View>
+            ))
+          ) : loans.length === 0 ? (
+            <EmptyState title="No loans yet" subtitle="Add one and Yume works out the EMI schedule for you.">
+              <PrimaryButton title="Add a loan" onPress={() => setModalVisible(true)} />
+            </EmptyState>
+          ) : (
+            <>
+              {activeLoans.length > 0 && <Text style={listTitle}>Your loans</Text>}
+              {activeLoans.map((loan) => (
+                <MovingRow key={loan.id}>
+                  <LoanCard
+                    loan={loan}
+                    hue={hues[loan.id]}
+                    progress={progress[loan.id]}
+                    onPress={() => setSelectedLoan(loan)}
+                    onPay={() => payLoan(loan)}
                   />
-                </Pressable>
-                {closedOpen &&
-                  closedLoans.map((loan) => (
-                    <MovingRow key={loan.id}>
-                      <LoanCard
-                        loan={loan}
-                        hue={hues[loan.id]}
-                        progress={progress[loan.id]}
-                        onPress={() => setSelectedLoan(loan)}
-                        onPay={() => payLoan(loan)}
-                      />
-                    </MovingRow>
-                  ))}
-              </>
-            )}
-          </>
-        )}
+                </MovingRow>
+              ))}
+              {closedLoans.length > 0 && (
+                <>
+                  <Pressable
+                    onPress={() => setClosedOpen((v) => !v)}
+                    accessibilityRole="button"
+                    accessibilityState={{ expanded: closedOpen }}
+                    style={styles.closedHeader}
+                  >
+                    <Text style={styles.closedDivider}>Closed · {closedLoans.length}</Text>
+                    <MaterialCommunityIcons
+                      name={closedOpen ? 'chevron-up' : 'chevron-down'}
+                      size={18}
+                      color={theme.colors.textMuted}
+                    />
+                  </Pressable>
+                  {closedOpen &&
+                    closedLoans.map((loan) => (
+                      <MovingRow key={loan.id}>
+                        <LoanCard
+                          loan={loan}
+                          hue={hues[loan.id]}
+                          progress={progress[loan.id]}
+                          onPress={() => setSelectedLoan(loan)}
+                          onPay={() => payLoan(loan)}
+                        />
+                      </MovingRow>
+                    ))}
+                </>
+              )}
+            </>
+          )}
+        </LoadFade>
       </ReanimatedAnimated.ScrollView>
       <SkyHeader
         collapse={collapse}

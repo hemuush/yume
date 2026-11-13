@@ -1,4 +1,5 @@
 import { ScreenLoadError } from '@/components/ScreenLoadError';
+import { Appear } from '@/components/Appear';
 import { useCallback, useState } from 'react';
 import { View, ScrollView, Pressable } from 'react-native';
 import { Text } from '@/components/Text';
@@ -145,11 +146,11 @@ export default function GardenScreen() {
               }}
             >
               {loadError && (
-                <View style={styles.errorBanner}>
+                <Appear style={styles.errorBanner}>
                   <Text style={styles.errorTitle}>Couldn’t load your garden</Text>
                   <Text style={styles.errorDetail}>{loadError}</Text>
                   <PrimaryButton title="Retry" compact variant="secondary" onPress={() => void reload()} />
-                </View>
+                </Appear>
               )}
 
               <Text style={styles.intro}>Keep spending under your daily goal to grow your streak.</Text>

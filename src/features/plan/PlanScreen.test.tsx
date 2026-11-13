@@ -244,7 +244,7 @@ jest.mock('@/features/goals/AddGoalModal', () => ({
 import PlanScreen from '../../../app/(tabs)/plan';
 import { router } from 'expo-router';
 
-// Bars and rings animate to their values (useGrowFrom); fake timers keep those
+// Bars and rings animate to their values (useDrawnValue); fake timers keep those
 // frames inside the test instead of firing after it ends.
 jest.useFakeTimers();
 

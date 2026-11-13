@@ -124,3 +124,28 @@ it('keeps a larger title row visible after font scaling changes its measured hei
   expect(onMeasure).toHaveBeenLastCalledWith(150, 74);
   act(() => root.unmount());
 });
+
+it('never squeezes the title for the summary beside it, so a title is not cut by a figure that is still hidden', () => {
+  const { StyleSheet } = require('react-native');
+  let root!: ReactTestRenderer;
+  act(() => {
+    root = create(
+      <SkyHeader
+        title="Savings goals"
+        collapse={{ scrollY: { value: 0 }, distance: { value: 100 }, onMeasure: jest.fn() } as never}
+        summary={<View testID="summary" />}
+      />
+    );
+  });
+  const title = root.root.findAll(
+    (n) => n.props.accessibilityRole === 'header' && n.props.children === 'Savings goals'
+  )[0];
+  const summary = root.root.findByProps({ testID: 'summary' }).parent!;
+  const style = (node: { props: { style?: unknown } }) => StyleSheet.flatten(node.props.style);
+  // Even a hair less than the text needs puts an ellipsis in it. Only the summary gives way.
+  expect(style(title).flexShrink).toBe(0);
+  expect(style(title).maxWidth).toBe('100%');
+  expect(style(summary).flexShrink).toBeGreaterThan(0);
+  expect(style(summary).minWidth).toBe(0);
+  act(() => root.unmount());
+});

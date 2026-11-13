@@ -1,4 +1,5 @@
 import { selectedFill } from '@/theme/interactionColors';
+import { Appear } from '@/components/Appear';
 import { Pressable, View, useWindowDimensions } from 'react-native';
 import { Text } from '@/components/Text';
 import Feather from '@expo/vector-icons/Feather';
@@ -102,12 +103,14 @@ export function AmountCard({
       </View>
       {isSum && <Text style={styles.expression}>{expr.replace(/([+−×÷])/g, ' $1 ')}</Text>}
       {amountIssue && (
-        <Text
-          style={[styles.hint, amountIssue.startsWith('Enter') && styles.amountError]}
-          accessibilityLiveRegion="polite"
-        >
-          {amountIssue}
-        </Text>
+        <Appear>
+          <Text
+            style={[styles.hint, amountIssue.startsWith('Enter') && styles.amountError]}
+            accessibilityLiveRegion="polite"
+          >
+            {amountIssue}
+          </Text>
+        </Appear>
       )}
 
       {frequentAmounts.length > 0 && (

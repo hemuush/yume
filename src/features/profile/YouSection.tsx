@@ -1,4 +1,5 @@
 import { ScreenLoadError } from '@/components/ScreenLoadError';
+import { Appear } from '@/components/Appear';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { useCallback, useMemo, useState } from 'react';
 import { View, Pressable, ActivityIndicator } from 'react-native';
@@ -144,11 +145,11 @@ export function YouSection() {
   return (
     <>
       {loadError && (
-        <View style={styles.errorBanner}>
+        <Appear style={styles.errorBanner}>
           <Text style={styles.errorTitle}>Couldn’t load your data</Text>
           <Text style={styles.errorDetail}>{loadError}</Text>
           <PrimaryButton title="Retry" compact variant="secondary" onPress={() => void load()} />
-        </View>
+        </Appear>
       )}
 
       {accounts.length > 0 ? (

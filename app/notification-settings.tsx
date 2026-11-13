@@ -1,4 +1,5 @@
 import { useCallback, useRef, useState } from 'react';
+import { CONTENT_ENTER } from '@/lib/animation';
 import { View, StyleSheet, Linking, Pressable } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { withPressedTint } from '@/lib/pressed';
@@ -228,6 +229,8 @@ export default function NotificationSettingsScreen() {
     <View style={styles.container}>
       <HomeWallpaper accent={accent} secondary={secondary} plain />
       <ReanimatedAnimated.ScrollView
+        // The settings arriving after the placeholders: one short fade, the header and wallpaper stay solid.
+        entering={CONTENT_ENTER}
         ref={scrollRef}
         onScroll={scrollHandler}
         scrollEventThrottle={16}

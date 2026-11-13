@@ -111,7 +111,7 @@ import { router } from 'expo-router';
 import { listTransactions } from '@/db/ledger';
 import { getCategoryOverview } from '@/db/reports';
 
-// Bars and rings animate to their values (useGrowFrom, at most the 700ms draw):
+// Bars and rings animate to their values (useDrawnValue):
 // let the last ones finish before the file ends, so no frame fires after teardown.
 afterAll(() => new Promise((resolve) => setTimeout(resolve, 800)));
 

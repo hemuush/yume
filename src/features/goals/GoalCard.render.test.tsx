@@ -18,7 +18,7 @@ afterEach(() => {
 import { GoalCard } from './GoalCard';
 import { SavingsGoal } from '@/types';
 
-// Bars and rings animate to their values (useGrowFrom); fake timers keep those
+// Bars and rings animate to their values (useDrawnValue); fake timers keep those
 // frames inside the test instead of firing after it ends.
 jest.useFakeTimers();
 

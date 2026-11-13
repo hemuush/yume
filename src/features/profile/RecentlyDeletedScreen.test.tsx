@@ -52,10 +52,18 @@ const entry = (over: Record<string, unknown>) => ({
 });
 
 function texts(r: ReactTestRenderer): string {
-  return r.root
-    .findAllByType(Text)
-    .map((t) => [t.props.children].flat(Infinity).join(''))
-    .join(' | ');
+  return (
+    r.root
+      .findAllByType(Text)
+      // The pieces of a caption are glued with non-breaking spaces; read them as people do.
+      .map((t) =>
+        [t.props.children]
+          .flat(Infinity)
+          .join('')
+          .replace(/\u00A0/g, ' ')
+      )
+      .join(' | ')
+  );
 }
 
 async function render() {
@@ -75,14 +83,15 @@ describe('Recently deleted screen', () => {
     const shown = texts(r);
     expect(shown).toContain('$50');
     expect(shown).not.toContain('₹50');
-    expect(shown).toMatch(/Hostel · 4 Mar 2025 · 30 days left/);
+    // What it was on one line, when and how long on the next.
+    expect(shown).toMatch(/Hostel \| 4 Mar 2025 · 30 days left/);
   });
 
   it('lists deleted entries with the days they have left, and restores one', async () => {
     mockEntries.current = [entry({})];
     const r = await render();
     expect(texts(r)).toContain('Food & Dining');
-    expect(texts(r)).toMatch(/Lunch · 26 Sept? · 30 days left/);
+    expect(texts(r)).toMatch(/Lunch \| 26 Sept? · 30 days left/);
     const restore = r.root.find(
       (n) => n.props.accessibilityLabel === 'Restore Food & Dining, Lunch' && n.props.onPress
     );
@@ -153,5 +162,20 @@ describe('Recently deleted screen', () => {
     const r = await render();
     expect(texts(r)).toContain('Nothing here');
     act(() => r.unmount());
+  });
+});
+
+describe('a long note', () => {
+  it('is cut on its own line, so the date and the days left are still shown whole', async () => {
+    mockEntries.current = [entry({ id: 'n1', note: 'x'.repeat(120), date: '2025-03-04' })];
+    const r = await render();
+    // The shared Text drops a one-line limit at large text sizes; what the screen asks for is on its own props.
+    const cut = r.root.findAll(
+      (n) => n.props.numberOfLines === 1 && String(n.props.children).startsWith('xxx')
+    );
+    expect(cut.length).toBeGreaterThan(0);
+    expect(texts(r)).toMatch(/4 Mar 2025 · 30 days left/);
+    // The time left is not in the line that gets cut.
+    cut.forEach((n) => expect(String(n.props.children)).not.toMatch(/days left/));
   });
 });

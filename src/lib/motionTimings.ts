@@ -1,8 +1,8 @@
 import { Easing } from 'react-native';
 
 /**
- * App motion durations (ms) without a Reanimated import, so core-`Animated` code (useGrowFrom, PaceBar) runs in
- * tests without the Reanimated mock. `MOTION` in animation.ts adds the shared curve. The rule: motion is quiet and
+ * App motion durations (ms) without a Reanimated import, so core-`Animated` code (the press feedback, the switch knob) runs
+ * in tests without the Reanimated mock. `MOTION` in animation.ts adds the shared curve. The rule: motion is quiet and
  * short; things fade or glide to a new state, never rise, roll, stagger or bounce.
  */
 export const DURATIONS = {

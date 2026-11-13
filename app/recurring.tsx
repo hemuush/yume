@@ -1,4 +1,6 @@
 import { ScreenLoadError } from '@/components/ScreenLoadError';
+import { Appear } from '@/components/Appear';
+import { LoadFade } from '@/components/LoadFade';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { View } from 'react-native';
 import { Text } from '@/components/Text';
@@ -162,132 +164,135 @@ export default function RecurringScreen() {
         ref={scrollRef}
         onScroll={scrollHandler}
         scrollEventThrottle={16}
-
         contentContainerStyle={{
-          paddingHorizontal: 16,
-          paddingTop: headerHeight + theme.layout.screenTopGap,
+          // No side padding: every block here (the cards, the headings, the notes) sits on the screen gutter
+          // itself, as on every other screen. Padding the page as well put the cards at twice the gutter.
+          // The first card brings the top gap itself (as on Budgets, Goals and Loans), so the page adds none.
+          paddingTop: headerHeight,
           paddingBottom: theme.layout.screenScrollPad + insets.bottom,
         }}
       >
-        {loadError && (
-          <View style={styles.errorBanner}>
-            <Text style={styles.errorTitle}>Couldn’t load recurring rules</Text>
-            <Text style={styles.errorDetail}>{loadError}</Text>
-            <PrimaryButton title="Retry" compact variant="secondary" onPress={() => void load()} />
-          </View>
-        )}
-        {!loaded ? (
-          <>
-            <SummarySkeleton />
-            <ListCard style={[styles.list, { marginTop: 16 }]}>
-              {[0, 1, 2].map((i) => (
-                <View key={i} style={styles.skeletonRow}>
-                  <Skeleton width={34} height={34} radius={17} />
-                  <View style={{ flex: 1, gap: 6 }}>
-                    <Skeleton width={140} height={13} radius={4} />
-                    <Skeleton width={100} height={10} radius={4} />
+        <LoadFade loaded={loaded}>
+          {loadError && (
+            <Appear style={styles.errorBanner}>
+              <Text style={styles.errorTitle}>Couldn’t load recurring rules</Text>
+              <Text style={styles.errorDetail}>{loadError}</Text>
+              <PrimaryButton title="Retry" compact variant="secondary" onPress={() => void load()} />
+            </Appear>
+          )}
+          {!loaded ? (
+            <>
+              <SummarySkeleton />
+              <ListCard style={[styles.list, { marginTop: 16 }]}>
+                {[0, 1, 2].map((i) => (
+                  <View key={i} style={styles.skeletonRow}>
+                    <Skeleton width={34} height={34} radius={17} />
+                    <View style={{ flex: 1, gap: 6 }}>
+                      <Skeleton width={140} height={13} radius={4} />
+                      <Skeleton width={100} height={10} radius={4} />
+                    </View>
                   </View>
-                </View>
-              ))}
-            </ListCard>
-          </>
-        ) : accounts.length === 0 ? (
-          <EmptyState
-            title="Add an account first"
-            subtitle="A recurring entry needs an account to come out of, or go into."
-          >
-            <PrimaryButton title="Add an account" onPress={() => setAddAccountVisible(true)} />
-          </EmptyState>
-        ) : rules.length === 0 && suggestions.length === 0 ? (
-          <EmptyState
-            title="Nothing recurring yet"
-            subtitle="Plan rent, subscriptions or salary so you can see what is coming."
-          >
-            <PrimaryButton title="Add a recurring entry" onPress={() => setModalVisible(true)} />
-          </EmptyState>
-        ) : (
-          <>
-            {(activeRules.length > 0 || suggestions.length > 0) && (
-              <RecurringHero
-                totals={subscriptionTotals(visibleRules)}
-                currency={currency}
-                hasOtherCurrencies={rules.some(
-                  (r) =>
-                    r.active &&
-                    !isHidden(r) &&
-                    accounts.find((a) => a.id === r.accountId)?.currency !== currency
-                )}
-                shares={shares}
-                nextDate={nextDate}
-                marks={runMarks(
-                  visibleRules.filter((r) => r.active),
-                  todayIso
-                )}
-                today={todayIso}
-                onDatePress={setSelectedRunDate}
-              />
-            )}
-            {activeRules.length > 0 && (
-              <>
-                <SectionHead title="Running" note={activeRules.length > 1 ? 'Biggest first' : undefined} />
-                <ListCard style={styles.list}>
-                  {activeRules.map((rule, i) => (
-                    <RuleRow
-                      key={rule.id}
-                      rule={rule}
-                      category={rule.categoryId ? categoriesById.get(rule.categoryId) : undefined}
-                      parentName={parentNameOf(rule.categoryId, categoriesById)}
-                      masked={isHidden(rule)}
-                      investRole={investRole(rule, investIds)}
-                      accountName={accountName}
-                      index={i}
-                      onTogglePause={() => void togglePause(rule)}
-                      busy={busyRuleIds.has(rule.id)}
-                      currency={accounts.find((a) => a.id === rule.accountId)?.currency}
-                      onPress={() => setEditingRule(rule)}
-                    />
-                  ))}
-                </ListCard>
-                <Text style={styles.footnote}>
-                  Due entries are added when you open Yume. Paused rules don’t create entries.
-                </Text>
-              </>
-            )}
-            <SuggestionsList
-              // A savings or investment charge (an SIP) shows its amount: left out while those are hidden.
-              suggestions={hideAmounts ? suggestions.filter((s) => !s.isSensitive) : suggestions}
-              onMakeRecurring={setFromSuggestion}
-              onHide={hideSuggestion}
-            />
-            {pausedRules.length > 0 && (
-              <>
-                <SectionHead
-                  title="Paused"
-                  note={`${pausedRules.length} ${pausedRules.length === 1 ? 'rule' : 'rules'}`}
+                ))}
+              </ListCard>
+            </>
+          ) : accounts.length === 0 ? (
+            <EmptyState
+              title="Add an account first"
+              subtitle="A recurring entry needs an account to come out of, or go into."
+            >
+              <PrimaryButton title="Add an account" onPress={() => setAddAccountVisible(true)} />
+            </EmptyState>
+          ) : rules.length === 0 && suggestions.length === 0 ? (
+            <EmptyState
+              title="Nothing recurring yet"
+              subtitle="Plan rent, subscriptions or salary so you can see what is coming."
+            >
+              <PrimaryButton title="Add a recurring entry" onPress={() => setModalVisible(true)} />
+            </EmptyState>
+          ) : (
+            <>
+              {(activeRules.length > 0 || suggestions.length > 0) && (
+                <RecurringHero
+                  totals={subscriptionTotals(visibleRules)}
+                  currency={currency}
+                  hasOtherCurrencies={rules.some(
+                    (r) =>
+                      r.active &&
+                      !isHidden(r) &&
+                      accounts.find((a) => a.id === r.accountId)?.currency !== currency
+                  )}
+                  shares={shares}
+                  nextDate={nextDate}
+                  marks={runMarks(
+                    visibleRules.filter((r) => r.active),
+                    todayIso
+                  )}
+                  today={todayIso}
+                  onDatePress={setSelectedRunDate}
                 />
-                <ListCard style={styles.list}>
-                  {pausedRules.map((rule, i) => (
-                    <RuleRow
-                      key={rule.id}
-                      rule={rule}
-                      category={rule.categoryId ? categoriesById.get(rule.categoryId) : undefined}
-                      parentName={parentNameOf(rule.categoryId, categoriesById)}
-                      masked={isHidden(rule)}
-                      investRole={investRole(rule, investIds)}
-                      accountName={accountName}
-                      index={i}
-                      onTogglePause={() => void togglePause(rule)}
-                      busy={busyRuleIds.has(rule.id)}
-                      currency={accounts.find((a) => a.id === rule.accountId)?.currency}
-                      onPress={() => setEditingRule(rule)}
-                      muted
-                    />
-                  ))}
-                </ListCard>
-              </>
-            )}
-          </>
-        )}
+              )}
+              {activeRules.length > 0 && (
+                <>
+                  <SectionHead title="Running" note={activeRules.length > 1 ? 'Biggest first' : undefined} />
+                  <ListCard style={styles.list}>
+                    {activeRules.map((rule, i) => (
+                      <RuleRow
+                        key={rule.id}
+                        rule={rule}
+                        category={rule.categoryId ? categoriesById.get(rule.categoryId) : undefined}
+                        parentName={parentNameOf(rule.categoryId, categoriesById)}
+                        masked={isHidden(rule)}
+                        investRole={investRole(rule, investIds)}
+                        accountName={accountName}
+                        index={i}
+                        onTogglePause={() => void togglePause(rule)}
+                        busy={busyRuleIds.has(rule.id)}
+                        currency={accounts.find((a) => a.id === rule.accountId)?.currency}
+                        onPress={() => setEditingRule(rule)}
+                      />
+                    ))}
+                  </ListCard>
+                  <Text style={styles.footnote}>
+                    Due entries are added when you open Yume. Paused rules don’t create entries.
+                  </Text>
+                </>
+              )}
+              <SuggestionsList
+                // A savings or investment charge (an SIP) shows its amount: left out while those are hidden.
+                suggestions={hideAmounts ? suggestions.filter((s) => !s.isSensitive) : suggestions}
+                onMakeRecurring={setFromSuggestion}
+                onHide={hideSuggestion}
+              />
+              {pausedRules.length > 0 && (
+                <>
+                  <SectionHead
+                    title="Paused"
+                    note={`${pausedRules.length} ${pausedRules.length === 1 ? 'rule' : 'rules'}`}
+                  />
+                  <ListCard style={styles.list}>
+                    {pausedRules.map((rule, i) => (
+                      <RuleRow
+                        key={rule.id}
+                        rule={rule}
+                        category={rule.categoryId ? categoriesById.get(rule.categoryId) : undefined}
+                        parentName={parentNameOf(rule.categoryId, categoriesById)}
+                        masked={isHidden(rule)}
+                        investRole={investRole(rule, investIds)}
+                        accountName={accountName}
+                        index={i}
+                        onTogglePause={() => void togglePause(rule)}
+                        busy={busyRuleIds.has(rule.id)}
+                        currency={accounts.find((a) => a.id === rule.accountId)?.currency}
+                        onPress={() => setEditingRule(rule)}
+                        muted
+                      />
+                    ))}
+                  </ListCard>
+                </>
+              )}
+            </>
+          )}
+        </LoadFade>
       </ReanimatedAnimated.ScrollView>
       <SkyHeader
         collapse={collapse}

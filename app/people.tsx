@@ -1,4 +1,6 @@
 import { ScreenLoadError } from '@/components/ScreenLoadError';
+import { Appear } from '@/components/Appear';
+import { LoadFade } from '@/components/LoadFade';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { useCallback, useState } from 'react';
 import { View, useWindowDimensions } from 'react-native';
@@ -68,97 +70,99 @@ export default function PeopleScreen() {
           paddingBottom: theme.layout.screenScrollPad + insets.bottom,
         }}
       >
-        {loadError && (
-          <View style={styles.errorBanner}>
-            <Text style={styles.errorTitle}>Couldn&rsquo;t load Friends &amp; family</Text>
-            <Text style={styles.errorDetail}>{loadError}</Text>
-            <PrimaryButton title="Retry" compact variant="secondary" onPress={() => void reload()} />
-          </View>
-        )}
-        {loading ? (
-          <View style={styles.tileRow}>
-            {[0, 1].map((i) => (
-              <View key={i} style={[styles.tileCell, styles.personTile]}>
-                <Skeleton width={32} height={32} circle radius={16} />
-                <Skeleton width={80} height={18} radius={5} style={{ marginTop: 12 }} />
-                <Skeleton width={60} height={10} radius={4} style={{ marginTop: 8 }} />
-              </View>
-            ))}
-          </View>
-        ) : people.length === 0 ? (
-          <EmptyState
-            title="Keep track of money between people"
-            subtitle="Add a friend or family member, then record money given or received."
-          >
-            <PrimaryButton title="Add a person" onPress={() => setAddVisible(true)} />
-          </EmptyState>
-        ) : (
-          <>
-            {summary && (
-              <PeopleNet
-                netMinor={netMinor}
-                owedToYouMinor={owedToYouMinor}
-                youOweMinor={youOweMinor}
-                owedCount={owed.length}
-                oweCount={owe.length}
-              />
-            )}
-            {[
-              {
-                key: 'owed',
-                title: 'Owes you',
-                dot: theme.colors.slice.saved,
-                list: owed,
-              },
-              {
-                key: 'owe',
-                title: 'You owe',
-                dot: theme.colors.slice.spent,
-                list: owe,
-              },
-            ].map(
-              (group) =>
-                group.list.length > 0 && (
-                  <View key={group.key}>
-                    <View style={styles.groupHead}>
-                      {/* The same colour as that side of the net card’s bar. */}
-                      <View style={[styles.groupDot, { backgroundColor: group.dot }]} />
-                      <Text style={styles.groupTitle}>{group.title}</Text>
-                    </View>
-                    {inRows(group.list, columns).map((row) => (
-                      <View key={row[0].id} style={styles.tileRow}>
-                        {row.map((p) => (
-                          <PersonTile
-                            key={p.id}
-                            person={p}
-                            color={colorOf(p)}
-                            onPress={() => setSelected(p)}
-                          />
-                        ))}
-                        {row.length < columns && <View style={styles.tileCell} />}
+        <LoadFade loaded={!loading}>
+          {loadError && (
+            <Appear style={styles.errorBanner}>
+              <Text style={styles.errorTitle}>Couldn&rsquo;t load Friends &amp; family</Text>
+              <Text style={styles.errorDetail}>{loadError}</Text>
+              <PrimaryButton title="Retry" compact variant="secondary" onPress={() => void reload()} />
+            </Appear>
+          )}
+          {loading ? (
+            <View style={styles.tileRow}>
+              {[0, 1].map((i) => (
+                <View key={i} style={[styles.tileCell, styles.personTile]}>
+                  <Skeleton width={32} height={32} circle radius={16} />
+                  <Skeleton width={80} height={18} radius={5} style={{ marginTop: 12 }} />
+                  <Skeleton width={60} height={10} radius={4} style={{ marginTop: 8 }} />
+                </View>
+              ))}
+            </View>
+          ) : people.length === 0 ? (
+            <EmptyState
+              title="Keep track of money between people"
+              subtitle="Add a friend or family member, then record money given or received."
+            >
+              <PrimaryButton title="Add a person" onPress={() => setAddVisible(true)} />
+            </EmptyState>
+          ) : (
+            <>
+              {summary && (
+                <PeopleNet
+                  netMinor={netMinor}
+                  owedToYouMinor={owedToYouMinor}
+                  youOweMinor={youOweMinor}
+                  owedCount={owed.length}
+                  oweCount={owe.length}
+                />
+              )}
+              {[
+                {
+                  key: 'owed',
+                  title: 'Owes you',
+                  dot: theme.colors.slice.saved,
+                  list: owed,
+                },
+                {
+                  key: 'owe',
+                  title: 'You owe',
+                  dot: theme.colors.slice.spent,
+                  list: owe,
+                },
+              ].map(
+                (group) =>
+                  group.list.length > 0 && (
+                    <View key={group.key}>
+                      <View style={styles.groupHead}>
+                        {/* The same colour as that side of the net card’s bar. */}
+                        <View style={[styles.groupDot, { backgroundColor: group.dot }]} />
+                        <Text style={styles.groupTitle}>{group.title}</Text>
                       </View>
+                      {inRows(group.list, columns).map((row) => (
+                        <View key={row[0].id} style={styles.tileRow}>
+                          {row.map((p) => (
+                            <PersonTile
+                              key={p.id}
+                              person={p}
+                              color={colorOf(p)}
+                              onPress={() => setSelected(p)}
+                            />
+                          ))}
+                          {row.length < columns && <View style={styles.tileCell} />}
+                        </View>
+                      ))}
+                    </View>
+                  )
+              )}
+              {settled.length > 0 && (
+                <>
+                  <Text style={styles.settledTitle}>Settled</Text>
+                  <ListCard>
+                    {settled.map((p, i) => (
+                      <PersonQuietRow
+                        key={p.id}
+                        person={p}
+                        color={colorOf(p)}
+                        divider={i > 0}
+                        onPress={() => setSelected(p)}
+                      />
                     ))}
-                  </View>
-                )
-            )}
-            {settled.length > 0 && (
-              <>
-                <Text style={styles.settledTitle}>Settled</Text>
-                <ListCard>
-                  {settled.map((p, i) => (
-                    <PersonQuietRow
-                      key={p.id}
-                      person={p}
-                      color={colorOf(p)}
-                      divider={i > 0}
-                      onPress={() => setSelected(p)}
-                    />
-                  ))}
-                </ListCard>
-              </>
-            )}
-          </>
-        )}
+                  </ListCard>
+                </>
+              )}
+            </>
+          )}
+        </LoadFade>
       </ReanimatedAnimated.ScrollView>
       <SkyHeader
         collapse={collapse}

@@ -1,4 +1,6 @@
 import { ScreenLoadError } from '@/components/ScreenLoadError';
+import { Appear } from '@/components/Appear';
+import { CONTENT_ENTER } from '@/lib/animation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
 import { View } from 'react-native';
@@ -178,6 +180,8 @@ export default function SavingsGoalsScreen() {
     <View style={styles.container}>
       <HomeWallpaper accent={accent} secondary={secondary} plain />
       <ReanimatedAnimated.ScrollView
+        // The data arriving after the placeholders: one short fade, the header and wallpaper stay solid.
+        entering={CONTENT_ENTER}
         ref={scrollRef}
         onScroll={scrollHandler}
         scrollEventThrottle={16}
@@ -187,11 +191,11 @@ export default function SavingsGoalsScreen() {
         }}
       >
         {loadError && (
-          <View style={styles.errorBanner}>
+          <Appear style={styles.errorBanner}>
             <Text style={styles.errorTitle}>Couldn’t load your goals</Text>
             <Text style={styles.errorDetail}>{loadError}</Text>
             <PrimaryButton title="Retry" compact variant="secondary" onPress={() => void load()} />
-          </View>
+          </Appear>
         )}
 
         <View style={{ height: theme.layout.screenTopGap }} />

@@ -1,4 +1,5 @@
 import { useLocalDayRefresh } from '@/lib/useLocalDayRefresh';
+import { Appear } from '@/components/Appear';
 import { CONTENT_ENTER } from '@/lib/animation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { onTransactionsChanged } from '@/lib/dataEvents';
@@ -755,19 +756,19 @@ export default function TransactionsScreen() {
   const banners = (
     <>
       {loadError && (
-        <View style={styles.errorBanner}>
+        <Appear style={styles.errorBanner}>
           <Text style={styles.errorTitle}>Couldn’t load your transactions</Text>
           <Text style={styles.errorDetail}>{loadError}</Text>
           <PrimaryButton title="Try again" compact variant="secondary" onPress={retryLoad} />
-        </View>
+        </Appear>
       )}
 
       {comparisonFailed && !loadError && (
-        <View style={styles.errorBanner}>
+        <Appear style={styles.errorBanner}>
           <Text style={styles.errorTitle}>Couldn’t load this period’s totals</Text>
           <Text style={styles.errorDetail}>Your entries are below.</Text>
           <PrimaryButton title="Try again" compact variant="secondary" onPress={retryLoad} />
-        </View>
+        </Appear>
       )}
     </>
   );

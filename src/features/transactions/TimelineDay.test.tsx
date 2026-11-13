@@ -46,7 +46,7 @@ it('shows foreign amounts in their own currency and excludes them from the day t
   act(() => tree.unmount());
 });
 
-// Bars, rings and the new-entry glow animate (useGrowFrom, JustAddedGlow); fake
+// Bars, rings and the new-entry glow animate (useDrawnValue, JustAddedGlow); fake
 // timers keep those frames inside the test instead of firing after it ends.
 jest.useFakeTimers();
 

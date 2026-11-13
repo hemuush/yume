@@ -1,4 +1,5 @@
 import { themeInk } from '@/theme/interactionColors';
+import { Appear } from '@/components/Appear';
 import { View, Pressable, ScrollView, ActivityIndicator, useWindowDimensions } from 'react-native';
 import { HeaderIconButton } from '@/components/AppHeader';
 import { Text } from '@/components/Text';
@@ -22,8 +23,9 @@ const TYPE_CHIPS: { label: string; value: ActivityType }[] = [
 ];
 
 /**
- * Activity's filter row: the Filters button, a removable chip per picked category/account/label, the one-tap
- * type choices (the sheet's `filterType`), and Clear all last. Only the type choices form the radio group.
+ * Activity's filter row: the Filters button, the one-tap type choices (the sheet's `filterType`), then a
+ * removable chip per picked category/account/label, and Clear all last. Only the type choices form the radio
+ * group.
  */
 export function ActivityFilterChips({
   filterType,
@@ -83,59 +85,66 @@ export function ActivityFilterChips({
       </Pressable>
     );
   });
-  // One row, in the order of how often it is used: Filters (with its count), what the sheet picked (a
-  // removable chip each), then the one-tap types, and Clear all at the end. Picking a type must not move the
-  // types under the thumb, so the only thing that appears with it, Clear all, appears after them, never in
-  // front. At large text it wraps instead of scrolling.
+  // One row, the stable controls first and what has been picked after them: Filters (with its count), the
+  // one-tap types, then a removable chip for each thing picked, and Clear all at the end. Whatever is picked
+  // (a type, or any number of categories, accounts and a label) only ever adds to the end of the row, so the
+  // types stay where the thumb found them and are never pushed off screen by a long list of chips. At large
+  // text it wraps instead of scrolling.
   const pickedChips = picked > 0 && (
     <>
       {categoryIds.map((id) => (
-        <Pressable
-          key={id}
-          onPress={() => onRemoveCategory(id)}
-          style={withPressedTint(accent, [styles.chip, { backgroundColor: chipBg }])}
-          accessibilityRole="button"
-          accessibilityLabel={`Remove the ${categoryName(id)} filter`}
-        >
-          <Text style={styles.chipText}>{categoryName(id)}</Text>
-          <Feather name="x" size={12} color={theme.colors.textSecondary} />
-        </Pressable>
+        <Appear key={`category:${id}`}>
+          <Pressable
+            onPress={() => onRemoveCategory(id)}
+            style={withPressedTint(accent, [styles.chip, { backgroundColor: chipBg }])}
+            accessibilityRole="button"
+            accessibilityLabel={`Remove the ${categoryName(id)} filter`}
+          >
+            <Text style={styles.chipText}>{categoryName(id)}</Text>
+            <Feather name="x" size={12} color={theme.colors.textSecondary} />
+          </Pressable>
+        </Appear>
       ))}
       {accountIds.map((id) => (
-        <Pressable
-          key={id}
-          onPress={() => onRemoveAccount(id)}
-          style={withPressedTint(accent, [styles.chip, { backgroundColor: chipBg }])}
-          accessibilityRole="button"
-          accessibilityLabel={`Remove the ${accountName(id)} filter`}
-        >
-          <Feather name="credit-card" size={11} color={theme.colors.textSecondary} />
-          <Text style={styles.chipText}>{accountName(id)}</Text>
-          <Feather name="x" size={12} color={theme.colors.textSecondary} />
-        </Pressable>
+        <Appear key={`account:${id}`}>
+          <Pressable
+            onPress={() => onRemoveAccount(id)}
+            style={withPressedTint(accent, [styles.chip, { backgroundColor: chipBg }])}
+            accessibilityRole="button"
+            accessibilityLabel={`Remove the ${accountName(id)} filter`}
+          >
+            <Feather name="credit-card" size={11} color={theme.colors.textSecondary} />
+            <Text style={styles.chipText}>{accountName(id)}</Text>
+            <Feather name="x" size={12} color={theme.colors.textSecondary} />
+          </Pressable>
+        </Appear>
       ))}
       {!!expenseLabel && (
-        <Pressable
-          onPress={onRemoveLabel}
-          style={withPressedTint(accent, [styles.chip, { backgroundColor: chipBg }])}
-          accessibilityRole="button"
-          accessibilityLabel="Remove expense label filter"
-        >
-          <Text style={styles.chipText}>Label: {expenseLabel}</Text>
-          <Feather name="x" size={12} color={theme.colors.textSecondary} />
-        </Pressable>
+        <Appear>
+          <Pressable
+            onPress={onRemoveLabel}
+            style={withPressedTint(accent, [styles.chip, { backgroundColor: chipBg }])}
+            accessibilityRole="button"
+            accessibilityLabel="Remove expense label filter"
+          >
+            <Text style={styles.chipText}>Label: {expenseLabel}</Text>
+            <Feather name="x" size={12} color={theme.colors.textSecondary} />
+          </Pressable>
+        </Appear>
       )}
     </>
   );
   const clearAll = picked > 0 && (
-    <Pressable
-      onPress={onClearAll}
-      style={withPressedTint(accent, styles.chip)}
-      accessibilityRole="button"
-      accessibilityLabel="Clear all Activity filters"
-    >
-      <Text style={styles.chipText}>Clear all</Text>
-    </Pressable>
+    <Appear>
+      <Pressable
+        onPress={onClearAll}
+        style={withPressedTint(accent, styles.chip)}
+        accessibilityRole="button"
+        accessibilityLabel="Clear all Activity filters"
+      >
+        <Text style={styles.chipText}>Clear all</Text>
+      </Pressable>
+    </Appear>
   );
   const filterButton = onOpenFilters && (
     <HeaderIconButton
@@ -152,8 +161,8 @@ export function ActivityFilterChips({
       {wrapTabs ? (
         <View style={[styles.typeBar, styles.typeFilterRowWrap]}>
           {filterButton}
-          {pickedChips}
           {pills}
+          {pickedChips}
           {clearAll}
         </View>
       ) : (
@@ -164,10 +173,10 @@ export function ActivityFilterChips({
           contentContainerStyle={[styles.typeBar, styles.typeFilterRow]}
         >
           {filterButton}
-          {pickedChips}
           <View style={styles.pillGroup} accessibilityRole="radiogroup">
             {pills}
           </View>
+          {pickedChips}
           {clearAll}
         </ScrollView>
       )}

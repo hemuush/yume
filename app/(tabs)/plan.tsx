@@ -1,4 +1,5 @@
 import { MonthlyPlanCheck } from '@/features/plan/MonthlyPlanCheck';
+import { Appear } from '@/components/Appear';
 import { CONTENT_ENTER } from '@/lib/animation';
 import { investRole, investRuleTitle, investmentIdsOf } from '@/lib/investment';
 import { InvestmentsCard } from '@/features/plan/InvestmentsCard';
@@ -441,12 +442,12 @@ export default function PlanScreen() {
         }}
       >
         {loadError && (
-          <View style={styles.errorBanner}>
+          <Appear style={styles.errorBanner}>
             <Text style={styles.errorTitle}>Couldn&rsquo;t load your plans</Text>
             <Text style={styles.errorDetail}>{loadError}</Text>
             <Text style={styles.errorDetail}>The forecast may be incomplete until this is resolved.</Text>
             <PrimaryButton title="Try again" onPress={() => void reload()} />
-          </View>
+          </Appear>
         )}
 
         {/* The tabs are there from the first frame, as on Reports, so the page does not drop by their height when the

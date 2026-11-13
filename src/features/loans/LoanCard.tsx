@@ -186,7 +186,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   headText: { flex: 1, minWidth: 0 },
-  name: { fontFamily: theme.font.roundedBold, fontSize: 14, color: theme.colors.textPrimary },
+  name: { fontFamily: theme.font.bodyMedium, fontSize: 14, color: theme.colors.textPrimary },
   sub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 2 },
   figs: {
     flexDirection: 'row',

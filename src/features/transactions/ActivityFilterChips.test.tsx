@@ -78,17 +78,31 @@ describe.each(LAYOUTS)('filter row, %s', (_name, width, fontScale) => {
     TYPES.forEach((label) => expect(after.indexOf(label)).toBe(before.indexOf(label)));
   });
 
-  it('keeps the picked chips ahead of the types and Clear all last of all', () => {
+  it('puts what is picked after the types, and Clear all last of all', () => {
     expect(
       row({ filterType: 'income', categoryIds: ['food'], accountIds: ['SBI'], expenseLabel: 'Lunch' })
     ).toEqual([
       'Filters',
+      ...TYPES,
       'Remove the Food filter',
       'Remove the SBI filter',
       'Remove expense label filter',
-      ...TYPES,
       'Clear all Activity filters',
     ]);
+  });
+
+  it('keeps the types where they are however many categories are picked, so a long list of chips never pushes them away', () => {
+    const none = row();
+    const many = row({
+      categoryIds: ['a', 'b', 'c', 'd', 'e', 'f', 'g'],
+      accountIds: ['SBI'],
+      expenseLabel: 'Lunch',
+    });
+    TYPES.forEach((label) => expect(many.indexOf(label)).toBe(none.indexOf(label)));
+    // Everything picked comes after the last type.
+    const lastType = many.indexOf('Show transfers');
+    expect(many.slice(lastType + 1)).toHaveLength(9 + 1);
+    expect(many.slice(lastType + 1).every((l) => /^(Remove|Clear)/.test(l))).toBe(true);
   });
 
   it('offers Clear all for a lone category, label or account chip too, still last', () => {
@@ -149,5 +163,42 @@ describe('the filter row does not change size when it is used', () => {
     expect(weight(spent, 'Show spent')).toBe(weight(spent, 'Show all'));
     act(() => all.unmount());
     act(() => spent.unmount());
+  });
+});
+
+describe('what is picked comes and goes with a fade', () => {
+  it('wraps each picked chip and Clear all in Appear, so none of them pops in or out', () => {
+    const { CONTENT_ENTER } = require('@/lib/animation');
+    jest
+      .spyOn(require('react-native'), 'useWindowDimensions')
+      .mockReturnValue({ width: 390, height: 800, scale: 3, fontScale: 1 });
+    let tree!: ReactTestRenderer;
+    act(() => {
+      tree = create(
+        <ActivityFilterChips
+          filterType={'expense' as ActivityType}
+          onFilterType={jest.fn()}
+          categoryIds={['food', 'fuel']}
+          accountIds={['SBI']}
+          expenseLabel="Lunch"
+          categoryName={(id) => id}
+          accountName={(id) => id}
+          onRemoveCategory={jest.fn()}
+          onRemoveAccount={jest.fn()}
+          onRemoveLabel={jest.fn()}
+          onClearAll={jest.fn()}
+          onOpenFilters={jest.fn()}
+        />
+      );
+    });
+    const { View } = require('react-native');
+    const fading = tree.root.findAll((n) => n.type === View && n.props.entering === CONTENT_ENTER);
+    // Two categories, an account, a label and Clear all.
+    expect(fading).toHaveLength(5);
+    // The type pills are not among them: they never come or go.
+    expect(
+      fading.every((n) => n.findAll((c) => /^Show /.test(String(c.props.accessibilityLabel))).length === 0)
+    ).toBe(true);
+    act(() => tree.unmount());
   });
 });
