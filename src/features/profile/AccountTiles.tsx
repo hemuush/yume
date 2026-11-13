@@ -7,7 +7,7 @@ import { GainPill } from '@/features/investments/GainPill';
 import { theme } from '@/constants/theme';
 import { cardUsage } from '@/lib/cardUsage';
 import { accountBadgeColor, accountIcon } from '@/lib/account';
-import { investmentLabel } from '@/lib/investment';
+import { INVESTMENT_KIND_LABEL, investmentLabel } from '@/lib/investment';
 import { formatMaskableMoney } from '@/lib/money';
 import { withPressedTint } from '@/lib/pressed';
 import { roundedMinor } from '@/lib/round';
@@ -81,7 +81,16 @@ const AccountTile = memo(function AccountTile({
   const { hideAmounts } = usePrivacy();
   const minor = roundedMinor(account.currentBalanceMinor);
   const quiet = archived || minor === 0;
-  const kind = account.investment ? investmentLabel(account.investment) : ACCOUNT_TYPE_LABEL[account.type];
+  // What the tile shows: an investment is its kind alone, which fits the head of a tile 150 dp wide (the full
+  // "Investment · Mutual fund" was cut at 360 dp); a screen reader gets the full label.
+  const kindFull = account.investment
+    ? investmentLabel(account.investment)
+    : ACCOUNT_TYPE_LABEL[account.type];
+  const kind = account.investment
+    ? account.investment.kind
+      ? INVESTMENT_KIND_LABEL[account.investment.kind]
+      : 'Investment'
+    : kindFull;
   const usage = cardUsage(account);
   const balance = formatMaskableMoney(minor, {
     currency: account.currency,
@@ -91,7 +100,7 @@ const AccountTile = memo(function AccountTile({
     <Pressable
       onPress={() => onPress(account)}
       accessibilityRole="button"
-      accessibilityLabel={`${account.name}, ${kind}${archived ? ', archived' : ''}, ${balance}`}
+      accessibilityLabel={`${account.name}, ${kindFull}${archived ? ', archived' : ''}, ${balance}`}
       accessibilityHint="Edit account"
       style={withPressedTint(accent, styles.tile)}
     >

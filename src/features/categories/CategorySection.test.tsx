@@ -127,3 +127,35 @@ it('offers a visible parent options button without holding the tile', async () =
   expect(onEdit).not.toHaveBeenCalled();
   expect(texts(tree)).toContain('Edit');
 });
+
+describe('Categories · columns', () => {
+  const cellWidth = (width: number, fontScale = 1) => {
+    const { StyleSheet } = require('react-native');
+    jest
+      .spyOn(require('react-native'), 'useWindowDimensions')
+      .mockReturnValue({ width, height: 800, scale: 3, fontScale });
+    let tree!: ReactTestRenderer;
+    act(() => {
+      tree = create(
+        <CategorySection cats={cats.filter((c) => !c.parentId)} onEdit={jest.fn()} onManage={jest.fn()} />
+      );
+    });
+    const widths = tree.root
+      .findAll((n) => typeof n.type === 'string')
+      .map((n) => StyleSheet.flatten(n.props.style)?.width)
+      .filter((w: unknown) => typeof w === 'string' && (w as string).endsWith('%'));
+    act(() => tree.unmount());
+    return widths[0] as string;
+  };
+  afterEach(() => jest.restoreAllMocks());
+
+  it('goes two to a row on a 360 dp phone, where a third of the row broke "Entertainment" mid-word', () => {
+    expect(cellWidth(360)).toBe('50%');
+  });
+
+  it('keeps three to a row from 375 dp up, and one with very large text', () => {
+    expect(cellWidth(375)).toBe(`${100 / 3}%`);
+    expect(cellWidth(412)).toBe(`${100 / 3}%`);
+    expect(cellWidth(390, 1.6)).toBe('100%');
+  });
+});

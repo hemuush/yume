@@ -11,7 +11,7 @@ import { CategoryIcon } from '@/components/CategoryIcon';
 import { useAccent } from '@/theme/AccentContext';
 import { usePressScale } from '@/lib/usePressScale';
 import { softTint } from '@/components/softTint';
-import { styles, TILE_COLUMNS } from './categories.styles';
+import { styles, TILE_COLUMNS, NARROW_TILES } from './categories.styles';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -121,7 +121,8 @@ export function TileRows<T extends { id: string }>({
   panelAfter?: (rowItems: T[], columns: number) => ReactNode;
 }) {
   const { width, fontScale } = useWindowDimensions();
-  const columns = fontScale > 1.5 ? 1 : width < 360 || fontScale > 1.2 ? 2 : TILE_COLUMNS;
+  // Under 370 dp a third of the row is too narrow for "Entertainment" or "Subscriptions", which broke mid-word.
+  const columns = fontScale > 1.5 ? 1 : width < NARROW_TILES || fontScale > 1.2 ? 2 : TILE_COLUMNS;
   const cellStyle = { width: `${100 / columns}%` as `${number}%` };
   const rows: T[][] = [];
   for (let i = 0; i < items.length; i += columns) rows.push(items.slice(i, i + columns));

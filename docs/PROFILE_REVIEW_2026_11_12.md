@@ -29,3 +29,22 @@ Profile holds the accounts and the settings, so a wrong number or a wrong side e
 ## Checks
 
 `ProfileAccountsRealData.test.tsx` (21 tests against the real database), `LinkTiles.test.tsx`, `plural.test.ts`, and additions to `YouSection`, `AccountDetailModal`, `BackupScreen`, `RecentlyDeletedScreen`, `TidyUpScreen`, `tidyUp`, `dateLabels`, `investment`, `AddLoanModal` and `UpdateValueSheet`. Each new test that guards a fix fails without it (checked by removing the fix). The test suite needs `LANG=en_IN.UTF-8`, as CI sets, or the amounts and dates format for another locale.
+
+## Profile, Settings, Notifications, Tidy up and Categories rendered on a real database (2026-11-13)
+
+All five were rendered from the real screens in a browser on a real database (the app's own db layer on SQLite compiled to JavaScript, built with the app's own write functions, with a dataset that includes what Tidy up looks for: a repeated entry, income filed under "Previous balance", an amount with paise), with the real fonts, at 360, 390 and 412 dp. Positions were measured and every cut-off text and small target was listed by script. The harness lives outside the repository and approximates Android; sheets, the delivery check and anything that needs the phone's own services were not rendered.
+
+- **The reminder times were cut to "9:0…" and "8:0…"** on the Notifications screen at every width. Two cards side by side left about 49 dp for the clock between two 44 dp buttons, and "9:00 AM" needs about 66. The Morning and Evening cards are one to a row on a phone (a basis of 200 dp), and the time reads whole.
+- **Category tiles broke words mid-word at 360 dp** ("Entertainmen / t", "Miscellaneou / s", "Subscription / s"): a third of the row is too narrow. Under 370 dp they go two to a row; from 375 dp up three, as before.
+- **Profile's investment tile cut its caption** to "Investment · Mutual f…" at 360 dp. It says the kind alone ("Mutual fund"); a screen reader still hears "Investment · Mutual fund".
+- **Switching Profile's You | Settings tab changed the width of each word** by about 2 dp (the picked one went bold). One weight now; the underline and the darker ink show the pick.
+- **Tidy up's "Sep 2026 – Oct 2026"** could split across lines on a narrow phone; the range is one piece.
+
+Confirmed on the real screens: the currency list and the daily goal panel open under their rows and the row does not move; the goal panel closes on Save or Clear, so Clear appearing in front of Save never happens under the thumb; Tidy up's all-clear card reads right; nothing else is cut off at 360, 390 or 412 dp, and the small targets the scan lists have their touch slop (Add 52, the archive toggle 52).
+
+### Seen and left
+
+- **Tidy up's old-balance card says its result twice**: the paragraph ends "the balance stays the same, and income drops by ₹50,000 across those months", and the box under it says the same.
+- **Two counts for notifications:** Profile says "Notifications 4 of 8 on" (every switch, the two times and Suu included), and the Notifications screen heads its list "2 of 5 on" (the five alerts only). Both are right for what they count.
+- At 360 dp Tidy up's two buttons ("They're real income", "Move to opening balance") each take two lines.
+
