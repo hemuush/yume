@@ -16,7 +16,8 @@ function panel(tree: ReactTestRenderer) {
   return outer ? StyleSheet.flatten(outer.props.style) : undefined;
 }
 function measure(tree: ReactTestRenderer, height: number) {
-  const inner = tree.root.findAll((n) => n.type === View && typeof n.props.onLayout === 'function')[0];
+  // The panel and, inside it, the entries both report a layout: the entries' is the last.
+  const inner = tree.root.findAll((n) => n.type === View && typeof n.props.onLayout === 'function').at(-1)!;
   act(() => inner.props.onLayout({ nativeEvent: { layout: { height } } }));
 }
 function element(open: boolean) {
@@ -145,4 +146,49 @@ it('jumps with reduce motion: gone at once when closed', () => {
   show(true, tree);
   expect(tree.root.findAllByType(Text)).toHaveLength(1);
   act(() => tree.unmount());
+});
+
+describe('when the animation does not take', () => {
+  const outerLayout = (tree: ReactTestRenderer, height: number) =>
+    act(() => outerPanel(tree).props.onLayout({ nativeEvent: { layout: { height } } }));
+
+  it('shows the entries as plain rows if the panel stays shorter than they are', () => {
+    const tree = show(false);
+    show(true, tree);
+    measure(tree, 96);
+    outerLayout(tree, 0);
+    act(() => {
+      jest.advanceTimersByTime(600);
+    });
+    expect(outerPanel(tree)).toBeUndefined();
+    expect(tree.root.findAllByType(Text)).toHaveLength(1);
+    // Still there after closing and opening again.
+    show(false, tree);
+    show(true, tree);
+    expect(tree.root.findAllByType(Text)).toHaveLength(1);
+    act(() => tree.unmount());
+  });
+
+  it('keeps animating when the panel reaches the height of the entries', () => {
+    const tree = show(false);
+    show(true, tree);
+    measure(tree, 96);
+    outerLayout(tree, 96);
+    act(() => {
+      jest.advanceTimersByTime(600);
+    });
+    expect(outerPanel(tree)).toBeDefined();
+    act(() => tree.unmount());
+  });
+
+  it('does not judge a panel that has not reported a height', () => {
+    const tree = show(false);
+    show(true, tree);
+    measure(tree, 96);
+    act(() => {
+      jest.advanceTimersByTime(600);
+    });
+    expect(outerPanel(tree)).toBeDefined();
+    act(() => tree.unmount());
+  });
 });

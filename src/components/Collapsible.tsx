@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { View } from 'react-native';
 import Animated, {
   cancelAnimation,
@@ -35,6 +35,9 @@ export function Collapsible({ open, children }: { open: boolean; children: React
   const natural = useSharedValue(0);
   const progress = useSharedValue(open ? 1 : 0);
   const style = useAnimatedStyle(() => panelStyle(natural.value, progress.value));
+  // The height the panel last laid out at, and whether it ever failed to reach the content's: then it stops animating.
+  const laidOut = useRef<number | null>(null);
+  const [stuck, setStuck] = useState(false);
 
   useEffect(() => {
     if (open) setMounted(true);
@@ -48,14 +51,31 @@ export function Collapsible({ open, children }: { open: boolean; children: React
     return () => clearTimeout(timer);
   }, [open, mounted, reduce]);
   useEffect(() => () => cancelAnimation(progress), [progress]);
+  // A safety net: if the animation does not take (the panel is still shorter than its entries well after it should
+  // have opened), the entries are shown as plain rows from then on. A hidden panel is worse than one that does not glide.
+  useEffect(() => {
+    if (!open || stuck) return;
+    const timer = setTimeout(
+      () => {
+        const height = laidOut.current;
+        if (height != null && natural.get() > 0 && height < natural.get() - 2) setStuck(true);
+      },
+      reduce ? 300 : DURATIONS.standard + 250
+    );
+    return () => clearTimeout(timer);
+  }, [open, stuck, reduce, natural]);
 
   if (!mounted) return null;
+  if (stuck) return <View>{children}</View>;
   return (
     <Animated.View
       pointerEvents={open ? 'auto' : 'none'}
       accessibilityElementsHidden={!open}
       importantForAccessibility={open ? 'auto' : 'no-hide-descendants'}
       style={[{ overflow: 'hidden' }, style]}
+      onLayout={(event) => {
+        laidOut.current = event.nativeEvent.layout.height;
+      }}
     >
       <View
         onLayout={(event) => {
