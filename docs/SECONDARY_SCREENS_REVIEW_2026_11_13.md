@@ -117,3 +117,12 @@ Looked for where Activity still hand-animates a state change or breaks the calm 
 - **The Week | Month underline** appeared and disappeared; it now crossfades (0.4 / 0.6 at 70 ms, 0.13 / 0.87 at 100 ms, done by 200 ms), as a CSS transition on an always-present underline. The screen at rest is pixel-identical to before (0 differing pixels at 390 dp).
 - **Left alone:** the Spent strip's period slide (`usePeriodSlide`: a from-and-to entrance that a CSS transition cannot express without a remount, and it already runs on the UI thread) and the type pills (their fill and their white text would have to glide together; a white word on a pale pill for 150 ms would read worse than the switch).
 
+### Eighth pass: Plan
+
+Plan has almost no animation of its own (the tab content's 150 ms fade, and the Money out | Scheduled income pill). The one real gap: its four kinds of progress bar (a budget's tile and its list row, a goal's tile and its list row, a loan's tile) were plain views with a percent width, while the same bars on Budgets, Goals, Loans and Reports are `GrowFill`: a bar that shows its value at once, remembers what it last showed, and glides to a new value after a real change. So adding an expense and coming back to Plan moved the budget bar on Budgets but jumped it on Plan.
+
+- **Plan's bars are `GrowFill` now**, each with its own key (`plan:budget:<id>`, `plan:budget-row:<id>`, `plan:goal:<id>`, `plan:goal-row:<id>`, `plan:loan:<id>`); `PlanSummaryRow` takes the key as `animKey`. No new code: the component was already in the app.
+- **At rest nothing changes:** the Upcoming, Money plan and Debt tabs are pixel-identical at 390 dp (0 differing pixels); Overview differs only in one demo-data avatar colour that is hashed from a random id per run.
+- **Tests:** `PlanBars.test.tsx` checks that a bar shows at once, glides to a new value, keeps its value across a visit, and that no Plan file draws a progress bar as a plain percent-width view (all three fail against the old bars).
+- **Left alone:** the Upcoming date pills and the runway ribbon (finger-driven), for the reasons in the Activity pass.
+
