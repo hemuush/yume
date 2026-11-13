@@ -5,6 +5,7 @@ import { Text } from '@/components/Text';
 import { createAccount, listAccounts } from '@/db/ledger';
 import { getCachedCurrency, getDefaultCurrency, SUPPORTED_CURRENCIES } from '@/db/settings';
 import { toMinor } from '@/lib/money';
+import { openingLabel, openingToMinor } from '@/lib/cardOpening';
 import type { Account, InvestmentKind } from '@/types';
 import { ModalSheet } from '@/components/ModalSheet';
 import { DraftCard } from '@/components/DraftCard';
@@ -125,7 +126,7 @@ export function AddAccountModal({
         setError('Enter a name');
         return;
       }
-      const openingBalanceMinor = toMinor(parseFloat(opening || '0'));
+      const openingBalanceMinor = openingToMinor(type, opening);
       const creditLimitMinor =
         type === 'credit_card' && creditLimit ? toMinor(parseFloat(creditLimit)) : null;
       if (
@@ -267,7 +268,7 @@ export function AddAccountModal({
       <View style={styles.pairRow}>
         <View style={styles.pairCell}>
           <AmountField
-            label={trackingNow ? 'Invested before Yume' : 'Opening balance'}
+            label={openingLabel(type, trackingNow)}
             value={opening}
             onChangeText={setOpening}
             placeholder="0"

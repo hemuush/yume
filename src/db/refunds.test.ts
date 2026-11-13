@@ -97,7 +97,7 @@ describe('refunds', () => {
     expect((await getDailyGoalStreakSeries(25000, 1, today))[0].streakDays).toBe(0);
   });
 
-  it("lower the category's and the month's spending, and never count as income", async () => {
+  it('lower the category’s and the month’s spending, and never count as income', async () => {
     await refund(249_900);
     const summary = await getPeriodSummary(SEPT);
     expect(summary.expenseMinor).toBe(670_000 - 249_900);
@@ -126,7 +126,7 @@ describe('refunds', () => {
     expect(split[0]).toMatchObject({ totalMinor: 420_100, count: 1 });
   });
 
-  it("lower the day's spending, and a budget's", async () => {
+  it('lower the day’s spending, and a budget’s', async () => {
     await refund(100_000, '2026-09-12');
     expect(await getDailyExpenseTotals(SEPT)).toEqual([{ date: '2026-09-12', totalMinor: 570_000 }]);
     await createBudget({
@@ -195,7 +195,7 @@ describe('refunds', () => {
     expect(changed.isRefund).toBe(false);
   });
 
-  it("stay out of Add's usual chips", async () => {
+  it('stay out of Add’s usual chips', async () => {
     await refund(249_900, '2026-09-20');
     await refund(249_900, '2026-09-21');
     const usual = await getRepeatEntries(5, '2026-09-27', 'income');

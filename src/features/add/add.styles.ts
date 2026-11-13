@@ -123,7 +123,7 @@ export const styles = StyleSheet.create({
   amountHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
   amountHeaderStacked: { flexDirection: 'column', alignItems: 'stretch', gap: 0 },
   amountRowStacked: { justifyContent: 'flex-start', flex: 0 },
-  actionDisabled: { opacity: 0.55 },
+  actionDisabled: { opacity: theme.opacity.disabled },
   amountRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -416,7 +416,7 @@ export const styles = StyleSheet.create({
     color: theme.colors.textPrimary,
     maxWidth: 150,
   },
-  detailChipDisabled: { opacity: 0.4 },
+  detailChipDisabled: { opacity: theme.opacity.disabled },
   detailChipTextMuted: { color: theme.colors.textMuted },
   error: {
     fontFamily: theme.font.bodyBold,

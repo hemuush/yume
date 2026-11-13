@@ -194,7 +194,8 @@ export function MonthlyPlanCheck({
           )}
           {plan.undatedGoals > 0 && (
             <Text style={s.note}>
-              {plan.undatedGoals} unfinished or overdue goals have no usable monthly target and are excluded.
+              {plan.undatedGoals} unfinished or overdue {plan.undatedGoals === 1 ? 'goal has' : 'goals have'}{' '}
+              no usable monthly target and {plan.undatedGoals === 1 ? 'is' : 'are'} excluded.
             </Text>
           )}
         </>

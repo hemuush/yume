@@ -59,9 +59,25 @@ export function LinkTiles({
   const stacked = fontScale > 1.2;
   return (
     <View style={[styles.strip, embedded && styles.stripEmbedded, stacked && styles.stripStacked]}>
-      <Stat value={entries} label="Entries" first stacked={stacked} onPress={onEntries} />
-      <Stat value={loans} label="Active loans" stacked={stacked} onPress={onLoans} />
-      <Stat value={friends} label="Friends" stacked={stacked} onPress={onFriends} />
+      <Stat
+        value={entries}
+        label={entries === 1 ? 'Entry' : 'Entries'}
+        first
+        stacked={stacked}
+        onPress={onEntries}
+      />
+      <Stat
+        value={loans}
+        label={loans === 1 ? 'Active loan' : 'Active loans'}
+        stacked={stacked}
+        onPress={onLoans}
+      />
+      <Stat
+        value={friends}
+        label={friends === 1 ? 'Friend' : 'Friends'}
+        stacked={stacked}
+        onPress={onFriends}
+      />
     </View>
   );
 }

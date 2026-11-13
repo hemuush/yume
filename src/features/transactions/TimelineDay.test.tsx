@@ -302,6 +302,35 @@ describe('TimelineDay', () => {
     expect(onReorder).not.toHaveBeenCalled();
   });
 
+  it('lifts a held line, and confirms with a haptic only when it lands in a new place', async () => {
+    const { DraggableLine } = require('./DraggableLine');
+    const { haptics } = require('@/lib/haptics');
+    const confirm = jest.spyOn(haptics, 'confirm').mockImplementation(() => {});
+    const onReorder = jest.fn().mockResolvedValue(undefined);
+    const r = render(new Set(), jest.fn(), jest.fn(), onReorder);
+    const lineOf = (label: string): ReactTestRenderer['root'] | undefined =>
+      r.root
+        .findAllByType(DraggableLine)
+        .find(
+          (l: ReactTestRenderer['root']) =>
+            l.findAll((n) => String(n.props.accessibilityLabel ?? '').startsWith(label)).length > 0
+        );
+    act(() => byLabel(r, 'Travel,')[0].props.onLongPress());
+    expect(lineOf('Travel,')!.props.lifted).toBe(true);
+    // Let go where it started: nothing is saved, nothing is confirmed.
+    await act(async () => lineOf('Travel,')!.props.onEnd());
+    expect(onReorder).not.toHaveBeenCalled();
+    expect(confirm).not.toHaveBeenCalled();
+    // Lift again, drag it one line up, let go.
+    act(() => byLabel(r, 'Travel,')[0].props.onLongPress());
+    act(() => lineOf('Travel,')!.props.onMove(-48));
+    await act(async () => lineOf('Travel,')!.props.onEnd());
+    expect(onReorder).toHaveBeenCalledWith(DATE, ['t3', 't1', 't4', 't5', 't2']);
+    expect(confirm).toHaveBeenCalledTimes(1);
+    confirm.mockRestore();
+    act(() => r.unmount());
+  });
+
   it('offers no reordering when the screen does not allow it (search, filters)', () => {
     const r = render(new Set());
     expect(byLabel(r, 'Travel,')[0].props.onLongPress).toBeUndefined();
@@ -426,7 +455,7 @@ describe('days as a feed with a marker rail', () => {
       act(() => tree.unmount());
     }));
 
-  it("puts the day's entries on a card, not straight on the wallpaper", () =>
+  it('puts the day’s entries on a card, not straight on the wallpaper', () =>
     withWidth(() => {
       const tree = day();
       const lane = tree.root.find(
@@ -460,7 +489,7 @@ describe('days as a feed with a marker rail', () => {
       expect(lines('only')).toBe(0);
     }));
 
-  it("puts today's date number in a filled circle", () =>
+  it('puts today’s date number in a filled circle', () =>
     withWidth(() => {
       const circle = (today: boolean) => {
         const tree = day({ today });

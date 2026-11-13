@@ -61,7 +61,13 @@ export function AddPersonModal({
         </View>
       }
     >
-      <FormInput label="Name" value={name} onChangeText={setName} placeholder="e.g. Roommate" />
+      <FormInput
+        label="Name"
+        value={name}
+        onChangeText={setName}
+        placeholder="e.g. Roommate"
+        autoCapitalize="words"
+      />
     </ModalSheet>
   );
 }

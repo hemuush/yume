@@ -101,7 +101,7 @@ export function CardBill({
       : null;
   return (
     <>
-      {failed && <Text style={styles.note}>Couldn't load this card's bill.</Text>}
+      {failed && <Text style={styles.note}>Couldn’t load this card’s bill.</Text>}
       {cycle && (
         <>
           <Text style={styles.label}>Bill</Text>

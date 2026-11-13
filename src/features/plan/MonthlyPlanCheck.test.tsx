@@ -145,3 +145,39 @@ it('leads with what is left to plan and the income link, and says when it is ove
   });
   expect(text()).toContain('Over expected income');
 });
+
+describe('goals left out of the estimate', () => {
+  const note = () => text().match(/\d+ unfinished or overdue [^.]*\./)?.[0];
+  const goal = (id: string) => ({
+    id,
+    name: id,
+    archived: false,
+    currentAmountMinor: 0,
+    targetAmountMinor: 100000,
+    targetDate: null,
+    createdAt: '2026-10-01 00:00:00',
+    linkedAccountId: null,
+    tracksAccount: false,
+  });
+  async function show(goals: object[]) {
+    (getMonthlyPlanIncome as jest.Mock).mockResolvedValue(null);
+    await act(async () => {
+      tree = create(
+        <MonthlyPlanCheck
+          refreshToken={{}}
+          currency="INR"
+          hidden={false}
+          input={{ ...input, goals: goals as never }}
+        />
+      );
+    });
+  }
+
+  it('agrees with its count: one goal "has" and "is" left out, several "have" and "are"', async () => {
+    await show([goal('a')]);
+    expect(note()).toBe('1 unfinished or overdue goal has no usable monthly target and is excluded.');
+    act(() => tree.unmount());
+    await show([goal('a'), goal('b')]);
+    expect(note()).toBe('2 unfinished or overdue goals have no usable monthly target and are excluded.');
+  });
+});

@@ -820,6 +820,109 @@ describe('Home, stepping between months on a lived-in phone', () => {
   });
 });
 
+describe('Home’s Recent activity and header, on a lived-in phone', () => {
+  const { periodLabel } = require('@/lib/period');
+  const step = async (tree: ReactTestRenderer, dir: 'decrement' | 'increment') => {
+    await act(async () => {
+      tree.root
+        .find(
+          (n) =>
+            Array.isArray(n.props.accessibilityActions) &&
+            n.props.accessibilityActions.some((a: { name: string }) => a.name === 'decrement') &&
+            typeof n.props.onAccessibilityAction === 'function'
+        )
+        .props.onAccessibilityAction({ nativeEvent: { actionName: dir } });
+    });
+  };
+  beforeAll(async () => {
+    await livedIn();
+  });
+  beforeEach(() => {
+    mockHide = false;
+    mockParams = {};
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+  });
+  afterEach(() => jest.restoreAllMocks());
+
+  it('opens the month Home is showing in Activity from View all, when it is a past month', async () => {
+    const { router } = require('expo-router');
+    const push = jest.spyOn(router, 'push');
+    const tree = await open(SCREENS[0][1]);
+    const viewAll = () =>
+      tree.root.findAll(
+        (n) => n.props.accessibilityLabel === 'View all — Recent activity' && n.props.onPress
+      )[0];
+    act(() => viewAll().props.onPress());
+    expect(push).toHaveBeenLastCalledWith({ pathname: '/transactions' });
+    await step(tree, 'decrement');
+    await settle();
+    act(() => viewAll().props.onPress());
+    const now = new Date();
+    const last = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const month = `${last.getFullYear()}-${String(last.getMonth() + 1).padStart(2, '0')}`;
+    expect(push).toHaveBeenLastCalledWith({ pathname: '/transactions', params: { month } });
+    act(() => tree.unmount());
+  });
+
+  it('names an empty past month instead of telling the reader to try another period', async () => {
+    const tree = await open(SCREENS[0][1]);
+    for (let i = 0; i < 8; i++) await step(tree, 'decrement');
+    await settle();
+    const shown = textOf(tree);
+    expect(shown).toContain(`Nothing logged in ${periodLabel({ granularity: 'month', offset: -8 })}`);
+    expect(shown).not.toContain('Try another period');
+    act(() => tree.unmount());
+  });
+
+  it('brings the month card back into view when the month is changed from the shrunk header, not otherwise', async () => {
+    const tree = await open(SCREENS[0][1]);
+    const { HomeHeader } = require('@/features/home/HomeHeader');
+    const header = () => tree.root.findByType(HomeHeader);
+    // Home's own list (the first scroller in the tree; the account tiles scroll sideways inside it).
+    const { ScrollView } = require('react-native');
+    const scrollTo = () => tree.root.findAllByType(ScrollView)[0].instance.scrollTo as jest.Mock;
+    scrollTo().mockClear();
+    // At the top the month card is on screen: changing the month there leaves the page where it is.
+    await act(async () => header().props.onChange({ granularity: 'month', offset: -1 }));
+    expect(scrollTo()).not.toHaveBeenCalled();
+    // Scrolled down, the card is out of sight and the header's chip is the control in use.
+    header().props.scrollY.set(300);
+    await act(async () => header().props.onChange({ granularity: 'month', offset: -2 }));
+    expect(scrollTo()).toHaveBeenCalledWith({ y: 0, animated: false });
+    act(() => tree.unmount());
+  });
+});
+
+describe('Home when the data cannot be read', () => {
+  beforeAll(async () => {
+    await livedIn();
+  });
+  beforeEach(() => {
+    mockHide = false;
+    mockParams = {};
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+  });
+  afterEach(() => jest.restoreAllMocks());
+
+  it('says so with a way to retry, and does not tell someone with accounts that theirs is a fresh start', async () => {
+    const { PrimaryButton } = require('@/components/PrimaryButton');
+    const fail = jest.spyOn(mockDb, 'getAllAsync').mockRejectedValue(new Error('db locked'));
+    const tree = await open(SCREENS[0][1]);
+    const shown = textOf(tree);
+    expect(shown).toContain('Couldn’t load your data');
+    expect(shown).not.toContain('A fresh start');
+    const retry = tree.root.findAllByType(PrimaryButton).find((b) => b.props.title === 'Try again');
+    expect(retry).toBeDefined();
+    // The data comes back: trying again shows it and clears the notice.
+    fail.mockRestore();
+    await act(async () => retry!.props.onPress());
+    await settle();
+    expect(textOf(tree)).toContain('Bank');
+    expect(textOf(tree)).not.toContain('Couldn’t load your data');
+    act(() => tree.unmount());
+  });
+});
+
 describe('Plan links open the selected existing flow', () => {
   beforeAll(async () => {
     await livedIn();

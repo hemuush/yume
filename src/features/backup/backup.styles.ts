@@ -45,7 +45,7 @@ export const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
     textDecorationLine: 'underline',
   },
-  linkDisabled: { opacity: 0.45 },
+  linkDisabled: { opacity: theme.opacity.disabled },
   fileActions: { marginTop: 14, borderWidth: 1, paddingVertical: 4 },
   titleRow: {
     flexDirection: 'row',

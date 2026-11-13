@@ -52,14 +52,24 @@ export function getAddEntryPresentation(input: Input) {
 
   const invalidAmount = expr !== '' && amountMinor <= 0;
 
+  // Typed amounts are kept in whole units. One that rounds to nothing ("0.4") is not a calculation to check: say
+  // what happened.
   const roundingNote =
     !untouchedEdit && amountValue !== null && amountValue !== amountMinor / 100
-      ? `Saved in whole units: ${formatMoney(amountMinor, currency)}`
+      ? amountMinor > 0
+        ? `Saved in whole units: ${formatMoney(amountMinor, currency)}`
+        : 'Amounts are saved in whole units, so this comes to nothing. Enter at least 1.'
       : undefined;
 
   const currentValidation = formToStaged();
 
-  const currentProblem = 'error' in currentValidation ? currentValidation.error : undefined;
+  // Nothing typed yet is "Enter an amount", not "a valid amount": nothing has been entered to be invalid.
+  const currentProblem =
+    'error' in currentValidation
+      ? expr === '' && currentValidation.error === 'Enter a valid amount'
+        ? 'Enter an amount'
+        : currentValidation.error
+      : undefined;
 
   const cannotSave = splitParts
     ? !!splitProblem(amountMinor, splitParts) || !effectiveAccountId

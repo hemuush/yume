@@ -32,6 +32,8 @@ export interface RepeatGroup {
   amountMinor: number;
   date: string;
   accountName: string;
+  /** The account's own currency, which the amount is in (a transfer's two accounts share one). */
+  currency: string;
   toAccountName: string | null;
   categoryName: string | null;
   parentName?: string | null;
@@ -50,6 +52,8 @@ export interface StartingBalanceGroup {
   key: string;
   accountId: string;
   accountName: string;
+  /** The account's own currency, which the total is in. */
+  currency: string;
   categoryName: string;
   ids: string[];
   totalMinor: number;
@@ -114,6 +118,7 @@ export async function findRepeatGroups(): Promise<RepeatGroup[]> {
       'id' | 'type' | 'account_id' | 'to_account_id' | 'category_id' | 'amount_minor' | 'date' | 'created_at'
     > & {
       account_name: string;
+      currency: string;
       to_account_name: string | null;
       category_name: string | null;
       parent_name: string | null;
@@ -123,7 +128,7 @@ export async function findRepeatGroups(): Promise<RepeatGroup[]> {
     }
   >(
     `SELECT t.id, t.type, t.account_id, t.to_account_id, t.category_id, t.amount_minor, t.date, t.created_at,
-       a.name AS account_name, ta.name AS to_account_name, c.name AS category_name, pc.name AS parent_name,
+       a.name AS account_name, a.currency AS currency, ta.name AS to_account_name, c.name AS category_name, pc.name AS parent_name,
        c.icon AS category_icon, c.color AS category_color,
        CASE WHEN t.type = 'transfer' THEN (a.type = 'savings' OR IFNULL(ta.type, '') = 'savings')
             ELSE COALESCE(${sensitiveOf('c')}, 0) END AS is_savings
@@ -167,6 +172,7 @@ export async function findRepeatGroups(): Promise<RepeatGroup[]> {
         amountMinor: r.amount_minor,
         date: r.date,
         accountName: r.account_name,
+        currency: r.currency,
         toAccountName: r.to_account_name ?? null,
         categoryName: r.category_name ?? null,
         parentName: r.parent_name ?? null,
@@ -187,11 +193,12 @@ export async function findStartingBalances(): Promise<StartingBalanceGroup[]> {
     Pick<TransactionRow, 'id' | 'account_id' | 'amount_minor' | 'date'> & {
       category_id: string;
       account_name: string;
+      currency: string;
       category_name: string;
       is_savings: number;
     }
   >(
-    `SELECT t.id, t.account_id, t.category_id, t.amount_minor, t.date, a.name AS account_name,
+    `SELECT t.id, t.account_id, t.category_id, t.amount_minor, t.date, a.name AS account_name, a.currency AS currency,
        c.name AS category_name, ${sensitiveOf('c')} AS is_savings
      FROM transactions t
      JOIN accounts a ON a.id = t.account_id
@@ -215,6 +222,7 @@ export async function findStartingBalances(): Promise<StartingBalanceGroup[]> {
         key,
         accountId: r.account_id,
         accountName: r.account_name,
+        currency: r.currency,
         categoryName: r.category_name,
         ids: [r.id],
         totalMinor: r.amount_minor,

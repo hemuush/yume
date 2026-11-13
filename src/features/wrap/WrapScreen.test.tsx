@@ -120,7 +120,7 @@ describe('Wrap screen', () => {
   it('says what went wrong when it cannot load', async () => {
     mockFail.current = true;
     const r = await render();
-    expect(texts(r)).toContain("Couldn't make your Wrap");
+    expect(texts(r)).toContain('Couldn’t make your Wrap');
     expect(texts(r)).toContain('Database is busy');
     act(() => r.unmount());
   });
@@ -129,7 +129,7 @@ describe('Wrap screen', () => {
 it('can retry a failed load without leaving the wrap screen', async () => {
   mockFail.current = true;
   const r = await render();
-  expect(texts(r)).toContain("Couldn't make your Wrap");
+  expect(texts(r)).toContain('Couldn’t make your Wrap');
   mockFail.current = false;
   await act(async () => {
     r.root.find((node) => node.props.title === 'Try again' && node.props.onPress).props.onPress();

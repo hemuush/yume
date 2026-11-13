@@ -32,7 +32,7 @@ import { CardRowsSkeleton, SummarySkeleton } from '@/components/ListSkeleton';
 import { useUndoToast } from '@/components/UndoToast';
 import { Section } from '@/components/Section';
 import { screenStyles as h, SCREEN } from '@/components/screenStyles';
-import { dayMonth, longMonth, shortMonthYear } from '@/lib/dateLabels';
+import { dayMonthMaybeYear, longMonth, shortMonthYear } from '@/lib/dateLabels';
 import { errorMessage } from '@/lib/errorMessage';
 import { categoryPath } from '@/lib/categoryLabel';
 import { showAlert } from '@/components/AppDialog';
@@ -82,8 +82,8 @@ export default function TidyUpScreen() {
   const { show: showUndo } = useUndoToast();
   const { hideAmounts } = usePrivacy();
   // Savings and investment amounts stay masked here too while hidden.
-  const money = (minor: number, savings: boolean) =>
-    formatMaskableMoney(minor, { masked: hideAmounts && savings });
+  const money = (minor: number, savings: boolean, currency: string) =>
+    formatMaskableMoney(minor, { currency, masked: hideAmounts && savings });
   const runAction = useSaveOnce(async (action: () => Promise<void>) => {
     await action();
   });
@@ -120,30 +120,30 @@ export default function TidyUpScreen() {
         emitTransactionsChanged();
         await reload();
       });
-    }, "Couldn't delete it");
+    }, 'Couldn’t delete it');
 
   const keepBoth = (group: RepeatGroup) =>
     act(async () => {
       await keepRepeatGroup(group.key);
       haptics.tap();
-    }, "Couldn't save that");
+    }, 'Couldn’t save that');
 
   const moveBalance = (group: StartingBalanceGroup) =>
     act(async () => {
       const move = await moveToOpeningBalance(group);
       haptics.confirm();
-      showUndo(`Moved to ${group.accountName}'s opening balance`, async () => {
+      showUndo(`Moved to ${group.accountName}’s opening balance`, async () => {
         await undoMoveToOpeningBalance(move);
         emitTransactionsChanged();
         await reload();
       });
-    }, "Couldn't move it");
+    }, 'Couldn’t move it');
 
   const keepIncome = (group: StartingBalanceGroup) =>
     act(async () => {
       await keepAsIncome(group.key);
       haptics.tap();
-    }, "Couldn't save that");
+    }, 'Couldn’t save that');
 
   const roundAmounts = (count: number) =>
     showAlert(
@@ -169,7 +169,7 @@ export default function TidyUpScreen() {
                   await reload();
                 }
               );
-            }, "Couldn't round amounts"),
+            }, 'Couldn’t round amounts'),
         },
       ]
     );
@@ -229,7 +229,7 @@ export default function TidyUpScreen() {
       >
         {loadError && (
           <View style={styles.errorBanner}>
-            <Text style={styles.errorTitle}>Couldn't check your data</Text>
+            <Text style={styles.errorTitle}>Couldn’t check your data</Text>
             <Text style={styles.errorDetail}>{loadError}</Text>
             <PrimaryButton title="Retry" compact variant="secondary" onPress={() => void reload()} />
           </View>
@@ -276,13 +276,13 @@ export default function TidyUpScreen() {
                         />
                         <View style={h.mid}>
                           <Text style={h.title} numberOfLines={2}>
-                            {money(g.amountMinor, g.isSavings)} ·{' '}
+                            {money(g.amountMinor, g.isSavings, g.currency)} ·{' '}
                             {g.type === 'transfer'
                               ? `${g.accountName} → ${g.toAccountName ?? '—'}`
                               : `${g.categoryName ? categoryPath(g.categoryName, g.parentName) : '—'} · ${g.accountName}`}
                           </Text>
                           <Text style={h.sub}>
-                            {dayMonth(g.date)} ·{' '}
+                            {dayMonthMaybeYear(g.date)} ·{' '}
                             {g.ids.length === 2 ? 'saved' : `${g.ids.length} times, saved`}{' '}
                             {g.savedAt.map(savedLabel).join(' and ')}
                           </Text>
@@ -315,7 +315,7 @@ export default function TidyUpScreen() {
                   {report.startingBalances.map((g, i) => {
                     const one = g.ids.length === 1;
                     const when = one
-                      ? dayMonth(g.firstDate)
+                      ? dayMonthMaybeYear(g.firstDate)
                       : `${g.ids.length} entries, ${shortMonthYear(g.firstDate)} – ${shortMonthYear(g.lastDate)}`;
                     return (
                       <View key={g.key} style={[styles.item, i > 0 && h.divider]}>
@@ -323,12 +323,13 @@ export default function TidyUpScreen() {
                           <CategoryIcon name="arrow-collapse-down" color={theme.colors.idCoralDeep} />
                           <View style={h.mid}>
                             <Text style={h.title} numberOfLines={2}>
-                              {money(g.totalMinor, g.isSavings)} · {g.categoryName} · {g.accountName}
+                              {money(g.totalMinor, g.isSavings, g.currency)} · {g.categoryName} ·{' '}
+                              {g.accountName}
                             </Text>
                             <Text style={h.sub}>
                               {when}. If {one ? 'this is' : 'these are'} money {g.accountName} already had,
                               move {one ? 'it' : 'them'} to its opening balance: the balance stays the same,
-                              and income drops by {money(g.totalMinor, g.isSavings)}
+                              and income drops by {money(g.totalMinor, g.isSavings, g.currency)}
                               {one ? ` in ${longMonth(g.firstDate)}` : ' across those months'}.
                             </Text>
                           </View>
@@ -337,13 +338,15 @@ export default function TidyUpScreen() {
                           <Feather name="bar-chart-2" size={13} color={theme.colors.textMuted} />
                           <Text style={styles.afterText}>
                             Income {one ? `in ${longMonth(g.firstDate)}` : 'across those months'}{' '}
-                            <Text style={styles.afterBold}>−{money(g.totalMinor, g.isSavings)}</Text> ·{' '}
-                            {g.accountName}'s balance <Text style={styles.afterBold}>stays the same</Text>
+                            <Text style={styles.afterBold}>
+                              −{money(g.totalMinor, g.isSavings, g.currency)}
+                            </Text>{' '}
+                            · {g.accountName}’s balance <Text style={styles.afterBold}>stays the same</Text>
                           </Text>
                         </View>
                         <View style={styles.actions}>
                           <PrimaryButton
-                            title={one ? "It's real income" : "They're real income"}
+                            title={one ? 'It’s real income' : 'They’re real income'}
                             variant="secondary"
                             onPress={() => keepIncome(g)}
                             disabled={busy}

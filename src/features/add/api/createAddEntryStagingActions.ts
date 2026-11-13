@@ -66,7 +66,7 @@ export function createAddEntryStagingActions(input: Input) {
     // the tapped part, as the whole payment. It stays an expense here.
     if (editing?.splitId && next !== 'expense') {
       showAlert(
-        "A split can't change type",
+        'A split can’t change type',
         'A split payment is always an expense. To record it differently, delete the split and add it again.'
       );
       return;

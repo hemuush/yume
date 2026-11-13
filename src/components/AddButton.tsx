@@ -51,5 +51,5 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.ink,
   },
   text: { fontFamily: theme.font.roundedBold, fontSize: 13, color: theme.colors.surface },
-  disabled: { opacity: 0.45 },
+  disabled: { opacity: theme.opacity.disabled },
 });

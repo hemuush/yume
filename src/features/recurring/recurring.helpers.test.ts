@@ -120,7 +120,7 @@ describe('runMarks', () => {
     expect(marks.filter((m: { key: string }) => m.key.startsWith('e-'))).toHaveLength(2);
   });
 
-  it("follows a rule's real day: a 31st rule clamped to the 28th lands on the 31st next", () => {
+  it('follows a rule’s real day: a 31st rule clamped to the 28th lands on the 31st next', () => {
     const marks = runMarks([rule({ nextRunDate: '2027-02-28', anchorDay: 31 })], '2027-02-27');
     expect(marks.map((m: { date: string }) => m.date)).toEqual(['2027-02-28']);
   });

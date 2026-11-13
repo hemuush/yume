@@ -26,7 +26,7 @@ export function WrapButton({ wraps, onPlay }: { wraps: ReadyWrap[]; onPlay: (wra
   if (wraps.length === 0) return null;
 
   const fresh = wraps.some((w) => !w.seen);
-  const nameOf = (w: ReadyWrap) => (w.period === 'month' ? `${w.label}'s Wrap` : "last week's Wrap");
+  const nameOf = (w: ReadyWrap) => (w.period === 'month' ? `${w.label}’s Wrap` : 'last week’s Wrap');
   const onPress = () => {
     haptics.tap();
     if (wraps.length === 1) onPlay(wraps[0]);

@@ -20,7 +20,7 @@ const MONTHS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 const ADD_MONTH_STEPS = [0, 1, 2, 6, 11, 12, 13, 24, 60, 240];
 const ADD_DAY_STEPS = [0, 1, 7, 14, 31, 90, 365, 366, -1, -7, -31, -365];
 
-describe("toLocalIsoDate — reads the Date object's own local fields, every month across leap years", () => {
+describe('toLocalIsoDate — reads the Date object’s own local fields, every month across leap years', () => {
   for (const y of YEARS) {
     for (const m of MONTHS) {
       const lastDay = new Date(y, m, 0).getDate();

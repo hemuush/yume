@@ -54,13 +54,13 @@ beforeAll(async () => {
 }, 180000);
 it.each([
   [11500, '₹385 left today'],
-  [60000, "₹100 over today's goal"],
+  [60000, '₹100 over today’s goal'],
   [50000, '₹0 left today'],
 ])('shows remaining or exceeded allowance for %s', async (spent, label) => {
   mockSpent = spent as number;
   const tree = await render();
   expect(texts(tree)).toContain(label);
-  expect(texts(tree)).toContain("Today's result can change until the day ends.");
+  expect(texts(tree)).toContain('Today’s result can change until the day ends.');
   expect(
     tree.root.findAll((n) => n.props.accessibilityLabel === 'Change daily goal' && n.props.onPress).length
   ).toBeGreaterThan(0);

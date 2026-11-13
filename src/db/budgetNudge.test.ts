@@ -49,7 +49,7 @@ describe('budget alerts', () => {
     expect(await queuedTitles()).toEqual([]);
   });
 
-  it("queue one alert at 80%, counting a subcategory's spending", async () => {
+  it('queue one alert at 80%, counting a subcategory’s spending', async () => {
     await spend(zomato, 30000); // ₹800 of ₹1,000
     expect(await queuedTitles()).toEqual(['Food budget is nearing its limit']);
     await spend(food, 5000);

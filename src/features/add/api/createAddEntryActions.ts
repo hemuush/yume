@@ -103,7 +103,7 @@ export function createAddEntryActions(input: Input) {
       const added = ppl.find((p) => !before.has(p.id));
       if (added) setPersonId(added.id);
     } catch (e) {
-      showAlert("Couldn't load people", errorMessage(e));
+      showAlert('Couldn’t load people', errorMessage(e));
     }
   };
   const openRepeatSheet = (): void => {

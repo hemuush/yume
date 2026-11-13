@@ -642,7 +642,7 @@ describe('Reports screen', () => {
     await pressText(tree, 'Open Food ›');
     expect(lastPush()).toMatch(/^\/category\/food\?g=custom&from=\d{4}-\d{2}-\d{2}&to=\d{4}-\d{2}-\d{2}$/);
   });
-  it("opens on a week from a link, as the week Wrap's report button sends", async () => {
+  it('opens on a week from a link, as the week Wrap’s report button sends', async () => {
     mockSearch.current = { from: '2026-09-20', to: '2026-09-26' };
     try {
       const tree = await render();
@@ -692,7 +692,7 @@ describe('Reports screen', () => {
       }
     });
 
-    it("lists the period's largest single expenses, up to today, and opens one's day", async () => {
+    it('lists the period’s largest single expenses, up to today, and opens one’s day', async () => {
       const tree = await render();
       expect(mockLargest).toHaveBeenCalledWith(
         { start: '2026-10-01', end: '2026-10-20' },

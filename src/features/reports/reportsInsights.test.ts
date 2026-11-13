@@ -126,6 +126,74 @@ describe('patternFacts: the heaviest day', () => {
   });
 });
 
+describe('patternFacts while the period is still going', () => {
+  const daily = (days: number[], amount = 10000) =>
+    days.map((d) => ({ date: `2026-09-${String(d).padStart(2, '0')}`, totalMinor: amount }));
+
+  it('says a share is of the month so far, not of the whole month, until the month is over', () => {
+    const rows = [
+      { date: '2026-09-01', totalMinor: 100000 },
+      { date: '2026-09-05', totalMinor: 2000 },
+      { date: '2026-09-09', totalMinor: 2000 },
+    ];
+    const live = patternFacts(rows, 30, SEPTEMBER, '2026-09-12').find((f) => f.key === 'heaviest')!;
+    expect(live.detail).toMatch(/96% of the month so far in one day/);
+    const over = patternFacts(rows, 30, SEPTEMBER, '2026-10-20').find((f) => f.key === 'heaviest')!;
+    expect(over.detail).toMatch(/96% of the month in one day/);
+    expect(over.detail).not.toContain('so far');
+  });
+
+  it('does not call a month front-loaded before it has had a ninth day to be compared with', () => {
+    // Everything so far is in the first eight days, because those are all the days there have been.
+    const early = patternFacts(daily([1, 2, 3]), 30, SEPTEMBER, '2026-09-03');
+    expect(early.some((f) => f.key === 'frontLoaded')).toBe(false);
+    const eighth = patternFacts(daily([1, 2, 3, 4]), 30, SEPTEMBER, '2026-09-08');
+    expect(eighth.some((f) => f.key === 'frontLoaded')).toBe(false);
+    // Once the ninth day has come and nothing much went out after the first eight, it is.
+    const ninth = patternFacts(
+      [...daily([1, 2, 3, 4]), { date: '2026-09-09', totalMinor: 1000 }],
+      30,
+      SEPTEMBER,
+      '2026-09-09'
+    );
+    expect(ninth.some((f) => f.key === 'frontLoaded')).toBe(true);
+  });
+
+  it('does not call a trip shorter than eight days front-loaded', () => {
+    const trip = { start: '2026-09-01', end: '2026-09-05' };
+    expect(patternFacts(daily([1, 2, 3]), 5, trip, '2026-10-20').some((f) => f.key === 'frontLoaded')).toBe(
+      false
+    );
+  });
+});
+
+describe('the "what moved" card names the period it is about', () => {
+  const base: StoryInput = {
+    mover: { categoryId: 'food', name: 'Food', pctChange: 32.4, totalMinor: 2600000 },
+    comparisonLabel: 'the month before',
+    patterns: [],
+    recurringMinor: 0,
+    discretionaryMinor: 0,
+    quiet: { countedDays: 0, noSpendDays: 0, longestRun: null },
+    spendDays: 10,
+    isCurrentPeriod: true,
+    unit: 'month',
+  };
+  const mover = (over: Partial<StoryInput>) =>
+    buildStoryCards({ ...base, ...over }).find((c) => c.key === 'mover')!.detail;
+
+  it('says "this month" only for the one in progress, and "that month" (or year) for a past one', () => {
+    expect(mover({})).toMatch(/It took .* this month\./);
+    expect(mover({ isCurrentPeriod: false })).toMatch(/It took .* that month\./);
+    expect(mover({ isCurrentPeriod: false, unit: 'year', comparisonLabel: 'last year' })).toMatch(
+      /It took .* that year\./
+    );
+    expect(mover({ isCurrentPeriod: false, unit: 'period', comparisonLabel: 'the period before' })).toMatch(
+      /It took .* in the period\./
+    );
+  });
+});
+
 describe('summariseDayTotal', () => {
   it('shows total spent when the day has only expenses', () => {
     expect(

@@ -8,7 +8,7 @@ export function fillSuuTemplate(template: string, pct: string): string {
 }
 
 /** No comparison period yet — a fresh install, or the very first days of use. */
-export const NO_DATA_LINES: readonly string[] = ["Log a few days and I'll spot trends."];
+export const NO_DATA_LINES: readonly string[] = ['Log a few days and I’ll spot trends.'];
 
 /** This period ran a deficit (spent more than came in). */
 export const OVERSPENT_LINES: readonly string[] = ['Spending passed income this month.'];

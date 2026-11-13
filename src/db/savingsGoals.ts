@@ -225,7 +225,7 @@ export async function contributeToGoal(id: string, deltaMinor: number): Promise<
     }
     if (existing.archived) throw new Error('Unarchive this goal before changing its progress.');
     if (existing.track_account && existing.linked_account_id) {
-      throw new Error("This goal follows its account's balance — move money into the account instead.");
+      throw new Error('This goal follows its account’s balance — move money into the account instead.');
     }
     const next = existing.current_amount_minor + deltaMinor;
     if (next < 0)

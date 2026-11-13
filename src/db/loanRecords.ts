@@ -250,7 +250,7 @@ export async function deleteLoan(loanId: string): Promise<RowSnapshot[]> {
     );
     if (prepayment) {
       throw new Error(
-        "This loan has a recorded prepayment, which can't be undone yet — it can't be deleted while that exists."
+        'This loan has a recorded prepayment, which can’t be undone yet — it can’t be deleted while that exists.'
       );
     }
     // Loan row first: loan_payments, loan_rate_changes and its transactions FK to it (ON DELETE CASCADE).

@@ -94,7 +94,7 @@ const styles = StyleSheet.create({
   name: { fontFamily: theme.font.bodyBold, fontSize: theme.typeSize.row, color: theme.colors.textPrimary },
   sub: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textSecondary },
   time: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 4 },
-  off: { opacity: 0.55 },
+  off: { opacity: theme.opacity.disabled },
   step: {
     width: 44,
     height: 44,

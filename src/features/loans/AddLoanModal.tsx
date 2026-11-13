@@ -26,6 +26,7 @@ import { DURATIONS, EASE_OUT } from '@/lib/motionTimings';
 import { dayMonthYear } from '@/lib/dateLabels';
 import { spendableAccountsOf, defaultCurrencyAccountsOf } from '@/lib/account';
 import { rateProblem, tenureProblem } from '@/lib/loanLimits';
+import { plural } from '@/lib/plural';
 import { useAccent } from '@/theme/AccentContext';
 import { useSaveOnce } from '@/lib/useSaveOnce';
 
@@ -129,7 +130,7 @@ export function AddLoanModal({
   useEffect(() => {
     if (!visible) return;
     let live = true;
-    (async () => {
+    void (async () => {
       try {
         const [accs, cats, ppl] = await Promise.all([listAccounts(), listCategories(), listPeople()]);
         if (!live) return;
@@ -244,7 +245,7 @@ export function AddLoanModal({
   const nextStep = () => {
     setError(null);
     if (step1Invalid) {
-      setError("Fill in who it's with, the amount, the tenure and a valid interest rate");
+      setError('Fill in who it’s with, the amount, the tenure and a valid interest rate');
       return;
     }
     const limit = rateProblem(rateBp) ?? tenureProblem(tenureMonths);
@@ -258,7 +259,7 @@ export function AddLoanModal({
   const submit = async () => {
     setError(null);
     if (step1Invalid) {
-      setError("Fill in who it's with, the amount, the tenure and a valid interest rate");
+      setError('Fill in who it’s with, the amount, the tenure and a valid interest rate');
       return;
     }
     const limit = rateProblem(rateBp) ?? tenureProblem(tenureMonths);
@@ -285,7 +286,9 @@ export function AddLoanModal({
       return;
     }
     if (loanTiming === 'existing' && alreadyPaidCount > tenureMonths) {
-      setError(`The loan only has ${tenureMonths} EMIs, so ${alreadyPaidCount} can't be paid already`);
+      setError(
+        `The loan only has ${plural(tenureMonths, 'EMI')}, so ${alreadyPaidCount} can’t be paid already`
+      );
       return;
     }
     if (loanTiming === 'existing' && alreadyPaidCount > 0) {
@@ -294,7 +297,7 @@ export function AddLoanModal({
       const elapsedMonths = monthsBetweenIsoDates(startDate, toLocalIsoDate(new Date()));
       if (alreadyPaidCount > elapsedMonths) {
         setError(
-          `You said ${alreadyPaidCount} installments are already paid, but only about ${elapsedMonths} month${elapsedMonths === 1 ? '' : 's'} have passed since ${dayMonthYear(startDate)} — double-check the start date or the paid count.`
+          `You said ${plural(alreadyPaidCount, 'installment')} ${alreadyPaidCount === 1 ? 'is' : 'are'} already paid, but only about ${plural(elapsedMonths, 'month')} ${elapsedMonths === 1 ? 'has' : 'have'} passed since ${dayMonthYear(startDate)} — double-check the start date or the paid count.`
         );
         return;
       }
@@ -436,6 +439,7 @@ export function AddLoanModal({
             value={counterparty}
             onChangeText={setCounterparty}
             placeholder="e.g. HDFC Bank"
+            autoCapitalize="words"
           />
           <AmountField
             label="Principal amount"
@@ -458,7 +462,7 @@ export function AddLoanModal({
             </View>
           </View>
           {rateType === 'floating' && (
-            <Text style={styles.hintText}>When the rate changes, update it from the loan's menu.</Text>
+            <Text style={styles.hintText}>When the rate changes, update it from the loan’s menu.</Text>
           )}
           <Text style={styles.fieldLabel}>Tenure</Text>
           <View style={styles.chipRow}>
@@ -492,7 +496,7 @@ export function AddLoanModal({
                   <Text style={styles.assetTitle}>Track what it paid for</Text>
                   <Text style={styles.assetHint}>
                     {trackAsset
-                      ? "Its value minus what's still owed counts toward your net worth."
+                      ? 'Its value minus what’s still owed counts toward your net worth.'
                       : 'Leave off for a personal loan or card: it counts as plain debt.'}
                   </Text>
                 </View>
@@ -554,7 +558,7 @@ export function AddLoanModal({
                 </View>
               </View>
               <Text style={styles.hintText}>
-                Change the dates if you're catching up. The first EMI is usually a month after the money is
+                Change the dates if you’re catching up. The first EMI is usually a month after the money is
                 paid out.
               </Text>
               <Text style={styles.fieldLabel}>

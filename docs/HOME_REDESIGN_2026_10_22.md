@@ -62,3 +62,9 @@ The month card now shows the month as a 112 dp ring (spent, saved, bills left, f
 
 - Very small slices of the month ring (Bills left and Free late in the month, a few percent of the ring) were drawn as round dots a whole stroke wide, so they overlapped each other and Free was hidden. A slice too small for round caps now draws as a thin flat bar (at least 2 dp) centred in its own slot, so every slice stays visible and none overlap.
 - The account tiles had 4 dp of vertical padding the other cards lack, which put them 4 dp lower than the cards above and gave Coming up an extra 4 dp. The padding is gone.
+
+## 2026-11-12: the ring is centred in the card
+
+The ring and its legend had been centred together as one group, which left the ring itself left of the card's middle. The ring is now exactly centred: the legend splits into two equal halves (the first half of the slices on the left, flush to the card's left edge; the rest on the right, flush to the right edge), each slice a name over its figure. This needs about 380 dp and normal text. On a narrower phone or above 1.15 font scale the ring stays centred on its own line and the legend drops under it in the usual wrapping columns. Before there is any income there is no legend and the ring stays centred. This replaces the "capped at 200 dp and centred beside the ring" note above.
+
+A legend figure is one line and shrinks (down to 75%) to fit its half of the legend, so a large amount like ₹12,34,56,789 is not cut to "₹12,34,56…". Above 130% text the shared Text wraps figures instead of shrinking them, and the legend is under the ring by then.

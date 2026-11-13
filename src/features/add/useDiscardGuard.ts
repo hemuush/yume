@@ -19,7 +19,7 @@ export function useDiscardGuard(
     setLeaving(true);
   };
   usePreventRemove(shouldAsk && !leaving, ({ data }) => {
-    showAlert(draft ? 'Leave this entry?' : 'Discard this entry?', "What you've entered hasn't been saved.", [
+    showAlert(draft ? 'Leave this entry?' : 'Discard this entry?', 'What you’ve entered hasn’t been saved.', [
       { text: 'Keep editing', style: 'cancel' },
       ...(draft
         ? [

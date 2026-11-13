@@ -34,7 +34,7 @@ describe('theme packs', () => {
     expect(THEMES[0].id).toBe('yume');
   });
 
-  it("keeps every pack's colours clearly different from every other pack's", () => {
+  it('keeps every pack’s colours clearly different from every other pack’s', () => {
     const clashes: string[] = [];
     THEMES.forEach((a, i) =>
       THEMES.slice(i + 1).forEach((b) => {

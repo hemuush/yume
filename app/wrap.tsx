@@ -70,7 +70,7 @@ export default function WrapScreen() {
       <HomeWallpaper accent={accent} secondary={secondary} />
       {error || wrap === null ? (
         <>
-          <Text style={styles.title}>{error ? "Couldn't make your Wrap" : 'Nothing to wrap yet'}</Text>
+          <Text style={styles.title}>{error ? 'Couldn’t make your Wrap' : 'Nothing to wrap yet'}</Text>
           <Text style={styles.detail}>{error ?? 'Nothing went out in that period.'}</Text>
           {error && (
             <PrimaryButton

@@ -10,8 +10,10 @@ import {
   deleteAccount,
   restoreAccount,
   getAccountTransactionCount,
+  getAccountRuleCounts,
 } from '@/db/ledger';
 import { toMinor, toMajor, formatMoney, formatMaskableMoney } from '@/lib/money';
+import { isCard, openingLabel, openingToField, openingToMinor } from '@/lib/cardOpening';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import type { Account, InvestmentKind } from '@/types';
 import { ModalSheet, SheetLink } from '@/components/ModalSheet';
@@ -84,7 +86,7 @@ export function AccountDetailModal({
     setChoice(choiceOf(account.type, !!account.investment));
     setKind(account.investment?.kind ?? null);
     setFundingId(account.investment?.fundingAccountId ?? null);
-    setOpening(toMajor(account.openingBalanceMinor).toString());
+    setOpening(openingToField(account.type, account.openingBalanceMinor));
     setCreditLimit(account.creditLimitMinor != null ? toMajor(account.creditLimitMinor).toString() : '');
     setStatementDay(account.statementDay != null ? String(account.statementDay) : '');
     setDueDay(account.dueDay != null ? String(account.dueDay) : '');
@@ -119,6 +121,14 @@ export function AccountDetailModal({
 
   if (!account) return null;
 
+  // What the field holds, as stored: untouched keeps the exact stored amount (it may carry paise), and a card's
+  // text is what it owes, so a minus in it means the card started with money in it.
+  const openingMinor =
+    opening === openingToField(account.type, account.openingBalanceMinor) &&
+    isCard(type) === isCard(account.type)
+      ? account.openingBalanceMinor
+      : openingToMinor(type, opening);
+
   const submit = () =>
     runAction(async () => {
       setError(null);
@@ -126,10 +136,7 @@ export function AccountDetailModal({
         setError('Enter a name');
         return;
       }
-      const openingBalanceMinor =
-        opening === toMajor(account.openingBalanceMinor).toString()
-          ? account.openingBalanceMinor
-          : toMinor(parseFloat(opening || '0'));
+      const openingBalanceMinor = openingMinor;
       const creditLimitMinor =
         type === 'credit_card' && creditLimit
           ? account.creditLimitMinor != null && creditLimit === toMajor(account.creditLimitMinor).toString()
@@ -201,10 +208,17 @@ export function AccountDetailModal({
       }
     });
 
-  const confirmArchive = () => {
+  const confirmArchive = async () => {
+    // Archiving pauses the repeating entries on the account and unarchiving does not resume them, so the
+    // person is told before, not left to find them paused.
+    const { active } = await getAccountRuleCounts(account.id).catch(() => ({ active: 0, paused: 0 }));
     showAlert(
       'Archive this account?',
-      'It disappears from account pickers and totals, but every past transaction against it stays exactly as it is. You can unarchive it later.',
+      `It disappears from account pickers and totals, but every past transaction against it stays exactly as it is. You can unarchive it later.${
+        active > 0
+          ? ` Its ${active} repeating ${active === 1 ? 'entry is' : 'entries are'} paused too, and stay${active === 1 ? 's' : ''} paused until you resume ${active === 1 ? 'it' : 'them'} in Recurring.`
+          : ''
+      }`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -217,7 +231,7 @@ export function AccountDetailModal({
                 await archiveAccount(account.id);
                 onChanged();
               } catch (e) {
-                showAlert("Couldn't archive", errorMessage(e));
+                showAlert('Couldn’t archive', errorMessage(e));
               } finally {
                 setBusy(false);
               }
@@ -232,9 +246,16 @@ export function AccountDetailModal({
       setBusy(true);
       try {
         await unarchiveAccount(account.id);
+        const { paused } = await getAccountRuleCounts(account.id).catch(() => ({ active: 0, paused: 0 }));
         onChanged();
+        if (paused > 0) {
+          showAlert(
+            'Unarchived',
+            `Its ${paused} repeating ${paused === 1 ? 'entry is' : 'entries are'} still paused. Resume ${paused === 1 ? 'it' : 'them'} in Recurring if you want ${paused === 1 ? 'it' : 'them'} to post again.`
+          );
+        }
       } catch (e) {
-        showAlert("Couldn't unarchive", errorMessage(e));
+        showAlert('Couldn’t unarchive', errorMessage(e));
       } finally {
         setBusy(false);
       }
@@ -252,7 +273,7 @@ export function AccountDetailModal({
           onChanged();
         });
       } catch (e) {
-        showAlert("Couldn't delete", errorMessage(e));
+        showAlert('Couldn’t delete', errorMessage(e));
       } finally {
         setBusy(false);
       }
@@ -301,7 +322,9 @@ export function AccountDetailModal({
             ? undefined
             : account.investment
               ? `Invested ${formatMoney(account.investment.investedMinor, account.currency)}`
-              : `Opened with ${formatMoney(toMinor(parseFloat(opening || '0')) || 0, account.currency)}`
+              : openingMinor < 0 && !Number.isNaN(openingMinor)
+                ? `Opened owing ${formatMoney(-openingMinor, account.currency)}`
+                : `Opened with ${formatMoney(openingMinor || 0, account.currency)}`
         }
       />
       <AccountReservations account={account} onNavigate={onClose} />
@@ -334,11 +357,14 @@ export function AccountDetailModal({
         />
       )}
       <AmountField
-        label={trackingNow ? 'Invested before Yume' : 'Opening balance'}
+        label={openingLabel(type, trackingNow)}
         value={opening}
         onChangeText={setOpening}
         placeholder="0"
       />
+      {isCard(type) && opening.startsWith('-') && (
+        <Text style={styles.hintText}>A minus means the card started with money in it, not a bill.</Text>
+      )}
       {trackingNow && (
         <Text style={styles.hintText}>
           Only money put in earlier. Transfers you make in Yume are added on their own.
@@ -379,7 +405,7 @@ export function AccountDetailModal({
       ) : txCheckFailed ? (
         <>
           <Text style={styles.errorText}>
-            Couldn't check whether this account has entries. You can still archive it.
+            Couldn’t check whether this account has entries. You can still archive it.
           </Text>
           <SheetLink label={busy ? 'Working…' : 'Archive account'} onPress={confirmArchive} disabled={busy} />
         </>

@@ -194,6 +194,6 @@ const styles = StyleSheet.create({
   // A 44 dp touch area around a 32 dp circle.
   hit: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   circle: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
-  circlePressed: { opacity: 0.7 },
-  blocked: { opacity: 0.4 },
+  circlePressed: { opacity: theme.opacity.pressed },
+  blocked: { opacity: theme.opacity.disabled },
 });

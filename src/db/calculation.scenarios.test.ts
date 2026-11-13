@@ -212,7 +212,7 @@ describe('calculation scenario matrix', () => {
     expect(afterWithdrawal.netMinor).toBe(100000);
   });
 
-  it("getRangeComparison across a real month boundary includes exactly that month's transactions, nothing from adjacent months", async () => {
+  it('getRangeComparison across a real month boundary includes exactly that month’s transactions, nothing from adjacent months', async () => {
     const account = await createAccount({
       name: 'BoundaryTest',
       type: 'bank',

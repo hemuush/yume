@@ -1,4 +1,5 @@
 import {
+  returnSpanLabel,
   STALE_DAYS,
   returnPct,
   formatReturnPct,
@@ -98,5 +99,15 @@ describe('valueReminderLine', () => {
   it('stays quiet later in the month, or when nothing is stale', () => {
     expect(valueReminderLine([acct('Index fund', old)], '2026-10-15')).toBeNull();
     expect(valueReminderLine([acct('Index fund', inv())], '2026-10-02')).toBeNull();
+  });
+});
+
+describe('returnSpanLabel', () => {
+  it('names a span of about a month in the singular, then months, then years to a tenth', () => {
+    expect(returnSpanLabel(10)).toBe('1 month');
+    expect(returnSpanLabel(45)).toBe('1 month');
+    expect(returnSpanLabel(61)).toBe('2 months');
+    expect(returnSpanLabel(700)).toBe('23 months');
+    expect(returnSpanLabel(800)).toBe('2.2 years');
   });
 });

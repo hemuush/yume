@@ -30,7 +30,7 @@ export interface CategoryRow {
   name: string;
   color: string;
   totalMinor: number;
-  share: number; // 0–1 of the kind's total
+  share: number; // 0–1 of the kind’s total
   count: number;
   avgMinor: number;
   subs: { name: string; totalMinor: number; count: number }[];

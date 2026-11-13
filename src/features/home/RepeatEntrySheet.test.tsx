@@ -96,7 +96,7 @@ describe('RepeatEntrySheet', () => {
     act(() => tree.unmount());
   });
 
-  it("labels an entry with its note (or category) and amount in the account's currency", () => {
+  it('labels an entry with its note (or category) and amount in the account’s currency', () => {
     expect(repeatEntryLabel(metro as any)).toBe(`Metro · ${formatMoney(15000, 'INR')}`);
     expect(repeatEntryLabel({ ...metro, note: '  ' } as any)).toBe(
       `Transport · ${formatMoney(15000, 'INR')}`

@@ -203,7 +203,7 @@ export default function BackupScreen() {
       try {
         snapshot = JSON.parse(content);
       } catch {
-        throw new Error("That file isn't valid JSON — pick a full backup Yume exported.");
+        throw new Error('That file isn’t valid JSON — pick a full backup Yume exported.');
       }
       await confirmAndRestore(snapshot);
     });
@@ -236,7 +236,7 @@ export default function BackupScreen() {
                   { text: 'OK', onPress: goHome },
                 ]);
               } catch (e) {
-                showAlert("Couldn't put your data back", errorMessage(e));
+                showAlert('Couldn’t put your data back', errorMessage(e));
               } finally {
                 setBusy(null);
                 await load();
@@ -260,7 +260,7 @@ export default function BackupScreen() {
       skippedColumns.length > 0
         ? `\n\nHeads up: ${skippedColumns.length} field${
             skippedColumns.length === 1 ? '' : 's'
-          } in this backup aren't part of this version of Yume and were skipped (${skippedColumns.join(
+          } in this backup aren’t part of this version of Yume and were skipped (${skippedColumns.join(
             ', '
           )}). Everything else was restored.`
         : '';
@@ -291,7 +291,7 @@ export default function BackupScreen() {
   /** Shows the restore preview for a backup; the sheet's Restore does the rest. */
   const confirmAndRestore = async (snapshot: BackupSnapshot, folderUri?: string) => {
     const backup = summarizeSnapshot(snapshot);
-    if (!backup) throw new Error("That file isn't a Yume backup — pick a full backup Yume exported.");
+    if (!backup) throw new Error('That file isn’t a Yume backup — pick a full backup Yume exported.');
     // A backup without a usable export time still restores; the preview just doesn't say when it was made.
     const exportedAt = Number.isNaN(Date.parse(snapshot.exportedAt)) ? null : snapshot.exportedAt;
     const [current, lostCount] = await Promise.all([
@@ -336,7 +336,7 @@ export default function BackupScreen() {
         // The copy couldn't be saved (usually a full phone) and nothing is replaced yet; proceed only if the
         // user accepts having no way back. Cancel is the default.
         showAlert(
-          "Couldn't keep a copy of your current data",
+          'Couldn’t keep a copy of your current data',
           `${e.message}
 
 Restore anyway? Your current data would be replaced with no way back.`,
@@ -378,7 +378,7 @@ Restore anyway? Your current data would be replaced with no way back.`,
         showAlert(
           'Backups found in this folder',
           latest
-            ? `Latest backup: ${latest.exportedAt ? formatWhen(latest.exportedAt) : 'date unknown'} · ${latest.summary!.entries} entries. Review it before replacing your app data, or keep your current data and start backing it up here.`
+            ? `Latest backup: ${latest.exportedAt ? formatWhen(latest.exportedAt) : 'date unknown'} · ${latest.summary!.entries} ${latest.summary!.entries === 1 ? 'entry' : 'entries'}. Review it before replacing your app data, or keep your current data and start backing it up here.`
             : 'Backup files exist, but none could be validated. They will be kept if you back up your current data here.',
           [
             { text: 'Cancel', style: 'cancel' },
@@ -476,12 +476,12 @@ Restore anyway? Your current data would be replaced with no way back.`,
       >
         {loadError && (
           <View style={listScreenStyles.errorBanner}>
-            <Text style={listScreenStyles.errorTitle}>Couldn't load your backup settings</Text>
+            <Text style={listScreenStyles.errorTitle}>Couldn’t load your backup settings</Text>
             <Text style={listScreenStyles.errorDetail}>{loadError}</Text>
             <PrimaryButton title="Retry" compact variant="secondary" onPress={() => void load()} />
           </View>
         )}
-        {/* The summary card, with a shield in the status's colour (green when safe, amber or red when it needs you). */}
+        {/* The summary card, with a shield in the status’s colour (green when safe, amber or red when it needs you). */}
         <SummaryCard style={styles.statusCard}>
           {!loaded ? (
             <>
@@ -637,8 +637,8 @@ Restore anyway? Your current data would be replaced with no way back.`,
                   </View>
                   <Text style={h.sub}>
                     {file.summary
-                      ? `${file.summary.entries} entries · ${formatBytes(file.sizeBytes)}`
-                      : "Couldn't read this file"}
+                      ? `${file.summary.entries} ${file.summary.entries === 1 ? 'entry' : 'entries'} · ${formatBytes(file.sizeBytes)}`
+                      : 'Couldn’t read this file'}
                   </Text>
                 </View>
                 <PrimaryButton

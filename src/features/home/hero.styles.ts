@@ -5,17 +5,10 @@ import { screenStyles as h } from '@/components/screenStyles';
 export const styles = StyleSheet.create({
   // Keep Home's cream surface and quiet edge consistent with the rest of the app.
   card: { ...h.card, paddingHorizontal: 16, paddingTop: 12, paddingBottom: 2 },
-  heroRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    // The ring and its legend sit together in the middle; the legend is capped so a name and its figure stay
-    // close instead of a hand's width apart.
-    justifyContent: 'center',
-    columnGap: 14,
-    rowGap: 4,
-    marginTop: 4,
-  },
+  // The ring sits in the middle of the card. Alone (or with the legend dropped under it) it is centred on its own
+  // line; flanked, two equal legend halves hold it exactly in the middle.
+  heroRow: { alignItems: 'center', marginTop: 4 },
+  heroRowFlanked: { flexDirection: 'row', columnGap: 12 },
   // The week's spending, in its own card under the Add buttons.
   rhythm: { ...h.card, paddingHorizontal: 16, paddingTop: 12, paddingBottom: 12 },
   footer: {

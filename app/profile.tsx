@@ -60,7 +60,7 @@ export default function ProfileScreen() {
       setEditing(false);
       Keyboard.dismiss();
     } catch (e) {
-      showAlert("Couldn't save name", errorMessage(e));
+      showAlert('Couldn’t save name', errorMessage(e));
     } finally {
       setSavingName(false);
     }
@@ -74,7 +74,7 @@ export default function ProfileScreen() {
       <View style={styles.container}>
         <HomeWallpaper accent={accent} secondary={secondary} plain />
         <SkyHeader title="Profile" showBack hideUser wallpaper />
-        {/* The identity line's shape while it loads. */}
+        {/* The identity line’s shape while it loads. */}
         <View style={styles.skeletonIdentity}>
           <Skeleton width={36} height={36} radius={12} />
           <View style={styles.skeletonText}>
@@ -109,7 +109,7 @@ export default function ProfileScreen() {
             >
               {loadError && (
                 <View style={styles.errorBanner}>
-                  <Text style={styles.errorTitle}>Couldn't load your data</Text>
+                  <Text style={styles.errorTitle}>Couldn’t load your data</Text>
                   <Text style={styles.errorDetail}>{loadError}</Text>
                   <PrimaryButton title="Retry" compact variant="secondary" onPress={() => void reload()} />
                 </View>

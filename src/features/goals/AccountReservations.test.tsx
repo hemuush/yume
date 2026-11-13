@@ -60,7 +60,7 @@ it('masks reservation, available and shortfall amounts together', async () => {
 it('shows a read failure rather than implying zero reservations', async () => {
   jest.mocked(getGoalReservationSummary).mockRejectedValueOnce(new Error('offline db'));
   const { tree } = await render();
-  expect(words(tree)).toContain("Couldn't load goal reservations");
+  expect(words(tree)).toContain('Couldn’t load goal reservations');
   expect(words(tree)).not.toContain('Available');
   await act(async () => {
     await tree.root

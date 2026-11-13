@@ -18,6 +18,7 @@ import { shade } from '@/lib/color';
 import { errorMessage } from '@/lib/errorMessage';
 import { haptics } from '@/lib/haptics';
 import { gainLabel, estimatedValue } from '@/lib/investment';
+import { plural } from '@/lib/plural';
 import { addValuation, updateValuation, deleteValuation, restoreValuation, Valuation } from '@/db/valuations';
 import type { Account } from '@/types';
 
@@ -206,11 +207,11 @@ export function UpdateValueSheet({
           </Pressable>
           <Text style={styles.estimateHint}>
             {growth
-              ? `Your last update grown at ${growth.rateBp / 100}% a year for ${growth.days} days${growth.matured ? ', to its maturity date' : ''}${sinceMinor > 0 ? `, plus the ${money(sinceMinor)} you've put in since` : sinceMinor < 0 ? `, minus the ${money(-sinceMinor)} you've taken out since` : ''}. An estimate: use your bank's figure when you have it.`
+              ? `Your last update grown at ${growth.rateBp / 100}% a year for ${plural(growth.days, 'day')}${growth.matured ? ', to its maturity date' : ''}${sinceMinor > 0 ? `, plus the ${money(sinceMinor)} you’ve put in since` : sinceMinor < 0 ? `, minus the ${money(-sinceMinor)} you’ve taken out since` : ''}. An estimate: use your bank’s figure when you have it.`
               : sinceMinor > 0
-                ? `Your last update plus the ${money(sinceMinor)} you've put in since.`
+                ? `Your last update plus the ${money(sinceMinor)} you’ve put in since.`
                 : sinceMinor < 0
-                  ? `Your last update minus the ${money(-sinceMinor)} you've taken out since.`
+                  ? `Your last update minus the ${money(-sinceMinor)} you’ve taken out since.`
                   : 'Your last update, nothing has moved since.'}
           </Text>
         </View>
@@ -250,7 +251,7 @@ export function UpdateValueSheet({
             </Pressable>
           ) : (
             <Text style={styles.estimateHint}>
-              Optional. Enter today's price and Yume works out the value. Your units are remembered; change
+              Optional. Enter today’s price and Yume works out the value. Your units are remembered; change
               them when a SIP buys more or you sell some.
             </Text>
           )}
@@ -277,7 +278,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
   },
-  pressed: { opacity: 0.7 },
+  pressed: { opacity: theme.opacity.pressed },
   estimateText: { fontFamily: theme.font.monoBold, fontSize: 12, color: theme.colors.textPrimary },
   estimateHint: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, lineHeight: 17 },
   unitsBlock: { gap: 8, marginBottom: 6 },

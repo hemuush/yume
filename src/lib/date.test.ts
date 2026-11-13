@@ -20,7 +20,7 @@ describe('isIsoDate', () => {
 });
 
 describe('toLocalIsoDate', () => {
-  it("formats using the Date object's own local fields, not a UTC conversion", () => {
+  it('formats using the Date object’s own local fields, not a UTC conversion', () => {
     expect(toLocalIsoDate(new Date(2024, 0, 31))).toBe('2024-01-31'); // Jan 31, local midnight
     expect(toLocalIsoDate(new Date(2024, 11, 1))).toBe('2024-12-01');
   });

@@ -106,7 +106,7 @@ export async function applyRateChange(
       throw new Error('Only floating-rate loans can have their rate updated');
     }
     if (opts.effectiveDate < loan.start_date) {
-      throw new Error("The effective date can't be before the loan itself started.");
+      throw new Error('The effective date can’t be before the loan itself started.');
     }
 
     const paidInstallments = await tx.getAllAsync<LoanPaymentRow>(
@@ -159,7 +159,7 @@ export async function applyRateChange(
       : loan.outstanding_principal_minor;
     if (mode === 'keepEmi' && stillOwesAfterSchedule > 0) {
       throw new Error(
-        `At ${(opts.newAnnualRateBp / 100).toFixed(2)}% p.a., the current EMI of ${formatMoney(loan.emi_amount_minor)} doesn't even cover the monthly interest — this loan would never pay off. Increase the EMI (via a new loan entry) or choose a lower rate.`
+        `At ${(opts.newAnnualRateBp / 100).toFixed(2)}% p.a., the current EMI of ${formatMoney(loan.emi_amount_minor)} doesn’t even cover the monthly interest — this loan would never pay off. Increase the EMI (via a new loan entry) or choose a lower rate.`
       );
     }
 
@@ -228,7 +228,7 @@ export async function undoInstallmentPayment(loanPaymentId: string): Promise<voi
   );
   if (laterPaid) {
     throw new Error(
-      "Undo the most recently paid installment first — earlier ones can't be undone out of order."
+      'Undo the most recently paid installment first — earlier ones can’t be undone out of order.'
     );
   }
 
@@ -249,7 +249,7 @@ export async function undoInstallmentPayment(loanPaymentId: string): Promise<voi
     );
     if (stillLaterPaid) {
       throw new Error(
-        "Undo the most recently paid installment first — earlier ones can't be undone out of order."
+        'Undo the most recently paid installment first — earlier ones can’t be undone out of order.'
       );
     }
     const loanNow = await tx.getFirstAsync<LoanRow>('SELECT * FROM loans WHERE id = ?', [current.loan_id]);
@@ -504,7 +504,7 @@ export async function applyPrepayment(
     // silently truncated, leaving the loan active with no installments to close it.
     if (plan.neverPaysOff) {
       throw new Error(
-        `The current EMI of ${formatMoney(loan.emi_amount_minor)} doesn't cover the interest on the remaining balance after this prepayment — this loan would never pay off. Try a larger prepayment amount.`
+        `The current EMI of ${formatMoney(loan.emi_amount_minor)} doesn’t cover the interest on the remaining balance after this prepayment — this loan would never pay off. Try a larger prepayment amount.`
       );
     }
     await tx.runAsync(

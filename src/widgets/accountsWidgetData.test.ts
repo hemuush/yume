@@ -30,7 +30,7 @@ describe('getAccountsWidgetData', () => {
     await createAccount({ name: 'Travel USD', type: 'bank', currency: 'USD', openingBalanceMinor: 25000 });
   });
 
-  it("shows every balance in full, in the account's own currency, while hiding is off", async () => {
+  it('shows every balance in full, in the account’s own currency, while hiding is off', async () => {
     await setHideSensitiveAmounts(false);
     const { accounts } = await getAccountsWidgetData();
     expect(accounts.map((a) => [a.name, a.balanceText])).toEqual([

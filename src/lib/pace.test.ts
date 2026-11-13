@@ -35,7 +35,7 @@ describe('monthPace', () => {
     ).toBeNull();
   });
 
-  it("doesn't let a big EMI early in the month inflate the forecast", () => {
+  it('doesn’t let a big EMI early in the month inflate the forecast', () => {
     // An ₹18,000 EMI on the 5th plus ₹500 a day of everyday spending, on the 10th of a 30-day month.
     const pace = monthPace({
       spentMinor: 1_800_000 + 500_000,

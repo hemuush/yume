@@ -15,8 +15,8 @@ const BAR_MAX = 34;
 
 /**
  * Activity's summary as one slim strip: what was spent, how it compares with the period before, and a small
- * preview of the days. It is a button: tapping it opens the full chart and totals (Insights). Nothing in it
- * moves; the figure shows the real amount at once.
+ * preview of the days. It is a button: tapping it opens the full chart and totals (Insights). The figure is the real
+ * amount at once (it never counts up); the strip as a whole glides in with the period, like Insights (usePeriodSlide).
  */
 export function ActivitySummaryStrip({
   periodKey,
@@ -114,7 +114,8 @@ export function ActivitySummaryStrip({
               />
             ))}
           </View>
-          <Text style={styles.caption}>{viewScope === 'week' ? 'This week' : 'By week'}</Text>
+          {/* What the bars are, true of any period: a past week is not "This week". */}
+          <Text style={styles.caption}>{viewScope === 'week' ? 'By day' : 'By week'}</Text>
         </View>
       </ReanimatedAnimated.View>
       <Feather name="chevron-right" size={18} color={theme.colors.textMuted} />

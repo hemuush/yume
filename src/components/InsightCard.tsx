@@ -63,7 +63,7 @@ export function InsightRow({
       accessibilityRole="button"
       accessibilityLabel={[label, detail, value].filter(Boolean).join('. ')}
       onPress={onPress}
-      style={({ pressed }) => [insight.row, pressed && { opacity: 0.65 }]}
+      style={({ pressed }) => [insight.row, pressed && { opacity: theme.opacity.pressed }]}
     >
       {content}
     </Pressable>

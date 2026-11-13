@@ -122,7 +122,7 @@ describe('split page', () => {
     ]);
   });
 
-  it("won't add a category twice", async () => {
+  it('won’t add a category twice', async () => {
     const tree = open();
     await addCategory(tree);
     await press(tree, 'pick Groceries');

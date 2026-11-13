@@ -60,7 +60,7 @@ it('offers recovery only when Android explicitly confirms no device lock', async
   await render();
   await unlock();
   expect(tree.root.findAllByType(PrimaryButton).map((button) => button.props.title)).toContain(
-    "Turn off Yume's lock"
+    'Turn off Yume’s lock'
   );
 });
 

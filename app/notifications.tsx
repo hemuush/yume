@@ -4,7 +4,8 @@ import { View, StyleSheet, Pressable } from 'react-native';
 import { Text } from '@/components/Text';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { getPeriodComparison } from '@/db/reports';
+import { getMonthToDateComparison } from '@/db/reports';
+import { PACE_MIN_DAY } from '@/lib/pace';
 import { listAccounts } from '@/db/ledger';
 import { toLocalIsoDate } from '@/lib/date';
 import { valueReminderLine } from '@/lib/investment';
@@ -57,7 +58,7 @@ const GROUP_TITLE: Record<NeedsYouTone, string> = {
 };
 
 /**
- * The bell's screen: the full list that Home's card shows the top three of, so both counts match. A glass card
+ * The bell's screen: the full list of what needs you, whose count is the number on Home's bell. A glass card
  * counts them by urgency, then the rows. ✕ hides an item until its situation changes (undoable, restorable).
  * Suu's check-in is a speech bubble from Suu, not an alert.
  */
@@ -76,19 +77,21 @@ export default function NeedsYouScreen() {
     const [needs, prefs, comparison, accounts] = await Promise.all([
       loadNeedsYou(),
       getNotificationPrefs(),
-      // As Home's Suu line: with savings hidden, savings and investment spending leave the comparison.
-      getPeriodComparison('month').then((c) => privateComparison(c, getCachedHideSensitiveAmounts())),
+      // As Home's Suu line: with savings hidden, savings and investment spending leave the comparison. This month so
+      // far is set against the same days of last month, not all of it, which would always read as "less" early on.
+      getMonthToDateComparison().then((c) => privateComparison(c, getCachedHideSensitiveAmounts())),
       listAccounts(),
     ]);
     setShown(needs.shown);
     setDismissed(needs.dismissed);
     const pct = comparison.expenseChangePct;
     const lines: string[] = [];
-    if (prefs.suuCheckins && pct != null) {
+    // Too few days of the month to say anything fair about its pace before the 5th (as for the month forecast).
+    if (prefs.suuCheckins && pct != null && new Date().getDate() >= PACE_MIN_DAY) {
       lines.push(
         pct <= 0
-          ? `You're spending ${formatPctChange(pct)} less than last month — nice pace.`
-          : `You're spending ${formatPctChange(pct)} more than last month. A lighter week would even it out.`
+          ? `You’re spending ${formatPctChange(pct)} less than at this point last month — nice pace.`
+          : `You’re spending ${formatPctChange(pct)} more than at this point last month. A lighter week would even it out.`
       );
     }
     const reminder = prefs.suuCheckins ? valueReminderLine(accounts, toLocalIsoDate(new Date())) : null;
@@ -128,7 +131,7 @@ export default function NeedsYouScreen() {
       // Nothing was saved, so the list goes back to how it was rather than claiming a dismissal.
       putBack();
       setDismissed((prev) => prev.filter((i) => i.key !== item.key));
-      showAlert("Couldn't dismiss", errorMessage(e));
+      showAlert('Couldn’t dismiss', errorMessage(e));
       return;
     }
     showUndo(`Dismissed ${item.title}`, async () => {
@@ -142,7 +145,7 @@ export default function NeedsYouScreen() {
     try {
       await restoreNeedsYou(item.key);
     } catch (e) {
-      showAlert("Couldn't show it again", errorMessage(e));
+      showAlert('Couldn’t show it again', errorMessage(e));
       return;
     }
     await reload();
@@ -154,7 +157,7 @@ export default function NeedsYouScreen() {
       await snoozeBackupReminder();
     } catch (e) {
       putBack();
-      showAlert("Couldn't snooze", errorMessage(e));
+      showAlert('Couldn’t snooze', errorMessage(e));
       return;
     }
     // Same as dismiss: a mis-tap can be taken back.
@@ -178,7 +181,7 @@ export default function NeedsYouScreen() {
       >
         {loadError && (
           <View style={styles.errorBanner}>
-            <Text style={styles.errorTitle}>Couldn't load what needs you</Text>
+            <Text style={styles.errorTitle}>Couldn’t load what needs you</Text>
             <Text style={styles.errorDetail}>{loadError}</Text>
             <PrimaryButton title="Retry" compact variant="secondary" onPress={() => void reload()} />
           </View>

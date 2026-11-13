@@ -140,7 +140,7 @@ function ContributionForm({
     // Reject an over-withdrawal before writing; the database also checks the live balance atomically.
     if (direction !== 'add' && amountMinor > goal.currentAmountMinor) {
       setError(
-        `You can ${direction === 'move' ? 'move' : 'withdraw'} up to ${formatMaskableMoney(goal.currentAmountMinor, { masked: hideAmounts })} — that's what's saved so far`
+        `You can ${direction === 'move' ? 'move' : 'withdraw'} up to ${formatMaskableMoney(goal.currentAmountMinor, { masked: hideAmounts })} — that’s what’s saved so far`
       );
       return;
     }
@@ -317,7 +317,7 @@ function ContributionForm({
           accessibilityElementsHidden={saving || saved}
           importantForAccessibility={saving || saved ? 'no-hide-descendants' : 'auto'}
         >
-          {/* The goal as it'll stand once this goes in (or comes out). */}
+          {/* The goal as it’ll stand once this goes in (or comes out). */}
           <GoalDraftHero
             name={goal.name}
             savedMinor={Math.max(

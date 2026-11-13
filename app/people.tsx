@@ -121,7 +121,7 @@ export default function PeopleScreen() {
                 group.list.length > 0 && (
                   <View key={group.key}>
                     <View style={styles.groupHead}>
-                      {/* The same colour as that side of the net card's bar. */}
+                      {/* The same colour as that side of the net card’s bar. */}
                       <View style={[styles.groupDot, { backgroundColor: group.dot }]} />
                       <Text style={styles.groupTitle}>{group.title}</Text>
                     </View>

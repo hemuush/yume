@@ -284,7 +284,7 @@ describe('planNotifications', () => {
       });
     });
 
-    it("queued in the early morning go out at that morning's time", () => {
+    it('queued in the early morning go out at that morning’s time', () => {
       const { notifications } = plan({
         alerts: [alert({ queuedAt: new Date(2026, 9, 3, 6, 0).toISOString() })],
       });

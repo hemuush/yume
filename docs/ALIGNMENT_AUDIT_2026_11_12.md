@@ -82,6 +82,47 @@ Each rule was run over all non-test source files (app and src); a hit is listed 
 | Section titles as headings for screen readers | **not marked**: `Section` titles ("This week", "Your accounts" and every other) now have the header role, so TalkBack can jump between sections |
 | Fixed heights on text-bearing boxes (clipped at large text) | **Activity's date number was a fixed 34 dp tall**: now a minimum, so it cannot clip at 200% text |
 
+## Seventh pass: other places with a visual beside text
+
+After the Home ring turned out to be off-centre, every other screen that pairs a ring, donut, arc or chart with text was checked.
+
+- Hero cards on Loans, Savings goals, Profile (cash), Investments and Budgets are text-led: the figure on the left and facts on the right or below; no centred visual to drift off-centre.
+- Split's donut is the leading mark of a row (donut, then text), by design, like a list row's icon. The notification day arc, Runway, Portfolio and Trend charts run the full card width. Garden's pots fill the row and wrap.
+- Home's account tiles are a fixed 148 dp (192 at large text), tested. On a very wide phone the third tile nearly fits and ends a few dp past the right gutter; narrower phones show a clear peek of the next tile. Left as is: it is a scrolling row and the sizes are part of the tested design.
+- Found: the Home legend's figures were cut to one line with an ellipsis; they now shrink to fit.
+
+## Eighth pass: small details
+
+- Faded states. Disabled controls used 0.4, 0.45, 0.5 or 0.55 opacity, arrows at the end of their range 0.25, 0.35 or 0.4, and pressed states 0.6, 0.65, 0.7 or 0.8. They now come from `theme.opacity` (disabled 0.45, limit 0.35, pressed 0.6), and `src/__tests__/opacityScale.test.ts` fails if a style named for one of those states uses its own number.
+- Apostrophes. Copy mixed the straight apostrophe (don't, Suu's) with the typographic one (don’t, Suu’s): about 230 straight against 44 typographic. All user-facing copy now uses the typographic one (the PDF report, which has its own embedded font, and the home-screen widgets are left out), and `src/__tests__/typography.test.ts` keeps it that way.
+- Plurals: "1 entries" (a backup with one entry) and "1 reminders scheduled" are now "1 entry" and "1 reminder scheduled"; every other count in copy is either handled or cannot be one.
+- Keyboards: search boxes (Find a category, Search report labels, Find a day, Search transactions) no longer capitalise the first letter or autocorrect, and a person's name or a lender's name capitalises each word. `src/__tests__/searchInputs.test.ts` keeps search boxes that way.
+- Checked and left: button and title capitalisation (sentence case throughout; "Which Wrap?" is a name), ellipsis characters (none typed as three dots), chevron and icon sizes (they vary by context: 16 in rows, 14 in links, 18 and 20 in headers).
+
+## Ninth pass: tools instead of reading
+
+The earlier passes each took one category and read the code for it. This one used broad tooling over all of `app/` and `src/`, to find what reading misses.
+
+| Scan | Result |
+| --- | --- |
+| Type-aware lint: `no-floating-promises`, `await-thenable` | **10 floating promises** (screen loads, two searches, two deletes, a refresh after delete and after undo), all handled; none of them could crash, but a failure in them would have been silent. 0 left |
+| Type-aware lint: `no-misused-promises` | 68 async handlers passed to `onPress`-style props. Not changed: each handler reports its own failure through the alert or toast, and a typed wrapper around every one of them would only move the same code |
+| Refresh callbacks after loan, person and refund changes | Typed as `() => void`, though the screens pass an async refresh. Now `() => void \| Promise<void>`, so the sheet can wait for it |
+| SQL | Every helper interpolates only fixed fragments (table, column and order names); every value is bound with `?`. No injection path |
+| Dates and money | Month offsets, end-of-month clamping and whole-rupee rounding re-checked against their tests; no drift found |
+| Unused files, exports and dependencies (knip) | None. It lists five "unlisted" packages: `@expo/image-utils` (used by the app-icon plugin; it arrives through `expo`), `xcode` and the autolinking binary (build scripts), and `expo-updates` (named by the tool's Expo plugin, not by this project) |
+| Cycles | None among 527 modules |
+
+Coverage was 89% of lines. The weakest files that move money or delete data were given tests:
+
+- `MonthPill`: the month and year picker, including the offsets for a past and a future year (10 tests).
+- `AddLoanParts`: the term stepper (step, clamp at both ends, pull back from an over-large value) and the option cards (4 tests).
+- `PersonDetailModal`, the money flows: money given or received with an account goes to the Friends & Family expense or income category and the right account; "Just adjust balance" writes one signed entry and no transaction; a missing Friends & Family category refuses and says why, rather than filing it under another category; an empty or zero amount asks for a valid one and records nothing (5 tests).
+
+Still thin: the less common branches of the transaction sheet, the delete flow on Categories, Budgets and Recurring screens, the chart scrub hook, the draggable line, and the Suu refresh badge.
+
+No crash-class bug was found by this pass. That is a result of the scans above, not a promise that none exist: nothing here has been run on a device.
+
 ## Not covered
 
 Screens other than Home and Activity have not been compared against a phone screenshot after these changes, and the sheets and the add-entry flow were checked in code only, not on a device.

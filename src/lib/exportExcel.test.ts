@@ -209,7 +209,7 @@ describe('buildExportWorkbook', () => {
     expect(amountCell.v).toBe(200); // 20000 minor units -> 200 major
   });
 
-  it("rolls a subcategory's spend into its parent in the Categories sheet, matching the app's own Reports rollup", () => {
+  it('rolls a subcategory’s spend into its parent in the Categories sheet, matching the app’s own Reports rollup', () => {
     const wb = buildExportWorkbook(data);
     const ws = wb.Sheets['Categories'];
     const rows = XLSX.utils.sheet_to_json<any[]>(ws, { header: 1 });

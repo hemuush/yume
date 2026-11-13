@@ -12,7 +12,7 @@ import { DateField } from '@/components/DateField';
 import { useUndoToast } from '@/components/UndoToast';
 import { theme } from '@/constants/theme';
 import { DraftCard } from '@/components/DraftCard';
-import { dayMonthYear, weekdayDayMonth } from '@/lib/dateLabels';
+import { dayMonthYear, weekdayDayMonthMaybeYear } from '@/lib/dateLabels';
 import { styles } from './loans.styles';
 import { errorMessage } from '@/lib/errorMessage';
 import { showAlert } from '@/components/AppDialog';
@@ -100,7 +100,7 @@ export function PayInstallmentSheet({
       await onPaid();
     } catch (e) {
       if (mounted.current)
-        showAlert("Payment saved, couldn't refresh", `${errorMessage(e)} Reopen this screen to see it.`);
+        showAlert('Payment saved, couldn’t refresh', `${errorMessage(e)} Reopen this screen to see it.`);
     }
     if (!mounted.current) return;
     showUndo(
@@ -111,14 +111,14 @@ export function PayInstallmentSheet({
         try {
           await undoInstallmentPayment(installment.id);
         } catch (e) {
-          showAlert("Couldn't undo", errorMessage(e));
+          showAlert('Couldn’t undo', errorMessage(e));
           return;
         }
         emitTransactionsChanged();
         try {
           await onPaid();
         } catch (e) {
-          showAlert("Payment undone, couldn't refresh", `${errorMessage(e)} Reopen this screen to see it.`);
+          showAlert('Payment undone, couldn’t refresh', `${errorMessage(e)} Reopen this screen to see it.`);
         }
       }
     );
@@ -165,7 +165,7 @@ export function PayInstallmentSheet({
         hue={lent ? theme.colors.secondary : theme.colors.idCoralDeep}
         icon="calendar-check"
         title={`${lent ? 'Into' : 'From'} ${account?.name ?? '—'}`}
-        kicker={`EMI #${installment.installmentNumber} · due ${weekdayDayMonth(installment.dueDate)}`}
+        kicker={`EMI #${installment.installmentNumber} · due ${weekdayDayMonthMaybeYear(installment.dueDate)}`}
         figure={formatMoney(installment.emiAmountMinor)}
         per="this EMI"
         meta={
@@ -179,8 +179,8 @@ export function PayInstallmentSheet({
       )}
       {account && linkedAccountMissing && (
         <Text style={styles.hintText}>
-          This loan's own account is unavailable, so this {lent ? 'receives into' : 'pays from'}{' '}
-          {account.name}. Change the loan's account if that's not right.
+          This loan’s own account is unavailable, so this {lent ? 'receives into' : 'pays from'}{' '}
+          {account.name}. Change the loan’s account if that’s not right.
         </Text>
       )}
       {early && (

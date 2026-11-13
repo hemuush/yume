@@ -115,7 +115,7 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.borderSoft,
     backgroundColor: theme.colors.surface,
   },
-  pressed: { opacity: 0.7 },
+  pressed: { opacity: theme.opacity.pressed },
   copy: { flex: 1, minWidth: 0 },
   title: {
     fontFamily: theme.font.roundedMedium,
@@ -133,7 +133,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: theme.colors.surfaceAlt,
   },
-  stepOff: { opacity: 0.4 },
+  stepOff: { opacity: theme.opacity.limit },
   count: {
     minWidth: 48,
     textAlign: 'center',

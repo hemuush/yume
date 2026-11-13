@@ -65,7 +65,7 @@ export function useNotificationPreferences(onScheduled: (success: boolean) => Pr
           committed.current = updated;
           saved = true;
         } catch (e) {
-          if (mounted.current && epoch === generation.current) showAlert("Couldn't save", errorMessage(e));
+          if (mounted.current && epoch === generation.current) showAlert('Couldn’t save', errorMessage(e));
         } finally {
           pending.current = pending.current.filter((item) => item !== change);
           publish();

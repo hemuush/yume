@@ -69,7 +69,7 @@ export function PendingRefunds({
       />
       {failed ? (
         <>
-          <Text style={styles.errorText}>Couldn't refresh pending refunds.</Text>
+          <Text style={styles.errorText}>Couldn’t refresh pending refunds.</Text>
           <PrimaryButton
             compact
             variant="secondary"

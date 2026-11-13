@@ -237,7 +237,7 @@ describe('when paying cannot work', () => {
     mockListAccounts.mockImplementation(async () => []);
     mockListCategories.mockImplementation(async () => []);
     const tree = await render();
-    expect(texts(tree)).toContain("Couldn't load the latest details: disk unavailable");
+    expect(texts(tree)).toContain('Couldn’t load the latest details: disk unavailable');
   });
 });
 
@@ -380,7 +380,7 @@ it('provides a retry after a detail-load failure', async () => {
   const retry = tree.root.findAllByType(PrimaryButton).find((b) => b.props.title === 'Retry');
   expect(retry).toBeDefined();
   await act(async () => retry!.props.onPress());
-  expect(texts(tree)).not.toContain("Couldn't load the latest details: disk unavailable");
+  expect(texts(tree)).not.toContain('Couldn’t load the latest details: disk unavailable');
 });
 
 it('identifies an outstanding loan with no schedule as incomplete', async () => {

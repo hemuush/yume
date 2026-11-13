@@ -77,6 +77,7 @@ export function HeatmapDayPicker({
             placeholder="Search day or month"
             value={query}
             onChangeText={setQuery}
+            autoCapitalize="none"
             autoCorrect={false}
             style={styles.search}
           />

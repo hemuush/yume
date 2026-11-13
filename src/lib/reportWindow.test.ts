@@ -53,7 +53,7 @@ describe('custom report ranges', () => {
     });
   });
 
-  it("won't step into a range that starts after today", () => {
+  it('won’t step into a range that starts after today', () => {
     const today = '2026-09-26';
     const lastTwoWeeks = custom('2026-09-13', '2026-09-26');
     expect(canStepWindowForward(lastTwoWeeks, today)).toBe(false);

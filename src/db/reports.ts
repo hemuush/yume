@@ -774,6 +774,35 @@ export function findTopGrowingCategory(
   return best;
 }
 
+/**
+ * This month so far against the same days of last month (all of it, when last month was shorter): the fair
+ * comparison while a month is in progress, since this month's first days set against all of last month always
+ * look like "less".
+ */
+export function getMonthToDateRanges(reference: Date = new Date()): {
+  current: DateRange;
+  previous: DateRange;
+} {
+  const day = reference.getDate();
+  const curStart = new Date(reference.getFullYear(), reference.getMonth(), 1);
+  const prevStart = new Date(reference.getFullYear(), reference.getMonth() - 1, 1);
+  const prevMonthEnd = new Date(reference.getFullYear(), reference.getMonth(), 0);
+  const prevSameDay = new Date(prevStart.getFullYear(), prevStart.getMonth(), day);
+  return {
+    current: { start: toIso(curStart), end: toIso(reference) },
+    previous: {
+      start: toIso(prevStart),
+      end: toIso(prevSameDay > prevMonthEnd ? prevMonthEnd : prevSameDay),
+    },
+  };
+}
+
+/** What a month so far spent and earned against the same days of the month before. */
+export function getMonthToDateComparison(reference: Date = new Date()): Promise<PeriodComparison> {
+  const { current, previous } = getMonthToDateRanges(reference);
+  return getRangeComparison(current, previous, 'month');
+}
+
 export async function getPeriodComparison(
   period: ReportPeriod,
   reference: Date = new Date()
@@ -1070,7 +1099,13 @@ export async function getNetWorthTrend(months = 6, reference: Date = new Date())
   );
 
   for (let k = 0; k < months; k++) {
-    const isCurrentMonth = k === months - 1;
+    // The last point is "Now" only when the window ends in the month in progress; ending in a past month (Reports
+    // on October, or on last year) it is that month, named like the rest.
+    const today = new Date();
+    const isCurrentMonth =
+      k === months - 1 &&
+      reference.getFullYear() === today.getFullYear() &&
+      reference.getMonth() === today.getMonth();
     const cutoff = cutoffs[k];
     const cutoffIso = toIso(cutoff);
     const cutoffMonth = cutoffIso.slice(0, 7);

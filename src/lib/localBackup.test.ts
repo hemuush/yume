@@ -111,7 +111,7 @@ describe('writeLocalBackupNow', () => {
     const existingUri = `content://tree/primary/yume-backup-${todayIso}`;
     (StorageAccessFramework.readDirectoryAsync as jest.Mock).mockResolvedValue([
       existingUri,
-      'content://tree/primary/yume-backup-2020-01-01', // an older day's file — left alone
+      'content://tree/primary/yume-backup-2020-01-01', // an older day’s file — left alone
     ]);
     (StorageAccessFramework.createFileAsync as jest.Mock).mockResolvedValue('content://new-file');
 
@@ -141,7 +141,7 @@ describe('writeLocalBackupNow', () => {
     expect(StorageAccessFramework.deleteAsync).not.toHaveBeenCalled();
   });
 
-  it("keeps today's existing backup when writing the new one fails, and removes the half-written file", async () => {
+  it('keeps today’s existing backup when writing the new one fails, and removes the half-written file', async () => {
     const todayIso = toLocalIsoDate(new Date());
     const existingUri = `content://tree/primary/yume-backup-${todayIso}`;
     (StorageAccessFramework.readDirectoryAsync as jest.Mock).mockResolvedValue([existingUri]);
@@ -165,7 +165,7 @@ describe('writeLocalBackupNow', () => {
     expect(StorageAccessFramework.createFileAsync).toHaveBeenCalled();
   });
 
-  it("never deletes a different day's backup file", async () => {
+  it('never deletes a different day’s backup file', async () => {
     (StorageAccessFramework.readDirectoryAsync as jest.Mock).mockResolvedValue([
       'content://tree/primary/yume-backup-2020-01-01',
       'content://tree/primary/yume-backup-2020-01-02',
@@ -220,7 +220,7 @@ describe('listLocalBackups', () => {
     expect(files[0].sizeBytes).toBeGreaterThan(0);
   });
 
-  it("keeps a file it can't read in the list, with nothing to restore", async () => {
+  it('keeps a file it can’t read in the list, with nothing to restore', async () => {
     (StorageAccessFramework.readDirectoryAsync as jest.Mock).mockResolvedValue([file('2026-09-25')]);
     (StorageAccessFramework.readAsStringAsync as jest.Mock).mockResolvedValue('not json');
     expect(await listLocalBackups(folder)).toEqual([
@@ -325,7 +325,7 @@ describe('recognising backup files by their own name', () => {
     expect(deleted).not.toContain(safUri('Backups', 'keep-me.txt'));
   });
 
-  it("replaces today's file even when Android named it with .json or a copy number", async () => {
+  it('replaces today’s file even when Android named it with .json or a copy number', async () => {
     const todayIso = toLocalIsoDate(new Date());
     const today = safUri('Backups', `yume-backup-${todayIso}.json`);
     const todayCopy = safUri('Backups', `yume-backup-${todayIso} (1).json`);

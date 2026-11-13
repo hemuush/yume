@@ -99,7 +99,7 @@ export async function listDeletedEntries(now: Date = new Date()): Promise<Delete
       if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) continue;
       row = parsed as TransactionRow;
     } catch {
-      continue; // A damaged snapshot can't be shown or restored; the 30-day purge clears it.
+      continue; // A damaged snapshot can’t be shown or restored; the 30-day purge clears it.
     }
     out.push({
       id: r.id,

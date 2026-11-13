@@ -188,7 +188,7 @@ export default function SavingsGoalsScreen() {
       >
         {loadError && (
           <View style={styles.errorBanner}>
-            <Text style={styles.errorTitle}>Couldn't load your goals</Text>
+            <Text style={styles.errorTitle}>Couldn’t load your goals</Text>
             <Text style={styles.errorDetail}>{loadError}</Text>
             <PrimaryButton title="Retry" compact variant="secondary" onPress={() => void load()} />
           </View>

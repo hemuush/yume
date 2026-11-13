@@ -14,14 +14,9 @@ import {
 } from '@/components/SummaryCard';
 import { theme } from '@/constants/theme';
 import { formatMaskableMoney } from '@/lib/money';
-import { formatReturnPct } from '@/lib/investment';
+import { formatReturnPct, returnSpanLabel } from '@/lib/investment';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import type { Portfolio } from '@/lib/portfolio';
-
-const years = (days: number) => {
-  const y = days / 365;
-  return y >= 2 ? `${Math.round(y * 10) / 10} years` : `${Math.max(1, Math.round(days / 30.44))} months`;
-};
 
 /**
  * The first card of the Investments page: what the holdings are worth, the return, the gain and the yearly
@@ -90,7 +85,7 @@ export function InvestmentsHero({
         <Text style={styles.hint}>
           {hideAmounts
             ? '••% a year'
-            : `${formatReturnPct(rate.rate * 100).replace('+', '')} a year over ${years(rate.days)}`}
+            : `${formatReturnPct(rate.rate * 100).replace('+', '')} a year over ${returnSpanLabel(rate.days)}`}
         </Text>
       )}
       {(gain == null || (!rate && !hideAmounts) || portfolio.unvaluedCount > 0) && (

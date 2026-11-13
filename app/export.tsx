@@ -87,7 +87,7 @@ export default function ExportScreen() {
         });
       }
     } catch (e) {
-      showAlert("Couldn't create the export", errorMessage(e));
+      showAlert('Couldn’t create the export', errorMessage(e));
     } finally {
       setBusy(false);
     }
@@ -301,7 +301,7 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
   },
-  stepOff: { opacity: 0.35 },
+  stepOff: { opacity: theme.opacity.limit },
   period: {
     flex: 1,
     textAlign: 'center',

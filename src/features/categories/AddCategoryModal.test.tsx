@@ -251,7 +251,7 @@ describe('AddCategoryModal — editing', () => {
     expect(byId(tree, 'name').props.value).toBe('Test Fuel');
     expect(byId(tree, 'sensitive').props.value).toBe(true);
     expect(() => byId(tree, 'kind')).toThrow();
-    expect(texts(tree).some((t) => t.includes("can't be changed once a category exists"))).toBe(true);
+    expect(texts(tree).some((t) => t.includes('can’t be changed once a category exists'))).toBe(true);
   });
 
   it('updates in place — never creates — and cannot send a type', async () => {

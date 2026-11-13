@@ -13,7 +13,7 @@ export interface Account {
   creditLimitMinor: number | null; // credit_card only
   statementDay: number | null; // credit_card only, 1-31 (a short month uses its last day)
   dueDay: number | null; // credit_card only, 1-31 (a short month uses its last day)
-  interestRateAnnualBp: number | null; // credit card's rate, or a deposit's / provident fund's yearly rate; basis points
+  interestRateAnnualBp: number | null; // credit card’s rate, or a deposit’s / provident fund’s yearly rate; basis points
   minDueBp?: number | null; // credit_card only: minimum due as a share of the statement, basis points
   minDueFloorMinor?: number | null; // credit_card only: the least the minimum due can be
   archived: boolean;
@@ -100,7 +100,7 @@ export type LoanRateType = 'fixed' | 'floating';
 export interface Loan {
   id: string;
   direction: LoanDirection;
-  counterparty: string; // bank name or person's name
+  counterparty: string; // bank name or person’s name
   principalMinor: number;
   interestRateAnnualBp: number; // basis points, e.g. 950 = 9.50%
   tenureMonths: number;

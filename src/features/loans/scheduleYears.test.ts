@@ -31,7 +31,7 @@ describe('groupScheduleByYear', () => {
     expect(years[1].paidCount).toBe(0);
   });
 
-  it("opens on the next EMI's year", () => {
+  it('opens on the next EMI’s year', () => {
     expect(currentScheduleYear(groupScheduleByYear(schedule))).toBe(2027);
   });
 

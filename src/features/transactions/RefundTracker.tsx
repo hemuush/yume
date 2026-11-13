@@ -37,7 +37,8 @@ export function RefundTracker({
 }: {
   transaction: Transaction;
   accounts: Account[];
-  onChanged: () => void;
+  /** May be async: the tracker waits for it before it says the change is saved. */
+  onChanged: () => void | Promise<void>;
   hideCreateAction?: boolean;
   sensitive?: boolean;
   request?: { sequence: number; mode: 'expect' | 'receive' };

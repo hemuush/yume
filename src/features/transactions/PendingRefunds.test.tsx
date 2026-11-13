@@ -66,7 +66,7 @@ it('retries a failed pending-refund load without displaying it as an empty resul
     tree = create(<PendingRefunds refreshToken={0} onOpen={jest.fn()} />);
   });
   expect(
-    tree.root.findAllByType(Text).some((n) => String(n.props.children).includes("Couldn't refresh"))
+    tree.root.findAllByType(Text).some((n) => String(n.props.children).includes('Couldn’t refresh'))
   ).toBe(true);
   await act(async () =>
     tree.root

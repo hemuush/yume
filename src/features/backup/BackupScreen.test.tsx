@@ -229,10 +229,17 @@ describe('Backup & restore · restore points', () => {
     expect(readLocalBackup).toHaveBeenCalledWith('content://backups/5');
   });
 
+  it('says "1 entry", not "1 entries", for a backup with a single entry', async () => {
+    mockState.files = [{ ...file(5), summary: { entries: 1 } }];
+    const tree = await render();
+    expect(texts(tree).some((t) => t.startsWith('1 entry ·'))).toBe(true);
+    expect(texts(tree).some((t) => t.includes('1 entries'))).toBe(false);
+  });
+
   it('keeps a file it cannot read in the list, with nothing to restore', async () => {
     mockState.files = [{ ...file(5), summary: null }];
     const tree = await render();
-    expect(texts(tree)).toContain("Couldn't read this file");
+    expect(texts(tree)).toContain('Couldn’t read this file');
     expect(buttons(tree, 'Restore')[0].props.disabled).toBe(true);
   });
 });
@@ -309,6 +316,24 @@ it('scans an occupied folder and reviews its latest backup before any write or a
   expect(writeLocalBackupNow).not.toHaveBeenCalled();
   expect(setLocalBackupFolderUri).not.toHaveBeenCalled();
   act(() => tree.unmount());
+});
+
+it('names the entries in the latest backup of an occupied folder in the singular or plural', async () => {
+  const { pickBackupFolder } = jest.requireMock('@/lib/localBackup');
+  const { showAlert } = jest.requireMock('@/components/AppDialog');
+  pickBackupFolder.mockResolvedValue('content://existing');
+  const message = async (entries: number) => {
+    showAlert.mockClear();
+    mockState.files = [{ ...file(5), summary: { entries } }];
+    const tree = await render();
+    await act(async () => {
+      await buttons(tree, 'Choose folder')[0].props.onPress();
+    });
+    act(() => tree.unmount());
+    return showAlert.mock.calls.find((call: unknown[]) => call[0] === 'Backups found in this folder')[1];
+  };
+  expect(await message(1)).toContain('· 1 entry. Review it');
+  expect(await message(2)).toContain('· 2 entries. Review it');
 });
 
 it('does not claim a backup exists when only the saved settings say one exists', async () => {

@@ -25,7 +25,7 @@ export function applyPadKey(expr: string, key: PadKey): string {
   if (key === 'back') return expr.slice(0, -1);
 
   if (isOperator(key)) {
-    if (expr === '') return expr; // an amount can't start with an operator
+    if (expr === '') return expr; // an amount can’t start with an operator
     // A second operator replaces the first ("12+" then "×" → "12×"); a
     // trailing "." is dropped first ("12." then "+" → "12+").
     const trimmed = isOperator(expr[expr.length - 1]) || expr.endsWith('.') ? expr.slice(0, -1) : expr;

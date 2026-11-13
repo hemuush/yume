@@ -188,20 +188,23 @@ describe('Profile · You section', () => {
 
   it('counts entries, loans and friends, and each tile opens its screen', async () => {
     const tree = await render();
-    expect(texts(tree)).toEqual(expect.arrayContaining(['284', 'Entries', '1', 'Active loans', 'Friends']));
+    // One loan and one friend read as singular: "1 Active loan", "1 Friend", never "1 Friends".
+    expect(texts(tree)).toEqual(expect.arrayContaining(['284', 'Entries', '1', 'Active loan', 'Friend']));
+    expect(texts(tree)).not.toContain('Friends');
+    expect(texts(tree)).not.toContain('Active loans');
     press(tree, '284 Entries');
     expect(router.navigate).toHaveBeenCalledWith('/transactions');
-    press(tree, '1 Active loans');
+    press(tree, '1 Active loan');
     expect(router.push).toHaveBeenCalledWith('/loans');
-    press(tree, '1 Friends');
+    press(tree, '1 Friend');
     expect(router.push).toHaveBeenCalledWith('/people');
   });
 
-  it("says why the balance runs negative when a loan's asset isn't tracked, and links to Loans", async () => {
+  it('says why the balance runs negative when a loan’s asset isn’t tracked, and links to Loans', async () => {
     const tree = await render();
-    expect(texts(tree).some((t) => t.startsWith("A loan's home or vehicle"))).toBe(false);
+    expect(texts(tree).some((t) => t.startsWith('A loan’s home or vehicle'))).toBe(false);
     openTracked(tree);
-    const hint = texts(tree).find((t) => t.startsWith("A loan's home or vehicle isn't counted"));
+    const hint = texts(tree).find((t) => t.startsWith('A loan’s home or vehicle isn’t counted'));
     expect(hint).toBeDefined();
     press(tree, hint!);
     expect(router.push).toHaveBeenCalledWith('/loans');
@@ -215,7 +218,7 @@ describe('Profile · You section', () => {
     expect(shown).toContain(
       'Loans with a tracked asset value count their real equity here, not just the debt.'
     );
-    expect(shown.some((t) => t.startsWith("A loan's home or vehicle"))).toBe(false);
+    expect(shown.some((t) => t.startsWith('A loan’s home or vehicle'))).toBe(false);
     expect(shown).toEqual(expect.arrayContaining(['+₹3,00,000', '₹4,02,499'])); // ₹8,00,000 home − ₹5,00,000 owed
   });
 
@@ -262,7 +265,7 @@ describe('Profile · You section', () => {
       'Savings goals',
       'Recurring',
       'What if?',
-      "Suu's Garden — see what's grown",
+      'Suu’s Garden — see what’s grown',
     ]) {
       expect(shown).not.toContain(gone);
     }

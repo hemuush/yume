@@ -43,7 +43,7 @@ export function ProfileIdentity({
           style={[local.avatar, { backgroundColor: accent }]}
           accessible
           accessibilityRole="image"
-          accessibilityLabel={name?.trim() ? `${name.trim()}'s avatar` : 'Your avatar'}
+          accessibilityLabel={name?.trim() ? `${name.trim()}’s avatar` : 'Your avatar'}
         >
           <Text style={[local.avatarInitial, { color: onAccent }]}>
             {(name?.trim().charAt(0) || 'Y').toUpperCase()}

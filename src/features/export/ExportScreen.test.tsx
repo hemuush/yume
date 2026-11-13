@@ -184,7 +184,7 @@ describe('Reports & exports', () => {
       await createButton(tree).props.onPress();
     });
     const { showAlert } = jest.requireMock('@/components/AppDialog');
-    expect(showAlert).toHaveBeenCalledWith("Couldn't create the export", 'too many entries');
+    expect(showAlert).toHaveBeenCalledWith('Couldn’t create the export', 'too many entries');
   });
 
   it('has nothing to export on an empty ledger', async () => {

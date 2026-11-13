@@ -36,7 +36,7 @@ describe('seen Wraps', () => {
     expect(seen[0]).toBe('2025-03');
   });
 
-  it("counts a month already played from Home's old review row", async () => {
+  it('counts a month already played from Home’s old review row', async () => {
     await mockTestDb.runAsync(
       "INSERT INTO settings (key, value) VALUES ('month_review_dismissed', '2026-09')"
     );

@@ -49,7 +49,7 @@ async function assertValidParent(
   selfId?: string
 ): Promise<void> {
   if (parentId === selfId) {
-    throw new Error("A category can't be its own parent");
+    throw new Error('A category can’t be its own parent');
   }
   const parent = await db.getFirstAsync<CategoryRow>('SELECT * FROM categories WHERE id = ?', [parentId]);
   if (!parent) throw new Error('Parent category not found');
@@ -85,8 +85,8 @@ async function assertUniqueCategoryName(
   if (clash)
     throw new Error(
       restoring
-        ? `There's already an active category called "${name}" here. Rename that category before restoring this one.`
-        : `There's already a category called "${name}" here.`
+        ? `There’s already an active category called "${name}" here. Rename that category before restoring this one.`
+        : `There’s already a category called "${name}" here.`
     );
 }
 
@@ -178,7 +178,7 @@ async function assertNotSystemCategory(
   );
   if (row?.is_system) {
     throw new Error(
-      `"${row.name}" is a built-in category Yume uses to auto-categorise EMI, fees and Friends & Family entries — it can't be ${action}.`
+      `"${row.name}" is a built-in category Yume uses to auto-categorise EMI, fees and Friends & Family entries — it can’t be ${action}.`
     );
   }
 }
@@ -220,13 +220,13 @@ export async function updateCategory(
     // A built-in category is matched by name at runtime — its icon, colour,
     // sensitivity and subcategories stay editable, but its name and parent are fixed.
     if (current.is_system && name !== current.name) {
-      throw new Error("The name of a built-in category can't be changed.");
+      throw new Error('The name of a built-in category can’t be changed.');
     }
     // Omitted `parentId` means "leave as-is": defaulting to null would strip the parent on every plain
     // edit by callers that never pass it. Same for `isSensitive`.
     const nextParentId = input.parentId !== undefined ? input.parentId : current.parent_id;
     if (current.is_system && nextParentId !== current.parent_id) {
-      throw new Error("The parent of a built-in category can't be changed.");
+      throw new Error('The parent of a built-in category can’t be changed.');
     }
     const nextIsSensitive = input.isSensitive !== undefined ? input.isSensitive : !!current.is_sensitive;
     affectsPrivacy = nextParentId !== current.parent_id || nextIsSensitive !== !!current.is_sensitive;
@@ -237,7 +237,7 @@ export async function updateCategory(
       );
       if (hasChildren) {
         throw new Error(
-          "This category already has subcategories of its own — it can't also become a subcategory."
+          'This category already has subcategories of its own — it can’t also become a subcategory.'
         );
       }
       await assertValidParent(tx, nextParentId, current.kind, id);
@@ -288,7 +288,7 @@ export async function deleteCategory(
     if ((ruleCount?.count ?? 0) > 0) {
       const n = ruleCount!.count;
       throw new Error(
-        `This category is used by ${n} recurring rule${n === 1 ? '' : 's'} — remove or reassign ${n === 1 ? 'it' : 'them'} first, so automatic entries don't break.`
+        `This category is used by ${n} recurring rule${n === 1 ? '' : 's'} — remove or reassign ${n === 1 ? 'it' : 'them'} first, so automatic entries don’t break.`
       );
     }
 

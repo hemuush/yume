@@ -29,7 +29,7 @@ import { emitTransactionsChanged } from '@/lib/dataEvents';
 import { errorMessage } from '@/lib/errorMessage';
 import { haptics } from '@/lib/haptics';
 import { withPressed } from '@/lib/pressed';
-import { dayMonth } from '@/lib/dateLabels';
+import { dayMonthMaybeYear } from '@/lib/dateLabels';
 import { toLocalIsoDate } from '@/lib/date';
 import { Category, Account } from '@/types';
 import { showAlert } from '@/components/AppDialog';
@@ -87,7 +87,7 @@ export default function RecentlyDeletedScreen() {
         emitTransactionsChanged();
         await reload();
       } catch (e) {
-        showAlert("Couldn't restore it", errorMessage(e));
+        showAlert('Couldn’t restore it', errorMessage(e));
       } finally {
         setBusyId(null);
       }
@@ -96,7 +96,7 @@ export default function RecentlyDeletedScreen() {
   const emptyAll = () => {
     showAlert(
       'Delete all for good?',
-      `${entries.length} ${entries.length === 1 ? 'entry' : 'entries'} will be gone for good. This can't be undone.`,
+      `${entries.length} ${entries.length === 1 ? 'entry' : 'entries'} will be gone for good. This can’t be undone.`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -110,7 +110,7 @@ export default function RecentlyDeletedScreen() {
                 haptics.warn();
                 await reload();
               } catch (e) {
-                showAlert("Couldn't empty it", errorMessage(e));
+                showAlert('Couldn’t empty it', errorMessage(e));
               } finally {
                 setBusyId(null);
               }
@@ -170,7 +170,7 @@ export default function RecentlyDeletedScreen() {
         ) : entries.length === 0 ? (
           <EmptyState
             title="Nothing here"
-            subtitle="Entries you delete wait here for 30 days, then they're gone for good."
+            subtitle="Entries you delete wait here for 30 days, then they’re gone for good."
           />
         ) : (
           <>
@@ -208,7 +208,7 @@ export default function RecentlyDeletedScreen() {
                       : [
                           isTransfer ? undefined : inParent(parentOf(cat)),
                           where,
-                          dayMonth(entry.date),
+                          dayMonthMaybeYear(entry.date),
                           `${entry.daysLeft} day${entry.daysLeft === 1 ? '' : 's'} left`,
                         ]
                           .filter(Boolean)
@@ -239,7 +239,11 @@ export default function RecentlyDeletedScreen() {
                           ]}
                         >
                           {entry.type === 'expense' ? '−' : entry.type === 'income' ? '+' : ''}
-                          <Amount minor={entry.amountMinor} sensitive={isSavings(entry)} />
+                          <Amount
+                            minor={entry.amountMinor}
+                            currency={accounts.find((a) => a.id === entry.accountId)?.currency}
+                            sensitive={isSavings(entry)}
+                          />
                         </Text>
                         {!entry.blockedReason && (
                           <Pressable

@@ -114,7 +114,7 @@ describe('net worth calculation matrix — every loan direction × status combin
 });
 
 describe('getNetWorthTrend historical cutoff correctness', () => {
-  it("a transaction dated in a later month never leaks into an earlier month's net worth snapshot", async () => {
+  it('a transaction dated in a later month never leaks into an earlier month’s net worth snapshot', async () => {
     // Reuses the file's shared mocked db; dates are in a year no other test touches so earlier running
     // totals can't contaminate this snapshot.
     const account = await createAccount({
@@ -150,6 +150,18 @@ describe('getNetWorthTrend historical cutoff correctness', () => {
     // March's ₹5,000 income must land exactly on top of February's
     // snapshot — not more (double-counted), not less (leaked away).
     expect(points[2].netWorthMinor).toBe(points[1].netWorthMinor + 500000);
+  });
+});
+
+describe('getNetWorthTrend labels', () => {
+  it('calls the last point "Now" only when the window ends in the month in progress', async () => {
+    const current = await getNetWorthTrend(3);
+    expect(current[2].label).toBe('Now');
+    // Reports on a past month or year ends its window there: that point is that month, not "Now".
+    const reference = new Date(2020, 5, 30);
+    const past = await getNetWorthTrend(3, reference);
+    expect(past.map((p) => p.label)).not.toContain('Now');
+    expect(past[2].label).toBe(reference.toLocaleDateString(undefined, { month: 'short' }));
   });
 });
 

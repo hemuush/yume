@@ -196,5 +196,5 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.borderSoft,
     marginBottom: 0,
   },
-  disabled: { opacity: 0.5 },
+  disabled: { opacity: theme.opacity.disabled },
 });

@@ -56,7 +56,10 @@ export function AddEntryAmount({ model }: Props): ReactElement {
         expr,
         isSum: sum,
         shownAmount,
-        issue: invalidAmount ? 'Enter a positive amount. Check the calculation.' : roundingNote,
+        // A sum that does not come out positive is a calculation to check; an amount that rounds to nothing says so.
+        issue: invalidAmount
+          ? (roundingNote ?? 'Enter a positive amount. Check the calculation.')
+          : roundingNote,
         minor: amountMinor,
       }}
       pad={{

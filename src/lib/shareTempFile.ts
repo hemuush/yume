@@ -17,7 +17,7 @@ export async function shareTempFile(
     if (file.exists) file.delete();
     file.create();
     await file.write(content);
-    if (!(await Sharing.isAvailableAsync())) throw new Error("Sharing isn't available on this phone.");
+    if (!(await Sharing.isAvailableAsync())) throw new Error('Sharing isn’t available on this phone.');
     await withoutRelock(() => Sharing.shareAsync(file.uri, options));
   } finally {
     try {

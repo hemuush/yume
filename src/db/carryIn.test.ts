@@ -60,7 +60,7 @@ describe('getCarryInMinor', () => {
     expect(await getCarryInMinor('2026-08-01')).toBe(0);
   });
 
-  it("carries a month's leftover into the next", async () => {
+  it('carries a month’s leftover into the next', async () => {
     // August: 1,000 in, 400 out.
     expect(await getCarryInMinor('2026-09-01')).toBe(60000);
   });
@@ -70,7 +70,7 @@ describe('getCarryInMinor', () => {
     expect(await getCarryInMinor('2026-10-01')).toBe(60000 + 50000 - 10000 - 7000 - 5000);
   });
 
-  it("matches each month's own free-to-use figure plus what came before it", async () => {
+  it('matches each month’s own free-to-use figure plus what came before it', async () => {
     const aug = await getPeriodSummary({ start: '2026-08-01', end: '2026-08-31' });
     const sep = await getPeriodSummary({ start: '2026-09-01', end: '2026-09-30' });
     expect(await getCarryInMinor('2026-09-01')).toBe(aug.netMinor);

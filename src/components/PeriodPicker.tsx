@@ -118,7 +118,7 @@ export function PeriodPicker({
         {loadFailed && (
           <View style={styles.weeks}>
             <Text accessibilityRole="alert" style={styles.weeksLabel}>
-              Couldn't load spending totals. You can still pick a period.
+              Couldn’t load spending totals. You can still pick a period.
             </Text>
             <Pressable
               accessibilityRole="button"
@@ -328,7 +328,7 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
   },
-  off: { opacity: 0.35 },
+  off: { opacity: theme.opacity.limit },
   cellText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textPrimary },
   cellSub: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted, marginTop: 1 },
   nowDot: {

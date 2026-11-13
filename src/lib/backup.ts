@@ -152,7 +152,7 @@ export async function restoreFromSnapshot(snapshot: BackupSnapshot): Promise<Res
 /** restoreFromSnapshot on a handle the caller already holds (see buildBackupSnapshotOn). */
 export async function restoreFromSnapshotOn(db: AppDb, snapshot: BackupSnapshot): Promise<RestoreResult> {
   if (!isValidSnapshotShape(snapshot)) {
-    throw new Error("This backup file is damaged or isn't a Yume backup. Nothing was changed.");
+    throw new Error('This backup file is damaged or isn’t a Yume backup. Nothing was changed.');
   }
   if (snapshot.formatVersion > BACKUP_FORMAT_VERSION) {
     throw new Error('This backup was made with a newer version of Yume. Please update the app first.');
@@ -179,7 +179,7 @@ export async function restoreFromSnapshotOn(db: AppDb, snapshot: BackupSnapshot)
     if (rows === undefined) continue;
     if (!Array.isArray(rows) || rows.some((r) => !r || typeof r !== 'object' || Array.isArray(r))) {
       throw new Error(
-        `This backup file is damaged (the "${table}" section isn't readable) — nothing was changed.`
+        `This backup file is damaged (the "${table}" section isn’t readable) — nothing was changed.`
       );
     }
     // Money is whole minor units everywhere: text or a fraction there would be stored as-is (SQLite accepts
@@ -230,7 +230,7 @@ export async function restoreFromSnapshotOn(db: AppDb, snapshot: BackupSnapshot)
     );
     if (badAmount) {
       throw new Error(
-        `This backup file is damaged (an amount in "${table}" isn't a number) — nothing was changed.`
+        `This backup file is damaged (an amount in "${table}" isn’t a number) — nothing was changed.`
       );
     }
   }
@@ -392,7 +392,7 @@ export async function restoreFromSnapshotOn(db: AppDb, snapshot: BackupSnapshot)
           throw new Error(
             `This backup file is incomplete — ${broken.length} record${broken.length === 1 ? '' : 's'} in it point${
               broken.length === 1 ? 's' : ''
-            } at data that isn't in the file. Nothing was changed.`
+            } at data that isn’t in the file. Nothing was changed.`
           );
         }
       });

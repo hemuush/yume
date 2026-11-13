@@ -3,7 +3,7 @@ import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Text } from '@/components/Text';
 import { formatMoney } from '@/lib/money';
 import { formatRatioPct } from '@/lib/format';
-import { weekdayDayMonth } from '@/lib/dateLabels';
+import { weekdayDayMonthMaybeYear } from '@/lib/dateLabels';
 import { payoffFraction } from '@/lib/loan';
 import { roundedMinor } from '@/lib/round';
 import { Loan } from '@/types';
@@ -17,7 +17,7 @@ import type { LoanProgress } from '@/db/loans';
 import { loanBarTone, loanGlyph, loanIcon, loanTint } from './loanIdentity';
 import { SCREEN } from '@/components/screenStyles';
 import { DUE_SOON_DAYS } from '@/lib/dueDate';
-import { daysUntilIsoDate } from '@/lib/date';
+import { daysUntilIsoDate, toLocalIsoDate } from '@/lib/date';
 
 import { useAccent } from '@/theme/AccentContext';
 import { themeInk } from '@/theme/interactionColors';
@@ -54,7 +54,18 @@ export function LoanCard({
   const nextDueDate = progress ? progress.nextDueDate : loan.nextDueDate;
   const nextEmiMinor = progress?.nextEmiMinor ?? loan.emiAmountMinor;
   const dueSoon = !!nextDueDate && daysUntilIsoDate(nextDueDate) <= DUE_SOON_DAYS;
-  const repaidLine = progress ? `${progress.paidCount} of ${progress.totalCount} EMIs` : null;
+  // A late EMI says so, as it does everywhere else (Home, Plan, the widget), instead of showing only a past date.
+  const lateDays =
+    nextDueDate && nextDueDate < toLocalIsoDate(new Date()) ? -daysUntilIsoDate(nextDueDate) : 0;
+  const nextWhen =
+    nextDueDate && lateDays > 0
+      ? `Overdue by ${lateDays} ${lateDays === 1 ? 'day' : 'days'}`
+      : nextDueDate
+        ? weekdayDayMonthMaybeYear(nextDueDate)
+        : '';
+  const repaidLine = progress
+    ? `${progress.paidCount} of ${progress.totalCount} ${progress.totalCount === 1 ? 'EMI' : 'EMIs'}`
+    : null;
 
   return (
     <Animated.View style={fadeStyle}>
@@ -128,8 +139,7 @@ export function LoanCard({
               <View style={styles.footerText}>
                 <Text style={styles.nextLine}>
                   <Text style={[styles.nextLabel, dueSoon && styles.nextLabelDue]}>Next EMI · </Text>
-                  {weekdayDayMonth(nextDueDate)} ·{' '}
-                  <Text style={styles.nextAmount}>{formatMoney(nextEmiMinor)}</Text>
+                  {nextWhen} · <Text style={styles.nextAmount}>{formatMoney(nextEmiMinor)}</Text>
                 </Text>
               </View>
               <Pressable
@@ -241,6 +251,6 @@ const styles = StyleSheet.create({
     borderRadius: theme.radius.pill,
     backgroundColor: theme.colors.ink,
   },
-  pillPressed: { opacity: 0.8 },
+  pillPressed: { opacity: theme.opacity.pressed },
   pillText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.white },
 });

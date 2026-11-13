@@ -19,7 +19,7 @@ import {
 } from './backup';
 
 describe('summarizeSnapshot', () => {
-  it("counts a backup's entries, accounts and loans, and finds its latest entry", () => {
+  it('counts a backup’s entries, accounts and loans, and finds its latest entry', () => {
     const snapshot = {
       formatVersion: 1,
       exportedAt: '2026-09-25T18:28:02Z',
@@ -37,7 +37,7 @@ describe('summarizeSnapshot', () => {
     });
   });
 
-  it("says a file that isn't a Yume backup has nothing to summarise", () => {
+  it('says a file that isn’t a Yume backup has nothing to summarise', () => {
     expect(summarizeSnapshot({ hello: 'world' })).toBeNull();
     expect(summarizeSnapshot(null)).toBeNull();
   });

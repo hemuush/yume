@@ -105,5 +105,5 @@ const styles = StyleSheet.create({
     borderRadius: 9,
     backgroundColor: theme.colors.ink,
   },
-  disabled: { opacity: 0.5 },
+  disabled: { opacity: theme.opacity.disabled },
 });

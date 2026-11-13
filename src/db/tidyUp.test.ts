@@ -173,4 +173,30 @@ describe('tidy up', () => {
     await keepAsIncome(group.key);
     expect((await getTidyUpReport()).startingBalances).toEqual([]);
   });
+
+  it('names the currency of each group, so a foreign pair is not shown in rupees', async () => {
+    const usd = (await createAccount({ name: 'Wise', type: 'bank', currency: 'USD', openingBalanceMinor: 0 }))
+      .id;
+    const lunch = () =>
+      createTransaction({
+        type: 'expense',
+        accountId: usd,
+        categoryId: food,
+        amountMinor: 5000,
+        date: '2026-09-12',
+      });
+    await lunch();
+    await lunch();
+    await createTransaction({
+      type: 'income',
+      accountId: usd,
+      categoryId: previous,
+      amountMinor: 300_000,
+      date: '2026-09-02',
+    });
+    const report = await getTidyUpReport();
+    expect(report.repeats.find((g) => g.accountName === 'Wise')?.currency).toBe('USD');
+    expect(report.repeats.find((g) => g.accountName === 'Bank')?.currency).toBe('INR');
+    expect(report.startingBalances.find((g) => g.accountName === 'Wise')?.currency).toBe('USD');
+  });
 });

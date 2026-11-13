@@ -48,7 +48,8 @@ export function PersonDetailModal({
 }: {
   person: PersonWithBalance;
   onClose: () => void;
-  onChanged: () => void;
+  /** May be async: the sheet waits for it before it finishes. */
+  onChanged: () => void | Promise<void>;
   initialTab?: 'settle' | 'history';
 }) {
   const { show: showUndo } = useUndoToast();
@@ -110,7 +111,7 @@ export function PersonDetailModal({
 
   useFocusEffect(
     useCallback(() => {
-      load();
+      void load();
     }, [load])
   );
 
@@ -230,7 +231,7 @@ export function PersonDetailModal({
         await onChanged();
       });
     } catch (e) {
-      showAlert("Couldn't delete entry", errorMessage(e));
+      showAlert('Couldn’t delete entry', errorMessage(e));
     } finally {
       setSaving(false);
       running.current = false;
@@ -246,7 +247,7 @@ export function PersonDetailModal({
 
   const onDeleteEntry = (entry: PersonLedgerEntry) => {
     if (!entry.transactionId) {
-      runDeleteEntry(entry);
+      void runDeleteEntry(entry);
       return;
     }
     showAlert(
@@ -345,7 +346,7 @@ export function PersonDetailModal({
       />
       {loadError && (
         <>
-          <Text style={styles.errorText}>Couldn't load the latest details: {loadError}</Text>
+          <Text style={styles.errorText}>Couldn’t load the latest details: {loadError}</Text>
           <PrimaryButton title="Retry" variant="secondary" compact onPress={load} />
         </>
       )}

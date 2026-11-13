@@ -82,6 +82,8 @@ export function ExpenseLabelsReport({
         <TextInput
           accessibilityLabel="Search report labels"
           placeholder="Find a label"
+          autoCapitalize="none"
+          autoCorrect={false}
           value={query}
           onChangeText={(text) => {
             setQuery(text);

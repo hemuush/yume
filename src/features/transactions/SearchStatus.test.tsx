@@ -50,11 +50,35 @@ describe('search, before typing', () => {
   it('distinguishes failed queries from no matches and lets the user retry', () => {
     const onRetry = jest.fn();
     const tree = render({ query: 'food', failed: true, onRetry });
-    expect(texts(tree)).toContain("Couldn't search");
+    expect(texts(tree)).toContain('Couldn’t search');
     expect(texts(tree)).not.toContain('No matches for "food"');
     const retry = tree.root.findAll((n) => n.props.onPress === onRetry)[0];
     act(() => retry.props.onPress());
     expect(onRetry).toHaveBeenCalledTimes(1);
     act(() => tree.unmount());
+  });
+});
+
+describe('search, with results', () => {
+  it('says how many matched, in the singular too', () => {
+    expect(texts(render({ query: 'food', resultCount: 12 }))).toContain('12 matches');
+    expect(texts(render({ query: 'food', resultCount: 1 }))).toContain('1 match');
+  });
+
+  it('says the list is only the newest when more matched, and what to do about it', () => {
+    const shown = texts(render({ query: 'food', resultCount: 50, capped: true, limit: 50 }));
+    expect(shown).toContain('Newest 50 matches. Add a word to narrow it.');
+    expect(shown).not.toContain('50 matches');
+  });
+
+  it('is announced to a screen reader as it changes', () => {
+    const r = render({ query: 'food', resultCount: 3 });
+    const line = r.root.findAllByType(Text).find((t) => [t.props.children].flat().join('') === '3 matches')!;
+    expect(line.props.accessibilityLiveRegion).toBe('polite');
+  });
+
+  it('shows no count while it is still searching or when nothing matched', () => {
+    expect(texts(render({ query: 'food', resultCount: 0, loading: true })).join(' ')).not.toMatch(/match/);
+    expect(texts(render({ query: 'zzz', resultCount: 0 })).join(' ')).not.toMatch(/\d+ match/);
   });
 });

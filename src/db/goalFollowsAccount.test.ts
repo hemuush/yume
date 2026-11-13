@@ -37,7 +37,7 @@ describe('a goal that follows its account', () => {
 
   const goalNamed = async (name: string) => (await listSavingsGoals(true)).find((g) => g.name === name)!;
 
-  it("shows the account's balance, and moves with a transfer in", async () => {
+  it('shows the account’s balance, and moves with a transfer in', async () => {
     await createSavingsGoal({
       name: 'Rainy day',
       targetAmountMinor: 5000000,
@@ -71,7 +71,7 @@ describe('a goal that follows its account', () => {
     expect(goal.currentAmountMinor).toBe(2200000);
   });
 
-  it("can't take money by hand while following", async () => {
+  it('can’t take money by hand while following', async () => {
     const goal = await goalNamed('Rainy day');
     await expect(contributeToGoal(goal.id, 10000)).rejects.toThrow(/follows its account/);
   });
@@ -108,7 +108,7 @@ describe('a goal that follows its account', () => {
     expect(made.currentAmountMinor).toBe(0);
   });
 
-  it("never shows below zero when the account's balance is negative", async () => {
+  it('never shows below zero when the account’s balance is negative', async () => {
     const overdrawn = (await createAccount({ name: 'Overdrawn', type: 'bank', currency: 'INR' })).id;
     await createTransaction({
       type: 'transfer',
@@ -146,7 +146,7 @@ describe('a goal that follows its account', () => {
     await expect(deleteSavingsGoal(made.id)).resolves.toBeTruthy();
   });
 
-  it("grows at the account's recent monthly rate, not its whole balance", async () => {
+  it('grows at the account’s recent monthly rate, not its whole balance', async () => {
     // In the last 90 days before 30 Sep: +₹3,000 in, −₹1,000 out.
     const perMonth = await getAccountMonthlyGrowth(potId, 90, '2026-09-30');
     expect(perMonth).toBe(Math.round(200000 / (90 / 30.44)));

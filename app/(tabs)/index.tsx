@@ -39,6 +39,7 @@ import { useReduceMotion } from '@/lib/useReduceMotion';
 import { useAccent } from '@/theme/AccentContext';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import { EmptyState } from '@/components/EmptyState';
+import { PrimaryButton } from '@/components/PrimaryButton';
 import {
   CURRENT_PERIOD,
   PeriodCursor,
@@ -71,6 +72,7 @@ import type { ComingUpFilter } from '@/features/home/comingUp';
 import { recurringRulesInCurrency } from '@/lib/recurringScope';
 import { buildLoansSummary } from '@/features/plan/planOverview';
 import { RecentTransactionRow } from '@/features/home/RecentTransactionRow';
+import { emptyRecentCopy, viewAllTarget } from '@/features/home/recentActivity';
 import { AccountSummarySheet } from '@/features/home/AccountSummarySheet';
 import { AccountDetailModal } from '@/features/profile/AccountDetailModal';
 import { loadReadyWraps, ReadyWrap } from '@/features/wrap/wrapWindow';
@@ -88,6 +90,8 @@ import { payCardRoute } from '@/lib/payCard';
 
 /** Home shows this many of the period's latest entries; fetch no more than that. */
 const RECENT_ROWS = 5;
+/** Scrolled past this, the month card's own period pill is under the header: the change came from the header's chip. */
+const CARD_OUT_OF_VIEW = 80;
 
 export default function DashboardScreen() {
   const insets = useSafeAreaInsets();
@@ -197,6 +201,10 @@ export default function DashboardScreen() {
 
   const handleCursorChange = useCallback(
     (next: PeriodCursor) => {
+      // Changed from the shrunk header's month chip, the month card it describes is scrolled out of sight: bring
+      // it back, or the new month would change only what is lower down. Changed on the card itself (its own pill or
+      // a swipe), the page stays where it is.
+      if (scrollY.get() > CARD_OUT_OF_VIEW) scrollRef.current?.scrollTo({ y: 0, animated: !reduceMotion });
       setHeroDirection(
         next.granularity !== cursor.granularity
           ? 0
@@ -208,7 +216,7 @@ export default function DashboardScreen() {
       );
       setCursor(next);
     },
-    [cursor]
+    [cursor, scrollY, reduceMotion]
   );
 
   // Quick period stepping starts overlapping loads that can finish out of order; only the latest may write
@@ -576,6 +584,14 @@ export default function DashboardScreen() {
           <View style={styles.errorBanner}>
             <Text style={styles.errorTitle}>Couldn&rsquo;t load your data</Text>
             <Text style={styles.errorDetail}>{loadError}</Text>
+            {/* Pulling down also retries, but nothing says so: offer it where the problem is said. */}
+            <PrimaryButton
+              title="Try again"
+              compact
+              variant="secondary"
+              onPress={() => void load(cursorRef.current)}
+              style={styles.errorRetry}
+            />
           </View>
         )}
 
@@ -641,14 +657,16 @@ export default function DashboardScreen() {
             <View style={{ marginTop: SCREEN.sectionGap }}>
               <AccountTilesSkeleton />
             </View>
-            <Section title="Recent activity">
+            {/* Coming up is what follows the accounts on the loaded page; Recent activity is below it. */}
+            <Section title="Coming up">
               <CardRowsSkeleton rows={3} subtitle />
             </Section>
           </>
         )}
 
-        {/* Accounts remain directly below the balance area. */}
-        {loaded && (
+        {/* Accounts remain directly below the balance area. After a failed first load nothing is known yet, so
+            the "fresh start" card would tell someone with accounts that they have none. */}
+        {loaded && !(loadError && historyAccounts.length === 0) && (
           <Animated.View entering={sectionEntering(1)} layout={ROW_LAYOUT}>
             <HomeAccounts
               accounts={accounts}
@@ -685,11 +703,12 @@ export default function DashboardScreen() {
             <Section
               compact
               title="Recent activity"
-              onSeeAll={() => router.push('/transactions')}
+              // The list is the browsed period's, so "View all" opens that month in Activity (a past month only).
+              onSeeAll={() => router.push(viewAllTarget(loadedCursor))}
               actionLabel="View all"
             >
               {recent.length === 0 ? (
-                <EmptyState title="Nothing logged" subtitle="Try another period." />
+                <EmptyState {...emptyRecentCopy(loadedCursor)} />
               ) : (
                 <View style={styles.recent}>
                   {recent.slice(0, 5).map((tx, i, rows) => (
@@ -862,4 +881,5 @@ const styles = StyleSheet.create({
     marginTop: 4,
     lineHeight: 16,
   },
+  errorRetry: { marginTop: 10, alignSelf: 'flex-start' },
 });
