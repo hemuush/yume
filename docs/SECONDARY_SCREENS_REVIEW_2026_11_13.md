@@ -148,3 +148,13 @@ After the group panel failed on a phone (ninth pass), every other use of the sam
 - **Checked:** every screen (22) rendered at 390 dp and at 360 dp with 1.3× text on #79 and on the current code, compared pixel by pixel: identical except Home's ring box, plus random demo-data avatar colours on Plan and People (the same regions differ between two renders of #79 itself). The group opens and closes with its entries, the amount bubble is whole.
 - **Not checked, and cannot be here:** anything on an Android device. `GrowFill` (Plan, Loans, Goals bars) uses `useAnimatedStyle` and was already on phones.
 
+### Twelfth pass: Activity's groups glide again, on a path already on phones
+
+After the eleventh pass the group opened and closed again but jumped (the days below move at once while the entries fade). The glide is back as a new `Collapsible`, built on shared values (`useSharedValue`, `useAnimatedStyle`, `withTiming`): the same path that already draws Home's capsules and the Plan, Loans and Goals bars on phones, not the CSS-transition path that failed.
+
+- **How:** the entries are measured (`onLayout`), and the panel's height and opacity follow `progress` (0 closed, 1 open) for 200 ms on the shared curve; a closed panel leaves the tree after the glide. A panel that never opened schedules nothing, so a stale timer cannot undo a later opening (that bug is why the first version vanished in the browser render).
+- **Fails safe:** unmeasured and open, the style is `height: auto`, so if the measuring ever fails the entries show at full height and do not glide; they never disappear.
+- **Measured** in the browser render with the stand-in upgraded to run `withTiming` frame by frame: the next day's top 624 → 714 dp over about 200 ms and back, with no step or flash; quick taps (open then close within 80 ms, three taps), reduce-motion and scrolling away and back end in the right state.
+- **Tests:** `Collapsible.test.tsx` (the style rule for every state, opens, closes, reopens while closing, reduce-motion, and no timers for a panel that never opened); `TimelineDay.test.tsx` (the entries sit in the panel and no layout, entering or exiting animation is left on them).
+- **Not verified, and cannot be here:** a phone. The layout-prop path is proven on phones for Home's capsule fill, but a height that moves the rows around it each frame, in a list, has not run on a phone.
+
