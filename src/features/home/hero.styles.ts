@@ -48,6 +48,8 @@ export const styles = StyleSheet.create({
     color: theme.colors.textPrimary,
   },
   headValueNeg: { color: theme.colors.expenseText },
+  // Under two links: the whole line, from the left, instead of squeezing in beside them.
+  headCaptionFull: { flexBasis: '100%', marginTop: -6, paddingBottom: 8 },
   headCaption: {
     flexShrink: 1,
     fontFamily: theme.font.body,
@@ -72,6 +74,7 @@ export const styles = StyleSheet.create({
 
   working: {
     marginTop: 6,
+    marginBottom: 12,
     borderRadius: 18,
     backgroundColor: theme.colors.tray,
     paddingHorizontal: 14,
