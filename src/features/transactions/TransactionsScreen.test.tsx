@@ -189,6 +189,22 @@ describe('Activity period controls', () => {
     expect([...selected].filter((l) => l === 'Week' || l === 'Month')).toEqual(['Month']);
     expect(texts(tree)).toContain('Nothing logged this month');
   });
+
+  it('dims the arrow to a period that has not started, even though a press eases opacity too', async () => {
+    const { StyleSheet } = require('react-native');
+    const { theme } = require('@/constants/theme');
+    mockComparison.fail = false;
+    const tree = await render();
+    const next = tree.root.find(
+      (n) =>
+        n.props.accessibilityLabel === 'Next week' &&
+        typeof n.props.onPressIn === 'function' &&
+        typeof n.type !== 'string'
+    );
+    // Today is in the current week, so there is nothing after it: disabled and visibly so.
+    expect(next.props.disabled).toBe(true);
+    expect(StyleSheet.flatten(next.props.style).opacity).toBe(theme.opacity.limit);
+  });
 });
 
 it('keeps the committed week caption while month data is still loading', async () => {

@@ -1,8 +1,10 @@
 /** The one button: announced as a button, reports taps, and a disabled one neither fires nor reads as enabled. */
+import { StyleSheet } from 'react-native';
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
 
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
 
+import { theme } from '@/constants/theme';
 import { PrimaryButton } from './PrimaryButton';
 
 function render(props: Partial<React.ComponentProps<typeof PrimaryButton>> = {}) {
@@ -70,5 +72,18 @@ describe('PrimaryButton', () => {
   it('swaps the title for a checkmark once done', () => {
     const tree = render({ done: true, doneLabel: 'Saved' });
     expect(JSON.stringify(tree.toJSON())).toContain('✓ Saved');
+  });
+
+  it('reads as unavailable: a disabled button is dimmed, and the press feedback does not undo it', () => {
+    // The press-down eases opacity between 0.92 and 1; written after the dim it used to win, so a disabled
+    // Save looked exactly like a live one.
+    const opacity = (props: Partial<React.ComponentProps<typeof PrimaryButton>>) =>
+      StyleSheet.flatten(pressable(render(props)).props.style).opacity;
+    expect(opacity({ disabled: true })).toBe(theme.opacity.disabled);
+    expect(opacity({ disabled: true, variant: 'secondary' })).toBe(theme.opacity.disabled);
+    // Busy and finished buttons keep their full strength (the spinner or the tick is the message).
+    expect(opacity({ loading: true })).not.toBe(theme.opacity.disabled);
+    expect(opacity({ done: true })).not.toBe(theme.opacity.disabled);
+    expect(opacity({})).not.toBe(theme.opacity.disabled);
   });
 });

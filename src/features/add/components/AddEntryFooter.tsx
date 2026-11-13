@@ -26,6 +26,7 @@ type Props = {
     | 'isLinked'
     | 'cannotSave'
     | 'currentProblem'
+    | 'dockHint'
     | 'editingId'
     | 'addRow'
     | 'setFooterHeight'
@@ -71,6 +72,7 @@ export function AddEntryFooter({ model }: Props): ReactElement {
     isLinked,
     cannotSave,
     currentProblem,
+    dockHint,
     editingId,
     addRow,
     setFooterHeight,
@@ -114,6 +116,8 @@ export function AddEntryFooter({ model }: Props): ReactElement {
     />
   );
 
+  const statusHint = !error && !repeatWarning && !splitParts && !invalidAmount ? dockHint : undefined;
+
   const addToListDisabled = !formReady || saving || addingRow || saveDone || !!currentProblem;
 
   const addToListButton = !editingId && !splitParts && (
@@ -143,14 +147,13 @@ export function AddEntryFooter({ model }: Props): ReactElement {
       offset={{ opened: insets.bottom }}
       style={[styles.footer, { paddingBottom: insets.bottom + 12 }]}
     >
-      {!error && !repeatWarning && !splitParts && !invalidAmount && currentProblem && (
+      {(statusHint || rows.length > 0) && (
+        // One line when it fits: what is missing on the left, how many are waiting on the right.
         <View style={styles.footerStatus}>
-          <Text style={styles.formHint}>
-            {invalidAmount ? 'Enter a positive amount. Check the calculation.' : currentProblem}
-          </Text>
+          {statusHint ? <Text style={styles.formHint}>{statusHint}</Text> : null}
+          {rows.length > 0 && <Text style={styles.queueHint}>{rows.length} on your list</Text>}
         </View>
       )}
-      {rows.length > 0 && <Text style={styles.queueHint}>{rows.length} on your list</Text>}
       {error && <Text style={styles.error}>{error}</Text>}
       <View
         pointerEvents={formBusy || !formReady ? 'none' : 'auto'}

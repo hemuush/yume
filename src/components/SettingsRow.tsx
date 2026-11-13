@@ -113,8 +113,9 @@ export function SettingsRow({
         h.row,
         compact && styles.compactRow,
         divider && h.divider,
-        dimmed && styles.dimmed,
         animatedStyle,
+        // After the press feedback, which writes opacity as well and would otherwise undo the dim.
+        dimmed && styles.dimmed,
       ]}
       onPress={onPress}
       onPressIn={onPressIn}
