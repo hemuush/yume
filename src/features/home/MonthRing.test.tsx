@@ -32,9 +32,7 @@ const sliceViews = (r: ReactTestRenderer) =>
 const image = (r: ReactTestRenderer) => r.root.find((n) => n.props.accessibilityRole === 'image');
 
 it('draws spent, saved, bills and free arcs in the legend colours', () => {
-  const r = mount(
-    <MonthRing slices={heroSlices(100_000, 40_000, 10_000, 20_000)} hideSavings={false} dayShare={0.4} />
-  );
+  const r = mount(<MonthRing slices={heroSlices(100_000, 40_000, 10_000, 20_000)} hideSavings={false} />);
   expect(sliceColours(r)).toEqual([
     theme.colors.slice.spent,
     theme.colors.slice.saved,
@@ -47,16 +45,13 @@ it('draws spent, saved, bills and free arcs in the legend colours', () => {
   act(() => r.unmount());
 });
 
-it('draws the day ring only for the current month', () => {
-  const past = mount(<MonthRing slices={heroSlices(100_000, 40_000, 0, 0)} hideSavings={false} />);
-  const now = mount(
-    <MonthRing slices={heroSlices(100_000, 40_000, 0, 0)} hideSavings={false} dayShare={0.4} />
-  );
-  expect(strokes(now).length - strokes(past).length).toBe(2);
-  act(() => {
-    past.unmount();
-    now.unmount();
-  });
+it('draws the month’s money only: the track and the slices, no second ring for the day of the month', () => {
+  const r = mount(<MonthRing slices={heroSlices(100_000, 40_000, 10_000, 20_000)} hideSavings={false} />);
+  expect(strokes(r)).toEqual([
+    theme.colors.trayTrack,
+    ...['spent', 'saved', 'due', 'free'].map((k) => `url(#ring-${k})`),
+  ]);
+  act(() => r.unmount());
 });
 
 it('does not say or draw savings while they are hidden', () => {
@@ -79,7 +74,7 @@ it('dims the slices that were not picked', () => {
 it('keeps round-capped arcs from running into each other, and draws one slice as a closed ring', () => {
   const r = mount(<MonthRing slices={heroSlices(100_000, 40_000, 0, 0)} hideSavings={false} />);
   const arcs = arcsOf(r);
-  const circumference = 2 * Math.PI * ((112 - 10 - 5 - 2) / 2);
+  const circumference = 2 * Math.PI * ((112 - 10) / 2);
   const [spent, free] = arcs.map((c) => c.props);
   const len = (p: Record<string, unknown>) => parseFloat(String(p.strokeDasharray));
   // Each arc's visible length (dash plus its two round caps) leaves a gap before the next one starts.
@@ -100,7 +95,7 @@ it('draws very small slices as thin flat bars in their own slots, so Free is alw
   );
   const arcs = arcsOf(r);
   expect(arcs).toHaveLength(4);
-  const circumference = 2 * Math.PI * ((112 - 10 - 5 - 2) / 2);
+  const circumference = 2 * Math.PI * ((112 - 10) / 2);
   const spans = arcs.map((c) => {
     const length = parseFloat(String(c.props.strokeDasharray));
     const start = -Number(c.props.strokeDashoffset);

@@ -13,9 +13,7 @@ export type SliceKey = 'spent' | 'saved' | 'due' | 'free';
 /** The ring's width and height; the same on every phone, so the card stays small. */
 const RING_SIZE = 112;
 const STROKE = 10;
-const OUTER_STROKE = 2.5;
-const R = (RING_SIZE - STROKE - OUTER_STROKE * 2 - 2) / 2;
-const R_OUTER = RING_SIZE / 2 - OUTER_STROKE / 2;
+const R = (RING_SIZE - STROKE) / 2;
 const GAP = 2.5;
 /** The shortest a flat bar for a very small slice is drawn, so it can still be seen. */
 const MIN_BAR = 2;
@@ -26,22 +24,18 @@ const SHEEN = 5;
 const brighter = (hex: string) => shade(hex, Math.min(88, hexToHsl(hex)[2] + SHEEN));
 
 /**
- * The month as one ring: spent, saved, bills still to pay and free, in the colours of the legend beside it. A
- * thin outer ring shows how far through the month today is, so spending reads against time. It is still: it
- * draws at once, each slice a touch lighter along one side, and the slices that were not picked glide back (a CSS
- * transition on each slice's own view). The figure for the picked slice sits in the middle (`children`).
+ * The month as one ring: spent, saved, bills still to pay and free, in the colours of the legend beside it. It is
+ * still: it draws at once, each slice a touch lighter along one side, and the slices that were not picked glide
+ * back (a CSS transition on each slice's own view). The figure for the picked slice sits in the middle (`children`).
  */
 export function MonthRing({
   slices,
   hideSavings,
-  dayShare = null,
   focus = null,
   children,
 }: {
   slices: HeroSlices;
   hideSavings: boolean;
-  /** How far through the month today is (0–1); null outside the current month. */
-  dayShare?: number | null;
   focus?: SliceKey | null;
   children?: React.ReactNode;
 }) {
@@ -54,7 +48,6 @@ export function MonthRing({
   const reduce = useReduceMotion();
   const c = RING_SIZE / 2;
   const circumference = 2 * Math.PI * R;
-  const outerC = 2 * Math.PI * R_OUTER;
   let used = 0;
   // A single slice is the whole ring, with no gap to leave.
   const whole = parts.length === 1;
@@ -73,29 +66,6 @@ export function MonthRing({
         accessibilityLabel={label}
       >
         <Svg width={RING_SIZE} height={RING_SIZE} style={{ position: 'absolute' }}>
-          {dayShare != null && (
-            <>
-              <Circle
-                cx={c}
-                cy={c}
-                r={R_OUTER}
-                stroke={theme.colors.divider}
-                strokeWidth={OUTER_STROKE}
-                fill="none"
-              />
-              <Circle
-                cx={c}
-                cy={c}
-                r={R_OUTER}
-                stroke={theme.colors.ink}
-                strokeWidth={OUTER_STROKE}
-                strokeLinecap="round"
-                fill="none"
-                strokeDasharray={`${Math.max(0, outerC * Math.min(1, dayShare))} ${outerC}`}
-                transform={`rotate(-90 ${c} ${c})`}
-              />
-            </>
-          )}
           <Circle cx={c} cy={c} r={R} stroke={theme.colors.trayTrack} strokeWidth={STROKE} fill="none" />
         </Svg>
         {parts.map((part) => {
