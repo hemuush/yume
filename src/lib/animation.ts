@@ -20,16 +20,13 @@ export const MOTION = {
 } as const;
 
 /**
- * One style property that glides to its new value, as a CSS transition on the shared curve. State-driven (a capsule
+ * One style property (or several) that glides to its new value, as a CSS transition on the shared curve. State-driven (a capsule
  * picked, a slice dimmed): the style says where it should be and Reanimated's CSS engine does the gliding on the UI
  * thread, with no shared value, effect or worklet to write. Nothing happens on first showing, only on a change.
  * `reduce` is the phone's reduce-motion setting: the value then jumps.
  */
-export function glide(
-  property: 'height' | 'opacity' | 'transform',
-  reduce: boolean,
-  duration = DURATIONS.standard
-) {
+type Glidable = 'height' | 'opacity' | 'transform';
+export function glide(property: Glidable | Glidable[], reduce: boolean, duration = DURATIONS.standard) {
   return {
     transitionProperty: property,
     // Written with its unit: valid in Reanimated and as plain CSS alike.

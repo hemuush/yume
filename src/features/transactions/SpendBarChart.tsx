@@ -17,6 +17,11 @@ const MIN_BAR_HEIGHT = 6;
 /** Height kept over the bars for the picked day's amount bubble. */
 const BUBBLE_ROOM = 22;
 
+/** How tall a day's bar is, in dp: a day with spend is at least MIN_BAR_HEIGHT; no spend, no bar. */
+function barHeight(totalMinor: number, maxTotal: number) {
+  return totalMinor > 0 ? Math.max(MIN_BAR_HEIGHT, (totalMinor / maxTotal) * MAX_BAR_HEIGHT) : 0;
+}
+
 /**
  * One bar's stack: shown at its height at once (nothing draws up from empty, or one after another: the calm rule),
  * then glides to a new height when the value really changes. Core `Animated`, not Reanimated: this chart is in the
@@ -102,12 +107,23 @@ export function SpendBarChart({
   const labelLine = Math.ceil(15 * k);
   const labelBox = { lineHeight: labelLine, minHeight: labelLine };
   const dateLine = dates ? Math.ceil(19 * k) : 0;
-  // Column padding, room for the picked day's amount, the capsule, the weekday and the date.
-  const rowHeight = 8 + BUBBLE_ROOM + MAX_BAR_HEIGHT + 6 + labelLine + dateLine;
+  // Column padding, room for the picked day's amount (it grows with the text), the capsule, the weekday and the date.
+  const rowHeight = 8 + Math.ceil(BUBBLE_ROOM * k) + MAX_BAR_HEIGHT + 6 + labelLine + dateLine;
   // Where the capsules rest: column padding, the gap and the weekday and date lines under them.
   const baseline = 4 + 6 + labelLine + dateLine;
+  const picked = bars.find((b) => !b.state && b.key === selectedKey);
   const showAverage = averageMinor != null && averageMinor > 0 && averageMinor <= maxTotal;
   const averageBottom = showAverage ? baseline + (averageMinor / maxTotal) * MAX_BAR_HEIGHT : 0;
+  const bubbleBottom = picked ? baseline + Math.max(barHeight(picked.totalMinor, maxTotal), 2) + 6 : 0;
+  // The average's name sits at the line's right end, about three columns wide; a picked day over there, at that
+  // height, has its amount drawn on top of it, so the name steps aside until another day is picked (the line stays).
+  // shortcut: "the last three columns" is the name's place, not a measured overlap of the words.
+  const fromEnd = picked ? bars.length - bars.indexOf(picked) : 0;
+  const nameClash =
+    fromEnd > 0 &&
+    fromEnd <= 3 &&
+    bubbleBottom - 3 < averageBottom + 16 &&
+    bubbleBottom + Math.ceil(22 * k) > averageBottom;
 
   return (
     <View style={[styles.row, { paddingHorizontal: inset, height: rowHeight }]}>
@@ -122,8 +138,7 @@ export function SpendBarChart({
         />
       )}
       {bars.map((bar) => {
-        const barPx =
-          bar.totalMinor > 0 ? Math.max(MIN_BAR_HEIGHT, (bar.totalMinor / maxTotal) * MAX_BAR_HEIGHT) : 0;
+        const barPx = barHeight(bar.totalMinor, maxTotal);
         const heightPct = (barPx / MAX_BAR_HEIGHT) * 100;
         const selected = selectedKey === bar.key;
         if (bar.state) {
@@ -160,16 +175,6 @@ export function SpendBarChart({
                   {null}
                 </AnimatedBarStack>
               ) : null}
-              {selected && (
-                <View style={[styles.bubbleWrap, { bottom: Math.max(barPx, 2) + 6 }]} pointerEvents="none">
-                  <View style={[styles.bubble, { backgroundColor: ink }]}>
-                    <Text style={styles.bubbleText} numberOfLines={1}>
-                      {formatMoney(bar.totalMinor)}
-                    </Text>
-                    <View style={[styles.bubbleNub, { backgroundColor: ink }]} />
-                  </View>
-                </View>
-              )}
             </View>
             <Text
               style={[styles.label, labelBox, bar.isCurrent && styles.labelToday, selected && styles.labelOn]}
@@ -186,7 +191,7 @@ export function SpendBarChart({
           </Pressable>
         );
       })}
-      {showAverage && (
+      {showAverage && !nameClash && (
         <View
           pointerEvents="none"
           accessibilityElementsHidden
@@ -196,6 +201,26 @@ export function SpendBarChart({
           <Text style={styles.averageText}>
             avg {formatMoney(averageMinor!)} {dates ? 'a day' : 'a week'}
           </Text>
+        </View>
+      )}
+      {picked && (
+        // The picked day's amount, drawn last on a row laid out like the columns: it is not cut by the capsule (which
+        // clips its children to 26 dp and its own height), and it stays over the next capsules and the average's name.
+        <View pointerEvents="none" style={[styles.bubbleRow, { paddingHorizontal: inset }]}>
+          {bars.map((bar) => (
+            <View key={bar.key} style={styles.bubbleCol}>
+              {bar === picked && (
+                <View style={[styles.bubbleWrap, { bottom: bubbleBottom }]}>
+                  <View style={[styles.bubble, { backgroundColor: ink }]}>
+                    <Text style={styles.bubbleText} numberOfLines={1}>
+                      {formatMoney(bar.totalMinor)}
+                    </Text>
+                    <View style={[styles.bubbleNub, { backgroundColor: ink }]} />
+                  </View>
+                </View>
+              )}
+            </View>
+          ))}
         </View>
       )}
     </View>
@@ -254,6 +279,17 @@ const styles = StyleSheet.create({
     color: theme.colors.textMuted,
     marginTop: 6,
   },
+  // Over the whole row, its columns the same width and spacing as the bars' own.
+  bubbleRow: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  bubbleCol: { width: `${100 / 7.4}%`, height: '100%' },
   bubbleWrap: { position: 'absolute', left: -24, right: -24, alignItems: 'center' },
   bubble: { paddingHorizontal: 7, paddingVertical: 3, borderRadius: 8, backgroundColor: theme.colors.ink },
   bubbleText: { fontFamily: theme.font.bodyBold, fontSize: 11, color: theme.colors.surface },
