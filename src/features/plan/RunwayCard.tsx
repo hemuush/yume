@@ -17,6 +17,7 @@ import { Runway } from './runway';
 import { useStacked } from '@/lib/useStacked';
 import { Kicker } from './PlanTiles';
 import { styles } from './plan.styles';
+import { noBreak } from '@/lib/keepTogether';
 
 /**
  * Spending balance, scoped inflow/outflow and a compact forecast verdict. Without an account,
@@ -77,7 +78,7 @@ export function RunwayCard({
     // One line under the verdict: when it bites, or how low it gets.
     const verdictSub = none
       ? `No payments in the next ${days} days`
-      : `Lowest ${formatMoney(runway.lowMinor)} on ${runway.lowDate === days0 ? 'today' : weekdayDayMonth(runway.lowDate)}`;
+      : `Lowest ${formatMoney(runway.lowMinor)} ${noBreak(`on ${runway.lowDate === days0 ? 'today' : weekdayDayMonth(runway.lowDate)}`)}`;
     return (
       <>
         <View style={[screenStyles.card, local.card]}>

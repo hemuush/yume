@@ -69,3 +69,11 @@ Every sheet and dialog (filter, entry details, budget, goal, loan, recurring, pe
 - **Loan setup's "I borrowed / I lent" cards** broke "borrowed" at 200%. Past 130% they sit one above the other.
 
 At 1.3 times text the category tiles looked split in the browser too, but they shrink their names to fit on a phone (the browser cannot show that), so only the sizes above 130% were treated as faults.
+
+### Third pass: what the first two had missed
+
+- **CI does not run on a feature branch** (only on pushes to main and on pull requests), so the branch's commits had not been through its CI-only steps. Run here: `expo export --platform android` bundles; `expo prebuild` plus `check:native` ("Native configuration looks right"); the audit gate finds no high or critical advisory; `expo-doctor@1.21.6` passes 18 of 20 checks, and the other two (the config schema and the React Native Directory) need `exp.host`, which this sandbox cannot reach. `expo prebuild` rewrites the `android` script in `package.json`; that edit was reverted.
+- **Dates split across two lines.** A script now opens every screen and sheet at 1.3 and 2 times text and finds a month followed by a day or year that wraps ("Nov" over "16"). It found Recurring's preview card ("next Mon, Nov / 16"), the Pay EMI sheet ("due Wed, Nov / 25"), Plan's runway line ("on Sun, Nov / 22"), Reports' tapped-day heading, the budget overview ("Nov / 2026") and the goal card ("by Mar 13, / 2027"). Each date is glued with non-breaking spaces (`noBreak`, `gluePiece`). Export's large "November / 2026" title is left: two words of a display heading may break between them.
+- **Wide screens.** The app is portrait-only, but Android 16 ignores that on tablets and unfolded foldables. At 600 and 840 dp every main screen renders without a fault, stretched to the full width. A maximum content width is a design decision and has not been made here.
+- **The browser harness** read `flex: 0` as a zero basis, which drew Recurring's rows over each other; it now reads it as Android does. With that, Recurring and its rule sheets were rendered at large text for the first time: no fault beyond the dates above.
+

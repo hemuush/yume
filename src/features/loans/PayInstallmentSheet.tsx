@@ -17,6 +17,7 @@ import { styles } from './loans.styles';
 import { errorMessage } from '@/lib/errorMessage';
 import { showAlert } from '@/components/AppDialog';
 import { useReduceMotion } from '@/lib/useReduceMotion';
+import { noBreak } from '@/lib/keepTogether';
 
 /**
  * Confirms one outgoing EMI or incoming repayment. The actual movement date defaults to today; the due
@@ -165,7 +166,7 @@ export function PayInstallmentSheet({
         hue={lent ? theme.colors.secondary : theme.colors.idCoralDeep}
         icon="calendar-check"
         title={`${lent ? 'Into' : 'From'} ${account?.name ?? '—'}`}
-        kicker={`EMI #${installment.installmentNumber} · due ${weekdayDayMonthMaybeYear(installment.dueDate)}`}
+        kicker={`EMI #${installment.installmentNumber} · ${noBreak(`due ${weekdayDayMonthMaybeYear(installment.dueDate)}`)}`}
         figure={formatMoney(installment.emiAmountMinor)}
         per="this EMI"
         meta={
