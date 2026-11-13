@@ -7,6 +7,7 @@ import type { McIconName } from '@/components/iconName';
 import { withPressedTint } from '@/lib/pressed';
 import { useAccent } from '@/theme/AccentContext';
 import { useStacked } from '@/lib/useStacked';
+import { GrowFill } from '@/components/GrowFill';
 
 /** Compact budget/goal row; large text moves its amount below the name instead of truncating it. */
 export function PlanSummaryRow({
@@ -15,6 +16,7 @@ export function PlanSummaryRow({
   amount,
   icon,
   progress,
+  animKey,
   color,
   accessibilityLabel,
   onPress,
@@ -24,6 +26,8 @@ export function PlanSummaryRow({
   amount: string;
   icon: McIconName;
   progress?: number;
+  /** Which bar this is (`plan:budget-row:<id>`): it keeps what it last showed and glides to a new value. */
+  animKey: string;
   color: string;
   accessibilityLabel: string;
   onPress: () => void;
@@ -50,9 +54,7 @@ export function PlanSummaryRow({
         </View>
         {progress !== undefined && (
           <View style={s.track} accessible={false}>
-            <View
-              style={[s.fill, { width: `${Math.max(0, Math.min(100, progress))}%`, backgroundColor: color }]}
-            />
+            <GrowFill animKey={animKey} pct={progress} style={[s.fill, { backgroundColor: color }]} />
           </View>
         )}
       </View>

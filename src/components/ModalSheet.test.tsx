@@ -390,3 +390,23 @@ describe.each(['sheet', 'center'] as const)('the %s making room for the keyboard
     act(() => tree.unmount());
   });
 });
+
+describe('on a wide screen', () => {
+  const surface = (over: Partial<Parameters<typeof ModalSheet>[0]>) => {
+    const { tree } = render(over);
+    const node = tree.root.find((n) => n.props.testID === 'sheet-surface');
+    const style = StyleSheet.flatten(node.props.style);
+    act(() => tree.unmount());
+    return style;
+  };
+
+  it('keeps a sheet to the centred 600 dp column, as wide as the screen on a phone', () => {
+    expect(surface({})).toMatchObject({ alignSelf: 'center', width: '100%', maxWidth: 600 });
+  });
+
+  it('keeps a dialog to the column less its 24 dp sides, with the sides on the container, not the dialog', () => {
+    const style = surface({ variant: 'center' });
+    expect(style).toMatchObject({ alignSelf: 'center', width: '100%', maxWidth: 552 });
+    expect(style.marginHorizontal).toBeUndefined();
+  });
+});

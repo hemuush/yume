@@ -74,7 +74,7 @@ it('rapid period turns render the latest bars and bind taps to that same period 
   expect(mockTiming).not.toHaveBeenCalled();
 });
 
-it('grows bars with the native driver and stops an interrupted animation', () => {
+it('shows bars at their height at once, glides a changed one with the native driver, and stops an interrupted glide', () => {
   const stops: jest.Mock[] = [];
   const configs: Animated.TimingAnimationConfig[] = [];
   jest.spyOn(Animated, 'timing').mockImplementation((_value, config) => {
@@ -83,13 +83,28 @@ it('grows bars with the native driver and stops an interrupted animation', () =>
     configs.push(config);
     return { start: jest.fn(), stop, reset: jest.fn() };
   });
+  const chart = (second: number) => (
+    <SpendBarChart bars={[bar('2026-10-01', 10000), bar('2026-10-02', second)]} onPressDay={jest.fn()} />
+  );
   act(() => {
-    root = create(<SpendBarChart bars={[bar('2026-10-01', 10000)]} onPressDay={jest.fn()} />);
+    root = create(chart(5000));
   });
-  expect(configs[0].useNativeDriver).toBe(true);
+  // First showing: nothing draws up from empty, nothing one after another.
+  expect(configs).toHaveLength(0);
+  act(() => {
+    root.update(chart(5000));
+  });
+  expect(configs).toHaveLength(0);
+  // A day whose spending changed glides to its new height, on the native driver.
+  act(() => {
+    root.update(chart(8000));
+  });
+  expect(configs).toHaveLength(1);
+  expect(configs[0]).toMatchObject({ useNativeDriver: true, toValue: 80, duration: 200 });
+  // Interrupted (here by reduce-motion): the running glide is stopped.
   mockReduce = true;
   act(() => {
-    root.update(<SpendBarChart bars={[bar('2026-10-01', 10000)]} onPressDay={jest.fn()} />);
+    root.update(chart(8000));
   });
   expect(stops[0]).toHaveBeenCalledTimes(1);
 });

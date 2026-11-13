@@ -1,4 +1,4 @@
-import { View, Pressable, StyleSheet, useWindowDimensions } from 'react-native';
+import { View, Pressable, StyleSheet } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
@@ -16,6 +16,7 @@ import { gainLabel } from '@/lib/investment';
 import { goalProgress } from '@/lib/savingsGoalProgress';
 import { keepTogether } from '@/lib/keepTogether';
 import type { Portfolio } from '@/lib/portfolio';
+import { useStacked } from '@/lib/useStacked';
 
 type Alert = { key: string; title: string; detail: string; onPress: () => void };
 
@@ -97,8 +98,7 @@ export function PlanOverviewPanels({
   onTab: (tab: PlanTab) => void;
   onBudget: (id: string) => void;
 }) {
-  const { width, fontScale } = useWindowDimensions();
-  const oneColumn = width < 340 || fontScale > 1.3;
+  const oneColumn = useStacked('late');
   const overdue = groups
     .flatMap((g) => g.items)
     .filter((item) => item.dueDate < today && (item.kind === 'bill' || item.kind === 'emi'));
