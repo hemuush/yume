@@ -378,7 +378,7 @@ Restore anyway? Your current data would be replaced with no way back.`,
         showAlert(
           'Backups found in this folder',
           latest
-            ? `Latest backup: ${latest.exportedAt ? formatWhen(latest.exportedAt) : 'date unknown'} · ${latest.summary!.entries} entries. Review it before replacing your app data, or keep your current data and start backing it up here.`
+            ? `Latest backup: ${latest.exportedAt ? formatWhen(latest.exportedAt) : 'date unknown'} · ${latest.summary!.entries} ${latest.summary!.entries === 1 ? 'entry' : 'entries'}. Review it before replacing your app data, or keep your current data and start backing it up here.`
             : 'Backup files exist, but none could be validated. They will be kept if you back up your current data here.',
           [
             { text: 'Cancel', style: 'cancel' },

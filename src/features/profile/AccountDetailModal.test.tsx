@@ -44,6 +44,7 @@ jest.mock('@/db/ledger', () => ({
   deleteAccount: jest.fn(),
   restoreAccount: jest.fn(),
   getAccountTransactionCount: (...a: unknown[]) => mockCount(...a),
+  getAccountRuleCounts: async () => ({ active: 0, paused: 0 }),
 }));
 
 import { AccountDetailModal } from './AccountDetailModal';

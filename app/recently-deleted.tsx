@@ -29,7 +29,7 @@ import { emitTransactionsChanged } from '@/lib/dataEvents';
 import { errorMessage } from '@/lib/errorMessage';
 import { haptics } from '@/lib/haptics';
 import { withPressed } from '@/lib/pressed';
-import { dayMonth } from '@/lib/dateLabels';
+import { dayMonthMaybeYear } from '@/lib/dateLabels';
 import { toLocalIsoDate } from '@/lib/date';
 import { Category, Account } from '@/types';
 import { showAlert } from '@/components/AppDialog';
@@ -208,7 +208,7 @@ export default function RecentlyDeletedScreen() {
                       : [
                           isTransfer ? undefined : inParent(parentOf(cat)),
                           where,
-                          dayMonth(entry.date),
+                          dayMonthMaybeYear(entry.date),
                           `${entry.daysLeft} day${entry.daysLeft === 1 ? '' : 's'} left`,
                         ]
                           .filter(Boolean)
@@ -239,7 +239,11 @@ export default function RecentlyDeletedScreen() {
                           ]}
                         >
                           {entry.type === 'expense' ? '−' : entry.type === 'income' ? '+' : ''}
-                          <Amount minor={entry.amountMinor} sensitive={isSavings(entry)} />
+                          <Amount
+                            minor={entry.amountMinor}
+                            currency={accounts.find((a) => a.id === entry.accountId)?.currency}
+                            sensitive={isSavings(entry)}
+                          />
                         </Text>
                         {!entry.blockedReason && (
                           <Pressable

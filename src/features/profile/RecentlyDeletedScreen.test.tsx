@@ -20,7 +20,12 @@ jest.mock('@/db/categories', () => ({
     { id: 'food', name: 'Food & Dining', icon: 'food', color: '#FF9E7D', isSensitive: false },
   ],
 }));
-jest.mock('@/db/accounts', () => ({ listAccounts: async () => [{ id: 'bank', name: 'HDFC' }] }));
+jest.mock('@/db/accounts', () => ({
+  listAccounts: async () => [
+    { id: 'bank', name: 'HDFC', currency: 'INR' },
+    { id: 'usd', name: 'Wise', currency: 'USD' },
+  ],
+}));
 const mockEntries = { current: [] as unknown[] };
 const mockRestore = jest.fn(async (_id: string) => {});
 jest.mock('@/db/recentlyDeleted', () => ({
@@ -62,6 +67,17 @@ async function render() {
 }
 
 describe('Recently deleted screen', () => {
+  it('shows an entry in its own account’s currency and names the year of an old one', async () => {
+    mockEntries.current = [
+      entry({ id: 'u1', accountId: 'usd', amountMinor: 5_000, note: 'Hostel', date: '2025-03-04' }),
+    ];
+    const r = await render();
+    const shown = texts(r);
+    expect(shown).toContain('$50');
+    expect(shown).not.toContain('₹50');
+    expect(shown).toMatch(/Hostel · 4 Mar 2025 · 30 days left/);
+  });
+
   it('lists deleted entries with the days they have left, and restores one', async () => {
     mockEntries.current = [entry({})];
     const r = await render();

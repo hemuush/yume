@@ -318,6 +318,24 @@ it('scans an occupied folder and reviews its latest backup before any write or a
   act(() => tree.unmount());
 });
 
+it('names the entries in the latest backup of an occupied folder in the singular or plural', async () => {
+  const { pickBackupFolder } = jest.requireMock('@/lib/localBackup');
+  const { showAlert } = jest.requireMock('@/components/AppDialog');
+  pickBackupFolder.mockResolvedValue('content://existing');
+  const message = async (entries: number) => {
+    showAlert.mockClear();
+    mockState.files = [{ ...file(5), summary: { entries } }];
+    const tree = await render();
+    await act(async () => {
+      await buttons(tree, 'Choose folder')[0].props.onPress();
+    });
+    act(() => tree.unmount());
+    return showAlert.mock.calls.find((call: unknown[]) => call[0] === 'Backups found in this folder')[1];
+  };
+  expect(await message(1)).toContain('· 1 entry. Review it');
+  expect(await message(2)).toContain('· 2 entries. Review it');
+});
+
 it('does not claim a backup exists when only the saved settings say one exists', async () => {
   mockState.folder = 'content://empty';
   mockState.lastAt = new Date().toISOString();

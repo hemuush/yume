@@ -26,6 +26,7 @@ import { DURATIONS, EASE_OUT } from '@/lib/motionTimings';
 import { dayMonthYear } from '@/lib/dateLabels';
 import { spendableAccountsOf, defaultCurrencyAccountsOf } from '@/lib/account';
 import { rateProblem, tenureProblem } from '@/lib/loanLimits';
+import { plural } from '@/lib/plural';
 import { useAccent } from '@/theme/AccentContext';
 import { useSaveOnce } from '@/lib/useSaveOnce';
 
@@ -285,7 +286,9 @@ export function AddLoanModal({
       return;
     }
     if (loanTiming === 'existing' && alreadyPaidCount > tenureMonths) {
-      setError(`The loan only has ${tenureMonths} EMIs, so ${alreadyPaidCount} can’t be paid already`);
+      setError(
+        `The loan only has ${plural(tenureMonths, 'EMI')}, so ${alreadyPaidCount} can’t be paid already`
+      );
       return;
     }
     if (loanTiming === 'existing' && alreadyPaidCount > 0) {
@@ -294,7 +297,7 @@ export function AddLoanModal({
       const elapsedMonths = monthsBetweenIsoDates(startDate, toLocalIsoDate(new Date()));
       if (alreadyPaidCount > elapsedMonths) {
         setError(
-          `You said ${alreadyPaidCount} installments are already paid, but only about ${elapsedMonths} month${elapsedMonths === 1 ? '' : 's'} have passed since ${dayMonthYear(startDate)} — double-check the start date or the paid count.`
+          `You said ${plural(alreadyPaidCount, 'installment')} ${alreadyPaidCount === 1 ? 'is' : 'are'} already paid, but only about ${plural(elapsedMonths, 'month')} ${elapsedMonths === 1 ? 'has' : 'have'} passed since ${dayMonthYear(startDate)} — double-check the start date or the paid count.`
         );
         return;
       }

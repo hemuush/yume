@@ -1,6 +1,7 @@
 import type { Account, AccountInvestment, InvestmentKind, Transaction } from '@/types';
 import { parseLocalIsoDate } from '@/lib/date';
 import { formatMoney } from '@/lib/money';
+import { plural } from '@/lib/plural';
 
 /** A tracked account's value is "old" once its latest update is more than this many days back. */
 export const STALE_DAYS = 35;
@@ -193,4 +194,12 @@ export function investTypeLabel(
   const role = investRole(tx, investmentIds);
   if (!role) return null;
   return role === 'invest' ? (tx.ruleId ? 'SIP' : 'Invested') : role === 'withdraw' ? 'Withdrawn' : 'Moved';
+}
+
+/** How long a return is quoted over: months for the first two years, then years to a tenth ("1 month", "2.5 years"). */
+export function returnSpanLabel(days: number): string {
+  const years = days / 365;
+  return years >= 2
+    ? `${Math.round(years * 10) / 10} years`
+    : plural(Math.max(1, Math.round(days / 30.44)), 'month');
 }

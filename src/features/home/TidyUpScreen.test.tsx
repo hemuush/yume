@@ -26,6 +26,7 @@ const pair = {
   amountMinor: 5000,
   date: '2026-09-23',
   accountName: 'Bank',
+  currency: 'INR',
   toAccountName: null,
   categoryName: 'Food',
   categoryIcon: 'food',
@@ -35,6 +36,7 @@ const oldBalance = {
   key: 'bank|prev',
   accountId: 'bank',
   accountName: 'Bank',
+  currency: 'INR',
   categoryName: 'Previous',
   ids: ['i1', 'i2'],
   totalMinor: 1_200_000,
@@ -92,6 +94,24 @@ describe('Tidy up screen', () => {
     expect(shown).toEqual(expect.arrayContaining(['Same entry twice?', 'Old balances logged as income']));
     expect(shown.some((t) => t.startsWith('₹50 · Food · Bank'))).toBe(true);
     expect(shown.some((t) => t.startsWith('₹12,000 · Previous · Bank'))).toBe(true);
+  });
+
+  it('shows a foreign account’s amounts in its own currency, and names the year of an old date', async () => {
+    const saved = mockReport.current;
+    mockReport.current = {
+      repeats: [{ ...pair, currency: 'USD', date: '2025-03-04' }],
+      startingBalances: [
+        { ...oldBalance, currency: 'USD', ids: ['i1'], firstDate: '2025-08-01', lastDate: '2025-08-01' },
+      ],
+      fractionalCount: 0,
+    };
+    const shown = texts(await render());
+    mockReport.current = saved;
+    expect(shown.some((t) => t.startsWith('$50 · Food · Bank'))).toBe(true);
+    expect(shown.some((t) => t.startsWith('$12,000 · Previous · Bank'))).toBe(true);
+    expect(shown.some((t) => /^4 Mar 2025 · saved /.test(t))).toBe(true);
+    expect(shown.some((t) => t.startsWith('1 Aug 2025. If this is money'))).toBe(true);
+    expect(shown.some((t) => t.includes('₹'))).toBe(false);
   });
 
   it('deletes one of a pair with an undo, or keeps both', async () => {

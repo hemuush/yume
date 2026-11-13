@@ -188,12 +188,15 @@ describe('Profile · You section', () => {
 
   it('counts entries, loans and friends, and each tile opens its screen', async () => {
     const tree = await render();
-    expect(texts(tree)).toEqual(expect.arrayContaining(['284', 'Entries', '1', 'Active loans', 'Friends']));
+    // One loan and one friend read as singular: "1 Active loan", "1 Friend", never "1 Friends".
+    expect(texts(tree)).toEqual(expect.arrayContaining(['284', 'Entries', '1', 'Active loan', 'Friend']));
+    expect(texts(tree)).not.toContain('Friends');
+    expect(texts(tree)).not.toContain('Active loans');
     press(tree, '284 Entries');
     expect(router.navigate).toHaveBeenCalledWith('/transactions');
-    press(tree, '1 Active loans');
+    press(tree, '1 Active loan');
     expect(router.push).toHaveBeenCalledWith('/loans');
-    press(tree, '1 Friends');
+    press(tree, '1 Friend');
     expect(router.push).toHaveBeenCalledWith('/people');
   });
 

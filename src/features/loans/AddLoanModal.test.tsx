@@ -183,4 +183,35 @@ describe('add loan', () => {
     const shown = tree.root.findAllByType(Text).map((t) => [].concat(t.props.children).join(''));
     expect(shown).toContain('The loan only has 12 EMIs, so 99 can’t be paid already');
   });
+
+  const shownText = (tree: ReactTestRenderer) =>
+    tree.root.findAllByType(Text).map((t) => [].concat(t.props.children).join(''));
+  const createExisting = async (tree: ReactTestRenderer, tenure: string, paid: number) => {
+    await fillStepOne(tree);
+    await act(async () => byId(tree, 'Tenure (months)').props.onChangeText(tenure));
+    await act(async () => footerButton(tree, 'Next').props.onPress());
+    await act(async () => byId(tree, 'options-new').props.onChange('existing'));
+    await act(async () => byId(tree, 'stepper').props.onChange(paid));
+    await act(async () => {
+      await footerButton(tree, 'Create loan').props.onPress();
+    });
+    return shownText(tree);
+  };
+
+  it('says "1 EMI", not "1 EMIs", when the loan has a single instalment', async () => {
+    const { tree } = await render();
+    expect(await createExisting(tree, '1', 5)).toContain(
+      'The loan only has 1 EMI, so 5 can’t be paid already'
+    );
+  });
+
+  it('says "1 installment is" and "0 months have", agreeing with the counts', async () => {
+    const { tree } = await render();
+    const shown = await createExisting(tree, '12', 1);
+    expect(
+      shown.some((t) =>
+        /^You said 1 installment is already paid, but only about 0 months have passed since /.test(t)
+      )
+    ).toBe(true);
+  });
 });
