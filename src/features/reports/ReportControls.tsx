@@ -19,6 +19,9 @@ const TAB_LABELS = [
 
 /** Three lenses in the same pill switch as Plan's tabs, so the two screens read as one family. */
 export function ReportTabs({ value, onChange }: { value: ReportTab; onChange: (value: ReportTab) => void }) {
+  // Past the supported reflow size "Breakdown" is wider than a third of the track: two to a row instead.
+  const { fontScale } = useWindowDimensions();
+  const stacked = fontScale > theme.accessibility.reflowFontScale;
   return (
     <View style={s.tabs}>
       <SegmentedControl
@@ -26,6 +29,7 @@ export function ReportTabs({ value, onChange }: { value: ReportTab; onChange: (v
         value={value}
         onChange={onChange}
         onBand
+        stacked={stacked}
       />
     </View>
   );

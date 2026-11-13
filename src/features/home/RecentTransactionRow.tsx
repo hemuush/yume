@@ -1,6 +1,6 @@
 import { withPressedTint } from '@/lib/pressed';
 import { investLines, type InvestRole } from '@/lib/investment';
-import { View, Pressable, StyleSheet, useWindowDimensions } from 'react-native';
+import { View, Pressable, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { Category, Transaction } from '@/types';
@@ -11,6 +11,7 @@ import { dayLabel, toLocalIsoDate } from '@/lib/date';
 import { categoryPath, joinSub } from '@/lib/categoryLabel';
 import { screenStyles as h, SCREEN } from '@/components/screenStyles';
 import { useAccent } from '@/theme/AccentContext';
+import { useStacked } from '@/lib/useStacked';
 
 /**
  * One recent-activity row: merchant/note leads, "category · account · day" beneath, amount right.
@@ -55,8 +56,7 @@ export function RecentTransactionRow({
   onPress?: () => void;
 }) {
   const { accent, secondary } = useAccent();
-  const { width, fontScale } = useWindowDimensions();
-  const stacked = width < 360 || fontScale > 1.2;
+  const stacked = useStacked();
   const isTransfer = tx.type === 'transfer';
   const note = tx.note?.trim();
   const invest = investRole

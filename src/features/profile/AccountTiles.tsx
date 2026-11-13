@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { View, Pressable, StyleSheet, useWindowDimensions } from 'react-native';
+import { View, Pressable, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
 import { Amount } from '@/components/Amount';
 import { CategoryIcon } from '@/components/CategoryIcon';
@@ -15,6 +15,7 @@ import { usePrivacy } from '@/theme/PrivacyContext';
 import { useAccent } from '@/theme/AccentContext';
 import { screenStyles as h, SCREEN } from '@/components/screenStyles';
 import type { Account } from '@/types';
+import { useStacked } from '@/lib/useStacked';
 
 const ACCOUNT_TYPE_LABEL: Record<Account['type'], string> = {
   bank: 'Bank',
@@ -41,8 +42,7 @@ export function AccountTiles({
   archived?: boolean;
   onPress: (account: Account) => void;
 }) {
-  const { width, fontScale } = useWindowDimensions();
-  const columns = width < 360 || fontScale > 1.2 ? 1 : 2;
+  const columns = useStacked() ? 1 : 2;
   const rows: Account[][] = [];
   for (let i = 0; i < accounts.length; i += columns) rows.push(accounts.slice(i, i + columns));
   return (

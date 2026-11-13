@@ -8,7 +8,7 @@ import { compactMoney } from '@/lib/compactMoney';
 import { dayMonth, weekdayDayMonth } from '@/lib/dateLabels';
 import { useScrub } from '@/features/reports/useScrub';
 import { guideValues, smoothPath } from '@/lib/chartPath';
-import type { Runway } from './runway';
+import { runwayTicks, TICK_DATE_WIDTH, type Runway } from './runway';
 
 const TOP = 30;
 const PAD = 8;
@@ -54,7 +54,7 @@ export function RunwayChart({ runway }: { runway: Runway }) {
 
   // The curve, guides and scale depend only on the runway and the width, not on the day being read, so a drag
   // (which re-renders on every move) reuses them.
-  const { x, y, line, zero, guides, ticks, below } = useMemo(() => {
+  const { x, y, line, zero, guides, below } = useMemo(() => {
     const balances = days.map((d) => d.afterMinor);
     const hi0 = Math.max(0, ...balances, runway.startMinor);
     const lo0 = Math.min(0, ...balances, runway.startMinor);
@@ -73,10 +73,9 @@ export function RunwayChart({ runway }: { runway: Runway }) {
       guides.push(v);
       lastY = y(v);
     }
-    const ticks: number[] = [0];
-    for (let i = 7; i <= n - 4; i += 7) ticks.push(i);
-    return { x, y, line, zero: y(0), guides, ticks, below: lo < 0 };
+    return { x, y, line, zero: y(0), guides, below: lo < 0 };
   }, [days, n, runway.startMinor, width, BASE, GUTTER]);
+  const ticks = runwayTicks(n, x, TICK_DATE_WIDTH * scale);
 
   const plot = Math.max(0, width - GUTTER);
   const day = days[sel];

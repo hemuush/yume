@@ -1,4 +1,4 @@
-import { View, StyleSheet, useWindowDimensions } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
 import { Amount } from '@/components/Amount';
 import { CountUpAmount } from '@/components/CountUpAmount';
@@ -10,6 +10,7 @@ import { hexToRgba, shade } from '@/lib/color';
 import { useAccent } from '@/theme/AccentContext';
 import { themeInk } from '@/theme/interactionColors';
 import type { BudgetCover } from './reportsInsights';
+import { useStacked } from '@/lib/useStacked';
 
 const money = (minor: number) => formatMoney(roundedMinor(minor));
 
@@ -44,8 +45,7 @@ export function ReportHero({
   animKey: string;
 }) {
   const { accent } = useAccent();
-  const { width, fontScale } = useWindowDimensions();
-  const stacked = width < 360 || fontScale > 1.2;
+  const stacked = useStacked();
   const ink = themeInk(accent);
   const used = budget ? budget.spentMinor / budget.limitMinor : 0;
   const over = budget != null && used > 1;

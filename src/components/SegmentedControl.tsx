@@ -6,6 +6,7 @@ import { theme } from '@/constants/theme';
 import { GLASS } from '@/components/Glass';
 import { haptics } from '@/lib/haptics';
 import { usePressScale } from '@/lib/usePressScale';
+import { withPressedTint } from '@/lib/pressed';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 import { DURATIONS, EASE_OUT } from '@/lib/motionTimings';
 
@@ -25,13 +26,19 @@ interface Props<T extends string> {
   disabled?: boolean;
   /** A smaller switch inside a card's heading row: 32 tall, with the touch area kept at 44. */
   compact?: boolean;
+  /** Large text or a narrow phone: rows of two plain tabs, so a label is never squeezed into its share of one row. */
+  stacked?: boolean;
 }
 
 /**
  * A pill switch: one theme-ink pill, measured from the track and moved with the native driver, glides to the
  * tapped choice instead of each segment snapping its own background. Reduce motion: it jumps.
  */
-export function SegmentedControl<T extends string>({
+export function SegmentedControl<T extends string>(props: Props<T>) {
+  return props.stacked ? <StackedSwitch {...props} /> : <PillSwitch {...props} />;
+}
+
+function PillSwitch<T extends string>({
   options,
   value,
   onChange,
@@ -107,6 +114,43 @@ export function SegmentedControl<T extends string>({
           onPress={() => onChange(opt.value)}
         />
       ))}
+    </View>
+  );
+}
+
+/** Every choice stays on screen: two to a row, each tab as wide as half the track. */
+function StackedSwitch<T extends string>({ options, value, onChange, disabled = false }: Props<T>) {
+  const { accent } = useAccent();
+  return (
+    <View style={[styles.stackTrack, disabled && styles.disabled]} accessibilityRole="tablist">
+      {[options.slice(0, 2), options.slice(2)]
+        .filter((row) => row.length > 0)
+        .map((row, index) => (
+          <View key={index} style={styles.stackRow}>
+            {row.map((opt) => {
+              const active = opt.value === value;
+              return (
+                <Pressable
+                  key={opt.value}
+                  accessibilityRole="tab"
+                  accessibilityState={{ selected: active, disabled }}
+                  disabled={disabled}
+                  onPress={() => {
+                    if (active) return;
+                    haptics.tap();
+                    onChange(opt.value);
+                  }}
+                  style={withPressedTint(accent, [
+                    styles.stackTab,
+                    active && { backgroundColor: selectedFill(accent) },
+                  ])}
+                >
+                  <Text style={[styles.stackLabel, active && styles.segmentTextActive]}>{opt.label}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        ))}
     </View>
   );
 }
@@ -197,6 +241,31 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
     marginBottom: 0,
+  },
+  stackTrack: {
+    padding: 4,
+    gap: 4,
+    borderRadius: 24,
+    backgroundColor: GLASS.fill,
+    borderWidth: 1,
+    borderColor: GLASS.edge,
+  },
+  stackRow: { flexDirection: 'row', gap: 4 },
+  stackTab: {
+    flex: 1,
+    minWidth: 0,
+    minHeight: 44,
+    borderRadius: theme.radius.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 4,
+  },
+  stackLabel: {
+    fontFamily: theme.font.body,
+    fontSize: 13,
+    color: theme.colors.textSecondary,
+    textAlign: 'center',
   },
   disabled: { opacity: theme.opacity.disabled },
 });

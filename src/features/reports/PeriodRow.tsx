@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Pressable, StyleProp, ViewStyle, useWindowDimensions } from 'react-native';
+import { View, Pressable, StyleProp, ViewStyle } from 'react-native';
 import { Text } from '@/components/Text';
 import { ActionSheet } from '@/components/ActionSheet';
 import Feather from '@expo/vector-icons/Feather';
@@ -11,6 +11,7 @@ import { styles } from './reports.styles';
 import { RangeSheet } from './RangeSheet';
 import { withPressedTint } from '@/lib/pressed';
 import { useAccent } from '@/theme/AccentContext';
+import { useStacked } from '@/lib/useStacked';
 
 const GRANULARITIES = [
   { key: 'month', label: 'Month', menuLabel: 'Month' },
@@ -36,8 +37,8 @@ export function PeriodRow({
   compact?: boolean;
 }) {
   const { accent } = useAccent();
-  const { width, fontScale } = useWindowDimensions();
-  const stacked = compact && (width < 360 || fontScale > 1.2);
+  const narrow = useStacked();
+  const stacked = compact && narrow;
   const [rangeOpen, setRangeOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const fwd = canStepWindowForward(cursor);

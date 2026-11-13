@@ -18,6 +18,7 @@ import { styles } from './transactions.styles';
 import { withPressed, withPressedTint } from '@/lib/pressed';
 import { shade } from '@/lib/color';
 import { useAccent } from '@/theme/AccentContext';
+import { useStacked } from '@/lib/useStacked';
 
 // The one-tap type choices above the list — the same `filterType` the filter
 // sheet sets, just without opening it.
@@ -69,8 +70,8 @@ export function ActivityFilterChips({
   const { accent } = useAccent();
   const chipBg = shade(accent, 95);
   const ink = themeInk(accent);
-  const { width, fontScale } = useWindowDimensions();
-  const wrapTabs = width < 360 || fontScale > 1.2;
+  const { width } = useWindowDimensions();
+  const wrapTabs = useStacked();
   // When what is picked is cleared the row can shrink to fit the screen: take it back to its start, so it is never
   // left scrolled past its own content (a blank strip with the edge of one chip).
   const scroller = useRef<ScrollViewInstance>(null);

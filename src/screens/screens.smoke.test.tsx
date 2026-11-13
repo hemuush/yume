@@ -446,43 +446,6 @@ async function open(load: () => { default: React.ComponentType }) {
   return tree;
 }
 
-it('says so, and shows the suggestion again, when hiding it could not be saved', async () => {
-  const { AppState } = require('react-native');
-  const subscription = jest.spyOn(AppState, 'addEventListener').mockReturnValue({ remove: jest.fn() });
-  await freshDb();
-  mockHide = false;
-  mockParams = {};
-  const bank = (await createAccount({ name: 'Bank', type: 'bank', currency: 'INR', openingBalanceMinor: 0 }))
-    .id;
-  const subscriptions = (await createCategory({ name: 'Subscriptions', kind: 'expense' })).id;
-  await createTransaction({
-    type: 'expense',
-    accountId: bank,
-    categoryId: subscriptions,
-    amountMinor: 64_900,
-    date: toLocalIsoDate(new Date()),
-  });
-  const hide = jest
-    .spyOn(require('@/db/settings'), 'hideSubscriptionSuggestion')
-    .mockRejectedValueOnce(new Error('disk full'));
-  const alert = jest.spyOn(require('@/components/AppDialog'), 'showAlert').mockImplementation(() => {});
-  const tree = await open(SCREENS.find(([name]) => name === 'recurring')![1]);
-  try {
-    const hideButton = () =>
-      tree.root.find((n) => /^Hide /.test(String(n.props.accessibilityLabel)) && !!n.props.onPress);
-    await act(async () => hideButton().props.onPress());
-    await settle();
-    expect(alert).toHaveBeenCalledWith('Couldn’t hide it', 'disk full');
-    // Back on the list: it was not saved, so it is not gone.
-    expect(hideButton()).toBeTruthy();
-  } finally {
-    act(() => tree.unmount());
-    subscription.mockRestore();
-    hide.mockRestore();
-    alert.mockRestore();
-  }
-});
-
 describe('re-audit recurring privacy and currency regressions', () => {
   beforeEach(async () => {
     mockHide = false;
@@ -1275,5 +1238,44 @@ it('opens recurring setup from the first-use call to action', async () => {
   } finally {
     act(() => tree.unmount());
     subscription.mockRestore();
+  }
+});
+
+// Keep this at the end of the file: restoring the AppState spy clears React Native's own mocked
+// `addEventListener`, so every test after it would get no subscription back.
+it('says so, and shows the suggestion again, when hiding it could not be saved', async () => {
+  const { AppState } = require('react-native');
+  const subscription = jest.spyOn(AppState, 'addEventListener').mockReturnValue({ remove: jest.fn() });
+  await freshDb();
+  mockHide = false;
+  mockParams = {};
+  const bank = (await createAccount({ name: 'Bank', type: 'bank', currency: 'INR', openingBalanceMinor: 0 }))
+    .id;
+  const subscriptions = (await createCategory({ name: 'Subscriptions', kind: 'expense' })).id;
+  await createTransaction({
+    type: 'expense',
+    accountId: bank,
+    categoryId: subscriptions,
+    amountMinor: 64_900,
+    date: toLocalIsoDate(new Date()),
+  });
+  const hide = jest
+    .spyOn(require('@/db/settings'), 'hideSubscriptionSuggestion')
+    .mockRejectedValueOnce(new Error('disk full'));
+  const alert = jest.spyOn(require('@/components/AppDialog'), 'showAlert').mockImplementation(() => {});
+  const tree = await open(SCREENS.find(([name]) => name === 'recurring')![1]);
+  try {
+    const hideButton = () =>
+      tree.root.find((n) => /^Hide /.test(String(n.props.accessibilityLabel)) && !!n.props.onPress);
+    await act(async () => hideButton().props.onPress());
+    await settle();
+    expect(alert).toHaveBeenCalledWith('Couldn’t hide it', 'disk full');
+    // Back on the list: it was not saved, so it is not gone.
+    expect(hideButton()).toBeTruthy();
+  } finally {
+    act(() => tree.unmount());
+    subscription.mockRestore();
+    hide.mockRestore();
+    alert.mockRestore();
   }
 });
