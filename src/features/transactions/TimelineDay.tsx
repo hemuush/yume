@@ -8,7 +8,7 @@ import { CategoryIcon } from '@/components/CategoryIcon';
 import { SECTION_TITLE } from '@/constants/textStyles';
 import { StatusBadge } from '@/components/StatusBadge';
 import { MovingRow } from '@/components/MovingRow';
-import { PANEL_ENTER, ROW_EXIT, ROW_LAYOUT } from '@/lib/animation';
+import { Collapsible } from '@/components/Collapsible';
 import { JustAddedGlow } from '@/components/JustAddedGlow';
 import { Category, Transaction } from '@/types';
 import { dayMonth, shortWeekday } from '@/lib/dateLabels';
@@ -104,7 +104,6 @@ function TimelineDayView({
   position = 'only',
   selected = false,
   today: isToday = false,
-  animateLayout = false,
 }: {
   date: string;
   label: string;
@@ -139,8 +138,6 @@ function TimelineDayView({
   selected?: boolean;
   /** This is today: its date number is drawn in a filled circle. */
   today?: boolean;
-  /** True just after a group opened or closed: the day then animates its height and its place in the list. */
-  animateLayout?: boolean;
 }) {
   const { hideAmounts } = usePrivacy();
   const stacked = useStacked();
@@ -330,7 +327,9 @@ function TimelineDayView({
     // A stack from one account names it, like a single entry does; from several, just the count.
     const sameAccount = line.items.every((t) => t.accountId === first.accountId);
     return (
-      <MovingRow key={line.key} moving={!settling}>
+      // moving={false}: the open panel animates its own height (Collapsible), so a layout animation on the row
+      // would chase it a frame behind.
+      <MovingRow key={line.key} moving={false}>
         {i > 0 && <View style={styles.separator} />}
         <Pressable
           onPress={() => {
@@ -376,45 +375,40 @@ function TimelineDayView({
             currency={accountCurrency(first.accountId)}
           />
         </Pressable>
-        {open && (
-          // The entries fade in as the rows below slide down, and fade out as they slide back (the same panel
-          // motion as Settings' accordion), instead of popping in and out.
-          <ReanimatedAnimated.View entering={PANEL_ENTER} exiting={ROW_EXIT}>
-            {line.items.map((tx) => {
-              // The category is already named above: note over account, or just the account with no note.
-              const label = tx.note || accountName(tx.accountId);
-              const sub = tx.note ? accountName(tx.accountId) : null;
-              return (
-                <MovingRow key={tx.id}>
-                  <View style={styles.separator} />
-                  <Pressable
-                    onPress={() => onPressTx(tx)}
-                    style={withPressedTint(accent, [styles.subLine, stacked && styles.wrapLine])}
-                    accessibilityRole="button"
-                    accessibilityLabel={`${categorySpoken(name, stackParent)}${tx.isRefund ? ', refund' : ''}${tx.note ? `, ${tx.note}` : ''}, ${money(tx.amountMinor, hidden(tx), tx.accountId)}`}
-                  >
-                    <View
-                      style={[styles.subDot, { backgroundColor: cat?.color ?? theme.colors.borderSoft }]}
-                    />
-                    <View style={[styles.mid, stacked && styles.wideMid]}>
-                      <View style={styles.entryHead}>
-                        <Text style={[styles.name, styles.stackName]}>{label}</Text>
-                        {tx.splitId && <StatusBadge label="Split" />}
-                      </View>
-                      {sub && <Text style={styles.sub}>{sub}</Text>}
+        {/* The panel opens and closes by animating its own height, so the rows below move with it, frame by frame. */}
+        <Collapsible open={open}>
+          {line.items.map((tx) => {
+            // The category is already named above: note over account, or just the account with no note.
+            const label = tx.note || accountName(tx.accountId);
+            const sub = tx.note ? accountName(tx.accountId) : null;
+            return (
+              <View key={tx.id}>
+                <View style={styles.separator} />
+                <Pressable
+                  onPress={() => onPressTx(tx)}
+                  style={withPressedTint(accent, [styles.subLine, stacked && styles.wrapLine])}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${categorySpoken(name, stackParent)}${tx.isRefund ? ', refund' : ''}${tx.note ? `, ${tx.note}` : ''}, ${money(tx.amountMinor, hidden(tx), tx.accountId)}`}
+                >
+                  <View style={[styles.subDot, { backgroundColor: cat?.color ?? theme.colors.borderSoft }]} />
+                  <View style={[styles.mid, stacked && styles.wideMid]}>
+                    <View style={styles.entryHead}>
+                      <Text style={[styles.name, styles.stackName]}>{label}</Text>
+                      {tx.splitId && <StatusBadge label="Split" />}
                     </View>
-                    <Amount
-                      type={tx.type}
-                      minor={tx.amountMinor}
-                      masked={hidden(tx)}
-                      currency={accountCurrency(tx.accountId)}
-                    />
-                  </Pressable>
-                </MovingRow>
-              );
-            })}
-          </ReanimatedAnimated.View>
-        )}
+                    {sub && <Text style={styles.sub}>{sub}</Text>}
+                  </View>
+                  <Amount
+                    type={tx.type}
+                    minor={tx.amountMinor}
+                    masked={hidden(tx)}
+                    currency={accountCurrency(tx.accountId)}
+                  />
+                </Pressable>
+              </View>
+            );
+          })}
+        </Collapsible>
       </MovingRow>
     );
   };
@@ -430,13 +424,9 @@ function TimelineDayView({
   const segment = [styles.day];
   const hasNext = position === 'first' || position === 'middle';
   return (
-    // The day grows and shrinks with its stacks open or closed, and the days below slide with it (only just after a
-    // toggle, see `animateLayout`).
-    <ReanimatedAnimated.View
-      entering={entering}
-      layout={animateLayout && !settling ? ROW_LAYOUT : undefined}
-      style={segment}
-    >
+    // The day grows and shrinks with its stacks open or closed as their panels animate their own height (Collapsible),
+    // and the days below, which are the list's own cells, move with it.
+    <ReanimatedAnimated.View entering={entering} style={segment}>
       <View style={styles.rail} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
         <Text style={styles.railWeekday}>{shortWeekday(date).toUpperCase()}</Text>
         <View

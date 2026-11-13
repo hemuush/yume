@@ -148,7 +148,6 @@ function render(
     categories?: Category[];
     savingsAccountIds?: Set<string>;
     onDragActive?: (active: boolean) => void;
-    animateLayout?: boolean;
   } = {}
 ) {
   let r!: ReactTestRenderer;
@@ -168,7 +167,6 @@ function render(
         onToggleStack={onToggleStack}
         onReorder={onReorder}
         onDragActive={opts.onDragActive}
-        animateLayout={opts.animateLayout}
       />
     );
   });
@@ -257,31 +255,29 @@ describe('TimelineDay', () => {
     expect(onPress.mock.calls.map(([t]) => t.id).sort()).toEqual(['t1', 't2', 't3', 't4', 't5']);
   });
 
-  it('opens and closes a stack with the panel motion, and lets days animate only just after a toggle', () => {
-    const { PANEL_ENTER, ROW_EXIT, ROW_LAYOUT } = require('@/lib/animation');
+  it('shows a stack’s entries only while it is open, in a panel that glides its own height', () => {
     const open = render(new Set([`${DATE}|expense|food`]));
+    expect(byLabel(open, 'Food, Lunch').length).toBeGreaterThan(0);
     const panels = open.root.findAll(
-      (n) => typeof n.type === 'string' && n.props.entering === PANEL_ENTER && n.props.exiting === ROW_EXIT
+      (n) => typeof n.type === 'string' && StyleSheet.flatten(n.props.style)?.overflow === 'hidden'
     );
     expect(panels.length).toBeGreaterThan(0);
-    const dayLayouts = (tree: ReactTestRenderer) =>
-      tree.root.findAll(
+    // Neither the panel's entries nor the day use an entering, exiting or layout animation: those leave the list's
+    // cell to change height at once, so the rows below jumped. The panel's own height glides instead.
+    expect(
+      panels[0].findAll((n) => n.props.layout !== undefined || n.props.exiting !== undefined)
+    ).toHaveLength(0);
+    expect(
+      open.root.findAll(
         (n) =>
           typeof n.type === 'string' &&
-          n.props.layout === ROW_LAYOUT &&
-          StyleSheet.flatten(n.props.style)?.flexDirection === 'row' &&
+          n.props.layout !== undefined &&
           StyleSheet.flatten(n.props.style)?.marginTop === 14
-      ).length;
-    // At rest the day carries no layout animation of its own, so a shift in a long list lands at once.
-    expect(dayLayouts(open)).toBe(0);
+      )
+    ).toHaveLength(0);
     act(() => open.unmount());
-    const moving = render(new Set([`${DATE}|expense|food`]), jest.fn(), jest.fn(), undefined, {
-      animateLayout: true,
-    });
-    expect(dayLayouts(moving)).toBe(1);
-    act(() => moving.unmount());
     const closed = render(new Set());
-    expect(closed.root.findAll((n) => n.props.entering === PANEL_ENTER)).toHaveLength(0);
+    expect(byLabel(closed, 'Food, Lunch')).toHaveLength(0);
     act(() => closed.unmount());
   });
 
