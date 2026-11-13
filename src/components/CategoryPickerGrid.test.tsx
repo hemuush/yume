@@ -23,6 +23,15 @@ const cats = ['Food', 'Groceries', 'Transport', 'Shopping', 'Health', 'Fun', 'Re
 
 const flat = (style: unknown) => Object.assign({}, ...[style].flat(Infinity).filter(Boolean));
 
+let textScale = 1;
+beforeEach(() => {
+  textScale = 1;
+  jest
+    .spyOn(require('react-native'), 'useWindowDimensions')
+    .mockImplementation(() => ({ width: 411, height: 800, fontScale: textScale, scale: 1 }));
+});
+afterEach(() => jest.restoreAllMocks());
+
 function render(dimmedIds?: string[], minColumnWidth?: number) {
   let r!: ReactTestRenderer;
   act(() => {
@@ -88,6 +97,19 @@ describe('category grid', () => {
     expect(flat(tileOf(r, 'Food').props.style).width).toBe(92);
     expect(flat(tileOf(r, 'Rent').props.style).width).toBe(92);
   });
+
+  it.each([
+    [1.3, 92],
+    [1.5, 123],
+    [2, 185],
+  ])(
+    'at text scale %s a column is %i px: past 130% the names stop shrinking, so they get wider columns',
+    (scale, width) => {
+      textScale = scale;
+      const r = render();
+      expect(flat(tileOf(r, 'Food').props.style).width).toBe(width);
+    }
+  );
 
   it('fades the categories the host marks as taken', () => {
     const r = render(['c1']);

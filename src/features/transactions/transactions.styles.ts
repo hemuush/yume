@@ -292,6 +292,7 @@ export const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
   },
+  quickBtnWide: { flexBasis: '100%' },
   quickIcon: {
     width: 28,
     height: 28,

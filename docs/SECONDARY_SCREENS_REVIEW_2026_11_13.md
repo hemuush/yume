@@ -57,3 +57,15 @@ A read-only audit of the whole repository (data layer, backup and restore, remin
 - **Recently deleted drew every row at once.** A big tidy-up can leave thousands. It draws a hundred and offers "Show 100 more"; the count, "Oldest leaves in" and Delete all still cover every entry (the list is not cut in the database, so nothing becomes unreachable).
 
 Seen in the browser and not a fault: Recurring's rows at large text overlapped there only because the browser reads `flex: 0` as a zero starting size; Android reads it as "size by content". Not checked on a phone.
+
+### Second pass: the sheets, at 2 times text
+
+Every sheet and dialog (filter, entry details, budget, goal, loan, recurring, person, category, account, investment) was opened in the browser at 360 and 412 dp, at 1, 1.3 and 2 times text. It found five more faults at large text, all fixed with a test that fails without the fix, and one mistake of mine on the way (a hook placed after an early return, which crashed Entry details when it opened; `TransactionDetailModal.test.tsx` now opens it from nothing).
+
+- **Switches of three or more choices squeezed each label into its share of one row.** Activity's filter Type row (five choices) ran together from 130% text on a 360 dp phone; "Expense / Income / Transfer" and Reports' tabs from 200%. `SegmentedControl` and `SheetTabs` now work out whether the longest word fits (`tooTight` in [tooTight.ts](../src/lib/tooTight.ts): letters at about 6.8 dp, the text scale, the window width less 48 dp) and, if not, lay the choices two to a row. Two choices never stack. It is an estimate from the window, not a measurement of the track (marked `shortcut:` in the code).
+- **Entry details' three actions ("Log today", "Recurring", "Refund") clipped "Recurring"** at 200%. Past 130% each gets its own row.
+- **The budget sheet's category tiles split names mid-word** ("Entertainm" over "ent") at 200%, because the grid kept four columns. Past 130% text, where the names stop shrinking to fit, the grid uses fewer, wider columns (`CategoryPicker`; this also covers Add, Split and the recurring form).
+- **Account details' "Out" and "Net" split into "O / ut" and "N / et"** at 200%: the label column was a fixed 30 dp. It grows with the text.
+- **Loan setup's "I borrowed / I lent" cards** broke "borrowed" at 200%. Past 130% they sit one above the other.
+
+At 1.3 times text the category tiles looked split in the browser too, but they shrink their names to fit on a phone (the browser cannot show that), so only the sizes above 130% were treated as faults.

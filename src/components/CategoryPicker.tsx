@@ -1,7 +1,15 @@
 import { useEffect, useEffectEvent, useState } from 'react';
-import { View, Pressable, Animated, StyleSheet, Keyboard, LayoutChangeEvent } from 'react-native';
+import {
+  View,
+  Pressable,
+  Animated,
+  StyleSheet,
+  Keyboard,
+  LayoutChangeEvent,
+  useWindowDimensions,
+} from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
-import { Text, TextInput } from '@/components/Text';
+import { Text, TextInput, MAX_FONT_SCALE } from '@/components/Text';
 import { Category } from '@/types';
 import { theme } from '@/constants/theme';
 import { CategoryIcon } from './CategoryIcon';
@@ -57,7 +65,15 @@ export function CategoryPicker({
   // The medal grid fills its width evenly: as many columns as fit, each an equal share,
   // so a row never ends in a lopsided gap on the right.
   const [gridWidth, setGridWidth] = useState(0);
-  const cols = gridWidth > 0 ? Math.max(3, Math.floor(gridWidth / minColumnWidth)) : 0;
+  // Past the reflow size a tile's name no longer shrinks to fit (Text turns that off), so each column needs the
+  // room the longest name takes at that size: fewer, wider columns instead of "Entertainm" over "ent".
+  const { fontScale } = useWindowDimensions();
+  const textScale = Math.min(MAX_FONT_SCALE, Math.max(1, fontScale));
+  const reflow = textScale > theme.accessibility.reflowFontScale;
+  const cols =
+    gridWidth > 0
+      ? Math.max(reflow ? 2 : 3, Math.floor(gridWidth / (minColumnWidth * (reflow ? textScale : 1))))
+      : 0;
   const tileWidth = cols > 0 ? Math.floor(gridWidth / cols) : undefined;
   const onGridLayout = (e: LayoutChangeEvent) => {
     const w = Math.round(e.nativeEvent.layout.width);

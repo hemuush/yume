@@ -3,7 +3,7 @@
  * rule form (monthly, from its next same day); the category row opens its page. Loan-tied entries get none.
  */
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
-import { Text } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 
 let mockHideAmounts = false;
 jest.mock('@/theme/PrivacyContext', () => ({ usePrivacy: () => ({ hideAmounts: mockHideAmounts }) }));
@@ -137,6 +137,37 @@ beforeAll(async () => {
 }, 180000);
 
 describe('entry detail', () => {
+  it('opens from nothing: the same hooks run before and after there is an entry', async () => {
+    const props = {
+      accounts: [{ id: 'bank', name: 'Bank' }] as any,
+      categories: [{ id: 'food', name: 'Food', icon: 'food', color: '#FF9E7D' }] as any,
+      onClose: jest.fn(),
+      onEdit: jest.fn(),
+      onChanged: jest.fn(),
+    };
+    let tree!: ReactTestRenderer;
+    await act(async () => {
+      tree = create(<TransactionDetailModal tx={null} {...props} />);
+    });
+    mounted.push(tree);
+    await act(async () => {
+      tree.update(<TransactionDetailModal tx={lunch as any} {...props} />);
+    });
+    expect(rows(tree, 'Log again today').length).toBeGreaterThan(0);
+  });
+
+  it.each([
+    [1, 96],
+    [2, '100%'],
+  ])('lays Log today, Recurring and Refund out at text scale %s with a basis of %s', async (scale, basis) => {
+    const spy = jest.spyOn(require('@/lib/useFontScale'), 'useFontScale').mockReturnValue(scale);
+    const tree = await render();
+    const style = rows(tree, 'Log again today')[0].props.style;
+    const flat = StyleSheet.flatten(typeof style === 'function' ? style({ pressed: false }) : style);
+    expect(flat.flexBasis).toBe(basis);
+    spy.mockRestore();
+  });
+
   it('logs the same entry again for today, with an undo', async () => {
     const tree = await render();
     await act(async () => {

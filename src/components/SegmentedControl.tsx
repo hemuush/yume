@@ -1,12 +1,13 @@
 import { selectedFill } from '@/theme/interactionColors';
 import { useEffect, useRef, useState } from 'react';
-import { View, Pressable, Animated, StyleSheet, LayoutChangeEvent } from 'react-native';
+import { View, Pressable, Animated, StyleSheet, LayoutChangeEvent, useWindowDimensions } from 'react-native';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { GLASS } from '@/components/Glass';
 import { haptics } from '@/lib/haptics';
 import { usePressScale } from '@/lib/usePressScale';
 import { withPressedTint } from '@/lib/pressed';
+import { tooTight } from '@/lib/tooTight';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 import { DURATIONS, EASE_OUT } from '@/lib/motionTimings';
 
@@ -26,7 +27,10 @@ interface Props<T extends string> {
   disabled?: boolean;
   /** A smaller switch inside a card's heading row: 32 tall, with the touch area kept at 44. */
   compact?: boolean;
-  /** Large text or a narrow phone: rows of two plain tabs, so a label is never squeezed into its share of one row. */
+  /**
+   * Rows of two plain tabs, so a label is never squeezed into its share of one row. Left out, a switch of three or
+   * more choices stacks by itself when its longest word would not fit (see `tooTight`).
+   */
   stacked?: boolean;
 }
 
@@ -35,7 +39,9 @@ interface Props<T extends string> {
  * tapped choice instead of each segment snapping its own background. Reduce motion: it jumps.
  */
 export function SegmentedControl<T extends string>(props: Props<T>) {
-  return props.stacked ? <StackedSwitch {...props} /> : <PillSwitch {...props} />;
+  const { width, fontScale } = useWindowDimensions();
+  const stacked = props.stacked ?? (!props.compact && tooTight(props.options, width, fontScale));
+  return stacked ? <StackedSwitch {...props} /> : <PillSwitch {...props} />;
 }
 
 function PillSwitch<T extends string>({
@@ -123,9 +129,8 @@ function StackedSwitch<T extends string>({ options, value, onChange, disabled = 
   const { accent } = useAccent();
   return (
     <View style={[styles.stackTrack, disabled && styles.disabled]} accessibilityRole="tablist">
-      {[options.slice(0, 2), options.slice(2)]
-        .filter((row) => row.length > 0)
-        .map((row, index) => (
+      {Array.from({ length: Math.ceil(options.length / 2) }, (_, i) => options.slice(i * 2, i * 2 + 2)).map(
+        (row, index) => (
           <View key={index} style={styles.stackRow}>
             {row.map((opt) => {
               const active = opt.value === value;
@@ -150,7 +155,8 @@ function StackedSwitch<T extends string>({ options, value, onChange, disabled = 
               );
             })}
           </View>
-        ))}
+        )
+      )}
     </View>
   );
 }

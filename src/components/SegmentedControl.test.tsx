@@ -46,4 +46,44 @@ describe('SegmentedControl', () => {
     expect(onChange).toHaveBeenCalledWith('debt');
     act(() => tree.unmount());
   });
+
+  describe('with more choices than the track can hold', () => {
+    const FIVE = ['All', 'Expense', 'Income', 'Transfer', 'Invest'].map((label) => ({ label, value: label }));
+    const blocksAt = (options: { label: string; value: string }[], width: number, fontScale: number) => {
+      const spy = jest
+        .spyOn(require('react-native'), 'useWindowDimensions')
+        .mockReturnValue({ width, height: 800, fontScale, scale: 1 });
+      let tree!: ReturnType<typeof create>;
+      act(() => {
+        tree = create(<SegmentedControl options={options} value={options[0].value} onChange={jest.fn()} />);
+      });
+      const list = tree.root.find(
+        (n) => typeof n.type === 'string' && n.props.accessibilityRole === 'tablist'
+      );
+      const blocks = list.children.length;
+      act(() => tree.unmount());
+      spy.mockRestore();
+      return blocks;
+    };
+
+    it('keeps five choices in one row while "Transfer" fits a fifth of a 360 dp phone', () => {
+      expect(blocksAt(FIVE, 360, 1)).toBe(5);
+    });
+
+    it('puts them two to a row at 130% text, or on a 320 dp phone, instead of breaking a word', () => {
+      expect(blocksAt(FIVE, 360, 1.3)).toBe(3);
+      expect(blocksAt(FIVE, 320, 1)).toBe(3);
+    });
+
+    it('stacks three choices only when "Breakdown" no longer fits a third', () => {
+      const reports = ['Overview', 'Breakdown', 'Trends'].map((label) => ({ label, value: label }));
+      expect(blocksAt(reports, 360, 1.3)).toBe(3);
+      expect(blocksAt(reports, 360, 2)).toBe(2);
+    });
+
+    it('never stacks two choices, however large the text', () => {
+      const two = ['Fixed', 'Floating'].map((label) => ({ label, value: label }));
+      expect(blocksAt(two, 320, 2)).toBe(2);
+    });
+  });
 });
