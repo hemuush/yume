@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { EASE_OUT } from '@/lib/motionTimings';
+import { DURATIONS, EASE_OUT } from '@/lib/motionTimings';
 import { View, Pressable, StyleSheet, Animated, useWindowDimensions } from 'react-native';
 import { Text, MAX_FONT_SCALE } from '@/components/Text';
 import { theme } from '@/constants/theme';
@@ -14,51 +14,47 @@ import { shade } from '@/lib/color';
 const MAX_BAR_HEIGHT = 52;
 // A day with any spend is at least this tall, so a small one still reads as a bar.
 const MIN_BAR_HEIGHT = 6;
-// Only 7 daily bars or ~4-5 weekly ones at a time, so a tighter cap than the
-// heatmap's (which can stagger a whole month of cells) still finishes fast.
-const MAX_STAGGER_MS = 220;
 /** Height kept over the bars for the picked day's amount bubble. */
 const BUBBLE_ROOM = 22;
 
 /**
- * One bar's stack: grows from 0 once on first appearance (staggered by `delay`), then glides between heights.
- * It never drops back to 0 first, which made every bar blink on each entry, scope switch and period change.
+ * One bar's stack: shown at its height at once (nothing draws up from empty, or one after another: the calm rule),
+ * then glides to a new height when the value really changes. Core `Animated`, not Reanimated: this chart is in the
+ * Insights sheet, a Modal window.
  */
 function AnimatedBarStack({
   heightPct,
-  delay,
   style,
   children,
 }: {
   heightPct: number;
-  delay: number;
   style: React.ComponentProps<typeof Animated.View>['style'];
   children: React.ReactNode;
 }) {
   const reduce = useReduceMotion();
-  // The height itself, in percent.
-  const [v] = useState(() => new Animated.Value(reduce ? heightPct : 0));
-  const grown = useRef(false);
+  // The height itself, in percent: already where it belongs on first showing.
+  const [v] = useState(() => new Animated.Value(heightPct));
+  const shown = useRef(heightPct);
 
   useEffect(() => {
     if (reduce) {
-      grown.current = true;
+      shown.current = heightPct;
       v.setValue(heightPct);
       return;
     }
-    const first = !grown.current;
-    grown.current = true;
+    // Nothing to do on first showing, or when the height is unchanged.
+    if (shown.current === heightPct) return;
+    shown.current = heightPct;
     const anim = Animated.timing(v, {
       toValue: heightPct,
-      duration: first ? 420 : 280,
-      delay: first ? delay : 0,
+      duration: DURATIONS.standard,
       easing: EASE_OUT,
       useNativeDriver: true,
     });
     anim.start();
     // Stopped when the bar goes or its height changes again, so no frame runs for a bar that has left.
     return () => anim.stop();
-  }, [heightPct, reduce, delay, v]);
+  }, [heightPct, reduce, v]);
 
   const scaleY = v.interpolate({ inputRange: [0, 100], outputRange: [0, 1], extrapolate: 'clamp' });
   return (
@@ -125,7 +121,7 @@ export function SpendBarChart({
           style={[styles.average, { bottom: averageBottom, left: inset, right: inset }]}
         />
       )}
-      {bars.map((bar, i) => {
+      {bars.map((bar) => {
         const barPx =
           bar.totalMinor > 0 ? Math.max(MIN_BAR_HEIGHT, (bar.totalMinor / maxTotal) * MAX_BAR_HEIGHT) : 0;
         const heightPct = (barPx / MAX_BAR_HEIGHT) * 100;
@@ -159,7 +155,6 @@ export function SpendBarChart({
               {bar.totalMinor > 0 ? (
                 <AnimatedBarStack
                   heightPct={heightPct}
-                  delay={Math.min(i * 45, MAX_STAGGER_MS)}
                   style={[styles.stack, { backgroundColor: selected ? ink : fill }]}
                 >
                   {null}

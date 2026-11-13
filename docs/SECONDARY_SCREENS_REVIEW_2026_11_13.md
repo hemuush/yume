@@ -109,3 +109,11 @@ Asked for modern animation packages that are safe to use, for Home first. Checke
 
 What changed on Home, measured in the browser render at 390 dp: 1,348 of 351,000 pixels (0.4%), all inside the month ring; nothing else moved. Tapping a legend slice dims the others from 100% to 35% in about 200 ms (frames sampled at 100%, 78%, 50%, 35%), where before they switched in one frame. In code: the capsules lost their shared values, effects and cancellations. Not checked on a phone: it is the app's first use of CSS transitions on Android, so the next build is the test; a transition that does not run would leave the final value, not a wrong one.
 
+### Seventh pass: the same on Activity
+
+Looked for where Activity still hand-animates a state change or breaks the calm rule. Found and changed two things; the rest was left.
+
+- **Insights' bar chart drew in from empty, staggered** (`SpendBarChart`: 420 ms per bar, up to 220 ms apart): sampled in the browser, at 166 ms the bars read 0.67, 0.08, 0, 0, 0, 0 of their height and they settled at about 450 ms. They are now at their height on the first frame and glide (200 ms) only when a day's spending changes. Kept on core `Animated`: this chart is in the Insights sheet, a Modal window, and the app's Reanimated use inside Modals is a suspect in the floating-sheet bug (fourth pass).
+- **The Week | Month underline** appeared and disappeared; it now crossfades (0.4 / 0.6 at 70 ms, 0.13 / 0.87 at 100 ms, done by 200 ms), as a CSS transition on an always-present underline. The screen at rest is pixel-identical to before (0 differing pixels at 390 dp).
+- **Left alone:** the Spent strip's period slide (`usePeriodSlide`: a from-and-to entrance that a CSS transition cannot express without a remount, and it already runs on the UI thread) and the type pills (their fill and their white text would have to glide together; a white word on a pale pill for 150 ms would read worse than the switch).
+

@@ -161,6 +161,30 @@ describe('Activity period controls', () => {
     expect(weightOf('Month')).toBe(week);
   });
 
+  it('fades the picked word’s underline in and out, one under each word, instead of adding and removing it', async () => {
+    const { StyleSheet, View } = require('react-native');
+    mockComparison.fail = false;
+    const tree = await render();
+    const underlines = () =>
+      tree.root
+        .findAllByType(View)
+        .map((v) => StyleSheet.flatten(v.props.style))
+        .filter((st) => st?.height === 2 && st?.transitionProperty === 'opacity');
+    expect(underlines().map((st) => st.opacity)).toEqual([1, 0]);
+    expect(underlines().every((st) => st.transitionDuration !== undefined)).toBe(true);
+    const month = tree.root.find(
+      (n) =>
+        n.props.accessibilityRole === 'radio' &&
+        typeof n.props.onPress === 'function' &&
+        n.findAllByType(Text).some((t) => t.props.children === 'Month')
+    );
+    await act(async () => month.props.onPress());
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    expect(underlines().map((st) => st.opacity)).toEqual([0, 1]);
+  });
+
   it('switches Week to Month from beside the period pill', async () => {
     mockComparison.fail = false;
     const tree = await render();
