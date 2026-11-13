@@ -75,7 +75,7 @@ export function backupStatus({
       tint: theme.colors.idCoral,
       tone: 'failed',
       title: 'Last backup failed',
-      lines: [outcome.error || "Couldn't write to the folder. Check that it still exists."],
+      lines: [outcome.error || 'Couldn’t write to the folder. Check that it still exists.'],
       failed: true,
     };
   }

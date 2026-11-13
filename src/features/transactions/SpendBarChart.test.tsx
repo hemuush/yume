@@ -170,7 +170,7 @@ describe('SpendBarChart calm chart', () => {
     expect(texts(r)).toContain('avg ₹50 a week');
   });
 
-  it("draws the average's name after the capsules, so none of them paints over it", () => {
+  it('draws the average’s name after the capsules, so none of them paints over it', () => {
     const r = render(null, 5000);
     type Json = { type: string; props: Record<string, unknown>; children: (Json | string)[] | null };
     const row = (function find(node: Json | string): Json | null {

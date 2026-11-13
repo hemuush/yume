@@ -116,8 +116,8 @@ export function PlanPeopleHabit({
         accessibilityRole="button"
         accessibilityLabel={
           hasHabit
-            ? `${habit.streakDays}-day streak at ${formatMoney(goalMinor)} or less a day. ${habit.days.map((kept, i) => `${habit.dates?.[i] ?? `Day ${i + 1}`}: ${habit.tracked?.[i] === false ? 'not tracked' : kept ? 'within goal' : 'over goal'}`).join(', ')}. Open Suu's garden`
-            : "Set a daily goal. Open Suu's garden"
+            ? `${habit.streakDays}-day streak at ${formatMoney(goalMinor)} or less a day. ${habit.days.map((kept, i) => `${habit.dates?.[i] ?? `Day ${i + 1}`}: ${habit.tracked?.[i] === false ? 'not tracked' : kept ? 'within goal' : 'over goal'}`).join(', ')}. Open Suu’s garden`
+            : 'Set a daily goal. Open Suu’s garden'
         }
         onPress={onGarden}
         style={withPressedTint(accent, [s.row, s.divider])}

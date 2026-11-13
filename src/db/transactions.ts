@@ -96,7 +96,7 @@ async function assertSameCurrencyTransfer(
   const to = rows.find((r) => r.id === toAccountId)?.currency;
   if (from && to && from !== to) {
     throw new Error(
-      `These accounts use different currencies (${from} and ${to}) — Yume can't convert between them, so a transfer between them isn't supported.`
+      `These accounts use different currencies (${from} and ${to}) — Yume can’t convert between them, so a transfer between them isn’t supported.`
     );
   }
 }

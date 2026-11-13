@@ -3,7 +3,14 @@ import { CONTENT_ENTER } from '@/lib/animation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { onTransactionsChanged } from '@/lib/dataEvents';
 import { useFreshness } from '@/lib/useFreshness';
-import { View, Pressable, Animated, useWindowDimensions, type FlatListInstance } from 'react-native';
+import {
+  View,
+  Pressable,
+  Animated,
+  BackHandler,
+  useWindowDimensions,
+  type FlatListInstance,
+} from 'react-native';
 import { Text, TextInput } from '@/components/Text';
 import ReanimatedAnimated from 'react-native-reanimated';
 import { PrimaryButton } from '@/components/PrimaryButton';
@@ -47,6 +54,8 @@ import {
   filterActivity,
   chartTransactionsFor,
   groupWithNotes,
+  emptyPeriodTitle,
+  searchDayLabel,
   type ValueNote,
 } from '@/features/transactions/transactions.helpers';
 import type { ActivityType } from '@/features/transactions/activityFilter';
@@ -60,11 +69,11 @@ import { themeInk } from '@/theme/interactionColors';
 import { haptics } from '@/lib/haptics';
 import { errorMessage } from '@/lib/errorMessage';
 import { withPressed, withPressedTint } from '@/lib/pressed';
-import { shade } from '@/lib/color';
 import { categoryPath, parentNameOf } from '@/lib/categoryLabel';
 import { EmptyState } from '@/components/EmptyState';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 import { useTabScrollToTop } from '@/lib/useTabScrollToTop';
+import { useScrollToTopOnChange } from '@/lib/useScrollToTopOnChange';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -111,6 +120,8 @@ export default function TransactionsScreen() {
   const [searchResults, setSearchResults] = useState<Transaction[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchFailed, setSearchFailed] = useState(false);
+  // More matched than the list shows (it holds the newest SEARCH_RESULT_LIMIT), so the list says so.
+  const [searchCapped, setSearchCapped] = useState(false);
   // Shared by the typing effect and edits/deletes made from a search result, so the list never shows a
   // stale or deleted row. Only the newest query may write results: closing/clearing the box bumps it too.
   const searchSeq = useRef(0);
@@ -119,16 +130,22 @@ export default function TransactionsScreen() {
     setSearchFailed(false);
     if (trimmed.length < SEARCH_MIN_CHARS) {
       setSearchResults([]);
+      setSearchCapped(false);
       setSearchLoading(false);
       return;
     }
     setSearchLoading(true);
     try {
-      const results = await searchTransactions(trimmed, SEARCH_RESULT_LIMIT);
-      if (seq === searchSeq.current) setSearchResults(results);
+      // One more than the list holds: getting it back is how we know the list is not everything.
+      const results = await searchTransactions(trimmed, SEARCH_RESULT_LIMIT + 1);
+      if (seq === searchSeq.current) {
+        setSearchResults(results.slice(0, SEARCH_RESULT_LIMIT));
+        setSearchCapped(results.length > SEARCH_RESULT_LIMIT);
+      }
     } catch {
       if (seq === searchSeq.current) {
         setSearchResults([]);
+        setSearchCapped(false);
         setSearchFailed(true);
       }
     } finally {
@@ -161,9 +178,15 @@ export default function TransactionsScreen() {
   // scroll) lands at once instead of being animated on every day.
   const [stackMoving, setStackMoving] = useState(false);
   const stackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // True for a moment after a period's entries land: the days mounted then fade in with the Spent strip's glide,
+  // instead of snapping in under it (and instead of replacing the loading placeholder in one frame). Days that
+  // scroll into view later mount with it off, so scrolling a long month never flickers.
+  const [arriving, setArriving] = useState(false);
+  const arriveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(
     () => () => {
       if (stackTimer.current) clearTimeout(stackTimer.current);
+      if (arriveTimer.current) clearTimeout(arriveTimer.current);
     },
     []
   );
@@ -182,7 +205,8 @@ export default function TransactionsScreen() {
   // (crossfade) unless it is a one-step move; a picked month or Week↔Month switch has no direction.
   const [direction, setDirection] = useState<-1 | 0 | 1>(0);
   // A link can open Activity already filtered: ?category= (a category page's
-  // "See all") or ?account= (Home's account sheet), with ?month=YYYY-MM.
+  // "See all") or ?account= (Home's account sheet), with ?month=YYYY-MM; a month alone (Home's "View all" on a
+  // past month) opens that month.
   const linkParams = useLocalSearchParams<{
     category?: string;
     account?: string;
@@ -191,7 +215,20 @@ export default function TransactionsScreen() {
   }>();
   useEffect(() => {
     const { category, account, month } = linkParams;
-    if (!category && !account) return;
+    // A real month that isn't in the future; anything else keeps the current view.
+    const [y, m] = month && /^\d{4}-\d{2}$/.test(month) ? month.split('-').map(Number) : [0, 0];
+    const now = new Date();
+    const validMonth =
+      m >= 1 && m <= 12 && (y < now.getFullYear() || (y === now.getFullYear() && m <= now.getMonth() + 1));
+    // A month on its own (Home's "View all" on a past month) opens that month; a bad one is dropped and the view
+    // stays as it is.
+    if (!category && !account) {
+      if (!month) return;
+      if (!validMonth) {
+        router.setParams({ month: undefined });
+        return;
+      }
+    }
     // A link shows its filter, not search results left open from before.
     searchSeq.current++;
     setSearching(false);
@@ -201,14 +238,7 @@ export default function TransactionsScreen() {
     setFilterCategoryIds(category ? [category] : []);
     setFilterAccountIds(account ? [account] : []);
     setFilterLabel(undefined);
-    const [y, m] = month && /^\d{4}-\d{2}$/.test(month) ? month.split('-').map(Number) : [0, 0];
-    // A real month that isn't in the future; anything else keeps the current view.
-    const now = new Date();
-    if (
-      m >= 1 &&
-      m <= 12 &&
-      (y < now.getFullYear() || (y === now.getFullYear() && m <= now.getMonth() + 1))
-    ) {
+    if (validMonth) {
       setDirection(0);
       setAnchor(new Date(y, m - 1, 1));
       setViewScope('month');
@@ -236,7 +266,7 @@ export default function TransactionsScreen() {
       })
       .catch(() => {
         if (live) {
-          showAlert("Couldn't open entry", 'Reopen it from Reports to retry.');
+          showAlert('Couldn’t open entry', 'Reopen it from Reports to retry.');
           router.setParams({ entry: undefined });
         }
       });
@@ -366,6 +396,9 @@ export default function TransactionsScreen() {
         today: todayDate,
       })
     : requestedHeading;
+  // A new period opens at its top: the list keeps its offset when its data is replaced, so picking a month from the
+  // shrunk header would otherwise land mid-way down it with the Spent strip out of view.
+  useScrollToTopOnChange(scrollRef, `${loadedPeriod.scope}-${loadedPeriod.fromDate}`);
   const load = useCallback(async (range: { fromDate: string; toDate: string }, scope: 'week' | 'month') => {
     const seq = ++loadSeq.current;
     let tx: Transaction[];
@@ -410,6 +443,9 @@ export default function TransactionsScreen() {
     setComparison(cmp);
     setComparisonFailed(cmp == null);
     setLoadedPeriod({ fromDate: range.fromDate, toDate: range.toDate, scope });
+    setArriving(true);
+    if (arriveTimer.current) clearTimeout(arriveTimer.current);
+    arriveTimer.current = setTimeout(() => setArriving(false), 400);
     return cmp != null;
   }, []);
 
@@ -504,7 +540,7 @@ export default function TransactionsScreen() {
       // the query so the list doesn't show the row as it was before. Read through a ref: typing must go
       // through the debounced search below, not re-run this on every keystroke.
       const live = searchState.current;
-      if (live.searching) runSearch(live.query.trim());
+      if (live.searching) void runSearch(live.query.trim());
     }, [load, rangeFromDate, rangeToDate, viewScope, runSearch, freshness])
   );
   // A save that doesn't leave this screen (the + long-press sheet) — reload in place.
@@ -514,7 +550,7 @@ export default function TransactionsScreen() {
         if (!focused.current) return;
         void load({ fromDate: rangeFromDate, toDate: rangeToDate }, viewScope);
         const live = searchState.current;
-        if (live.searching) runSearch(live.query.trim());
+        if (live.searching) void runSearch(live.query.trim());
       }),
     [load, rangeFromDate, rangeToDate, viewScope, runSearch]
   );
@@ -528,6 +564,7 @@ export default function TransactionsScreen() {
     searchSeq.current++;
     if (trimmed.length < SEARCH_MIN_CHARS) {
       setSearchResults([]);
+      setSearchCapped(false);
       setSearchLoading(false);
       return;
     }
@@ -564,13 +601,25 @@ export default function TransactionsScreen() {
       .then(showRecentSearches)
       .catch(() => {});
   };
-  const closeSearch = () => {
+  const closeSearch = useCallback(() => {
     searchSeq.current++;
     setSearching(false);
     setSearchQuery('');
     setSearchResults([]);
+    setSearchCapped(false);
     setSearchLoading(false);
-  };
+  }, []);
+  // The phone's back button (or gesture) leaves search, as Cancel does, instead of leaving the tab with it open.
+  useFocusEffect(
+    useCallback(() => {
+      if (!searching) return;
+      const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+        closeSearch();
+        return true;
+      });
+      return () => sub.remove();
+    }, [searching, closeSearch])
+  );
 
   // Things to try, from this period's own entries: a category or two, an amount, a day.
   const searchSuggestions = useMemo(() => {
@@ -707,7 +756,7 @@ export default function TransactionsScreen() {
     <>
       {loadError && (
         <View style={styles.errorBanner}>
-          <Text style={styles.errorTitle}>Couldn't load your transactions</Text>
+          <Text style={styles.errorTitle}>Couldn’t load your transactions</Text>
           <Text style={styles.errorDetail}>{loadError}</Text>
           <PrimaryButton title="Try again" compact variant="secondary" onPress={retryLoad} />
         </View>
@@ -715,7 +764,7 @@ export default function TransactionsScreen() {
 
       {comparisonFailed && !loadError && (
         <View style={styles.errorBanner}>
-          <Text style={styles.errorTitle}>Couldn't load this period's totals</Text>
+          <Text style={styles.errorTitle}>Couldn’t load this period’s totals</Text>
           <Text style={styles.errorDetail}>Your entries are below.</Text>
           <PrimaryButton title="Try again" compact variant="secondary" onPress={retryLoad} />
         </View>
@@ -800,6 +849,8 @@ export default function TransactionsScreen() {
           <ReanimatedAnimated.FlatList
             // A search result opens on the first tap, even with the keyboard up.
             keyboardShouldPersistTaps="handled"
+            // Scrolling the results puts the keyboard away, so the lower entries are not hidden behind it.
+            keyboardDismissMode={searching ? 'on-drag' : 'none'}
             ref={scrollRef}
             onScroll={scrollHandler}
             scrollEventThrottle={16}
@@ -845,6 +896,8 @@ export default function TransactionsScreen() {
                     failed={searchFailed}
                     onRetry={() => runSearch(trimmedQuery)}
                     resultCount={searchResults.length}
+                    capped={searchCapped}
+                    limit={SEARCH_RESULT_LIMIT}
                     suggestions={searchSuggestions}
                     recent={recentSearches}
                     onPick={setSearchQuery}
@@ -876,25 +929,6 @@ export default function TransactionsScreen() {
                     />
                   </ReanimatedAnimated.View>
 
-                  {filterLabel && (
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityLabel="Remove expense label filter"
-                      onPress={() => setFilterLabel(undefined)}
-                      style={withPressedTint(accent, [
-                        styles.chip,
-                        {
-                          alignSelf: 'flex-start',
-                          marginHorizontal: 16,
-                          marginTop: 8,
-                          backgroundColor: shade(accent, 95),
-                        },
-                      ])}
-                    >
-                      <Text style={styles.chipText}>Label: {filterLabel}</Text>
-                      <Feather name="x" size={12} color={theme.colors.textSecondary} />
-                    </Pressable>
-                  )}
                   <ActivityFilterChips
                     onOpenFilters={() => setFilterVisible(true)}
                     filterCount={filterCount}
@@ -911,6 +945,8 @@ export default function TransactionsScreen() {
                     }}
                     categoryIds={filterCategoryIds}
                     accountIds={filterAccountIds}
+                    expenseLabel={filterLabel}
+                    onRemoveLabel={() => setFilterLabel(undefined)}
                     categoryName={categoryPathName}
                     accountName={accountName}
                     onRemoveCategory={(id) => setFilterCategoryIds((ids) => ids.filter((x) => x !== id))}
@@ -932,11 +968,13 @@ export default function TransactionsScreen() {
                   )}
                   {accounts.length > 0 && transactions.length === 0 && (
                     <EmptyState
-                      title={
-                        loadedPeriod.scope === 'month'
-                          ? 'Nothing logged this month'
-                          : 'Nothing logged this week'
-                      }
+                      title={emptyPeriodTitle({
+                        scope: loadedPeriod.scope,
+                        current: periodIsCurrent,
+                        title: heading.title,
+                        from: loadedPeriod.fromDate,
+                        today: todayDate,
+                      })}
                       subtitle="Tap + to add an entry, or look at another period."
                     />
                   )}
@@ -954,16 +992,17 @@ export default function TransactionsScreen() {
                     : group.date === yesterday
                       ? 'Yesterday'
                       : searching
-                        ? dayMonth(group.date)
+                        ? searchDayLabel(group.date, todayDate)
                         : longWeekday(group.date)
                 }
                 dateLabel={
                   searching && group.date !== today
-                    ? group.date.slice(0, 4)
+                    ? longWeekday(group.date)
                     : group.date === today || group.date === yesterday
                       ? weekdayDayMonth(group.date)
                       : dayMonth(group.date)
                 }
+                entering={arriving ? CONTENT_ENTER : undefined}
                 items={group.items}
                 categories={categories}
                 accountName={accountName}
@@ -1038,6 +1077,7 @@ export default function TransactionsScreen() {
                 style={styles.searchInput}
                 autoFocus
                 autoCapitalize="none"
+                autoCorrect={false}
                 returnKeyType="search"
                 onSubmitEditing={() => rememberSearch(searchQuery)}
                 accessibilityLabel="Search transactions"

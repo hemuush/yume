@@ -62,7 +62,7 @@ const heights = (r: ReactTestRenderer) =>
 it('says what was spent this week, how it compares, and opens Insights when tapped', () => {
   const { r, onPress } = strip();
   const shown = texts(r);
-  expect(shown).toEqual(expect.arrayContaining(['Spent this week', 'amount:617700', 'This week']));
+  expect(shown).toEqual(expect.arrayContaining(['Spent this week', 'amount:617700', 'By day']));
   expect(shown.some((t) => t.endsWith('less than last week'))).toBe(true);
   const button = r.root.find((n) => n.props.accessibilityRole === 'button' && n.props.onPress);
   expect(button.props.accessibilityLabel).toMatch(/^Spent this week, .*less than last week\. Open insights$/);
@@ -99,5 +99,12 @@ it('names a past month plainly and shows its weeks', () => {
 it('says nothing about change when the period matches the one before', () => {
   const { r } = strip({ expenseChangeMinor: 0 });
   expect(texts(r).some((t) => /than/.test(t))).toBe(false);
+  act(() => r.unmount());
+});
+
+it('labels the bars by what they are, so a past week is never captioned "This week"', () => {
+  const { r } = strip({ current: false });
+  expect(texts(r)).toContain('By day');
+  expect(texts(r)).not.toContain('This week');
   act(() => r.unmount());
 });

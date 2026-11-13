@@ -1,3 +1,4 @@
+import { isFixedCategoryName } from '@/lib/fixedCategory';
 import { PurchaseCheck } from '@/features/whatif/PurchaseCheck';
 import { ScreenLoadError } from '@/components/ScreenLoadError';
 import { useCallback, useState } from 'react';
@@ -119,7 +120,8 @@ export default function WhatIfScreen() {
     setCategoryId((prev) => {
       if (prev && spendable.some((c) => c.categoryId === prev)) return prev;
       if (askedCategoryId && spendable.some((c) => c.categoryId === askedCategoryId)) return askedCategoryId;
-      return spendable[0]?.categoryId ?? null;
+      // Starts on the biggest category that is a choice (not rent or an EMI); any of them can still be picked.
+      return (spendable.find((c) => !isFixedCategoryName(c.name)) ?? spendable[0])?.categoryId ?? null;
     });
     setGoalId((prev) => (prev && openGoals.some((g) => g.id === prev) ? prev : (openGoals[0]?.id ?? null)));
   }, [askedCategoryId]);
@@ -177,7 +179,7 @@ export default function WhatIfScreen() {
       >
         {loadError && (
           <View style={styles.errorBanner}>
-            <Text style={styles.errorTitle}>Couldn't load your data</Text>
+            <Text style={styles.errorTitle}>Couldn’t load your data</Text>
             <Text style={styles.errorDetail}>{loadError}</Text>
             <PrimaryButton title="Retry" compact variant="secondary" onPress={() => void reload()} />
           </View>
@@ -299,9 +301,9 @@ export default function WhatIfScreen() {
                     ) : (
                       <Text style={styles.neutralText}>
                         {pace.currentEtaDate
-                          ? "This change doesn't move the date — try a bigger cut."
+                          ? 'This change doesn’t move the date — try a bigger cut.'
                           : selectedGoal?.tracksAccount
-                            ? "Its account hasn't grown in the last 3 months, so there's no date to compare yet."
+                            ? 'Its account hasn’t grown in the last 3 months, so there’s no date to compare yet.'
                             : 'Add a bit more progress to this goal first to project a date.'}
                       </Text>
                     )}

@@ -148,7 +148,7 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
       const ok = await createPickedAccounts();
       setCreating(false);
       if (!ok) {
-        setAccountsError("Couldn't add every account. Try again, or skip and add them later in Profile.");
+        setAccountsError('Couldn’t add every account. Try again, or skip and add them later in Profile.');
         return;
       }
       await finish();
@@ -183,17 +183,17 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
       try {
         snapshot = JSON.parse(content);
       } catch {
-        throw new Error("That file isn't valid JSON — pick a full backup Yume exported.");
+        throw new Error('That file isn’t valid JSON — pick a full backup Yume exported.');
       }
       const backup = summarizeSnapshot(snapshot);
-      if (!backup) throw new Error("That file isn't a Yume backup — pick a full backup Yume exported.");
+      if (!backup) throw new Error('That file isn’t a Yume backup — pick a full backup Yume exported.');
       const exportedAt = Number.isNaN(Date.parse(snapshot.exportedAt))
         ? new Date().toISOString()
         : snapshot.exportedAt;
       const current = await getCurrentSummary();
       setPendingRestore({ snapshot, preview: { exportedAt, backup, current, lostCount: 0 } });
     } catch (e) {
-      showAlert("Couldn't open that backup", errorMessage(e));
+      showAlert('Couldn’t open that backup', errorMessage(e));
     }
   };
 
@@ -220,7 +220,7 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
       } catch (e) {
         setRestoring(false);
         setPendingRestore(null);
-        showAlert("Couldn't restore that backup", errorMessage(e));
+        showAlert('Couldn’t restore that backup', errorMessage(e));
         return;
       }
       try {
@@ -265,7 +265,7 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
             style={[styles.container, { marginBottom: padVisible ? 0 : insets.bottom }]}
             behavior="padding"
           >
-            {/* The sky: the Yume mark and Skip on top, Suu in the middle, Home's hills along the bottom. */}
+            {/* The sky: the Yume mark and Skip on top, Suu in the middle, Home’s hills along the bottom. */}
             <View style={[styles.sky, { paddingTop: insets.top + 12 }]}>
               <LinearGradient colors={[gradientTop, gradientBottom]} style={StyleSheet.absoluteFill} />
               <View style={styles.skyBar}>

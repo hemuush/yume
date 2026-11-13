@@ -7,6 +7,7 @@ import { Chip } from '@/components/Chip';
 import { listExpenseLabels } from '@/db/expenseLabels';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import { theme } from '@/constants/theme';
+import { NOTE_MAX_LENGTH } from '@/lib/textLimits';
 
 export function ExpenseLabelSheet({
   visible,
@@ -83,6 +84,9 @@ export function ExpenseLabelSheet({
         onChangeText={setDraft}
         placeholder="Find or create a label"
         accessibilityLabel="Expense label"
+        maxLength={NOTE_MAX_LENGTH}
+        // A new label is a name (a shop, a person): the keyboard may capitalise it, but must not "correct" it.
+        autoCorrect={false}
         returnKeyType="done"
         onSubmitEditing={() => pick(draft.trim())}
         style={{

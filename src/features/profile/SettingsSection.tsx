@@ -164,7 +164,7 @@ export function SettingsSection() {
 
   useFocusEffect(
     useCallback(() => {
-      load();
+      void load();
     }, [load])
   );
 
@@ -179,7 +179,7 @@ export function SettingsSection() {
       // A failed write would leave the screen showing the new currency while formatMoney() still reads the
       // old cached one: a silent mismatch.
       setCurrency(previous);
-      showAlert("Couldn't change currency", errorMessage(e));
+      showAlert('Couldn’t change currency', errorMessage(e));
     }
   };
 
@@ -228,7 +228,7 @@ export function SettingsSection() {
         if (!secured) {
           showAlert(
             'No screen lock found',
-            "Set up a fingerprint, face unlock, or PIN/pattern in your phone's own settings first — Yume locks using whatever your phone is already secured with."
+            'Set up a fingerprint, face unlock, or PIN/pattern in your phone’s own settings first — Yume locks using whatever your phone is already secured with.'
           );
           return;
         }
@@ -242,7 +242,7 @@ export function SettingsSection() {
       }
       setLockEnabled(enabled);
     } catch (e) {
-      showAlert("Couldn't check the device lock", errorMessage(e));
+      showAlert('Couldn’t check the device lock', errorMessage(e));
     }
   };
 
@@ -254,7 +254,7 @@ export function SettingsSection() {
       setHideWidgets(enabled);
       refreshAllWidgets();
     } catch (e) {
-      showAlert("Couldn't change widget privacy", errorMessage(e));
+      showAlert('Couldn’t change widget privacy', errorMessage(e));
     } finally {
       setWidgetSaving(false);
     }
@@ -276,7 +276,7 @@ export function SettingsSection() {
     <>
       {readFailed && (
         <View style={styles.errorBanner}>
-          <Text style={styles.errorTitle}>Some settings couldn't be read</Text>
+          <Text style={styles.errorTitle}>Some settings couldn’t be read</Text>
           <Text style={styles.errorDetail}>
             Previously loaded values are kept. Retry to check the latest settings.
           </Text>
@@ -458,7 +458,7 @@ export function SettingsSection() {
             icon="fingerprint"
             iconBg={theme.colors.accentTint}
             label="Require unlock"
-            sub="Fingerprint, face, or your phone's PIN"
+            sub="Fingerprint, face, or your phone’s PIN"
             right={
               <ToggleSwitch accessibilityLabel="Require unlock" value={lockEnabled} onChange={onToggleLock} />
             }

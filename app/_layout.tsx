@@ -192,7 +192,7 @@ function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean;
         // navigate, not push: already on that screen (or a tab) it goes there instead of stacking a copy.
         router.navigate(pendingRoute);
       } catch (e) {
-        console.warn("Couldn't open the notification's screen:", e);
+        console.warn('Couldn’t open the notification’s screen:', e);
       }
     }, 0);
     return () => clearTimeout(timer);
@@ -233,7 +233,7 @@ function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean;
       try {
         router.navigate(returnTo);
       } catch (e) {
-        console.warn("Couldn't go back to the screen that was open:", e);
+        console.warn('Couldn’t go back to the screen that was open:', e);
       }
     }, 0);
     return () => clearTimeout(timer);
@@ -310,7 +310,7 @@ function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean;
   return (
     <ErrorBoundary>
       <StatusBar style="dark" />
-      {/* Yume's own confirm/notice dialog, shown by showAlert() anywhere in the app. Never over the lock
+      {/* Yume’s own confirm/notice dialog, shown by showAlert() anywhere in the app. Never over the lock
           screen: a dialog is its own window, so it would sit on top of it with working buttons. */}
       <AppDialogHost />
       <AppLockSaveFeedback />
@@ -319,8 +319,8 @@ function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean;
         <ThemeSaveFeedback />
         <MilestoneNoteProvider>
           {/* freezeOnBlur is left OFF: with it on (the navigator default), a
-            blurred screen's React tree is suspended and can miss context
-            updates that happen while it's off-screen — e.g. toggling "hide
+            blurred screen’s React tree is suspended and can miss context
+            updates that happen while it’s off-screen — e.g. toggling "hide
             amounts" from the Profile header left the Settings switch showing
             the old state until a full remount. The screens here are light, so
             keeping them live costs little. */}

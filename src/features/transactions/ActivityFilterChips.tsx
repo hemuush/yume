@@ -30,10 +30,12 @@ export function ActivityFilterChips({
   onFilterType,
   categoryIds,
   accountIds,
+  expenseLabel,
   categoryName,
   accountName,
   onRemoveCategory,
   onRemoveAccount,
+  onRemoveLabel,
   onClearAll,
   onOpenFilters,
   filterCount = 0,
@@ -42,15 +44,19 @@ export function ActivityFilterChips({
   onFilterType: (type: ActivityType) => void;
   categoryIds: string[];
   accountIds: string[];
+  /** An expense label picked in the filter sheet; it is a chip like the categories and accounts. */
+  expenseLabel?: string;
   categoryName: (id: string) => string;
   accountName: (id: string) => string;
   onRemoveCategory: (id: string) => void;
   onRemoveAccount: (id: string) => void;
+  onRemoveLabel?: () => void;
   onClearAll: () => void;
   onOpenFilters?: () => void;
   filterCount?: number;
 }) {
-  const picked = categoryIds.length + accountIds.length + (filterType === 'all' ? 0 : 1);
+  const picked =
+    categoryIds.length + accountIds.length + (expenseLabel ? 1 : 0) + (filterType === 'all' ? 0 : 1);
   const { accent } = useAccent();
   const chipBg = shade(accent, 95);
   const ink = themeInk(accent);
@@ -106,6 +112,17 @@ export function ActivityFilterChips({
           <Feather name="x" size={12} color={theme.colors.textSecondary} />
         </Pressable>
       ))}
+      {!!expenseLabel && (
+        <Pressable
+          onPress={onRemoveLabel}
+          style={withPressedTint(accent, [styles.chip, { backgroundColor: chipBg }])}
+          accessibilityRole="button"
+          accessibilityLabel="Remove expense label filter"
+        >
+          <Text style={styles.chipText}>Label: {expenseLabel}</Text>
+          <Feather name="x" size={12} color={theme.colors.textSecondary} />
+        </Pressable>
+      )}
       {picked > 0 && (
         <Pressable
           onPress={onClearAll}
@@ -162,6 +179,8 @@ export function SearchStatus({
   loading,
   resultCount,
   failed = false,
+  capped = false,
+  limit,
   onRetry,
   suggestions = [],
   recent = [],
@@ -173,6 +192,10 @@ export function SearchStatus({
   loading: boolean;
   resultCount: number;
   failed?: boolean;
+  /** More entries matched than the list shows. */
+  capped?: boolean;
+  /** How many the list holds, named when it is capped. */
+  limit?: number;
   onRetry?: () => void;
   /** Things to try, from the user's own entries (a category, an amount, a day). */
   suggestions?: string[];
@@ -251,8 +274,8 @@ export function SearchStatus({
   if (failed) {
     return (
       <View style={styles.searchEmpty}>
-        <Text style={styles.searchEmptyTitle}>Couldn't search</Text>
-        <Text style={styles.searchEmptySub}>Your entries haven't changed. Please try again.</Text>
+        <Text style={styles.searchEmptyTitle}>Couldn’t search</Text>
+        <Text style={styles.searchEmptySub}>Your entries haven’t changed. Please try again.</Text>
         <Pressable onPress={onRetry} accessibilityRole="button" style={withPressed(styles.searchSuggestChip)}>
           <Text style={styles.searchSuggestText}>Retry search</Text>
         </Pressable>
@@ -263,9 +286,17 @@ export function SearchStatus({
     return (
       <EmptyState
         title={`No matches for "${query}"`}
-        subtitle="Try a shorter word, or check the spelling — search looks at each transaction's note, category, account, amount and day."
+        subtitle="Try a shorter word, or check the spelling — search looks at each transaction’s note, category, account, amount and day."
       />
     );
   }
-  return null;
+  // With results: how many, so the list below is not a guess. A capped list says it is the newest, and how to see
+  // the rest (a longer search narrows it).
+  return (
+    <Text style={styles.searchCount} accessibilityLiveRegion="polite">
+      {capped
+        ? `Newest ${limit ?? resultCount} matches. Add a word to narrow it.`
+        : `${resultCount} ${resultCount === 1 ? 'match' : 'matches'}`}
+    </Text>
+  );
 }

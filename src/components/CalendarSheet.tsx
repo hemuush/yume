@@ -390,7 +390,7 @@ const styles = StyleSheet.create({
   },
   dayToday: { borderColor: theme.colors.borderSoft },
   dayText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
-  dayTextDisabled: { color: theme.colors.textMuted, opacity: 0.4 },
+  dayTextDisabled: { color: theme.colors.textMuted, opacity: theme.opacity.disabled },
   yearStrip: { gap: 6, paddingBottom: 12 },
   yearChip: {
     width: 58,

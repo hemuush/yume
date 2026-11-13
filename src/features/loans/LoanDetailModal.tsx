@@ -26,7 +26,7 @@ import { ActionList, ActionSheetItem } from '@/components/ActionSheet';
 import { theme, modalFooterStyles as f } from '@/constants/theme';
 import { screenStyles as h } from '@/components/screenStyles';
 import { toLocalIsoDate } from '@/lib/date';
-import { dayMonthYear, weekdayDayMonth } from '@/lib/dateLabels';
+import { dayMonthYear, weekdayDayMonthMaybeYear } from '@/lib/dateLabels';
 import { styles } from './loans.styles';
 import { AssetModal } from './AssetModal';
 import { AccountModal } from './AccountModal';
@@ -50,7 +50,8 @@ const PAYOFF_LINE_HEIGHT = 40;
 type LoanDetailProps = {
   loan: Loan;
   onClose: () => void;
-  onChanged: () => void;
+  /** May be async: the sheet waits for it before it finishes. */
+  onChanged: () => void | Promise<void>;
   startWithPay?: boolean;
   hue?: string;
 };
@@ -136,7 +137,7 @@ function LoanDetailContent({ loan, onClose, onChanged, startWithPay = false, hue
 
   useFocusEffect(
     useCallback(() => {
-      load();
+      void load();
     }, [load])
   );
 
@@ -219,14 +220,14 @@ function LoanDetailContent({ loan, onClose, onChanged, startWithPay = false, hue
       try {
         const snapshot = await deleteLoan(liveLoan.id);
         haptics.warn();
-        onChanged();
+        void onChanged();
         onClose();
         showUndo(`Deleted "${liveLoan.counterparty}"`, async () => {
           await restoreLoan(snapshot);
-          onChanged();
+          await onChanged();
         });
       } catch (e) {
-        showAlert("Couldn't delete loan", errorMessage(e));
+        showAlert('Couldn’t delete loan', errorMessage(e));
       } finally {
         setBusy(false);
       }
@@ -317,7 +318,7 @@ function LoanDetailContent({ loan, onClose, onChanged, startWithPay = false, hue
           <>
             {loadError && (
               <View>
-                <Text style={styles.errorText}>Couldn't load the latest details: {loadError}</Text>
+                <Text style={styles.errorText}>Couldn’t load the latest details: {loadError}</Text>
                 <PrimaryButton title="Retry" compact variant="secondary" onPress={() => void load()} />
               </View>
             )}
@@ -377,7 +378,7 @@ function LoanDetailContent({ loan, onClose, onChanged, startWithPay = false, hue
                             ? 'Schedule unavailable'
                             : 'None left',
                       sub: nextInstallment
-                        ? `${weekdayDayMonth(nextInstallment.dueDate)}${nextOverdue ? ' · overdue' : ''}`
+                        ? `${weekdayDayMonthMaybeYear(nextInstallment.dueDate)}${nextOverdue ? ' · overdue' : ''}`
                         : undefined,
                     },
                     {
@@ -485,7 +486,7 @@ function LoanDetailContent({ loan, onClose, onChanged, startWithPay = false, hue
                 )}
                 {linkedAccountMissing && defaultAccount && (
                   <Text style={styles.hintText}>
-                    This loan's original account is unavailable — payments will go through{' '}
+                    This loan’s original account is unavailable — payments will go through{' '}
                     {defaultAccount.name} instead.
                   </Text>
                 )}

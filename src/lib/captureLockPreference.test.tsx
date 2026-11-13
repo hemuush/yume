@@ -127,7 +127,7 @@ it('shows a failed lock-save notice after capture gating unmounts and restores t
   await act(async () => {
     finishProtection();
   });
-  expect(screen.getByText("Couldn't change the app lock")).toBeOnTheScreen();
+  expect(screen.getByText('Couldn’t change the app lock')).toBeOnTheScreen();
   expect(screen.queryByText('Storage write failed')).toBeNull();
   expect(
     screen.getByText('Your previous app lock setting has been restored. Try again to save your choice.')

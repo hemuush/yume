@@ -207,7 +207,7 @@ export default function CategoryScreen() {
       >
         {loadError && (
           <View style={styles.errorBanner}>
-            <Text style={styles.errorTitle}>Couldn't load this category</Text>
+            <Text style={styles.errorTitle}>Couldn’t load this category</Text>
             <Text style={styles.errorDetail}>{loadError}</Text>
             <PrimaryButton title="Retry" compact variant="secondary" onPress={() => void reload()} />
           </View>
@@ -360,7 +360,10 @@ export default function CategoryScreen() {
               }
             >
               {entries.length === 0 ? (
-                <Text style={styles.empty}>Nothing in {periodName} yet.</Text>
+                <Text style={styles.empty}>
+                  Nothing in {periodName}
+                  {range.end >= today ? ' yet' : ''}.
+                </Text>
               ) : (
                 <ListCard>
                   {entries.map((tx, i) => (

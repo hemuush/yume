@@ -117,7 +117,7 @@ describe('Profile · Settings section', () => {
     mockBackupResult.mockRejectedValueOnce(new Error('offline'));
     const tree = await render();
     expect(texts(tree)).not.toContain('Never backed up');
-    expect(texts(tree)).toContain("Some settings couldn't be read");
+    expect(texts(tree)).toContain('Some settings couldn’t be read');
     await press(tree, 'Retry');
     expect(texts(tree)).toContain('Last backup yesterday');
     act(() => tree.unmount());
@@ -278,7 +278,7 @@ describe('Profile · Settings section', () => {
     expect(mockSetTheme).toHaveBeenCalledWith('hollowViolet');
   });
 
-  it("won't turn the lock on when the phone itself has no screen lock", async () => {
+  it('won’t turn the lock on when the phone itself has no screen lock', async () => {
     mockLock.lockEnabled = false;
     mockDeviceSecured.mockResolvedValue(false);
     const alert = jest.mocked(showAlert);
@@ -305,7 +305,7 @@ describe('Profile · Settings section', () => {
     await act(async () => {
       await toggle.props.onChange(true);
     });
-    expect(showAlert).toHaveBeenCalledWith("Couldn't check the device lock", 'Native check failed');
+    expect(showAlert).toHaveBeenCalledWith('Couldn’t check the device lock', 'Native check failed');
     expect(mockLock.setLockEnabled).not.toHaveBeenCalled();
   });
 
@@ -342,6 +342,6 @@ it('persists widget privacy and refreshes placed widgets; failed writes retain t
   await act(async () => toggle().props.onChange(false));
   expect(toggle().props.value).toBe(true);
   expect(refreshAllWidgets).toHaveBeenCalledTimes(1);
-  expect(showAlert).toHaveBeenCalledWith("Couldn't change widget privacy", 'write failed');
+  expect(showAlert).toHaveBeenCalledWith('Couldn’t change widget privacy', 'write failed');
   act(() => tree.unmount());
 });

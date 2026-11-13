@@ -120,3 +120,19 @@ it('does not reuse unfiltered figures while a privacy-scoped reload is pending',
   expect(words(tree)).not.toContain('₹100');
   await act(async () => tree.unmount());
 });
+
+it('says "1 purchase", not "1 purchases", when the later period had a single one', async () => {
+  const baseline = await getSpendingExplanation('food', current, previous, false);
+  jest.mocked(getSpendingExplanation).mockResolvedValueOnce({
+    ...baseline,
+    current: { ...baseline.current, count: 1 },
+    previous: { ...baseline.previous, count: 3 },
+  });
+  let tree!: ReactTestRenderer;
+  await act(async () => {
+    tree = create(<SpendingExplanation categoryId="food" current={current} previous={previous} />);
+  });
+  expect(words(tree)).toContain('3 → 1 purchase');
+  expect(words(tree)).not.toContain('3 → 1 purchases');
+  await act(async () => tree.unmount());
+});

@@ -503,6 +503,17 @@ export async function getAccountTransactionCount(accountId: string): Promise<num
   return row?.total ?? 0;
 }
 
+/** The repeating entries that post into or out of an account: running now, and paused. */
+export async function getAccountRuleCounts(accountId: string): Promise<{ active: number; paused: number }> {
+  const db = await getDb();
+  const row = await db.getFirstAsync<{ active: number | null; paused: number | null }>(
+    `SELECT SUM(CASE WHEN active = 1 THEN 1 ELSE 0 END) AS active, SUM(CASE WHEN active = 0 THEN 1 ELSE 0 END) AS paused
+     FROM recurring_rules WHERE account_id = ? OR to_account_id = ?`,
+    [accountId, accountId]
+  );
+  return { active: row?.active ?? 0, paused: row?.paused ?? 0 };
+}
+
 /**
  * Archives an account: hidden from pickers and totals, history kept (like `archiveCategory`), and linked loans'
  * `linked_account_id` keeps working (that FK is SET NULL only on real deletes). Recurring entries posting into

@@ -277,7 +277,7 @@ export function PlanOverviewPanels({
         key: 'investments',
         name: 'Investments',
         icon: 'trending-up',
-        note: "Track what you've invested",
+        note: 'Track what you’ve invested',
         onPress: onInvestments,
       };
 

@@ -204,7 +204,7 @@ describe('budgets', () => {
     expect(progress.spentMinor).toBe(250000);
   });
 
-  it("a budget on a subcategory itself stays scoped to just that subcategory's own spend", async () => {
+  it('a budget on a subcategory itself stays scoped to just that subcategory’s own spend', async () => {
     const suppliesId = (await createCategory({ name: 'Supplies', kind: 'expense', parentId: diningId })).id;
     await createBudget({
       categoryId: suppliesId,
@@ -253,7 +253,7 @@ describe('budgets', () => {
     expect(progress.remainingMinor).toBe(-24000);
   });
 
-  it("rollover carries last month's unspent amount into this month's effective limit", async () => {
+  it('rollover carries last month’s unspent amount into this month’s effective limit', async () => {
     // March: ₹5,000 budgeted, ₹3,000 spent — ₹2,000 unspent.
     await createBudget({
       categoryId: groceriesId,

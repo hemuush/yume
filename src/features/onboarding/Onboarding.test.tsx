@@ -206,7 +206,7 @@ describe('Onboarding account step', () => {
     await press(cta(tree));
     expect(onDone).not.toHaveBeenCalled();
     const shown = tree.root.findAll((n) => typeof n.props.children === 'string').map((n) => n.props.children);
-    expect(shown.some((t: string) => t.startsWith("Couldn't add every account"))).toBe(true);
+    expect(shown.some((t: string) => t.startsWith('Couldn’t add every account'))).toBe(true);
 
     await press(cta(tree)); // retry
     expect(createAccountMock.mock.calls.map((c) => c[0].name)).toEqual(['Bank account', 'Cash', 'Cash']);
@@ -303,14 +303,14 @@ describe('Onboarding restore from a backup', () => {
     expect(tree.root.findAll((n) => n.props.title === 'Restore this backup')).toHaveLength(0);
   });
 
-  it("says so when the file isn't a backup, and restores nothing", async () => {
+  it('says so when the file isn’t a backup, and restores nothing', async () => {
     const alert = jest.mocked(showAlert);
     mockBackupFile.current = '{"hello": 1}';
     const tree = await render();
     await press(byLabel(tree, 'I have a Yume backup'));
     expect(alert).toHaveBeenCalledWith(
-      "Couldn't open that backup",
-      expect.stringContaining("isn't a Yume backup")
+      'Couldn’t open that backup',
+      expect.stringContaining('isn’t a Yume backup')
     );
     expect(tree.root.findAll((n) => n.props.title === 'Restore this backup')).toHaveLength(0);
     alert.mockRestore();
@@ -322,7 +322,7 @@ describe('Onboarding restore from a backup', () => {
       const tree = await render();
       await press(byLabel(tree, 'I have a Yume backup'));
       expect(showAlert).toHaveBeenCalledWith(
-        "Couldn't open that backup",
+        'Couldn’t open that backup',
         expect.stringContaining('too large')
       );
       expect(mockReadBackup).not.toHaveBeenCalled();

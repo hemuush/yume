@@ -14,7 +14,7 @@ import {
 } from '@/components/SummaryCard';
 import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
-import { dayMonth, weekdayDayMonth } from '@/lib/dateLabels';
+import { dayMonth, weekdayDayMonth, weekdayDayMonthMaybeYear } from '@/lib/dateLabels';
 import { addDaysToIsoDate, parseLocalIsoDate } from '@/lib/date';
 import { useAccent } from '@/theme/AccentContext';
 import { themeInk } from '@/theme/interactionColors';
@@ -169,7 +169,7 @@ export function RecurringHero({
           <SummaryFacts
             facts={[
               { label: 'Running', value: String(totals.count) },
-              ...(nextDate ? [{ label: 'Next due', value: weekdayDayMonth(nextDate) }] : []),
+              ...(nextDate ? [{ label: 'Next due', value: weekdayDayMonthMaybeYear(nextDate) }] : []),
               ...(shares.length > 1 && biggest
                 ? [{ label: 'Biggest', value: `${biggest.name} ${formatMoney(biggest.minor, currency)}` }]
                 : []),

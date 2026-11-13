@@ -161,7 +161,7 @@ describe('ledger integrity', () => {
     }
   });
 
-  it("listPeople's grouped balances match each person's own ledger", async () => {
+  it('listPeople’s grouped balances match each person’s own ledger', async () => {
     const asha = await createPerson({ name: 'Test Person' });
     const ravi = await createPerson({ name: 'Ravi' });
     await createPerson({ name: 'Nobody Yet' });
@@ -186,7 +186,7 @@ describe('ledger integrity', () => {
     expect(people.find((p) => p.name === 'Nobody Yet')!.balanceMinor).toBe(0);
   });
 
-  it("a category's transaction list can roll up its subcategories; without the flag it stays exact-match", async () => {
+  it('a category’s transaction list can roll up its subcategories; without the flag it stays exact-match', async () => {
     const range = { fromDate: '2026-01-01', toDate: '2026-01-31' };
     const exact = await listTransactions({ categoryId: foodId, ...range });
     const rolled = await listTransactions({ categoryId: foodId, includeSubcategories: true, ...range });
@@ -295,7 +295,7 @@ describe('ledger integrity', () => {
       expect(await countRows()).toBe(before);
     });
 
-    it("keeps this phone's own settings (backup folder, app lock) instead of the backup's copies", async () => {
+    it('keeps this phone’s own settings (backup folder, app lock) instead of the backup’s copies', async () => {
       await setLocalBackupFolderUri('content://old-phone/folder');
       await setAppLockEnabled(false);
       const fromOldPhone = await buildBackupSnapshot();
@@ -313,7 +313,7 @@ describe('ledger integrity', () => {
       expect(await setting('default_currency')).toBe('INR');
     });
 
-    it("on a fresh install the backup's app-lock preference comes back, but never its folder grant", async () => {
+    it('on a fresh install the backup’s app-lock preference comes back, but never its folder grant', async () => {
       await setLocalBackupFolderUri('content://old-phone/folder');
       await setAppLockEnabled(true);
       const fromOldPhone = await buildBackupSnapshot();

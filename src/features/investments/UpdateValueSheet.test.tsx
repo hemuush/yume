@@ -111,7 +111,7 @@ describe('UpdateValueSheet', () => {
   it('offers the accounts own figure as the estimate and explains it', () => {
     const { r } = render();
     expect(shown(r)).toContain('Use ₹44,560');
-    expect(shown(r)).toContain("Your last update plus the ₹1,500 you've put in since.");
+    expect(shown(r)).toContain('Your last update plus the ₹1,500 you’ve put in since.');
     press(r, 'Use the estimate ₹44,560');
     expect(r.root.findAllByType(TextInput)[0].props.value).toBe('44560');
   });
@@ -240,7 +240,27 @@ describe('deposit estimate', () => {
     } as unknown as Account;
     const { r } = render({ account: fd });
     expect(shown(r)).toContain('grown at 7% a year');
-    expect(shown(r)).toContain("An estimate: use your bank's figure when you have it.");
+    expect(shown(r)).toContain('An estimate: use your bank’s figure when you have it.');
     expect(shown(r)).not.toContain('Use ₹10,00,000');
+  });
+
+  it('says "1 day", not "1 days", when the last update was yesterday', () => {
+    const yesterday = toLocalIsoDate(new Date(Date.now() - 86_400_000));
+    const fd = {
+      ...account,
+      currentBalanceMinor: 1_000_000_00,
+      interestRateAnnualBp: 700,
+      investment: {
+        investedMinor: 1_000_000_00,
+        takenOutMinor: 0,
+        gainMinor: 0,
+        valuedAt: yesterday,
+        lastValueMinor: 1_000_000_00,
+        kind: 'fixed_deposit',
+        maturityDate: null,
+      },
+    } as unknown as Account;
+    const { r } = render({ account: fd });
+    expect(shown(r)).toContain('a year for 1 day.');
   });
 });

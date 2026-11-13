@@ -36,7 +36,7 @@ export function AccountReservations({ account, onNavigate }: { account: Account;
   if (failed)
     return (
       <View style={styles.card}>
-        <Text style={styles.hint}>Couldn't load goal reservations.</Text>
+        <Text style={styles.hint}>Couldn’t load goal reservations.</Text>
         <PrimaryButton
           compact
           variant="secondary"

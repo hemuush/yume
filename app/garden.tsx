@@ -36,9 +36,9 @@ function noteFor(stage: GrowthStage, streak: number): string {
   // `stage === 'seed'` only happens at streak exactly 0 (stageForStreak's threshold); today's logged spend
   // resolves the streak at once, so there is no separate in-between state to word differently.
   if (stage === 'seed')
-    return "No streak going right now — spend under today's goal to plant the first seed.";
+    return 'No streak going right now — spend under today’s goal to plant the first seed.';
   if (stage === 'sprout')
-    return `${streak} day${streak === 1 ? '' : 's'} running. A couple more and it's a sapling.`;
+    return `${streak} day${streak === 1 ? '' : 's'} running. A couple more and it’s a sapling.`;
   if (stage === 'sapling') return `${streak} days running — getting there. A full week and it blooms.`;
   return `${streak} days running — in full bloom. A day over the goal starts it again from a seed.`;
 }
@@ -107,7 +107,7 @@ export default function GardenScreen() {
     return (
       <View style={styles.container}>
         <HomeWallpaper accent={accent} secondary={secondary} />
-        <SkyHeader title="Suu's garden" showBack hideUser wallpaper />
+        <SkyHeader title="Suu’s garden" showBack hideUser wallpaper />
         <View style={{ paddingTop: 20 }}>
           <Glass radius={28} style={[styles.bed, { marginTop: 0 }]}>
             {Array.from({ length: POT_COUNT }, (_, i) => (
@@ -146,7 +146,7 @@ export default function GardenScreen() {
             >
               {loadError && (
                 <View style={styles.errorBanner}>
-                  <Text style={styles.errorTitle}>Couldn't load your garden</Text>
+                  <Text style={styles.errorTitle}>Couldn’t load your garden</Text>
                   <Text style={styles.errorDetail}>{loadError}</Text>
                   <PrimaryButton title="Retry" compact variant="secondary" onPress={() => void reload()} />
                 </View>
@@ -216,7 +216,7 @@ export default function GardenScreen() {
                           <Text style={styles.todayFigure}>
                             {todaySpentMinor <= dailyGoalMinor
                               ? `${formatMoney(dailyGoalMinor - todaySpentMinor)} left today`
-                              : `${formatMoney(todaySpentMinor - dailyGoalMinor)} over today's goal`}
+                              : `${formatMoney(todaySpentMinor - dailyGoalMinor)} over today’s goal`}
                           </Text>
                           <Text style={styles.summaryGoal}>Goal {formatMoney(dailyGoalMinor)} a day</Text>
                         </View>
@@ -225,7 +225,7 @@ export default function GardenScreen() {
                       <Text style={styles.summaryGoal}>Daily goal · under {formatMoney(dailyGoalMinor)}</Text>
                     )}
                     <Text style={styles.introHint}>
-                      {hideAmounts ? 'Sensitive spending excluded from the amount above. ' : ''}Today's result
+                      {hideAmounts ? 'Sensitive spending excluded from the amount above. ' : ''}Today’s result
                       can change until the day ends.
                     </Text>
                   </Glass>
@@ -272,7 +272,7 @@ export default function GardenScreen() {
               )}
             </ScrollView>
             <SkyHeader
-              title="Suu's garden"
+              title="Suu’s garden"
               showBack
               hideUser
               wallpaper

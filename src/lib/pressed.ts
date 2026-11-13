@@ -1,11 +1,12 @@
 import { PressableStateCallbackType, StyleProp, ViewStyle } from 'react-native';
 import { softTint } from '@/components/softTint';
+import { theme } from '@/constants/theme';
 
 /**
  * How a plain Pressable answers a finger: it dims while held. Cards, tiles and big buttons shrink instead
  * (usePressScale); rows, chips, links and small icon buttons use this so nothing tappable looks inert.
  */
-const PRESSED: ViewStyle = { opacity: 0.6 };
+const PRESSED: ViewStyle = { opacity: theme.opacity.pressed };
 
 /** A Pressable `style` that adds the pressed dim to `style`. */
 export function withPressed(style?: StyleProp<ViewStyle>) {

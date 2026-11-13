@@ -112,7 +112,7 @@ export default function LoansScreen() {
       >
         {loadError && (
           <View style={styles.errorBanner}>
-            <Text style={styles.errorTitle}>Couldn't load your loans</Text>
+            <Text style={styles.errorTitle}>Couldn’t load your loans</Text>
             <Text style={styles.errorDetail}>{loadError}</Text>
             <PrimaryButton title="Retry" compact variant="secondary" onPress={() => void load()} />
           </View>

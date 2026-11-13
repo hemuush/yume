@@ -292,7 +292,7 @@ export function RuleModal({
           onDeleted();
         });
       } catch (e) {
-        showAlert("Couldn't delete", errorMessage(e));
+        showAlert('Couldn’t delete', errorMessage(e));
       } finally {
         setSaving(false);
       }

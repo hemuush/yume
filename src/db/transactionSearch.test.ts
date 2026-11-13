@@ -79,7 +79,7 @@ describe('searchTransactions', () => {
     expect(results[0].categoryId).toBe(groceriesId);
   });
 
-  it("matches a transfer by either side's account name", async () => {
+  it('matches a transfer by either side’s account name', async () => {
     const bySource = await searchTransactions('HDFC');
     expect(bySource.some((t) => t.type === 'transfer')).toBe(true);
 

@@ -64,11 +64,15 @@ function render(l: Loan, p: LoanProgress | undefined, onPress = jest.fn(), onPay
 
 describe('LoanCard', () => {
   it('shows EMIs paid, the debt-free month and the next EMI', () => {
-    const { text } = render(loan(), progress);
+    // A date ahead of today, so the line is the date and not "Overdue".
+    const { toLocalIsoDate, addDaysToIsoDate } = require('@/lib/date');
+    const { weekdayDayMonth } = require('@/lib/dateLabels');
+    const ahead = addDaysToIsoDate(toLocalIsoDate(new Date()), 10);
+    const { text } = render(loan({ nextDueDate: ahead }), { ...progress, nextDueDate: ahead });
     expect(text).toContain('5 of 36 EMIs');
     expect(text).toContain('Debt-free');
     expect(text).toContain('Next EMI');
-    expect(text).toContain('5 Oct');
+    expect(text).toContain(weekdayDayMonth(ahead));
     expect(text).toContain('1,807');
     expect(text).toContain('Pay');
   });
@@ -117,5 +121,39 @@ describe('LoanCard', () => {
     expect(text).toContain('Paid off');
     expect(text).not.toContain('Debt-free');
     expect(text).not.toContain('Next EMI');
+  });
+});
+
+describe('LoanCard when the next EMI is not simply ahead', () => {
+  const { toLocalIsoDate, addDaysToIsoDate } = require('@/lib/date');
+  const { weekdayDayMonth } = require('@/lib/dateLabels');
+  const today = toLocalIsoDate(new Date());
+
+  it('says a late EMI is overdue, and by how many days, instead of showing only a past date', () => {
+    for (const [days, words] of [
+      [12, 'Overdue by 12 days'],
+      [1, 'Overdue by 1 day'],
+    ] as const) {
+      const late = addDaysToIsoDate(today, -days);
+      const { text } = render(loan({ nextDueDate: late }), { ...progress, nextDueDate: late });
+      expect(text).toContain(words);
+      expect(text).not.toContain(weekdayDayMonth(late));
+    }
+  });
+
+  it('shows the date of one still ahead, with its year only when it is not this year', () => {
+    const soon = addDaysToIsoDate(today, 5);
+    const { text } = render(loan({ nextDueDate: soon }), { ...progress, nextDueDate: soon });
+    expect(text).toContain(weekdayDayMonth(soon));
+    expect(text).not.toContain('Overdue');
+    const nextYear = `${new Date().getFullYear() + 1}-03-03`;
+    const far = render(loan({ nextDueDate: nextYear }), { ...progress, nextDueDate: nextYear });
+    expect(far.text).toContain(String(new Date().getFullYear() + 1));
+  });
+
+  it('says "1 EMI" for a loan of one installment', () => {
+    const { text } = render(loan(), { ...progress, paidCount: 0, totalCount: 1 });
+    expect(text).toContain('0 of 1 EMI');
+    expect(text).not.toContain('0 of 1 EMIs');
   });
 });

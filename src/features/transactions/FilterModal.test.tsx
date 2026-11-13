@@ -224,3 +224,30 @@ it('keeps a selected expense label and clears it for an incompatible type', asyn
   act(() => button(tree, 'Apply').props.onPress());
   expect(onApply).toHaveBeenLastCalledWith({ type: 'income', categoryIds: [], accountIds: [] });
 });
+
+describe('the label box', () => {
+  const labelBox = (t: ReactTestRenderer) =>
+    t.root.findAllByType(TextInput).find((i) => i.props.accessibilityLabel === 'Filter expense label')!;
+  const texts = (t: ReactTestRenderer) =>
+    t.root.findAll((n) => typeof n.props.children === 'string').map((n) => n.props.children as string);
+
+  it('keeps what is typed as it was typed: no added capital, no autocorrect (a label matches exactly)', async () => {
+    const { tree } = await render();
+    expect(labelBox(tree).props.autoCapitalize).toBe('none');
+    expect(labelBox(tree).props.autoCorrect).toBe(false);
+  });
+
+  it('says to tap a label when a half-typed word narrows the list, and not once it is one of them', async () => {
+    (listExpenseLabels as jest.Mock).mockResolvedValue(['Lunch', 'Lunch at work', 'Fuel']);
+    const { tree } = await render();
+    expect(texts(tree)).not.toContain('Tap a label below to filter by it.');
+    act(() => labelBox(tree).props.onChangeText('lun'));
+    expect(texts(tree)).toContain('Tap a label below to filter by it.');
+    act(() => labelBox(tree).props.onChangeText('Lunch'));
+    expect(texts(tree)).not.toContain('Tap a label below to filter by it.');
+    // Nothing matches: no hint to tap something that is not there.
+    act(() => labelBox(tree).props.onChangeText('zzz'));
+    expect(texts(tree)).not.toContain('Tap a label below to filter by it.');
+    (listExpenseLabels as jest.Mock).mockResolvedValue([]);
+  });
+});

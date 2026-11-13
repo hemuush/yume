@@ -109,7 +109,7 @@ describe('prepay guard', () => {
   it('rejects more than the displayed balance with an inline error', async () => {
     const tree = await submit(100_060, '1002');
     expect(mockApply).not.toHaveBeenCalled();
-    expect(texts(tree).some((t) => t.includes("Amount can't exceed the outstanding balance"))).toBe(true);
+    expect(texts(tree).some((t) => t.includes('Amount can’t exceed the outstanding balance'))).toBe(true);
   });
 
   it('rejects an empty amount', async () => {

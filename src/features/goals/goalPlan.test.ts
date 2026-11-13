@@ -106,7 +106,7 @@ describe('goalHues', () => {
 });
 
 describe('createdLocalDate', () => {
-  it("reads SQLite's UTC timestamp as the local calendar day it fell on", () => {
+  it('reads SQLite’s UTC timestamp as the local calendar day it fell on', () => {
     const utc = new Date('2026-03-01T23:30:00Z');
     const local = `${utc.getFullYear()}-${String(utc.getMonth() + 1).padStart(2, '0')}-${String(utc.getDate()).padStart(2, '0')}`;
     expect(createdLocalDate('2026-03-01 23:30:00')).toBe(local);

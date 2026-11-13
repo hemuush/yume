@@ -210,7 +210,7 @@ describe('Activity filter bar', () => {
     dimensions.mockRestore();
   });
 
-  it("draws the picked type as a dark rounded button, like Home's Add expense", () => {
+  it('draws the picked type as a dark rounded button, like Home’s Add expense', () => {
     const { themeInk } = require('@/theme/interactionColors');
     const { theme } = require('@/constants/theme');
     const dimensions = jest

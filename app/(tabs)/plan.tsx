@@ -89,6 +89,7 @@ import { listCardCycles } from '@/db/cardCycles';
 import { showAlert } from '@/components/AppDialog';
 import { errorMessage } from '@/lib/errorMessage';
 import { useTabScrollToTop } from '@/lib/useTabScrollToTop';
+import { isFixedCategoryName } from '@/lib/fixedCategory';
 import { withPressed, withPressedTint } from '@/lib/pressed';
 import { ModalSheet } from '@/components/ModalSheet';
 import { PrimaryButton } from '@/components/PrimaryButton';
@@ -290,11 +291,15 @@ export default function PlanScreen() {
       return runwayIds.has(r.accountId) ? [toRuleInput(r)] : [];
     });
     const runwayItems = buildDueItems(loansSummary.rows, runwayRules, cardCycles, until, loanPayments);
-    // The top-spend category (sorted biggest first) a cut could apply to: not a built-in like Loan EMI,
-    // which the app files automatically — "spend 10% less on your EMI" isn't a real choice.
+    // The top-spend category (sorted biggest first) a cut could apply to: not a built-in like Loan EMI, which the
+    // app files automatically, nor rent, insurance or a subscription — "spend 10% less on your rent" isn't a real
+    // choice. The same fixed list Reports counts as "already spoken for".
     const top = averages.find(
       (c) =>
-        c.totalMinor > 0 && !(hideAmounts && c.isSensitive) && !categoriesById.get(c.categoryId)?.isSystem
+        c.totalMinor > 0 &&
+        !(hideAmounts && c.isSensitive) &&
+        !categoriesById.get(c.categoryId)?.isSystem &&
+        !isFixedCategoryName(c.name)
     );
 
     const investments = buildPortfolio(accounts, currency, today);
@@ -374,7 +379,7 @@ export default function PlanScreen() {
       if (context) setPaying(context);
       else showAlert('Nothing to pay', 'This loan has no installment due right now.');
     } catch (e) {
-      if (ticket === paymentRequest.current) showAlert("Couldn't open the payment", errorMessage(e));
+      if (ticket === paymentRequest.current) showAlert('Couldn’t open the payment', errorMessage(e));
     } finally {
       if (ticket === paymentRequest.current) openingPayment.current = false;
     }
@@ -437,18 +442,22 @@ export default function PlanScreen() {
           </View>
         )}
 
+        {/* The tabs are there from the first frame, as on Reports, so the page does not drop by their height when the
+            data lands. After a failed first load only the notice above shows. */}
+        {(!loadError || (loaded && data)) && (
+          <View style={[styles.tabs, tab === 'money' && { marginBottom: 4 }]}>
+            <PlanNavigation value={tab} onChange={selectTab} stacked={stackTiles} />
+          </View>
+        )}
         {!loaded || !data || data.hideAmounts !== hideAmounts ? (
           loadError ? null : (
-            <View style={{ marginTop: theme.layout.screenTopGap, gap: SCREEN.sectionGap }}>
+            <View style={{ gap: SCREEN.sectionGap }}>
               <CardRowsSkeleton rows={3} meter />
               <CardRowsSkeleton rows={2} subtitle />
             </View>
           )
         ) : (
           <>
-            <View style={[styles.tabs, tab === 'money' && { marginBottom: 4 }]}>
-              <PlanNavigation value={tab} onChange={selectTab} stacked={stackTiles} />
-            </View>
             <ReanimatedAnimated.View key={tab} entering={CONTENT_ENTER}>
               {tab === 'overview' && (
                 <RunwayCard

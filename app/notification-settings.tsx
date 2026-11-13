@@ -219,7 +219,7 @@ export default function NotificationSettingsScreen() {
   const deliverySub = !delivery
     ? 'Tap for details'
     : delivery.permitted && !delivery.channelBlocked
-      ? `${delivery.scheduledCount} reminders scheduled`
+      ? `${delivery.scheduledCount} ${delivery.scheduledCount === 1 ? 'reminder' : 'reminders'} scheduled`
       : 'Tap to see how to fix it';
   const noTimes = !prefs.morningEnabled && !prefs.eveningEnabled;
   const onCount = MENTION_KEYS.filter((k) => prefs[k] === true).length;
@@ -364,11 +364,11 @@ export default function NotificationSettingsScreen() {
             <SettingsRow
               icon="sprout"
               iconBg={shade(secondary, 94)}
-              label="Suu's check-ins"
+              label="Suu’s check-ins"
               sub="Two lines on the bell screen"
               right={
                 <ToggleSwitch
-                  accessibilityLabel="Suu's check-ins"
+                  accessibilityLabel="Suu’s check-ins"
                   value={prefs.suuCheckins}
                   onChange={(v) => void save({ suuCheckins: v })}
                 />

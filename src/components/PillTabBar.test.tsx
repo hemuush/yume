@@ -93,7 +93,7 @@ it('retains Add on other screens', () => {
   expect(add).toHaveBeenCalledTimes(1);
   act(() => tree.unmount());
 });
-it("shows the chosen tab's fill and hides the others", () => {
+it('shows the chosen tab’s fill and hides the others', () => {
   const { tree } = render(1);
   const opacityOf = (label: string) =>
     StyleSheet.flatten(tree.root.findByProps({ testID: `tab-fill-${label}` }).props.style).opacity;

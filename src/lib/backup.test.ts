@@ -119,12 +119,12 @@ describe('restoreFromSnapshot', () => {
       },
     };
 
-    await expect(restoreFromSnapshot(damaged)).rejects.toThrow(/isn't a number/);
+    await expect(restoreFromSnapshot(damaged)).rejects.toThrow(/isn’t a number/);
     expect(await listTransactions({ limit: 100 })).toHaveLength(before.length);
   });
 });
 
-it("keeps this phone's widget privacy when restoring an older or less-private backup", async () => {
+it('keeps this phone’s widget privacy when restoring an older or less-private backup', async () => {
   await mockTestDb.runAsync(
     "INSERT INTO settings (key,value) VALUES ('hide_widget_values','1') ON CONFLICT(key) DO UPDATE SET value='1'"
   );

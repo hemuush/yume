@@ -102,7 +102,7 @@ export function GoalAccountField({
               first={!showReserve}
               on={tracks && !reserves}
               title={`Follow ${account.name}`}
-              sub="Progress is this account's balance and updates by itself."
+              sub="Progress is this account’s balance and updates by itself."
               onPress={() => {
                 onChangeReserves?.(false);
                 onChangeTracks(true);
@@ -110,7 +110,7 @@ export function GoalAccountField({
             />
             <FollowOption
               on={!tracks && !reserves}
-              title="I'll add money myself"
+              title="I’ll add money myself"
               sub="Tap + Add money as you save. The account is just a label."
               onPress={() => {
                 onChangeReserves?.(false);

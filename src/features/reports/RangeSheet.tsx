@@ -161,7 +161,7 @@ export function RangeSheet({
           disabled={!canNext}
           accessibilityState={{ disabled: !canNext }}
           hitSlop={10}
-          style={withPressed([styles.navBtn, !canNext && { opacity: 0.25 }])}
+          style={withPressed([styles.navBtn, !canNext && { opacity: theme.opacity.limit }])}
           accessibilityRole="button"
           accessibilityLabel="Next month"
         >
@@ -267,7 +267,7 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   dayText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
-  dayTextDisabled: { color: theme.colors.textMuted, opacity: 0.4 },
+  dayTextDisabled: { color: theme.colors.textMuted, opacity: theme.opacity.disabled },
   summary: {
     fontFamily: theme.font.body,
     fontSize: 12,

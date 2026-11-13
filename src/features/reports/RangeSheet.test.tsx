@@ -89,7 +89,7 @@ describe('RangeSheet', () => {
     expect(onApply).toHaveBeenCalledWith({ start: addDaysToIsoDate(today, -29), end: today });
   });
 
-  it("doesn't let a day after today be picked", async () => {
+  it('doesn’t let a day after today be picked', async () => {
     const tree = await render();
     const tomorrow = addDaysToIsoDate(today, 1);
     // Tomorrow may fall in next month, which the sheet doesn't show yet.

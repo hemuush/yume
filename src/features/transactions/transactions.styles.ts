@@ -52,6 +52,14 @@ export const styles = StyleSheet.create({
   searchCancel: { fontSize: 13, fontFamily: theme.font.bodyBold, color: theme.colors.link },
   searchCancelBtn: { minHeight: 44, justifyContent: 'center', paddingHorizontal: 4 },
   searchLoading: { paddingVertical: 40, alignItems: 'center' },
+  // Above the results: how many matched (or that this is only the newest of more).
+  searchCount: {
+    paddingHorizontal: 16,
+    paddingBottom: 2,
+    fontFamily: theme.font.body,
+    fontSize: 12,
+    color: theme.colors.textMuted,
+  },
   // Search before anything is typed: what it looks at, things to try, and past searches.
   searchEmpty: { alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingTop: 24 },
   searchEmptyIcon: {
@@ -172,7 +180,7 @@ export const styles = StyleSheet.create({
   periodRowFlush: { marginLeft: -10 },
   periodInner: { flexShrink: 1, flexDirection: 'row', alignItems: 'center' },
   periodNav: { width: 36, minHeight: 44, alignItems: 'center', justifyContent: 'center' },
-  periodNavOff: { opacity: 0.35 },
+  periodNavOff: { opacity: theme.opacity.limit },
   // The period reads as Home's calendar pill: icon, the period (with "Week 1 of 5" under it), a chevron.
   periodTitleBtn: {
     flexShrink: 1,

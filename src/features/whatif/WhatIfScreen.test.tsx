@@ -21,8 +21,13 @@ let mockHide = false;
 jest.mock('@/theme/PrivacyContext', () => ({ usePrivacy: () => ({ hideAmounts: mockHide }) }));
 let mockSensitive = false;
 let mockExtraCategories = 0;
+let mockRent = false;
 jest.mock('@/db/reports', () => ({
+  // Biggest first, as the real query returns them: rent (when a test asks for it) leads.
   getCategoryMonthlyAverages: async () => [
+    ...(mockRent
+      ? [{ categoryId: 'rent', name: 'Rent', color: '#ccc', totalMinor: 2500000, isSensitive: false }]
+      : []),
     ...Array.from({ length: mockExtraCategories }, (_, i) => ({
       categoryId: `x${i}`,
       name: `Extra ${i}`,
@@ -91,6 +96,7 @@ describe('What-if', () => {
     mockHide = false;
     mockSensitive = false;
     mockExtraCategories = 0;
+    mockRent = false;
   });
 
   it('shows the six biggest categories and the rest behind "N more"', async () => {
@@ -106,6 +112,18 @@ describe('What-if', () => {
     shown = texts(tree);
     expect(shown).toContain('Extra 7');
     expect(shown).toContain('Fewer');
+  });
+
+  it('starts on the biggest category that is a choice, not on rent, though rent can still be picked', async () => {
+    mockRent = true;
+    const tree = await render();
+    // Rent is the biggest (₹25,000) but fixed: the sandbox opens on Food (₹12,000, ₹9,600 after a 20% cut).
+    expect(texts(tree)).toEqual(expect.arrayContaining(['₹12,000', '₹9,600']));
+    expect(texts(tree)).not.toContain('₹20,000');
+    // Rent is still a chip, for someone who really is moving.
+    await press(tree, 'Rent');
+    expect(texts(tree)).toEqual(expect.arrayContaining(['₹25,000', '₹20,000']));
+    act(() => tree.unmount());
   });
 
   it('shows the month now and with the default 20% cut', async () => {

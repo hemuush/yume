@@ -614,3 +614,81 @@ it('keeps the week card and insights attached to the displayed period', () => {
   expect(onSeeInsights).toHaveBeenLastCalledWith('month:-1');
   act(() => r.unmount());
 });
+
+describe('the ring in the middle of the card', () => {
+  const { HeroLegend } = require('./HeroLegend');
+  const { MonthRing } = require('./MonthRing');
+  const withScreen = (size: { width: number; fontScale: number }, fn: () => void) => {
+    const spy = jest
+      .spyOn(require('react-native'), 'useWindowDimensions')
+      .mockReturnValue({ ...size, height: 900, scale: 3 });
+    try {
+      fn();
+    } finally {
+      spy.mockRestore();
+    }
+  };
+
+  it('splits the legend into two halves on either side of the ring, so the ring is centred', () =>
+    withScreen({ width: 412, fontScale: 1 }, () => {
+      const r = render({ dueMinor: 10_000 });
+      const legends = r.root.findAllByType(HeroLegend);
+      expect(legends.map((l) => l.props.side)).toEqual(['left', 'right']);
+      // Four slices (spent, saved, bills left, free): two on each side, so the halves are equal.
+      expect(legends.map((l) => (l.props.items as unknown[]).length)).toEqual([2, 2]);
+      // The ring sits between them in the row.
+      const row = r.root.findByType(MonthRing).parent!;
+      const order = row.children
+        .filter((c) => typeof c !== 'string')
+        .map((c) => (typeof c !== 'string' && c.type === MonthRing ? 'ring' : 'legend'));
+      expect(order).toEqual(['legend', 'ring', 'legend']);
+      act(() => r.unmount());
+    }));
+
+  it('keeps the legend whole (still tappable) across the two halves', () =>
+    withScreen({ width: 412, fontScale: 1 }, () => {
+      const r = render({ dueMinor: 10_000 });
+      for (const label of ['Spent, ₹', 'Saved, ₹', 'Bills left, ₹']) {
+        expect(byLabel(r, label)).toBeTruthy();
+      }
+      act(() => r.unmount());
+    }));
+
+  it('centres the ring on its own line and drops the legend under it on a narrow phone or at large text', () => {
+    for (const size of [
+      { width: 360, fontScale: 1 },
+      { width: 412, fontScale: 1.3 },
+    ]) {
+      withScreen(size, () => {
+        const r = render({ dueMinor: 10_000 });
+        const legends = r.root.findAllByType(HeroLegend);
+        expect(legends).toHaveLength(1);
+        expect(legends[0].props.side).toBeUndefined();
+        expect((legends[0].props.items as unknown[]).length).toBe(4);
+        act(() => r.unmount());
+      });
+    }
+  });
+
+  it('lets a big figure shrink to fit its half of the legend rather than being cut off', () =>
+    withScreen({ width: 412, fontScale: 1 }, () => {
+      // The shared Text only shrinks a figure at normal text sizes (above 130% it wraps instead).
+      const scale = jest.spyOn(require('@/lib/useFontScale'), 'useFontScale').mockReturnValue(1);
+      const r = render({ dueMinor: 10_000, spentMinor: 123_456_789_00, incomeMinor: 200_000_000_00 });
+      const amount = r.root
+        .findAllByType(Text)
+        .find((t) => [t.props.children].flat().join('').startsWith('₹12,34,56'));
+      expect(amount?.props.adjustsFontSizeToFit).toBe(true);
+      expect(amount?.props.numberOfLines).toBe(1);
+      act(() => r.unmount());
+      scale.mockRestore();
+    }));
+
+  it('shows no legend at all, and keeps the ring centred, before there is any income', () =>
+    withScreen({ width: 412, fontScale: 1 }, () => {
+      const r = render({ incomeMinor: 0 });
+      expect(r.root.findAllByType(HeroLegend)).toHaveLength(0);
+      expect(r.root.findAllByType(MonthRing)).toHaveLength(1);
+      act(() => r.unmount());
+    }));
+});

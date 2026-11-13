@@ -69,7 +69,7 @@ describe('period picker', () => {
   it('explains a totals failure and retries', async () => {
     jest.mocked(getSpendByMonth).mockRejectedValueOnce(new Error('read failed'));
     const r = await render();
-    expect(texts(r)).toContain("Couldn't load spending totals. You can still pick a period.");
+    expect(texts(r)).toContain('Couldn’t load spending totals. You can still pick a period.');
     const findRetry = () =>
       r.root.find(
         (n) =>
@@ -79,7 +79,7 @@ describe('period picker', () => {
       );
     await act(async () => findRetry().props.onPress());
     expect(texts(r)).toContain('₹74k');
-    expect(texts(r)).not.toContain("Couldn't load spending totals. You can still pick a period.");
+    expect(texts(r)).not.toContain('Couldn’t load spending totals. You can still pick a period.');
     act(() => r.unmount());
   });
 
@@ -134,7 +134,7 @@ describe('period picker', () => {
     expect(texts(r)).toContain('This year');
   });
 
-  it("lists the shown month's weeks, the future ones off", async () => {
+  it('lists the shown month’s weeks, the future ones off', async () => {
     const onPick = jest.fn();
     const r = await render({
       weeks: {

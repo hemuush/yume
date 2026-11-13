@@ -351,7 +351,7 @@ function FinalBeat({
         Sharing.shareAsync(uri!, { mimeType: 'image/png', dialogTitle: 'Share your Wrap' })
       );
     } catch (e) {
-      showAlert("Couldn't share it", errorMessage(e));
+      showAlert('Couldn’t share it', errorMessage(e));
     } finally {
       shareInFlight.current = false;
       setSharing(false);
@@ -373,7 +373,7 @@ function FinalBeat({
       </Rise>
       <View style={styles.finalMiddle}>
         <Rise delay={200} still={still} onShown={() => setCardShown(true)}>
-          {/* The shared image: the card on its own bit of wallpaper, so it's opaque and looks like the app. */}
+          {/* The shared image: the card on its own bit of wallpaper, so it’s opaque and looks like the app. */}
           <View ref={card} collapsable={false} style={styles.card}>
             <HomeWallpaper accent={accent} secondary={secondary} />
             <Glass radius={24} tone="strong">

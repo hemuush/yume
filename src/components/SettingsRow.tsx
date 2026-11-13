@@ -142,7 +142,7 @@ const styles = StyleSheet.create({
     maxWidth: '40%',
     textAlign: 'right',
   },
-  dimmed: { opacity: 0.45 },
+  dimmed: { opacity: theme.opacity.disabled },
   compactRow: { minHeight: 52, paddingVertical: 8 },
   compactSub: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, marginTop: 0 },
   compactValue: { fontFamily: theme.font.bodyBold, fontSize: 12 },

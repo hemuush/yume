@@ -149,6 +149,9 @@ export function CategoryPicker({
         placeholder="Find a category"
         placeholderTextColor={theme.colors.textMuted}
         style={styles.searchInput}
+        // A search box, not a sentence: no capital at the start, no autocorrect.
+        autoCapitalize="none"
+        autoCorrect={false}
         returnKeyType="done"
         onFocus={() => onSearchFocusChange?.(true)}
         onBlur={() => onSearchFocusChange?.(false)}
@@ -284,7 +287,7 @@ function MedalTile({
       accessibilityLabel={hint ? `${name}, ${hint}` : name}
       accessibilityState={{ selected: active }}
     >
-      {/* The fade sits on the contents, not the pressable: the press animation drives the pressable's own opacity. */}
+      {/* The fade sits on the contents, not the pressable: the press animation drives the pressable’s own opacity. */}
       <View
         style={[
           styles.medalBody,
