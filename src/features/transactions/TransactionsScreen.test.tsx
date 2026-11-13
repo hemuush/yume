@@ -161,28 +161,29 @@ describe('Activity period controls', () => {
     expect(weightOf('Month')).toBe(week);
   });
 
-  it('fades the picked word’s underline in and out, one under each word, instead of adding and removing it', async () => {
+  it('underlines the picked word only, and moves the underline when the other word is picked', async () => {
     const { StyleSheet, View } = require('react-native');
     mockComparison.fail = false;
     const tree = await render();
-    const underlines = () =>
-      tree.root
-        .findAllByType(View)
-        .map((v) => StyleSheet.flatten(v.props.style))
-        .filter((st) => st?.height === 2 && st?.transitionProperty === 'opacity');
-    expect(underlines().map((st) => st.opacity)).toEqual([1, 0]);
-    expect(underlines().every((st) => st.transitionDuration !== undefined)).toBe(true);
-    const month = tree.root.find(
-      (n) =>
-        n.props.accessibilityRole === 'radio' &&
-        typeof n.props.onPress === 'function' &&
-        n.findAllByType(Text).some((t) => t.props.children === 'Month')
-    );
-    await act(async () => month.props.onPress());
+    const radio = (word: string) =>
+      tree.root.find(
+        (n) =>
+          n.props.accessibilityRole === 'radio' &&
+          typeof n.props.onPress === 'function' &&
+          n.findAllByType(Text).some((t) => t.props.children === word)
+      );
+    const underlined = () =>
+      ['Week', 'Month'].filter((word) =>
+        radio(word)
+          .findAllByType(View)
+          .some((v) => StyleSheet.flatten(v.props.style)?.height === 2)
+      );
+    expect(underlined()).toEqual(['Week']);
+    await act(async () => radio('Month').props.onPress());
     await act(async () => {
       await new Promise((resolve) => setTimeout(resolve, 0));
     });
-    expect(underlines().map((st) => st.opacity)).toEqual([0, 1]);
+    expect(underlined()).toEqual(['Month']);
   });
 
   it('switches Week to Month from beside the period pill', async () => {
@@ -411,6 +412,31 @@ it('puts the back arrow and the word Month on the 16 dp gutter, and leaves the s
   expect(flush(big)).toEqual({ left: 0, right: 0 });
   act(() => big.unmount());
   wide.mockRestore();
+});
+
+it('lets the days animate only for a moment after a group opens or closes', async () => {
+  const { toLocalIsoDate } = require('@/lib/date');
+  const { TimelineDay } = require('./TimelineDay');
+  mockComparison.fail = false;
+  mockLedger.transactions = ['a', 'b'].map((id) => ({
+    id,
+    type: 'expense',
+    accountId: 'bank',
+    categoryId: null,
+    amountMinor: 10_000,
+    date: toLocalIsoDate(new Date()),
+    note: '',
+  })) as Transaction[];
+  const tree = await render();
+  const day = () => tree.root.findAllByType(TimelineDay)[0];
+  expect(day().props.animateLayout).toBe(false);
+  act(() => day().props.onToggleStack('some-group'));
+  expect(day().props.animateLayout).toBe(true);
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 450));
+  });
+  expect(day().props.animateLayout).toBe(false);
+  act(() => tree.unmount());
 });
 
 describe('Activity search results', () => {

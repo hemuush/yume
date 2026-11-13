@@ -23,12 +23,12 @@ const sliceColours = (r: ReactTestRenderer) =>
     .map((s) => s.props.stopColor);
 const arcsOf = (r: ReactTestRenderer) =>
   r.root.findAllByType(Circle).filter((c) => String(c.props.stroke).startsWith('url(#ring-'));
-/** The views the slices sit in: the one that is dimmed, with the glide on it. */
+/** The views the slices sit in: the one that is dimmed. */
 const sliceViews = (r: ReactTestRenderer) =>
   r.root
     .findAllByType(View)
     .map((v) => StyleSheet.flatten(v.props.style))
-    .filter((st) => st?.transitionProperty === 'opacity');
+    .filter((st) => st?.opacity !== undefined);
 const image = (r: ReactTestRenderer) => r.root.find((n) => n.props.accessibilityRole === 'image');
 
 it('draws spent, saved, bills and free arcs in the legend colours', () => {
@@ -66,8 +66,8 @@ it('dims the slices that were not picked', () => {
     <MonthRing slices={heroSlices(100_000, 40_000, 10_000, 0)} hideSavings={false} focus="spent" />
   );
   expect(sliceViews(r).map((st) => st.opacity)).toEqual([1, 0.35, 0.35]);
-  // Picking another slice glides: a CSS transition on each slice's view, not a hard switch.
-  expect(sliceViews(r).every((st) => st.transitionDuration === '200ms')).toBe(true);
+  // A plain style change: no CSS transition is used on a phone-unverified path.
+  expect(sliceViews(r).every((st) => st.transitionProperty === undefined)).toBe(true);
   act(() => r.unmount());
 });
 
