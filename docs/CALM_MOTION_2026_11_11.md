@@ -11,7 +11,7 @@ Replaces the "longer, softer" direction of [MOTION_POLISH_2026_11_11.md](MOTION_
 - Press feedback is the original quick dip: 80 ms in, 120 ms out, no spring.
 - The Home capsules show at their height; the picked one still lifts. The heatmap cells no longer fade in one by one.
 - The tab pill fades its fill and slides its row; it no longer scales in.
-- Sheets still rise, but 16 pt over 220 ms; the toast rises 16 pt.
+- Sheets fade in with their backdrop (the Modal's own fade) and no longer rise: a Reanimated entering animation on the sheet surface is a suspect in sheets standing above the bottom of the screen (see [the sheets review](SECONDARY_SCREENS_REVIEW_2026_11_13.md)). The toast rises 16 pt.
 - Screens open the same way everywhere: the standard slide. The card-grow transition (a card expanding into Budgets, Savings goals and Category detail) and its overlay (`CardGrowHost`, `cardGrow`) were removed.
 - Everything still turns off with the phone's reduce-motion setting.
 

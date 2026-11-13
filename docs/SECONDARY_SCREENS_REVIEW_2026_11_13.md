@@ -77,3 +77,17 @@ At 1.3 times text the category tiles looked split in the browser too, but they s
 - **Wide screens.** The app is portrait-only, but Android 16 ignores that on tablets and unfolded foldables. At 600 and 840 dp every main screen renders without a fault, stretched to the full width. A maximum content width is a design decision and has not been made here.
 - **The browser harness** read `flex: 0` as a zero basis, which drew Recurring's rows over each other; it now reads it as Android does. With that, Recurring and its rule sheets were rendered at large text for the first time: no fault beyond the dates above.
 
+### Fourth pass: sheets standing above the bottom of the screen
+
+A device screenshot (Reports' day sheet on a Samsung phone with three-button navigation) showed the sheet ending about 99 dp above the bottom, with the dimmed page, the tab bar and the navigation buttons under it. An earlier screenshot of the Activity filter sheet showed the same, so it is every sheet.
+
+What the screenshot says: the screen is 2424 px tall (about 2.63 px per dp); the sheet's bottom edge is at 2165 px, so 259 px (98.6 dp) above the bottom. That is the status bar plus the navigation bar, to within a pixel or two: the sheet is laid out in an area of the screen's height less the two bars. The backdrop does cover the whole screen, so the window itself is full height.
+
+What is established and what is not. The two sheet layouts are `ModalSheet`'s framed one (a header, a scrolling body; the default, which Reports' day sheet uses) and the plain one. The keyboard-avoiding wrapper is only in the framed one and was already off unless the keyboard is up (previous pass), so it cannot explain a lift with the keyboard down. Nothing here was reproduced on a phone: the cause is not confirmed. Three measures cover the three suspects, and a phone has to say whether they are enough:
+
+- **Keyboard padding** (the earlier fix): the library's wrapper only pads while the keyboard is really up.
+- **A Reanimated entering animation on the sheet surface** (added in the 11 November motion pass, the time the screenshots started): a Modal is its own window whose content is laid out twice, and a layout animation can keep the first frame. The surface is a plain View again; `sheetSurface.test.ts` keeps a layout animation off it. The sheets no longer rise; the Modal's own fade brings the backdrop and sheet in together.
+- **A short content area**, whatever made it short ([Reanimated #6659](https://github.com/software-mansion/react-native-reanimated/issues/6659) describes one way a Modal ends up the wrong height under the New Architecture): `ModalSafeArea` compares its first layout with the screen and, only when it is short by exactly the status and navigation bars, gives the content the screen's height. A smaller window (split screen) does not match and is left alone. Remove it once a phone shows sheets reaching the bottom without it.
+
+If the sheet still stands above the bottom after this, the numbers above (and which sheet, whether the keyboard was used before it, the build) say which of the three is left.
+

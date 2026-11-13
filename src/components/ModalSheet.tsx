@@ -12,10 +12,9 @@ import {
   KeyboardAwareScrollView,
   useKeyboardState,
 } from 'react-native-keyboard-controller';
-import { SafeAreaProvider, useSafeAreaInsets, initialWindowMetrics } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ModalSafeArea } from './ModalSafeArea';
 import { theme } from '@/constants/theme';
-import ReAnimated, { FadeInDown, ReduceMotion } from 'react-native-reanimated';
-import { MOTION } from '@/lib/animation';
 import { usePressScale } from '@/lib/usePressScale';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 import { AmountPadHostProvider, useAmountPadHost } from '@/components/AmountField';
@@ -132,11 +131,11 @@ function StandaloneSheet(props: Props) {
           sheet’s footer buttons end up clipped behind the system nav bar. */}
       {/* No KeyboardProvider here: the root one already follows a Modal’s window. A second provider shares the
           Activity’s window insets and, when it unmounts, leaves the screen underneath with a stale keyboard gap. */}
-      <SafeAreaProvider initialMetrics={initialWindowMetrics}>
+      <ModalSafeArea>
         <SheetSurfaceProvider value>
           <ModalSheetBody {...props} onClose={close} />
         </SheetSurfaceProvider>
-      </SafeAreaProvider>
+      </ModalSafeArea>
     </Modal>
   );
 }
@@ -408,8 +407,7 @@ function ModalSheetBody({
             style={[styles.flex, styles.alignBottom, { paddingTop: insets.top + 8 }]}
             pointerEvents="box-none"
           >
-            <ReAnimated.View
-              entering={inFlow ? undefined : SHEET_ENTER}
+            <View
               testID="sheet-surface"
               onLayout={
                 sharesHeight && visible ? (event) => flow.measure(event.nativeEvent.layout.height) : undefined
@@ -454,7 +452,7 @@ function ModalSheetBody({
                 <View style={{ height: keyboardUp ? 0 : insets.bottom }} />
               )}
               {pad && <View style={[styles.sheetDock, { paddingBottom: 12 + insets.bottom }]}>{pad}</View>}
-            </ReAnimated.View>
+            </View>
           </KeyboardAvoidingView>
         </View>
       </AmountPadHostProvider>
@@ -462,8 +460,7 @@ function ModalSheetBody({
   }
 
   const body = (
-    <ReAnimated.View
-      entering={inFlow ? undefined : SHEET_ENTER}
+    <View
       style={[
         isSheet ? styles.sheet : styles.dialog,
         stripView && styles.dialogStriped,
@@ -475,7 +472,7 @@ function ModalSheetBody({
       {header}
       {children}
       {pad && <View style={styles.inlineDock}>{pad}</View>}
-    </ReAnimated.View>
+    </View>
   );
 
   return (
@@ -507,12 +504,13 @@ function ModalSheetBody({
   );
 }
 
-/** The surface rises a little as the backdrop fades, so a sheet arrives instead of blinking in. */
-const SHEET_ENTER = FadeInDown.duration(MOTION.slideIn)
-  .easing(MOTION.ease)
-  .withInitialValues({ opacity: 0, transform: [{ translateY: 16 }] })
-  .reduceMotion(ReduceMotion.System);
-
+/*
+ * The sheet surface is a plain View on purpose. A Modal is its own Android window, and its content is laid out
+ * once at one size and again when the window reports its real one; a Reanimated entering animation on the surface
+ * (the 16 pt rise that was here) can keep the first frame, which left a sheet standing about a status bar plus a
+ * navigation bar above the bottom of the screen. The Modal's own fade brings backdrop and sheet in together.
+ * src/__tests__/sheetSurface.test.ts keeps layout animations off it.
+ */
 const SHEET_SHADOW = {
   shadowColor: theme.colors.ink,
   shadowOffset: { width: 0, height: -6 },
