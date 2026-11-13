@@ -1,4 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
+import { joinSub } from '@/lib/categoryLabel';
+import { gluePiece } from '@/lib/keepTogether';
 import { View, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -149,9 +151,14 @@ export default function InvestmentsScreen() {
       icon="repeat"
       round
       label={sip.holdingName}
-      sub={`${ruleCadenceLabel(sip.rule)} · from ${sip.fromName}${
-        sip.active ? ` · next ${weekdayDayMonth(sip.rule.nextRunDate)}` : ' · paused'
-      }`}
+      // Wraps between its pieces, never inside a date ("next Sun, Nov" over "22").
+      sub={joinSub(
+        [
+          ruleCadenceLabel(sip.rule),
+          `from ${sip.fromName}`,
+          sip.active ? `next ${weekdayDayMonth(sip.rule.nextRunDate)}` : 'paused',
+        ].map(gluePiece)
+      )}
       subColor={sip.active ? undefined : theme.colors.warnInk}
       value={money(
         sip.rule.amountMinor,
@@ -170,7 +177,8 @@ export default function InvestmentsScreen() {
         onScroll={scrollHandler}
         scrollEventThrottle={16}
         contentContainerStyle={{
-          paddingTop: headerHeight + theme.layout.screenTopGap,
+          // The first card brings the top gap itself (as on Budgets, Goals and Loans), so the page adds none.
+          paddingTop: headerHeight,
           paddingBottom: theme.layout.screenScrollPad + insets.bottom,
         }}
       >

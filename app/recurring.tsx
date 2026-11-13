@@ -167,7 +167,8 @@ export default function RecurringScreen() {
         contentContainerStyle={{
           // No side padding: every block here (the cards, the headings, the notes) sits on the screen gutter
           // itself, as on every other screen. Padding the page as well put the cards at twice the gutter.
-          paddingTop: headerHeight + theme.layout.screenTopGap,
+          // The first card brings the top gap itself (as on Budgets, Goals and Loans), so the page adds none.
+          paddingTop: headerHeight,
           paddingBottom: theme.layout.screenScrollPad + insets.bottom,
         }}
       >

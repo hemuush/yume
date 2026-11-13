@@ -322,7 +322,7 @@ export default function WhatIfScreen() {
             </View>
           </Section>
         )}
-        <Section compact first={categories.length === 0} title="Can I afford it?">
+        <Section compact first={categories.length === 0} title="Before you buy">
           <PurchaseCheck />
         </Section>
       </ReanimatedAnimated.ScrollView>

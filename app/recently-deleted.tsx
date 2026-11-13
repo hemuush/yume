@@ -1,4 +1,5 @@
 import { useSaveOnce } from '@/lib/useSaveOnce';
+import { gluePiece } from '@/lib/keepTogether';
 import { Appear } from '@/components/Appear';
 import { ScreenLoadError } from '@/components/ScreenLoadError';
 import { LoadFade } from '@/components/LoadFade';
@@ -206,15 +207,20 @@ export default function RecentlyDeletedScreen() {
                       const title = isTransfer ? 'Transfer' : (cat?.name ?? 'Uncategorised');
                       const where =
                         entry.note.trim() || accounts.find((a) => a.id === entry.accountId)?.name || '';
-                      const sub = entry.blockedReason
+                      // Two lines, so a long note can be cut without taking the date and the time left with it:
+                      // what it was, then when and how long it stays (each piece whole, never split by a wrap).
+                      const what = entry.blockedReason
                         ? entry.blockedReason
+                        : [isTransfer ? undefined : inParent(parentOf(cat)), where]
+                            .filter(Boolean)
+                            .join(' · ');
+                      const when = entry.blockedReason
+                        ? null
                         : [
-                            isTransfer ? undefined : inParent(parentOf(cat)),
-                            where,
                             dayMonthMaybeYear(entry.date),
                             `${entry.daysLeft} day${entry.daysLeft === 1 ? '' : 's'} left`,
                           ]
-                            .filter(Boolean)
+                            .map(gluePiece)
                             .join(' · ');
                       return (
                         <View key={entry.id} style={[h.row, i > 0 && h.divider]}>
@@ -230,9 +236,12 @@ export default function RecentlyDeletedScreen() {
                             <Text style={h.title} numberOfLines={2}>
                               {title}
                             </Text>
-                            <Text style={h.sub} numberOfLines={2}>
-                              {sub}
-                            </Text>
+                            {!!what && (
+                              <Text style={h.sub} numberOfLines={when ? 1 : 2}>
+                                {what}
+                              </Text>
+                            )}
+                            {!!when && <Text style={[h.sub, what ? styles.subNext : null]}>{when}</Text>}
                           </View>
                           <Text
                             style={[
@@ -317,6 +326,8 @@ const styles = StyleSheet.create({
     borderRadius: theme.radius.pill,
     backgroundColor: theme.colors.ink,
   },
+  /** The second line under an entry's title sits right under the first. */
+  subNext: { marginTop: 0 },
   restoreText: { fontFamily: theme.font.roundedBold, fontSize: 12, color: theme.colors.white },
   emptyAll: {
     alignSelf: 'stretch',

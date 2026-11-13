@@ -5,9 +5,10 @@ import { SCREEN } from '@/components/screenStyles';
 // Shared by the Recurring screen, the rows and RuleModal.
 export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
-  // The page pads by the top gap only; each block brings the screen gutter.
+  // The page adds no padding; each block brings the screen gutter and the top gap.
   errorBanner: {
     marginHorizontal: SCREEN.gutter,
+    marginTop: theme.layout.screenTopGap,
     marginBottom: 12,
     padding: 14,
     borderRadius: theme.radius.md,

@@ -225,7 +225,11 @@ describe('Investments page', () => {
 
   it('lists the SIPs with where each comes from and the month’s total', async () => {
     const shown = texts(await render());
-    expect(shown.some((t) => / · from HDFC · next /.test(t))).toBe(true);
+    // The pieces of the caption are glued with non-breaking spaces so a date never splits; read them as spaces.
+    expect(shown.some((t) => / · from HDFC · next /.test(t.replace(/\u00A0/g, ' ')))).toBe(true);
+    // Each piece is whole: a wrap can fall between them, never inside the date.
+    const caption = shown.find((t) => /from\u00A0HDFC/.test(t))!;
+    expect(caption.split(' · ').every((piece) => !/ /.test(piece))).toBe(true);
     expect(shown.join(' ')).toContain('SIPs');
     expect(shown.join(' ')).toContain(inr(10_000_00));
   });

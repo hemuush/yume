@@ -24,3 +24,25 @@ The filter chips were in front of the type pills (Filters, then every picked cat
 ## Checks
 
 `screenGutter.test.ts`, `listRowFonts.test.ts`, `SectionHead.test.tsx`, `RuleRow.test.tsx` (the two lines, the pieces), `SkyHeaderMotion.test.tsx` (the title does not shrink for the summary), `ActivityFilterChips.test.tsx` (what is picked follows the types, however many) and `DimmedControls`-style checks from the Add review. Each new test that guards a fix fails without it (checked by removing the fix). The suite needs `LANG=en_IN.UTF-8`, as CI sets.
+
+## The other screens (People, Investments, Backup, Export, Recently deleted, What-if, Category detail, Garden)
+
+The same method (the real screens in a browser on a real database, at 360, 390 and 412 dp, positions and cut-off text listed by script) over the screens not yet compared. Backup, Category detail and Garden needed nothing. Themes cannot be rendered in the browser (it needs the phone's app-icon module), and Split is a sheet, which the browser does not render; both were read in code only.
+
+### Fixed
+
+- **People: "Owes you" and "You owe" sat at the far right of the screen, away from their colour dot.** The heading row was built for a title with a note on the right (`space-between`), so with a dot and a title the dot went to the left edge and the title to the right. They sit together now.
+- **Investments and Recurring started 8 dp lower than every other screen.** Both padded the page by the top gap and their first card carries the top gap too (the same double count as Recurring's side gutter). The first card is at the same height on Budgets, Goals, Loans, People, Backup, Tidy up, Notification settings, Investments and Recurring (66 dp in the browser).
+- **A monthly SIP's caption broke its date** ("next Sun, Nov" over "22"). The caption is glued by piece (`gluePiece`, which Recurring's rows now share) so it wraps between pieces only.
+- **Recently deleted hid the date and the time left behind a long note.** The caption was one line of text cut at two lines: "Headphones from the sale th…", with the date and "30 days left" gone, and "30 days" splitting from "left" even when they showed. It is two lines now: what it was (cut at one line if it is long), then when and how long it stays, each piece whole.
+- **What-if had "Can I afford it?" twice** (a section heading, then the card's own title directly under it). The section reads "Before you buy".
+- **Export had a second title and a heading in a different place on each step.** An icon tile and "Export your entries" in the content repeated the header's "Export" (no other screen has such a block); the hint now sits under the header as on What-if and Suu's garden. "1. Choose a period" was inside its card and "2. Choose a file type" above its cards, and both were in the rounded display face; both are above their blocks, in the type every other section heading uses.
+
+### Seen and left
+
+- Garden's day cells are 39 dp wide at 360 dp (seven to a row); a calendar grid cannot be wider on that phone, and the screen is a decorative flow.
+- What-if's chips are 32 dp tall with the shared Chip's touch slop (48 dp to touch).
+- Themes and Split were not rendered, only read.
+
+Tests: `people.styles.test.ts`, `captionPieces.test.ts`, `keepTogether.test.ts` (`gluePiece`), `RecentlyDeletedScreen.test.tsx` (two lines, a long note), `RuleRow.test.tsx`. Each new test fails without its fix.
+
