@@ -162,9 +162,9 @@ export default function RecurringScreen() {
         ref={scrollRef}
         onScroll={scrollHandler}
         scrollEventThrottle={16}
-
         contentContainerStyle={{
-          paddingHorizontal: 16,
+          // No side padding: every block here (the cards, the headings, the notes) sits on the screen gutter
+          // itself, as on every other screen. Padding the page as well put the cards at twice the gutter.
           paddingTop: headerHeight + theme.layout.screenTopGap,
           paddingBottom: theme.layout.screenScrollPad + insets.bottom,
         }}

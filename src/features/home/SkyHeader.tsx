@@ -243,8 +243,13 @@ const styles = StyleSheet.create({
     fontSize: theme.typeSize.title,
     color: theme.colors.ink,
     transformOrigin: 'left center',
-    flexShrink: 1,
+    // Never squeezed by what sits beside it: even a fraction of a point less than its text needs cuts the last
+    // letters to an ellipsis. Only a title longer than the whole row is cut (maxWidth).
+    flexShrink: 0,
+    maxWidth: '100%',
   },
+  // The title is the one that must stay whole: when the row is short, the summary (invisible until the header
+  // collapses) gives way, so "Savings goals" never reads "Savings …" because of a figure nobody can see yet.
   summary: { marginLeft: 10, flexShrink: 1, minWidth: 0 },
   below: { gap: 10, paddingTop: 8, paddingBottom: 2 },
   // Just the chevron, nudged so the icon (not its 40dp touch area) sits on the page gutter.

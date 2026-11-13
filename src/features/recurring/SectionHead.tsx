@@ -2,6 +2,7 @@ import { View, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { SECTION_GAP, SECTION_TITLE } from '@/constants/textStyles';
+import { SCREEN } from '@/components/screenStyles';
 
 /** A heading above a card on Recurring: the rounded title, and a small note on the right. */
 export function SectionHead({ title, note }: { title: string; note?: string }) {
@@ -20,6 +21,7 @@ const styles = StyleSheet.create({
     gap: 6,
     alignItems: 'baseline',
     justifyContent: 'space-between',
+    marginHorizontal: SCREEN.gutter,
     marginTop: SECTION_GAP.top,
     marginBottom: SECTION_GAP.bottom,
   },

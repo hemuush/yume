@@ -1,11 +1,13 @@
 import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
+import { SCREEN } from '@/components/screenStyles';
 
 // Shared by the Recurring screen, the rows and RuleModal.
 export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
-  // The page already pads by the top gap and 20px a side.
+  // The page pads by the top gap only; each block brings the screen gutter.
   errorBanner: {
+    marginHorizontal: SCREEN.gutter,
     marginBottom: 12,
     padding: 14,
     borderRadius: theme.radius.md,
@@ -37,13 +39,15 @@ export const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 17,
     color: theme.colors.textMuted,
-    marginHorizontal: 4,
+    marginHorizontal: SCREEN.gutter,
     marginTop: 12,
   },
+  /** A note under a card on the screen: lines up with the card's edge, not the sheet hints that share `hint`. */
+  listNote: { marginHorizontal: SCREEN.gutter },
   row: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8 },
   rowDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.borderSoft },
   rowMuted: { opacity: 0.6 },
-  rowTitle: { fontFamily: theme.font.bodyBold, fontSize: 14, color: theme.colors.textPrimary },
+  rowTitle: { fontFamily: theme.font.bodyMedium, fontSize: 14, color: theme.colors.textPrimary },
   rowSub: {
     fontFamily: theme.font.body,
     fontSize: 12,
@@ -51,6 +55,8 @@ export const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
     marginTop: 2,
   },
+  /** The second line under a rule's title sits right under the first. */
+  rowSubNext: { marginTop: 0 },
   ruleMain: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10, minWidth: 0 },
   ruleCopy: { flex: 1, minWidth: 0 },
   ruleMainStacked: { flex: 0 },
@@ -74,7 +80,7 @@ export const styles = StyleSheet.create({
   hide: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   ruleSide: { flexDirection: 'row', alignItems: 'center', gap: 16 },
   ruleAmount: {
-    fontFamily: theme.font.bodyBold,
+    fontFamily: theme.font.bodyMedium,
     fontVariant: ['tabular-nums'],
     fontSize: 14,
     color: theme.colors.textPrimary,

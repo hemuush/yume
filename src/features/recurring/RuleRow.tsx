@@ -13,6 +13,7 @@ import { ROW_LAYOUT, ROW_EXIT } from '@/lib/animation';
 import { withPressed } from '@/lib/pressed';
 import { weekdayDayMonthMaybeYear } from '@/lib/dateLabels';
 import { joinSub } from '@/lib/categoryLabel';
+import { keepTogether, noBreak } from '@/lib/keepTogether';
 
 /**
  * One rule in the Running or Paused card: category icon, what and when, amount, and a pause switch. Tapping
@@ -63,7 +64,20 @@ export function RuleRow({
       ? `${accountName(rule.accountId)} → ${rule.toAccountId ? accountName(rule.toAccountId) : '—'}`
       : (category?.name ?? '—');
   const title = !transfer && rule.note ? rule.note : name;
-  const when = `${ruleCadenceLabel(rule)} · Next ${weekdayDayMonthMaybeYear(rule.nextRunDate)}${rule.postingMode === 'confirm' ? ' · Confirm first' : ''}${rule.nextAmountMinor != null ? ' · One-off amount' : ''}`;
+  const whenParts = [
+    ruleCadenceLabel(rule),
+    `Next ${weekdayDayMonthMaybeYear(rule.nextRunDate)}`,
+    rule.postingMode === 'confirm' && 'Confirm first',
+    rule.nextAmountMinor != null && 'One-off amount',
+  ];
+  const when = joinSub(whenParts);
+  // Two lines under the title: when it runs, then where it comes from or goes. Each wraps between its pieces, never inside one: a date ("Next Tue, 1 Dec"), a cadence
+  // or an account ("From SBI") is kept whole, so no "Dec" or "Play" is left alone on a line.
+  const whenShown = joinSub(whenParts.map((part) => part && noBreak(part)));
+  // A short piece is kept whole; a long one (an account called "HDFC Savings Account") may still wrap, but not
+  // leave its last word alone.
+  const where = (part: string | false | null | undefined) =>
+    part && (part.length <= 22 ? noBreak(part) : keepTogether(part));
   return (
     <Animated.View
       layout={ROW_LAYOUT}
@@ -94,16 +108,16 @@ export function RuleRow({
         />
         <View style={styles.ruleCopy}>
           <Text style={styles.rowTitle}>{title}</Text>
-          <Text style={styles.rowSub}>
+          <Text style={styles.rowSub}>{whenShown}</Text>
+          <Text style={[styles.rowSub, styles.rowSubNext]}>
             {transfer
               ? investRole
-                ? `${when} · ${investRole === 'invest' ? `From ${accountName(rule.accountId)}` : 'Investment'}`
-                : `${when} · Transfer`
+                ? where(investRole === 'invest' ? `From ${accountName(rule.accountId)}` : 'Investment')
+                : 'Transfer'
               : joinSub([
-                  when,
-                  rule.note && name,
-                  parentName,
-                  `${rule.type === 'income' ? 'Into' : 'From'} ${accountName(rule.accountId)}`,
+                  rule.note && where(name),
+                  where(parentName),
+                  where(`${rule.type === 'income' ? 'Into' : 'From'} ${accountName(rule.accountId)}`),
                 ])}
           </Text>
         </View>

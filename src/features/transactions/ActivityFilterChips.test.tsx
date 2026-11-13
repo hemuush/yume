@@ -78,17 +78,31 @@ describe.each(LAYOUTS)('filter row, %s', (_name, width, fontScale) => {
     TYPES.forEach((label) => expect(after.indexOf(label)).toBe(before.indexOf(label)));
   });
 
-  it('keeps the picked chips ahead of the types and Clear all last of all', () => {
+  it('puts what is picked after the types, and Clear all last of all', () => {
     expect(
       row({ filterType: 'income', categoryIds: ['food'], accountIds: ['SBI'], expenseLabel: 'Lunch' })
     ).toEqual([
       'Filters',
+      ...TYPES,
       'Remove the Food filter',
       'Remove the SBI filter',
       'Remove expense label filter',
-      ...TYPES,
       'Clear all Activity filters',
     ]);
+  });
+
+  it('keeps the types where they are however many categories are picked, so a long list of chips never pushes them away', () => {
+    const none = row();
+    const many = row({
+      categoryIds: ['a', 'b', 'c', 'd', 'e', 'f', 'g'],
+      accountIds: ['SBI'],
+      expenseLabel: 'Lunch',
+    });
+    TYPES.forEach((label) => expect(many.indexOf(label)).toBe(none.indexOf(label)));
+    // Everything picked comes after the last type.
+    const lastType = many.indexOf('Show transfers');
+    expect(many.slice(lastType + 1)).toHaveLength(9 + 1);
+    expect(many.slice(lastType + 1).every((l) => /^(Remove|Clear)/.test(l))).toBe(true);
   });
 
   it('offers Clear all for a lone category, label or account chip too, still last', () => {

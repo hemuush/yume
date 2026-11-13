@@ -22,8 +22,9 @@ const TYPE_CHIPS: { label: string; value: ActivityType }[] = [
 ];
 
 /**
- * Activity's filter row: the Filters button, a removable chip per picked category/account/label, the one-tap
- * type choices (the sheet's `filterType`), and Clear all last. Only the type choices form the radio group.
+ * Activity's filter row: the Filters button, the one-tap type choices (the sheet's `filterType`), then a
+ * removable chip per picked category/account/label, and Clear all last. Only the type choices form the radio
+ * group.
  */
 export function ActivityFilterChips({
   filterType,
@@ -83,10 +84,11 @@ export function ActivityFilterChips({
       </Pressable>
     );
   });
-  // One row, in the order of how often it is used: Filters (with its count), what the sheet picked (a
-  // removable chip each), then the one-tap types, and Clear all at the end. Picking a type must not move the
-  // types under the thumb, so the only thing that appears with it, Clear all, appears after them, never in
-  // front. At large text it wraps instead of scrolling.
+  // One row, the stable controls first and what has been picked after them: Filters (with its count), the
+  // one-tap types, then a removable chip for each thing picked, and Clear all at the end. Whatever is picked
+  // (a type, or any number of categories, accounts and a label) only ever adds to the end of the row, so the
+  // types stay where the thumb found them and are never pushed off screen by a long list of chips. At large
+  // text it wraps instead of scrolling.
   const pickedChips = picked > 0 && (
     <>
       {categoryIds.map((id) => (
@@ -152,8 +154,8 @@ export function ActivityFilterChips({
       {wrapTabs ? (
         <View style={[styles.typeBar, styles.typeFilterRowWrap]}>
           {filterButton}
-          {pickedChips}
           {pills}
+          {pickedChips}
           {clearAll}
         </View>
       ) : (
@@ -164,10 +166,10 @@ export function ActivityFilterChips({
           contentContainerStyle={[styles.typeBar, styles.typeFilterRow]}
         >
           {filterButton}
-          {pickedChips}
           <View style={styles.pillGroup} accessibilityRole="radiogroup">
             {pills}
           </View>
+          {pickedChips}
           {clearAll}
         </ScrollView>
       )}
