@@ -52,6 +52,9 @@ export function ReportHero({
   const near = budget != null && !over && used >= NEAR_BUDGET;
   // Calm is a deeper shade of the theme colour: the plain pastel barely shows on the track.
   const barColor = over ? theme.colors.expense : near ? theme.colors.slice.due : shade(accent, 68);
+  // Side by side, the three columns share the row; stacked (a narrow phone or large text) they are as tall as
+  // their own content. A zero flex basis in a column has no height to share, so the lines drew over each other.
+  const share = (grow: number) => (stacked ? null : { flexGrow: grow, flexShrink: 1, flexBasis: 0 });
   const kept = incomeMinor - spentMinor;
   const keptPct = incomeMinor > 0 ? Math.round((kept / incomeMinor) * 100) : null;
   const incomeChange =
@@ -63,7 +66,7 @@ export function ReportHero({
   return (
     <View style={styles.card}>
       <View style={[styles.kpis, stacked && styles.kpisStacked]}>
-        <View style={[styles.kpi, styles.kpiLead]} accessible accessibilityLabel={spentSpoken}>
+        <View style={[styles.kpi, share(1.1)]} accessible accessibilityLabel={spentSpoken}>
           <Text style={styles.kpiLabel}>{`Spent${inProgress ? ' so far' : ''}`}</Text>
           <CountUpAmount
             minor={roundedMinor(spentMinor)}
@@ -75,7 +78,7 @@ export function ReportHero({
             <Text style={styles.kpiSub}>{`${money(perDayMinor)} a day`}</Text>
           )}
         </View>
-        <View style={[styles.kpi, styles.kpiIncome]}>
+        <View style={[styles.kpi, share(1.25)]}>
           <Text style={styles.kpiLabel}>Income</Text>
           <Amount
             minor={roundedMinor(incomeMinor)}
@@ -90,7 +93,7 @@ export function ReportHero({
             </Text>
           )}
         </View>
-        <View style={styles.kpi}>
+        <View style={[styles.kpi, share(1)]}>
           <Text style={styles.kpiLabel}>Kept</Text>
           <Text
             style={[styles.kpiValue, kept < 0 ? styles.bad : styles.good]}
@@ -143,10 +146,9 @@ const styles = StyleSheet.create({
   budgetText: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
   kpis: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
   kpisStacked: { flexDirection: 'column', alignItems: 'stretch', gap: 8 },
-  kpi: { flexGrow: 1, flexShrink: 1, flexBasis: 0, minWidth: 0 },
-  kpiLead: { flexGrow: 1.1 },
-  // Income carries the long line ("↑ 8% so far vs the month before"): the width it needs to stay on two lines at 360 dp.
-  kpiIncome: { flexGrow: 1.25 },
+  // Income gets the most room (1.25): it carries the long line ("↑ 8% so far vs the month before"), which needs that
+  // width to stay on two lines at 360 dp; Spent leads (1.1). See `share`.
+  kpi: { minWidth: 0 },
   kpiLabel: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
   kpiValue: {
     fontFamily: theme.font.bodyMedium,
