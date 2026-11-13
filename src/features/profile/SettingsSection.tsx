@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import { Appear } from '@/components/Appear';
 import { View, Pressable, useWindowDimensions } from 'react-native';
 import { Text } from '@/components/Text';
 import { useFocusEffect, router } from 'expo-router';
@@ -275,13 +276,13 @@ export function SettingsSection() {
   return (
     <>
       {readFailed && (
-        <View style={styles.errorBanner}>
+        <Appear style={styles.errorBanner}>
           <Text style={styles.errorTitle}>Some settings couldn’t be read</Text>
           <Text style={styles.errorDetail}>
             Previously loaded values are kept. Retry to check the latest settings.
           </Text>
           <PrimaryButton title="Retry" variant="secondary" compact onPress={() => void load()} />
-        </View>
+        </Appear>
       )}
       <Section compact title="Appearance">
         {themeSaveError && (

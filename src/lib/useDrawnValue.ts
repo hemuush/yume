@@ -10,7 +10,7 @@ const lastShown = new Map<string, number>();
 /**
  * A shared value for a bar, line or ring on the UI thread (smooth even while JavaScript is busy): it shows its value
  * at once (nothing draws in from empty), a key seen before keeps what it showed, a real change glides old to new,
- * and reduced motion goes straight to the end. The UI-thread twin of useGrowFrom.
+ * and reduced motion goes straight to the end.
  */
 export function useDrawnValue(
   key: string,

@@ -1,4 +1,6 @@
 import { PrimaryButton } from '@/components/PrimaryButton';
+import { Appear } from '@/components/Appear';
+import { LoadFade } from '@/components/LoadFade';
 import { useCallback, useState } from 'react';
 import { View, StyleSheet, Pressable } from 'react-native';
 import { Text } from '@/components/Text';
@@ -179,137 +181,139 @@ export default function NeedsYouScreen() {
           paddingBottom: theme.layout.screenScrollPad + insets.bottom,
         }}
       >
-        {loadError && (
-          <View style={styles.errorBanner}>
-            <Text style={styles.errorTitle}>Couldn’t load what needs you</Text>
-            <Text style={styles.errorDetail}>{loadError}</Text>
-            <PrimaryButton title="Retry" compact variant="secondary" onPress={() => void reload()} />
-          </View>
-        )}
+        <LoadFade loaded={shown !== null}>
+          {loadError && (
+            <Appear style={styles.errorBanner}>
+              <Text style={styles.errorTitle}>Couldn’t load what needs you</Text>
+              <Text style={styles.errorDetail}>{loadError}</Text>
+              <PrimaryButton title="Retry" compact variant="secondary" onPress={() => void reload()} />
+            </Appear>
+          )}
 
-        {shown === null ? (
-          // Bones only while loading: a failed load shows just its banner.
-          loadError ? null : (
-            <View style={{ marginTop: theme.layout.screenTopGap }}>
-              <CardRowsSkeleton rows={3} />
-            </View>
-          )
-        ) : shown.length === 0 ? (
-          <EmptyState
-            title="All caught up"
-            subtitle="Nothing needs you right now. Suu will say when something does."
-          >
-            <PrimaryButton
-              title="Choose what Yume mentions"
-              variant="secondary"
-              compact
-              onPress={() => router.push('/notification-settings')}
-            />
-          </EmptyState>
-        ) : (
-          <>
-            <SummaryCard>
-              <SummaryTop
-                label={shown.some((i) => i.tone === 'urgent') ? 'Needs you today' : 'Needs you'}
-                figure={
-                  <View style={styles.figureRow}>
-                    <Text style={summaryFigure}>{shown.length}</Text>
-                    <Text style={styles.figureNote}>{shown.length === 1 ? 'thing' : 'things'}</Text>
-                  </View>
-                }
-                side={
-                  shown.some((i) => i.tone === 'urgent') ? <SummarySide main="Do these first" /> : undefined
-                }
-              />
-              <SummarySplit
-                parts={TONES.map((t) => ({
-                  key: t,
-                  weight: shown.filter((i) => i.tone === t).length,
-                  color: NEEDS_TONE[t].color,
-                }))}
-              />
-              <View style={styles.tones}>
-                {TONES.map((t) => {
-                  const n = shown.filter((i) => i.tone === t).length;
-                  return n > 0 ? (
-                    <View key={t} style={styles.toneChip}>
-                      <View style={[styles.toneDot, { backgroundColor: NEEDS_TONE[t].color }]} />
-                      <Text style={styles.toneText}>
-                        {n} {NEEDS_TONE[t].label}
-                      </Text>
-                    </View>
-                  ) : null;
-                })}
+          {shown === null ? (
+            // Bones only while loading: a failed load shows just its banner.
+            loadError ? null : (
+              <View style={{ marginTop: theme.layout.screenTopGap }}>
+                <CardRowsSkeleton rows={3} />
               </View>
-            </SummaryCard>
-            {TONES.map((t) => {
-              const group = shown.filter((i) => i.tone === t);
-              return group.length > 0 ? (
-                <Section key={t} compact title={GROUP_TITLE[t]} badge={group.length}>
-                  <ListCard>
-                    {group.map((item, i) => (
-                      <NeedsYouRow
-                        key={item.key}
-                        item={item}
-                        divider={i > 0}
-                        onPress={() => open(item)}
-                        onSnooze={() => void snooze(item)}
-                        onDismiss={() => void dismiss(item)}
-                      />
-                    ))}
-                  </ListCard>
-                </Section>
-              ) : null;
-            })}
-          </>
-        )}
-
-        {suuLines.length > 0 && (
-          <Section title="Suu says">
-            <View style={styles.suu}>
-              <View style={styles.suuFace}>
-                <SuuIllustration size={38} />
-              </View>
-              <View style={styles.suuLines}>
-                {suuLines.map((line, i) => (
-                  <Text key={`${i}:${line}`} style={styles.suuText}>
-                    {line}
-                  </Text>
-                ))}
-              </View>
-            </View>
-          </Section>
-        )}
-
-        {dismissed.length > 0 && (
-          <>
-            <Pressable
-              onPress={() => setShowDismissed((v) => !v)}
-              style={withPressedTint(accent, styles.dismissedToggle)}
-              accessibilityRole="button"
-              accessibilityState={{ expanded: showDismissed }}
+            )
+          ) : shown.length === 0 ? (
+            <EmptyState
+              title="All caught up"
+              subtitle="Nothing needs you right now. Suu will say when something does."
             >
-              <Text style={styles.dismissedToggleText}>
-                {showDismissed ? 'Hide dismissed' : `Show dismissed (${dismissed.length})`}
-              </Text>
-            </Pressable>
-            {showDismissed && (
-              <ListCard style={styles.dismissedList}>
-                {dismissed.map((item, i) => (
-                  <NeedsYouRow
-                    key={item.key}
-                    item={{ ...item, snoozable: false }}
-                    divider={i > 0}
-                    onPress={() => open(item)}
-                    onSnooze={() => {}}
-                    onDismiss={() => void bringBack(item)}
-                    dismissLabel="Show again"
-                  />
-                ))}
-              </ListCard>
-            )}
-          </>
-        )}
+              <PrimaryButton
+                title="Choose what Yume mentions"
+                variant="secondary"
+                compact
+                onPress={() => router.push('/notification-settings')}
+              />
+            </EmptyState>
+          ) : (
+            <>
+              <SummaryCard>
+                <SummaryTop
+                  label={shown.some((i) => i.tone === 'urgent') ? 'Needs you today' : 'Needs you'}
+                  figure={
+                    <View style={styles.figureRow}>
+                      <Text style={summaryFigure}>{shown.length}</Text>
+                      <Text style={styles.figureNote}>{shown.length === 1 ? 'thing' : 'things'}</Text>
+                    </View>
+                  }
+                  side={
+                    shown.some((i) => i.tone === 'urgent') ? <SummarySide main="Do these first" /> : undefined
+                  }
+                />
+                <SummarySplit
+                  parts={TONES.map((t) => ({
+                    key: t,
+                    weight: shown.filter((i) => i.tone === t).length,
+                    color: NEEDS_TONE[t].color,
+                  }))}
+                />
+                <View style={styles.tones}>
+                  {TONES.map((t) => {
+                    const n = shown.filter((i) => i.tone === t).length;
+                    return n > 0 ? (
+                      <View key={t} style={styles.toneChip}>
+                        <View style={[styles.toneDot, { backgroundColor: NEEDS_TONE[t].color }]} />
+                        <Text style={styles.toneText}>
+                          {n} {NEEDS_TONE[t].label}
+                        </Text>
+                      </View>
+                    ) : null;
+                  })}
+                </View>
+              </SummaryCard>
+              {TONES.map((t) => {
+                const group = shown.filter((i) => i.tone === t);
+                return group.length > 0 ? (
+                  <Section key={t} compact title={GROUP_TITLE[t]} badge={group.length}>
+                    <ListCard>
+                      {group.map((item, i) => (
+                        <NeedsYouRow
+                          key={item.key}
+                          item={item}
+                          divider={i > 0}
+                          onPress={() => open(item)}
+                          onSnooze={() => void snooze(item)}
+                          onDismiss={() => void dismiss(item)}
+                        />
+                      ))}
+                    </ListCard>
+                  </Section>
+                ) : null;
+              })}
+            </>
+          )}
+
+          {suuLines.length > 0 && (
+            <Section title="Suu says">
+              <View style={styles.suu}>
+                <View style={styles.suuFace}>
+                  <SuuIllustration size={38} />
+                </View>
+                <View style={styles.suuLines}>
+                  {suuLines.map((line, i) => (
+                    <Text key={`${i}:${line}`} style={styles.suuText}>
+                      {line}
+                    </Text>
+                  ))}
+                </View>
+              </View>
+            </Section>
+          )}
+
+          {dismissed.length > 0 && (
+            <>
+              <Pressable
+                onPress={() => setShowDismissed((v) => !v)}
+                style={withPressedTint(accent, styles.dismissedToggle)}
+                accessibilityRole="button"
+                accessibilityState={{ expanded: showDismissed }}
+              >
+                <Text style={styles.dismissedToggleText}>
+                  {showDismissed ? 'Hide dismissed' : `Show dismissed (${dismissed.length})`}
+                </Text>
+              </Pressable>
+              {showDismissed && (
+                <ListCard style={styles.dismissedList}>
+                  {dismissed.map((item, i) => (
+                    <NeedsYouRow
+                      key={item.key}
+                      item={{ ...item, snoozable: false }}
+                      divider={i > 0}
+                      onPress={() => open(item)}
+                      onSnooze={() => {}}
+                      onDismiss={() => void bringBack(item)}
+                      dismissLabel="Show again"
+                    />
+                  ))}
+                </ListCard>
+              )}
+            </>
+          )}
+        </LoadFade>
       </ReanimatedAnimated.ScrollView>
       <SkyHeader
         collapse={collapse}

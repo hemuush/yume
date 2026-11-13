@@ -165,3 +165,40 @@ describe('the filter row does not change size when it is used', () => {
     act(() => spent.unmount());
   });
 });
+
+describe('what is picked comes and goes with a fade', () => {
+  it('wraps each picked chip and Clear all in Appear, so none of them pops in or out', () => {
+    const { CONTENT_ENTER } = require('@/lib/animation');
+    jest
+      .spyOn(require('react-native'), 'useWindowDimensions')
+      .mockReturnValue({ width: 390, height: 800, scale: 3, fontScale: 1 });
+    let tree!: ReactTestRenderer;
+    act(() => {
+      tree = create(
+        <ActivityFilterChips
+          filterType={'expense' as ActivityType}
+          onFilterType={jest.fn()}
+          categoryIds={['food', 'fuel']}
+          accountIds={['SBI']}
+          expenseLabel="Lunch"
+          categoryName={(id) => id}
+          accountName={(id) => id}
+          onRemoveCategory={jest.fn()}
+          onRemoveAccount={jest.fn()}
+          onRemoveLabel={jest.fn()}
+          onClearAll={jest.fn()}
+          onOpenFilters={jest.fn()}
+        />
+      );
+    });
+    const { View } = require('react-native');
+    const fading = tree.root.findAll((n) => n.type === View && n.props.entering === CONTENT_ENTER);
+    // Two categories, an account, a label and Clear all.
+    expect(fading).toHaveLength(5);
+    // The type pills are not among them: they never come or go.
+    expect(
+      fading.every((n) => n.findAll((c) => /^Show /.test(String(c.props.accessibilityLabel))).length === 0)
+    ).toBe(true);
+    act(() => tree.unmount());
+  });
+});

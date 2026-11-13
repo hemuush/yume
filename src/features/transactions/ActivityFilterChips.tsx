@@ -1,4 +1,5 @@
 import { themeInk } from '@/theme/interactionColors';
+import { Appear } from '@/components/Appear';
 import { View, Pressable, ScrollView, ActivityIndicator, useWindowDimensions } from 'react-native';
 import { HeaderIconButton } from '@/components/AppHeader';
 import { Text } from '@/components/Text';
@@ -92,52 +93,58 @@ export function ActivityFilterChips({
   const pickedChips = picked > 0 && (
     <>
       {categoryIds.map((id) => (
-        <Pressable
-          key={id}
-          onPress={() => onRemoveCategory(id)}
-          style={withPressedTint(accent, [styles.chip, { backgroundColor: chipBg }])}
-          accessibilityRole="button"
-          accessibilityLabel={`Remove the ${categoryName(id)} filter`}
-        >
-          <Text style={styles.chipText}>{categoryName(id)}</Text>
-          <Feather name="x" size={12} color={theme.colors.textSecondary} />
-        </Pressable>
+        <Appear key={`category:${id}`}>
+          <Pressable
+            onPress={() => onRemoveCategory(id)}
+            style={withPressedTint(accent, [styles.chip, { backgroundColor: chipBg }])}
+            accessibilityRole="button"
+            accessibilityLabel={`Remove the ${categoryName(id)} filter`}
+          >
+            <Text style={styles.chipText}>{categoryName(id)}</Text>
+            <Feather name="x" size={12} color={theme.colors.textSecondary} />
+          </Pressable>
+        </Appear>
       ))}
       {accountIds.map((id) => (
-        <Pressable
-          key={id}
-          onPress={() => onRemoveAccount(id)}
-          style={withPressedTint(accent, [styles.chip, { backgroundColor: chipBg }])}
-          accessibilityRole="button"
-          accessibilityLabel={`Remove the ${accountName(id)} filter`}
-        >
-          <Feather name="credit-card" size={11} color={theme.colors.textSecondary} />
-          <Text style={styles.chipText}>{accountName(id)}</Text>
-          <Feather name="x" size={12} color={theme.colors.textSecondary} />
-        </Pressable>
+        <Appear key={`account:${id}`}>
+          <Pressable
+            onPress={() => onRemoveAccount(id)}
+            style={withPressedTint(accent, [styles.chip, { backgroundColor: chipBg }])}
+            accessibilityRole="button"
+            accessibilityLabel={`Remove the ${accountName(id)} filter`}
+          >
+            <Feather name="credit-card" size={11} color={theme.colors.textSecondary} />
+            <Text style={styles.chipText}>{accountName(id)}</Text>
+            <Feather name="x" size={12} color={theme.colors.textSecondary} />
+          </Pressable>
+        </Appear>
       ))}
       {!!expenseLabel && (
-        <Pressable
-          onPress={onRemoveLabel}
-          style={withPressedTint(accent, [styles.chip, { backgroundColor: chipBg }])}
-          accessibilityRole="button"
-          accessibilityLabel="Remove expense label filter"
-        >
-          <Text style={styles.chipText}>Label: {expenseLabel}</Text>
-          <Feather name="x" size={12} color={theme.colors.textSecondary} />
-        </Pressable>
+        <Appear>
+          <Pressable
+            onPress={onRemoveLabel}
+            style={withPressedTint(accent, [styles.chip, { backgroundColor: chipBg }])}
+            accessibilityRole="button"
+            accessibilityLabel="Remove expense label filter"
+          >
+            <Text style={styles.chipText}>Label: {expenseLabel}</Text>
+            <Feather name="x" size={12} color={theme.colors.textSecondary} />
+          </Pressable>
+        </Appear>
       )}
     </>
   );
   const clearAll = picked > 0 && (
-    <Pressable
-      onPress={onClearAll}
-      style={withPressedTint(accent, styles.chip)}
-      accessibilityRole="button"
-      accessibilityLabel="Clear all Activity filters"
-    >
-      <Text style={styles.chipText}>Clear all</Text>
-    </Pressable>
+    <Appear>
+      <Pressable
+        onPress={onClearAll}
+        style={withPressedTint(accent, styles.chip)}
+        accessibilityRole="button"
+        accessibilityLabel="Clear all Activity filters"
+      >
+        <Text style={styles.chipText}>Clear all</Text>
+      </Pressable>
+    </Appear>
   );
   const filterButton = onOpenFilters && (
     <HeaderIconButton

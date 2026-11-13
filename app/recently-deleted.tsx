@@ -1,5 +1,7 @@
 import { useSaveOnce } from '@/lib/useSaveOnce';
+import { Appear } from '@/components/Appear';
 import { ScreenLoadError } from '@/components/ScreenLoadError';
+import { LoadFade } from '@/components/LoadFade';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { useCallback, useMemo, useState } from 'react';
 import { View, StyleSheet, Pressable } from 'react-native';
@@ -153,128 +155,130 @@ export default function RecentlyDeletedScreen() {
           paddingBottom: theme.layout.screenScrollPad + insets.bottom,
         }}
       >
-        {loadError && (
-          <View style={styles.errorBanner}>
-            <Text style={styles.errorTitle}>Couldn&rsquo;t load Recently deleted</Text>
-            <Text style={styles.errorDetail}>{loadError}</Text>
-            <PrimaryButton title="Retry" compact variant="secondary" onPress={() => void reload()} />
-          </View>
-        )}
-        {!loaded ? (
-          <>
-            <SummarySkeleton />
-            <View style={{ marginTop: 16 }}>
-              <CardRowsSkeleton rows={3} />
-            </View>
-          </>
-        ) : entries.length === 0 ? (
-          <EmptyState
-            title="Nothing here"
-            subtitle="Entries you delete wait here for 30 days, then they’re gone for good."
-          />
-        ) : (
-          <>
-            <SummaryCard>
-              <SummaryTop
-                label="Waiting to be restored"
-                figure={
-                  <View style={styles.figureRow}>
-                    <Text style={summaryFigure}>{entries.length}</Text>
-                    <Text style={styles.figureNote}>{entries.length === 1 ? 'entry' : 'entries'}</Text>
-                  </View>
-                }
-                side={
-                  <SummarySide
-                    main={`Oldest leaves in ${soonest} ${soonest === 1 ? 'day' : 'days'}`}
-                    note="then gone for good"
-                  />
-                }
-              />
-              <Text style={styles.hint}>
-                Entries you delete wait here for 30 days. Each ring is the time left.
-              </Text>
-            </SummaryCard>
-            {groups.map((g) => (
-              <Section key={g.title} title={g.title}>
-                <ListCard>
-                  {g.items.map((entry, i) => {
-                    const cat = categoryOf(entry.categoryId);
-                    const isTransfer = entry.type === 'transfer';
-                    const title = isTransfer ? 'Transfer' : (cat?.name ?? 'Uncategorised');
-                    const where =
-                      entry.note.trim() || accounts.find((a) => a.id === entry.accountId)?.name || '';
-                    const sub = entry.blockedReason
-                      ? entry.blockedReason
-                      : [
-                          isTransfer ? undefined : inParent(parentOf(cat)),
-                          where,
-                          dayMonthMaybeYear(entry.date),
-                          `${entry.daysLeft} day${entry.daysLeft === 1 ? '' : 's'} left`,
-                        ]
-                          .filter(Boolean)
-                          .join(' · ');
-                    return (
-                      <View key={entry.id} style={[h.row, i > 0 && h.divider]}>
-                        <DaysLeftRing daysLeft={entry.daysLeft}>
-                          <CategoryIcon
-                            name={isTransfer ? 'swap-horizontal' : (cat?.icon ?? 'tag')}
-                            color={isTransfer ? secondary : (cat?.color ?? theme.colors.textMuted)}
-                            square={38}
-                            round
-                          />
-                        </DaysLeftRing>
-                        <View style={h.mid}>
-                          <Text style={h.title} numberOfLines={2}>
-                            {title}
-                          </Text>
-                          <Text style={h.sub} numberOfLines={2}>
-                            {sub}
-                          </Text>
-                        </View>
-                        <Text
-                          style={[
-                            h.amount,
-                            entry.type === 'expense' && h.expense,
-                            entry.type === 'income' && h.income,
-                          ]}
-                        >
-                          {entry.type === 'expense' ? '−' : entry.type === 'income' ? '+' : ''}
-                          <Amount
-                            minor={entry.amountMinor}
-                            currency={accounts.find((a) => a.id === entry.accountId)?.currency}
-                            sensitive={isSavings(entry)}
-                          />
-                        </Text>
-                        {!entry.blockedReason && (
-                          <Pressable
-                            onPress={() => void restore(entry)}
-                            disabled={busyId != null}
-                            hitSlop={8}
-                            accessibilityRole="button"
-                            accessibilityLabel={`Restore ${title}${entry.note ? `, ${entry.note}` : ''}`}
-                            style={withPressed(styles.restore)}
+        <LoadFade loaded={loaded}>
+          {loadError && (
+            <Appear style={styles.errorBanner}>
+              <Text style={styles.errorTitle}>Couldn&rsquo;t load Recently deleted</Text>
+              <Text style={styles.errorDetail}>{loadError}</Text>
+              <PrimaryButton title="Retry" compact variant="secondary" onPress={() => void reload()} />
+            </Appear>
+          )}
+          {!loaded ? (
+            <>
+              <SummarySkeleton />
+              <View style={{ marginTop: 16 }}>
+                <CardRowsSkeleton rows={3} />
+              </View>
+            </>
+          ) : entries.length === 0 ? (
+            <EmptyState
+              title="Nothing here"
+              subtitle="Entries you delete wait here for 30 days, then they’re gone for good."
+            />
+          ) : (
+            <>
+              <SummaryCard>
+                <SummaryTop
+                  label="Waiting to be restored"
+                  figure={
+                    <View style={styles.figureRow}>
+                      <Text style={summaryFigure}>{entries.length}</Text>
+                      <Text style={styles.figureNote}>{entries.length === 1 ? 'entry' : 'entries'}</Text>
+                    </View>
+                  }
+                  side={
+                    <SummarySide
+                      main={`Oldest leaves in ${soonest} ${soonest === 1 ? 'day' : 'days'}`}
+                      note="then gone for good"
+                    />
+                  }
+                />
+                <Text style={styles.hint}>
+                  Entries you delete wait here for 30 days. Each ring is the time left.
+                </Text>
+              </SummaryCard>
+              {groups.map((g) => (
+                <Section key={g.title} title={g.title}>
+                  <ListCard>
+                    {g.items.map((entry, i) => {
+                      const cat = categoryOf(entry.categoryId);
+                      const isTransfer = entry.type === 'transfer';
+                      const title = isTransfer ? 'Transfer' : (cat?.name ?? 'Uncategorised');
+                      const where =
+                        entry.note.trim() || accounts.find((a) => a.id === entry.accountId)?.name || '';
+                      const sub = entry.blockedReason
+                        ? entry.blockedReason
+                        : [
+                            isTransfer ? undefined : inParent(parentOf(cat)),
+                            where,
+                            dayMonthMaybeYear(entry.date),
+                            `${entry.daysLeft} day${entry.daysLeft === 1 ? '' : 's'} left`,
+                          ]
+                            .filter(Boolean)
+                            .join(' · ');
+                      return (
+                        <View key={entry.id} style={[h.row, i > 0 && h.divider]}>
+                          <DaysLeftRing daysLeft={entry.daysLeft}>
+                            <CategoryIcon
+                              name={isTransfer ? 'swap-horizontal' : (cat?.icon ?? 'tag')}
+                              color={isTransfer ? secondary : (cat?.color ?? theme.colors.textMuted)}
+                              square={38}
+                              round
+                            />
+                          </DaysLeftRing>
+                          <View style={h.mid}>
+                            <Text style={h.title} numberOfLines={2}>
+                              {title}
+                            </Text>
+                            <Text style={h.sub} numberOfLines={2}>
+                              {sub}
+                            </Text>
+                          </View>
+                          <Text
+                            style={[
+                              h.amount,
+                              entry.type === 'expense' && h.expense,
+                              entry.type === 'income' && h.income,
+                            ]}
                           >
-                            <Text style={styles.restoreText}>{busyId === entry.id ? '…' : 'Restore'}</Text>
-                          </Pressable>
-                        )}
-                      </View>
-                    );
-                  })}
-                </ListCard>
-              </Section>
-            ))}
-            <Pressable
-              onPress={emptyAll}
-              disabled={busyId != null}
-              accessibilityState={{ disabled: busyId != null }}
-              accessibilityRole="button"
-              style={withPressed(styles.emptyAll)}
-              hitSlop={8}
-            >
-              <Text style={styles.emptyAllText}>Delete all for good</Text>
-            </Pressable>
-          </>
-        )}
+                            {entry.type === 'expense' ? '−' : entry.type === 'income' ? '+' : ''}
+                            <Amount
+                              minor={entry.amountMinor}
+                              currency={accounts.find((a) => a.id === entry.accountId)?.currency}
+                              sensitive={isSavings(entry)}
+                            />
+                          </Text>
+                          {!entry.blockedReason && (
+                            <Pressable
+                              onPress={() => void restore(entry)}
+                              disabled={busyId != null}
+                              hitSlop={8}
+                              accessibilityRole="button"
+                              accessibilityLabel={`Restore ${title}${entry.note ? `, ${entry.note}` : ''}`}
+                              style={withPressed(styles.restore)}
+                            >
+                              <Text style={styles.restoreText}>{busyId === entry.id ? '…' : 'Restore'}</Text>
+                            </Pressable>
+                          )}
+                        </View>
+                      );
+                    })}
+                  </ListCard>
+                </Section>
+              ))}
+              <Pressable
+                onPress={emptyAll}
+                disabled={busyId != null}
+                accessibilityState={{ disabled: busyId != null }}
+                accessibilityRole="button"
+                style={withPressed(styles.emptyAll)}
+                hitSlop={8}
+              >
+                <Text style={styles.emptyAllText}>Delete all for good</Text>
+              </Pressable>
+            </>
+          )}
+        </LoadFade>
       </ReanimatedAnimated.ScrollView>
       <SkyHeader
         collapse={collapse}

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Animated, View, Pressable } from 'react-native';
+import { View, Pressable } from 'react-native';
 import Svg, { Circle, Line, Polyline } from 'react-native-svg';
 import { Text } from '@/components/Text';
 import { CategoryIcon } from '@/components/CategoryIcon';
@@ -8,7 +8,6 @@ import { formatMoney } from '@/lib/money';
 import { roundedMinor } from '@/lib/round';
 import { withPressedTint } from '@/lib/pressed';
 import { useAccent } from '@/theme/AccentContext';
-import { useGrowFrom } from '@/lib/useGrowFrom';
 import type { Category } from '@/types';
 import type { CategoryAgainstUsual } from './reportsInsights';
 import { styles } from './reports.styles';
@@ -19,23 +18,8 @@ const SPARK_W = 62;
 const SPARK_H = 24;
 const SPARK_PAD = 3;
 
-const AnimatedPolyline = Animated.createAnimatedComponent(Polyline);
-const AnimatedLine = Animated.createAnimatedComponent(Line);
-const AnimatedCircle = Animated.createAnimatedComponent(Circle);
-
-/** The line draws in from its first month, then the live segment and end dot fade in; still on a revisit. */
-function Sparkline({
-  animKey,
-  values,
-  usual,
-  live,
-}: {
-  animKey: string;
-  values: number[];
-  usual: number;
-  live: boolean;
-}) {
-  const draw = useGrowFrom(animKey, 1);
+/** A category's recent months as a small line against its usual level; a month still going is dashed. */
+function Sparkline({ values, usual, live }: { values: number[]; usual: number; live: boolean }) {
   const lo = Math.min(...values, usual);
   const hi = Math.max(...values, usual);
   const y = (v: number) => SPARK_H - SPARK_PAD - ((v - lo) / (hi - lo || 1)) * (SPARK_H - 2 * SPARK_PAD);
@@ -43,11 +27,6 @@ function Sparkline({
   const pts = (list: number[]) => list.map((v, i) => `${x(i)},${y(v)}`).join(' ');
   const last = values.length - 1;
   const solid = live ? values.slice(0, -1) : values;
-  let length = 0;
-  for (let i = 1; i < solid.length; i++) length += Math.hypot(x(i) - x(i - 1), y(solid[i]) - y(solid[i - 1]));
-  length = Math.ceil(length) + 1;
-  const offset = draw.interpolate({ inputRange: [0, 1], outputRange: [length, 0] });
-  const late = draw.interpolate({ inputRange: [0, 0.7, 1], outputRange: [0, 0, 1] });
   const stroke = {
     stroke: theme.colors.ink,
     strokeOpacity: 0.75,
@@ -65,17 +44,9 @@ function Sparkline({
         strokeWidth={1}
         strokeDasharray="2 3"
       />
-      <AnimatedPolyline
-        points={pts(solid)}
-        fill="none"
-        strokeLinejoin="round"
-        strokeDasharray={length}
-        strokeDashoffset={offset}
-        {...stroke}
-      />
+      <Polyline points={pts(solid)} fill="none" strokeLinejoin="round" {...stroke} />
       {live && (
-        <AnimatedLine
-          opacity={late}
+        <Line
           x1={x(last - 1)}
           y1={y(values[last - 1])}
           x2={x(last)}
@@ -84,7 +55,7 @@ function Sparkline({
           {...stroke}
         />
       )}
-      <AnimatedCircle opacity={late} cx={x(last)} cy={y(values[last])} r={3} fill={theme.colors.ink} />
+      <Circle cx={x(last)} cy={y(values[last])} r={3} fill={theme.colors.ink} />
     </Svg>
   );
 }
@@ -120,12 +91,7 @@ function TrackRow({
         <Text style={styles.trackSub}>{`${now}${inProgress ? ' so far' : ''} · usual\u00A0${usual}`}</Text>
       </View>
       <View style={styles.trackEnd}>
-        <Sparkline
-          animKey={`spark:${r.categoryId}`}
-          values={r.totalsMinor}
-          usual={r.usualMinor}
-          live={inProgress}
-        />
+        <Sparkline values={r.totalsMinor} usual={r.usualMinor} live={inProgress} />
         <Text
           style={[styles.trackPct, r.pct > 105 && styles.trackPctOver, r.pct < 95 && styles.trackPctUnder]}
         >

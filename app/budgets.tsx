@@ -1,4 +1,6 @@
 import { ScreenLoadError } from '@/components/ScreenLoadError';
+import { Appear } from '@/components/Appear';
+import { CONTENT_ENTER } from '@/lib/animation';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { continueBudgets } from '@/features/budgets/continueBudgets';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -257,6 +259,8 @@ export default function BudgetsScreen() {
     <View style={styles.container}>
       <HomeWallpaper accent={accent} secondary={secondary} plain />
       <ReanimatedAnimated.ScrollView
+        // The data arriving after the placeholders: one short fade, the header and wallpaper stay solid.
+        entering={CONTENT_ENTER}
         ref={scrollRef}
         onScroll={scrollHandler}
         scrollEventThrottle={16}
@@ -266,11 +270,11 @@ export default function BudgetsScreen() {
         }}
       >
         {loadError && (
-          <View style={styles.errorBanner}>
+          <Appear style={styles.errorBanner}>
             <Text style={styles.errorTitle}>Couldn’t load your budgets</Text>
             <Text style={styles.errorDetail}>{loadError}</Text>
             <PrimaryButton title="Retry" compact variant="secondary" onPress={() => void load()} />
-          </View>
+          </Appear>
         )}
 
         {budgets.length > 0 && <BudgetsHero figures={hero} />}

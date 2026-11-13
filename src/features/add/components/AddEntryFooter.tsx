@@ -1,4 +1,5 @@
 import { Pressable, View } from 'react-native';
+import { Appear } from '@/components/Appear';
 import { Text } from '@/components/Text';
 import { KeyboardStickyView } from 'react-native-keyboard-controller';
 import Feather from '@expo/vector-icons/Feather';
@@ -149,12 +150,16 @@ export function AddEntryFooter({ model }: Props): ReactElement {
     >
       {(statusHint || rows.length > 0) && (
         // One line when it fits: what is missing on the left, how many are waiting on the right.
-        <View style={styles.footerStatus}>
+        <Appear style={styles.footerStatus}>
           {statusHint ? <Text style={styles.formHint}>{statusHint}</Text> : null}
           {rows.length > 0 && <Text style={styles.queueHint}>{rows.length} on your list</Text>}
-        </View>
+        </Appear>
       )}
-      {error && <Text style={styles.error}>{error}</Text>}
+      {error && (
+        <Appear>
+          <Text style={styles.error}>{error}</Text>
+        </Appear>
+      )}
       <View
         pointerEvents={formBusy || !formReady ? 'none' : 'auto'}
         accessibilityElementsHidden={formBusy || !formReady}

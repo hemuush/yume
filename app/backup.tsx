@@ -1,4 +1,6 @@
 import { useSaveOnce } from '@/lib/useSaveOnce';
+import { Appear } from '@/components/Appear';
+import { LoadFade } from '@/components/LoadFade';
 import { ScreenLoadError } from '@/components/ScreenLoadError';
 import { useCallback, useState } from 'react';
 import { View, Pressable } from 'react-native';
@@ -475,86 +477,88 @@ Restore anyway? Your current data would be replaced with no way back.`,
         }}
       >
         {loadError && (
-          <View style={listScreenStyles.errorBanner}>
+          <Appear style={listScreenStyles.errorBanner}>
             <Text style={listScreenStyles.errorTitle}>Couldn’t load your backup settings</Text>
             <Text style={listScreenStyles.errorDetail}>{loadError}</Text>
             <PrimaryButton title="Retry" compact variant="secondary" onPress={() => void load()} />
-          </View>
+          </Appear>
         )}
         {/* The summary card, with a shield in the status’s colour (green when safe, amber or red when it needs you). */}
         <SummaryCard style={styles.statusCard}>
-          {!loaded ? (
-            <>
-              <Skeleton width={200} height={16} radius={4} />
-              <Skeleton width={240} height={12} radius={4} style={{ marginTop: 8 }} />
-              <Skeleton width={240} height={44} radius={999} style={{ marginTop: 14 }} />
-            </>
-          ) : (
-            <>
-              <View style={styles.statusHead}>
-                <BackupShield icon={status.icon} tone={status.tone} />
-                <View style={h.mid}>
-                  <Text style={styles.statusTitle}>{status.title}</Text>
-                  {status.lines.map((line) => (
-                    <Text key={line} style={[h.sub, status.failed && styles.errorLine]}>
-                      {line}
-                    </Text>
-                  ))}
-                </View>
-              </View>
-              {hasFolder ? (
-                <PrimaryButton
-                  title={
-                    folderError
-                      ? busy === 'pick-folder'
-                        ? 'Choosing…'
-                        : 'Choose another folder'
-                      : busy === 'backup-now-local'
-                        ? 'Backing up…'
-                        : 'Back up now'
-                  }
-                  done={doneLabel === 'backup-now-local'}
-                  onPress={folderError ? choosePickFolder : backupNowLocal}
-                  disabled={!!busy}
-                  style={styles.mainAction}
-                />
-              ) : (
-                <PrimaryButton
-                  title={busy === 'pick-folder' ? 'Choosing…' : 'Choose folder'}
-                  onPress={choosePickFolder}
-                  disabled={!!busy}
-                  style={styles.mainAction}
-                />
-              )}
-              <View style={styles.scheduleBlock}>
-                <InsightDisclosure title="Backup schedule">
-                  <Text style={styles.scheduleHint}>Choose how often Yume saves to your folder.</Text>
-                  <SegmentedControl
-                    options={FREQUENCIES}
-                    value={frequency}
-                    onChange={onChangeFrequency}
-                    disabled={!!busy}
-                  />
-                  <View style={styles.scheduleFoot}>
-                    <Text style={styles.scheduleHint}>
-                      Runs while Yume is open. Nothing leaves your phone.
-                    </Text>
-                    {hasFolder && (
-                      <Pressable
-                        onPress={forgetFolder}
-                        disabled={!!busy}
-                        hitSlop={8}
-                        accessibilityRole="button"
-                        style={withPressedTint(accent, [styles.linkAction, busy && styles.linkDisabled])}
-                      >
-                        <Text style={styles.link}>Forget folder</Text>
-                      </Pressable>
-                    )}
+          <LoadFade loaded={loaded}>
+            {!loaded ? (
+              <>
+                <Skeleton width={200} height={16} radius={4} />
+                <Skeleton width={240} height={12} radius={4} style={{ marginTop: 8 }} />
+                <Skeleton width={240} height={44} radius={999} style={{ marginTop: 14 }} />
+              </>
+            ) : (
+              <>
+                <View style={styles.statusHead}>
+                  <BackupShield icon={status.icon} tone={status.tone} />
+                  <View style={h.mid}>
+                    <Text style={styles.statusTitle}>{status.title}</Text>
+                    {status.lines.map((line) => (
+                      <Text key={line} style={[h.sub, status.failed && styles.errorLine]}>
+                        {line}
+                      </Text>
+                    ))}
                   </View>
-                </InsightDisclosure>
-              </View>
-            </>
-          )}
+                </View>
+                {hasFolder ? (
+                  <PrimaryButton
+                    title={
+                      folderError
+                        ? busy === 'pick-folder'
+                          ? 'Choosing…'
+                          : 'Choose another folder'
+                        : busy === 'backup-now-local'
+                          ? 'Backing up…'
+                          : 'Back up now'
+                    }
+                    done={doneLabel === 'backup-now-local'}
+                    onPress={folderError ? choosePickFolder : backupNowLocal}
+                    disabled={!!busy}
+                    style={styles.mainAction}
+                  />
+                ) : (
+                  <PrimaryButton
+                    title={busy === 'pick-folder' ? 'Choosing…' : 'Choose folder'}
+                    onPress={choosePickFolder}
+                    disabled={!!busy}
+                    style={styles.mainAction}
+                  />
+                )}
+                <View style={styles.scheduleBlock}>
+                  <InsightDisclosure title="Backup schedule">
+                    <Text style={styles.scheduleHint}>Choose how often Yume saves to your folder.</Text>
+                    <SegmentedControl
+                      options={FREQUENCIES}
+                      value={frequency}
+                      onChange={onChangeFrequency}
+                      disabled={!!busy}
+                    />
+                    <View style={styles.scheduleFoot}>
+                      <Text style={styles.scheduleHint}>
+                        Runs while Yume is open. Nothing leaves your phone.
+                      </Text>
+                      {hasFolder && (
+                        <Pressable
+                          onPress={forgetFolder}
+                          disabled={!!busy}
+                          hitSlop={8}
+                          accessibilityRole="button"
+                          style={withPressedTint(accent, [styles.linkAction, busy && styles.linkDisabled])}
+                        >
+                          <Text style={styles.link}>Forget folder</Text>
+                        </Pressable>
+                      )}
+                    </View>
+                  </InsightDisclosure>
+                </View>
+              </>
+            )}
+          </LoadFade>
         </SummaryCard>
 
         <View style={[h.card, cardSurface.neutral, styles.fileActions]}>

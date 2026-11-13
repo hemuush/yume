@@ -1,4 +1,6 @@
 import { useSaveOnce } from '@/lib/useSaveOnce';
+import { Appear } from '@/components/Appear';
+import { CONTENT_ENTER } from '@/lib/animation';
 import { ScreenLoadError } from '@/components/ScreenLoadError';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { useCallback, useState } from 'react';
@@ -260,6 +262,8 @@ export default function CategoriesScreen() {
     <View style={styles.container}>
       <HomeWallpaper accent={accent} secondary={secondary} plain />
       <ReanimatedAnimated.ScrollView
+        // The data arriving after the placeholders: one short fade, the header and wallpaper stay solid.
+        entering={CONTENT_ENTER}
         ref={scrollRef}
         onScroll={scrollHandler}
         scrollEventThrottle={16}
@@ -269,11 +273,11 @@ export default function CategoriesScreen() {
         }}
       >
         {loadError && (
-          <View style={styles.errorBanner}>
+          <Appear style={styles.errorBanner}>
             <Text style={styles.errorTitle}>Couldn’t load your categories</Text>
             <Text style={styles.errorDetail}>{loadError}</Text>
             <PrimaryButton title="Retry" compact variant="secondary" onPress={() => void load()} />
-          </View>
+          </Appear>
         )}
         <View style={styles.screenIntro}>
           <Text style={styles.introText}>Organize your money, your way.</Text>
