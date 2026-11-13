@@ -1,4 +1,11 @@
-import { Easing, FadeIn, FadeOut, LinearTransition, ReduceMotion } from 'react-native-reanimated';
+import {
+  cubicBezier,
+  Easing,
+  FadeIn,
+  FadeOut,
+  LinearTransition,
+  ReduceMotion,
+} from 'react-native-reanimated';
 import { DURATIONS } from './motionTimings';
 
 /**
@@ -11,6 +18,22 @@ export const MOTION = {
   exit: Easing.bezier(0.4, 0, 1, 1),
   ...DURATIONS,
 } as const;
+
+/**
+ * One style property (or several) that glides to its new value, as a CSS transition on the shared curve. State-driven (a capsule
+ * picked, a slice dimmed): the style says where it should be and Reanimated's CSS engine does the gliding on the UI
+ * thread, with no shared value, effect or worklet to write. Nothing happens on first showing, only on a change.
+ * `reduce` is the phone's reduce-motion setting: the value then jumps.
+ */
+type Glidable = 'height' | 'opacity' | 'transform';
+export function glide(property: Glidable | Glidable[], reduce: boolean, duration = DURATIONS.standard) {
+  return {
+    transitionProperty: property,
+    // Written with its unit: valid in Reanimated and as plain CSS alike.
+    transitionDuration: `${reduce ? 0 : duration}ms` as const,
+    transitionTimingFunction: cubicBezier(0.22, 1, 0.36, 1),
+  } as const;
+}
 
 /**
  * A `withTiming` config on the shared curve. A worklet, so safe inside UI-thread animation callbacks,

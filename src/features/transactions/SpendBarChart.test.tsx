@@ -12,6 +12,7 @@ jest.mock('@/lib/money', () => ({
 }));
 
 import { SpendBarChart } from './SpendBarChart';
+import type { SpendBar } from './spendChart';
 import { buildWeekSpendBars } from './spendChart';
 import type { Transaction } from '@/types';
 
@@ -191,5 +192,47 @@ describe('SpendBarChart calm chart', () => {
     expect(JSON.stringify(overlays[0])).not.toContain('avg');
     expect(JSON.stringify(overlays[1])).toContain('avg');
     act(() => r.unmount());
+  });
+  it('draws the picked amount outside the capsule, which clips what is inside it to its own width and height', () => {
+    const r = render('2026-10-01');
+    const amount = r.root.findAllByType(Text).find((t) => [t.props.children].flat().join('') === '₹13484')!;
+    for (let node = amount.parent; node; node = node.parent) {
+      expect(StyleSheet.flatten(node.props.style)?.overflow).not.toBe('hidden');
+    }
+    act(() => r.unmount());
+  });
+
+  it('lets the average’s name step aside only where the picked amount would be drawn over it', () => {
+    const days = ['01', '02', '03', '04', '05'].map((d): SpendBar => ({
+      key: `2026-10-${d}`,
+      label: 'T',
+      totalMinor: 100_000,
+      isCurrent: false,
+      segments: [],
+    }));
+    const named = (key: string) => {
+      let r!: ReactTestRenderer;
+      act(() => {
+        r = create(
+          <SpendBarChart
+            bars={days}
+            onPressDay={jest.fn()}
+            selectedKey={key}
+            inset={0}
+            averageMinor={100_000}
+          />
+        );
+      });
+      return texts(r).some((t) => t.startsWith('avg'));
+    };
+    // The average is as tall as every bar: its name is where a bubble over one of the last three bars would be.
+    expect(named('2026-10-01')).toBe(true);
+    expect(named('2026-10-02')).toBe(true);
+    expect(named('2026-10-03')).toBe(false);
+    expect(named('2026-10-05')).toBe(false);
+    // Picked days far from the name's height leave it (a short Friday, over the name's row, with the average low).
+    expect(texts(render('2026-10-01', 5000))).toContain('avg ₹50 a day');
+    expect(texts(render('2026-10-02', 5000)).some((t) => t.startsWith('avg'))).toBe(false);
+    expect(texts(render(null, 5000))).toContain('avg ₹50 a day');
   });
 });

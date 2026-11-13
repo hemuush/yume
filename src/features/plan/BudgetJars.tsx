@@ -11,6 +11,7 @@ import type { McIconName } from '@/components/iconName';
 import { BudgetsSummary, PlanBudgetInput } from './planOverview';
 import { styles } from './plan.styles';
 import { PlanSummaryRow, PlanListAdd, summaryListStyle } from './PlanSummaryRow';
+import { GrowFill } from '@/components/GrowFill';
 import { TileGrid } from './PlanGrid';
 
 /** Used this much of its limit, a jar turns amber. */
@@ -80,6 +81,7 @@ export function BudgetJars({
               amount={amount}
               icon={(b.categoryIcon ?? 'tag') as McIconName}
               progress={b.percentUsed}
+              animKey={`plan:budget-row:${b.id}`}
               color={color}
               accessibilityLabel={`${b.categoryName}, ${Math.round(b.percentUsed)}% used, ${amount}. Open budgets`}
               onPress={() => (onBudget ? onBudget(b.id) : onOpen())}
@@ -142,7 +144,11 @@ function BudgetTile({ budget: b, onPress }: { budget: PlanBudgetInput; onPress: 
           {b.categoryName}
         </Text>
         <View style={styles.tileTrack} pointerEvents="none">
-          <View style={[styles.tileProgress, { width: `${Math.min(100, pct)}%`, backgroundColor: fill }]} />
+          <GrowFill
+            animKey={`plan:budget:${b.id}`}
+            pct={pct}
+            style={[styles.tileProgress, { backgroundColor: fill }]}
+          />
         </View>
         <Text style={[styles.tileAmt, b.overBudget && styles.tileOver]} numberOfLines={2}>
           {left}

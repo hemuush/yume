@@ -14,6 +14,8 @@ export function createReanimatedMock() {
     __esModule: true,
     // Text too: PrimaryButton renders a ReanimatedAnimated.Text for its label.
     default: { View, Text, ScrollView, FlatList, createAnimatedComponent: (Component: unknown) => Component },
+    // A CSS transition's curve (src/lib/animation.ts `glide`).
+    cubicBezier: () => ({}),
     FadeIn: chainableProxy,
     FadeInDown: chainableProxy,
     FadeInUp: chainableProxy,

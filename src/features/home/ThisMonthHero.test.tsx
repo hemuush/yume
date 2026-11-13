@@ -4,6 +4,8 @@
  */
 import { Text, StyleSheet } from 'react-native';
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
+import { Circle } from 'react-native-svg';
+import { theme } from '@/constants/theme';
 // The allowance and the day tick read the date: fix it (22 October, 9 days left) so the figures are steady.
 beforeAll(() => {
   jest.useFakeTimers({
@@ -142,6 +144,16 @@ describe('month card', () => {
     // The shares are in the bar and the tray, not a chip; the pace waits under Details.
     expect(all.some((t) => t.endsWith('% spent'))).toBe(false);
     expect(all.some((t) => t.startsWith('On pace'))).toBe(false);
+  });
+
+  it('draws the ring from the month’s money only, with no second ring for how far through the month it is', () => {
+    // 22 October is in the current month: the ring once drew a black arc for 22 of 31 days, which nothing explained.
+    const strokes = render()
+      .root.findAllByType(Circle)
+      .map((c) => c.props.stroke);
+    expect(strokes.length).toBeGreaterThan(0);
+    expect(strokes).not.toContain(theme.colors.ink);
+    expect(strokes).not.toContain(theme.colors.divider);
   });
 
   it('puts the pace, a spending forecast, under Details', () => {

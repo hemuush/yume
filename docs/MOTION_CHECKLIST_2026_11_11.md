@@ -17,7 +17,7 @@ Generated from a scan of every `.tsx` under `app/` and `src/` (281 files, 76 wit
 
 - [x] Tab switch: cross-fade, `DURATIONS.quick`, off with reduce-motion (`app/(tabs)/_layout.tsx`)
 - [x] Stack push/pop: slide_from_right 260 ms; grow routes (Budgets, Goals, Category) use card-grow 300 ms; Wrap fades
-- [x] Sheets/dialogs: backdrop fades, surface rises 28 pt (`ModalSheet`); flow pages excluded
+- [x] Sheets/dialogs: backdrop and surface fade together (the Modal's own fade); no entering animation on the surface (`ModalSheet`, guarded by `sheetSurface.test.ts`); flow pages excluded
 - [x] Toast / milestone note: rise 16 pt in, ease-in out
 - [x] Pill tab bar: fill bloom, layout slide, label fade, press scale
 - [x] Skeleton: linear 1.4 s sweep, frozen under reduce-motion

@@ -8,7 +8,8 @@ import { haptics } from '@/lib/haptics';
 let mockPack = { primary: '#8FCBFF', secondary: '#8FE8C8' };
 
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
-jest.mock('@/lib/useReduceMotion', () => ({ useReduceMotion: () => true }));
+let mockReduce = true;
+jest.mock('@/lib/useReduceMotion', () => ({ useReduceMotion: () => mockReduce }));
 jest.mock('@/lib/haptics', () => ({ haptics: { tap: jest.fn() } }));
 jest.mock('@/theme/AccentContext', () => ({
   useAccent: () => ({ accent: mockPack.primary, secondary: mockPack.secondary }),
@@ -23,7 +24,10 @@ beforeEach(() => {
     .spyOn(require('react-native'), 'useWindowDimensions')
     .mockReturnValue({ width: 390, height: 800, scale: 3, fontScale: 1 });
 });
-afterEach(() => jest.restoreAllMocks());
+afterEach(() => {
+  jest.restoreAllMocks();
+  mockReduce = true;
+});
 
 const text = (r: ReactTestRenderer) =>
   r.root
@@ -287,4 +291,34 @@ it('leaves the amounts off the capsules at a large font size, keeping the picked
   } finally {
     spy.mockRestore();
   }
+});
+
+describe('state changes glide', () => {
+  const tracksOf = (r: ReactTestRenderer) =>
+    r.root.findAll(
+      (n) =>
+        String(n.type) === 'View' && StyleSheet.flatten(n.props.style)?.transitionProperty === 'transform'
+    );
+
+  it('as CSS transitions on the capsule itself: its height, and the picked one standing a little taller', () => {
+    mockReduce = false;
+    const r = render([{ date: '2026-10-17', totalMinor: 10000 }], '2026-10-17');
+    const fill = StyleSheet.flatten(fills(r)[6].props.style);
+    expect(fill).toMatchObject({ height: FULL, transitionProperty: 'height', transitionDuration: '200ms' });
+    const scales = tracksOf(r).map((n) => StyleSheet.flatten(n.props.style).transform);
+    expect(scales).toHaveLength(7);
+    // Today, the last capsule, starts picked; the rest sit at their own size.
+    expect(scales.map((t) => t[0].scale)).toEqual([1, 1, 1, 1, 1, 1, 1.08]);
+    act(() => r.unmount());
+  });
+
+  it('and jump when the phone asks for reduced motion', () => {
+    mockReduce = true;
+    const r = render([{ date: '2026-10-17', totalMinor: 10000 }], '2026-10-17');
+    const durations = [...fills(r), ...tracksOf(r)].map(
+      (n) => StyleSheet.flatten(n.props.style).transitionDuration
+    );
+    expect(durations.every((d) => d === '0ms')).toBe(true);
+    act(() => r.unmount());
+  });
 });

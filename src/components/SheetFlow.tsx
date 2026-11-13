@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Modal, View } from 'react-native';
-import { SafeAreaProvider, initialWindowMetrics } from 'react-native-safe-area-context';
+import { ModalSafeArea } from './ModalSafeArea';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 import { SheetSurfaceProvider } from './SheetSurface';
 
@@ -69,7 +69,7 @@ function SheetFlowHost({ children, visible }: { children: React.ReactNode; visib
       navigationBarTranslucent
       onRequestClose={() => Array.from(handlers.current.values()).at(-1)?.()}
     >
-      <SafeAreaProvider initialMetrics={initialWindowMetrics}>
+      <ModalSafeArea>
         <SheetSurfaceProvider value>
           <SheetFlowContext.Provider value={value}>
             <View
@@ -81,7 +81,7 @@ function SheetFlowHost({ children, visible }: { children: React.ReactNode; visib
             </View>
           </SheetFlowContext.Provider>
         </SheetSurfaceProvider>
-      </SafeAreaProvider>
+      </ModalSafeArea>
     </Modal>
   );
 }

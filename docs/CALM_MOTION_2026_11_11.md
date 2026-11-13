@@ -11,9 +11,15 @@ Replaces the "longer, softer" direction of [MOTION_POLISH_2026_11_11.md](MOTION_
 - Press feedback is the original quick dip: 80 ms in, 120 ms out, no spring.
 - The Home capsules show at their height; the picked one still lifts. The heatmap cells no longer fade in one by one.
 - The tab pill fades its fill and slides its row; it no longer scales in.
-- Sheets still rise, but 16 pt over 220 ms; the toast rises 16 pt.
+- Sheets fade in with their backdrop (the Modal's own fade) and no longer rise: a Reanimated entering animation on the sheet surface is a suspect in sheets standing above the bottom of the screen (see [the sheets review](SECONDARY_SCREENS_REVIEW_2026_11_13.md)). The toast rises 16 pt.
 - Screens open the same way everywhere: the standard slide. The card-grow transition (a card expanding into Budgets, Savings goals and Category detail) and its overlay (`CardGrowHost`, `cardGrow`) were removed.
 - Everything still turns off with the phone's reduce-motion setting.
+
+## Follow-up, 14 November 2026: CSS transitions for state changes on Home
+
+Reanimated 4's CSS transitions (already installed, first used here) replace hand-written shared values for a state change. `glide(property, reduce)` in [animation.ts](../src/lib/animation.ts) is one style property that transitions to its new value on the shared curve, `'200ms'`, and `'0ms'` with the phone's reduce-motion. Home's day capsules (height, and the picked one's lift) use it: about 20 lines of shared values, effects and cancellations came out of `SpendBars`. The month ring's unpicked slices now glide back over 200 ms (they used to switch in one frame), and each slice is a touch lighter along its top, from its own colour. Nothing draws in, rolls, staggers or springs; the calm rule stands. See [the review](SECONDARY_SCREENS_REVIEW_2026_11_13.md).
+
+**Activity, same day.** Its Insights bar chart still drew every bar up from empty, one after another (about 0.45 s), which this rule had retired elsewhere; the bars now show at their height at once and glide only when a day's value really changes (core `Animated`, not Reanimated: the chart is in a Modal sheet). The Week | Month underline fades with `glide` instead of appearing and disappearing.
 
 ## Not changed
 

@@ -47,6 +47,7 @@ import { ThemeSaveFeedback } from '@/theme/ThemeSaveFeedback';
 import { LockScreen } from '@/components/LockScreen';
 import { Onboarding } from '@/features/onboarding/Onboarding';
 import { theme } from '@/constants/theme';
+import { ColumnFrame } from '@/components/ColumnFrame';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { errorMessage } from '@/lib/errorMessage';
 
@@ -160,7 +161,9 @@ export default function RootLayout() {
         <AppLockProvider initialLockEnabled={initialLocked}>
           <AccentProvider>
             <PrivacyProvider>
-              <AppGate needsOnboarding={needsOnboarding} initialLocked={initialLocked} />
+              <ColumnFrame>
+                <AppGate needsOnboarding={needsOnboarding} initialLocked={initialLocked} />
+              </ColumnFrame>
             </PrivacyProvider>
           </AccentProvider>
         </AppLockProvider>

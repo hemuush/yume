@@ -77,3 +77,65 @@ At 1.3 times text the category tiles looked split in the browser too, but they s
 - **Wide screens.** The app is portrait-only, but Android 16 ignores that on tablets and unfolded foldables. At 600 and 840 dp every main screen renders without a fault, stretched to the full width. A maximum content width is a design decision and has not been made here.
 - **The browser harness** read `flex: 0` as a zero basis, which drew Recurring's rows over each other; it now reads it as Android does. With that, Recurring and its rule sheets were rendered at large text for the first time: no fault beyond the dates above.
 
+### Fourth pass: sheets standing above the bottom of the screen
+
+A device screenshot (Reports' day sheet on a Samsung phone with three-button navigation) showed the sheet ending about 99 dp above the bottom, with the dimmed page, the tab bar and the navigation buttons under it. An earlier screenshot of the Activity filter sheet showed the same, so it is every sheet.
+
+What the screenshot says: the screen is 2424 px tall (about 2.63 px per dp); the sheet's bottom edge is at 2165 px, so 259 px (98.6 dp) above the bottom. That is the status bar plus the navigation bar, to within a pixel or two: the sheet is laid out in an area of the screen's height less the two bars. The backdrop does cover the whole screen, so the window itself is full height.
+
+What is established and what is not. The two sheet layouts are `ModalSheet`'s framed one (a header, a scrolling body; the default, which Reports' day sheet uses) and the plain one. The keyboard-avoiding wrapper is only in the framed one and was already off unless the keyboard is up (previous pass), so it cannot explain a lift with the keyboard down. Nothing here was reproduced on a phone: the cause is not confirmed. Three measures cover the three suspects, and a phone has to say whether they are enough:
+
+- **Keyboard padding** (the earlier fix): the library's wrapper only pads while the keyboard is really up.
+- **A Reanimated entering animation on the sheet surface** (added in the 11 November motion pass, the time the screenshots started): a Modal is its own window whose content is laid out twice, and a layout animation can keep the first frame. The surface is a plain View again; `sheetSurface.test.ts` keeps a layout animation off it. The sheets no longer rise; the Modal's own fade brings the backdrop and sheet in together.
+- **A short content area**, whatever made it short ([Reanimated #6659](https://github.com/software-mansion/react-native-reanimated/issues/6659) describes one way a Modal ends up the wrong height under the New Architecture): `ModalSafeArea` compares its first layout with the screen and, only when it is short by exactly the status and navigation bars, gives the content the screen's height. A smaller window (split screen) does not match and is left alone. Remove it once a phone shows sheets reaching the bottom without it.
+
+If the sheet still stands above the bottom after this, the numbers above (and which sheet, whether the keyboard was used before it, the build) say which of the three is left.
+
+### Fifth pass: the audit's code-level findings
+
+- **Wide screens.** The app is one centred column of at most 600 dp (`ColumnFrame` in the root layout); a phone is untouched. Sheets and dialogs are their own windows and cap themselves to it (a dialog's 24 dp sides moved from the dialog to its container, so a dialog can be `width: 100%` and still centred). The Home and Reports placeholders take their width from the column. Seen in the browser at 840 dp: the sheets are a 600 dp column; a screen cannot be checked at that width without the root layout, which the browser harness does not render, so the column itself is covered by a unit test only.
+- **Cut-offs that differ.** `useStacked` now names the three it knows (`normal`, `early`, `late`); Add's amount card, Activity's period bar and Plan's status tiles use the named ones, with the same numbers as before. The guard test looks for any inline `width < N || fontScale > X`.
+- **CI** can be run on a branch with no pull request (`workflow_dispatch`), without a second run on every push once the pull request is open.
+- **`@expo/image-utils`**, which the app-icon plugin requires, is a dev dependency instead of a package Expo happens to bring.
+- **Not done:** the 1,254-line Activity route (56 hooks) is left until it is next changed; splitting it now would be a large change with nothing to prove it, and no bug lives in it.
+
+### Sixth pass: trying the newer animation tools on Home
+
+Asked for modern animation packages that are safe to use, for Home first. Checked against Expo SDK 58's own version list, npm (versions, peer dependencies, licences) and a clean-room `npm audit` (0 vulnerabilities for Skia 2.14.0, Lottie 7.5.0, `@expo/ui` 58.0.28, `expo-glass-effect` 58.0.5):
+
+- **Reanimated 4 CSS transitions** (already installed, unused until now): used. No new dependency.
+- **Skia 2.14.0** (Expo's pick for SDK 58; v3 has no stable release): not added. A soft gradient on the ring needs only `react-native-svg`, which is already here; Skia is for blur, glow and shaders, and adds a native engine to the APK whose size was not measured.
+- **Rive** (0.5.14, pre-1.0, needs `react-native-nitro-modules` below 0.37 while the latest is 0.37.2) and **`expo-glass-effect`** (Apple platforms only): not suitable. **Lottie** and **`@expo/ui`**: safe, but for one-off moments and native-looking controls, not Home's dashboard.
+
+What changed on Home, measured in the browser render at 390 dp: 1,348 of 351,000 pixels (0.4%), all inside the month ring; nothing else moved. Tapping a legend slice dims the others from 100% to 35% in about 200 ms (frames sampled at 100%, 78%, 50%, 35%), where before they switched in one frame. In code: the capsules lost their shared values, effects and cancellations. Not checked on a phone: it is the app's first use of CSS transitions on Android, so the next build is the test; a transition that does not run would leave the final value, not a wrong one.
+
+### Seventh pass: the same on Activity
+
+Looked for where Activity still hand-animates a state change or breaks the calm rule. Found and changed two things; the rest was left.
+
+- **Insights' bar chart drew in from empty, staggered** (`SpendBarChart`: 420 ms per bar, up to 220 ms apart): sampled in the browser, at 166 ms the bars read 0.67, 0.08, 0, 0, 0, 0 of their height and they settled at about 450 ms. They are now at their height on the first frame and glide (200 ms) only when a day's spending changes. Kept on core `Animated`: this chart is in the Insights sheet, a Modal window, and the app's Reanimated use inside Modals is a suspect in the floating-sheet bug (fourth pass).
+- **The Week | Month underline** appeared and disappeared; it now crossfades (0.4 / 0.6 at 70 ms, 0.13 / 0.87 at 100 ms, done by 200 ms), as a CSS transition on an always-present underline. The screen at rest is pixel-identical to before (0 differing pixels at 390 dp).
+- **Left alone:** the Spent strip's period slide (`usePeriodSlide`: a from-and-to entrance that a CSS transition cannot express without a remount, and it already runs on the UI thread) and the type pills (their fill and their white text would have to glide together; a white word on a pale pill for 150 ms would read worse than the switch).
+
+### Eighth pass: Plan
+
+Plan has almost no animation of its own (the tab content's 150 ms fade, and the Money out | Scheduled income pill). The one real gap: its four kinds of progress bar (a budget's tile and its list row, a goal's tile and its list row, a loan's tile) were plain views with a percent width, while the same bars on Budgets, Goals, Loans and Reports are `GrowFill`: a bar that shows its value at once, remembers what it last showed, and glides to a new value after a real change. So adding an expense and coming back to Plan moved the budget bar on Budgets but jumped it on Plan.
+
+- **Plan's bars are `GrowFill` now**, each with its own key (`plan:budget:<id>`, `plan:budget-row:<id>`, `plan:goal:<id>`, `plan:goal-row:<id>`, `plan:loan:<id>`); `PlanSummaryRow` takes the key as `animKey`. No new code: the component was already in the app.
+- **At rest nothing changes:** the Upcoming, Money plan and Debt tabs are pixel-identical at 390 dp (0 differing pixels); Overview differs only in one demo-data avatar colour that is hashed from a random id per run.
+- **Tests:** `PlanBars.test.tsx` checks that a bar shows at once, glides to a new value, keeps its value across a visit, and that no Plan file draws a progress bar as a plain percent-width view (all three fail against the old bars).
+- **Left alone:** the Upcoming date pills and the runway ribbon (finger-driven), for the reasons in the Activity pass.
+
+### Ninth pass: Activity's groups and the week chart's amount bubble
+
+Two things seen on a phone (screenshots), both on Activity.
+
+- **Opening or closing a group ("Home 2 ⌄") was not smooth.** The group's entries faded while the list's cell changed height at once, so the days below jumped, a gap opened and filled on opening, and on closing the days slid up over the fading entries. The entries are now in a `Collapsible` that glides its own height and opacity (a CSS transition; 200 ms on the shared curve). Measured in the browser render at 390 dp: the next day's top 624 → 714 dp over about 200 ms with an ease-out, and back on closing; nothing is left at rest between. A stale "close" timer on a panel that was never opened was removing the panel just opened in a long list (found in the same render: the chevron turned but nothing opened); a closed, never-opened panel now schedules nothing, and a test counts the timers. The group's line and the day lose their layout animation, and so does the screen's 400 ms `stackMoving` window that existed only to switch it on.
+- **The picked day's amount was cut off** ("₹3,710" showed "3,7…" with a flat top). It was drawn inside the capsule, which clips to 26 dp wide and 52 dp tall. It is now an overlay drawn after the columns, whole and above the neighbouring capsules; the room above the bars grows with the text size (checked at 1.3×, first and last day, and 412 dp). The average's name steps aside when a picked day among the last three columns would put its amount over it.
+- **Tests:** `Collapsible.test.tsx` (opens from nothing, glides closed then leaves the tree, reopens, reduce motion, no timers when never opened); `SpendBarChart.test.tsx` (no overflow-hidden ancestor above the amount; the name steps aside only in the last three columns); the two tests that pinned the old `animateLayout` window were replaced. All new tests fail on the previous code.
+- **Not changed, seen:** the average's name has a page-coloured box behind it, which bites the top of the capsule under it (visible on the last two days). It is the "words win" choice made earlier; a cleaner fix (the name below the chart, or no box) is a design change and was left for a decision.
+- **Not verified on a phone:** this is the first height transition in the app on Android; the browser render stands in for it.
+
+### Tenth pass: Home's month ring loses its black arc
+
+A thin black arc ran round the outside of the month ring for how far through the month today is (13 of 30 days read as an arc to about 5 o'clock). Nothing in the legend or the labels said so, it sat against the end of the Spent slice so it read as data, it was the darkest mark on the card, and the "About ₹61 a day for 17 days" pill already names the days left. It is removed, with the faint track under it; the ring now fills its 112 dp box (radius 51 instead of 47.5, so the figure in the middle has 7 dp more room) and the card's size and the legend are unchanged. `MonthRing` no longer takes `dayShare`. A test on the month card checks that no circle is stroked in the ink or divider colour; it fails on the previous code.

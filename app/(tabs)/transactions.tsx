@@ -1,6 +1,6 @@
 import { useLocalDayRefresh } from '@/lib/useLocalDayRefresh';
 import { Appear } from '@/components/Appear';
-import { CONTENT_ENTER } from '@/lib/animation';
+import { CONTENT_ENTER, glide } from '@/lib/animation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { onTransactionsChanged } from '@/lib/dataEvents';
 import { useFreshness } from '@/lib/useFreshness';
@@ -75,6 +75,7 @@ import { EmptyState } from '@/components/EmptyState';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 import { useTabScrollToTop } from '@/lib/useTabScrollToTop';
 import { useScrollToTopOnChange } from '@/lib/useScrollToTopOnChange';
+import { useStacked } from '@/lib/useStacked';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -89,8 +90,8 @@ const SEARCH_RESULT_LIMIT = 50;
 
 export default function TransactionsScreen() {
   const insets = useSafeAreaInsets();
-  const { width, height, fontScale } = useWindowDimensions();
-  const stackPeriod = width < 380 || fontScale > 1.15;
+  const { height, fontScale } = useWindowDimensions();
+  const stackPeriod = useStacked('early');
   const tabScrollPad = useTabScrollPad();
   const { hideAmounts } = usePrivacy();
   const { accent, secondary } = useAccent();
@@ -174,11 +175,6 @@ export default function TransactionsScreen() {
   // Which stacked lines ("Food & Dining ×5") are open lives here, not in TimelineDay: FlatList unmounts
   // off-screen rows, and local state there would silently close a stack the user opened.
   const [openStacks, setOpenStacks] = useState<Set<string>>(new Set());
-  // True for a moment after a group opens or closes: only then do the days animate their height and position,
-  // so the days below slide with it. At any other time a shift in a long list (rows being measured as you
-  // scroll) lands at once instead of being animated on every day.
-  const [stackMoving, setStackMoving] = useState(false);
-  const stackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // True for a moment after a period's entries land: the days mounted then fade in with the Spent strip's glide,
   // instead of snapping in under it (and instead of replacing the loading placeholder in one frame). Days that
   // scroll into view later mount with it off, so scrolling a long month never flickers.
@@ -186,7 +182,6 @@ export default function TransactionsScreen() {
   const arriveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(
     () => () => {
-      if (stackTimer.current) clearTimeout(stackTimer.current);
       if (arriveTimer.current) clearTimeout(arriveTimer.current);
     },
     []
@@ -198,9 +193,6 @@ export default function TransactionsScreen() {
       else next.add(key);
       return next;
     });
-    setStackMoving(true);
-    if (stackTimer.current) clearTimeout(stackTimer.current);
-    stackTimer.current = setTimeout(() => setStackMoving(false), 400);
   }, []);
   // Slide direction of the headline/chart on the next period change (read by TransactionsHeadline): 0
   // (crossfade) unless it is a one-step move; a picked month or Week↔Month switch has no direction.
@@ -1015,7 +1007,6 @@ export default function TransactionsScreen() {
                 onPressNote={openInvestments}
                 openStacks={openStacks}
                 onToggleStack={toggleStack}
-                animateLayout={stackMoving}
                 onReorder={canReorder ? reorderDay : undefined}
                 onDragActive={setDragging}
                 selected={!searching && loadedPeriod.scope === 'week' && selectedBar === group.date}
@@ -1175,7 +1166,10 @@ export default function TransactionsScreen() {
                     accessibilityState={{ selected: on }}
                   >
                     <Text style={[styles.scopeText, on && styles.scopeTextOn]}>{o.label}</Text>
-                    {on && <View style={styles.scopeUnderline} />}
+                    <ReanimatedAnimated.View
+                      pointerEvents="none"
+                      style={[styles.scopeUnderline, { opacity: on ? 1 : 0 }, glide('opacity', reduceMotion)]}
+                    />
                   </Pressable>
                 );
               })}

@@ -4,6 +4,9 @@ on:
   push:
     branches: [main, master]
   pull_request:
+  # A branch with no pull request yet is checked on demand (Actions > CI > Run workflow), without a second run
+  # on every push once the pull request is open.
+  workflow_dispatch:
 
 permissions:
   contents: read

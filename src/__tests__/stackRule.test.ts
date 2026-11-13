@@ -24,8 +24,10 @@ it('looks at the app and its components', () => {
 });
 
 it('keeps the shared rule in useStacked instead of repeating it', () => {
+  // Any "width < N || fontScale > X" written out in a component, whatever the numbers: the cut-offs live in
+  // useStacked (normal, early, late), so a new one is a new name there, not another copy.
   const copies = sources.filter((f) =>
-    /width\s*(<\s*360|>=\s*360)[^\n]*fontScale\s*(>|<=)\s*1\.2\b/.test(readFileSync(f, 'utf8'))
+    /width\s*<\s*\d+\s*\|\|\s*fontScale\s*>\s*\d/.test(readFileSync(f, 'utf8'))
   );
   expect(copies.map((f) => f.slice(ROOT.length + 1))).toEqual([]);
 });

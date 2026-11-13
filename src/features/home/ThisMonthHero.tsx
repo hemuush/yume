@@ -361,7 +361,6 @@ export function ThisMonthHero({
   const now = new Date();
   const isCurrentMonth = displayed.periodKey === 'month:0';
   const daysLeft = daysLeftInMonth(now);
-  const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
   const perDayMinor =
     isCurrentMonth && slices.hasIncome && !over ? dailyAllowance(freeMinor, daysLeft) : null;
   const legend: LegendItem[] = !slices.hasIncome
@@ -443,12 +442,7 @@ export function ThisMonthHero({
         <ReanimatedAnimated.View style={[styles.body, slideStyle]} {...pan.panHandlers}>
           <View style={[styles.heroRow, flanked && styles.heroRowFlanked]}>
             {flanked && <HeroLegend items={legend.slice(0, splitAt)} side="left" />}
-            <MonthRing
-              slices={slices}
-              hideSavings={hideAmounts}
-              dayShare={isCurrentMonth && slices.hasIncome ? now.getDate() / daysInMonth : null}
-              focus={focus}
-            >
+            <MonthRing slices={slices} hideSavings={hideAmounts} focus={focus}>
               <View
                 accessible
                 accessibilityLabel={

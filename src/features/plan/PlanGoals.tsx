@@ -20,6 +20,7 @@ import { styles } from './plan.styles';
 import { PlanSummaryRow, PlanListAdd, summaryListStyle } from './PlanSummaryRow';
 import { TileGrid } from './PlanGrid';
 import { compactMoney } from '@/lib/compactMoney';
+import { GrowFill } from '@/components/GrowFill';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -95,6 +96,7 @@ export function GoalsStrip({
               }
               amount={hideAmounts ? 'Saved amount hidden' : done ? 'Completed' : `${pct}%`}
               icon={goal.linkedAccountId ? 'bank-outline' : 'flag-variant-outline'}
+              animKey={`plan:goal-row:${goal.id}`}
               progress={hideAmounts ? undefined : pct}
               color={theme.colors.incomeText}
               accessibilityLabel={
@@ -174,7 +176,11 @@ function GoalCard({ goal, masked, onPress }: { goal: SavingsGoal; masked: boolea
         </Text>
         {!masked && (
           <View style={styles.tileTrack} pointerEvents="none">
-            <View style={[styles.tileProgress, { width: `${pct}%`, backgroundColor: hue }]} />
+            <GrowFill
+              animKey={`plan:goal:${goal.id}`}
+              pct={pct}
+              style={[styles.tileProgress, { backgroundColor: hue }]}
+            />
           </View>
         )}
         <Text style={styles.tileAmt} numberOfLines={2}>

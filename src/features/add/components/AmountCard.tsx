@@ -1,6 +1,6 @@
 import { selectedFill } from '@/theme/interactionColors';
 import { Appear } from '@/components/Appear';
-import { Pressable, View, useWindowDimensions } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { Text } from '@/components/Text';
 import Feather from '@expo/vector-icons/Feather';
 import { theme } from '@/constants/theme';
@@ -11,6 +11,7 @@ import { EntryType, TYPE_WASH, typeWash } from '@/features/add/addEntry';
 import { withPressedTint } from '@/lib/pressed';
 import { softTint } from '@/components/softTint';
 import { useAccent } from '@/theme/AccentContext';
+import { useStacked } from '@/lib/useStacked';
 
 /**
  * The Add screen's display pieces: amount card, From/To pickers, "Your usual" chips, staged-entry list.
@@ -52,8 +53,7 @@ export function AmountCard({
   const { amounts: frequentAmounts, onPick: onPickAmount } = suggestions;
   const { accent } = useAccent();
   const wash = refund ? TYPE_WASH.income : typeWash(type, accent);
-  const { width, fontScale } = useWindowDimensions();
-  const stacked = width < 380 || fontScale > 1.15;
+  const stacked = useStacked('early');
   return (
     <View
       style={[

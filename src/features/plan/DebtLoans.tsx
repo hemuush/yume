@@ -15,6 +15,7 @@ import { LoansSummary } from './planOverview';
 import { TileGrid } from './PlanGrid';
 import { styles } from './plan.styles';
 import { keepTogether } from '@/lib/keepTogether';
+import { GrowFill } from '@/components/GrowFill';
 
 /**
  * The Debt tab's loans as compact tiles, two to a row (one with large text): the loan's mark and what is left,
@@ -80,13 +81,12 @@ export function DebtLoans({
                   {r.name}
                 </Text>
                 <View style={styles.tileTrack} pointerEvents="none">
-                  <View
+                  <GrowFill
+                    animKey={`plan:loan:${r.id}`}
+                    pct={fraction * 100}
                     style={[
                       styles.tileProgress,
-                      {
-                        width: `${fraction * 100}%`,
-                        backgroundColor: lent ? theme.colors.slice.saved : loanBarTone(hue),
-                      },
+                      { backgroundColor: lent ? theme.colors.slice.saved : loanBarTone(hue) },
                     ]}
                   />
                 </View>
