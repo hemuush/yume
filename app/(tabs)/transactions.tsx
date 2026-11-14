@@ -36,6 +36,7 @@ import { dayMonth, longMonth, longWeekday, weekdayDayMonth } from '@/lib/dateLab
 import { PeriodPicker } from '@/components/PeriodPicker';
 import { FilterModal } from '@/features/transactions/FilterModal';
 import { TimelineDay } from '@/features/transactions/TimelineDay';
+import { createStackStore } from '@/features/transactions/stackStore';
 import { getTransactionById } from '@/db/transactions';
 import { showAlert } from '@/components/AppDialog';
 import { TransactionDetailModal } from '@/features/transactions/TransactionDetailModal';
@@ -57,6 +58,9 @@ import {
   groupWithNotes,
   emptyPeriodTitle,
   searchDayLabel,
+  keepIfEqual,
+  reuseUnchanged,
+  useStableSet,
   type ValueNote,
 } from '@/features/transactions/transactions.helpers';
 import type { ActivityType } from '@/features/transactions/activityFilter';
@@ -87,6 +91,8 @@ const SEARCH_MIN_CHARS = 2;
 // Search spans the whole ledger, not one week/month — capped so a very
 // common word doesn't dump years of history into one scroll.
 const SEARCH_RESULT_LIMIT = 50;
+/** One empty list for "no value updates": a new one each time was a state change, and a redraw of every day. */
+const NO_NOTES: ValueNote[] = [];
 
 export default function TransactionsScreen() {
   const insets = useSafeAreaInsets();
@@ -173,8 +179,9 @@ export default function TransactionsScreen() {
     setFilterAccountIds([]);
   }, []);
   // Which stacked lines ("Food & Dining ×5") are open lives here, not in TimelineDay: FlatList unmounts
-  // off-screen rows, and local state there would silently close a stack the user opened.
-  const [openStacks, setOpenStacks] = useState<Set<string>>(new Set());
+  // off-screen rows, and local state there would silently close a stack the user opened. It is not React state:
+  // opening a stack then re-renders that one line instead of this screen and the whole day.
+  const [stacks] = useState(createStackStore);
   // True for a moment after a period's entries land: the days mounted then fade in with the Spent strip's glide,
   // instead of snapping in under it (and instead of replacing the loading placeholder in one frame). Days that
   // scroll into view later mount with it off, so scrolling a long month never flickers.
@@ -186,14 +193,6 @@ export default function TransactionsScreen() {
     },
     []
   );
-  const toggleStack = useCallback((key: string) => {
-    setOpenStacks((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      return next;
-    });
-  }, []);
   // Slide direction of the headline/chart on the next period change (read by TransactionsHeadline): 0
   // (crossfade) unless it is a one-step move; a picked month or Week↔Month switch has no direction.
   const [direction, setDirection] = useState<-1 | 0 | 1>(0);
@@ -304,25 +303,27 @@ export default function TransactionsScreen() {
     return { fromDate: toLocalIsoDate(new Date(y, m, 1)), toDate: toLocalIsoDate(new Date(y, m + 1, 0)) };
   }, [anchor]);
   const visibleRange = viewScope === 'month' ? monthRange : { fromDate: week.start, toDate: week.end };
-  const investmentIds = useMemo(() => investmentIdsOf(accounts), [accounts]);
+  // Sets, labels and currencies the days of the list read, kept the same object while their content is: an account's
+  // balance moves with every entry, and anything rebuilt around the whole account redrew every day after each edit.
+  const investmentIds = useStableSet(useMemo(() => investmentIdsOf(accounts), [accounts]));
   const openInvestments = useCallback(() => router.push('/investments'), []);
   // Under the Invest chip, value updates of the holdings in view are listed beside the money moved.
-  const [valueNotes, setValueNotes] = useState<ValueNote[]>([]);
+  const [valueNotes, setValueNotes] = useState<ValueNote[]>(NO_NOTES);
   const wantsNotes = filterType === 'invest' && !searching;
   const notesFrom = viewScope === 'month' ? monthRange.fromDate : week.start;
   const notesTo = viewScope === 'month' ? monthRange.toDate : week.end;
   useEffect(() => {
     if (!wantsNotes) {
-      setValueNotes([]);
+      setValueNotes(NO_NOTES);
       return;
     }
     let live = true;
     listValuationEvents(notesFrom, notesTo)
       .then((events) => {
-        if (live) setValueNotes(events);
+        if (live) setValueNotes(events.length === 0 ? NO_NOTES : events);
       })
       .catch(() => {
-        if (live) setValueNotes([]);
+        if (live) setValueNotes(NO_NOTES);
       });
     return () => {
       live = false;
@@ -358,7 +359,7 @@ export default function TransactionsScreen() {
     () =>
       wantsNotes
         ? valueNotes.filter((n) => filterAccountIds.length === 0 || filterAccountIds.includes(n.accountId))
-        : [],
+        : NO_NOTES,
     [wantsNotes, valueNotes, filterAccountIds]
   );
   const groupedDays = useMemo<{ date: string; items: Transaction[]; notes?: ValueNote[] }[]>(() => {
@@ -430,9 +431,10 @@ export default function TransactionsScreen() {
       cmp = null;
     }
     if (seq !== loadSeq.current) return false;
-    setAccounts(loadedAccounts);
-    setCategories(loadedCategories);
-    setTransactions(tx);
+    // A reload that found nothing new changes nothing held here, so no day of the list redraws for it.
+    setAccounts((prev) => keepIfEqual(prev, loadedAccounts));
+    setCategories((prev) => keepIfEqual(prev, loadedCategories));
+    setTransactions((prev) => reuseUnchanged(prev, tx));
     setComparison(cmp);
     setComparisonFailed(cmp == null);
     setLoadedPeriod({ fromDate: range.fromDate, toDate: range.toDate, scope });
@@ -650,12 +652,19 @@ export default function TransactionsScreen() {
     !filterLabel && filterType === 'all' && filterCategoryIds.length === 0 && filterAccountIds.length === 0;
   const canReorder = !searching && noFilter;
   const [dragging, setDragging] = useState(false);
+  // Reads the period at the time of the call, so this stays the same function as the period changes: a new one
+  // would make every day of the list redraw.
+  const shown = useRef({ fromDate: rangeFromDate, toDate: rangeToDate, scope: viewScope });
+  useEffect(() => {
+    shown.current = { fromDate: rangeFromDate, toDate: rangeToDate, scope: viewScope };
+  }, [rangeFromDate, rangeToDate, viewScope]);
   const reorderDay = useCallback(
     async (date: string, orderedIds: string[]) => {
       await setDayOrder(date, orderedIds);
-      await load({ fromDate: rangeFromDate, toDate: rangeToDate }, viewScope);
+      const now = shown.current;
+      await load({ fromDate: now.fromDate, toDate: now.toDate }, now.scope);
     },
-    [load, rangeFromDate, rangeToDate, viewScope]
+    [load]
   );
   const trimmedQuery = searchQuery.trim();
 
@@ -715,10 +724,21 @@ export default function TransactionsScreen() {
   };
 
   // Stable, so a day of the list only redraws when its own entries change.
-  const accountName = useCallback((id: string) => accountsById.get(id)?.name ?? '—', [accountsById]);
+  const labelKey = useMemo(() => JSON.stringify(accounts.map((a) => [a.id, a.name, a.currency])), [accounts]);
+  const accountLabels = useMemo(
+    () =>
+      new Map(
+        (JSON.parse(labelKey) as [string, string, string][]).map(([id, name, currency]) => [
+          id,
+          { name, currency },
+        ])
+      ),
+    [labelKey]
+  );
+  const accountName = useCallback((id: string) => accountLabels.get(id)?.name ?? '—', [accountLabels]);
   const accountCurrency = useCallback(
-    (id: string) => accountsById.get(id)?.currency ?? getCachedCurrency(),
-    [accountsById]
+    (id: string) => accountLabels.get(id)?.currency ?? getCachedCurrency(),
+    [accountLabels]
   );
   const categoryName = useCallback(
     (id: string | null) => (id ? categoriesById.get(id)?.name : undefined) ?? '—',
@@ -727,7 +747,7 @@ export default function TransactionsScreen() {
   // A filter chip is one line, so a subcategory carries its parent: "Food & Dining › Zomato".
   const categoryPathName = (id: string) => categoryPath(categoryName(id), parentNameOf(id, categoriesById));
 
-  const savingsAccountIds = useMemo(() => savingsAccountIdsOf(accounts), [accounts]);
+  const savingsAccountIds = useStableSet(useMemo(() => savingsAccountIdsOf(accounts), [accounts]));
   const headline = useMemo(() => privateComparison(comparison, hideAmounts), [comparison, hideAmounts]);
   // How much more or less than the comparison period; the percent alone says little without a base.
   const expenseChangeMinor =
@@ -1005,8 +1025,7 @@ export default function TransactionsScreen() {
                 investmentIds={investmentIds}
                 notes={group.notes}
                 onPressNote={openInvestments}
-                openStacks={openStacks}
-                onToggleStack={toggleStack}
+                stacks={stacks}
                 onReorder={canReorder ? reorderDay : undefined}
                 onDragActive={setDragging}
                 selected={!searching && loadedPeriod.scope === 'week' && selectedBar === group.date}

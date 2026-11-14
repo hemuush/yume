@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { View } from 'react-native';
 import Animated, {
   cancelAnimation,
@@ -21,6 +21,9 @@ export function panelStyle(natural: number, progress: number) {
   return progress >= 1 ? { height: 'auto' as const, opacity: 1 } : { height: 0, opacity: 0 };
 }
 
+/** How long an opening panel waits to be measured before it opens as tall as its entries. */
+const MEASURE_WAIT = 150;
+
 /**
  * A panel that opens and closes by animating its own height, so whatever sits below it moves with it, frame by
  * frame: in a list the cell then grows and shrinks smoothly. (An entering or exiting animation on the children
@@ -28,8 +31,23 @@ export function panelStyle(natural: number, progress: number) {
  * overlap the fading panel.) The height is a shared value on the UI thread (`useAnimatedStyle`, the path the progress
  * bars use), not a CSS transition: that was tried and did not work on a phone. Open when first shown it is simply
  * open; once closed it is taken out of the tree. Reduce motion: it jumps.
+ *
+ * It opens without a hitch because nothing is left to do when the tap lands: `warm` (set when a finger touches down)
+ * puts the entries in the tree, hidden, and measures them, so the glide starts at once on the UI thread. A tap that
+ * arrives unprepared mounts and measures first and starts the glide when the height is known, not before: the glide
+ * is front-loaded (ease-out), and starting it blind would spend most of it unseen.
  */
-export function Collapsible({ open, children }: { open: boolean; children: ReactNode }) {
+export function Collapsible({
+  open,
+  warm = false,
+  children,
+}: {
+  open: boolean;
+  /** The entries are about to be wanted (a finger is down): have them in the tree and measured. */
+  warm?: boolean;
+  /** The entries, or a function that makes them: it runs only while they are wanted, so a closed panel costs nothing. */
+  children: ReactNode | (() => ReactNode);
+}) {
   const reduce = useReduceMotion();
   const [mounted, setMounted] = useState(open);
   const natural = useSharedValue(0);
@@ -38,11 +56,29 @@ export function Collapsible({ open, children }: { open: boolean; children: React
   // The height the panel last laid out at, and whether it ever failed to reach the content's: then it stops animating.
   const laidOut = useRef<number | null>(null);
   const [stuck, setStuck] = useState(false);
+  // What the panel is heading for, and whether the glide towards it has started.
+  const heading = useRef(open);
+  const started = useRef(true);
+  const glide = useCallback(() => {
+    started.current = true;
+    const to = heading.current ? 1 : 0;
+    progress.set(reduce ? to : withTiming(to, timing(DURATIONS.standard)));
+  }, [progress, reduce]);
 
   useEffect(() => {
+    heading.current = open;
     if (open) setMounted(true);
-    progress.set(reduce ? (open ? 1 : 0) : withTiming(open ? 1 : 0, timing(DURATIONS.standard)));
-  }, [open, reduce, progress]);
+    started.current = false;
+    // Closing, or opening with the height known, glides at once. Opening without it waits for the measure.
+    if (!open || reduce || natural.get() > 0) {
+      glide();
+      return;
+    }
+    const timer = setTimeout(() => {
+      if (!started.current) glide();
+    }, MEASURE_WAIT);
+    return () => clearTimeout(timer);
+  }, [open, reduce, natural, glide]);
   // Out of the tree once it has closed (a touch longer than the glide). A panel that never opened has nothing to
   // close: a timer there once landed after the next opening and removed it.
   useEffect(() => {
@@ -60,13 +96,15 @@ export function Collapsible({ open, children }: { open: boolean; children: React
         const height = laidOut.current;
         if (height != null && natural.get() > 0 && height < natural.get() - 2) setStuck(true);
       },
-      reduce ? 300 : DURATIONS.standard + 250
+      reduce ? 300 : MEASURE_WAIT + DURATIONS.standard + 250
     );
     return () => clearTimeout(timer);
   }, [open, stuck, reduce, natural]);
 
-  if (!mounted) return null;
-  if (stuck) return <View>{children}</View>;
+  // In the tree as soon as it is asked to open (the same render), while it closes, and from a finger touching down.
+  if (!(open || mounted || warm)) return null;
+  const content = typeof children === 'function' ? children() : children;
+  if (stuck) return <View>{content}</View>;
   return (
     <Animated.View
       pointerEvents={open ? 'auto' : 'none'}
@@ -80,9 +118,10 @@ export function Collapsible({ open, children }: { open: boolean; children: React
       <View
         onLayout={(event) => {
           natural.set(Math.round(event.nativeEvent.layout.height));
+          if (heading.current && !started.current) glide();
         }}
       >
-        {children}
+        {content}
       </View>
     </Animated.View>
   );

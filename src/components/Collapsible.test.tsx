@@ -20,26 +20,27 @@ function measure(tree: ReactTestRenderer, height: number) {
   const inner = tree.root.findAll((n) => n.type === View && typeof n.props.onLayout === 'function').at(-1)!;
   act(() => inner.props.onLayout({ nativeEvent: { layout: { height } } }));
 }
-function element(open: boolean) {
+function element(open: boolean, warm = false) {
   return (
-    <Collapsible open={open}>
+    <Collapsible open={open} warm={warm}>
       <Text>Phone Cover</Text>
     </Collapsible>
   );
 }
-function show(open: boolean, tree?: ReactTestRenderer) {
+function show(open: boolean, tree?: ReactTestRenderer, warm = false) {
   if (tree) {
-    act(() => tree.update(element(open)));
+    act(() => tree.update(element(open, warm)));
     return tree;
   }
   let created!: ReactTestRenderer;
   act(() => {
-    created = create(element(open));
+    created = create(element(open, warm));
   });
   return created;
 }
 // The test double for Reanimated draws a style when the component renders, so a render shows what the UI thread would.
-const redraw = (tree: ReactTestRenderer, open: boolean) => act(() => tree.update(element(open)));
+const redraw = (tree: ReactTestRenderer, open: boolean, warm = false) =>
+  act(() => tree.update(element(open, warm)));
 
 beforeEach(() => {
   jest.useFakeTimers();
@@ -189,6 +190,88 @@ describe('when the animation does not take', () => {
       jest.advanceTimersByTime(600);
     });
     expect(outerPanel(tree)).toBeDefined();
+    act(() => tree.unmount());
+  });
+});
+
+describe('opening without a hitch', () => {
+  it('waits for the entries to be measured before it starts to open, then opens from the start', () => {
+    const tree = show(false);
+    show(true, tree);
+    redraw(tree, true);
+    // In the tree already (the same render as the tap), hidden and not yet gliding.
+    expect(tree.root.findAllByType(Text)).toHaveLength(1);
+    expect(panel(tree)).toMatchObject({ height: 0, opacity: 0 });
+    measure(tree, 96);
+    redraw(tree, true);
+    expect(panel(tree)).toMatchObject({ height: 96, opacity: 1 });
+    act(() => tree.unmount());
+  });
+
+  it('opens anyway, as tall as its entries, if the measure never comes', () => {
+    const tree = show(false);
+    show(true, tree);
+    act(() => {
+      jest.advanceTimersByTime(200);
+    });
+    redraw(tree, true);
+    expect(panel(tree)).toMatchObject({ height: 'auto', opacity: 1 });
+    act(() => tree.unmount());
+  });
+
+  it('is ready before the tap when a finger is down: entries in the tree, measured, and the tap only has to glide', () => {
+    const tree = show(false, undefined, true);
+    expect(tree.root.findAllByType(Text)).toHaveLength(1);
+    expect(panel(tree)).toMatchObject({ height: 0, opacity: 0 });
+    expect(outerPanel(tree).props.pointerEvents).toBe('none');
+    measure(tree, 96);
+    // The tap: nothing to wait for, the glide starts in the same moment.
+    show(true, tree, true);
+    redraw(tree, true, true);
+    expect(panel(tree)).toMatchObject({ height: 96, opacity: 1 });
+    act(() => tree.unmount());
+  });
+
+  it('opens at once the second time: the height from the first opening is remembered', () => {
+    const tree = show(true);
+    measure(tree, 96);
+    show(false, tree);
+    act(() => {
+      jest.advanceTimersByTime(300);
+    });
+    expect(outerPanel(tree)).toBeUndefined();
+    show(true, tree);
+    redraw(tree, true);
+    expect(panel(tree)).toMatchObject({ height: 96, opacity: 1 });
+    act(() => tree.unmount());
+  });
+});
+
+describe('entries made on demand', () => {
+  it('does not make its entries while closed, and makes them once it is asked to open', () => {
+    const make = jest.fn(() => <Text>Phone Cover</Text>);
+    let tree!: ReactTestRenderer;
+    act(() => {
+      tree = create(<Collapsible open={false}>{make}</Collapsible>);
+    });
+    expect(make).not.toHaveBeenCalled();
+    act(() => tree.update(<Collapsible open>{make}</Collapsible>));
+    expect(make).toHaveBeenCalled();
+    expect(tree.root.findAllByType(Text)).toHaveLength(1);
+    act(() => tree.unmount());
+  });
+
+  it('makes them from a finger touching down, ready for the tap', () => {
+    const make = jest.fn(() => <Text>Phone Cover</Text>);
+    let tree!: ReactTestRenderer;
+    act(() => {
+      tree = create(
+        <Collapsible open={false} warm>
+          {make}
+        </Collapsible>
+      );
+    });
+    expect(make).toHaveBeenCalled();
     act(() => tree.unmount());
   });
 });
