@@ -3,7 +3,7 @@
  * 2+ entries of a category stack into a line that opens in place; every entry stays tappable (no "+N more").
  */
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
-import { Text, StyleSheet } from 'react-native';
+import { Text, StyleSheet, View } from 'react-native';
 
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
 let mockHideAmounts = false;
@@ -581,4 +581,57 @@ describe('days as a feed with a marker rail', () => {
       expect(separators.length).toBeGreaterThan(0);
       act(() => tree.unmount());
     }));
+});
+
+describe('how a day’s lines move', () => {
+  const render = (rows: Transaction[]) => {
+    let tree!: ReactTestRenderer;
+    act(() => {
+      tree = create(
+        <TimelineDay
+          date={DATE}
+          label="Today"
+          dateLabel="25 Sept"
+          items={rows}
+          categories={categories}
+          accountName={(id) => id}
+          categoryName={(id) => names[id ?? ''] ?? ''}
+          onPressTx={jest.fn()}
+          stacks={createStackStore()}
+        />
+      );
+    });
+    return tree;
+  };
+  // In the test double a row's `layout` prop is set exactly when the row is given its slide into place.
+  const sliding = (tree: ReactTestRenderer) =>
+    tree.root.findAllByType(View).filter((v) => v.props.layout !== undefined);
+  const food = [tx('f1', { categoryId: 'food' }), tx('f2', { categoryId: 'food' })];
+  const others = [tx('t', { categoryId: 'travel' }), tx('s', { type: 'income', categoryId: 'salary' })];
+
+  it('slides its lines into place when an entry above them comes or goes', () => {
+    const tree = render(others);
+    expect(sliding(tree)).toHaveLength(2);
+    act(() => tree.unmount());
+  });
+
+  it('does not slide the lines of a day that holds a group, which would trail the panel as it opens', () => {
+    // The panel changes height every frame; a line below it that slid towards each new position would always be
+    // a few frames behind the panel's edge, overlapping it as it opens and leaving a gap as it closes.
+    const tree = render([...food, ...others]);
+    expect(sliding(tree)).toHaveLength(0);
+    act(() => tree.unmount());
+  });
+
+  it('lets the whole day leave without each of its lines playing an exit first', () => {
+    const tree = render([...food, ...others]);
+    const config = tree.root.findAll((n) => n.props.skipExiting === true);
+    expect(config).toHaveLength(1);
+    // Every line that has an exit animation is inside it, so none of them runs when the day itself is removed.
+    const exiting = (root: { findAllByType: typeof tree.root.findAllByType }) =>
+      root.findAllByType(View).filter((v) => v.props.exiting !== undefined).length;
+    expect(exiting(config[0])).toBeGreaterThan(0);
+    expect(exiting(config[0])).toBe(exiting(tree.root));
+    act(() => tree.unmount());
+  });
 });

@@ -184,8 +184,9 @@ export default function TransactionsScreen() {
   const [stacks] = useState(createStackStore);
   // True for a moment after a period's entries land: the days mounted then fade in with the Spent strip's glide,
   // instead of snapping in under it (and instead of replacing the loading placeholder in one frame). Days that
-  // scroll into view later mount with it off, so scrolling a long month never flickers.
-  const [arriving, setArriving] = useState(false);
+  // scroll into view later mount with it off, so scrolling a long month never flickers. A ref, not state: only the
+  // days mounting right now read it, and turning it off again must not redraw the whole screen for nothing.
+  const arriving = useRef(false);
   const arriveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(
     () => () => {
@@ -431,6 +432,12 @@ export default function TransactionsScreen() {
       cmp = null;
     }
     if (seq !== loadSeq.current) return false;
+    // Set before the state below lands, which is when the new days mount and read it.
+    arriving.current = true;
+    if (arriveTimer.current) clearTimeout(arriveTimer.current);
+    arriveTimer.current = setTimeout(() => {
+      arriving.current = false;
+    }, 400);
     // A reload that found nothing new changes nothing held here, so no day of the list redraws for it.
     setAccounts((prev) => keepIfEqual(prev, loadedAccounts));
     setCategories((prev) => keepIfEqual(prev, loadedCategories));
@@ -438,9 +445,6 @@ export default function TransactionsScreen() {
     setComparison(cmp);
     setComparisonFailed(cmp == null);
     setLoadedPeriod({ fromDate: range.fromDate, toDate: range.toDate, scope });
-    setArriving(true);
-    if (arriveTimer.current) clearTimeout(arriveTimer.current);
-    arriveTimer.current = setTimeout(() => setArriving(false), 400);
     return cmp != null;
   }, []);
 
@@ -1015,7 +1019,7 @@ export default function TransactionsScreen() {
                       ? weekdayDayMonth(group.date)
                       : dayMonth(group.date)
                 }
-                entering={arriving ? CONTENT_ENTER : undefined}
+                entering={arriving.current ? CONTENT_ENTER : undefined}
                 items={group.items}
                 categories={categories}
                 accountName={accountName}

@@ -1,7 +1,7 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { keepTogether } from '@/lib/keepTogether';
 import { Animated, Pressable, View, StyleSheet } from 'react-native';
-import ReanimatedAnimated from 'react-native-reanimated';
+import ReanimatedAnimated, { LayoutAnimationConfig } from 'react-native-reanimated';
 import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
 import { CategoryIcon } from '@/components/CategoryIcon';
@@ -198,6 +198,10 @@ function TimelineDayView({
   }, [items, onReorder, onDragActive, dy]);
   const shown = arranged ?? lines;
   const canReorder = !!onReorder && shown.length > 1;
+  // Lines slide into place when an entry above them goes or comes (and not just after a hand-ordering, which has
+  // moved them already). A day with a group does not: opening one changes the height of its panel every frame, and
+  // each line below would start a slide of its own towards that moving position and trail behind the panel's edge.
+  const slides = !settling && !shown.some((line) => line.kind === 'stack');
 
   const heightsInOrder = () => shown.map((l) => heights.current.get(laneKey(l)) ?? ROW_H);
   const lift = (index: number) => {
@@ -281,7 +285,7 @@ function TimelineDayView({
       const tx = line.tx;
       const cat = tx.categoryId ? categoriesById.get(tx.categoryId) : undefined;
       return (
-        <MovingRow key={tx.id} moving={!settling}>
+        <MovingRow key={tx.id} moving={slides}>
           {i > 0 && <View style={styles.separator} />}
           <Pressable
             onPress={() => onPressTx(tx)}
@@ -441,132 +445,144 @@ function TimelineDayView({
   return (
     // The day grows and shrinks with its stacks open or closed as their panels animate their own height (Collapsible),
     // and the days below, which are the list's own cells, move with it.
-    <ReanimatedAnimated.View entering={entering} style={segment}>
-      <View style={styles.rail} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-        <Text style={styles.railWeekday}>{shortWeekday(date).toUpperCase()}</Text>
-        <View
-          style={
-            isToday ? [styles.railNumberToday, { backgroundColor: theme.colors.ink }] : styles.railNumber
-          }
-        >
-          <Text style={[styles.railNumberText, isToday && styles.railNumberTextToday]}>
-            {Number(date.slice(8, 10))}
-          </Text>
+    // skipExiting: when the whole day leaves (the period changed, or the list scrolled it out of its window) its lines
+    // go with it. Without this each line plays its fade-out first, and the removed day is kept on screen, over the
+    // new one, until they have all finished.
+    <LayoutAnimationConfig skipExiting>
+      <ReanimatedAnimated.View entering={entering} style={segment}>
+        <View style={styles.rail} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+          <Text style={styles.railWeekday}>{shortWeekday(date).toUpperCase()}</Text>
+          <View
+            style={
+              isToday ? [styles.railNumberToday, { backgroundColor: theme.colors.ink }] : styles.railNumber
+            }
+          >
+            <Text style={[styles.railNumberText, isToday && styles.railNumberTextToday]}>
+              {Number(date.slice(8, 10))}
+            </Text>
+          </View>
+          {hasNext && <View style={styles.railLine} />}
         </View>
-        {hasNext && <View style={styles.railLine} />}
-      </View>
-      <View style={styles.dayBody}>
-        <View
-          style={styles.head}
-          accessible
-          accessibilityRole="header"
-          accessibilityLabel={`${label}, ${dateLabel}${showTotal ? `, ${totalText}` : ''}`}
-        >
-          <Text style={[styles.title, selected && styles.titleOn]}>{label}</Text>
-          {showTotal && <Text style={styles.total}>{totalText}</Text>}
-        </View>
-        <View style={styles.lane}>
-          {shown.map((line, i) => (
-            <DraggableLine
-              key={laneKey(line)}
-              lifted={drag?.from === i}
-              shift={shiftOf(i)}
-              dy={dy}
-              onHeight={(h) => heights.current.set(laneKey(line), h)}
-              onMove={moveTo}
-              onEnd={drop}
-            >
-              {renderLine(line, i)}
-            </DraggableLine>
-          ))}
-          {transfers.map((tx, i) => {
-            const role = investRole(tx, investmentIds);
-            const text = role
-              ? investLines(tx, role, accountName)
-              : {
-                  // The arrow stays with where it goes: "SBI → Emergency fund" wraps after "SBI", never leaving "fund" alone.
-                  title: keepTogether(`${accountName(tx.accountId)} → ${accountName(tx.toAccountId!)}`),
-                  sub: `${tx.note ? `${tx.note} · ` : ''}Transfer`,
-                };
-            return (
-              <View key={tx.id}>
-                {(lines.length > 0 || i > 0) && <View style={styles.separator} />}
-                <Pressable
-                  onPress={() => onPressTx(tx)}
-                  style={withPressedTint(accent, [styles.line, stacked && styles.wrapLine])}
-                  accessibilityRole="button"
-                  accessibilityLabel={`${money(tx.amountMinor, hidden(tx), tx.accountId)} ${
-                    role === 'invest'
-                      ? `invested in ${accountName(tx.toAccountId!)}${tx.ruleId ? ' by SIP' : ''}, from ${accountName(tx.accountId)}`
-                      : role === 'withdraw'
-                        ? `withdrawn from ${accountName(tx.accountId)} to ${accountName(tx.toAccountId!)}`
-                        : `moved from ${accountName(tx.accountId)} to ${accountName(tx.toAccountId!)}`
-                  }`}
-                >
-                  <JustAddedGlow ids={[tx.id]} surface="activity" />
-                  <View style={styles.lead}>
-                    <View style={[styles.transferIcon, { backgroundColor: softTint(secondary, 0.35) }]}>
-                      <Feather
-                        name={
-                          role === 'invest' ? 'trending-up' : role === 'withdraw' ? 'trending-down' : 'repeat'
-                        }
-                        size={16}
-                        color={theme.colors.ink}
-                      />
+        <View style={styles.dayBody}>
+          <View
+            style={styles.head}
+            accessible
+            accessibilityRole="header"
+            accessibilityLabel={`${label}, ${dateLabel}${showTotal ? `, ${totalText}` : ''}`}
+          >
+            <Text style={[styles.title, selected && styles.titleOn]}>{label}</Text>
+            {showTotal && <Text style={styles.total}>{totalText}</Text>}
+          </View>
+          <View style={styles.lane}>
+            {shown.map((line, i) => (
+              <DraggableLine
+                key={laneKey(line)}
+                lifted={drag?.from === i}
+                shift={shiftOf(i)}
+                dy={dy}
+                onHeight={(h) => heights.current.set(laneKey(line), h)}
+                onMove={moveTo}
+                onEnd={drop}
+              >
+                {renderLine(line, i)}
+              </DraggableLine>
+            ))}
+            {transfers.map((tx, i) => {
+              const role = investRole(tx, investmentIds);
+              const text = role
+                ? investLines(tx, role, accountName)
+                : {
+                    // The arrow stays with where it goes: "SBI → Emergency fund" wraps after "SBI", never leaving "fund" alone.
+                    title: keepTogether(`${accountName(tx.accountId)} → ${accountName(tx.toAccountId!)}`),
+                    sub: `${tx.note ? `${tx.note} · ` : ''}Transfer`,
+                  };
+              return (
+                <View key={tx.id}>
+                  {(lines.length > 0 || i > 0) && <View style={styles.separator} />}
+                  <Pressable
+                    onPress={() => onPressTx(tx)}
+                    style={withPressedTint(accent, [styles.line, stacked && styles.wrapLine])}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${money(tx.amountMinor, hidden(tx), tx.accountId)} ${
+                      role === 'invest'
+                        ? `invested in ${accountName(tx.toAccountId!)}${tx.ruleId ? ' by SIP' : ''}, from ${accountName(tx.accountId)}`
+                        : role === 'withdraw'
+                          ? `withdrawn from ${accountName(tx.accountId)} to ${accountName(tx.toAccountId!)}`
+                          : `moved from ${accountName(tx.accountId)} to ${accountName(tx.toAccountId!)}`
+                    }`}
+                  >
+                    <JustAddedGlow ids={[tx.id]} surface="activity" />
+                    <View style={styles.lead}>
+                      <View style={[styles.transferIcon, { backgroundColor: softTint(secondary, 0.35) }]}>
+                        <Feather
+                          name={
+                            role === 'invest'
+                              ? 'trending-up'
+                              : role === 'withdraw'
+                                ? 'trending-down'
+                                : 'repeat'
+                          }
+                          size={16}
+                          color={theme.colors.ink}
+                        />
+                      </View>
                     </View>
-                  </View>
-                  <View style={[styles.mid, stacked && styles.wideMid]}>
-                    <Text style={[styles.name, styles.transferName]}>{text.title}</Text>
-                    <Text style={styles.sub}>{text.sub}</Text>
-                  </View>
-                  <Text style={[styles.amount, styles.transferAmount]} numberOfLines={1}>
-                    {money(tx.amountMinor, hidden(tx), tx.accountId)}
-                  </Text>
-                </Pressable>
-              </View>
-            );
-          })}
-          {notes.map((note, i) => {
-            const masked = hideAmounts && savingsAccountIds.has(note.accountId);
-            const change = note.previousMinor == null ? null : note.valueMinor - note.previousMinor;
-            const cur = accountCurrency(note.accountId);
-            return (
-              <View key={note.id}>
-                {(lines.length > 0 || transfers.length > 0 || i > 0) && <View style={styles.separator} />}
-                <Pressable
-                  onPress={onPressNote ? () => onPressNote(note) : undefined}
-                  disabled={!onPressNote}
-                  accessibilityRole={onPressNote ? 'button' : undefined}
-                  accessibilityHint={onPressNote ? 'Opens your investments' : undefined}
-                  style={[styles.line, stacked && styles.wrapLine]}
-                  accessibilityLabel={`${accountName(note.accountId)} value updated to ${formatMaskableMoney(note.valueMinor, { masked, currency: cur })}`}
-                >
-                  <View style={styles.lead}>
-                    <View
-                      style={[styles.transferIcon, { backgroundColor: softTint(theme.colors.idGold, 0.35) }]}
-                    >
-                      <Feather name="edit-3" size={15} color={theme.colors.ink} />
+                    <View style={[styles.mid, stacked && styles.wideMid]}>
+                      <Text style={[styles.name, styles.transferName]}>{text.title}</Text>
+                      <Text style={styles.sub}>{text.sub}</Text>
                     </View>
-                  </View>
-                  <View style={[styles.mid, stacked && styles.wideMid]}>
-                    <Text style={[styles.name, styles.transferName]}>
-                      {accountName(note.accountId)} now worth{' '}
-                      {formatMaskableMoney(note.valueMinor, { masked, currency: cur })}
+                    <Text style={[styles.amount, styles.transferAmount]} numberOfLines={1}>
+                      {money(tx.amountMinor, hidden(tx), tx.accountId)}
                     </Text>
-                    <Text style={styles.sub}>
-                      Value update
-                      {change != null && !masked
-                        ? ` · ${change < 0 ? '−' : '+'}${formatMoney(Math.abs(change), cur)} since ${dayMonth(note.previousDate!)}`
-                        : ''}
-                    </Text>
-                  </View>
-                </Pressable>
-              </View>
-            );
-          })}
+                  </Pressable>
+                </View>
+              );
+            })}
+            {notes.map((note, i) => {
+              const masked = hideAmounts && savingsAccountIds.has(note.accountId);
+              const change = note.previousMinor == null ? null : note.valueMinor - note.previousMinor;
+              const cur = accountCurrency(note.accountId);
+              return (
+                <View key={note.id}>
+                  {(lines.length > 0 || transfers.length > 0 || i > 0) && <View style={styles.separator} />}
+                  <Pressable
+                    onPress={onPressNote ? () => onPressNote(note) : undefined}
+                    disabled={!onPressNote}
+                    accessibilityRole={onPressNote ? 'button' : undefined}
+                    accessibilityHint={onPressNote ? 'Opens your investments' : undefined}
+                    style={[styles.line, stacked && styles.wrapLine]}
+                    accessibilityLabel={`${accountName(note.accountId)} value updated to ${formatMaskableMoney(note.valueMinor, { masked, currency: cur })}`}
+                  >
+                    <View style={styles.lead}>
+                      <View
+                        style={[
+                          styles.transferIcon,
+                          { backgroundColor: softTint(theme.colors.idGold, 0.35) },
+                        ]}
+                      >
+                        <Feather name="edit-3" size={15} color={theme.colors.ink} />
+                      </View>
+                    </View>
+                    <View style={[styles.mid, stacked && styles.wideMid]}>
+                      <Text style={[styles.name, styles.transferName]}>
+                        {accountName(note.accountId)} now worth{' '}
+                        {formatMaskableMoney(note.valueMinor, { masked, currency: cur })}
+                      </Text>
+                      <Text style={styles.sub}>
+                        Value update
+                        {change != null && !masked
+                          ? ` · ${change < 0 ? '−' : '+'}${formatMoney(Math.abs(change), cur)} since ${dayMonth(note.previousDate!)}`
+                          : ''}
+                      </Text>
+                    </View>
+                  </Pressable>
+                </View>
+              );
+            })}
+          </View>
         </View>
-      </View>
-    </ReanimatedAnimated.View>
+      </ReanimatedAnimated.View>
+    </LayoutAnimationConfig>
   );
 }
 
