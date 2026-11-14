@@ -26,6 +26,8 @@ The [25 October repository re-audit](REPOSITORY_REAUDIT_2026_10_25.md) records p
 
 The [14 November performance pass](PERFORMANCE_2026_11_14.md) measures every screen with a ledger of up to 300,000 entries, fixes what scaled badly (Reports' cash-flow read, Activity's repeated redraws, date formatting) and adds bulk-data tests. It does not establish device smoothness.
 
+The [14 November Activity smoothness pass](ACTIVITY_SMOOTHNESS_2026_11_14.md) measures each Activity interaction (JavaScript cost per tap at 6 times slower CPU), removes a redraw after every period step, stops lines sliding under an opening group and skips exit animations when a day leaves, and splits the screen file into tested hooks and components. The animation changes rest on Reanimated's source and tests, not on a device.
+
 Hands-on Android outcomes belong in [release device acceptance](RELEASE_DEVICE_CHECKS.md). A passing test suite or JavaScript export does not establish native compilation, notification delivery, accessibility or frame pacing.
 
 ## Maintained guides
