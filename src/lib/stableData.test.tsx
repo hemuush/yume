@@ -1,11 +1,11 @@
 /**
- * Reloading Activity changes the objects it holds even when nothing changed (accounts carry a balance that moves with
- * every entry, rows are fetched again). These keep what is the same the same object, so only a day that really
+ * Reloading Activity or Home changes the objects they hold even when nothing changed (accounts carry a balance that
+ * moves with every entry, rows are fetched again). These keep what is the same the same object, so only what really
  * changed redraws: before, one deleted entry redrew all seven days on screen.
  */
 import { Text } from 'react-native';
 import { create, act } from 'react-test-renderer';
-import { keepIfEqual, reuseUnchanged, sameElements, useStableSet } from './transactions.helpers';
+import { keepIfEqual, reuseUnchanged, sameElements, useStableSet, useStableValue } from './stableData';
 
 describe('keepIfEqual', () => {
   it('hands back the list already held when the new one holds the same things', () => {
@@ -86,6 +86,26 @@ describe('useStableSet', () => {
     act(() => tree.update(<Reads set={new Set(['a', 'b', 'c'])} seen={seen} />));
     expect(seen[2]).not.toBe(seen[0]);
     expect([...seen[2]].sort()).toEqual(['a', 'b', 'c']);
+    act(() => tree.unmount());
+  });
+});
+
+describe('useStableValue', () => {
+  it('hands back the very same value while what it holds is the same, however often it is rebuilt', () => {
+    const seen: unknown[] = [];
+    function Probe({ value }: { value: unknown }) {
+      seen.push(useStableValue(value));
+      return null;
+    }
+    let tree!: ReturnType<typeof create>;
+    act(() => {
+      tree = create(<Probe value={[{ id: 'a', name: 'Bank' }]} />);
+    });
+    act(() => tree.update(<Probe value={[{ id: 'a', name: 'Bank' }]} />));
+    expect(seen[1]).toBe(seen[0]);
+    act(() => tree.update(<Probe value={[{ id: 'a', name: 'Bank of India' }]} />));
+    expect(seen[2]).not.toBe(seen[0]);
+    expect(seen[2]).toEqual([{ id: 'a', name: 'Bank of India' }]);
     act(() => tree.unmount());
   });
 });

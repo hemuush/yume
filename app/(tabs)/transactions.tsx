@@ -27,6 +27,7 @@ import { ActivityPeriodBar } from '@/features/transactions/ActivityPeriodBar';
 import { useActivityLedger } from '@/features/transactions/useActivityLedger';
 import { useActivitySearch } from '@/features/transactions/useActivitySearch';
 import { useDayJump } from '@/features/transactions/useDayJump';
+import { useStableSet } from '@/lib/stableData';
 import { SEARCH_MIN_CHARS, SEARCH_RESULT_LIMIT } from '@/features/transactions/searchLimits';
 import { dayMonth, longMonth, longWeekday, weekdayDayMonth } from '@/lib/dateLabels';
 import { PeriodPicker } from '@/components/PeriodPicker';
@@ -54,7 +55,6 @@ import {
   emptyPeriodTitle,
   searchDayLabel,
   searchSuggestionsFor,
-  useStableSet,
   type ValueNote,
 } from '@/features/transactions/transactions.helpers';
 import type { ActivityType } from '@/features/transactions/activityFilter';

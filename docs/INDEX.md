@@ -28,6 +28,8 @@ The [14 November performance pass](PERFORMANCE_2026_11_14.md) measures every scr
 
 The [14 November Activity smoothness pass](ACTIVITY_SMOOTHNESS_2026_11_14.md) measures each Activity interaction (JavaScript cost per tap at 6 times slower CPU), removes a redraw after every period step, stops lines sliding under an opening group and skips exit animations when a day leaves, and splits the screen file into tested hooks and components. The animation changes rest on Reanimated's source and tests, not on a device.
 
+The [14 November Home pass](HOME_SMOOTHNESS_2026_11_14.md) applies the same method to Home: sheets move out of the page's state, a reload keeps what it did not change, the page's sections compare their props, and the 886-line screen is split into tested hooks and components. Opening or closing a sheet no longer redraws the page behind it.
+
 Hands-on Android outcomes belong in [release device acceptance](RELEASE_DEVICE_CHECKS.md). A passing test suite or JavaScript export does not establish native compilation, notification delivery, accessibility or frame pacing.
 
 ## Maintained guides

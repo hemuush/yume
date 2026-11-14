@@ -4,7 +4,8 @@ import { getRangeComparison, type PeriodComparison } from '@/db/reports';
 import type { Account, Category, Transaction } from '@/types';
 import { toLocalIsoDate } from '@/lib/date';
 import { errorMessage } from '@/lib/errorMessage';
-import { keepIfEqual, previousRangeFor, reuseUnchanged } from './transactions.helpers';
+import { previousRangeFor } from './transactions.helpers';
+import { keepIfEqual, reuseUnchanged } from '@/lib/stableData';
 
 /** How long the days that mount as a period lands take to fade in. */
 const ARRIVAL_MS = 400;
