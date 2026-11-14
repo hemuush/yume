@@ -246,3 +246,32 @@ describe('opening without a hitch', () => {
     act(() => tree.unmount());
   });
 });
+
+describe('entries made on demand', () => {
+  it('does not make its entries while closed, and makes them once it is asked to open', () => {
+    const make = jest.fn(() => <Text>Phone Cover</Text>);
+    let tree!: ReactTestRenderer;
+    act(() => {
+      tree = create(<Collapsible open={false}>{make}</Collapsible>);
+    });
+    expect(make).not.toHaveBeenCalled();
+    act(() => tree.update(<Collapsible open>{make}</Collapsible>));
+    expect(make).toHaveBeenCalled();
+    expect(tree.root.findAllByType(Text)).toHaveLength(1);
+    act(() => tree.unmount());
+  });
+
+  it('makes them from a finger touching down, ready for the tap', () => {
+    const make = jest.fn(() => <Text>Phone Cover</Text>);
+    let tree!: ReactTestRenderer;
+    act(() => {
+      tree = create(
+        <Collapsible open={false} warm>
+          {make}
+        </Collapsible>
+      );
+    });
+    expect(make).toHaveBeenCalled();
+    act(() => tree.unmount());
+  });
+});

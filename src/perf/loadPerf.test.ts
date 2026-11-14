@@ -182,6 +182,16 @@ run('load performance', () => {
       console.log(`PLAN-SQL took ${Math.round(performance.now() - t0)}ms for ${rows.length} rows`);
     }
     console.log(
+      ['', 'slowest statements (all measurements added up)']
+        .concat(
+          [...mockSlow]
+            .sort((a, b) => b[1].ms - a[1].ms)
+            .slice(0, 25)
+            .map(([sql, e]) => `${String(Math.round(e.ms)).padStart(6)} ms  x${String(e.n).padEnd(3)} ${sql}`)
+        )
+        .join('\n')
+    );
+    console.log(
       ['', 'screen'.padEnd(24) + 'ms'.padStart(8) + 'queries'.padStart(10)]
         .concat(
           results.map((r) => r.name.padEnd(24) + String(r.ms).padStart(8) + String(r.calls).padStart(10))

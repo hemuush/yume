@@ -45,7 +45,8 @@ export function Collapsible({
   open: boolean;
   /** The entries are about to be wanted (a finger is down): have them in the tree and measured. */
   warm?: boolean;
-  children: ReactNode;
+  /** The entries, or a function that makes them: it runs only while they are wanted, so a closed panel costs nothing. */
+  children: ReactNode | (() => ReactNode);
 }) {
   const reduce = useReduceMotion();
   const [mounted, setMounted] = useState(open);
@@ -102,7 +103,8 @@ export function Collapsible({
 
   // In the tree as soon as it is asked to open (the same render), while it closes, and from a finger touching down.
   if (!(open || mounted || warm)) return null;
-  if (stuck) return <View>{children}</View>;
+  const content = typeof children === 'function' ? children() : children;
+  if (stuck) return <View>{content}</View>;
   return (
     <Animated.View
       pointerEvents={open ? 'auto' : 'none'}
@@ -119,7 +121,7 @@ export function Collapsible({
           if (heading.current && !started.current) glide();
         }}
       >
-        {children}
+        {content}
       </View>
     </Animated.View>
   );

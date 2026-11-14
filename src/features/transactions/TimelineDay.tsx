@@ -28,6 +28,7 @@ import {
   LaneLine,
   moveLine,
   type ValueNote,
+  sameElements,
 } from './transactions.helpers';
 import { investLines, investRole } from '@/lib/investment';
 import { isSavingsEntry } from '@/lib/privateSummary';
@@ -381,39 +382,44 @@ function TimelineDayView({
               </Pressable>
               {/* The panel opens and closes by animating its own height, so the rows below move with it, frame by frame. */}
               <Collapsible open={open} warm={warm}>
-                {line.items.map((tx) => {
-                  // The category is already named above: note over account, or just the account with no note.
-                  const label = tx.note || accountName(tx.accountId);
-                  const sub = tx.note ? accountName(tx.accountId) : null;
-                  return (
-                    <View key={tx.id}>
-                      <View style={styles.separator} />
-                      <Pressable
-                        onPress={() => onPressTx(tx)}
-                        style={withPressedTint(accent, [styles.subLine, stacked && styles.wrapLine])}
-                        accessibilityRole="button"
-                        accessibilityLabel={`${categorySpoken(name, stackParent)}${tx.isRefund ? ', refund' : ''}${tx.note ? `, ${tx.note}` : ''}, ${money(tx.amountMinor, hidden(tx), tx.accountId)}`}
-                      >
-                        <View
-                          style={[styles.subDot, { backgroundColor: cat?.color ?? theme.colors.borderSoft }]}
-                        />
-                        <View style={[styles.mid, stacked && styles.wideMid]}>
-                          <View style={styles.entryHead}>
-                            <Text style={[styles.name, styles.stackName]}>{label}</Text>
-                            {tx.splitId && <StatusBadge label="Split" />}
+                {() =>
+                  line.items.map((tx) => {
+                    // The category is already named above: note over account, or just the account with no note.
+                    const label = tx.note || accountName(tx.accountId);
+                    const sub = tx.note ? accountName(tx.accountId) : null;
+                    return (
+                      <View key={tx.id}>
+                        <View style={styles.separator} />
+                        <Pressable
+                          onPress={() => onPressTx(tx)}
+                          style={withPressedTint(accent, [styles.subLine, stacked && styles.wrapLine])}
+                          accessibilityRole="button"
+                          accessibilityLabel={`${categorySpoken(name, stackParent)}${tx.isRefund ? ', refund' : ''}${tx.note ? `, ${tx.note}` : ''}, ${money(tx.amountMinor, hidden(tx), tx.accountId)}`}
+                        >
+                          <View
+                            style={[
+                              styles.subDot,
+                              { backgroundColor: cat?.color ?? theme.colors.borderSoft },
+                            ]}
+                          />
+                          <View style={[styles.mid, stacked && styles.wideMid]}>
+                            <View style={styles.entryHead}>
+                              <Text style={[styles.name, styles.stackName]}>{label}</Text>
+                              {tx.splitId && <StatusBadge label="Split" />}
+                            </View>
+                            {sub && <Text style={styles.sub}>{sub}</Text>}
                           </View>
-                          {sub && <Text style={styles.sub}>{sub}</Text>}
-                        </View>
-                        <Amount
-                          type={tx.type}
-                          minor={tx.amountMinor}
-                          masked={hidden(tx)}
-                          currency={accountCurrency(tx.accountId)}
-                        />
-                      </Pressable>
-                    </View>
-                  );
-                })}
+                          <Amount
+                            type={tx.type}
+                            minor={tx.amountMinor}
+                            masked={hidden(tx)}
+                            currency={accountCurrency(tx.accountId)}
+                          />
+                        </Pressable>
+                      </View>
+                    );
+                  })
+                }
               </Collapsible>
             </>
           )}
@@ -734,6 +740,13 @@ function OpenStack({
 export const TimelineDay = memo(TimelineDayView, (prev, next) => {
   for (const key of Object.keys(next) as (keyof typeof next)[]) {
     if (key === 'entering' || prev[key] === next[key]) continue;
+    // A day made of the same entries is the same day, whether or not its list was rebuilt around them.
+    if (
+      (key === 'items' || key === 'notes') &&
+      sameElements(prev[key] as readonly unknown[] | undefined, next[key] as readonly unknown[] | undefined)
+    ) {
+      continue;
+    }
     return false;
   }
   return Object.keys(prev).length === Object.keys(next).length;

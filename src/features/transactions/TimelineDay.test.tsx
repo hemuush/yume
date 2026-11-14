@@ -422,6 +422,38 @@ it('re-renders only the stack that opens: not the day, and not a stack of anothe
   }
 });
 
+it('does not redraw a day whose list of entries was rebuilt around the very same entries, and does when one changed', () => {
+  const money = require('@/lib/money');
+  const format = jest.spyOn(money, 'formatMaskableMoney');
+  const props = {
+    date: DATE,
+    label: 'Today',
+    dateLabel: '25 Sept',
+    items,
+    categories,
+    accountName: (id: string) => accounts[id],
+    categoryName: (id: string | null) => names[id ?? ''],
+    onPressTx: jest.fn(),
+    stacks: createStackStore(),
+  };
+  let tree!: ReactTestRenderer;
+  try {
+    act(() => {
+      tree = create(<TimelineDay {...props} />);
+    });
+    format.mockClear();
+    act(() => tree.update(<TimelineDay {...props} items={[...items]} />));
+    expect(format).not.toHaveBeenCalled();
+    act(() =>
+      tree.update(<TimelineDay {...props} items={[{ ...items[0], amountMinor: 1 }, ...items.slice(1)]} />)
+    );
+    expect(format).toHaveBeenCalled();
+  } finally {
+    act(() => tree.unmount());
+    format.mockRestore();
+  }
+});
+
 describe('days as a feed with a marker rail', () => {
   const day = (over: Partial<React.ComponentProps<typeof TimelineDay>> = {}) => {
     let tree!: ReactTestRenderer;
