@@ -36,6 +36,7 @@ import { dayMonth, longMonth, longWeekday, weekdayDayMonth } from '@/lib/dateLab
 import { PeriodPicker } from '@/components/PeriodPicker';
 import { FilterModal } from '@/features/transactions/FilterModal';
 import { TimelineDay } from '@/features/transactions/TimelineDay';
+import { createStackStore } from '@/features/transactions/stackStore';
 import { getTransactionById } from '@/db/transactions';
 import { showAlert } from '@/components/AppDialog';
 import { TransactionDetailModal } from '@/features/transactions/TransactionDetailModal';
@@ -173,8 +174,9 @@ export default function TransactionsScreen() {
     setFilterAccountIds([]);
   }, []);
   // Which stacked lines ("Food & Dining ×5") are open lives here, not in TimelineDay: FlatList unmounts
-  // off-screen rows, and local state there would silently close a stack the user opened.
-  const [openStacks, setOpenStacks] = useState<Set<string>>(new Set());
+  // off-screen rows, and local state there would silently close a stack the user opened. It is not React state:
+  // opening a stack then re-renders that one line instead of this screen and the whole day.
+  const [stacks] = useState(createStackStore);
   // True for a moment after a period's entries land: the days mounted then fade in with the Spent strip's glide,
   // instead of snapping in under it (and instead of replacing the loading placeholder in one frame). Days that
   // scroll into view later mount with it off, so scrolling a long month never flickers.
@@ -186,14 +188,6 @@ export default function TransactionsScreen() {
     },
     []
   );
-  const toggleStack = useCallback((key: string) => {
-    setOpenStacks((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      return next;
-    });
-  }, []);
   // Slide direction of the headline/chart on the next period change (read by TransactionsHeadline): 0
   // (crossfade) unless it is a one-step move; a picked month or Week↔Month switch has no direction.
   const [direction, setDirection] = useState<-1 | 0 | 1>(0);
@@ -1005,8 +999,7 @@ export default function TransactionsScreen() {
                 investmentIds={investmentIds}
                 notes={group.notes}
                 onPressNote={openInvestments}
-                openStacks={openStacks}
-                onToggleStack={toggleStack}
+                stacks={stacks}
                 onReorder={canReorder ? reorderDay : undefined}
                 onDragActive={setDragging}
                 selected={!searching && loadedPeriod.scope === 'week' && selectedBar === group.date}

@@ -9,6 +9,7 @@ jest.mock('@/theme/PrivacyContext', () => ({
 }));
 jest.useFakeTimers();
 
+import { createStackStore } from './stackStore';
 import { TimelineDay } from './TimelineDay';
 import { filterActivity, groupWithNotes, type ValueNote } from './transactions.helpers';
 import type { Category, Transaction } from '@/types';
@@ -111,8 +112,7 @@ function render(props: Partial<React.ComponentProps<typeof TimelineDay>> & { ite
         categoryName={() => 'Food'}
         accountCurrency={() => 'INR'}
         onPressTx={jest.fn()}
-        openStacks={new Set()}
-        onToggleStack={jest.fn()}
+        stacks={createStackStore()}
         investmentIds={investmentIds}
         savingsAccountIds={investmentIds}
         {...props}
