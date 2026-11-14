@@ -11,6 +11,7 @@ jest.mock('@/theme/PrivacyContext', () => ({
   usePrivacy: () => ({ hideAmounts: mockHideAmounts, toggleHideAmounts: jest.fn() }),
 }));
 
+import { createStackStore, type StackStore } from './stackStore';
 import { TimelineDay } from './TimelineDay';
 import { Category, Transaction } from '@/types';
 import { theme } from '@/constants/theme';
@@ -33,8 +34,7 @@ it('shows foreign amounts in their own currency and excludes them from the day t
         categoryName={(id) => names[id ?? ''] ?? ''}
         accountCurrency={(id) => (id === 'usd' ? 'USD' : 'INR')}
         onPressTx={jest.fn()}
-        openStacks={new Set()}
-        onToggleStack={jest.fn()}
+        stacks={createStackStore()}
       />
     );
   });
@@ -104,8 +104,7 @@ it('labels a received refund without exposing its sensitive amount and still ope
           accountName={(id) => id}
           categoryName={(id) => names[id ?? '']}
           onPressTx={open}
-          openStacks={new Set()}
-          onToggleStack={jest.fn()}
+          stacks={createStackStore()}
         />
       );
     });
@@ -139,6 +138,18 @@ function byLabel(r: ReactTestRenderer, start: string) {
   );
 }
 
+/** A store with some stacks open, that tells `onToggle` which stack was tapped. */
+function storeOf(open: Iterable<string>, onToggle: (key: string) => void): StackStore {
+  const stacks = createStackStore(open);
+  return {
+    ...stacks,
+    toggle: (key) => {
+      onToggle(key);
+      stacks.toggle(key);
+    },
+  };
+}
+
 function render(
   openStacks: Set<string>,
   onToggleStack = jest.fn(),
@@ -163,8 +174,7 @@ function render(
         accountName={(id) => accounts[id] ?? id}
         categoryName={(id) => (id ? names[id] : 'Transfer')}
         onPressTx={onPressTx}
-        openStacks={openStacks}
-        onToggleStack={onToggleStack}
+        stacks={storeOf(openStacks, onToggleStack)}
         onReorder={onReorder}
         onDragActive={opts.onDragActive}
       />
@@ -353,8 +363,7 @@ describe('TimelineDay with subcategories', () => {
           accountName={(id) => accounts[id] ?? id}
           categoryName={(id) => (id === 'flipG' ? 'Flipkart Minutes' : (names[id ?? ''] ?? ''))}
           onPressTx={jest.fn()}
-          openStacks={new Set()}
-          onToggleStack={jest.fn()}
+          stacks={createStackStore()}
         />
       );
     });
@@ -373,7 +382,47 @@ it('releases the parent scroll lock when a held day unmounts', () => {
   expect(onDragActive).toHaveBeenLastCalledWith(false);
 });
 
-it('does not rebuild an unrelated day when another day expands, but refreshes its own expansion', () => {
+it('re-renders only the stack that opens: not the day, and not a stack of another day', () => {
+  const money = require('@/lib/money');
+  const format = jest.spyOn(money, 'formatMaskableMoney');
+  const stacks = createStackStore();
+  const props = {
+    date: DATE,
+    label: 'Today',
+    dateLabel: '25 Sept',
+    items,
+    categories,
+    accountName: (id: string) => accounts[id],
+    categoryName: (id: string | null) => names[id ?? ''],
+    onPressTx: jest.fn(),
+    stacks,
+  };
+  let tree!: ReactTestRenderer;
+  try {
+    act(() => {
+      tree = create(<TimelineDay {...props} />);
+    });
+    format.mockClear();
+    // Another day's stack opening changes nothing here.
+    act(() => stacks.toggle('2026-09-24|expense|food'));
+    expect(format).not.toHaveBeenCalled();
+    expect(byLabel(tree, 'Food, Lunch')).toHaveLength(0);
+    // This day's own stack opens, and only the stack redraws: the lines beside it are left as they are.
+    const singles = format.mock.calls.length;
+    act(() => stacks.toggle(`${DATE}|expense|food`));
+    expect(byLabel(tree, 'Food, Lunch').length).toBeGreaterThan(0);
+    const drawn = format.mock.calls.length - singles;
+    format.mockClear();
+    act(() => tree.update(<TimelineDay {...props} dateLabel="26 Sept" />));
+    // A change to the day itself redraws every line: the stack alone was a fraction of that.
+    expect(format.mock.calls.length).toBeGreaterThan(drawn);
+  } finally {
+    act(() => tree.unmount());
+    format.mockRestore();
+  }
+});
+
+it('does not redraw a day whose list of entries was rebuilt around the very same entries, and does when one changed', () => {
   const money = require('@/lib/money');
   const format = jest.spyOn(money, 'formatMaskableMoney');
   const props = {
@@ -385,8 +434,7 @@ it('does not rebuild an unrelated day when another day expands, but refreshes it
     accountName: (id: string) => accounts[id],
     categoryName: (id: string | null) => names[id ?? ''],
     onPressTx: jest.fn(),
-    onToggleStack: jest.fn(),
-    openStacks: new Set<string>(),
+    stacks: createStackStore(),
   };
   let tree!: ReactTestRenderer;
   try {
@@ -394,9 +442,11 @@ it('does not rebuild an unrelated day when another day expands, but refreshes it
       tree = create(<TimelineDay {...props} />);
     });
     format.mockClear();
-    act(() => tree.update(<TimelineDay {...props} openStacks={new Set(['2026-09-24|expense|food'])} />));
+    act(() => tree.update(<TimelineDay {...props} items={[...items]} />));
     expect(format).not.toHaveBeenCalled();
-    act(() => tree.update(<TimelineDay {...props} openStacks={new Set([`${DATE}|expense|food`])} />));
+    act(() =>
+      tree.update(<TimelineDay {...props} items={[{ ...items[0], amountMinor: 1 }, ...items.slice(1)]} />)
+    );
     expect(format).toHaveBeenCalled();
   } finally {
     act(() => tree.unmount());
@@ -418,8 +468,7 @@ describe('days as a feed with a marker rail', () => {
           accountName={(id) => id}
           categoryName={(id) => names[id ?? ''] ?? ''}
           onPressTx={jest.fn()}
-          openStacks={new Set()}
-          onToggleStack={jest.fn()}
+          stacks={createStackStore()}
           {...over}
         />
       );

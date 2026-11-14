@@ -9,6 +9,7 @@ import { SECTION_TITLE } from '@/constants/textStyles';
 import { StatusBadge } from '@/components/StatusBadge';
 import { MovingRow } from '@/components/MovingRow';
 import { Collapsible } from '@/components/Collapsible';
+import { useStackOpen, type StackStore } from './stackStore';
 import { JustAddedGlow } from '@/components/JustAddedGlow';
 import { Category, Transaction } from '@/types';
 import { dayMonth, shortWeekday } from '@/lib/dateLabels';
@@ -27,6 +28,7 @@ import {
   LaneLine,
   moveLine,
   type ValueNote,
+  sameElements,
 } from './transactions.helpers';
 import { investLines, investRole } from '@/lib/investment';
 import { isSavingsEntry } from '@/lib/privateSummary';
@@ -91,8 +93,7 @@ function TimelineDayView({
   accountName,
   categoryName,
   onPressTx,
-  openStacks,
-  onToggleStack,
+  stacks,
   entering,
   onReorder,
   onDragActive,
@@ -113,8 +114,8 @@ function TimelineDayView({
   accountName: (id: string) => string;
   categoryName: (id: string | null) => string;
   onPressTx: (tx: Transaction) => void;
-  openStacks: Set<string>;
-  onToggleStack: (key: string) => void;
+  /** Which stacked lines are open (see stackStore). */
+  stacks: StackStore;
   entering?: React.ComponentProps<typeof ReanimatedAnimated.View>['entering'];
   /** Saves the day's new order (entry ids, top to bottom). Omit to turn hand-ordering off (search, filters). */
   onReorder?: (date: string, orderedIds: string[]) => Promise<void>;
@@ -319,7 +320,6 @@ function TimelineDayView({
     }
     // A stack (one category, several entries): one line that opens in place to show what's inside.
     const cat = line.categoryId ? categoriesById.get(line.categoryId) : undefined;
-    const open = openStacks.has(line.key);
     const first = line.items[0];
     const name = categoryName(line.categoryId);
     const stackParent = parentNameOf(line.categoryId, categoriesById);
@@ -331,84 +331,99 @@ function TimelineDayView({
       // would chase it a frame behind.
       <MovingRow key={line.key} moving={false}>
         {i > 0 && <View style={styles.separator} />}
-        <Pressable
-          onPress={() => {
-            haptics.tap();
-            onToggleStack(line.key);
-          }}
-          {...reorderProps(i)}
-          style={withPressedTint(accent, [styles.line, stacked && styles.wrapLine])}
-          accessibilityRole="button"
-          accessibilityState={{ expanded: open }}
-          accessibilityLabel={`${categorySpoken(name, stackParent)}${line.items.every((t) => t.isRefund) ? ', refunds' : ''}, ${line.items.length} entries, ${money(line.totalMinor, lineMasked, first.accountId)}. ${open ? 'Close' : 'Open'}`}
-        >
-          {/* A new entry folded into this line glows the line. */}
-          <JustAddedGlow ids={line.items.map((t) => t.id)} surface="activity" />
-          <View style={styles.lead}>
-            <CategoryIcon name={cat?.icon ?? 'tag'} color={cat?.color} size={15} square={ICON} round />
-          </View>
-          <View style={[styles.mid, stacked && styles.wideMid]}>
-            <View style={styles.stackMid}>
-              <Text style={[styles.name, styles.stackName]}>{name}</Text>
-              {line.items.every((t) => t.isRefund) && <StatusBadge label="Refund" tone="complete" />}
-              <View style={styles.stackChip}>
-                <Text style={styles.stackCount}>{line.items.length}</Text>
-                <Feather
-                  name={open ? 'chevron-up' : 'chevron-down'}
-                  size={13}
-                  color={theme.colors.textSecondary}
-                />
-              </View>
-            </View>
-            <Text style={styles.sub}>
-              {joinSub([
-                stackParent,
-                `${line.items.length} entries`,
-                sameAccount && accountName(first.accountId),
-              ])}
-            </Text>
-          </View>
-          <Amount
-            type={line.type}
-            minor={line.totalMinor}
-            masked={lineMasked}
-            currency={accountCurrency(first.accountId)}
-          />
-        </Pressable>
-        {/* The panel opens and closes by animating its own height, so the rows below move with it, frame by frame. */}
-        <Collapsible open={open}>
-          {line.items.map((tx) => {
-            // The category is already named above: note over account, or just the account with no note.
-            const label = tx.note || accountName(tx.accountId);
-            const sub = tx.note ? accountName(tx.accountId) : null;
-            return (
-              <View key={tx.id}>
-                <View style={styles.separator} />
-                <Pressable
-                  onPress={() => onPressTx(tx)}
-                  style={withPressedTint(accent, [styles.subLine, stacked && styles.wrapLine])}
-                  accessibilityRole="button"
-                  accessibilityLabel={`${categorySpoken(name, stackParent)}${tx.isRefund ? ', refund' : ''}${tx.note ? `, ${tx.note}` : ''}, ${money(tx.amountMinor, hidden(tx), tx.accountId)}`}
-                >
-                  <View style={[styles.subDot, { backgroundColor: cat?.color ?? theme.colors.borderSoft }]} />
-                  <View style={[styles.mid, stacked && styles.wideMid]}>
-                    <View style={styles.entryHead}>
-                      <Text style={[styles.name, styles.stackName]}>{label}</Text>
-                      {tx.splitId && <StatusBadge label="Split" />}
+        {/* Only this line re-renders when it opens or closes: the day, and the screen, are left alone. */}
+        <OpenStack stacks={stacks} id={line.key}>
+          {({ open, warm, warmUp }) => (
+            <>
+              <Pressable
+                onPressIn={warmUp}
+                onPress={() => {
+                  haptics.tap();
+                  stacks.toggle(line.key);
+                }}
+                {...reorderProps(i)}
+                style={withPressedTint(accent, [styles.line, stacked && styles.wrapLine])}
+                accessibilityRole="button"
+                accessibilityState={{ expanded: open }}
+                accessibilityLabel={`${categorySpoken(name, stackParent)}${line.items.every((t) => t.isRefund) ? ', refunds' : ''}, ${line.items.length} entries, ${money(line.totalMinor, lineMasked, first.accountId)}. ${open ? 'Close' : 'Open'}`}
+              >
+                {/* A new entry folded into this line glows the line. */}
+                <JustAddedGlow ids={line.items.map((t) => t.id)} surface="activity" />
+                <View style={styles.lead}>
+                  <CategoryIcon name={cat?.icon ?? 'tag'} color={cat?.color} size={15} square={ICON} round />
+                </View>
+                <View style={[styles.mid, stacked && styles.wideMid]}>
+                  <View style={styles.stackMid}>
+                    <Text style={[styles.name, styles.stackName]}>{name}</Text>
+                    {line.items.every((t) => t.isRefund) && <StatusBadge label="Refund" tone="complete" />}
+                    <View style={styles.stackChip}>
+                      <Text style={styles.stackCount}>{line.items.length}</Text>
+                      <Feather
+                        name={open ? 'chevron-up' : 'chevron-down'}
+                        size={13}
+                        color={theme.colors.textSecondary}
+                      />
                     </View>
-                    {sub && <Text style={styles.sub}>{sub}</Text>}
                   </View>
-                  <Amount
-                    type={tx.type}
-                    minor={tx.amountMinor}
-                    masked={hidden(tx)}
-                    currency={accountCurrency(tx.accountId)}
-                  />
-                </Pressable>
-              </View>
-            );
-          })}
-        </Collapsible>
+                  <Text style={styles.sub}>
+                    {joinSub([
+                      stackParent,
+                      `${line.items.length} entries`,
+                      sameAccount && accountName(first.accountId),
+                    ])}
+                  </Text>
+                </View>
+                <Amount
+                  type={line.type}
+                  minor={line.totalMinor}
+                  masked={lineMasked}
+                  currency={accountCurrency(first.accountId)}
+                />
+              </Pressable>
+              {/* The panel opens and closes by animating its own height, so the rows below move with it, frame by frame. */}
+              <Collapsible open={open} warm={warm}>
+                {() =>
+                  line.items.map((tx) => {
+                    // The category is already named above: note over account, or just the account with no note.
+                    const label = tx.note || accountName(tx.accountId);
+                    const sub = tx.note ? accountName(tx.accountId) : null;
+                    return (
+                      <View key={tx.id}>
+                        <View style={styles.separator} />
+                        <Pressable
+                          onPress={() => onPressTx(tx)}
+                          style={withPressedTint(accent, [styles.subLine, stacked && styles.wrapLine])}
+                          accessibilityRole="button"
+                          accessibilityLabel={`${categorySpoken(name, stackParent)}${tx.isRefund ? ', refund' : ''}${tx.note ? `, ${tx.note}` : ''}, ${money(tx.amountMinor, hidden(tx), tx.accountId)}`}
+                        >
+                          <View
+                            style={[
+                              styles.subDot,
+                              { backgroundColor: cat?.color ?? theme.colors.borderSoft },
+                            ]}
+                          />
+                          <View style={[styles.mid, stacked && styles.wideMid]}>
+                            <View style={styles.entryHead}>
+                              <Text style={[styles.name, styles.stackName]}>{label}</Text>
+                              {tx.splitId && <StatusBadge label="Split" />}
+                            </View>
+                            {sub && <Text style={styles.sub}>{sub}</Text>}
+                          </View>
+                          <Amount
+                            type={tx.type}
+                            minor={tx.amountMinor}
+                            masked={hidden(tx)}
+                            currency={accountCurrency(tx.accountId)}
+                          />
+                        </Pressable>
+                      </View>
+                    );
+                  })
+                }
+              </Collapsible>
+            </>
+          )}
+        </OpenStack>
       </MovingRow>
     );
   };
@@ -700,21 +715,36 @@ const styles = StyleSheet.create({
 });
 
 /**
+ * A stack's line and its panel, re-rendered alone when that stack opens or closes. A finger touching the line puts its
+ * entries in the tree and measures them (`warm`), so the tap that follows only has to start the glide.
+ */
+function OpenStack({
+  stacks,
+  id,
+  children,
+}: {
+  stacks: StackStore;
+  id: string;
+  children: (state: { open: boolean; warm: boolean; warmUp: () => void }) => React.ReactNode;
+}) {
+  const open = useStackOpen(stacks, id);
+  const [warm, setWarm] = useState(false);
+  const warmUp = useCallback(() => setWarm(true), []);
+  return <>{children({ open, warm, warmUp })}</>;
+}
+
+/**
  * Memoized: typing in search, opening a sheet or dragging re-renders the screen, and a month holds dozens of
  * days. `entering` only plays on mount, so a new animation object on each render isn't a reason to redraw.
  */
 export const TimelineDay = memo(TimelineDayView, (prev, next) => {
   for (const key of Object.keys(next) as (keyof typeof next)[]) {
     if (key === 'entering' || prev[key] === next[key]) continue;
-    if (key === 'openStacks') {
-      // Expansion belongs to a date. Opening another day's stack must not rebuild this day's rows.
-      const prefix = `${next.date}|`;
-      for (const stack of prev.openStacks) {
-        if (stack.startsWith(prefix) && !next.openStacks.has(stack)) return false;
-      }
-      for (const stack of next.openStacks) {
-        if (stack.startsWith(prefix) && !prev.openStacks.has(stack)) return false;
-      }
+    // A day made of the same entries is the same day, whether or not its list was rebuilt around them.
+    if (
+      (key === 'items' || key === 'notes') &&
+      sameElements(prev[key] as readonly unknown[] | undefined, next[key] as readonly unknown[] | undefined)
+    ) {
       continue;
     }
     return false;

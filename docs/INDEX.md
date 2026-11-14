@@ -24,6 +24,8 @@ The [25 October startup corrections](STARTUP_FIXES_2026_10_25.md) address onboar
 
 The [25 October repository re-audit](REPOSITORY_REAUDIT_2026_10_25.md) records per-file coverage, dependency/security checks, small motion improvements, cleanup and current validation. Its [coverage inventory](REPOSITORY_REAUDIT_COVERAGE_2026_10_25.csv) distinguishes full-content automated checks from focused manual flow review. The preceding [25 October app-flow audit](FULL_APP_AUDIT_2026_10_25.md) records the setup, loan, valuation, category, theme, split and restore corrections.
 
+The [14 November performance pass](PERFORMANCE_2026_11_14.md) measures every screen with a ledger of up to 300,000 entries, fixes what scaled badly (Reports' cash-flow read, Activity's repeated redraws, date formatting) and adds bulk-data tests. It does not establish device smoothness.
+
 Hands-on Android outcomes belong in [release device acceptance](RELEASE_DEVICE_CHECKS.md). A passing test suite or JavaScript export does not establish native compilation, notification delivery, accessibility or frame pacing.
 
 ## Maintained guides

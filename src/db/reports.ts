@@ -917,18 +917,30 @@ export async function getMonthlyCashFlow(
   const currency = await getDefaultCurrency();
   const todayIso = toIso(new Date());
 
+  const sensitive = excludeSensitive ? ` AND ${NOT_SENSITIVE}` : '';
+  // Only the months shown are summed: reading the whole ledger for seven bars made this grow with every entry
+  // (48 ms at 100,000 entries, in the Reports load). The first month with data, which marks the months before it as
+  // not recorded, comes from its own cheap lookup of the earliest entry.
+  const startIso = toIso(new Date(reference.getFullYear(), reference.getMonth() - (months - 1), 1));
   const rows = await db.getAllAsync<{ ym: string; income: number; expense: number }>(
     `SELECT strftime('%Y-%m', t.date) as ym,
        SUM(CASE WHEN ${INCOME_ROWS} THEN t.amount_minor ELSE 0 END) as income,
        SUM(CASE WHEN ${SPEND_ROWS} THEN ${SPEND_AMOUNT} ELSE 0 END) as expense
      FROM transactions t
      JOIN accounts a ON a.id = t.account_id
-     WHERE (${INCOME_ROWS} OR ${SPEND_ROWS}) AND a.currency = ? AND t.date <= ?${excludeSensitive ? ` AND ${NOT_SENSITIVE}` : ''}
+     WHERE (${INCOME_ROWS} OR ${SPEND_ROWS}) AND a.currency = ? AND t.date >= ? AND t.date <= ?${sensitive}
      GROUP BY ym`,
+    [currency, startIso, todayIso]
+  );
+  const earliest = await db.getFirstAsync<{ first: string | null }>(
+    `SELECT MIN(t.date) AS first
+     FROM transactions t
+     JOIN accounts a ON a.id = t.account_id
+     WHERE (${INCOME_ROWS} OR ${SPEND_ROWS}) AND a.currency = ? AND t.date <= ?${sensitive}`,
     [currency, todayIso]
   );
   const byMonth = new Map(rows.map((r) => [r.ym, r]));
-  const firstMonth = rows.map((r) => r.ym).sort()[0];
+  const firstMonth = earliest?.first?.slice(0, 7);
   return monthSlots(months, reference).map(({ ym, label }) => ({
     label,
     month: ym,
