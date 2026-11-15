@@ -42,7 +42,36 @@ Differences from the canvas that are deliberate:
 
 The screen was rendered on a real SQLite ledger (the same harness as the earlier passes) at 390, 360 and 320 dp and at 100%, 150% and 200% text, before and after, in week and month views, and the whole matrix of interactions was run at 6 times slower CPU on both builds (below). A first render showed the month labels cut to "W.." (the web layer clamps a single-line Text to its column); the labels are now one row spread over the bars' width, so nothing depends on overflow. A second showed the stacked period pill with its arrows bunched at the left (now at its ends).
 
-Interaction timings at 6 times slower CPU, before and after, are in the next section.
+## Measured at 6 times slower CPU, in a browser
+
+The harness ([the earlier Activity pass](ACTIVITY_SMOOTHNESS_2026_11_14.md) used it too) runs each interaction on a 3,000-entry ledger with the CPU throttled 6 times and counts the JavaScript that blocks the page (tasks over 50 ms) and the longest gap between frames. "Before" is the build of the previous commit, "after" is this one.
+
+- **Size of the page.** The first screen holds 132 DOM nodes (it was 119): two more in each row (the right-hand column and the account text, 9 → 11) and about fifteen more in the Spent card (the bars' letters and the chip). Mounting to the first days took 1,431 ms after against 1,098 before in the quiet run (1,297 against 1,085 in the first); that is the cost of those nodes plus noise and was not tuned further.
+- **Interactions.** Scrolling a week and a month (flings of 2,500 and 6,000 px) had no blocking task before or after. For the rest the same build measured twice differs by up to 2 times (the old build's month step blocked for 326 ms in one run and 762 ms in the other), so a single number cannot tell a small change from noise. Most interactions are faster in one run and slower in the other. Three were slower after in both runs, by modest amounts: stepping to the next month (+45 and +93 ms of blocked JavaScript), switching back to Week (+8 and +78 ms) and closing Insights (a task of about 50 ms that was not there before). Those three are repeated five times on each build in the next paragraph.
+
+| Interaction | JS blocked, ms (quiet run, before → after) | Longest frame gap, ms (before → after) | JS blocked, ms (first run, before → after) |
+| ----------- | ------------------------------------------ | -------------------------------------- | ------------------------------------------ |
+| week: previous week | 392 → 446 | 450 → 500 | 416 → 329 |
+| week: next week | 204 → 180 | 250 → 233 | 161 → 227 |
+| chip: Spent | 67 → 103 | 117 → 150 | 53 → 12 |
+| chip: All | 119 → 9 | 167 → 50 | 4 → 140 |
+| scope: Month | 561 → 209 | 567 → 233 | 225 → 801 |
+| month: previous month | 762 → 194 | 700 → 250 | 326 → 409 |
+| month: next month | 226 → 319 | 250 → 333 | 247 → 291 |
+| month: chip Spent | 191 → 87 | 233 → 133 | 92 → 130 |
+| month: chip All | 330 → 395 | 383 → 450 | 104 → 84 |
+| scope: Week | 162 → 240 | 217 → 283 | 131 → 139 |
+| insights: open | 26 → 36 | 67 → 83 | 31 → 400 |
+| insights: close | 0 → 51 | 0 → 100 | 0 → 49 |
+| picker: open | 148 → 153 | 200 → 200 | 127 → 99 |
+| picker: close | 9 → 128 | 67 → 167 | 106 → 20 |
+| entry: open detail | 110 → 247 | 150 → 317 | 403 → 354 |
+| entry: close detail | 11 → 0 | 50 → 0 | 0 → 0 |
+| search: open | 363 → 52 | 400 → 100 | 242 → 84 |
+| search: type "food" | 164 → 54 | 150 → 100 | 148 → 98 |
+| search: close | 99 → 126 | 150 → 183 | 72 → 80 |
+
+The first run overlapped a type check and a lint run on the same machine for its last part, which is why its Insights and Week | Month numbers are higher; the quiet run is the one to read. Neither says anything about a phone.
 
 ## Not established
 
