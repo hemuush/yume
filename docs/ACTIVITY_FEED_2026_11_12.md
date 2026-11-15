@@ -1,5 +1,7 @@
 # Activity: feed first (2026-11-12)
 
+> **Partly superseded on 15 November 2026** by [the Activity redesign](ACTIVITY_REDESIGN_2026_11_15.md): the date rail, the 64 dp strip with its "By day" caption, the underlined Week | Month and the rounded-rectangle chips described below were replaced (heading over a card, Spent card with lettered bars, filled Week | Month pill, pill chips). The feed-first ordering, totals, privacy rules, groups and hand-ordering stand.
+
 Activity now leads with its entries. The summary is one slim strip, the filters are one row, and the days are a flat dated feed. Calculations, privacy rules, period loading, search and hand-ordering are unchanged; this is presentation.
 
 ## What changed

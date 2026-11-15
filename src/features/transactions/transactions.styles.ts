@@ -152,50 +152,60 @@ export const styles = StyleSheet.create({
     fontSize: 12,
     color: theme.colors.textPrimary,
   },
-  // Week | Month as two plain words, the picked one bold with an underline.
-  scopeSwitch: { flexDirection: 'row', alignItems: 'center' },
-  // The buttons carry 10 dp of side padding for their touch area; pulling the row out by that much puts the word
-  // "Month" on the 16 dp gutter, where the cards' right edge is.
-  scopeSwitchFlush: { marginRight: -10 },
-  scopeBtn: { minHeight: 44, justifyContent: 'center', paddingHorizontal: 10 },
-  scopeBtnStacked: { flex: 1, alignItems: 'center' },
-  // One weight picked or not: the underline and the darker ink show the pick, so switching never changes the width
-  // of either word (the right-hand word would otherwise step 2 dp each time).
-  scopeText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textMuted },
-  scopeTextOn: { color: theme.colors.textPrimary },
-  scopeUnderline: {
-    position: 'absolute',
-    left: 10,
-    right: 10,
-    bottom: 9,
-    height: 2,
-    borderRadius: 1,
-    backgroundColor: theme.colors.ink,
-  },
-
-  // ‹ This week 8–14 Nov › on one plain line, Week | Month at its right end.
-  periodBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
-  periodBarStacked: { flexDirection: 'column', alignItems: 'stretch' },
-  periodRowStacked: { flex: 0 },
-  periodRow: { flexShrink: 1, flexDirection: 'row', alignItems: 'center', minHeight: 44 },
-  // The back arrow sits centred in a 36 dp button: pulled out by 10 dp, the arrow itself is on the gutter.
-  periodRowFlush: { marginLeft: -10 },
-  periodInner: { flexShrink: 1, flexDirection: 'row', alignItems: 'center' },
-  periodNav: { width: 36, minHeight: 44, alignItems: 'center', justifyContent: 'center' },
-  periodNavOff: { opacity: theme.opacity.limit },
-  // The period reads as Home's calendar pill: icon, the period (with "Week 1 of 5" under it), a chevron.
-  periodTitleBtn: {
-    flexShrink: 1,
-    minHeight: 44,
+  // Week | Month as a pill of two buttons, the picked one filled with the theme's ink: the same look as the type chips
+  // below it. 3 dp around 36 dp buttons and the 1 dp edge make it the pill's 44.
+  scopeSwitch: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 12,
+    padding: 3,
+    borderRadius: theme.radius.pill,
+    backgroundColor: GLASS.fill,
+    borderWidth: 1,
+    borderColor: GLASS.edge,
+  },
+  scopeSwitchStacked: { alignSelf: 'stretch' },
+  scopeBtn: {
+    minHeight: 36,
+    paddingHorizontal: 16,
+    borderRadius: theme.radius.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  scopeBtnStacked: { flex: 1 },
+  // One weight picked or not: the fill and the light text show the pick, so switching never changes the width of
+  // either word.
+  scopeText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
+  scopeTextOn: { color: theme.colors.white },
+
+  // ‹ This week 9–15 Nov ▾ › in one pill, Week | Month at its right end.
+  periodBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
+  periodBarStacked: { flexDirection: 'column', alignItems: 'stretch' },
+  periodPill: {
+    flexShrink: 1,
+    minHeight: 44,
+    justifyContent: 'center',
+    overflow: 'hidden',
     borderRadius: theme.radius.pill,
     backgroundColor: GLASS.fillStrong,
     borderWidth: 1,
     borderColor: GLASS.edge,
   },
+  periodPillStacked: { alignSelf: 'stretch' },
+  periodInner: { flexShrink: 1, flexDirection: 'row', alignItems: 'center' },
+  // Stacked above the switch, the pill is the full width: the arrows go to its ends and the name between them.
+  periodInnerStacked: { flexGrow: 1, flexShrink: 0 },
+  periodNav: { width: 36, minHeight: 42, alignItems: 'center', justifyContent: 'center' },
+  periodNavOff: { opacity: theme.opacity.limit },
+  // The period: its name (with "Week 1 of 5" under it when that is useful) and a chevron that says it opens the picker.
+  periodTitleBtn: {
+    flexShrink: 1,
+    minHeight: 42,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 2,
+  },
+  periodTitleBtnStacked: { flexGrow: 1, justifyContent: 'center' },
   periodTitleCol: { flexShrink: 1, minWidth: 0 },
   periodTitle: {
     fontFamily: theme.font.bodyBold,
@@ -237,16 +247,16 @@ export const styles = StyleSheet.create({
   typeFilterRow: { marginTop: 8, paddingLeft: 16, paddingRight: 16, gap: 6 },
   pillGroup: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   typeFilterRowWrap: { marginTop: 8, marginHorizontal: 16, flexWrap: 'wrap', paddingRight: 0 },
-  // As tall as its tallest chip (44): "Clear all" and a picked chip are taller than the 40 dp pills, and a row that
-  // grew when one arrived moved the pills and the whole list under them.
+  // 44 tall whatever it holds: the 40 dp pills and chips are drawn inside it with a touch area that reaches the edges, and
+  // a row that grew when a chip arrived moved the pills and the whole list under them.
   typeBar: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingRight: 8, minHeight: 44 },
   typeBtn: {
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: 40,
     paddingHorizontal: 14,
-    // The same rounded-rectangle button Home's Add expense / Income / Transfer use.
-    borderRadius: theme.radius.lg,
+    // A pill, like the Week | Month switch above and the picked-filter chips beside it.
+    borderRadius: theme.radius.pill,
     backgroundColor: theme.colors.surface,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
@@ -264,9 +274,10 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    minHeight: 44,
+    // Drawn 40 tall like the type pills; the touch area stays 48 (hitSlop).
+    minHeight: 40,
     paddingHorizontal: 12,
-    borderRadius: theme.radius.md,
+    borderRadius: theme.radius.pill,
     backgroundColor: theme.colors.surface,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.borderSoft,
