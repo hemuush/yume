@@ -1,7 +1,6 @@
 import { View, StyleSheet } from 'react-native';
-import { theme } from '@/constants/theme';
 import { Skeleton } from '@/components/Skeleton';
-import { screenStyles } from '@/components/screenStyles';
+import { screenStyles, SCREEN } from '@/components/screenStyles';
 
 const BAR_HEIGHTS = [12, 22, 8, 40, 16, 26, 14];
 /** How many entries each placeholder day holds. */
@@ -9,7 +8,7 @@ const DAYS = [3, 2];
 
 /**
  * Stands in for the page while the first `listTransactions` batch is loading. It is drawn from the same
- * measures as the real page (the Spent card, the filter row, then days with a heading above a card of entries), so
+ * measures as the real page (the Spent card, the filter row, then each day as Home's list card with its heading inside), so
  * when the data lands the page fills in rather than reflowing.
  */
 export function TransactionsSkeleton() {
@@ -40,22 +39,21 @@ export function TransactionsSkeleton() {
 
       {DAYS.map((rows, d) => (
         <View key={d} style={[styles.day, d === 0 && styles.firstDay]}>
-          <View style={styles.head}>
-            <Skeleton width={128} height={12} radius={4} />
-            <Skeleton width={84} height={10} radius={4} />
-          </View>
           <View style={styles.lane}>
+            <View style={styles.head}>
+              <Skeleton width={56} height={11} radius={4} />
+              <Skeleton width={52} height={11} radius={4} />
+            </View>
             {Array.from({ length: rows }, (_, i) => (
-              <View key={i} style={styles.row}>
-                <Skeleton width={34} height={34} radius={17} />
+              <View key={i} style={[styles.row, i > 0 && styles.divider]}>
+                <View style={styles.slot}>
+                  <Skeleton width={SCREEN.mark} height={SCREEN.mark} radius={SCREEN.mark / 2} />
+                </View>
                 <View style={styles.rowMid}>
                   <Skeleton width={d === 0 && i === 1 ? 96 : 128} height={13} radius={4} />
-                  <Skeleton width={78} height={10} radius={3} style={{ marginTop: 6 }} />
+                  <Skeleton width={110} height={10} radius={3} style={{ marginTop: 6 }} />
                 </View>
-                <View style={styles.rowEnd}>
-                  <Skeleton width={58} height={13} radius={4} />
-                  <Skeleton width={36} height={10} radius={3} style={{ marginTop: 6 }} />
-                </View>
+                <Skeleton width={58} height={13} radius={4} />
               </View>
             ))}
           </View>
@@ -91,25 +89,24 @@ const styles = StyleSheet.create({
     minHeight: 44,
     paddingHorizontal: 16,
   },
-  // A day: its heading, then the card across the full width.
-  day: { marginHorizontal: 16, marginTop: 12 },
+  // A day: Home's list card, the day named inside it (its heading line), then its rows.
+  day: { marginTop: 12 },
   // The filter row's own 10 dp gap sits above the first day.
   firstDay: { marginTop: 22 },
+  lane: { ...screenStyles.card, paddingHorizontal: 12 },
+  // Home's day heading: 12 dp above and 2 below a line of small capitals.
   head: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     minHeight: 29,
-    paddingHorizontal: 4,
-  },
-  lane: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.radius.xl,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
     paddingHorizontal: 14,
+    paddingTop: 12,
+    paddingBottom: 2,
   },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 48, paddingVertical: 6 },
+  // Home's row: 56 dp least, 14 dp of side padding, the 40 dp disc in its 44 dp slot.
+  row: { ...screenStyles.row, gap: 12 },
+  divider: screenStyles.divider,
+  slot: { width: SCREEN.lead, alignItems: 'center', justifyContent: 'center' },
   rowMid: { flex: 1 },
-  rowEnd: { alignItems: 'flex-end' },
 });

@@ -4,9 +4,7 @@ import Animated from 'react-native-reanimated';
 import { Text } from '@/components/Text';
 import { EmptyState } from '@/components/EmptyState';
 import { Section } from '@/components/Section';
-import { screenStyles } from '@/components/screenStyles';
-import { EYEBROW } from '@/constants/textStyles';
-import { theme } from '@/constants/theme';
+import { screenStyles as h } from '@/components/screenStyles';
 import { dayLabel } from '@/lib/date';
 import { investRole } from '@/lib/investment';
 import { formatMoney } from '@/lib/money';
@@ -69,10 +67,10 @@ export const HomeRecentActivity = memo(function HomeRecentActivity({
             <Animated.View key={tx.id} entering={rowEntering(i)} layout={ROW_LAYOUT} exiting={ROW_EXIT}>
               {/* Each day is named once, above its rows; today also carries what went out. */}
               {(i === 0 || rows[i - 1].date !== tx.date) && (
-                <View style={[styles.dayHead, i > 0 && styles.dayHeadDivider]}>
-                  <Text style={styles.dayHeadText}>{dayLabel(tx.date)}</Text>
+                <View style={[h.dayHead, i > 0 && h.dayHeadDivider]}>
+                  <Text style={h.dayHeadText}>{dayLabel(tx.date)}</Text>
                   {tx.date === today && cursor.offset === 0 && todaySpendMinor > 0 && (
-                    <Text style={styles.dayHeadText}>−{formatMoney(roundedMinor(todaySpendMinor))}</Text>
+                    <Text style={h.dayHeadText}>−{formatMoney(roundedMinor(todaySpendMinor))}</Text>
                   )}
                 </View>
               )}
@@ -98,16 +96,5 @@ export const HomeRecentActivity = memo(function HomeRecentActivity({
 });
 
 const styles = StyleSheet.create({
-  recent: { ...screenStyles.card, paddingHorizontal: 12 },
-  dayHead: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    columnGap: 8,
-    paddingHorizontal: 14,
-    paddingTop: 12,
-    paddingBottom: 2,
-  },
-  dayHeadDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.borderSoft },
-  dayHeadText: { ...EYEBROW, fontFamily: theme.font.bodyBold, fontSize: 11, fontVariant: ['tabular-nums'] },
+  recent: { ...h.card, paddingHorizontal: 12 },
 });
