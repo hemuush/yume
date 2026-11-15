@@ -26,5 +26,3 @@ export function buildLoansModel(loans: Loan[], progress: Record<string, LoanProg
     ),
   };
 }
-
-export type LoansModel = ReturnType<typeof buildLoansModel>;

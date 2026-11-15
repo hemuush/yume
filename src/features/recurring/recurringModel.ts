@@ -59,5 +59,3 @@ export function buildRecurringModel({
     ),
   };
 }
-
-export type RecurringModel = ReturnType<typeof buildRecurringModel>;

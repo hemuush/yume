@@ -330,6 +330,16 @@ describe('transfers, refunds and friends', () => {
     act(() => tree.unmount());
   });
 
+  it('keeps a note that arrives in a link to the length the note field allows', async () => {
+    mockParams.current = { type: 'expense', categoryId: ids.food, note: 'x'.repeat(5_000) };
+    const tree = await render();
+    await typeAmount(tree, '40');
+    await save(tree);
+    const [row] = await saved();
+    expect(row.note).toBe('x'.repeat(120));
+    act(() => tree.unmount());
+  });
+
   it('saves money back as income against the purchase’s category, flagged as a refund', async () => {
     mockParams.current = {
       type: 'expense',
