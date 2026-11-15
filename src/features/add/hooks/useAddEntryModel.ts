@@ -9,6 +9,7 @@ import { useAddEntryDerived } from '@/features/add/hooks/useAddEntryDerived';
 import { useAddEntryEnvironment } from '@/features/add/hooks/useAddEntryEnvironment';
 import { useAddEntryState } from '@/features/add/hooks/useAddEntryState';
 import { useAddEntrySuggestions } from '@/features/add/hooks/useAddEntrySuggestions';
+import { useStableModel } from '@/features/add/hooks/useStableModel';
 
 /** Composes the Add route's local state, data and commands; views receive no repository dependencies. */
 export function useAddEntryModel() {
@@ -23,7 +24,7 @@ export function useAddEntryModel() {
   const save = createAddEntrySaveActions({ state, draft, derived, environment, completion, staging });
   const navigation = createAddEntryActions({ state, draft, derived, environment });
   const display = getAddEntryPresentation({ environment, state, draft, derived, staging });
-  return {
+  return useStableModel({
     ...environment,
     ...state,
     ...draft,
@@ -35,5 +36,5 @@ export function useAddEntryModel() {
     ...save,
     ...navigation,
     ...display,
-  };
+  });
 }

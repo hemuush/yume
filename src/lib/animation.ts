@@ -21,6 +21,13 @@ export function timing(duration: number) {
   return { duration, easing: MOTION.ease };
 }
 
+// Built once: the same object every time, so a component given one as a prop is not seen to change on each render.
+const ROW_OPENING = FadeIn.duration(MOTION.enter).easing(MOTION.ease).reduceMotion(ReduceMotion.System);
+const ROW_QUICK = FadeIn.duration(MOTION.quick).easing(MOTION.ease).reduceMotion(ReduceMotion.System);
+const SECTION_OPENING = FadeIn.duration(DURATIONS.section)
+  .easing(MOTION.ease)
+  .reduceMotion(ReduceMotion.System);
+
 let homeOpeningPlayed = false;
 
 /** Whether Home has already played its opening fade-in since the app was opened. */
@@ -37,16 +44,12 @@ export function markHomeOpeningPlayed(): void {
  * pull-to-refresh), so the screen never replays an entrance. No stagger, no travel.
  */
 export function homeRowEntering(_index: number, opening: boolean) {
-  return FadeIn.duration(opening ? MOTION.enter : MOTION.quick)
-    .easing(MOTION.ease)
-    .reduceMotion(ReduceMotion.System);
+  return opening ? ROW_OPENING : ROW_QUICK;
 }
 
 /** How a Home section arrives: the same plain fade as a row, a touch longer on the first open. */
 export function homeSectionEntering(_index: number, opening: boolean) {
-  return FadeIn.duration(opening ? DURATIONS.section : MOTION.quick)
-    .easing(MOTION.ease)
-    .reduceMotion(ReduceMotion.System);
+  return opening ? SECTION_OPENING : ROW_QUICK;
 }
 
 /**

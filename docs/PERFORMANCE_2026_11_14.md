@@ -25,7 +25,7 @@ Why Activity redrew so much: a reload stored a new empty list of notes (a state 
 
 - `src/perf/bulkData.test.ts` runs in every test run on a 20,000-entry ledger: figures equal a recomputation from the raw rows (period totals, cash flow for 7, 12 and 30 months with and without private categories, every account's balance), and each screen's load stays within its round-trips (Home 60, Activity 18, Reports 62, Plan 8; today 52, 15, 52, 5) and a generous time.
 - `src/db/cashFlowRecorded.test.ts` pins which months count as recorded, including an empty stretch after the first entry (the case that a window alone would get wrong).
-- `src/features/transactions/sameObjects.test.tsx` and the day test in `TimelineDay.test.tsx` pin the identity rules and that a day still redraws when an entry changes; `dateLabels.bulk.test.ts` pins the labels against `toLocaleDateString`.
+- `src/lib/stableData.test.tsx` and the day test in `TimelineDay.test.tsx` pin the identity rules and that a day still redraws when an entry changes; `dateLabels.bulk.test.ts` pins the labels against `toLocaleDateString`.
 
 ## Left alone, on purpose
 

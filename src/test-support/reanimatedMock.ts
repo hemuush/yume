@@ -21,6 +21,8 @@ export function createReanimatedMock() {
     FadeOutDown: chainableProxy,
     LinearTransition: chainableProxy,
     ReduceMotion: { System: 'system' },
+    // Only decides how a removed subtree animates on the phone; here it just shows what it wraps.
+    LayoutAnimationConfig: ({ children }: { children: unknown }) => children,
     // A real useRef, not a fresh object per render: otherwise a rerender would "reset" a shared value and
     // defeat tests that check state survives across renders.
     useSharedValue: (initial: unknown) =>

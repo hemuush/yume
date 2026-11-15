@@ -1,3 +1,4 @@
+import { memo, useCallback } from 'react';
 import { View, Pressable, Animated, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
 import Feather from '@expo/vector-icons/Feather';
@@ -50,11 +51,11 @@ export function AmountPad({
       {ROWS.map((row, r) => (
         <View key={r} style={styles.row}>
           {row.map((key) => (
-            <PadButton
+            <KeyButton
               key={key}
               padKey={key}
-              onPress={() => onKey(key)}
-              onLongPress={key === 'back' ? onClear : undefined}
+              onKey={onKey}
+              onClear={key === 'back' ? onClear : undefined}
               tone={tone}
               surface={keySurface}
             />
@@ -65,6 +66,27 @@ export function AmountPad({
     </View>
   );
 }
+
+/**
+ * One key of the pad. It compares its props by identity, so a pad whose keys, clear command and colours are the same is
+ * not drawn again when what is around it is (every digit typed redraws the footer that holds it).
+ */
+const KeyButton = memo(function KeyButton({
+  padKey,
+  onKey,
+  onClear,
+  tone,
+  surface,
+}: {
+  padKey: PadKey;
+  onKey: (key: PadKey) => void;
+  onClear: (() => void) | undefined;
+  tone: { bg: string; ink: string } | undefined;
+  surface: string | undefined;
+}) {
+  const onPress = useCallback(() => onKey(padKey), [onKey, padKey]);
+  return <PadButton padKey={padKey} onPress={onPress} onLongPress={onClear} tone={tone} surface={surface} />;
+});
 
 export function PadButton({
   padKey,

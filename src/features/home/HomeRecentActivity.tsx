@@ -1,0 +1,113 @@
+import { memo } from 'react';
+import { StyleSheet, View } from 'react-native';
+import Animated from 'react-native-reanimated';
+import { Text } from '@/components/Text';
+import { EmptyState } from '@/components/EmptyState';
+import { Section } from '@/components/Section';
+import { screenStyles } from '@/components/screenStyles';
+import { EYEBROW } from '@/constants/textStyles';
+import { theme } from '@/constants/theme';
+import { dayLabel } from '@/lib/date';
+import { investRole } from '@/lib/investment';
+import { formatMoney } from '@/lib/money';
+import { ROW_EXIT, ROW_LAYOUT } from '@/lib/animation';
+import type { PeriodCursor } from '@/lib/period';
+import { roundedMinor } from '@/lib/round';
+import type { Account, Category, Transaction } from '@/types';
+import { RecentTransactionRow } from './RecentTransactionRow';
+import { emptyRecentCopy } from './recentActivity';
+
+/**
+ * Home's "Recent activity": the browsed period's latest entries, each day named once above its rows. It compares its
+ * props by identity, so it is drawn again only when its own entries, or what names them, change.
+ */
+export const HomeRecentActivity = memo(function HomeRecentActivity({
+  recent,
+  cursor,
+  today,
+  todaySpendMinor,
+  categoriesById,
+  accountsById,
+  savingsIds,
+  investIds,
+  rowEntering,
+  onOpenEntry,
+  onSeeAll,
+}: {
+  recent: Transaction[];
+  /** The period the entries belong to. */
+  cursor: PeriodCursor;
+  /** Today's date (ISO): its heading also says what went out today. */
+  today: string;
+  todaySpendMinor: number;
+  categoriesById: ReadonlyMap<string, Category>;
+  /** The name and currency of each account (all that a row says of one). */
+  accountsById: ReadonlyMap<string, Pick<Account, 'name' | 'currency'>>;
+  savingsIds: ReadonlySet<string>;
+  investIds: ReadonlySet<string>;
+  rowEntering: (i: number) => React.ComponentProps<typeof Animated.View>['entering'];
+  onOpenEntry: (tx: Transaction) => void;
+  /** "View all": opens the period in Activity. */
+  onSeeAll: () => void;
+}) {
+  const categoryFor = (id: string | null) => (id ? categoriesById.get(id) : undefined);
+  const parentNameFor = (id: string | null) => {
+    const parentId = categoryFor(id)?.parentId;
+    return parentId ? categoryFor(parentId)?.name : undefined;
+  };
+  const accountName = (id: string | null | undefined) => (id ? accountsById.get(id)?.name : undefined);
+  const isSavingsTransfer = (tx: Transaction) =>
+    tx.type === 'transfer' &&
+    (savingsIds.has(tx.accountId) || (!!tx.toAccountId && savingsIds.has(tx.toAccountId)));
+  return (
+    <Section compact title="Recent activity" onSeeAll={onSeeAll} actionLabel="View all">
+      {recent.length === 0 ? (
+        <EmptyState {...emptyRecentCopy(cursor)} />
+      ) : (
+        <View style={styles.recent}>
+          {recent.slice(0, 5).map((tx, i, rows) => (
+            <Animated.View key={tx.id} entering={rowEntering(i)} layout={ROW_LAYOUT} exiting={ROW_EXIT}>
+              {/* Each day is named once, above its rows; today also carries what went out. */}
+              {(i === 0 || rows[i - 1].date !== tx.date) && (
+                <View style={[styles.dayHead, i > 0 && styles.dayHeadDivider]}>
+                  <Text style={styles.dayHeadText}>{dayLabel(tx.date)}</Text>
+                  {tx.date === today && cursor.offset === 0 && todaySpendMinor > 0 && (
+                    <Text style={styles.dayHeadText}>−{formatMoney(roundedMinor(todaySpendMinor))}</Text>
+                  )}
+                </View>
+              )}
+              <RecentTransactionRow
+                showDay={false}
+                onPress={() => onOpenEntry(tx)}
+                currency={accountsById.get(tx.accountId)?.currency}
+                tx={tx}
+                category={categoryFor(tx.categoryId) ?? undefined}
+                parentName={parentNameFor(tx.categoryId)}
+                accountName={accountName(tx.accountId)}
+                toAccountName={accountName(tx.toAccountId)}
+                savingsTransfer={isSavingsTransfer(tx)}
+                investRole={investRole(tx, investIds)}
+                divider={i > 0 && rows[i - 1].date === tx.date}
+              />
+            </Animated.View>
+          ))}
+        </View>
+      )}
+    </Section>
+  );
+});
+
+const styles = StyleSheet.create({
+  recent: { ...screenStyles.card, paddingHorizontal: 12 },
+  dayHead: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    columnGap: 8,
+    paddingHorizontal: 14,
+    paddingTop: 12,
+    paddingBottom: 2,
+  },
+  dayHeadDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.borderSoft },
+  dayHeadText: { ...EYEBROW, fontFamily: theme.font.bodyBold, fontSize: 11, fontVariant: ['tabular-nums'] },
+});

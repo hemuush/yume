@@ -2,6 +2,7 @@
  * Activity assembled: when the period-totals query fails, the list still shows (with a note) instead of the
  * skeleton hanging forever.
  */
+import { Profiler } from 'react';
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
 import { Text, BackHandler } from 'react-native';
 import type { Account, Transaction } from '@/types';
@@ -609,4 +610,41 @@ describe('Activity opened on a month from a link', () => {
       mounted = null;
     }
   });
+});
+
+it('does not redraw the screen when its days have finished arriving', async () => {
+  // The days that mount as a period lands fade in for a moment. Turning that off again once was a state change: a
+  // redraw of the whole screen, with nothing on it different, after every period step.
+  mockComparison.fail = false;
+  const { toLocalIsoDate } = require('@/lib/date');
+  mockLedger.transactions = [
+    {
+      id: 'tea',
+      type: 'expense',
+      accountId: 'bank',
+      categoryId: null,
+      amountMinor: 2900,
+      date: toLocalIsoDate(new Date()),
+      note: 'Tea',
+    },
+  ] as Transaction[];
+  let commits = 0;
+  let tree!: ReactTestRenderer;
+  await act(async () => {
+    tree = create(
+      <Profiler id="activity" onRender={() => commits++}>
+        <TransactionsScreen />
+      </Profiler>
+    );
+  });
+  mounted = tree;
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  });
+  expect(texts(tree)).toContain('Tea');
+  const settled = commits;
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 600));
+  });
+  expect(commits).toBe(settled);
 });

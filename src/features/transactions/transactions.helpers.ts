@@ -1,5 +1,4 @@
 import { Account, Category, Transaction } from '@/types';
-import { useMemo } from 'react';
 import { investRole } from '@/lib/investment';
 import type { ValuationEvent } from '@/db/valuations';
 import { getCachedCurrency } from '@/db/settings';
@@ -7,6 +6,8 @@ import type { ActivityFilter } from './activityFilter';
 import { toLocalIsoDate, parseLocalIsoDate, addDaysToIsoDate } from '@/lib/date';
 import { dayMonth, dayMonthYear, weekdayDayMonthMaybeYear } from '@/lib/dateLabels';
 import { weekRangesInMonth } from './spendChart';
+import { isSavingsEntry } from '@/lib/privateSummary';
+import { SEARCH_MIN_CHARS } from './searchLimits';
 
 /** One Sunday-to-Saturday week of a calendar month, cut at the month's own first and last day. */
 interface ActivityWeek {
@@ -234,6 +235,9 @@ export type LaneLine =
       totalMinor: number;
     };
 
+/** A line's identity in its day: the entry's id, or the group's key. */
+export const laneKey = (line: LaneLine) => (line.kind === 'single' ? line.tx.id : line.key);
+
 /**
  * Day layout (newest first): own-account transfers become notes; 2+ same-category entries stack into one line
  * ("Food & Dining ×5") in the newest's place. Split parts are plain lines of their own and never join a stack.
@@ -339,39 +343,24 @@ export function chartTransactionsFor(
   });
 }
 
-/** `next`, unless it holds exactly what `prev` does: then `prev` itself, so a reload that found nothing new changes no state. */
-export function keepIfEqual<T>(prev: T[], next: T[]): T[] {
-  return prev === next || JSON.stringify(prev) === JSON.stringify(next) ? prev : next;
-}
-
-/**
- * The reloaded rows, each replaced by the one already held when it has the same id and exactly the same fields. A day
- * made of unchanged rows is then still made of the same objects, and does not redraw; only what changed does.
- */
-export function reuseUnchanged<T extends { id: string }>(prev: T[], next: T[]): T[] {
-  if (prev.length === 0) return next;
-  const before = new Map(prev.map((row) => [row.id, row]));
-  let allSame = prev.length === next.length;
-  const out = next.map((row, i) => {
-    const old = before.get(row.id);
-    const kept = old && JSON.stringify(old) === JSON.stringify(row) ? old : row;
-    if (allSame && kept !== prev[i]) allSame = false;
-    return kept;
-  });
-  return allSame ? prev : out;
-}
-
-/** Whether two lists hold the very same objects in the same order. */
-export function sameElements<T>(a: readonly T[] | undefined, b: readonly T[] | undefined): boolean {
-  if (a === b) return true;
-  if (!a || !b || a.length !== b.length) return false;
-  for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
-  return true;
-}
-
-/** The same Set object for as long as the set holds the same members, however often it is rebuilt. */
-export function useStableSet<T>(set: ReadonlySet<T>): ReadonlySet<T> {
-  const key = [...set].sort().join('\u0000');
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- the members are the key
-  return useMemo(() => set, [key]);
+/** Things to try in the search box, from the period's own entries: a category or two, an amount, a day. */
+export function searchSuggestionsFor(
+  transactions: Transaction[],
+  categoriesById: ReadonlyMap<string, Category>,
+  savingsAccountIds: ReadonlySet<string>
+): string[] {
+  const out: string[] = [];
+  for (const t of transactions) {
+    const name = t.categoryId ? categoriesById.get(t.categoryId)?.name : undefined;
+    if (name && !out.includes(name)) out.push(name);
+    if (out.length >= 2) break;
+  }
+  const amountOf = transactions.find(
+    (t) => t.type === 'expense' && !isSavingsEntry(t, categoriesById, savingsAccountIds)
+  );
+  // A one-digit amount would be under the search minimum, so the chip would do nothing.
+  const amountText = amountOf ? String(Math.round(amountOf.amountMinor / 100)) : '';
+  if (amountText.length >= SEARCH_MIN_CHARS) out.push(amountText);
+  if (transactions[0]) out.push(dayMonth(transactions[0].date));
+  return out;
 }

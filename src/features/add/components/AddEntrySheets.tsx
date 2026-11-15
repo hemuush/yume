@@ -3,31 +3,31 @@ import { AddSheets } from '@/features/add/AddSheets';
 import type { AddEntryModel } from '@/features/add/types/addEntryModel';
 import type { ReactElement } from 'react';
 
-type Props = {
-  model: Pick<
-    AddEntryModel,
-    | 'accountSheetOpen'
-    | 'type'
-    | 'pickableAccounts'
-    | 'effectiveAccountId'
-    | 'setAccountSheetOpen'
-    | 'pickAccount'
-    | 'addAccountVisible'
-    | 'setAddAccountVisible'
-    | 'setError'
-    | 'load'
-    | 'addPersonVisible'
-    | 'setAddPersonVisible'
-    | 'onPersonAdded'
-    | 'calendarOpen'
-    | 'date'
-    | 'setCalendarOpen'
-    | 'setDate'
-    | 'repeatSheetVisible'
-    | 'setRepeatSheetVisible'
-    | 'leave'
-  >;
-};
+/** What this section of the Add page reads from the model; it is drawn again only when one of them changes. */
+export const SHEETS_KEYS = [
+  'accountSheetOpen',
+  'type',
+  'pickableAccounts',
+  'effectiveAccountId',
+  'setAccountSheetOpen',
+  'pickAccount',
+  'addAccountVisible',
+  'setAddAccountVisible',
+  'setError',
+  'load',
+  'addPersonVisible',
+  'setAddPersonVisible',
+  'onPersonAdded',
+  'calendarOpen',
+  'date',
+  'setCalendarOpen',
+  'setDate',
+  'repeatSheetVisible',
+  'setRepeatSheetVisible',
+  'leave',
+] as const satisfies readonly (keyof AddEntryModel)[];
+
+type Props = { model: Pick<AddEntryModel, (typeof SHEETS_KEYS)[number]> };
 export function AddEntrySheets({ model }: Props): ReactElement {
   const {
     accountSheetOpen,
