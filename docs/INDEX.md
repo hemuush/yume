@@ -38,6 +38,8 @@ The [15 November Loans, Recurring, Budgets and Add pass](LOANS_RECURRING_BUDGETS
 
 The [15 November category emoji change](CATEGORY_EMOJI_2026_11_15.md) lets a person give a category their own emoji (typed or pasted from their keyboard) and cuts the built-in icon picker from about 110 icons to fifteen; every icon already stored keeps drawing, and an emoji travels through the file backup, the folder backup, undo and the widgets.
 
+The [15 November Activity redesign](ACTIVITY_REDESIGN_2026_11_15.md) builds the approved design at the app's compact sizes: each day is a heading (day, date, what it spent) over one full-width card with no date rail, rows read name on the left and amount over account on the right, the Spent strip became a card with a comparison chip and a lettered preview (a month's weeks on a square-root scale), the period is one pill with its arrows inside beside a filled Week | Month switch, and the filter chips are pills. It was rendered in a browser and measured at 6 times slower CPU, not seen on a phone.
+
 The [15 November pass over the other screens](OTHER_SCREENS_SMOOTHNESS_2026_11_15.md) applies it to People, Investments, Categories, Profile (You and Settings), Notification settings, What-if and Goals: sheets in stores, data hooks that keep unchanged rows, controls that own their own state (the person's Settle form, Settings' currency, goal and About, the trend's stretch), and a notification switch that is one redraw instead of three. Backup, Garden, Tidy up, Themes, Wrap, Category detail and Split were not measured.
 
 The [15 November code audit](CODE_AUDIT_2026_11_15.md) covers the whole repository: compiler-based scans of every file, a line-by-line read of the highest-risk code, and a randomized property test on real SQLite (about 55,000 operations: balances, people's ledgers, refunds, backup round trips and report totals all hold). It found no data-loss, security or money defect and two low ones, now fixed; it lists what was not checked.
@@ -72,6 +74,7 @@ These remain available for decisions and previous evidence. Old source lists and
 | [Security and product decisions: implementation record](../SECURITY_PRODUCT_REVIEW.md)             | Dated review or implementation record |
 | [Activity interaction refinement](ACTIVITY_INTERACTION_REFINEMENT_2026_10_20.md)                   | Dated review or implementation record |
 | [Activity feed first](ACTIVITY_FEED_2026_11_12.md)                                                 | Dated review or implementation record |
+| [Activity redesign](ACTIVITY_REDESIGN_2026_11_15.md) | Dated review or implementation record |
 | [Spacing and alignment audit](ALIGNMENT_AUDIT_2026_11_12.md) | Dated review or implementation record |
 | [Home review](HOME_REVIEW_2026_11_12.md) | Dated review or implementation record |
 | [Reports review](REPORTS_REVIEW_2026_11_12.md) | Dated review or implementation record |

@@ -58,8 +58,6 @@ export const weekdayDayMonthMaybeYear = (iso: string, today: Date = new Date()) 
   iso.slice(0, 4) === String(today.getFullYear()) ? weekdayDayMonth(iso) : weekdayDayMonthYear(iso);
 
 /** "Thursday" */
-/** "THU": the short weekday, for a day's marker in Activity's feed. */
-export const shortWeekday = label({ weekday: 'short' });
 export const longWeekday = label({ weekday: 'long' });
 
 /** "Oct" */

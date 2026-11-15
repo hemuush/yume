@@ -63,8 +63,14 @@ jest.mock('@/db/ledger', () => ({
 
 import TransactionsScreen from '../../../app/(tabs)/transactions';
 
+// Only the words of each Text: a nested Text (the date after a day's name) is listed on its own.
 const texts = (tree: ReactTestRenderer) =>
-  tree.root.findAllByType(Text).map((t) => [].concat(t.props.children as never).join(''));
+  tree.root.findAllByType(Text).map((t) =>
+    ([] as unknown[])
+      .concat(t.props.children)
+      .filter((c) => typeof c === 'string' || typeof c === 'number')
+      .join('')
+  );
 
 // Unmounted after each test, so the list's own batching timers don't fire once the test is over.
 let mounted: ReactTestRenderer | null = null;
@@ -162,8 +168,9 @@ describe('Activity period controls', () => {
     expect(weightOf('Month')).toBe(week);
   });
 
-  it('underlines the picked word only, and moves the underline when the other word is picked', async () => {
-    const { StyleSheet, View } = require('react-native');
+  it('fills the picked word with the theme’s ink only, and moves the fill when the other word is picked', async () => {
+    const { StyleSheet } = require('react-native');
+    const { themeInk } = require('@/theme/interactionColors');
     mockComparison.fail = false;
     const tree = await render();
     const radio = (word: string) =>
@@ -173,18 +180,18 @@ describe('Activity period controls', () => {
           typeof n.props.onPress === 'function' &&
           n.findAllByType(Text).some((t) => t.props.children === word)
       );
-    const underlined = () =>
-      ['Week', 'Month'].filter((word) =>
-        radio(word)
-          .findAllByType(View)
-          .some((v) => StyleSheet.flatten(v.props.style)?.height === 2)
-      );
-    expect(underlined()).toEqual(['Week']);
+    const filled = () =>
+      ['Week', 'Month'].filter((word) => {
+        const raw = radio(word).props.style;
+        const style = StyleSheet.flatten(typeof raw === 'function' ? raw({ pressed: false }) : raw);
+        return style?.backgroundColor === themeInk('#8FCBFF');
+      });
+    expect(filled()).toEqual(['Week']);
     await act(async () => radio('Month').props.onPress());
     await act(async () => {
       await new Promise((resolve) => setTimeout(resolve, 0));
     });
-    expect(underlined()).toEqual(['Month']);
+    expect(filled()).toEqual(['Month']);
   });
 
   it('switches Week to Month from beside the period pill', async () => {
@@ -391,26 +398,47 @@ it('opens the chart and totals in an Insights sheet from the Spent strip', async
   dimensions.mockRestore();
 });
 
-it('puts the back arrow and the word Month on the 16 dp gutter, and leaves the stacked layout alone', async () => {
+it('keeps the period pill and the Week | Month switch on the 16 dp gutters, side by side or stacked at large text', async () => {
   const { StyleSheet } = require('react-native');
-  const flush = (tree: ReactTestRenderer) => ({
-    left: tree.root.findAll(
-      (n) => typeof n.type === 'string' && StyleSheet.flatten(n.props.style)?.marginLeft === -10
-    ).length,
-    right: tree.root.findAll(
-      (n) => typeof n.type === 'string' && StyleSheet.flatten(n.props.style)?.marginRight === -10
-    ).length,
-  });
+  // Nothing is pulled out past the gutter by a negative margin: the pill's and the switch's own edges are the edges.
+  const pulledOut = (tree: ReactTestRenderer) =>
+    tree.root.findAll((n) => {
+      if (typeof n.type !== 'string') return false;
+      const flat = StyleSheet.flatten(n.props.style);
+      return !!flat && (flat.marginLeft === -10 || flat.marginRight === -10);
+    }).length;
+  const switchStyle = (tree: ReactTestRenderer) =>
+    StyleSheet.flatten(
+      tree.root.find(
+        (n) =>
+          typeof n.type === 'string' &&
+          n.props.accessibilityRole === 'radiogroup' &&
+          !!StyleSheet.flatten(n.props.style)?.borderRadius
+      ).props.style
+    );
   const wide = jest
     .spyOn(require('react-native'), 'useWindowDimensions')
     .mockReturnValue({ width: 412, height: 900, fontScale: 1, scale: 3 });
   const tree = await render();
-  expect(flush(tree).left).toBeGreaterThan(0);
-  expect(flush(tree).right).toBeGreaterThan(0);
+  expect(pulledOut(tree)).toBe(0);
+  expect(switchStyle(tree).alignSelf).toBeUndefined();
   act(() => tree.unmount());
   wide.mockReturnValue({ width: 412, height: 900, fontScale: 1.5, scale: 3 });
   const big = await render();
-  expect(flush(big)).toEqual({ left: 0, right: 0 });
+  expect(pulledOut(big)).toBe(0);
+  // Stacked: the switch takes the full width under the pill, its two buttons sharing it.
+  expect(switchStyle(big).alignSelf).toBe('stretch');
+  // ...and the pill above it spans the width too, its arrows at the ends.
+  const pillStyle = (tree: ReactTestRenderer) =>
+    StyleSheet.flatten(
+      tree.root.find(
+        (n) =>
+          typeof n.type === 'string' &&
+          StyleSheet.flatten(n.props.style)?.overflow === 'hidden' &&
+          StyleSheet.flatten(n.props.style)?.minHeight === 44
+      ).props.style
+    );
+  expect(pillStyle(big).alignSelf).toBe('stretch');
   act(() => big.unmount());
   wide.mockRestore();
 });

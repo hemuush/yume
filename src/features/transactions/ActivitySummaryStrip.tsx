@@ -7,16 +7,20 @@ import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
 import { withPressed } from '@/lib/pressed';
 import { screenStyles } from '@/components/screenStyles';
+import { useStacked } from '@/lib/useStacked';
 import type { SpendBar } from './spendChart';
 import { usePeriodSlide } from './usePeriodSlide';
 
-/** The tallest a mini bar is drawn; the rest are in proportion to the biggest day. */
-const BAR_MAX = 34;
+/** The tallest a mini bar is drawn; the rest are in proportion to the biggest. */
+const BAR_MAX = 40;
+/** The bars and the letters under them share this width, so a week's seven and a month's five fill it alike. */
+const PREVIEW_W = 96;
 
 /**
- * Activity's summary as one slim strip: what was spent, how it compares with the period before, and a small
- * preview of the days. It is a button: tapping it opens the full chart and totals (Insights). The figure is the real
- * amount at once (it never counts up); the strip as a whole glides in with the period, like Insights (usePeriodSlide).
+ * Activity's summary as one compact card: what was spent, a chip for how it compares with the period before, and a
+ * small labelled preview of the period (M T W… for a week's days, W1–W5 for a month's weeks). It is a button: tapping
+ * it opens the full chart and totals (Insights). The figure is the real amount at once (it never counts up); the card's
+ * contents glide in with the period, like Insights (usePeriodSlide).
  */
 export function ActivitySummaryStrip({
   periodKey,
@@ -47,6 +51,8 @@ export function ActivitySummaryStrip({
   onPress: () => void;
 }) {
   const slideStyle = usePeriodSlide(periodKey, direction);
+  // Large text has no room beside the figure for the preview: it is only a picture of what the figure says.
+  const showPreview = !useStacked();
   const counted = bars.filter((bar) => !bar.state);
   const peak = Math.max(1, ...counted.map((bar) => bar.totalMinor));
   const kicker = narrowedTo
@@ -59,6 +65,7 @@ export function ActivitySummaryStrip({
     change == null || change === 0
       ? null
       : `${formatMoney(Math.abs(change))} ${change > 0 ? 'more' : 'less'} than ${compareLabel}`;
+  const more = change != null && change > 0;
   return (
     <Pressable
       onPress={onPress}
@@ -69,91 +76,157 @@ export function ActivitySummaryStrip({
       <ReanimatedAnimated.View style={[styles.glide, slideStyle]}>
         <View style={styles.lead}>
           <Text style={styles.kicker}>{kicker}</Text>
-          <View style={styles.figureRow}>
-            <CountUpAmount
-              key={`${periodKey}:${narrowedTo ?? ''}`}
-              minor={spentMinor}
-              style={styles.figure}
-              numberOfLines={1}
-              adjustsFontSizeToFit
-            />
-            {changeWords && change != null && (
-              <View style={styles.change}>
+          <CountUpAmount
+            key={`${periodKey}:${narrowedTo ?? ''}`}
+            minor={spentMinor}
+            style={styles.figure}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+          />
+          {changeWords && change != null && (
+            <View style={styles.changeRow}>
+              <View style={[styles.chip, more ? styles.chipMore : styles.chipLess]}>
                 <Feather
-                  name={change > 0 ? 'arrow-up-right' : 'arrow-down-right'}
+                  name={more ? 'arrow-up' : 'arrow-down'}
                   size={12}
-                  color={change > 0 ? theme.colors.expenseText : theme.colors.incomeText}
+                  color={more ? theme.colors.expenseText : theme.colors.incomeText}
                 />
-                <Text style={[styles.changeText, change > 0 ? styles.more : styles.less]} numberOfLines={2}>
-                  {changeWords}
+                <Text style={[styles.chipText, more ? styles.more : styles.less]} numberOfLines={1}>
+                  {formatMoney(Math.abs(change))}
                 </Text>
               </View>
-            )}
-          </View>
+              <Text style={styles.changeText} numberOfLines={2}>
+                {more ? 'more' : 'less'} than {compareLabel}
+              </Text>
+            </View>
+          )}
         </View>
-        <View
-          style={styles.preview}
-          accessibilityElementsHidden
-          importantForAccessibility="no-hide-descendants"
-        >
-          <View style={styles.bars}>
-            {bars.map((bar) => (
-              <View
-                key={bar.key}
-                style={[
-                  styles.bar,
-                  {
-                    height: bar.state ? 4 : Math.max(4, Math.round((BAR_MAX * bar.totalMinor) / peak)),
-                    backgroundColor: bar.isCurrent
-                      ? theme.colors.ink
-                      : bar.state || bar.totalMinor === 0
-                        ? theme.colors.trayTrack
-                        : theme.colors.slice.free,
-                  },
-                ]}
-              />
-            ))}
+        {showPreview && (
+          <View
+            style={styles.preview}
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
+          >
+            <View style={styles.bars}>
+              {bars.map((bar, i) => {
+                const future = isFuture(bar, i, bars, current);
+                return (
+                  <View key={bar.key} style={styles.col}>
+                    <View
+                      style={[
+                        styles.bar,
+                        { height: barHeight(bar, future, viewScope === 'month', peak) },
+                        future ? styles.barFuture : { backgroundColor: barColor(bar) },
+                      ]}
+                    />
+                  </View>
+                );
+              })}
+            </View>
+            {/* Spread across the same width as the bars: each word is under its bar to within a dp or two, and a wider
+                word ("W1", "W") never has to fit the column of its bar. */}
+            <View style={styles.labels}>
+              {bars.map((bar, i) => (
+                <Text key={bar.key} style={[styles.label, bar.isCurrent && styles.labelNow]}>
+                  {viewScope === 'month' ? `W${i + 1}` : bar.label}
+                </Text>
+              ))}
+            </View>
           </View>
-          {/* What the bars are, true of any period: a past week is not "This week". */}
-          <Text style={styles.caption}>{viewScope === 'week' ? 'By day' : 'By week'}</Text>
-        </View>
+        )}
       </ReanimatedAnimated.View>
       <Feather name="chevron-right" size={18} color={theme.colors.textMuted} />
     </Pressable>
   );
 }
 
+/** A bar that has not happened yet: a week's later days, or the weeks of this month still to come. */
+function isFuture(bar: SpendBar, index: number, bars: SpendBar[], current: boolean) {
+  if (bar.state === 'future') return true;
+  if (bar.state || !current) return false;
+  const now = bars.findIndex((b) => b.isCurrent);
+  return now >= 0 && index > now;
+}
+
+/**
+ * A day's bar is in proportion to the busiest day. A month is one big week and four small ones, so its bars are drawn
+ * on a square-root scale: the small weeks stay readable and the order is the same. A period with no spend is a short tick.
+ */
+function barHeight(bar: SpendBar, future: boolean, monthly: boolean, peak: number) {
+  if (future || bar.state) return 4;
+  if (bar.totalMinor <= 0) return 3;
+  if (monthly) return Math.round(8 + (BAR_MAX - 8) * Math.sqrt(bar.totalMinor / peak));
+  return Math.max(4, Math.round((BAR_MAX * bar.totalMinor) / peak));
+}
+
+function barColor(bar: SpendBar) {
+  if (bar.isCurrent) return theme.colors.ink;
+  return bar.state || bar.totalMinor === 0 ? theme.colors.trayTrack : theme.colors.slice.free;
+}
+
 const styles = StyleSheet.create({
   strip: {
     marginHorizontal: 16,
     marginTop: 8,
-    minHeight: 64,
-    // The same side padding as Home's month card and as this strip's loading placeholder.
+    // The same side padding as Home's month card and as this card's loading placeholder.
     paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingVertical: 12,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
   },
-  // The figure, its comparison and the day bars glide together; the chevron stays put.
+  // The figure, its comparison and the bars glide together; the chevron stays put.
   glide: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 12 },
-  lead: { flex: 1, minWidth: 0 },
-  kicker: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
-  figureRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline', columnGap: 8 },
+  lead: { flex: 1, minWidth: 0, gap: 2 },
+  kicker: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 16, color: theme.colors.textSecondary },
   figure: {
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 20,
-    lineHeight: 26,
-    letterSpacing: -0.2,
+    fontFamily: theme.font.bodyBold,
+    fontSize: 24,
+    lineHeight: 30,
+    letterSpacing: -0.3,
     fontVariant: ['tabular-nums'],
     color: theme.colors.textPrimary,
   },
-  change: { flexDirection: 'row', alignItems: 'center', gap: 2, flexShrink: 1 },
-  changeText: { fontFamily: theme.font.bodyMedium, fontSize: 12, flexShrink: 1 },
+  changeRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    columnGap: 6,
+    rowGap: 2,
+    marginTop: 2,
+  },
+  chip: {
+    minHeight: 22,
+    paddingLeft: 6,
+    paddingRight: 8,
+    borderRadius: 11,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
+  chipLess: { backgroundColor: theme.colors.incomeTint },
+  chipMore: { backgroundColor: theme.colors.expenseTint },
+  chipText: { fontFamily: theme.font.bodyBold, fontSize: 12, fontVariant: ['tabular-nums'] },
   more: { color: theme.colors.expenseText },
   less: { color: theme.colors.incomeText },
-  preview: { alignItems: 'flex-end', gap: 3 },
-  bars: { flexDirection: 'row', alignItems: 'flex-end', gap: 3, height: BAR_MAX, width: 64 },
-  bar: { flex: 1, borderRadius: 3 },
-  caption: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted },
+  changeText: { flexShrink: 1, fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
+  preview: { width: PREVIEW_W, gap: 3 },
+  bars: { flexDirection: 'row', alignItems: 'flex-end', gap: 4, height: BAR_MAX },
+  col: { flex: 1, alignItems: 'center', justifyContent: 'flex-end' },
+  bar: { width: '100%', maxWidth: 16, borderRadius: 4 },
+  // Not here yet: an outline, not a bar, so it never reads as a day with nothing spent.
+  barFuture: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: theme.colors.inkOff,
+  },
+  labels: { flexDirection: 'row', justifyContent: 'space-between' },
+  label: {
+    fontFamily: theme.font.bodyMedium,
+    fontSize: 11,
+    lineHeight: 14,
+    color: theme.colors.textMuted,
+  },
+  labelNow: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
 });

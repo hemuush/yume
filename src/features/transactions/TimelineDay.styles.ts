@@ -1,6 +1,5 @@
 import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
-import { SECTION_TITLE } from '@/constants/textStyles';
 import { SCREEN } from '@/components/screenStyles';
 
 /** A compact row: its least height. */
@@ -9,53 +8,31 @@ export const ROW_H = 48;
 export const ICON = SCREEN.iconTile;
 
 export const styles = StyleSheet.create({
-  // Each day is a flat block on the page: a marker rail on the left (weekday, date, a line down to the next
-  // day) and the day's heading and entries beside it.
-  day: { marginHorizontal: 16, marginTop: 14, flexDirection: 'row', gap: 12 },
-  rail: { width: 44, alignItems: 'center', paddingTop: 8 },
-  railWeekday: {
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 11,
-    letterSpacing: 0.6,
-    color: theme.colors.textMuted,
-  },
-  // Minimum, not fixed, so the date number is never clipped at large text sizes.
-  railNumber: { minWidth: 34, minHeight: 34, alignItems: 'center', justifyContent: 'center' },
-  railNumberToday: {
-    minWidth: 34,
-    minHeight: 34,
-    paddingHorizontal: 6,
-    borderRadius: 17,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  railNumberText: {
-    fontFamily: theme.font.bodyBold,
-    fontVariant: ['tabular-nums'],
-    fontSize: 18,
-    color: theme.colors.textPrimary,
-  },
-  railNumberTextToday: { color: theme.colors.white },
-  railLine: { flex: 1, width: 2, marginTop: 6, borderRadius: 1, backgroundColor: theme.colors.divider },
-  dayBody: { flex: 1, minWidth: 0 },
+  // Each day is a heading line (the day, what it spent) above one card of its entries: no marker rail beside it, so
+  // the card runs the full width and the amounts sit near the edge.
+  day: { marginHorizontal: 16, marginTop: 12 },
   head: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     alignItems: 'baseline',
     justifyContent: 'space-between',
-    gap: 8,
-    paddingTop: 8,
-    paddingBottom: 2,
+    columnGap: 8,
+    paddingHorizontal: 4,
+    paddingTop: 4,
+    paddingBottom: 6,
   },
+  // The chart's picked day: its heading sits on a soft tint, pulled out by the 4 dp it gains, so the text stays put.
+  headOn: { marginHorizontal: -4, paddingHorizontal: 8, borderRadius: 10 },
+  // "Today · Sun 15 Nov": the day in bold ink and the date after it, quieter, as one line that wraps together.
   title: {
     flexGrow: 1,
     flexBasis: 160,
-    // A quiet day label: the section heading's face at row-caption size.
-    ...SECTION_TITLE,
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 13,
+    fontFamily: theme.font.bodyBold,
+    fontSize: 14,
+    lineHeight: 19,
+    color: theme.colors.textPrimary,
   },
-  titleOn: { fontFamily: theme.font.bodyBold, color: theme.colors.ink },
+  titleDate: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
   // Spending reads in ink with its minus sign; only money in is green.
   total: {
     fontFamily: theme.font.body,
@@ -126,6 +103,8 @@ export const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
     marginTop: 2,
   },
+  // The right-hand column: the amount over the account it came from, both against the card's right edge.
+  side: { alignItems: 'flex-end', flexShrink: 1, maxWidth: '45%', marginLeft: 'auto' },
   amount: {
     fontFamily: theme.font.bodyMedium,
     fontSize: 14,
@@ -136,6 +115,14 @@ export const styles = StyleSheet.create({
     marginLeft: 'auto',
   },
   income: { color: theme.colors.incomeText },
+  account: {
+    fontFamily: theme.font.body,
+    fontSize: 12,
+    lineHeight: 17,
+    marginTop: 2,
+    color: theme.colors.textMuted,
+    textAlign: 'right',
+  },
   // An open stack's entries: the same card, dividers and text as every other
   // line, each with a dot in its category's colour under the stack's icon.
   subLine: {
