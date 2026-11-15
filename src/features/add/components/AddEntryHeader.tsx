@@ -11,24 +11,24 @@ import { useAccent } from '@/theme/AccentContext';
 import type { AddEntryModel } from '@/features/add/types/addEntryModel';
 import type { ReactElement } from 'react';
 
-type Props = {
-  model: Pick<
-    AddEntryModel,
-    | 'title'
-    | 'editingId'
-    | 'editing'
-    | 'isLinked'
-    | 'onDelete'
-    | 'saving'
-    | 'addingRow'
-    | 'saveDone'
-    | 'formReady'
-    | 'openRepeatSheet'
-    | 'type'
-    | 'onTypeChange'
-    | 'formBusy'
-  >;
-};
+/** What this section of the Add page reads from the model; it is drawn again only when one of them changes. */
+export const HEADER_KEYS = [
+  'title',
+  'editingId',
+  'editing',
+  'isLinked',
+  'onDelete',
+  'saving',
+  'addingRow',
+  'saveDone',
+  'formReady',
+  'openRepeatSheet',
+  'type',
+  'onTypeChange',
+  'formBusy',
+] as const satisfies readonly (keyof AddEntryModel)[];
+
+type Props = { model: Pick<AddEntryModel, (typeof HEADER_KEYS)[number]> };
 export function AddEntryHeader({ model }: Props): ReactElement {
   const { accent } = useAccent();
   const {

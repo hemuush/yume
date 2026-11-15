@@ -1,3 +1,4 @@
+import { memo, useCallback } from 'react';
 import { Pressable, View } from 'react-native';
 import { Appear } from '@/components/Appear';
 import { Text } from '@/components/Text';
@@ -14,51 +15,54 @@ import { useFontScale } from '@/lib/useFontScale';
 import type { AddEntryModel } from '@/features/add/types/addEntryModel';
 import type { ReactElement } from 'react';
 
-type Props = {
-  model: Pick<
-    AddEntryModel,
-    | 'saveTitle'
-    | 'saveDone'
-    | 'saving'
-    | 'submit'
-    | 'splitParts'
-    | 'formReady'
-    | 'addingRow'
-    | 'isLinked'
-    | 'cannotSave'
-    | 'currentProblem'
-    | 'dockHint'
-    | 'editingId'
-    | 'addRow'
-    | 'setFooterHeight'
-    | 'insets'
-    | 'error'
-    | 'repeatWarning'
-    | 'invalidAmount'
-    | 'rows'
-    | 'formBusy'
-    | 'type'
-    | 'effectiveAccount'
-    | 'date'
-    | 'today'
-    | 'yesterday'
-    | 'note'
-    | 'noteEditing'
-    | 'refund'
-    | 'setNote'
-    | 'setNoteEditing'
-    | 'setAccountSheetOpen'
-    | 'setCalendarOpen'
-    | 'setRefund'
-    | 'setError'
-    | 'openSplit'
-    | 'padVisible'
-    | 'setPadOpen'
-    | 'onPadKey'
-    | 'clearAmount'
-    | 'padTone'
-  >;
-};
+// The account, date and note row is drawn again only when what it shows changes, not for each digit typed above it.
+const DetailRow = memo(AddDetailRow);
+
+/** What this section of the Add page reads from the model; it is drawn again only when one of them changes. */
+export const FOOTER_KEYS = [
+  'saveTitle',
+  'saveDone',
+  'saving',
+  'submit',
+  'splitParts',
+  'formReady',
+  'addingRow',
+  'isLinked',
+  'cannotSave',
+  'currentProblem',
+  'dockHint',
+  'editingId',
+  'addRow',
+  'setFooterHeight',
+  'insets',
+  'error',
+  'repeatWarning',
+  'invalidAmount',
+  'rows',
+  'formBusy',
+  'type',
+  'effectiveAccount',
+  'date',
+  'today',
+  'yesterday',
+  'note',
+  'noteEditing',
+  'refund',
+  'setNote',
+  'setNoteEditing',
+  'setAccountSheetOpen',
+  'setCalendarOpen',
+  'setRefund',
+  'setError',
+  'openSplit',
+  'padVisible',
+  'setPadOpen',
+  'onPadKey',
+  'clearAmount',
+  'padTone',
+] as const satisfies readonly (keyof AddEntryModel)[];
+
+type Props = { model: Pick<AddEntryModel, (typeof FOOTER_KEYS)[number]> };
 export function AddEntryFooter({ model }: Props): ReactElement {
   const { accent } = useAccent();
   const stackActions = useFontScale() > theme.accessibility.reflowFontScale;
@@ -104,6 +108,14 @@ export function AddEntryFooter({ model }: Props): ReactElement {
     clearAmount,
     padTone,
   } = model;
+
+  const onPickAccount = useCallback(() => setAccountSheetOpen(true), [setAccountSheetOpen]);
+  const onPickDate = useCallback(() => setCalendarOpen(true), [setCalendarOpen]);
+  const onToggleRefund = useCallback(() => {
+    setRefund((r) => !r);
+    setError(null);
+  }, [setRefund, setError]);
+  const onHidePad = useCallback(() => setPadOpen(false), [setPadOpen]);
 
   const saveButton = (
     <PrimaryButton
@@ -165,7 +177,7 @@ export function AddEntryFooter({ model }: Props): ReactElement {
         accessibilityElementsHidden={formBusy || !formReady}
         importantForAccessibility={formBusy || !formReady ? 'no-hide-descendants' : 'auto'}
       >
-        <AddDetailRow
+        <DetailRow
           type={type}
           accountName={effectiveAccount?.name}
           date={date}
@@ -179,14 +191,11 @@ export function AddEntryFooter({ model }: Props): ReactElement {
           hasList={rows.length > 0}
           onNoteChange={setNote}
           onNoteEditing={setNoteEditing}
-          onPickAccount={() => setAccountSheetOpen(true)}
-          onPickDate={() => setCalendarOpen(true)}
-          onToggleRefund={() => {
-            setRefund((r) => !r);
-            setError(null);
-          }}
+          onPickAccount={onPickAccount}
+          onPickDate={onPickDate}
+          onToggleRefund={onToggleRefund}
           onSplit={openSplit}
-          onHidePad={padVisible ? () => setPadOpen(false) : undefined}
+          onHidePad={padVisible ? onHidePad : undefined}
         />
       </View>
       {padVisible ? (

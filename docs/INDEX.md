@@ -34,6 +34,8 @@ The [15 November Reports pass](REPORTS_SMOOTHNESS_2026_11_15.md) does the same f
 
 The [15 November Plan pass](PLAN_SMOOTHNESS_2026_11_15.md) applies it to Plan: which sheet is open moves out of the page's state, a reload keeps what it did not change, each tab is its own memoized piece, and the 932-line screen is split into tested hooks, a pure derivation and components. Opening or closing a sheet no longer redraws the tab behind it.
 
+The [15 November Loans, Recurring, Budgets and Add pass](LOANS_RECURRING_BUDGETS_ADD_SMOOTHNESS_2026_11_15.md) applies it to those four: Loans, Budgets and Recurring keep their sheets outside the page's state, keep unchanged rows on reload and compare their props, and Add's sections are drawn again only for the fields of the model they read, so a digit on the pad no longer redraws the header, the category grid and the sheets.
+
 Hands-on Android outcomes belong in [release device acceptance](RELEASE_DEVICE_CHECKS.md). A passing test suite or JavaScript export does not establish native compilation, notification delivery, accessibility or frame pacing.
 
 ## Maintained guides

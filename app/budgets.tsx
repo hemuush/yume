@@ -2,24 +2,12 @@ import { ScreenLoadError } from '@/components/ScreenLoadError';
 import { Appear } from '@/components/Appear';
 import { CONTENT_ENTER } from '@/lib/animation';
 import { PrimaryButton } from '@/components/PrimaryButton';
-import { continueBudgets } from '@/features/budgets/continueBudgets';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
 import { View } from 'react-native';
-import { MovingRow } from '@/components/MovingRow';
 import { Text } from '@/components/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { listAccounts, listCategories } from '@/db/ledger';
-import {
-  listBudgetsForMonth,
-  listLapsedBudgets,
-  createBudget,
-  deleteBudget,
-  restoreBudget,
-  BudgetProgress,
-  LapsedBudget,
-} from '@/db/budgets';
-import { Account, Category } from '@/types';
+import type { BudgetProgress } from '@/db/budgets';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import { theme } from '@/constants/theme';
 import { SkyHeader, HeaderSummary } from '@/features/home/SkyHeader';
@@ -28,93 +16,63 @@ import { formatMoney } from '@/lib/money';
 import { useCollapsingHeader } from '@/lib/useCollapsingHeader';
 import { AddButton } from '@/components/AddButton';
 import { EmptyState } from '@/components/EmptyState';
-import { ActionSheet, ActionSheetItem } from '@/components/ActionSheet';
-import { useUndoToast } from '@/components/UndoToast';
 import { CardRowsSkeleton, SummarySkeleton } from '@/components/ListSkeleton';
-import { useScreenLoad } from '@/lib/useScreenLoad';
-import { haptics } from '@/lib/haptics';
-import { BudgetRow } from '@/features/budgets/BudgetRow';
-import { categoryPath, categorySentence } from '@/lib/categoryLabel';
+import { BudgetListRow } from '@/features/budgets/BudgetListRow';
 import { BudgetsHero } from '@/features/budgets/BudgetsHero';
+import { BudgetsSheets } from '@/features/budgets/BudgetsSheets';
 import { LapsedBudgetsCard } from '@/features/budgets/LapsedBudgetsCard';
 import { budgetsOverview } from '@/features/budgets/budgetsOverview';
-import { AddBudgetModal } from '@/features/budgets/AddBudgetModal';
+import { createBudgetsSheets } from '@/features/budgets/budgetsSheetsStore';
 import { styles } from '@/features/budgets/budgets.styles';
+import { useBudgetActions } from '@/features/budgets/useBudgetActions';
+import { useBudgetsData } from '@/features/budgets/useBudgetsData';
+import { useToday } from '@/features/budgets/useToday';
 import { HomeWallpaper } from '@/features/home/HomeWallpaper';
 import { useAccent } from '@/theme/AccentContext';
 import { ListCard } from '@/components/SummaryCard';
-import { errorMessage } from '@/lib/errorMessage';
-import { BudgetDetailModal } from '@/features/budgets/BudgetDetailModal';
-import { useToday } from '@/features/budgets/useToday';
-import { getCachedCurrency } from '@/db/settings';
 import { showAlert } from '@/components/AppDialog';
-import { budgetCategories } from '@/features/budgets/budgetCategories';
+
+// The hero and the lapsed card compare their props by identity, so a reload that changed neither leaves them be.
+const Hero = memo(BudgetsHero);
+const Lapsed = memo(LapsedBudgetsCard);
+const NO_BUDGETS_STYLE = { marginTop: theme.layout.screenTopGap };
 
 export default function BudgetsScreen() {
   const insets = useSafeAreaInsets();
   // The header sits over the page and shrinks as it scrolls.
   const { collapse, headerHeight, scrollHandler, scrollRef } = useCollapsingHeader();
-  const { show: showUndo } = useUndoToast();
   const { hideAmounts } = usePrivacy();
   const { accent, secondary } = useAccent();
-  const [budgets, setBudgets] = useState<BudgetProgress[]>([]);
-  const [lapsed, setLapsed] = useState<LapsedBudget[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [accounts, setAccounts] = useState<Account[]>([]);
-  const [detailId, setDetailId] = useState<string | null>(null);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [editingBudget, setEditingBudget] = useState<BudgetProgress | null>(null);
-  const [manageTarget, setManageTarget] = useState<BudgetProgress | null>(null);
-  const [continuingId, setContinuingId] = useState<string | null>(null);
-  const [continuingAll, setContinuingAll] = useState(false);
-  // Guards a double-tap firing deleteBudget twice for a row before the ActionSheet closes (same as
-  // Categories' manage sheet).
-  const [deleteBusy, setDeleteBusy] = useState(false);
-  const continuing = useRef(false);
-  const request = useRef(0);
-  const active = useRef(true);
-  useEffect(() => {
-    active.current = true;
-    return () => {
-      active.current = false;
-      request.current += 1;
-    };
-  }, []);
+  // Which sheet is open is kept outside React state, so opening or closing one does not redraw the page behind it.
+  const [sheets] = useState(createBudgetsSheets);
 
   const today = useToday();
   const periodMonth = today.slice(0, 7);
-  useEffect(
-    () => () => {
-      request.current += 1;
-    },
-    [periodMonth, hideAmounts]
+  const {
+    budgets,
+    lapsed,
+    categories,
+    accounts,
+    loaded,
+    hasData,
+    loadError,
+    reload: load,
+  } = useBudgetsData(periodMonth, hideAmounts);
+  const { busy, continuingId, continuingAll, onContinue, onContinueAll, onDelete, isBusy } = useBudgetActions(
+    {
+      periodMonth,
+      lapsed,
+      reload: load,
+    }
   );
-  const mutationBusy = deleteBusy || continuingAll || continuingId !== null;
 
-  const loadBudgets = useCallback(async () => {
-    const id = ++request.current;
-    const [list, lapsedList, cats, accs] = await Promise.all([
-      listBudgetsForMonth(periodMonth, hideAmounts),
-      listLapsedBudgets(periodMonth, hideAmounts),
-      listCategories(true),
-      listAccounts(true),
-    ]);
-    if (!active.current || request.current !== id) return;
-    setBudgets(list);
-    setLapsed(lapsedList);
-    setCategories(cats);
-    setAccounts(accs);
-  }, [periodMonth, hideAmounts]);
-  const { loaded, hasData, loadError, reload: load } = useScreenLoad(loadBudgets);
   const { budget: budgetId, add } = useLocalSearchParams<{ budget?: string; add?: string }>();
   useEffect(() => {
     if (!loaded || loadError || (!budgetId && add !== '1')) return;
     const selected = budgets.find((item) => item.budget.id === budgetId);
     if (add === '1' || selected) {
-      if (add === '1') {
-        setEditingBudget(null);
-        setModalVisible(true);
-      } else if (selected) setDetailId(selected.budget.id);
+      if (add === '1') sheets.openForm(null);
+      else if (selected) sheets.openDetail(selected.budget.id);
     } else if (budgetId) {
       showAlert(
         'Budget unavailable',
@@ -122,120 +80,22 @@ export default function BudgetsScreen() {
       );
     }
     router.setParams({ budget: undefined, add: undefined });
-  }, [loaded, loadError, budgetId, add, budgets]);
+  }, [loaded, loadError, budgetId, add, budgets, sheets]);
 
-  const hero = budgetsOverview(budgets, today);
-
-  // Every expense category, parents and subcategories alike, for AddBudgetModal's picker; see that
-  // component's comment for why it isn't pre-filtered to "no budget this month".
-  const expenseCategories = useMemo(
-    () => budgetCategories(categories, hideAmounts),
-    [categories, hideAmounts]
+  const hero = useMemo(() => budgetsOverview(budgets, today), [budgets, today]);
+  const openBudget = useCallback(
+    (id: string) => {
+      if (!isBusy()) sheets.openDetail(id);
+    },
+    [isBusy, sheets]
   );
-
-  const budgetedIds = useMemo(() => new Set(budgets.map((b) => b.budget.categoryId)), [budgets]);
-  const detail = budgets.find((b) => b.budget.id === detailId);
-  useEffect(() => {
-    if (loaded && !loadError && detailId && !detail) setDetailId(null);
-  }, [loaded, loadError, detailId, detail]);
-
-  const onContinue = async (item: LapsedBudget) => {
-    if (!active.current || continuing.current) return;
-    continuing.current = true;
-    setContinuingId(item.categoryId);
-    try {
-      await createBudget({
-        categoryId: item.categoryId,
-        limitAmountMinor: item.limitAmountMinor,
-        rollover: item.rollover,
-        periodMonth,
-      });
-      if (!active.current) return;
-      haptics.tap();
-      await load();
-    } catch (e) {
-      // The category stays in the list to try again; say why this attempt didn't take.
-      if (active.current) showAlert('Couldn’t continue budget', errorMessage(e));
-    } finally {
-      continuing.current = false;
-      if (active.current) setContinuingId(null);
-    }
-  };
-
-  const onContinueAll = async () => {
-    if (!active.current || continuing.current) return;
-    continuing.current = true;
-    setContinuingAll(true);
-    try {
-      const failures = await continueBudgets(lapsed, periodMonth);
-      if (!active.current) return;
-      haptics.tap();
-      await load();
-      if (failures.length) showAlert('Some budgets couldn’t continue', failures.join('\n'));
-    } finally {
-      continuing.current = false;
-      if (active.current) setContinuingAll(false);
-    }
-  };
-
-  const onDelete = async (progress: BudgetProgress) => {
-    if (!active.current || continuing.current) return;
-    continuing.current = true;
-    setDeleteBusy(true);
-    let deleted = false;
-    try {
-      const snapshot = await deleteBudget(progress.budget.id);
-      deleted = true;
-      if (!active.current) return;
-      haptics.warn();
-      showUndo(`Deleted "${categoryPath(progress.categoryName, progress.parentName)}" budget`, async () => {
-        await restoreBudget(snapshot);
-        if (active.current) {
-          try {
-            await load();
-          } catch {
-            showAlert(
-              'Budget restored',
-              'The budget was restored, but the list could not refresh. Reopen Budgets to see it.'
-            );
-          }
-        }
-      });
-      await load();
-    } catch (e) {
-      if (active.current)
-        showAlert(
-          deleted ? 'Budget deleted' : 'Couldn’t delete budget',
-          deleted
-            ? 'The budget was deleted, but the list could not refresh. Reopen Budgets to see it.'
-            : errorMessage(e)
-        );
-    } finally {
-      continuing.current = false;
-      if (active.current) setDeleteBusy(false);
-    }
-  };
-
-  const manageItems: ActionSheetItem[] = manageTarget
-    ? [
-        {
-          key: 'edit',
-          label: 'Edit limit',
-          icon: 'edit-2',
-          onPress: () => {
-            setEditingBudget(manageTarget);
-            setModalVisible(true);
-          },
-        },
-        {
-          key: 'delete',
-          label: 'Delete',
-          icon: 'trash-2',
-          destructive: true,
-          onPress: () => onDelete(manageTarget),
-        },
-      ]
-    : [];
+  const openManage = useCallback(
+    (progress: BudgetProgress) => {
+      if (!isBusy()) sheets.openManage(progress);
+    },
+    [isBusy, sheets]
+  );
+  const openForm = useCallback(() => sheets.openForm(null), [sheets]);
 
   if (!hasData && loadError)
     return <ScreenLoadError title="Budgets" message={loadError} onRetry={() => void load()} />;
@@ -277,16 +137,16 @@ export default function BudgetsScreen() {
           </Appear>
         )}
 
-        {budgets.length > 0 && <BudgetsHero figures={hero} />}
+        {budgets.length > 0 && <Hero figures={hero} />}
 
         {lapsed.length > 0 && (
-          <LapsedBudgetsCard
+          <Lapsed
             items={lapsed}
             continuingId={continuingId}
             continuingAll={continuingAll}
             onContinue={onContinue}
             onContinueAll={onContinueAll}
-            style={budgets.length === 0 && { marginTop: theme.layout.screenTopGap }}
+            style={budgets.length === 0 ? NO_BUDGETS_STYLE : undefined}
           />
         )}
 
@@ -295,7 +155,7 @@ export default function BudgetsScreen() {
             title="No budgets yet"
             subtitle="Set a monthly limit for a category to see how close you are, right from Home."
           >
-            <PrimaryButton title="Create a budget" onPress={() => setModalVisible(true)} />
+            <PrimaryButton title="Create a budget" onPress={openForm} />
           </EmptyState>
         ) : (
           budgets.length > 0 && (
@@ -303,19 +163,13 @@ export default function BudgetsScreen() {
               <Text style={styles.listTitle}>This month</Text>
               <ListCard>
                 {budgets.map((progress, i) => (
-                  <MovingRow key={progress.budget.id}>
-                    <BudgetRow
-                      progress={progress}
-                      divider={i > 0}
-                      showPerDay
-                      onPress={() => {
-                        if (!continuing.current) setDetailId(progress.budget.id);
-                      }}
-                      onMore={() => {
-                        if (!continuing.current) setManageTarget(progress);
-                      }}
-                    />
-                  </MovingRow>
+                  <BudgetListRow
+                    key={progress.budget.id}
+                    progress={progress}
+                    divider={i > 0}
+                    onOpen={openBudget}
+                    onMore={openManage}
+                  />
                 ))}
               </ListCard>
             </>
@@ -337,52 +191,17 @@ export default function BudgetsScreen() {
         showBack
         hideUser
         wallpaper
-        actions={
-          <AddButton
-            disabled={mutationBusy}
-            onPress={() => {
-              setEditingBudget(null);
-              setModalVisible(true);
-            }}
-            label="+ Add"
-          />
-        }
+        actions={<AddButton disabled={busy} onPress={openForm} label="+ Add" />}
       />
-
-      <AddBudgetModal
-        visible={modalVisible}
-        editing={editingBudget}
-        categories={expenseCategories}
-        budgetedCategoryIds={budgetedIds}
-        onClose={() => {
-          setModalVisible(false);
-          setEditingBudget(null);
-        }}
-        onSaved={async () => {
-          setModalVisible(false);
-          setEditingBudget(null);
-          await load();
-        }}
-      />
-      {detail && (
-        <BudgetDetailModal
-          key={detail.budget.id}
-          progress={detail}
-          categories={categories}
-          accounts={accounts}
-          currency={getCachedCurrency()}
-          onClose={() => setDetailId(null)}
-          onChanged={load}
-        />
-      )}
-
-      <ActionSheet
-        visible={!!manageTarget}
-        onClose={() => setManageTarget(null)}
-        title={
-          manageTarget ? categorySentence(manageTarget.categoryName, manageTarget.parentName) : undefined
-        }
-        items={manageItems}
+      <BudgetsSheets
+        sheets={sheets}
+        budgets={budgets}
+        categories={categories}
+        accounts={accounts}
+        hideAmounts={hideAmounts}
+        ready={loaded && !loadError}
+        reload={load}
+        onDelete={onDelete}
       />
     </View>
   );

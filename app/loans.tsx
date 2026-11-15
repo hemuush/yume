@@ -1,15 +1,11 @@
 import { ScreenLoadError } from '@/components/ScreenLoadError';
 import { Appear } from '@/components/Appear';
 import { LoadFade } from '@/components/LoadFade';
-import { useCallback, useEffect, useState } from 'react';
+import { memo, useEffect, useMemo, useState } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
-import { View, Pressable } from 'react-native';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { View } from 'react-native';
 import { Text } from '@/components/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { listLoans, getLoanProgress, LoanProgress } from '@/db/loans';
-import { Loan } from '@/types';
-import { MovingRow } from '@/components/MovingRow';
 import { EmptyState } from '@/components/EmptyState';
 import { AddButton } from '@/components/AddButton';
 import { SkyHeader, HeaderSummary } from '@/features/home/SkyHeader';
@@ -20,19 +16,22 @@ import { PrimaryButton } from '@/components/PrimaryButton';
 import { Skeleton } from '@/components/Skeleton';
 import { theme } from '@/constants/theme';
 import { SECTION_TITLE, SECTION_GAP } from '@/constants/textStyles';
-import { useScreenLoad } from '@/lib/useScreenLoad';
+import { parseLocalIsoDate } from '@/lib/date';
 import { styles } from '@/features/loans/loans.styles';
-import { LoanCard } from '@/features/loans/LoanCard';
-import { LoanDetailModal } from '@/features/loans/LoanDetailModal';
+import { ClosedLoans } from '@/features/loans/ClosedLoans';
+import { LoanListItem } from '@/features/loans/LoanListItem';
+import { LoansSheets } from '@/features/loans/LoansSheets';
 import { HomeWallpaper } from '@/features/home/HomeWallpaper';
 import { useAccent } from '@/theme/AccentContext';
 import { LoansHero } from '@/features/loans/LoansHero';
-import { loanHues } from '@/features/loans/loanIdentity';
-import { debtShares, summarizeLoans } from '@/features/loans/loanTotals';
-import { buildTimeline } from '@/features/loans/timelineLayout';
-import { AddLoanModal } from '@/features/loans/AddLoanModal';
+import { buildLoansModel } from '@/features/loans/loansModel';
+import { createLoansSheets } from '@/features/loans/loansSheetsStore';
+import { useLoansData } from '@/features/loans/useLoansData';
 import { SCREEN } from '@/components/screenStyles';
 import { showAlert } from '@/components/AppDialog';
+
+// The hero compares its props by identity: it is drawn again only when the totals, shares or timeline change.
+const Hero = memo(LoansHero);
 
 const listTitle = {
   ...SECTION_TITLE,
@@ -50,21 +49,10 @@ export default function LoansScreen() {
   const { accent, secondary } = useAccent();
   // The header sits over the page and shrinks as it scrolls.
   const { collapse, headerHeight, scrollHandler, scrollRef } = useCollapsingHeader();
-  const [loans, setLoans] = useState<Loan[]>([]);
-  // Each loan's EMIs paid, next EMI and last EMI, for its card and the hero.
-  const [progress, setProgress] = useState<Record<string, LoanProgress>>({});
-  const [closedOpen, setClosedOpen] = useState(false);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [selectedLoan, setSelectedLoan] = useState<Loan | null>(null);
-  const [payOnOpen, setPayOnOpen] = useState(false);
+  // Which sheet is open is kept outside React state, so opening or closing one does not redraw the page behind it.
+  const [sheets] = useState(createLoansSheets);
+  const { loans, progress, today, loaded, hasData, loadError, reload: load } = useLoansData();
   const { pay: payLoanId, loan: detailLoanId } = useLocalSearchParams<{ pay?: string; loan?: string }>();
-
-  const loadLoans = useCallback(async () => {
-    const [list, rows] = await Promise.all([listLoans(), getLoanProgress()]);
-    setLoans(list);
-    setProgress(Object.fromEntries(rows.map((p) => [p.loanId, p])));
-  }, []);
-  const { loaded, hasData, loadError, reload: load } = useScreenLoad(loadLoans);
   const loading = !loaded && !loadError;
   useEffect(() => {
     // Consume each route request after a successful load. A later reminder must work in this same screen.
@@ -72,30 +60,15 @@ export default function LoansScreen() {
     if (!loaded || loadError || !requested) return;
     router.setParams({ pay: undefined, loan: undefined });
     const selected = loans.find((loan) => loan.id === requested);
-    setSelectedLoan(selected ?? null);
-    setPayOnOpen(!!payLoanId && selected?.status !== 'closed');
+    sheets.show(selected ?? null, !!payLoanId && selected?.status !== 'closed');
     if (!selected)
       showAlert('Loan unavailable', 'This loan may have been deleted. Review your current loans below.');
-  }, [loaded, loadError, payLoanId, detailLoanId, loans]);
+  }, [loaded, loadError, payLoanId, detailLoanId, loans, sheets]);
 
-  // A defaulted loan is still money owed (or owed to you), so only closed
-  // loans drop out of the totals. Closed ones also sit apart in the list.
-  const activeLoans = loans.filter((l) => l.status !== 'closed');
-  const closedLoans = loans.filter((l) => l.status === 'closed');
-  const hues = loanHues(loans);
-  const totals = summarizeLoans(loans, progress);
-  const shares = debtShares(loans);
-  const timeline = buildTimeline(
-    activeLoans.flatMap((l) => {
-      const end = progress[l.id]?.lastDueDate;
-      return l.direction === 'borrowed' && end ? [{ id: l.id, name: l.counterparty, endDate: end }] : [];
-    }),
-    new Date()
+  const { activeLoans, closedLoans, hues, totals, shares, timeline } = useMemo(
+    () => buildLoansModel(loans, progress, today ? parseLocalIsoDate(today) : new Date()),
+    [loans, progress, today]
   );
-  const payLoan = (loan: Loan) => {
-    setPayOnOpen(true);
-    setSelectedLoan(loan);
-  };
 
   if (!hasData && loadError)
     return <ScreenLoadError title="Loans" message={loadError} onRetry={() => void load()} />;
@@ -121,7 +94,7 @@ export default function LoansScreen() {
             </Appear>
           )}
           {(loading || loans.length > 0) && (
-            <LoansHero totals={totals} shares={shares} hues={hues} timeline={timeline} loading={loading} />
+            <Hero totals={totals} shares={shares} hues={hues} timeline={timeline} loading={loading} />
           )}
           {loading ? (
             [0, 1].map((i) => (
@@ -133,50 +106,29 @@ export default function LoansScreen() {
             ))
           ) : loans.length === 0 ? (
             <EmptyState title="No loans yet" subtitle="Add one and Yume works out the EMI schedule for you.">
-              <PrimaryButton title="Add a loan" onPress={() => setModalVisible(true)} />
+              <PrimaryButton title="Add a loan" onPress={sheets.openAdd} />
             </EmptyState>
           ) : (
             <>
               {activeLoans.length > 0 && <Text style={listTitle}>Your loans</Text>}
               {activeLoans.map((loan) => (
-                <MovingRow key={loan.id}>
-                  <LoanCard
-                    loan={loan}
-                    hue={hues[loan.id]}
-                    progress={progress[loan.id]}
-                    onPress={() => setSelectedLoan(loan)}
-                    onPay={() => payLoan(loan)}
-                  />
-                </MovingRow>
+                <LoanListItem
+                  key={loan.id}
+                  loan={loan}
+                  hue={hues[loan.id]}
+                  progress={progress[loan.id]}
+                  onOpen={sheets.openLoan}
+                  onPay={sheets.payLoan}
+                />
               ))}
               {closedLoans.length > 0 && (
-                <>
-                  <Pressable
-                    onPress={() => setClosedOpen((v) => !v)}
-                    accessibilityRole="button"
-                    accessibilityState={{ expanded: closedOpen }}
-                    style={styles.closedHeader}
-                  >
-                    <Text style={styles.closedDivider}>Closed · {closedLoans.length}</Text>
-                    <MaterialCommunityIcons
-                      name={closedOpen ? 'chevron-up' : 'chevron-down'}
-                      size={18}
-                      color={theme.colors.textMuted}
-                    />
-                  </Pressable>
-                  {closedOpen &&
-                    closedLoans.map((loan) => (
-                      <MovingRow key={loan.id}>
-                        <LoanCard
-                          loan={loan}
-                          hue={hues[loan.id]}
-                          progress={progress[loan.id]}
-                          onPress={() => setSelectedLoan(loan)}
-                          onPay={() => payLoan(loan)}
-                        />
-                      </MovingRow>
-                    ))}
-                </>
+                <ClosedLoans
+                  loans={closedLoans}
+                  hues={hues}
+                  progress={progress}
+                  onOpen={sheets.openLoan}
+                  onPay={sheets.payLoan}
+                />
               )}
             </>
           )}
@@ -197,30 +149,9 @@ export default function LoansScreen() {
         showBack
         hideUser
         wallpaper
-        actions={<AddButton onPress={() => setModalVisible(true)} label="+ Loan" />}
+        actions={<AddButton onPress={sheets.openAdd} label="+ Loan" />}
       />
-
-      <AddLoanModal
-        visible={modalVisible}
-        onClose={() => setModalVisible(false)}
-        onCreated={async () => {
-          setModalVisible(false);
-          await load();
-        }}
-      />
-
-      {selectedLoan && (
-        <LoanDetailModal
-          loan={selectedLoan}
-          hue={hues[selectedLoan.id]}
-          startWithPay={payOnOpen}
-          onClose={() => {
-            setSelectedLoan(null);
-            setPayOnOpen(false);
-          }}
-          onChanged={load}
-        />
-      )}
+      <LoansSheets sheets={sheets} hues={hues} reload={load} />
     </View>
   );
 }

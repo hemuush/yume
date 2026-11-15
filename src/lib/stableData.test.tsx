@@ -6,9 +6,11 @@
 import { Text } from 'react-native';
 import { create, act } from 'react-test-renderer';
 import {
+  keepEntriesIfEqual,
   keepFieldsIfEqual,
   keepIfEqual,
   reuseUnchanged,
+  reuseUnchangedBy,
   sameElements,
   useStableSet,
   useStableValue,
@@ -136,5 +138,51 @@ describe('keepFieldsIfEqual', () => {
     const next = { a: 1 };
     expect(keepFieldsIfEqual(null, next)).toBe(next);
     expect(keepFieldsIfEqual({ a: 1 } as { a: number; b?: number }, { a: 1, b: 2 })).toEqual({ a: 1, b: 2 });
+  });
+});
+
+describe('keepEntriesIfEqual', () => {
+  const entry = (loanId: string, paid: number) => ({ loanId, paid, next: null });
+
+  it('hands back the map already held when every entry is the same', () => {
+    const prev = { a: entry('a', 1), b: entry('b', 2) };
+    expect(keepEntriesIfEqual(prev, { a: entry('a', 1), b: entry('b', 2) })).toBe(prev);
+  });
+
+  it('keeps each entry that did not change, so a row made of it does not redraw', () => {
+    const prev = { a: entry('a', 1), b: entry('b', 2) };
+    const next = { a: entry('a', 1), b: entry('b', 3) };
+    const out = keepEntriesIfEqual(prev, next);
+    expect(out).not.toBe(prev);
+    expect(out.a).toBe(prev.a);
+    expect(out.b).toBe(next.b);
+  });
+
+  it('notices an entry that came or went', () => {
+    const prev = { a: entry('a', 1) };
+    expect(keepEntriesIfEqual(prev, { a: entry('a', 1), b: entry('b', 1) })).not.toBe(prev);
+    expect(keepEntriesIfEqual({ a: entry('a', 1), b: entry('b', 1) }, { a: entry('a', 1) })).not.toBe(prev);
+  });
+
+  it('takes the first map as it is', () => {
+    const first = { a: entry('a', 1) };
+    expect(keepEntriesIfEqual(undefined, first)).toBe(first);
+  });
+});
+
+describe('reuseUnchangedBy', () => {
+  const budget = (id: string, spentMinor: number) => ({ budget: { id }, spentMinor });
+
+  it('matches rows by the key it is given, keeping those that are exactly as before', () => {
+    const prev = [budget('a', 100), budget('b', 200)];
+    const next = [budget('a', 100), budget('b', 250)];
+    const out = reuseUnchangedBy(prev, next, (row) => row.budget.id);
+    expect(out[0]).toBe(prev[0]);
+    expect(out[1]).toBe(next[1]);
+  });
+
+  it('hands back the list already held when nothing changed', () => {
+    const prev = [budget('a', 100)];
+    expect(reuseUnchangedBy(prev, [budget('a', 100)], (row) => row.budget.id)).toBe(prev);
   });
 });
