@@ -2,7 +2,7 @@ import { ScreenLoadError } from '@/components/ScreenLoadError';
 import { Appear } from '@/components/Appear';
 import { LoadFade } from '@/components/LoadFade';
 import { PrimaryButton } from '@/components/PrimaryButton';
-import { useCallback, useEffect, useState } from 'react';
+import { memo, useCallback, useEffect, useState } from 'react';
 import { useLocalSearchParams } from 'expo-router';
 import { View, Keyboard } from 'react-native';
 import { Text } from '@/components/Text';
@@ -26,6 +26,10 @@ import { ProfileIdentity } from '@/features/profile/ProfileIdentity';
 import { errorMessage } from '@/lib/errorMessage';
 import { showAlert } from '@/components/AppDialog';
 import { useSaveOnce } from '@/lib/useSaveOnce';
+
+// Neither section takes anything from the page, so editing the name or any other change here does not draw them.
+const You = memo(YouSection);
+const Settings = memo(SettingsSection);
 
 /**
  * Personal card with inline name editing plus a "You"/"Settings" segment, the shared
@@ -138,7 +142,7 @@ export default function ProfileScreen() {
 
                 <ProfileTabs value={tab} onChange={setTab} />
 
-                {tab === 'you' ? <YouSection /> : <SettingsSection />}
+                {tab === 'you' ? <You /> : <Settings />}
               </LoadFade>
             </KeyboardAwareScrollView>
             <SkyHeader

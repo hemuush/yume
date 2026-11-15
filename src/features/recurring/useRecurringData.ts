@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { listAccounts, listCategories } from '@/db/ledger';
 import { listRecurringRules } from '@/db/recurring';
 import { getDefaultCurrency, getHiddenSubscriptionSuggestions } from '@/db/settings';
@@ -37,6 +37,15 @@ export function useRecurringData() {
   const [data, setData] = useState(NONE);
   // What is held, so a reload that found nothing new sets no state at all.
   const held = useRef(NONE);
+  // Only the newest load may land, and none after the page is gone: an older read that finishes late would put old
+  // rules back over newer ones.
+  const request = useRef(0);
+  useEffect(
+    () => () => {
+      request.current += 1;
+    },
+    []
+  );
   const commit = useCallback((next: RecurringData) => {
     if (next === held.current) return;
     held.current = next;
@@ -44,6 +53,7 @@ export function useRecurringData() {
   }, []);
 
   const loadRules = useCallback(async () => {
+    const id = ++request.current;
     const [rules, allAccounts, categories, hidden, currency] = await Promise.all([
       listRecurringRules(),
       listAccounts(true),
@@ -57,6 +67,7 @@ export function useRecurringData() {
     const accounts = allAccounts.filter((a) => !a.archived || inUse.has(a.id));
     // A suggestion is a nicety — if it fails, the rules still show.
     const suggestions = await getSubscriptionSuggestions(hidden).catch(() => []);
+    if (id !== request.current) return;
     const prev = held.current;
     const next: RecurringData = {
       rules: reuseUnchanged(prev.rules, rules),
@@ -77,17 +88,22 @@ export function useRecurringData() {
   }, [commit]);
   const { loaded, hasData, loadError, reload } = useScreenLoad(loadRules);
 
+  // A change made here outranks any read that started before it, which would put the old state back.
   const setRuleActive = useCallback(
-    (id: string, active: boolean) =>
+    (id: string, active: boolean) => {
+      request.current += 1;
       commit({
         ...held.current,
         rules: held.current.rules.map((r) => (r.id === id ? { ...r, active } : r)),
-      }),
+      });
+    },
     [commit]
   );
   const dropSuggestion = useCallback(
-    (key: string) =>
-      commit({ ...held.current, suggestions: held.current.suggestions.filter((s) => s.key !== key) }),
+    (key: string) => {
+      request.current += 1;
+      commit({ ...held.current, suggestions: held.current.suggestions.filter((s) => s.key !== key) });
+    },
     [commit]
   );
   return { ...data, loaded, hasData, loadError, reload, setRuleActive, dropSuggestion };

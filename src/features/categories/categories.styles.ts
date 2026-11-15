@@ -189,15 +189,32 @@ export const styles = StyleSheet.create({
     borderColor: theme.colors.borderSoft,
   },
   iconChoiceActive: { borderColor: theme.colors.ink },
-  moreIcons: {
-    minHeight: 44,
+  // The "your own emoji" row under the icon grid: a badge (a plus, or the chosen emoji), its words, a chevron.
+  ownEmojiRow: {
+    minHeight: 52,
     marginTop: 10,
+    paddingHorizontal: 10,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
+    gap: 12,
+    borderRadius: 14,
+    backgroundColor: theme.colors.surface,
+    borderWidth: 1,
+    borderColor: theme.colors.borderSoft,
   },
-  moreIconsText: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
+  ownEmojiRowActive: { borderColor: theme.colors.ink },
+  ownEmojiBadge: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.surfaceAlt,
+  },
+  ownEmojiText: { flex: 1, fontFamily: theme.font.bodyMedium, fontSize: 14, color: theme.colors.textPrimary },
+  ownEmojiField: { marginTop: 12 },
+  // The field is one emoji, so it is typed large enough to see what was entered (the form's text is 13).
+  ownEmojiInput: { fontFamily: theme.font.body, fontSize: 24, lineHeight: 30, minHeight: 56 },
   colorRow: { flexDirection: 'row', flexWrap: 'wrap', gap: GRID_GAP, marginBottom: 18 },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 20 },
   colorSwatch: {

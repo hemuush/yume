@@ -1,9 +1,8 @@
 import { View, Pressable, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Feather from '@expo/vector-icons/Feather';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { CategoryGlyph } from '@/components/CategoryGlyph';
 import { Text } from '@/components/Text';
-import type { McIconName } from '@/components/iconName';
 import { theme } from '@/constants/theme';
 import { shade } from '@/lib/color';
 import { withPressedTint } from '@/lib/pressed';
@@ -42,7 +41,7 @@ export function EntryHero({
   const identity = (
     <>
       <View style={[styles.icon, { backgroundColor: theme.colors.glass }]}>
-        <MaterialCommunityIcons name={icon as McIconName} size={19} color={shade(hue, 30, 10)} />
+        <CategoryGlyph name={icon} size={19} color={shade(hue, 30, 10)} />
       </View>
       <View style={styles.names}>
         <View style={styles.titleRow}>

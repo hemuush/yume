@@ -1,230 +1,63 @@
-import { useSaveOnce } from '@/lib/useSaveOnce';
 import { Appear } from '@/components/Appear';
 import { CONTENT_ENTER } from '@/lib/animation';
 import { ScreenLoadError } from '@/components/ScreenLoadError';
 import { PrimaryButton } from '@/components/PrimaryButton';
-import { useCallback, useState } from 'react';
+import { memo, useState } from 'react';
 import { View } from 'react-native';
 import { Text } from '@/components/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useScreenLoad } from '@/lib/useScreenLoad';
-import {
-  listCategories,
-  archiveCategory,
-  unarchiveCategory,
-  deleteCategory,
-  restoreCategory,
-} from '@/db/ledger';
-import { Category, CategoryKind } from '@/types';
+import { CategoryKind } from '@/types';
 import { theme } from '@/constants/theme';
 import { HeaderIconButton } from '@/components/AppHeader';
 import { SkyHeader, HeaderSummary } from '@/features/home/SkyHeader';
 import ReanimatedAnimated from 'react-native-reanimated';
 import { useCollapsingHeader } from '@/lib/useCollapsingHeader';
 import { AddButton } from '@/components/AddButton';
-import { ActionSheet, ActionSheetItem } from '@/components/ActionSheet';
 import { styles } from '@/features/categories/categories.styles';
-import { CategorySection, CategoryTile, TileRows } from '@/features/categories/CategorySection';
-import { AddCategoryModal } from '@/features/categories/AddCategoryModal';
-import { useUndoToast } from '@/components/UndoToast';
-import { haptics } from '@/lib/haptics';
+import { CategorySection, MemoCategoryTile, TileRows } from '@/features/categories/CategorySection';
+import { CategoriesSheets } from '@/features/categories/CategoriesSheets';
+import { createCategoriesSheets } from '@/features/categories/categoriesSheetsStore';
+import { useCategoriesData } from '@/features/categories/useCategoriesData';
+import { useCategoryActions } from '@/features/categories/useCategoryActions';
 import { Skeleton } from '@/components/Skeleton';
-import { errorMessage } from '@/lib/errorMessage';
-import { showPrivacyReminderWarning } from '@/lib/privacyReminderFeedback';
-import { showAlert } from '@/components/AppDialog';
 import { HomeWallpaper } from '@/features/home/HomeWallpaper';
 import { useAccent } from '@/theme/AccentContext';
 import { SCREEN } from '@/components/screenStyles';
 import { SheetTabs } from '@/components/SheetTabs';
 import { topLevelOnly } from '@/lib/categoryTree';
 
+// The tiles are drawn again only when their categories change, not for a sheet opening or a tab's panel.
+const Section = memo(CategorySection);
+
 export default function CategoriesScreen() {
   const insets = useSafeAreaInsets();
   // The header sits over the page and shrinks as it scrolls.
   const { collapse, headerHeight, scrollHandler, scrollRef } = useCollapsingHeader();
-  const { show: showUndo } = useUndoToast();
   const { accent, secondary } = useAccent();
-  const runAction = useSaveOnce(async (action: () => Promise<void>) => {
-    await action();
-  });
-  const [allCategories, setAllCategories] = useState<Category[]>([]);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  // Which sheet is open lives outside React state: opening or closing one does not redraw the tiles behind it.
+  const [sheets] = useState(createCategoriesSheets);
   const [showArchived, setShowArchived] = useState(false);
   const [kind, setKind] = useState<CategoryKind>('expense');
-  // Which category the "manage" sheet is open for, and whether from the active or archived section, which
-  // only changes the two actions offered (Archive/Delete vs Restore/Delete).
-  const [manageTarget, setManageTarget] = useState<{ cat: Category; archived: boolean } | null>(null);
+  const {
+    allCategories,
+    active: categories,
+    archived: archivedCategories,
+    expense: expenseCats,
+    income: incomeCats,
+    loaded,
+    hasData,
+    loadError,
+    reload: load,
+  } = useCategoriesData();
+  const { onUnarchive, onArchive, onDelete, onManage, onManageArchived } = useCategoryActions({
+    sheets,
+    allCategories,
+    reload: load,
+  });
 
-  const loadCategories = useCallback(async () => {
-    setAllCategories(await listCategories(true));
-  }, []);
-  const { loaded, hasData, loadError, reload: load } = useScreenLoad(loadCategories);
-  // Guards the manage sheet's Archive/Delete/Restore against a double-tap firing the mutation twice before
-  // it closes; other delete flows (LoanDetailModal, RuleModal, etc.) disable their trigger likewise.
-  const [actionBusy, setActionBusy] = useState(false);
-
-  const categories = allCategories.filter((c) => !c.archived);
-  const archivedCategories = allCategories.filter((c) => c.archived);
-  const expenseCats = categories.filter((c) => c.kind === 'expense');
-  const incomeCats = categories.filter((c) => c.kind === 'income');
   const visibleCategories = kind === 'expense' ? expenseCats : incomeCats;
   const parentCount = topLevelOnly(visibleCategories).length;
   const subcategoryCount = visibleCategories.length - parentCount;
-
-  const onUnarchive = (cat: Category) => {
-    showAlert('Restore category', `Bring "${cat.name}" back into pickers?`, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Restore',
-        onPress: () =>
-          runAction(async () => {
-            if (actionBusy) return;
-            setActionBusy(true);
-            try {
-              await unarchiveCategory(cat.id, showPrivacyReminderWarning);
-              await load();
-            } catch (e) {
-              showAlert('Couldn’t restore category', errorMessage(e));
-            } finally {
-              setActionBusy(false);
-            }
-          }),
-      },
-    ]);
-  };
-
-  const onArchive = (cat: Category) => {
-    const childCount = allCategories.filter((c) => c.parentId === cat.id).length;
-    showAlert(
-      `Archive "${cat.name}"?`,
-      childCount > 0
-        ? `Hides it and its ${childCount} subcategor${childCount === 1 ? 'y' : 'ies'} from pickers. Past transactions keep them. Recurring entries keep running; pause them in Recurring if needed.`
-        : `Hides it from pickers. Past transactions keep it. Recurring entries keep running; pause them in Recurring if needed.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Archive',
-          style: 'destructive',
-          onPress: () =>
-            runAction(async () => {
-              if (actionBusy) return;
-              setActionBusy(true);
-              try {
-                await archiveCategory(cat.id, showPrivacyReminderWarning);
-                await load();
-              } catch (e) {
-                showAlert('Couldn’t archive category', errorMessage(e));
-              } finally {
-                setActionBusy(false);
-              }
-            }),
-        },
-      ]
-    );
-  };
-
-  const runDelete = (cat: Category) =>
-    runAction(async () => {
-      if (actionBusy) return;
-      setActionBusy(true);
-      try {
-        const snapshot = await deleteCategory(cat.id, showPrivacyReminderWarning);
-        haptics.warn();
-        await load();
-        showUndo(`Deleted "${cat.name}"`, async () => {
-          await restoreCategory(snapshot, showPrivacyReminderWarning);
-          await load();
-        });
-      } catch (e) {
-        showAlert('Couldn’t delete category', errorMessage(e));
-      } finally {
-        setActionBusy(false);
-      }
-    });
-
-  const onDelete = (cat: Category) => {
-    // A single category is instant-delete + undo, but one with subcategories cascades them all in the same
-    // tap, which the undo toast alone doesn't make obvious, so that case gets an extra confirm step first.
-    const childCount = allCategories.filter((c) => c.parentId === cat.id).length;
-    if (childCount === 0) {
-      void runDelete(cat);
-      return;
-    }
-    showAlert(
-      `Delete "${cat.name}"?`,
-      `This also deletes its ${childCount} subcategor${childCount === 1 ? 'y' : 'ies'}. You can undo right after, if needed.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Delete', style: 'destructive', onPress: () => runDelete(cat) },
-      ]
-    );
-  };
-
-  // A single-button information notice, not a menu — a plain showAlert,
-  // unlike the two functions below.
-  const onManage = (cat: Category) => {
-    if (cat.isSystem) {
-      showAlert(
-        'Built-in category',
-        `"${cat.name}" is used by Yume to auto-categorise loan EMIs, fees and Friends & Family entries, so it can’t be archived, deleted, or renamed. You can still change its icon and colour.`
-      );
-      return;
-    }
-    setManageTarget({ cat, archived: false });
-  };
-
-  const onManageArchived = (cat: Category) => {
-    setManageTarget({ cat, archived: true });
-  };
-
-  // Feeds the one shared `ActionSheet`: only its two rows differ between an active category's menu
-  // (Archive/Delete) and an archived one's (Restore/Delete).
-  const manageItems: ActionSheetItem[] = manageTarget
-    ? manageTarget.archived
-      ? [
-          {
-            key: 'restore',
-            label: 'Restore',
-            icon: 'rotate-ccw',
-            onPress: () => onUnarchive(manageTarget.cat),
-          },
-          {
-            key: 'delete',
-            label: 'Delete',
-            icon: 'trash-2',
-            destructive: true,
-            onPress: () => onDelete(manageTarget.cat),
-          },
-        ]
-      : [
-          {
-            key: 'edit',
-            label: 'Edit category',
-            icon: 'edit-2',
-            onPress: () => setEditingCategory(manageTarget.cat),
-          },
-          // Moving is a parent change in the edit sheet, so a subcategory's menu just opens it there.
-          ...(manageTarget.cat.parentId
-            ? [
-                {
-                  key: 'move',
-                  label: 'Move to another category',
-                  icon: 'corner-up-right' as const,
-                  onPress: () => setEditingCategory(manageTarget.cat),
-                },
-              ]
-            : []),
-          { key: 'archive', label: 'Archive', icon: 'archive', onPress: () => onArchive(manageTarget.cat) },
-          {
-            key: 'delete',
-            label: 'Delete',
-            icon: 'trash-2',
-            destructive: true,
-            onPress: () => onDelete(manageTarget.cat),
-          },
-        ]
-    : [];
 
   if (!hasData && loadError)
     return <ScreenLoadError title="Categories" message={loadError} onRetry={() => void load()} />;
@@ -300,19 +133,14 @@ export default function CategoriesScreen() {
           </View>
         </View>
         {parentCount > 0 ? (
-          <CategorySection
-            key={kind}
-            cats={visibleCategories}
-            onEdit={setEditingCategory}
-            onManage={onManage}
-          />
+          <Section key={kind} cats={visibleCategories} onEdit={sheets.edit} onManage={onManage} />
         ) : (
           <View style={styles.emptyCard}>
             <Text style={styles.emptyTitle}>
               A place for your {kind === 'expense' ? 'spending' : 'income'}
             </Text>
             <Text style={styles.emptyText}>Create a category to start organizing your transactions.</Text>
-            <PrimaryButton title="Add category" compact onPress={() => setModalVisible(true)} />
+            <PrimaryButton title="Add category" compact onPress={sheets.openAdd} />
           </View>
         )}
 
@@ -327,10 +155,10 @@ export default function CategoriesScreen() {
                 // Flat, not grouped by parent: a subcategory can be archived while its parent stays
                 // active, so there isn't always an archived parent tile to nest it under.
                 renderTile={(cat) => (
-                  <CategoryTile
+                  <MemoCategoryTile
                     category={cat}
                     isSubcategory={!!cat.parentId}
-                    onPress={() => onManageArchived(cat)}
+                    onPress={onManageArchived}
                     onLongPress={onManageArchived}
                   />
                 )}
@@ -370,43 +198,20 @@ export default function CategoriesScreen() {
               label={showArchived ? 'Hide archived categories' : 'Show archived categories'}
               badge={!showArchived && archivedCategories.length > 0}
             />
-            <AddButton onPress={() => setModalVisible(true)} label="+ Add" />
+            <AddButton onPress={sheets.openAdd} label="+ Add" />
           </>
         }
       />
 
-      <AddCategoryModal
-        visible={modalVisible}
-        category={null}
-        initialKind={kind}
-        allCategories={categories}
-        onClose={() => setModalVisible(false)}
-        onSaved={async () => {
-          setModalVisible(false);
-          await load();
-        }}
-      />
-      <AddCategoryModal
-        visible={!!editingCategory}
-        category={editingCategory}
-        allCategories={categories}
-        onManage={() => {
-          const cat = editingCategory;
-          setEditingCategory(null);
-          if (cat) onManage(cat);
-        }}
-        onClose={() => setEditingCategory(null)}
-        onSaved={async () => {
-          setEditingCategory(null);
-          await load();
-        }}
-      />
-
-      <ActionSheet
-        visible={!!manageTarget}
-        onClose={() => setManageTarget(null)}
-        title={manageTarget?.archived ? 'Manage archived category' : 'Manage category'}
-        items={manageItems}
+      <CategoriesSheets
+        sheets={sheets}
+        categories={categories}
+        kind={kind}
+        onManage={onManage}
+        onArchive={onArchive}
+        onUnarchive={onUnarchive}
+        onDelete={onDelete}
+        reload={load}
       />
     </View>
   );

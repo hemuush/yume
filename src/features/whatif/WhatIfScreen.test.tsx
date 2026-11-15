@@ -43,7 +43,14 @@ let mockGoals: unknown[] = [];
 jest.mock('@/db/savingsGoals', () => ({ listSavingsGoals: async () => mockGoals }));
 jest.mock('@/db/ledger', () => ({ getAccountMonthlyGrowth: async () => 0 }));
 
-jest.mock('./PurchaseCheck', () => ({ PurchaseCheck: () => null }));
+// Counts how often the purchase check below is drawn.
+const mockPurchaseDraws = { count: 0 };
+jest.mock('./PurchaseCheck', () => ({
+  PurchaseCheck: () => {
+    mockPurchaseDraws.count++;
+    return null;
+  },
+}));
 import WhatIfScreen from '../../../app/whatif';
 import { router } from 'expo-router';
 
@@ -90,6 +97,20 @@ beforeAll(async () => {
 }, 180000);
 
 describe('What-if', () => {
+  it('does not draw the purchase check again when a category, a cut or a goal is picked', async () => {
+    mockGoals = [goal];
+    const tree = await render();
+    const drawn = mockPurchaseDraws.count;
+    expect(drawn).toBeGreaterThan(0);
+    press(tree, 'Fun');
+    press(tree, '-30%');
+    press(tree, 'Goa trip');
+    press(tree, 'Reset');
+    expect(mockPurchaseDraws.count).toBe(drawn);
+    // The page itself did follow the choices.
+    expect(texts(tree)).toContain('Fun');
+  });
+
   beforeEach(() => {
     mockParams = {};
     mockGoals = [goal];

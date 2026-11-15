@@ -1,26 +1,16 @@
 import { ScreenLoadError } from '@/components/ScreenLoadError';
 import { Appear } from '@/components/Appear';
 import { PrimaryButton } from '@/components/PrimaryButton';
-import { useCallback, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { View, Pressable, ActivityIndicator } from 'react-native';
 import { Text } from '@/components/Text';
 import Feather from '@expo/vector-icons/Feather';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { router } from 'expo-router';
-import ReanimatedAnimated from 'react-native-reanimated';
-import { PANEL_ENTER, ROW_EXIT } from '@/lib/animation';
-import { listAccounts, countTransactions } from '@/db/ledger';
-import { listLoans } from '@/db/loans';
-import { trackedBalanceParts, TrackedBalanceParts } from '@/db/reports';
-import { listPeople } from '@/db/people';
-import { getDefaultCurrency } from '@/db/settings';
 import { roundedMinor } from '@/lib/round';
-import { Account } from '@/types';
 import { EmptyState } from '@/components/EmptyState';
 import { theme } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
 import { usePrivacy } from '@/theme/PrivacyContext';
-import { useScreenLoad } from '@/lib/useScreenLoad';
 import { Section } from '@/components/Section';
 import { styles } from './profile.styles';
 import { trackedSumLines, groupAccountsByType } from './trackedSum';
@@ -28,9 +18,15 @@ import { CashHero } from './CashHero';
 import { AccountTiles, tileOrder } from './AccountTiles';
 import { TrackedCard } from './TrackedCard';
 import { LinkTiles } from './LinkTiles';
-import { AddAccountModal } from './AddAccountModal';
-import { AccountDetailModal } from './AccountDetailModal';
+import { ArchivedAccounts } from './ArchivedAccounts';
+import { YouSheets } from './YouSheets';
+import { createYouSheets } from './youSheetsStore';
+import { useYouData } from './useYouData';
 import { withPressedTint } from '@/lib/pressed';
+
+const goEntries = () => router.navigate('/transactions');
+const goLoans = () => router.push('/loans');
+const goFriends = () => router.push('/people');
 
 /**
  * "You": accounts first, tracked balance as one line opening to its sum, tiles for Entries, Loans and Friends,
@@ -38,54 +34,28 @@ import { withPressedTint } from '@/lib/pressed';
  */
 export function YouSection() {
   const { accent } = useAccent();
-  const [accounts, setAccounts] = useState<Account[]>([]);
-  const [archivedAccounts, setArchivedAccounts] = useState<Account[]>([]);
-  const [archivedOpen, setArchivedOpen] = useState(false);
-  const [detailAccount, setDetailAccount] = useState<Account | null>(null);
-  const [txCount, setTxCount] = useState(0);
-  const [activeLoanCount, setActiveLoanCount] = useState(0);
-  const [peopleCount, setPeopleCount] = useState(0);
-  const [parts, setParts] = useState<TrackedBalanceParts>({
-    accountsMinor: 0,
-    loansMinor: 0,
-    peopleMinor: 0,
-  });
-  const [defaultCurrency, setDefaultCurrencyState] = useState('INR');
-  const [hasOtherCurrency, setHasOtherCurrency] = useState(false);
-  const [hasLoans, setHasLoans] = useState(false);
-  const [hasUntrackedAssetLoan, setHasUntrackedAssetLoan] = useState(false);
-  const [addAccountVisible, setAddAccountVisible] = useState(false);
-
-  const loadYou = useCallback(async () => {
-    const [accs, allAccs, txCountNow, loans, people, currency] = await Promise.all([
-      listAccounts(),
-      listAccounts(true),
-      // Only the count is shown — loading every row just to take .length
-      // was the single heaviest query on this screen.
-      countTransactions(),
-      listLoans(),
-      listPeople(),
-      getDefaultCurrency(),
-    ]);
-    const openLoans = loans.filter((l) => l.status !== 'closed');
-    setAccounts(accs);
-    setArchivedAccounts(allAccs.filter((a) => a.archived));
-    setTxCount(txCountNow);
-    setPeopleCount(people.length);
-    setActiveLoanCount(loans.filter((l) => l.status === 'active').length);
-    setDefaultCurrencyState(currency);
-    setHasOtherCurrency(accs.some((a) => a.currency !== currency));
-    // The same three terms computeTrackedBalance adds up, kept apart so the
-    // card can show them as a sum.
-    setParts(trackedBalanceParts({ accounts: accs, loans, people, defaultCurrency: currency }));
-    setHasLoans(openLoans.length > 0);
-    setHasUntrackedAssetLoan(openLoans.some((l) => l.direction === 'borrowed' && !l.assetValueMinor));
-  }, []);
-  const { loaded, hasData, loadError, reload: load } = useScreenLoad(loadYou);
+  // Which sheet is open lives outside React state: opening or closing one does not redraw the page behind it.
+  const [sheets] = useState(createYouSheets);
+  const {
+    accounts,
+    archivedAccounts,
+    txCount,
+    activeLoanCount,
+    peopleCount,
+    parts,
+    defaultCurrency,
+    hasOtherCurrency,
+    hasLoans,
+    hasUntrackedAssetLoan,
+    loaded,
+    hasData,
+    loadError,
+    reload: load,
+  } = useYouData();
 
   // Balances are whole rupees: each account row rounds its own, and the accounts total (sum's first line and
   // card footer) sums those rounded rows, default-currency only, so the list always adds up.
-  const dispAccountBalance = (a: Account) => roundedMinor(a.currentBalanceMinor);
+  const dispAccountBalance = (a: (typeof accounts)[number]) => roundedMinor(a.currentBalanceMinor);
   const accountsShown = accounts
     .filter((a) => a.currency === defaultCurrency)
     .reduce((sum, a) => sum + dispAccountBalance(a), 0);
@@ -165,9 +135,9 @@ export function YouSection() {
             entries={txCount}
             loans={activeLoanCount}
             friends={peopleCount}
-            onEntries={() => router.navigate('/transactions')}
-            onLoans={() => router.push('/loans')}
-            onFriends={() => router.push('/people')}
+            onEntries={goEntries}
+            onLoans={goLoans}
+            onFriends={goFriends}
           />
         </CashHero>
       ) : (
@@ -177,9 +147,9 @@ export function YouSection() {
             entries={txCount}
             loans={activeLoanCount}
             friends={peopleCount}
-            onEntries={() => router.navigate('/transactions')}
-            onLoans={() => router.push('/loans')}
-            onFriends={() => router.push('/people')}
+            onEntries={goEntries}
+            onLoans={goLoans}
+            onFriends={goFriends}
           />
         </>
       )}
@@ -189,7 +159,7 @@ export function YouSection() {
         title="Accounts"
         right={
           <Pressable
-            onPress={() => setAddAccountVisible(true)}
+            onPress={sheets.openAdd}
             accessibilityRole="button"
             accessibilityLabel="Add an account"
             style={withPressedTint(accent, styles.addLink)}
@@ -204,40 +174,13 @@ export function YouSection() {
             title="Add your first account"
             subtitle="Track a bank account, cash or wallet. Use its current balance as your starting balance."
           >
-            <PrimaryButton title="Add an account" onPress={() => setAddAccountVisible(true)} />
+            <PrimaryButton title="Add an account" onPress={sheets.openAdd} />
           </EmptyState>
         ) : (
-          <AccountTiles accounts={tiles} onPress={setDetailAccount} />
+          <AccountTiles accounts={tiles} onPress={sheets.openAccount} />
         )}
 
-        {archivedAccounts.length > 0 && (
-          <View style={styles.archivedWrap}>
-            <Pressable
-              style={withPressedTint(accent, styles.archivedRow)}
-              onPress={() => setArchivedOpen((v) => !v)}
-              accessibilityRole="button"
-              accessibilityState={{ expanded: archivedOpen }}
-              accessibilityLabel={`Archived accounts, ${archivedAccounts.length}. ${archivedOpen ? 'Hide' : 'Show'}`}
-            >
-              <MaterialCommunityIcons name="archive-outline" size={15} color={theme.colors.textMuted} />
-              <Text style={styles.archivedLabel}>Archived accounts</Text>
-              <Text style={styles.archivedSub}>
-                {archivedAccounts.length} account{archivedAccounts.length === 1 ? '' : 's'} ·{' '}
-                {archivedOpen ? 'tap to hide' : 'tap to show'}
-              </Text>
-              <Feather
-                name={archivedOpen ? 'chevron-up' : 'chevron-down'}
-                size={16}
-                color={theme.colors.textMuted}
-              />
-            </Pressable>
-            {archivedOpen && (
-              <ReanimatedAnimated.View entering={PANEL_ENTER} exiting={ROW_EXIT}>
-                <AccountTiles accounts={archivedAccounts} archived onPress={setDetailAccount} />
-              </ReanimatedAnimated.View>
-            )}
-          </View>
-        )}
+        <ArchivedAccounts accounts={archivedAccounts} onOpen={sheets.openAccount} />
       </Section>
 
       {/* Budgets, goals, recurring, What-if and Suu’s Garden live on Plan,
@@ -253,22 +196,7 @@ export function YouSection() {
         <Feather name="chevron-right" size={14} color={theme.colors.link} />
       </Pressable>
 
-      <AddAccountModal
-        visible={addAccountVisible}
-        onClose={() => setAddAccountVisible(false)}
-        onCreated={async () => {
-          setAddAccountVisible(false);
-          await load();
-        }}
-      />
-      <AccountDetailModal
-        account={detailAccount}
-        onClose={() => setDetailAccount(null)}
-        onChanged={async () => {
-          setDetailAccount(null);
-          await load();
-        }}
-      />
+      <YouSheets sheets={sheets} reload={load} />
     </>
   );
 }

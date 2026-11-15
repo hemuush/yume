@@ -3,7 +3,7 @@ import { Appear } from '@/components/Appear';
 import { CONTENT_ENTER } from '@/lib/animation';
 import { PurchaseCheck } from '@/features/whatif/PurchaseCheck';
 import { ScreenLoadError } from '@/components/ScreenLoadError';
-import { useCallback, useState } from 'react';
+import { memo, useCallback, useState } from 'react';
 import { View } from 'react-native';
 import { Text } from '@/components/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -74,6 +74,9 @@ function PaceLane({ width, color, faded }: { width: `${number}%`; color: string;
     </View>
   );
 }
+
+// It takes nothing from this page, so choosing a category or a cut does not draw it again.
+const BeforeYouBuy = memo(PurchaseCheck);
 
 /** How many category chips What-if shows before "N more". */
 const CATEGORY_CHIPS = 6;
@@ -323,7 +326,7 @@ export default function WhatIfScreen() {
           </Section>
         )}
         <Section compact first={categories.length === 0} title="Before you buy">
-          <PurchaseCheck />
+          <BeforeYouBuy />
         </Section>
       </ReanimatedAnimated.ScrollView>
       <SkyHeader collapse={collapse} summary={undefined} title="What if…?" showBack hideUser wallpaper>

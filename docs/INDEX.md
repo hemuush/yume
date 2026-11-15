@@ -36,6 +36,12 @@ The [15 November Plan pass](PLAN_SMOOTHNESS_2026_11_15.md) applies it to Plan: w
 
 The [15 November Loans, Recurring, Budgets and Add pass](LOANS_RECURRING_BUDGETS_ADD_SMOOTHNESS_2026_11_15.md) applies it to those four: Loans, Budgets and Recurring keep their sheets outside the page's state, keep unchanged rows on reload and compare their props, and Add's sections are drawn again only for the fields of the model they read, so a digit on the pad no longer redraws the header, the category grid and the sheets.
 
+The [15 November category emoji change](CATEGORY_EMOJI_2026_11_15.md) lets a person give a category their own emoji (typed or pasted from their keyboard) and cuts the built-in icon picker from about 110 icons to fifteen; every icon already stored keeps drawing, and an emoji travels through the file backup, the folder backup, undo and the widgets.
+
+The [15 November pass over the other screens](OTHER_SCREENS_SMOOTHNESS_2026_11_15.md) applies it to People, Investments, Categories, Profile (You and Settings), Notification settings, What-if and Goals: sheets in stores, data hooks that keep unchanged rows, controls that own their own state (the person's Settle form, Settings' currency, goal and About, the trend's stretch), and a notification switch that is one redraw instead of three. Backup, Garden, Tidy up, Themes, Wrap, Category detail and Split were not measured.
+
+The [15 November code audit](CODE_AUDIT_2026_11_15.md) covers the whole repository: compiler-based scans of every file, a line-by-line read of the highest-risk code, and a randomized property test on real SQLite (about 55,000 operations: balances, people's ledgers, refunds, backup round trips and report totals all hold). It found no data-loss, security or money defect and two low ones, now fixed; it lists what was not checked.
+
 Hands-on Android outcomes belong in [release device acceptance](RELEASE_DEVICE_CHECKS.md). A passing test suite or JavaScript export does not establish native compilation, notification delivery, accessibility or frame pacing.
 
 ## Maintained guides

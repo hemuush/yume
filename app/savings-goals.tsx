@@ -1,10 +1,9 @@
 import { ScreenLoadError } from '@/components/ScreenLoadError';
 import { Appear } from '@/components/Appear';
 import { CONTENT_ENTER } from '@/lib/animation';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
 import { View } from 'react-native';
-import { MovingRow } from '@/components/MovingRow';
 import { Text } from '@/components/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { listAccounts } from '@/db/ledger';
@@ -21,7 +20,8 @@ import { AddButton } from '@/components/AddButton';
 import { EmptyState } from '@/components/EmptyState';
 import { useScreenLoad } from '@/lib/useScreenLoad';
 import { Skeleton } from '@/components/Skeleton';
-import { GoalCard } from '@/features/goals/GoalCard';
+import { GoalListRow } from '@/features/goals/GoalListRow';
+import { reuseUnchanged } from '@/lib/stableData';
 import { HomeWallpaper } from '@/features/home/HomeWallpaper';
 import { useAccent } from '@/theme/AccentContext';
 import { GoalsHero } from '@/features/goals/GoalsHero';
@@ -37,6 +37,9 @@ import { PrimaryButton } from '@/components/PrimaryButton';
 import { styles } from '@/features/goals/goals.styles';
 import { showAlert } from '@/components/AppDialog';
 
+// The totals card is drawn again only when the totals change, not for a sheet opening.
+const Totals = memo(GoalsHero);
+
 export default function SavingsGoalsScreen() {
   const insets = useSafeAreaInsets();
   const { hideAmounts } = usePrivacy();
@@ -45,6 +48,10 @@ export default function SavingsGoalsScreen() {
   const { collapse, headerHeight, scrollHandler, scrollRef } = useCollapsingHeader();
   const [allGoals, setAllGoals] = useState<SavingsGoal[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
+  // What is held, so a reload that found nothing new sets no state, and a goal that did not change stays the same object
+  // (its row is not drawn again).
+  const heldGoals = useRef<SavingsGoal[]>([]);
+  const heldAccounts = useRef<Account[]>([]);
   const [showArchived, setShowArchived] = useState(false);
   const [addVisible, setAddVisible] = useState(false);
   const [editingGoal, setEditingGoal] = useState<SavingsGoal | null>(null);
@@ -71,8 +78,16 @@ export default function SavingsGoalsScreen() {
     const id = ++request.current;
     const [goals, accs] = await Promise.all([listSavingsGoals(true), listAccounts(true)]);
     if (!active.current || id !== request.current) return;
-    setAllGoals(goals);
-    setAccounts(accs);
+    const nextGoals = reuseUnchanged(heldGoals.current, goals);
+    if (nextGoals !== heldGoals.current) {
+      heldGoals.current = nextGoals;
+      setAllGoals(nextGoals);
+    }
+    const nextAccounts = reuseUnchanged(heldAccounts.current, accs);
+    if (nextAccounts !== heldAccounts.current) {
+      heldAccounts.current = nextAccounts;
+      setAccounts(nextAccounts);
+    }
   }, []);
   const { loaded, hasData, loadError, reload: load } = useScreenLoad(loadGoals);
   const { goal: goalId, add } = useLocalSearchParams<{ goal?: string; add?: string }>();
@@ -126,7 +141,10 @@ export default function SavingsGoalsScreen() {
     try {
       await markGoalLetterRevealed(letterGoal.id);
       if (!active.current) return;
-      setAllGoals((goals) => goals.map((g) => (g.id === letterGoal.id ? { ...g, letterRevealed: true } : g)));
+      heldGoals.current = heldGoals.current.map((g) =>
+        g.id === letterGoal.id ? { ...g, letterRevealed: true } : g
+      );
+      setAllGoals(heldGoals.current);
       setLetterGoal(null);
     } catch (e) {
       if (active.current) {
@@ -213,23 +231,18 @@ export default function SavingsGoalsScreen() {
           </EmptyState>
         ) : (
           <>
-            {!showArchived && <GoalsHero totals={totals} />}
+            {!showArchived && <Totals totals={totals} />}
             <View style={styles.list}>
               {visibleGoals.map((goal, i) => (
-                <MovingRow key={goal.id}>
-                  <GoalCard
-                    goal={goal}
-                    hue={hues[goal.id]}
-                    divider={i > 0}
-                    accountName={accountsById.get(goal.linkedAccountId ?? '')?.name}
-                    accountAvailable={
-                      !!accountsById.get(goal.linkedAccountId ?? '') &&
-                      !accountsById.get(goal.linkedAccountId ?? '')?.archived
-                    }
-                    onPress={() => setEditingGoal(goal)}
-                    onContribute={() => setContributingGoal(goal)}
-                  />
-                </MovingRow>
+                <GoalListRow
+                  key={goal.id}
+                  goal={goal}
+                  hue={hues[goal.id]}
+                  divider={i > 0}
+                  account={accountsById.get(goal.linkedAccountId ?? '')}
+                  onOpen={setEditingGoal}
+                  onContribute={setContributingGoal}
+                />
               ))}
             </View>
           </>

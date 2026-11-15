@@ -3,8 +3,7 @@ import { selectedFill } from '@/theme/interactionColors';
 import { useMemo, useState } from 'react';
 import { View, Pressable } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import type { McIconName } from '@/components/iconName';
+import { CategoryGlyph } from '@/components/CategoryGlyph';
 import { Text } from '@/components/Text';
 import { createCategory, updateCategory } from '@/db/ledger';
 import { Category, CategoryKind } from '@/types';
@@ -17,14 +16,18 @@ import { SwitchRow } from '@/components/SwitchRow';
 import { InsightDisclosure } from '@/components/InsightCard';
 import { CATEGORY_COLOR_PALETTE, modalFooterStyles as f, theme } from '@/constants/theme';
 import { CATEGORY_ICON_CHOICES } from '@/constants/categories';
+import {
+  DEFAULT_CATEGORY_ICON,
+  isEmojiIcon,
+  normalizeCategoryIcon,
+  parseEmojiInput,
+} from '@/lib/categoryIcon';
 import { styles, GRID_COLUMNS, GRID_GAP } from './categories.styles';
 import { errorMessage } from '@/lib/errorMessage';
 import { withPressed } from '@/lib/pressed';
 import { useSaveOnce } from '@/lib/useSaveOnce';
 import { showPrivacyReminderWarning } from '@/lib/privacyReminderFeedback';
 import { softTint } from '@/components/softTint';
-
-const PREVIEW_ICON_COUNT = 24;
 
 const KINDS: { label: string; value: CategoryKind }[] = [
   { label: 'Expense', value: 'expense' },
@@ -55,12 +58,19 @@ export function AddCategoryModal({
   const cell =
     gridWidth > 0 ? Math.max(44, Math.floor((gridWidth - GRID_GAP * (columns - 1)) / columns)) : 44;
   const cellSize = useMemo(() => ({ width: cell, height: cell }), [cell]);
-  const [showAllIcons, setShowAllIcons] = useState(false);
   const [name, setName] = useState('');
   const [kind, setKind] = useState<CategoryKind>('expense');
   const [parentId, setParentId] = useState<string | null>(null);
   const [color, setColor] = useState(CATEGORY_COLOR_PALETTE[0]);
-  const [icon, setIcon] = useState(CATEGORY_ICON_CHOICES[0]);
+  const [icon, setIcon] = useState(DEFAULT_CATEGORY_ICON);
+  // The icon a category being edited already has, when it is a built-in one the picker no longer lists (the defaults
+  // `gas-station` or `shield-check`, or one picked before the list was cut): it stays on offer while editing, so nothing
+  // is lost by opening the editor.
+  const [keptIcon, setKeptIcon] = useState<string | null>(null);
+  // The person's own emoji: the text in the field, whether the field is open, and what is wrong with it, if anything.
+  const [emojiDraft, setEmojiDraft] = useState('');
+  const [emojiOpen, setEmojiOpen] = useState(false);
+  const [emojiError, setEmojiError] = useState<string | null>(null);
   const [isSensitive, setIsSensitive] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -76,11 +86,15 @@ export function AddCategoryModal({
       setKind(category?.kind ?? initialKind);
       setParentId(category?.parentId ?? null);
       setColor(category?.color ?? CATEGORY_COLOR_PALETTE[0]);
-      setIcon(category?.icon ?? CATEGORY_ICON_CHOICES[0]);
+      const startIcon = category ? normalizeCategoryIcon(category.icon) : DEFAULT_CATEGORY_ICON;
+      setIcon(startIcon);
+      setKeptIcon(isEmojiIcon(startIcon) || CATEGORY_ICON_CHOICES.includes(startIcon) ? null : startIcon);
+      setEmojiDraft(isEmojiIcon(startIcon) ? startIcon : '');
+      setEmojiOpen(isEmojiIcon(startIcon));
+      setEmojiError(null);
       // Its own flag: one inherited from a hidden parent shows below, but isn't this category's to switch.
       setIsSensitive(category?.ownIsSensitive ?? category?.isSensitive ?? false);
       setError(null);
-      setShowAllIcons(false);
     }
   }
 
@@ -102,6 +116,10 @@ export function AddCategoryModal({
     setError(null);
     if (!name.trim()) {
       setError('Enter a name');
+      return;
+    }
+    if (emojiOpen && emojiError) {
+      setError('Fix the emoji, or pick one of the icons instead.');
       return;
     }
     setSaving(true);
@@ -138,9 +156,41 @@ export function AddCategoryModal({
   const parentName = parent?.name;
   // Under a parent marked sensitive, a subcategory is hidden with it (db/spendSql.ts sensitiveOf).
   const hiddenWithParent = !!parent?.isSensitive;
-  const previewIcons = CATEGORY_ICON_CHOICES.slice(0, PREVIEW_ICON_COUNT);
-  if (!previewIcons.includes(icon)) previewIcons[previewIcons.length - 1] = icon;
-  const visibleIcons = showAllIcons ? CATEGORY_ICON_CHOICES : previewIcons;
+  const builtInIcons = keptIcon ? [...CATEGORY_ICON_CHOICES, keptIcon] : CATEGORY_ICON_CHOICES;
+  const emojiChosen = isEmojiIcon(icon);
+
+  const pickBuiltIn = (name: string) => {
+    setIcon(name);
+    setEmojiOpen(false);
+    setEmojiError(null);
+  };
+  // Opens the field (or folds it away), and picks the emoji typed earlier again, if there is one.
+  const toggleEmoji = () => {
+    if (emojiOpen) {
+      setEmojiOpen(false);
+      return;
+    }
+    setEmojiOpen(true);
+    const typed = parseEmojiInput(emojiDraft);
+    if (typed.kind === 'ok') setIcon(typed.emoji);
+  };
+  const typeEmoji = (text: string) => {
+    setEmojiDraft(text);
+    const typed = parseEmojiInput(text);
+    if (typed.kind === 'ok') {
+      setIcon(typed.emoji);
+      setEmojiError(null);
+    } else if (typed.kind === 'empty') {
+      // Nothing typed: back to the default icon, but only if the emoji was what is chosen.
+      if (emojiChosen) setIcon(DEFAULT_CATEGORY_ICON);
+      setEmojiError(null);
+    } else {
+      // The last good icon stays in the preview; Save is held until the field is fixed or an icon is picked.
+      setEmojiError(
+        typed.kind === 'many' ? 'One emoji only.' : 'That isn’t an emoji. Use your keyboard’s emoji key.'
+      );
+    }
+  };
   return (
     <ModalSheet
       dismissible={!saving}
@@ -260,10 +310,10 @@ export function AddCategoryModal({
         <Text style={styles.pickerLabel}>Icon</Text>
         <View style={styles.iconGrid}>
           {gridWidth > 0 &&
-            visibleIcons.map((iconName) => (
+            builtInIcons.map((iconName) => (
               <Pressable
                 key={iconName}
-                onPress={() => setIcon(iconName)}
+                onPress={() => pickBuiltIn(iconName)}
                 accessibilityRole="button"
                 accessibilityLabel={`${iconName.replace(/-/g, ' ')} icon`}
                 accessibilityState={{ selected: icon === iconName }}
@@ -273,24 +323,56 @@ export function AddCategoryModal({
                   icon === iconName && [styles.iconChoiceActive, { backgroundColor: softTint(color, 0.4) }],
                 ])}
               >
-                <MaterialCommunityIcons name={iconName as McIconName} color={theme.colors.ink} size={22} />
+                <CategoryGlyph name={iconName} color={theme.colors.ink} size={22} />
               </Pressable>
             ))}
         </View>
         <Pressable
-          onPress={() => setShowAllIcons((v) => !v)}
+          onPress={toggleEmoji}
           accessibilityRole="button"
-          accessibilityLabel={showAllIcons ? 'Show fewer icons' : 'Browse all icons'}
-          accessibilityState={{ expanded: showAllIcons }}
-          style={withPressed(styles.moreIcons)}
+          accessibilityLabel={emojiChosen ? 'Your own emoji, selected' : 'Use your own emoji'}
+          accessibilityState={{ selected: emojiChosen, expanded: emojiOpen }}
+          style={withPressed([styles.ownEmojiRow, emojiChosen && styles.ownEmojiRowActive])}
         >
-          <Text style={styles.moreIconsText}>{showAllIcons ? 'Show fewer icons' : 'Browse all icons'}</Text>
+          <View style={[styles.ownEmojiBadge, emojiChosen && { backgroundColor: softTint(color, 0.4) }]}>
+            {emojiChosen ? (
+              <CategoryGlyph name={icon} color={theme.colors.ink} size={20} />
+            ) : (
+              <Feather name="plus" size={18} color={theme.colors.ink} />
+            )}
+          </View>
+          <Text style={styles.ownEmojiText}>{emojiChosen ? 'Your own emoji' : 'Use your own emoji'}</Text>
           <Feather
-            name={showAllIcons ? 'chevron-up' : 'chevron-down'}
+            name={emojiOpen ? 'chevron-up' : 'chevron-down'}
             size={15}
             color={theme.colors.textSecondary}
           />
         </Pressable>
+        {emojiOpen && (
+          <View style={styles.ownEmojiField}>
+            <FormInput
+              label="Your emoji"
+              value={emojiDraft}
+              onChangeText={typeEmoji}
+              placeholder="Type or paste one emoji"
+              style={styles.ownEmojiInput}
+              autoCorrect={false}
+              autoCapitalize="none"
+              maxLength={40}
+            />
+            {emojiError ? (
+              <Text accessibilityRole="alert" style={styles.errorText}>
+                {emojiError}
+              </Text>
+            ) : (
+              <Text style={styles.modalHint}>
+                {emojiDraft.trim()
+                  ? 'Shown wherever this category appears.'
+                  : 'Use your keyboard’s emoji key, or paste one. Left empty, the tag icon is used.'}
+              </Text>
+            )}
+          </View>
+        )}
       </View>
       <SwitchRow
         title="Treat as sensitive"

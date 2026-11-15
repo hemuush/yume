@@ -1,5 +1,6 @@
 import { FlexWidget, TextWidget, IconWidget, type ColorProp } from 'react-native-android-widget';
 import glyphs from '@expo/vector-icons/build/vendor/react-native-vector-icons/glyphmaps/MaterialCommunityIcons.json';
+import { isEmojiIcon } from '@/lib/categoryIcon';
 import { widgetColor, WIDGET_FONT, WIDGET_RADIUS } from './widgetTheme';
 
 /**
@@ -77,7 +78,10 @@ export function iconGlyph(name: string): string {
   return code != null ? String.fromCodePoint(code) : '•';
 }
 
-/** A category or account icon in a round tinted circle, like Home's rows. */
+/**
+ * A category or account icon in a round tinted circle, like Home's rows. A built-in name is a glyph of the icon font; a
+ * category's own emoji is plain text in the phone's system font (the icon font has no emoji, and would draw a dot).
+ */
 export function WidgetIcon({
   name,
   background,
@@ -106,12 +110,16 @@ export function WidgetIcon({
         justifyContent: 'center',
       }}
     >
-      <IconWidget
-        icon={iconGlyph(name)}
-        font={WIDGET_FONT.icons}
-        size={Math.round(size * 0.5)}
-        style={{ color }}
-      />
+      {isEmojiIcon(name) ? (
+        <TextWidget text={name} maxLines={1} style={{ fontSize: Math.round(size * 0.55) }} />
+      ) : (
+        <IconWidget
+          icon={iconGlyph(name)}
+          font={WIDGET_FONT.icons}
+          size={Math.round(size * 0.5)}
+          style={{ color }}
+        />
+      )}
     </FlexWidget>
   );
 }

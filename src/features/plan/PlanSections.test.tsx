@@ -16,7 +16,7 @@ jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMoc
 let mockHide = false;
 jest.mock('@/theme/PrivacyContext', () => ({ usePrivacy: () => ({ hideAmounts: mockHide }) }));
 
-import { PeopleTile } from './PlanTiles';
+import { PlanPeopleHabit } from './PlanPeopleHabit';
 import { BudgetJars } from './BudgetJars';
 import { DebtPath } from './DebtPath';
 import { GoalsStrip } from './PlanGoals';
@@ -724,14 +724,20 @@ it('keeps every budget and the add action available beyond the six-tile preview'
   expect(onAdd).toHaveBeenCalledTimes(1);
 });
 
-it('shows both People balances without netting one against the other', () => {
-  const tree = render(
-    <PeopleTile
-      state={{ kind: 'balances', count: 2, owedToYouMinor: 50000, youOweMinor: 20000 }}
-      people={[]}
-      onOpen={jest.fn()}
+const peopleCard = (people: React.ComponentProps<typeof PlanPeopleHabit>['people']) =>
+  render(
+    <PlanPeopleHabit
+      people={people}
+      topPeople={[]}
+      habit={null}
+      goalMinor={null}
+      onPeople={jest.fn()}
+      onGarden={jest.fn()}
     />
   );
+
+it('shows both People balances without netting one against the other', () => {
+  const tree = peopleCard({ kind: 'balances', count: 2, owedToYouMinor: 50000, youOweMinor: 20000 });
   expect(texts(tree)).toEqual(expect.arrayContaining(['To collect', 'To pay back', '₹500', '₹200']));
   expect(
     tree.root.findAll(
@@ -741,6 +747,15 @@ it('shows both People balances without netting one against the other', () => {
         n.props.accessibilityLabel.includes('200 to pay back')
     ).length
   ).toBeGreaterThan(0);
+});
+
+it('shows only the People balance there is', () => {
+  const owed = texts(peopleCard({ kind: 'balances', count: 1, owedToYouMinor: 50000, youOweMinor: 0 }));
+  expect(owed).toContain('To collect');
+  expect(owed).not.toContain('To pay back');
+  const owing = texts(peopleCard({ kind: 'balances', count: 1, owedToYouMinor: 0, youOweMinor: 20000 }));
+  expect(owing).toContain('To pay back');
+  expect(owing).not.toContain('To collect');
 });
 
 it('prioritises over-budget compact rows, limits the preview and opens the selected budget', () => {
