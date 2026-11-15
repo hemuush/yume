@@ -355,6 +355,7 @@ export function AddCategoryModal({
               value={emojiDraft}
               onChangeText={typeEmoji}
               placeholder="Type or paste one emoji"
+              style={styles.ownEmojiInput}
               autoCorrect={false}
               autoCapitalize="none"
               maxLength={40}

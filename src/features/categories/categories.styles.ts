@@ -213,6 +213,8 @@ export const styles = StyleSheet.create({
   },
   ownEmojiText: { flex: 1, fontFamily: theme.font.bodyMedium, fontSize: 14, color: theme.colors.textPrimary },
   ownEmojiField: { marginTop: 12 },
+  // The field is one emoji, so it is typed large enough to see what was entered (the form's text is 13).
+  ownEmojiInput: { fontFamily: theme.font.body, fontSize: 24, lineHeight: 30, minHeight: 56 },
   colorRow: { flexDirection: 'row', flexWrap: 'wrap', gap: GRID_GAP, marginBottom: 18 },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 20 },
   colorSwatch: {
