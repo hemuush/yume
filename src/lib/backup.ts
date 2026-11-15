@@ -2,6 +2,7 @@ import { ENTRY_DRAFT_KEY } from '@/features/add/entryDraft';
 import { getDb, type AppDb } from '@/db/client';
 import { resetSettingsCache } from '@/db/settings';
 import { assertValidIsoDate } from './date';
+import { normalizeCategoryIcon } from './categoryIcon';
 import { BACKFILL_LOAN_TX_KIND_SQL } from '@/db/loanTxKind';
 import { repairTrackedRefundLabels } from '@/db/refundLabels';
 
@@ -348,7 +349,11 @@ export async function restoreFromSnapshotOn(db: AppDb, snapshot: BackupSnapshot)
             }
             if (columns.length === 0) continue;
             const placeholders = columns.map(() => '?').join(', ');
-            const values = columns.map((c) => row[c]);
+            // A category's icon is cosmetic and comes from a file that may be old or hand-edited: a built-in name or one
+            // emoji is kept as it is (so a backup carries custom emoji across phones), anything else becomes the tag.
+            const values = columns.map((c) =>
+              table === 'categories' && c === 'icon' ? normalizeCategoryIcon(row[c]) : row[c]
+            );
             // A damaged file with two value updates for one account and day keeps the later one rather than
             // failing the whole restore on the unique index.
             const verb = table === 'account_valuations' ? 'INSERT OR REPLACE' : 'INSERT';

@@ -2,6 +2,7 @@ import { found } from './found';
 import { CategoryRow } from './rows';
 import { getDb } from './client';
 import { newId } from '@/lib/id';
+import { normalizeCategoryIcon } from '@/lib/categoryIcon';
 import { captureRows, restoreRows, RowSnapshot } from './undoSnapshot';
 import { Category } from '@/types';
 import { refreshPrivacyNotificationsAfterCommit } from './afterCommit';
@@ -132,7 +133,7 @@ export async function createCategory(
         name,
         input.kind,
         input.parentId ?? null,
-        input.icon ?? 'tag',
+        normalizeCategoryIcon(input.icon),
         input.color ?? '#6366F1',
         input.sortOrder ?? 0,
         input.isSensitive ? 1 : 0,
@@ -245,7 +246,7 @@ export async function updateCategory(
     await assertUniqueCategoryName(tx, name, current.kind, nextParentId, id);
     await tx.runAsync(
       'UPDATE categories SET name = ?, icon = ?, color = ?, parent_id = ?, is_sensitive = ? WHERE id = ?',
-      [name, input.icon, input.color, nextParentId, nextIsSensitive ? 1 : 0, id]
+      [name, normalizeCategoryIcon(input.icon), input.color, nextParentId, nextIsSensitive ? 1 : 0, id]
     );
   });
   return !affectsPrivacy || refreshPrivacyNotificationsAfterCommit();

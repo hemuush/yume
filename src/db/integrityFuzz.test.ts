@@ -50,6 +50,7 @@ import { clearReadCache } from '@/db/readCache';
 import { resetSettingsCache, setDefaultCurrency } from '@/db/settings';
 import { addDaysToIsoDate, addMonthsToIsoDate, toLocalIsoDate } from '@/lib/date';
 import { buildBackupSnapshot, restoreFromSnapshot } from '@/lib/backup';
+import { normalizeCategoryIcon } from '@/lib/categoryIcon';
 import type { RowSnapshot } from '@/db/undoSnapshot';
 
 /** A small deterministic generator (mulberry32): the same seed always gives the same run. */
@@ -103,10 +104,12 @@ async function seedWorld(): Promise<World> {
     openingMinor.set(id, opening);
   }
   const expenseCategories: string[] = [];
-  for (const name of ['Food', 'Rent', 'Transport', 'Fun']) {
-    expenseCategories.push((await createCategory({ name, kind: 'expense' })).id);
+  // A built-in name, one the picker no longer lists, an emoji and a joined emoji: every shape an icon can have.
+  const icons = ['silverware-fork-knife', 'gas-station', '\u2615', '\u{1F468}\u200D\u{1F469}\u200D\u{1F467}'];
+  for (const [i, name] of ['Food', 'Rent', 'Transport', 'Fun'].entries()) {
+    expenseCategories.push((await createCategory({ name, kind: 'expense', icon: icons[i] })).id);
   }
-  const incomeCategories = [(await createCategory({ name: 'Salary', kind: 'income' })).id];
+  const incomeCategories = [(await createCategory({ name: 'Salary', kind: 'income', icon: '\u{1F4B0}' })).id];
   const pot = (
     await createAccount({ name: 'Pot', type: 'savings', currency: 'INR', openingBalanceMinor: 80_000 })
   ).id;
@@ -223,7 +226,20 @@ async function expectNoRefundOverReceived(where: string) {
 }
 
 /** Everything that must hold after any sequence of operations. */
+/** Every category's icon is a built-in name or one emoji, whatever happened to it (edits, undo, restore). */
+async function expectIconsAreIcons(where: string) {
+  const rows = await mockDb.getAllAsync<{ name: string; icon: string }>('SELECT name, icon FROM categories');
+  expect(rows.length).toBeGreaterThan(0);
+  for (const row of rows)
+    expect({ where, name: row.name, icon: normalizeCategoryIcon(row.icon) }).toEqual({
+      where,
+      name: row.name,
+      icon: row.icon,
+    });
+}
+
 async function expectEverythingHolds(world: World, where: string) {
+  await expectIconsAreIcons(where);
   await expectBooksBalance(world, where);
   await expectPeopleMatchTheirLedgers(where);
   await expectNoRefundOverReceived(where);
@@ -512,7 +528,11 @@ async function operateExtra(
     if (memory.goneGoals.length > 0) await restoreSavingsGoal(memory.goneGoals.pop()!);
   } else {
     // An unused category goes through every state; an unused account is archived.
-    const category = await createCategory({ name: `Temp ${step}`, kind: 'expense' });
+    const category = await createCategory({
+      name: `Temp ${step}`,
+      kind: 'expense',
+      icon: step % 2 === 0 ? '\u{1F355}' : 'airplane',
+    });
     await archiveCategory(category.id);
     await unarchiveCategory(category.id);
     if (r.next() < 0.5) await restoreCategory(await deleteCategory(category.id));

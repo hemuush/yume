@@ -1,7 +1,6 @@
 import { selectedFill } from '@/theme/interactionColors';
 import { Animated, Pressable, StyleSheet, View } from 'react-native';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import type { McIconName } from '@/components/iconName';
+import { CategoryGlyph } from '@/components/CategoryGlyph';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { usePressScale } from '@/lib/usePressScale';
@@ -57,7 +56,7 @@ export function Chip({ label, active, onPress, activeBorderColor, icon, iconColo
             { backgroundColor: iconColor ?? softTint(activeBorderColor ?? accent, 0.3) },
           ]}
         >
-          <MaterialCommunityIcons name={icon as McIconName} size={13} color={theme.colors.ink} />
+          <CategoryGlyph name={icon} size={13} color={theme.colors.ink} />
         </View>
       )}
       <Text style={[styles.text, active && styles.textActive]}>
