@@ -250,7 +250,7 @@ export function buildDueItems(
 
 /** How far ahead "Due in the next 2 weeks" looks. */
 const DUE_SOON_DAYS = 14;
-/** The window the Plan tab looks ahead: a bill a fortnight and a day away still counts. */
+/** The window the Plan tab looks ahead, in days. */
 export const PLAN_DAYS = 30;
 
 export interface DueSoon {
@@ -410,3 +410,12 @@ export function buildHabitState(
 
 /** The What-if preview's cut sizes. */
 export const WHAT_IF_CUTS = [5, 10, 20] as const;
+
+export interface PlanPerson {
+  id: string;
+  name: string;
+  balanceMinor: number;
+}
+
+/** How many people's balances show under the total. */
+export const PEOPLE_SHOWN = 3;

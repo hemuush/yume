@@ -5,9 +5,15 @@ import { styles } from '@/features/add/add.styles';
 import type { AddEntryModel } from '@/features/add/types/addEntryModel';
 import type { ReactElement } from 'react';
 
-type Props = {
-  model: Pick<AddEntryModel, 'formReady' | 'error' | 'retryLoad' | 'isLinked'>;
-};
+/** What this section of the Add page reads from the model; it is drawn again only when one of them changes. */
+export const LOAD_NOTICE_KEYS = [
+  'formReady',
+  'error',
+  'retryLoad',
+  'isLinked',
+] as const satisfies readonly (keyof AddEntryModel)[];
+
+type Props = { model: Pick<AddEntryModel, (typeof LOAD_NOTICE_KEYS)[number]> };
 export function AddEntryLoadNotice({ model }: Props): ReactElement {
   const { formReady, error, retryLoad, isLinked } = model;
 

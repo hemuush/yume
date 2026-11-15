@@ -1,183 +1,153 @@
-import { runWhenIdle } from '@/lib/runWhenIdle';
-import { Appear } from '@/components/Appear';
-import { useLocalDayRefresh } from '@/lib/useLocalDayRefresh';
-import { investHref, withdrawHref } from '@/lib/investRoutes';
-import { investRole, investmentIdsOf } from '@/lib/investment';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, StyleSheet, RefreshControl } from 'react-native';
-import { Text } from '@/components/Text';
 import Animated, { useSharedValue, useAnimatedScrollHandler } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { router, useFocusEffect } from 'expo-router';
-import { listAccounts, listCategories, listTransactions } from '@/db/ledger';
-import { listLoans, getLoanProgress } from '@/db/loans';
-import { listBudgetsForMonth, BudgetProgress } from '@/db/budgets';
-import { listSavingsGoals } from '@/db/savingsGoals';
-import { listCardCycles } from '@/db/cardCycles';
-import { listExpectedRefunds, ExpectedRefund } from '@/db/refundTracking';
-import { getTransactionById } from '@/db/transactions';
-import { TransactionDetailModal } from '@/features/transactions/TransactionDetailModal';
-import { showAlert } from '@/components/AppDialog';
-import { listRecurringRules } from '@/db/recurring';
-import {
-  getRangeComparison,
-  PeriodComparison,
-  getTodaySpend,
-  getMonthPaceInputs,
-  getStillToPayThisMonth,
-  getCarryInMinor,
-  getDailyExpenseTotals,
-} from '@/db/reports';
-import { monthPace } from '@/lib/pace';
-import { getUserName, getDailySpendingGoal, getDefaultCurrency } from '@/db/settings';
-import { savingsAccountIdsOf } from '@/lib/account';
-import { privateComparison, isSavingsEntry } from '@/lib/privateSummary';
-import { roundedMinor } from '@/lib/round';
-import { Account, Category, Transaction, Loan, RecurringRule, SavingsGoal } from '@/types';
-import { theme } from '@/constants/theme';
-import { useTabScrollPad } from '@/lib/uiScale';
-import { useReduceMotion } from '@/lib/useReduceMotion';
-import { useAccent } from '@/theme/AccentContext';
-import { usePrivacy } from '@/theme/PrivacyContext';
-import { EmptyState } from '@/components/EmptyState';
+import { router } from 'expo-router';
+import { Appear } from '@/components/Appear';
 import { PrimaryButton } from '@/components/PrimaryButton';
-import {
-  CURRENT_PERIOD,
-  PeriodCursor,
-  periodRange,
-  previousPeriodRange,
-  stepPeriod,
-  canStepForward,
-} from '@/lib/period';
+import { Section } from '@/components/Section';
+import { Text } from '@/components/Text';
+import { SCREEN } from '@/components/screenStyles';
+import { theme } from '@/constants/theme';
 import {
   homeRowEntering,
   homeSectionEntering,
   hasPlayedHomeOpening,
   markHomeOpeningPlayed,
   ROW_LAYOUT,
-  ROW_EXIT,
 } from '@/lib/animation';
+import { categorySentence } from '@/lib/categoryLabel';
+import { toLocalIsoDate } from '@/lib/date';
+import { investmentIdsOf } from '@/lib/investment';
+import { monthPace } from '@/lib/pace';
+import { CURRENT_PERIOD, PeriodCursor, periodRange, stepPeriod, canStepForward } from '@/lib/period';
+import { recurringRulesInCurrency } from '@/lib/recurringScope';
+import { roundedMinor } from '@/lib/round';
+import { useStableSet, useStableValue } from '@/lib/stableData';
+import { useReduceMotion } from '@/lib/useReduceMotion';
+import { useTabScrollPad } from '@/lib/uiScale';
+import { savingsAccountIdsOf } from '@/lib/account';
+import { useAccent } from '@/theme/AccentContext';
 import { HomeHeader } from '@/features/home/HomeHeader';
 import { ThisMonthHero } from '@/features/home/ThisMonthHero';
 import { ThisMonthHeroSkeleton, AccountTilesSkeleton, CardRowsSkeleton } from '@/features/home/HomeSkeleton';
 import { MonthPill } from '@/features/home/MonthPill';
 import { HomeWallpaper } from '@/features/home/HomeWallpaper';
 import { HomeAccounts } from '@/features/home/HomeAccounts';
-import { spendBarsStart } from '@/features/home/spendBarData';
-import { SuuRefreshBadge } from '@/features/home/SuuRefreshBadge';
-import { Section } from '@/components/Section';
-import { SCREEN, screenStyles } from '@/components/screenStyles';
 import { HomeComingUp } from '@/features/home/HomeComingUp';
+import { HomeRecentActivity } from '@/features/home/HomeRecentActivity';
+import { HomeSheets } from '@/features/home/HomeSheets';
+import { createHomeSheets } from '@/features/home/homeSheetsStore';
+import { SuuRefreshBadge } from '@/features/home/SuuRefreshBadge';
 import { buildUpcomingItems } from '@/features/home/upcomingItems';
 import type { ComingUpFilter } from '@/features/home/comingUp';
-import { recurringRulesInCurrency } from '@/lib/recurringScope';
+import { viewAllTarget } from '@/features/home/recentActivity';
+import { useHomeData } from '@/features/home/useHomeData';
+import { useOpenRefund } from '@/features/home/useOpenRefund';
 import { buildLoansSummary } from '@/features/plan/planOverview';
-import { RecentTransactionRow } from '@/features/home/RecentTransactionRow';
-import { emptyRecentCopy, viewAllTarget } from '@/features/home/recentActivity';
-import { AccountSummarySheet } from '@/features/home/AccountSummarySheet';
-import { AccountDetailModal } from '@/features/profile/AccountDetailModal';
-import { loadReadyWraps, ReadyWrap } from '@/features/wrap/wrapWindow';
-import { NeedsYouItem } from '@/features/home/needsYou';
-import { loadNeedsYou } from '@/features/home/needsYouData';
-import { AddAccountModal } from '@/features/profile/AddAccountModal';
-import { toLocalIsoDate, dayLabel } from '@/lib/date';
-import { formatMoney } from '@/lib/money';
-import { EYEBROW } from '@/constants/textStyles';
-import { categorySentence } from '@/lib/categoryLabel';
-import { onTransactionsChanged } from '@/lib/dataEvents';
-import { useFreshness } from '@/lib/useFreshness';
-import { errorMessage } from '@/lib/errorMessage';
-import { payCardRoute } from '@/lib/payCard';
+import type { Transaction } from '@/types';
 
-/** Home shows this many of the period's latest entries; fetch no more than that. */
-const RECENT_ROWS = 5;
 /** Scrolled past this, the month card's own period pill is under the header: the change came from the header's chip. */
 const CARD_OUT_OF_VIEW = 80;
+
+// Each section of the page compares its props by identity and is drawn again only when one of them changed: the page
+// hands them values that keep their identity until what is in them changes (see useHomeData).
+const Header = memo(HomeHeader);
+const MonthCard = memo(ThisMonthHero);
+const Accounts = memo(HomeAccounts);
+const ComingUp = memo(HomeComingUp);
+
+const openAccounts = () => router.push('/profile');
+
+const openComingUp = (filter: ComingUpFilter) => {
+  if (filter === 'budget') router.navigate('/budgets');
+  else if (filter === 'goal') router.navigate('/savings-goals');
+  else router.navigate({ pathname: '/plan', params: { tab: 'upcoming' } });
+};
+
+const openSpendingReports = (key: string) => {
+  const [kind, offset] = key.split(':');
+  const shown: PeriodCursor = { granularity: kind === 'year' ? 'year' : 'month', offset: Number(offset) };
+  const range = periodRange(shown);
+  router.navigate({
+    pathname: '/reports',
+    params:
+      shown.granularity === 'month' ? { month: String(shown.offset) } : { from: range.start, to: range.end },
+  });
+};
+
+const rowEntering = (i: number) => homeRowEntering(i, !hasPlayedHomeOpening());
+const sectionEntering = (i: number) => homeSectionEntering(i, !hasPlayedHomeOpening());
 
 export default function DashboardScreen() {
   const insets = useSafeAreaInsets();
   const tabScrollPad = useTabScrollPad();
-  const { hideAmounts } = usePrivacy();
   const { accent, secondary } = useAccent();
-  const [accounts, setAccounts] = useState<Account[]>([]);
-  const [historyAccounts, setHistoryAccounts] = useState<Account[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [recent, setRecent] = useState<Transaction[]>([]);
-  const [loans, setLoans] = useState<Loan[]>([]);
-  // This month's budgets and the open goals, for Coming up (they stay in place while a month is browsed).
-  const [budgets, setBudgets] = useState<BudgetProgress[]>([]);
-  const [goals, setGoals] = useState<SavingsGoal[]>([]);
-  const [recurringRules, setRecurringRules] = useState<RecurringRule[]>([]);
-  const [rawComparison, setComparison] = useState<PeriodComparison | null>(null);
-  // What earlier months left over (or, when negative, ran short by) — added to the period's own free-to-use.
-  const [carryInMinor, setCarryInMinor] = useState(0);
-  const comparison = useMemo(
-    () => privateComparison(rawComparison, hideAmounts),
-    [rawComparison, hideAmounts]
-  );
-  const [loanProgress, setLoanProgress] = useState<Awaited<ReturnType<typeof getLoanProgress>>>([]);
-  const [cardBills, setCardBills] = useState<Awaited<ReturnType<typeof listCardCycles>>>([]);
-  // The default currency: Home's in-hand total counts only accounts in it.
-  const [currency, setCurrency] = useState('INR');
-  const [refunds, setRefunds] = useState<ExpectedRefund[]>([]);
-  const [refundError, setRefundError] = useState(false);
-  const [refundTx, setRefundTx] = useState<Transaction | null>(null);
-  const [openingRefund, setOpeningRefund] = useState<string | null>(null);
-  const refundRequest = useRef(0);
-  const openingRefundRef = useRef(false);
-  const [dailySpend, setDailySpend] = useState<{ date: string; totalMinor: number }[]>([]);
-  // Both are always about today, not the browsed period (like Budgets/Goals below); `dailyGoal` stays
-  // `null` (strip renders nothing) until the user sets one in Settings → Money.
-  const [todaySpendMinor, setTodaySpendMinor] = useState(0);
-  const [dailyGoalMinor, setDailyGoalMinor] = useState<number | null>(null);
-  // Inputs to the month forecast under the moon (see lib/pace.ts).
-  const [paceInputs, setPaceInputs] = useState<{
-    everydaySpentMinor: number;
-    dueRestOfMonthMinor: number;
-  } | null>(null);
-  // Unpaid EMIs and bills left this month, for the card's "Free after bills".
-  const [stillToPayMinor, setStillToPayMinor] = useState(0);
-  // Everything that needs you (see features/home/needsYou.ts). The bell opens
-  // the list and shows the count; Home itself only flags the Budgets tab.
-  const [needsYou, setNeedsYou] = useState<NeedsYouItem[]>([]);
-  const [addAccountVisible, setAddAccountVisible] = useState(false);
-  // Tapping an account card opens its summary; "Edit account" there swaps
-  // it for the full edit form.
-  const [summaryAccount, setSummaryAccount] = useState<Account | null>(null);
-  const [editAccount, setEditAccount] = useState<Account | null>(null);
-  // Last week's Wrap on a Monday, last month's on the 1st–7th: the header's Wrap button (wrapWindow.ts).
-  const [readyWraps, setReadyWraps] = useState<ReadyWrap[]>([]);
   const [refreshing, setRefreshing] = useState(false);
-  const [userName, setUserNameState] = useState<string | null>(null);
   const [cursor, setCursor] = useState<PeriodCursor>(CURRENT_PERIOD);
-  // The period the on-screen figures belong to: `cursor` moves at once, this catches up once that month's
-  // data loads. The hero turns its page on it, so a new month name never shows the old month's numbers.
-  const [loadedCursor, setLoadedCursor] = useState<PeriodCursor>(CURRENT_PERIOD);
+  // The period the header's chip shows: the month card turns its page on it, so a new month name never shows the old
+  // month's numbers.
   const [displayedPeriodKey, setDisplayedPeriodKey] = useState('month:0');
   const displayedCursor = useMemo<PeriodCursor>(() => {
     const [kind, offset] = displayedPeriodKey.split(':');
     return { granularity: kind === 'year' ? 'year' : 'month', offset: Number(offset) };
   }, [displayedPeriodKey]);
-  const [loadError, setLoadError] = useState<string | null>(null);
-  // Defaults ([], 0, null) look like a genuinely empty period, so the skeleton gates on this flag: set once
-  // after the first `load()` (success or failure), never reset; later fetches update in place.
-  const [loaded, setLoaded] = useState(false);
-  // The staggered opening fade plays only on the first load after app open; later rows (new month, refresh)
-  // get one quick fade. Flipped shortly after the first load, once the opening rows have mounted.
-  const [openingDone, setOpeningDone] = useState(hasPlayedHomeOpening);
-  useEffect(() => {
-    if (!loaded || openingDone) return;
-    const t = setTimeout(() => {
-      markHomeOpeningPlayed();
-      setOpeningDone(true);
-    }, 800);
-    return () => clearTimeout(t);
-  }, [loaded, openingDone]);
-  const rowEntering = (i: number) => homeRowEntering(i, !openingDone);
-  const sectionEntering = (i: number) => homeSectionEntering(i, !openingDone);
   // Hero slide direction on month change: +1/-1 for a same-granularity step, else 0 (crossfade). State, not
   // a ref (ThisMonthHero reads it in render); set with `setCursor` so one re-render carries both.
   const [heroDirection, setHeroDirection] = useState<-1 | 0 | 1>(0);
+
+  const data = useHomeData(cursor);
+  const {
+    accounts,
+    historyAccounts,
+    categories,
+    recent,
+    loans,
+    budgets,
+    goals,
+    recurringRules,
+    comparison,
+    carryInMinor,
+    loanProgress,
+    cardBills,
+    currency,
+    refunds,
+    refundError,
+    dailySpend,
+    todaySpendMinor,
+    dailyGoalMinor,
+    paceInputs,
+    stillToPayMinor,
+    needsYouCount,
+    readyWraps,
+    userName,
+    loadedCursor,
+    loadError,
+    loaded,
+    reload,
+  } = data;
+
+  // The sheets (an account's summary and edit form, an entry's detail, the new-account form): which is open is kept
+  // outside React state, so opening or closing one does not redraw the page behind it.
+  const [sheets] = useState(createHomeSheets);
+  const openRefund = useOpenRefund(sheets);
+  const { cancel: cancelOpeningRefund, open: openRefundPurchase } = openRefund;
+  const openEntry = useCallback(
+    (tx: Transaction) => {
+      cancelOpeningRefund();
+      sheets.openEntry(tx);
+    },
+    [cancelOpeningRefund, sheets]
+  );
+
+  // The staggered opening fade plays only on the first load after app open; later rows (new month, refresh)
+  // get one quick fade. Marked played shortly after the first load, once the opening rows have mounted. Read from the
+  // module's own flag, not React state: turning it over must not redraw the whole page for nothing.
+  useEffect(() => {
+    if (!loaded || hasPlayedHomeOpening()) return;
+    const t = setTimeout(markHomeOpeningPlayed, 800);
+    return () => clearTimeout(t);
+  }, [loaded]);
 
   // The header overlays the ScrollView and collapses on scroll (see HomeHeader); its expanded height pads
   // the content so nothing hides under it. The estimate only covers the first frame before it measures.
@@ -200,296 +170,77 @@ export default function DashboardScreen() {
   });
   const [headerHeight, setHeaderHeight] = useState(insets.top + 200);
 
+  // Read through a ref so the handlers below keep one identity as the period changes: the sections that take them
+  // would otherwise be drawn again for nothing.
+  const cursorRef = useRef(cursor);
+  useEffect(() => {
+    cursorRef.current = cursor;
+  });
   const handleCursorChange = useCallback(
     (next: PeriodCursor) => {
+      const current = cursorRef.current;
       // Changed from the shrunk header's month chip, the month card it describes is scrolled out of sight: bring
       // it back, or the new month would change only what is lower down. Changed on the card itself (its own pill or
       // a swipe), the page stays where it is.
       if (scrollY.get() > CARD_OUT_OF_VIEW) scrollRef.current?.scrollTo({ y: 0, animated: !reduceMotion });
       setHeroDirection(
-        next.granularity !== cursor.granularity
+        next.granularity !== current.granularity
           ? 0
-          : next.offset > cursor.offset
+          : next.offset > current.offset
             ? 1
-            : next.offset < cursor.offset
+            : next.offset < current.offset
               ? -1
               : 0
       );
       setCursor(next);
     },
-    [cursor, scrollY, reduceMotion]
+    [scrollY, reduceMotion]
   );
-
-  // Quick period stepping starts overlapping loads that can finish out of order; only the latest may write
-  // state, or last month's data lands under this month's label (periodSeq/fullSeq).
-  const periodSeq = useRef(0);
-  const fullSeq = useRef(0);
-  // The cursor the latest period fetch was started for, so the effect below
-  // only fires for a real change and never doubles up a full load.
-  const fetchedCursor = useRef<PeriodCursor>(CURRENT_PERIOD);
-  const cursorRef = useRef(cursor);
-  useEffect(() => {
-    cursorRef.current = cursor;
-  });
-
-  // Period figures and today's remaining amount commit together, so a month refresh cannot leave the daily strip stale.
-  const fetchPeriod = useCallback(
-    (c: PeriodCursor) => {
-      const reference = new Date();
-      const today = toLocalIsoDate(reference);
-      const range = periodRange(c, reference);
-      const daily =
-        c.granularity === 'month'
-          ? getDailyExpenseTotals(
-              {
-                start: c.offset === 0 ? spendBarsStart(today) : range.start,
-                end: c.offset === 0 ? today : range.end,
-              },
-              hideAmounts,
-              undefined,
-              'outgoing'
-            )
-          : Promise.resolve([]);
-      return Promise.all([
-        listTransactions({ fromDate: range.start, toDate: range.end, limit: RECENT_ROWS }),
-        getRangeComparison(range, previousPeriodRange(c, reference), c.granularity),
-        getCarryInMinor(range.start, hideAmounts),
-        daily,
-        c.offset !== 0
-          ? Promise.resolve(0)
-          : c.granularity === 'month'
-            ? daily.then((rows) => rows.find((row) => row.date === today)?.totalMinor ?? 0)
-            : getTodaySpend(today, hideAmounts),
-      ]);
+  const stepHero = useCallback(
+    (dir: -1 | 1) => handleCursorChange(stepPeriod(cursorRef.current, dir)),
+    [handleCursorChange]
+  );
+  const scrollToTop = useCallback(
+    () => scrollRef.current?.scrollTo({ y: 0, animated: !reduceMotion }),
+    [reduceMotion]
+  );
+  const renderPeriod = useCallback(
+    (key: string) => {
+      const [kind, offset] = key.split(':');
+      return (
+        <MonthPill
+          cursor={{ granularity: kind === 'year' ? 'year' : 'month', offset: Number(offset) }}
+          onChange={handleCursorChange}
+        />
+      );
     },
-    [hideAmounts]
+    [handleCursorChange]
   );
-
-  // Accounts, loans and settings stay in place while the selected period reloads.
-  const loadPeriod = useCallback(
-    async (c: PeriodCursor) => {
-      fetchedCursor.current = c;
-      const seq = ++periodSeq.current;
-      try {
-        const [tx, cmp, carry, daily, todaySpend] = await fetchPeriod(c);
-        if (seq !== periodSeq.current) return;
-        setDailySpend(daily);
-        setTodaySpendMinor(todaySpend);
-        setRecent(tx);
-        setComparison(cmp);
-        setCarryInMinor(carry);
-        setLoadedCursor(c);
-        setLoadError(null);
-        setLoaded(true);
-      } catch (e) {
-        if (seq === periodSeq.current) setLoadError(errorMessage(e));
-      }
-    },
-    [fetchPeriod]
-  );
-
-  const load = useCallback(
-    async (c: PeriodCursor) => {
-      fetchedCursor.current = c;
-      const pSeq = ++periodSeq.current;
-      const fSeq = ++fullSeq.current;
-      let periodWritten = false;
-      let failed = false;
-      try {
-        const [
-          period,
-          accs,
-          cats,
-          ln,
-          rules,
-          progress,
-          cycles,
-          name,
-          dailyGoal,
-          paceIn,
-          stillToPay,
-          wraps,
-          defaultCurrency,
-          budgetRows,
-          goalRows,
-          refundResult,
-        ] = await Promise.all([
-          fetchPeriod(c),
-          listAccounts(true),
-          listCategories(true),
-          listLoans(),
-          listRecurringRules(),
-          getLoanProgress(),
-          listCardCycles().catch(() => []),
-          getUserName(),
-          getDailySpendingGoal(),
-          getMonthPaceInputs(undefined, hideAmounts),
-          getStillToPayThisMonth(undefined, hideAmounts),
-          loadReadyWraps(),
-          getDefaultCurrency(),
-          // Budgets and goals are extras here: a failed read leaves them out instead of blanking Home.
-          listBudgetsForMonth(undefined, hideAmounts).catch(() => [] as BudgetProgress[]),
-          listSavingsGoals().catch(() => [] as SavingsGoal[]),
-          listExpectedRefunds()
-            .then((rows) => ({ rows, failed: false }))
-            .catch(() => ({ rows: [] as ExpectedRefund[], failed: true })),
-        ]);
-        if (pSeq === periodSeq.current) {
-          const [tx, cmp, carry, periodDaily, todaySpend] = period;
-          setDailySpend(periodDaily);
-          setTodaySpendMinor(todaySpend);
-          setRecent(tx);
-          setComparison(cmp);
-          setCarryInMinor(carry);
-          setLoadedCursor(c);
-          periodWritten = true;
-        }
-        if (fSeq !== fullSeq.current) return false;
-        setHistoryAccounts(accs);
-        setAccounts(accs.filter((account) => !account.archived));
-        setCategories(cats);
-        // A defaulted loan is still real money owed (or owed to you) — only a
-        // 'closed' loan (fully paid off) should ever drop out of these totals.
-        setLoans(ln.filter((l) => l.status !== 'closed'));
-        if (hideAmounts) {
-          const catById = new Map(cats.map((cat) => [cat.id, cat]));
-          const savingsIds = savingsAccountIdsOf(accs);
-          setRecurringRules(rules.filter((r) => !isSavingsEntry(r, catById, savingsIds)));
-        } else {
-          setRecurringRules(rules);
-        }
-        setLoanProgress(progress);
-        setCardBills(cycles);
-        setBudgets(budgetRows);
-        setGoals(goalRows);
-        setUserNameState(name);
-        setRefunds(refundResult.rows);
-        setRefundError(refundResult.failed);
-        setDailyGoalMinor(dailyGoal);
-        setPaceInputs(paceIn);
-        setStillToPayMinor(stillToPay);
-        // Housekeeping scans do not gate the first useful financial content or the tab transition.
-        runWhenIdle(() => {
-          if (fSeq !== fullSeq.current) return;
-          void loadNeedsYou()
-            .then((needs) => {
-              if (fSeq === fullSeq.current) setNeedsYou(needs.shown);
-            })
-            .catch((error) => console.warn('Needs you refresh failed:', error));
-        });
-        setReadyWraps(wraps);
-        setCurrency(defaultCurrency);
-        setLoadError(null);
-      } catch (e) {
-        if (fSeq !== fullSeq.current) return false;
-        // Guard the throw so a transient DB error shows a banner instead of
-        // freezing stale data + a stuck pull-to-refresh spinner.
-        failed = true;
-        setLoadError(errorMessage(e));
-      } finally {
-        // Not "loaded" until a period's figures have landed, so the card never
-        // shows an empty month for a moment — a newer period fetch sets it too.
-        if (fSeq === fullSeq.current && (periodWritten || failed)) setLoaded(true);
-      }
-      return !failed && fSeq === fullSeq.current;
-    },
-    [hideAmounts, fetchPeriod]
-  );
-
-  // Coming back to Home with nothing changed (no write, same day, same settings) shows what's already here
-  // instead of re-running every query.
-  const freshness = useFreshness();
-  useLocalDayRefresh(() => {
-    void load(cursorRef.current);
-  }, true);
-  // Whether Home is on screen: a save made elsewhere is picked up when Home is next focused (the write marks
-  // it stale), so the change event only reloads in place while Home is showing.
-  const focused = useRef(false);
-  useFocusEffect(
-    useCallback(() => {
-      focused.current = true;
-      return () => {
-        focused.current = false;
-        refundRequest.current++;
-        openingRefundRef.current = false;
-        setOpeningRefund(null);
-      };
-    }, [])
-  );
-  useFocusEffect(
-    useCallback(() => {
-      if (freshness.isFresh([load])) return;
-      const started = freshness.start([load]);
-      void load(cursorRef.current).then((ok) => {
-        if (ok) freshness.commit(started);
-      });
-    }, [load, freshness])
-  );
-  // A save that doesn't leave Home (the + long-press sheet) — reload in place.
-  useEffect(
-    () =>
-      onTransactionsChanged(() => {
-        if (focused.current) void load(cursorRef.current);
-      }),
-    [load]
-  );
-  // A new month or year: just that period's figures.
-  useEffect(() => {
-    if (fetchedCursor.current !== cursor) void loadPeriod(cursor);
-  }, [cursor, loadPeriod]);
-
-  const openRefund = async (transactionId: string) => {
-    if (openingRefundRef.current) return;
-    openingRefundRef.current = true;
-    const ticket = ++refundRequest.current;
-    setOpeningRefund(transactionId);
-    try {
-      const tx = await getTransactionById(transactionId);
-      if (ticket !== refundRequest.current) return;
-      if (!tx) {
-        showAlert('Purchase unavailable', 'This purchase may have been deleted. Refresh Home and try again.');
-        return;
-      }
-      setSummaryAccount(null);
-      setRefundTx(tx);
-    } catch (e) {
-      if (ticket === refundRequest.current) showAlert('Couldn’t open the refund', errorMessage(e));
-    } finally {
-      if (ticket === refundRequest.current) {
-        openingRefundRef.current = false;
-        setOpeningRefund(null);
-      }
-    }
-  };
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await load(cursor);
+    await reload();
     setRefreshing(false);
   };
 
-  // Looked up per row on every render, so by id rather than a scan of the whole list each time.
+  // What the sections below say of accounts, categories and savings: only names, currencies and which are savings or
+  // investments. Balances move with every entry, and must not redraw sections that do not show them.
   const categoriesById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
-  const accountsById = useMemo(() => new Map(historyAccounts.map((a) => [a.id, a])), [historyAccounts]);
-  const categoryFor = (id: string | null) => (id ? categoriesById.get(id) : undefined);
-  const parentNameFor = (id: string | null) => {
-    const parentId = categoryFor(id)?.parentId;
-    return parentId ? categoryFor(parentId)?.name : undefined;
-  };
-  const accountName = (id: string | null | undefined) => (id ? accountsById.get(id)?.name : undefined);
-  const savingsIds = savingsAccountIdsOf(historyAccounts);
-  const investIds = investmentIdsOf(historyAccounts);
-  const isSavingsTransfer = (tx: Transaction) =>
-    tx.type === 'transfer' &&
-    (savingsIds.has(tx.accountId) || (!!tx.toAccountId && savingsIds.has(tx.toAccountId)));
+  const accountLabels = useStableValue(
+    historyAccounts.map((a) => ({ id: a.id, name: a.name, currency: a.currency }))
+  );
+  const accountsById = useMemo(() => new Map(accountLabels.map((a) => [a.id, a])), [accountLabels]);
+  const savingsIds = useStableSet(useMemo(() => savingsAccountIdsOf(historyAccounts), [historyAccounts]));
+  const investIds = useStableSet(useMemo(() => investmentIdsOf(historyAccounts), [historyAccounts]));
 
   const dispIncome = roundedMinor(comparison?.current.incomeMinor ?? 0);
   const dispExpense = roundedMinor(comparison?.current.expenseMinor ?? 0);
   // Where this month is heading — the current month only, and only once
   // there's enough of it to go on (monthPace returns null before the 5th).
   const todayIso = toLocalIsoDate(new Date());
+  const isThisMonth = loadedCursor.granularity === 'month' && loadedCursor.offset === 0;
   const paceMinor =
-    paceInputs && comparison && loadedCursor.granularity === 'month' && loadedCursor.offset === 0
+    paceInputs && comparison && isThisMonth
       ? monthPace({ spentMinor: comparison.current.expenseMinor, ...paceInputs, today: todayIso })
       : null;
   const monthEndLabel = (() => {
@@ -502,18 +253,52 @@ export default function DashboardScreen() {
   // What's free to use: what earlier months left over, plus this period's own surplus.
   const surplusInPeriod = carryIn + dispIncome - dispExpense - savingsInPeriod;
 
+  // Handed to the month card as objects, kept the same until what is in them changes, so a redraw of the page that
+  // changed none of them does not redraw the card.
+  const spendingTrend = useMemo(
+    () =>
+      loadedCursor.granularity === 'month'
+        ? {
+            daily: dailySpend,
+            today: loadedCursor.offset === 0 ? todayIso : periodRange(loadedCursor).end,
+            mode: (loadedCursor.offset === 0 ? 'week' : 'month') as 'week' | 'month',
+          }
+        : null,
+    [loadedCursor, dailySpend, todayIso]
+  );
+  const recaps = useMemo(
+    () =>
+      readyWraps.map((w) => ({
+        key: `${w.period}:${w.key}`,
+        label: w.label,
+        onPress: () => router.push(`/wrap?period=${w.period}`),
+      })),
+    [readyWraps]
+  );
+  const todayGoal = useMemo(
+    () =>
+      dailyGoalMinor != null && loadedCursor.offset === 0
+        ? { spentMinor: todaySpendMinor, goalMinor: dailyGoalMinor }
+        : null,
+    [dailyGoalMinor, loadedCursor.offset, todaySpendMinor]
+  );
+  const pace = useMemo(
+    () => (paceMinor != null ? { projectedMinor: paceMinor, byLabel: monthEndLabel } : null),
+    [paceMinor, monthEndLabel]
+  );
+
   // Rebuilt only when its inputs change, not on every swipe or scroll-driven render.
   const upcoming = useMemo(() => {
     const cat = (id: string | null) => (id ? categoriesById.get(id) : undefined);
     return buildUpcomingItems({
-      investmentIds: investmentIdsOf(historyAccounts),
+      investmentIds: investIds,
       loans: buildLoansSummary(loans, loanProgress).rows.flatMap((row) =>
         row.direction === 'borrowed' && row.nextDueDate && row.nextEmiMinor != null
           ? [{ id: row.id, name: row.name, nextDueDate: row.nextDueDate, nextEmiMinor: row.nextEmiMinor }]
           : []
       ),
       cardBills,
-      rules: recurringRulesInCurrency(recurringRules, historyAccounts, currency),
+      rules: recurringRulesInCurrency(recurringRules, accountLabels, currency),
       accent,
       secondary,
       accountName: (id) => (id ? accountsById.get(id)?.name : undefined),
@@ -533,28 +318,18 @@ export default function DashboardScreen() {
     secondary,
     categoriesById,
     accountsById,
-    historyAccounts,
+    accountLabels,
+    investIds,
     currency,
   ]);
 
-  const openComingUp = (filter: ComingUpFilter) => {
-    if (filter === 'budget') router.navigate('/budgets');
-    else if (filter === 'goal') router.navigate('/savings-goals');
-    else router.navigate({ pathname: '/plan', params: { tab: 'upcoming' } });
-  };
-
-  const openSpendingReports = (key: string) => {
-    const [kind, offset] = key.split(':');
-    const shown: PeriodCursor = { granularity: kind === 'year' ? 'year' : 'month', offset: Number(offset) };
-    const range = periodRange(shown);
-    router.navigate({
-      pathname: '/reports',
-      params:
-        shown.granularity === 'month'
-          ? { month: String(shown.offset) }
-          : { from: range.start, to: range.end },
-    });
-  };
+  const retryLoad = useCallback(() => void reload(), [reload]);
+  const openRecentInActivity = useCallback(
+    // The list is the browsed period's, so "View all" opens that month in Activity (a past month only).
+    () => router.push(viewAllTarget(loadedCursor)),
+    [loadedCursor]
+  );
+  const openRefundById = useCallback((id: string) => void openRefundPurchase(id), [openRefundPurchase]);
 
   return (
     <View style={styles.container}>
@@ -590,7 +365,7 @@ export default function DashboardScreen() {
               title="Try again"
               compact
               variant="secondary"
-              onPress={() => void load(cursorRef.current)}
+              onPress={retryLoad}
               style={styles.errorRetry}
             />
           </Appear>
@@ -599,53 +374,25 @@ export default function DashboardScreen() {
         <View style={styles.heroGap}>
           {loaded && historyAccounts.length === 0 ? null : loaded ? (
             <Animated.View entering={sectionEntering(0)} layout={ROW_LAYOUT}>
-              <ThisMonthHero
+              <MonthCard
                 periodKey={`${loadedCursor.granularity}:${loadedCursor.offset}`}
                 direction={heroDirection}
-                renderPeriod={(key) => {
-                  const [kind, offset] = key.split(':');
-                  return (
-                    <MonthPill
-                      cursor={{ granularity: kind === 'year' ? 'year' : 'month', offset: Number(offset) }}
-                      onChange={handleCursorChange}
-                    />
-                  );
-                }}
+                renderPeriod={renderPeriod}
                 onPeriodDisplayed={setDisplayedPeriodKey}
                 canStepForward={canStepForward(cursor)}
-                onStep={(dir) => handleCursorChange(stepPeriod(cursor, dir))}
-                spendingTrend={
-                  loadedCursor.granularity === 'month'
-                    ? {
-                        daily: dailySpend,
-                        today: loadedCursor.offset === 0 ? todayIso : periodRange(loadedCursor).end,
-                        mode: loadedCursor.offset === 0 ? 'week' : 'month',
-                      }
-                    : null
-                }
+                onStep={stepHero}
+                spendingTrend={spendingTrend}
                 onSeeInsights={openSpendingReports}
                 incomeMinor={dispIncome}
                 spentMinor={dispExpense}
                 savingsMinor={savingsInPeriod}
                 surplusMinor={surplusInPeriod}
                 carryMinor={carryIn}
-                dueMinor={
-                  loadedCursor.granularity === 'month' && loadedCursor.offset === 0
-                    ? roundedMinor(stillToPayMinor)
-                    : null
-                }
-                recaps={readyWraps.map((w) => ({
-                  key: `${w.period}:${w.key}`,
-                  label: w.label,
-                  onPress: () => router.push(`/wrap?period=${w.period}`),
-                }))}
+                dueMinor={isThisMonth ? roundedMinor(stillToPayMinor) : null}
+                recaps={recaps}
                 // Today is always about today — only alongside the current period.
-                today={
-                  dailyGoalMinor != null && loadedCursor.offset === 0
-                    ? { spentMinor: todaySpendMinor, goalMinor: dailyGoalMinor }
-                    : null
-                }
-                pace={paceMinor != null ? { projectedMinor: paceMinor, byLabel: monthEndLabel } : null}
+                today={todayGoal}
+                pace={pace}
               />
             </Animated.View>
           ) : (
@@ -669,12 +416,12 @@ export default function DashboardScreen() {
             the "fresh start" card would tell someone with accounts that they have none. */}
         {loaded && !(loadError && historyAccounts.length === 0) && (
           <Animated.View entering={sectionEntering(1)} layout={ROW_LAYOUT}>
-            <HomeAccounts
+            <Accounts
               accounts={accounts}
               currency={currency}
-              onOpenAccounts={() => router.push('/profile')}
-              onOpenAccount={setSummaryAccount}
-              onAddAccount={() => setAddAccountVisible(true)}
+              onOpenAccounts={openAccounts}
+              onOpenAccount={sheets.openAccount}
+              onAddAccount={sheets.openAddAccount}
             />
           </Animated.View>
         )}
@@ -682,16 +429,16 @@ export default function DashboardScreen() {
         {/* Next payments and pending refunds stay visible without tabs. */}
         {loaded && historyAccounts.length > 0 && (
           <Animated.View entering={sectionEntering(2)} layout={ROW_LAYOUT}>
-            <HomeComingUp
+            <ComingUp
               upcoming={upcoming}
               budgets={budgets}
               goals={goals}
               today={todayIso}
               refunds={refunds}
               refundError={refundError}
-              openingRefund={openingRefund}
-              onOpenRefund={(id) => void openRefund(id)}
-              onRetryRefunds={() => void load(cursorRef.current)}
+              openingRefund={openRefund.opening}
+              onOpenRefund={openRefundById}
+              onRetryRefunds={retryLoad}
               rowEntering={rowEntering}
               onSeeAll={openComingUp}
               stillToPayMinor={roundedMinor(stillToPayMinor)}
@@ -701,149 +448,41 @@ export default function DashboardScreen() {
 
         {loaded && historyAccounts.length > 0 && (
           <Animated.View entering={sectionEntering(4)} layout={ROW_LAYOUT}>
-            <Section
-              compact
-              title="Recent activity"
-              // The list is the browsed period's, so "View all" opens that month in Activity (a past month only).
-              onSeeAll={() => router.push(viewAllTarget(loadedCursor))}
-              actionLabel="View all"
-            >
-              {recent.length === 0 ? (
-                <EmptyState {...emptyRecentCopy(loadedCursor)} />
-              ) : (
-                <View style={styles.recent}>
-                  {recent.slice(0, 5).map((tx, i, rows) => (
-                    <Animated.View
-                      key={tx.id}
-                      entering={rowEntering(i)}
-                      layout={ROW_LAYOUT}
-                      exiting={ROW_EXIT}
-                    >
-                      {/* Each day is named once, above its rows; today also carries what went out. */}
-                      {(i === 0 || rows[i - 1].date !== tx.date) && (
-                        <View style={[styles.dayHead, i > 0 && styles.dayHeadDivider]}>
-                          <Text style={styles.dayHeadText}>{dayLabel(tx.date)}</Text>
-                          {tx.date === todayIso && loadedCursor.offset === 0 && todaySpendMinor > 0 && (
-                            <Text style={styles.dayHeadText}>
-                              −{formatMoney(roundedMinor(todaySpendMinor))}
-                            </Text>
-                          )}
-                        </View>
-                      )}
-                      <RecentTransactionRow
-                        showDay={false}
-                        onPress={() => {
-                          refundRequest.current++;
-                          openingRefundRef.current = false;
-                          setOpeningRefund(null);
-                          setSummaryAccount(null);
-                          setRefundTx(tx);
-                        }}
-                        currency={accountsById.get(tx.accountId)?.currency}
-                        tx={tx}
-                        category={categoryFor(tx.categoryId) ?? undefined}
-                        parentName={parentNameFor(tx.categoryId)}
-                        accountName={accountName(tx.accountId)}
-                        toAccountName={accountName(tx.toAccountId)}
-                        savingsTransfer={isSavingsTransfer(tx)}
-                        investRole={investRole(tx, investIds)}
-                        divider={i > 0 && rows[i - 1].date === tx.date}
-                      />
-                    </Animated.View>
-                  ))}
-                </View>
-              )}
-            </Section>
+            <HomeRecentActivity
+              recent={recent}
+              cursor={loadedCursor}
+              today={todayIso}
+              todaySpendMinor={todaySpendMinor}
+              categoriesById={categoriesById}
+              accountsById={accountsById}
+              savingsIds={savingsIds}
+              investIds={investIds}
+              rowEntering={rowEntering}
+              onOpenEntry={openEntry}
+              onSeeAll={openRecentInActivity}
+            />
           </Animated.View>
         )}
       </Animated.ScrollView>
 
-      <HomeHeader
+      <Header
         cursor={displayedCursor}
         onChange={handleCursorChange}
         userName={userName}
-        alertCount={needsYou.length}
+        alertCount={needsYouCount}
         scrollY={scrollY}
         onHeight={setHeaderHeight}
-        onBrandPress={() => scrollRef.current?.scrollTo({ y: 0, animated: !reduceMotion })}
+        onBrandPress={scrollToTop}
       />
       <SuuRefreshBadge refreshing={refreshing} />
 
-      <AccountSummarySheet
-        account={summaryAccount}
+      <HomeSheets
+        sheets={sheets}
         cursor={cursor}
         accounts={accounts}
+        historyAccounts={historyAccounts}
         categories={categories}
-        onClose={() => setSummaryAccount(null)}
-        onAdd={(acc) => {
-          setSummaryAccount(null);
-          router.push(
-            `/add-transaction?type=${acc.type === 'savings' ? 'transfer' : 'expense'}&accountId=${acc.id}`
-          );
-        }}
-        onEdit={(acc) => {
-          setSummaryAccount(null);
-          setEditAccount(acc);
-        }}
-        onChanged={() => load(cursor)}
-        onInvest={(acc) => {
-          setSummaryAccount(null);
-          router.push(investHref(acc));
-        }}
-        onWithdraw={(acc) => {
-          setSummaryAccount(null);
-          router.push(withdrawHref(acc));
-        }}
-        onPayBill={(acc, amountMinor) => {
-          setSummaryAccount(null);
-          router.push(payCardRoute(acc.id, amountMinor));
-        }}
-        onAddCharge={(acc, categoryId) => {
-          setSummaryAccount(null);
-          router.push(
-            `/add-transaction?type=expense&accountId=${acc.id}${categoryId ? `&categoryId=${categoryId}` : ''}`
-          );
-        }}
-        onSeeAll={(acc) => {
-          setSummaryAccount(null);
-          const month =
-            cursor.granularity === 'month' ? `&month=${periodRange(cursor).start.slice(0, 7)}` : '';
-          router.navigate(`/transactions?account=${acc.id}${month}`);
-        }}
-      />
-
-      {refundTx && (
-        <TransactionDetailModal
-          tx={refundTx}
-          accounts={historyAccounts}
-          categories={categories}
-          onClose={() => setRefundTx(null)}
-          onEdit={(tx) => {
-            setRefundTx(null);
-            router.push({ pathname: '/add-transaction', params: { id: tx.id } });
-          }}
-          onChanged={() => {
-            setRefundTx(null);
-            void load(cursorRef.current);
-          }}
-        />
-      )}
-      <AccountDetailModal
-        account={editAccount}
-        onClose={() => setEditAccount(null)}
-        onChanged={async () => {
-          setEditAccount(null);
-          await load(cursor);
-        }}
-      />
-
-      <AddAccountModal
-        visible={addAccountVisible}
-        onClose={() => setAddAccountVisible(false)}
-        onCreated={async () => {
-          setAddAccountVisible(false);
-          await load(cursor);
-        }}
+        reload={reload}
       />
     </View>
   );
@@ -853,18 +492,6 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
   scroll: { flex: 1 },
   heroGap: { marginTop: 4 },
-  recent: { ...screenStyles.card, paddingHorizontal: 12 },
-  dayHead: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    columnGap: 8,
-    paddingHorizontal: 14,
-    paddingTop: 12,
-    paddingBottom: 2,
-  },
-  dayHeadDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.borderSoft },
-  dayHeadText: { ...EYEBROW, fontFamily: theme.font.bodyBold, fontSize: 11, fontVariant: ['tabular-nums'] },
   errorBanner: {
     marginHorizontal: SCREEN.gutter,
     marginTop: 16,

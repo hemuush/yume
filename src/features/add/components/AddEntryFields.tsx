@@ -1,3 +1,4 @@
+import { memo, useCallback } from 'react';
 import { View } from 'react-native';
 import { Text } from '@/components/Text';
 import { PrimaryButton } from '@/components/PrimaryButton';
@@ -10,44 +11,47 @@ import { SplitCard } from '@/features/add/SplitCard';
 import type { AddEntryModel } from '@/features/add/types/addEntryModel';
 import type { ReactElement } from 'react';
 
-type Props = {
-  model: Pick<
-    AddEntryModel,
-    | 'type'
-    | 'people'
-    | 'friendAccounts'
-    | 'personId'
-    | 'setPersonId'
-    | 'friendSign'
-    | 'setFriendSign'
-    | 'friendAccountId'
-    | 'setFriendAccountId'
-    | 'setAddPersonVisible'
-    | 'pickableAccounts'
-    | 'accounts'
-    | 'setAddAccountVisible'
-    | 'effectiveAccountId'
-    | 'toAccountId'
-    | 'pickAccount'
-    | 'setToAccountId'
-    | 'splitParts'
-    | 'amountMinor'
-    | 'filteredCategories'
-    | 'currency'
-    | 'openSplit'
-    | 'editing'
-    | 'setSplitParts'
-    | 'setError'
-    | 'usual'
-    | 'isLinked'
-    | 'categoryId'
-    | 'setCategoryId'
-    | 'setExpr'
-    | 'expr'
-    | 'setPadOpen'
-    | 'setSearchFocused'
-  >;
-};
+/** What this section of the Add page reads from the model; it is drawn again only when one of them changes. */
+export const FIELDS_KEYS = [
+  'type',
+  'people',
+  'friendAccounts',
+  'personId',
+  'setPersonId',
+  'friendSign',
+  'setFriendSign',
+  'friendAccountId',
+  'setFriendAccountId',
+  'setAddPersonVisible',
+  'pickableAccounts',
+  'accounts',
+  'setAddAccountVisible',
+  'effectiveAccountId',
+  'toAccountId',
+  'pickAccount',
+  'setToAccountId',
+  'splitParts',
+  'amountMinor',
+  'filteredCategories',
+  'currency',
+  'openSplit',
+  'editing',
+  'setSplitParts',
+  'setError',
+  'usual',
+  'isLinked',
+  'categoryId',
+  'setCategoryId',
+  'setExpr',
+  'hasAmount',
+  'setPadOpen',
+  'setSearchFocused',
+] as const satisfies readonly (keyof AddEntryModel)[];
+
+// The grid of every category is drawn again only when its own inputs change, not for each digit typed above it.
+const Picker = memo(CategoryPicker);
+
+type Props = { model: Pick<AddEntryModel, (typeof FIELDS_KEYS)[number]> };
 export function AddEntryFields({ model }: Props): ReactElement {
   const {
     type,
@@ -80,10 +84,18 @@ export function AddEntryFields({ model }: Props): ReactElement {
     categoryId,
     setCategoryId,
     setExpr,
-    expr,
+    hasAmount,
     setPadOpen,
     setSearchFocused,
   } = model;
+  const onPickCategory = useCallback(
+    (id: string) => {
+      setCategoryId(id);
+      // Amount typed: the pad folds away so the grid and Save have the room.
+      if (hasAmount) setPadOpen(false);
+    },
+    [setCategoryId, setPadOpen, hasAmount]
+  );
 
   return (
     <>
@@ -166,14 +178,10 @@ export function AddEntryFields({ model }: Props): ReactElement {
                 />
               )}
               <View style={styles.fieldCard}>
-                <CategoryPicker
+                <Picker
                   categories={filteredCategories}
                   selectedId={categoryId}
-                  onSelect={(id) => {
-                    setCategoryId(id);
-                    // Amount typed: the pad folds away so the grid and Save have the room.
-                    if (expr !== '') setPadOpen(false);
-                  }}
+                  onSelect={onPickCategory}
                   variant="medal"
                   compact
                   searchable

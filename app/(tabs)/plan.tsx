@@ -1,134 +1,35 @@
-import { MonthlyPlanCheck } from '@/features/plan/MonthlyPlanCheck';
-import { Appear } from '@/components/Appear';
-import { CONTENT_ENTER } from '@/lib/animation';
-import { investRole, investRuleTitle, investmentIdsOf } from '@/lib/investment';
-import { InvestmentsCard } from '@/features/plan/InvestmentsCard';
-import { buildPortfolio, type Portfolio } from '@/lib/portfolio';
-import { LoanComparison } from '@/features/loans/LoanComparison';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { View, Pressable, StyleSheet } from 'react-native';
-import Feather from '@expo/vector-icons/Feather';
-import { Text } from '@/components/Text';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
-import { listBudgetsForMonth } from '@/db/budgets';
-import { listSavingsGoals } from '@/db/savingsGoals';
-import { listRecurringRules } from '@/db/recurring';
-import {
-  listLoans,
-  listPendingLoanPayments,
-  getLoanProgress,
-  getLoanPaymentContext,
-  LoanPaymentContext,
-} from '@/db/loans';
-import { listPeople } from '@/db/people';
-import { listAccounts, listCategories } from '@/db/ledger';
-import { getDailyGoalStreakSeries, getCategoryMonthlyAverages } from '@/db/reports';
-import { getDailySpendingGoal, getDefaultCurrency } from '@/db/settings';
-import { usePrivacy } from '@/theme/PrivacyContext';
-import { isSavingsEntry } from '@/lib/privateSummary';
-import { recurringRulesInCurrency } from '@/lib/recurringScope';
-import { savingsAccountIdsOf } from '@/lib/account';
-import { Account, Category, Loan, SavingsGoal, RecurringRule, Transaction } from '@/types';
-import type { BudgetProgress } from '@/db/budgets';
-import type { PersonWithBalance } from '@/db/people';
-import { AddBudgetModal } from '@/features/budgets/AddBudgetModal';
-import { budgetCategories } from '@/features/budgets/budgetCategories';
-import { AddLoanModal } from '@/features/loans/AddLoanModal';
-import { RuleModal } from '@/features/recurring/RuleModal';
-import { BudgetDetailModal } from '@/features/budgets/BudgetDetailModal';
-import { LoanDetailModal } from '@/features/loans/LoanDetailModal';
-import { loanHues } from '@/features/loans/loanIdentity';
-import { PersonDetailModal } from '@/features/people/PersonDetailModal';
-import { theme } from '@/constants/theme';
-import { useTabScrollPad } from '@/lib/uiScale';
-import { addDaysToIsoDate, toLocalIsoDate } from '@/lib/date';
-import { SkyHeader, HeaderSummary } from '@/features/home/SkyHeader';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
 import ReanimatedAnimated from 'react-native-reanimated';
+import Feather from '@expo/vector-icons/Feather';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Appear } from '@/components/Appear';
+import { CardRowsSkeleton } from '@/components/ListSkeleton';
+import { PrimaryButton } from '@/components/PrimaryButton';
+import { SCREEN } from '@/components/screenStyles';
+import { Text } from '@/components/Text';
+import { theme } from '@/constants/theme';
+import { HomeWallpaper } from '@/features/home/HomeWallpaper';
+import { HeaderSummary, SkyHeader } from '@/features/home/SkyHeader';
+import { PlanDebtTab } from '@/features/plan/PlanDebtTab';
+import { PLAN_TABS as TABS, PlanNavigation, type PlanTab } from '@/features/plan/PlanNavigation';
+import { PlanMoneyTab } from '@/features/plan/PlanMoneyTab';
+import { PlanOverviewTab } from '@/features/plan/PlanOverviewTab';
+import { PlanSheets } from '@/features/plan/PlanSheets';
+import { PlanUpcomingTab } from '@/features/plan/PlanUpcomingTab';
+import type { PlanActions } from '@/features/plan/planActions';
+import { PLAN_DAYS } from '@/features/plan/planOverview';
+import { createPlanSheets } from '@/features/plan/planSheetsStore';
+import { usePlanData } from '@/features/plan/usePlanData';
+import { CONTENT_ENTER } from '@/lib/animation';
 import { useCollapsingHeader } from '@/lib/useCollapsingHeader';
 import { formatMoney } from '@/lib/money';
-import { useAccent } from '@/theme/AccentContext';
-import { HomeWallpaper } from '@/features/home/HomeWallpaper';
-import { CardRowsSkeleton } from '@/components/ListSkeleton';
-import { useScreenLoad } from '@/lib/useScreenLoad';
-import { categorySentence, parentNameOf } from '@/lib/categoryLabel';
-import { SCREEN } from '@/components/screenStyles';
-import { Section } from '@/components/Section';
-import {
-  buildLoansSummary,
-  buildDueItems,
-  buildDueSoon,
-  groupDueItems,
-  buildBudgetsSummary,
-  buildPeopleState,
-  buildHabitState,
-  PLAN_DAYS,
-  LoansSummary,
-  DueSoon,
-  DueGroup,
-  BudgetsSummary,
-  PeopleState,
-  HabitState,
-  PlanRoute,
-} from '@/features/plan/planOverview';
-import { PayInstallmentSheet } from '@/features/loans/PayInstallmentSheet';
-import { PlanPerson, PEOPLE_SHOWN } from '@/features/plan/PlanTiles';
-import { PlanPeopleHabit } from '@/features/plan/PlanPeopleHabit';
-import { PlanOverviewPanels } from '@/features/plan/PlanOverviewPanels';
-import { UpcomingDates } from '@/features/plan/UpcomingDates';
-import { RunwayCard } from '@/features/plan/RunwayCard';
-import { BudgetJars } from '@/features/plan/BudgetJars';
-import { DebtPath } from '@/features/plan/DebtPath';
-import { DebtLoans } from '@/features/plan/DebtLoans';
-import { PlanNavigation, PLAN_TABS as TABS, PlanTab } from '@/features/plan/PlanNavigation';
-import { GoalOverviewModal } from '@/features/goals/GoalOverviewModal';
-import { AddGoalModal } from '@/features/goals/AddGoalModal';
-import { GoalsStrip, WhatIfCard } from '@/features/plan/PlanGoals';
-import { buildRunway, isRunwayAccount, runwayStartMinor, transferFlow, Runway } from '@/features/plan/runway';
-import { ComingUpSection } from '@/features/plan/ComingUpSection';
-import { listCardCycles } from '@/db/cardCycles';
-import { showAlert } from '@/components/AppDialog';
-import { errorMessage } from '@/lib/errorMessage';
-import { useTabScrollToTop } from '@/lib/useTabScrollToTop';
-import { isFixedCategoryName } from '@/lib/fixedCategory';
-import { withPressed, withPressedTint } from '@/lib/pressed';
-import { ModalSheet } from '@/components/ModalSheet';
-import { PrimaryButton } from '@/components/PrimaryButton';
-import { TransactionDetailModal } from '@/features/transactions/TransactionDetailModal';
-import { PendingRefunds } from '@/features/transactions/PendingRefunds';
-import { AddAccountModal } from '@/features/profile/AddAccountModal';
+import { withPressedTint } from '@/lib/pressed';
+import { useTabScrollPad } from '@/lib/uiScale';
 import { useStacked } from '@/lib/useStacked';
-
-interface PlanData {
-  hideAmounts: boolean;
-  currency: string;
-  accounts: Account[];
-  categories: Category[];
-  budgetDetails: BudgetProgress[];
-  loanDetails: Loan[];
-  personDetails: PersonWithBalance[];
-  ruleDetails: RecurringRule[];
-  loans: LoansSummary;
-  dueSoon: DueSoon;
-  dueGroups: DueGroup[];
-  runway: Runway;
-  schedule: Runway;
-  /** Whether a bank, cash or wallet account holds the balance the runway starts from. */
-  hasAccounts: boolean;
-  /** Payment-sheet balances, by account id. */
-  balances: Record<string, number>;
-  today: string;
-  savingsAccounts: Account[];
-  budgets: BudgetsSummary;
-  people: PeopleState;
-  topPeople: PlanPerson[];
-  goals: SavingsGoal[];
-  whatIf: { categoryId: string; categoryName: string; avgMonthlyMinor: number } | null;
-  habit: HabitState | null;
-  dailyGoalMinor: number | null;
-  investments: Portfolio;
-  /** What the active SIPs add up to a month, in the default currency. */
-}
+import { useTabScrollToTop } from '@/lib/useTabScrollToTop';
+import { useAccent } from '@/theme/AccentContext';
 
 /**
  * The gap under the tabs, per tab. Each tab's first block carries its own top margin (the runway card 4, the Upcoming
@@ -142,30 +43,11 @@ export default function PlanScreen() {
   const stackTiles = useStacked();
   const insets = useSafeAreaInsets();
   const tabScrollPad = useTabScrollPad();
-  const { hideAmounts } = usePrivacy();
   const { accent, secondary } = useAccent();
-  const [creationMenu, setCreationMenu] = useState(false);
-  const [data, setData] = useState<PlanData | null>(null);
-  const request = useRef(0);
-  const paymentRequest = useRef(0);
-  const openingPayment = useRef(false);
-  const [detail, setDetail] = useState<{
-    kind:
-      | 'loan'
-      | 'budget'
-      | 'person'
-      | 'goal'
-      | 'new-goal'
-      | 'new-budget'
-      | 'new-account'
-      | 'new-rule'
-      | 'new-loan'
-      | 'rule';
-    id: string;
-  } | null>(null);
-  const [refundTx, setRefundTx] = useState<Transaction | null>(null);
   const [tab, setTab] = useState<PlanTab>('overview');
-  const [comparisonOpen, setComparisonOpen] = useState(false);
+  // Which sheet is open is kept outside React state, so opening or closing one does not redraw the page behind it.
+  const [sheets] = useState(createPlanSheets);
+  const { hideAmounts, data, scoped, version, loaded, loadError, reload } = usePlanData();
   // Home's "See all upcoming" arrives with ?tab=upcoming; the param is spent once it has picked the tab.
   const { tab: tabParam } = useLocalSearchParams<{ tab?: string }>();
   useEffect(() => {
@@ -175,259 +57,35 @@ export default function PlanScreen() {
     if (picked) setTab(picked.value);
     router.setParams({ tab: undefined });
   }, [tabParam]);
-  useFocusEffect(
-    useCallback(
-      () => () => {
-        paymentRequest.current++;
-        openingPayment.current = false;
-      },
-      []
-    )
-  );
+  // Leaving Plan drops a payment lookup still in flight.
+  useFocusEffect(useCallback(() => () => sheets.cancelPayment(), [sheets]));
+  useEffect(() => () => sheets.cancelPayment(), [sheets]);
 
-  const loadPlan = useCallback(async () => {
-    const call = ++request.current;
-    const today = toLocalIsoDate(new Date());
-    const until = addDaysToIsoDate(today, PLAN_DAYS - 1);
-    const dailyGoalRead = getDailySpendingGoal();
-    const [
-      budgets,
-      goals,
-      rules,
-      loans,
-      progress,
-      people,
-      categories,
-      accounts,
-      dailyGoal,
-      averages,
-      allCardCycles,
-      streak,
-      currency,
-      loanPayments,
-    ] = await Promise.all([
-      listBudgetsForMonth(undefined, hideAmounts),
-      listSavingsGoals(),
-      listRecurringRules(),
-      listLoans(),
-      getLoanProgress(),
-      listPeople(),
-      listCategories(true),
-      listAccounts(),
-      dailyGoalRead,
-      getCategoryMonthlyAverages(3),
-      listCardCycles(),
-      // The streak only needs the goal value, so it chains off the same read instead of waiting for the batch.
-      dailyGoalRead.then((goal) => (goal != null ? getDailyGoalStreakSeries(goal, 5) : null)),
-      getDefaultCurrency(),
-      listPendingLoanPayments(until),
-    ]);
-
-    if (call !== request.current) return;
-    const categoriesById = new Map(categories.map((c) => [c.id, c]));
-    const accountsById = new Map(accounts.map((a) => [a.id, a]));
-    // Totals and the runway are in the default currency; another currency's card bill isn't added to them.
-    const cardCycles = allCardCycles.filter((c) => accountsById.get(c.accountId)?.currency === currency);
-    const categoryLabelOf = (id: string | null) => {
-      const cat = id ? categoriesById.get(id) : undefined;
-      return cat ? categorySentence(cat.name, parentNameOf(id, categoriesById)) : undefined;
-    };
-    const savingsIds = savingsAccountIdsOf(accounts);
-    const accountName = (id: string | null) => (id ? accountsById.get(id)?.name : undefined) ?? '—';
-    const loansSummary = buildLoansSummary(loans, progress);
-    // Same label Home's Upcoming list uses for a rule.
-    const investIds = investmentIdsOf(accounts);
-    const ruleLabel = (r: (typeof rules)[number]) => {
-      const role = investRole(r, investIds);
-      if (role) return investRuleTitle(role, accountName(r.accountId), accountName(r.toAccountId));
-      return r.type === 'transfer'
-        ? `${accountName(r.accountId)} → ${accountName(r.toAccountId)}`
-        : r.note || categoryLabelOf(r.categoryId) || 'Recurring';
-    };
-    // A transfer is listed (and counted in the runway) only when it moves money you can spend.
-    const transferOf = (r: (typeof rules)[number]) => {
-      const flow = transferFlow(r, accountsById, currency);
-      if (!flow) return undefined;
-      const role = investRole(r, investIds);
-      const sub =
-        role === 'invest'
-          ? `from ${accountName(r.accountId)}`
-          : role === 'withdraw'
-            ? `to ${accountName(r.toAccountId)}`
-            : flow === 'out'
-              ? `Moving to ${accountName(r.toAccountId)}`
-              : `Coming back from ${accountName(r.accountId)}`;
-      return { flow, sub, invest: role === 'invest' || role === 'withdraw' };
-    };
-    const toRuleInput = (r: (typeof rules)[number], type: 'income' | 'expense' | 'transfer' = r.type) => ({
-      id: r.id,
-      type,
-      active: r.active,
-      nextRunDate: r.nextRunDate,
-      frequency: r.frequency,
-      intervalCount: r.intervalCount,
-      anchorDay: r.anchorDay,
-      nextAmountMinor: r.nextAmountMinor,
-      scheduledDate: r.scheduledDate,
-      endDate: r.endDate,
-      amountMinor: r.amountMinor,
-      label: ruleLabel(r),
-      ...(r.type === 'transfer' ? { transfer: transferOf(r) } : {}),
-    });
-    const visibleRules = recurringRulesInCurrency(
-      rules.filter((r) => !hideAmounts || !isSavingsEntry(r, categoriesById, savingsIds)),
-      accounts,
-      currency
-    );
-    // Every run in the fortnight Plan shows: a weekly bill is due twice in it, not once.
-    const dueItems = buildDueItems(
-      loansSummary.rows,
-      visibleRules.map((r) => toRuleInput(r)),
-      cardCycles,
-      until,
-      loanPayments
-    );
-    // The runway only moves with money in and out of bank, cash and wallets: a bill charged to a card waits for
-    // the card's own bill, and a transfer counts when it crosses in or out of those accounts (a SIP to an
-    // investment account goes out; a sweep from savings comes in).
-    const runwayIds = new Set(accounts.filter((a) => isRunwayAccount(a, currency)).map((a) => a.id));
-    const runwayRules = visibleRules.flatMap((r) => {
-      if (r.type === 'transfer') {
-        const flow = transferFlow(r, accountsById, currency);
-        return flow ? [toRuleInput(r, flow === 'out' ? 'expense' : 'income')] : [];
-      }
-      return runwayIds.has(r.accountId) ? [toRuleInput(r)] : [];
-    });
-    const runwayItems = buildDueItems(loansSummary.rows, runwayRules, cardCycles, until, loanPayments);
-    // The top-spend category (sorted biggest first) a cut could apply to: not a built-in like Loan EMI, which the
-    // app files automatically, nor rent, insurance or a subscription — "spend 10% less on your rent" isn't a real
-    // choice. The same fixed list Reports counts as "already spoken for".
-    const top = averages.find(
-      (c) =>
-        c.totalMinor > 0 &&
-        !(hideAmounts && c.isSensitive) &&
-        !categoriesById.get(c.categoryId)?.isSystem &&
-        !isFixedCategoryName(c.name)
-    );
-
-    const investments = buildPortfolio(accounts, currency, today);
-    setData({
-      investments,
-      hideAmounts,
-      currency,
-      accounts,
-      categories,
-      budgetDetails: budgets,
-      loanDetails: loans,
-      personDetails: people,
-      ruleDetails: visibleRules,
-      loans: loansSummary,
-      dueSoon: buildDueSoon(dueItems, today, PLAN_DAYS),
-      dueGroups: groupDueItems(dueItems, today, PLAN_DAYS),
-      schedule: buildRunway(0, dueItems, today, PLAN_DAYS),
-      runway: buildRunway(runwayStartMinor(accounts, currency), runwayItems, today, PLAN_DAYS),
-      hasAccounts: accounts.some((a) => isRunwayAccount(a, currency)),
-      // A savings balance stays hidden in privacy mode, so the pay sheet doesn't show it either.
-      balances: Object.fromEntries(
-        accounts
-          .filter((a) => !(hideAmounts && a.type === 'savings'))
-          .map((a) => [a.id, a.currentBalanceMinor])
-      ),
-      today,
-      savingsAccounts: accounts.filter((a) => a.type === 'savings' && !a.archived),
-      budgets: buildBudgetsSummary(
-        budgets.map((b) => ({
-          id: b.budget.id,
-          categoryName: categorySentence(b.categoryName, b.parentName),
-          categoryIcon: b.categoryIcon,
-          categoryColor: b.categoryColor,
-          spentMinor: b.spentMinor,
-          effectiveLimitMinor: b.effectiveLimitMinor,
-          categoryId: b.budget.categoryId,
-          parentCategoryId: b.parentCategoryId,
-          remainingMinor: b.remainingMinor,
-          percentUsed: b.percentUsed,
-          overBudget: b.overBudget,
-        }))
-      ),
-      people: buildPeopleState(people),
-      topPeople: [...people]
-        .filter((p) => p.balanceMinor !== 0)
-        .sort((a, b) => Math.abs(b.balanceMinor) - Math.abs(a.balanceMinor))
-        .slice(0, PEOPLE_SHOWN)
-        .map((p) => ({ id: p.id, name: p.name, balanceMinor: p.balanceMinor })),
-      goals,
-      whatIf: top
-        ? { categoryId: top.categoryId, categoryName: top.name, avgMonthlyMinor: top.totalMinor }
-        : null,
-      habit: streak ? buildHabitState(streak) : null,
-      dailyGoalMinor: dailyGoal,
-    });
-  }, [hideAmounts]);
-  // Time changes the 14-day window even when nobody writes to the ledger.
-  const { loaded, loadError, reload } = useScreenLoad(loadPlan);
-  useEffect(
-    () => () => {
-      request.current++;
-      paymentRequest.current++;
-    },
-    []
-  );
-  // The EMI being paid from Coming up, with the account and category it goes on.
-  const [paying, setPaying] = useState<LoanPaymentContext | null>(null);
-  const payEmi = async (loanId: string) => {
-    if (openingPayment.current) return;
-    openingPayment.current = true;
-    const ticket = ++paymentRequest.current;
-    setDetail(null);
-    setRefundTx(null);
-    try {
-      const context = await getLoanPaymentContext(loanId);
-      if (ticket !== paymentRequest.current) return;
-      if (context) setPaying(context);
-      else showAlert('Nothing to pay', 'This loan has no installment due right now.');
-    } catch (e) {
-      if (ticket === paymentRequest.current) showAlert('Couldn’t open the payment', errorMessage(e));
-    } finally {
-      if (ticket === paymentRequest.current) openingPayment.current = false;
-    }
-  };
-  const openDetail = (kind: NonNullable<typeof detail>['kind'], id: string) => {
-    // A slow earlier Pay lookup must not cover a detail the user opened more recently.
-    paymentRequest.current++;
-    openingPayment.current = false;
-    setPaying(null);
-    setRefundTx(null);
-    setDetail({ kind, id });
-  };
-  const open = (route: PlanRoute) => router.push(route);
   // The header shrinks as the page scrolls.
   const { collapse, headerHeight, scrollHandler, scrollRef } = useCollapsingHeader();
   useTabScrollToTop(scrollRef);
-  const selectTab = (next: PlanTab) => {
-    setTab(next);
-    scrollRef.current?.scrollTo({ y: 0, animated: false });
-  };
-
-  const scoped = data?.hideAmounts === hideAmounts ? data : null;
-  // The same colour a loan has on Loans, by its place among the borrowed ones.
-  const loanHuesById = loanHues(data?.loanDetails ?? []);
-  const selectedLoan =
-    detail?.kind === 'loan'
-      ? scoped?.loanDetails.find((l) => l.id === detail.id && l.status !== 'closed')
-      : undefined;
-  const selectedBudget =
-    detail?.kind === 'budget' ? scoped?.budgetDetails.find((b) => b.budget.id === detail.id) : undefined;
-  const selectedPerson =
-    detail?.kind === 'person' ? scoped?.personDetails.find((p) => p.id === detail.id) : undefined;
-  const selectedRule =
-    detail?.kind === 'rule' ? scoped?.ruleDetails.find((r) => r.id === detail.id) : undefined;
-  const selectedGoal =
-    detail?.kind === 'goal' ? scoped?.goals.find((g) => g.id === detail.id && !g.archived) : undefined;
-  useEffect(() => {
-    if (scoped && ((detail?.kind === 'goal' && !selectedGoal) || (detail?.kind === 'rule' && !selectedRule)))
-      setDetail(null);
-  }, [detail, scoped, selectedGoal, selectedRule]);
+  const selectTab = useCallback(
+    (next: PlanTab) => {
+      setTab(next);
+      scrollRef.current?.scrollTo({ y: 0, animated: false });
+    },
+    [scrollRef]
+  );
+  // What the parts of the page can do, as one object that keeps its identity: they compare their props, and are drawn
+  // again only for what they show.
+  const actions = useMemo<PlanActions>(
+    () => ({
+      open: (route) => router.push(route),
+      openDetail: sheets.openDetail,
+      selectTab,
+      payEmi: (loanId) => void sheets.payEmi(loanId),
+      openRefund: sheets.openRefund,
+      openComparison: sheets.openComparison,
+    }),
+    [sheets, selectTab]
+  );
+  // The pending refunds and the plan check read their own data again after each load of the page.
+  const refreshToken = useMemo(() => ({ version }), [version]);
 
   return (
     <View style={styles.container}>
@@ -457,7 +115,7 @@ export default function PlanScreen() {
             <PlanNavigation value={tab} onChange={selectTab} stacked={stackTiles} />
           </View>
         )}
-        {!loaded || !data || data.hideAmounts !== hideAmounts ? (
+        {!loaded || !scoped ? (
           loadError ? null : (
             <View style={{ gap: SCREEN.sectionGap }}>
               <CardRowsSkeleton rows={3} meter />
@@ -465,212 +123,26 @@ export default function PlanScreen() {
             </View>
           )
         ) : (
-          <>
-            <ReanimatedAnimated.View key={tab} entering={CONTENT_ENTER}>
-              {tab === 'overview' && (
-                <RunwayCard
-                  compact
-                  onViewPayments={() => selectTab('upcoming')}
-                  dueSoon={data.dueSoon}
-                  runway={data.runway}
-                  hasAccounts={data.hasAccounts}
-                  days={PLAN_DAYS}
-                  onAddAccount={() => openDetail('new-account', '')}
-                />
-              )}
-              {tab === 'overview' && (
-                <>
-                  <PlanOverviewPanels
-                    budgets={data.budgets}
-                    groups={data.dueGroups}
-                    loans={data.loans}
-                    goals={data.goals}
-                    today={data.today}
-                    hideAmounts={hideAmounts}
-                    runway={data.hasAccounts ? data.runway : undefined}
-                    investments={data.investments}
-                    onInvestments={() => open('/investments')}
-                    onTab={selectTab}
-                    onBudget={(id) => openDetail('budget', id)}
-                  />
-                  <View style={{ marginHorizontal: 16 }}>
-                    <PendingRefunds
-                      summaryOnly
-                      refreshToken={data}
-                      onOpen={(tx) => {
-                        paymentRequest.current++;
-                        openingPayment.current = false;
-                        setPaying(null);
-                        setDetail(null);
-                        setRefundTx(tx);
-                      }}
-                    />
-                  </View>
-                  <Section compact title="People & habit">
-                    <PlanPeopleHabit
-                      people={data.people}
-                      topPeople={data.topPeople}
-                      habit={data.habit}
-                      goalMinor={data.dailyGoalMinor}
-                      onPeople={() => open('/people')}
-                      onPerson={(id) => openDetail('person', id)}
-                      onGarden={() => open('/garden')}
-                    />
-                  </Section>
-                </>
-              )}
-              {tab === 'upcoming' && (
-                <Section
-                  compact
-                  first
-                  title="Upcoming payments"
-                  // One short line: beside "Manage recurring" it has about 190 dp on a 360 dp phone, and the rows say what each is.
-                  subtitle={`Next ${PLAN_DAYS} days`}
-                  actionLabel="Manage recurring"
-                  onSeeAll={() => open('/recurring')}
-                >
-                  <UpcomingDates
-                    runway={data.schedule}
-                    today={data.today}
-                    renderDays={(days, mode) => (
-                      <ComingUpSection
-                        flow={mode === 'income' ? 'in' : 'out'}
-                        groups={days.map((day) => ({
-                          date: day.date,
-                          outMinor: mode === 'income' ? day.inMinor : day.outMinor,
-                          items: day.items.filter((item) =>
-                            mode === 'income'
-                              ? item.kind === 'income' || item.transfer?.flow === 'in'
-                              : item.kind === 'emi' || item.kind === 'bill' || item.transfer?.flow === 'out'
-                          ),
-                        }))}
-                        today={data.today}
-                        onOpen={open}
-                        onPay={(id) => void payEmi(id)}
-                        onLoan={(id) => openDetail('loan', id)}
-                        onRule={(id) => openDetail('rule', id)}
-                      />
-                    )}
-                  />
-                </Section>
-              )}
-              {tab === 'money' && (
-                <>
-                  <MonthlyPlanCheck
-                    refreshToken={data}
-                    currency={data.currency}
-                    hidden={hideAmounts}
-                    input={{
-                      categories: data.categories,
-                      accounts: data.accounts,
-                      rules: data.ruleDetails,
-                      budgets: data.budgetDetails.map((b) => ({
-                        categoryId: b.budget.categoryId,
-                        limitMinor: b.effectiveLimitMinor,
-                      })),
-                      goals: data.goals,
-                      loans: data.loans.rows,
-                      today: data.today,
-                    }}
-                  />
-                  <Section
-                    compact
-                    first
-                    title="Budgets"
-                    actionLabel="Manage budgets"
-                    onSeeAll={() => open('/budgets')}
-                  >
-                    <BudgetJars
-                      hideAdd
-                      summary={data.budgets}
-                      onOpen={() => open('/budgets')}
-                      onBudget={(id) => openDetail('budget', id)}
-                      onAdd={() => openDetail('new-budget', '')}
-                      limit={data.budgets.rows.length + 1}
-                    />
-                  </Section>
-                  <Section
-                    compact
-                    title="Goals"
-                    actionLabel="Manage goals"
-                    onSeeAll={() => open('/savings-goals')}
-                  >
-                    <GoalsStrip
-                      hideAdd
-                      goals={data.goals}
-                      savingsAccounts={data.savingsAccounts}
-                      onOpen={() => open('/savings-goals')}
-                      onGoal={(id) => openDetail('goal', id)}
-                      onAdd={() => openDetail('new-goal', '')}
-                      limit={data.goals.length + 1}
-                    />
-                  </Section>
-                  <Section compact title="More">
-                    <InvestmentsCard
-                      portfolio={data.investments}
-                      onOpen={() => open('/investments')}
-                      extraTile={
-                        <WhatIfCard
-                          key="what-if"
-                          whatIf={data.whatIf}
-                          onOpen={(cut) =>
-                            data.whatIf
-                              ? router.push({
-                                  pathname: '/whatif',
-                                  params: { category: data.whatIf.categoryId, cut: String(cut) },
-                                })
-                              : open('/whatif')
-                          }
-                        />
-                      }
-                    />
-                  </Section>
-                </>
-              )}
-              {tab === 'debt' && (
-                <>
-                  <View style={{ marginTop: 4 }}>
-                    <DebtPath
-                      loans={data.loans}
-                      today={data.today}
-                      hues={loanHuesById}
-                      onOpen={() => open('/loans')}
-                      onAdd={data.loans.rows.length === 0 ? () => openDetail('new-loan', '') : undefined}
-                      onCompare={
-                        data.loans.rows.filter((loan) => loan.direction === 'borrowed').length >= 2
-                          ? () => setComparisonOpen(true)
-                          : undefined
-                      }
-                    />
-                  </View>
-                  {data.loans.rows.some((loan) => loan.direction === 'borrowed') && (
-                    <Section compact title="Loans" onSeeAll={() => open('/loans')}>
-                      <DebtLoans
-                        hues={loanHuesById}
-                        loans={{
-                          ...data.loans,
-                          rows: data.loans.rows.filter((loan) => loan.direction === 'borrowed'),
-                        }}
-                        onLoan={(id) => openDetail('loan', id)}
-                      />
-                    </Section>
-                  )}
-                  {data.loans.rows.some((loan) => loan.direction === 'lent') && (
-                    <Section compact title="Money lent" onSeeAll={() => open('/loans')}>
-                      <DebtLoans
-                        hues={loanHuesById}
-                        loans={{
-                          ...data.loans,
-                          rows: data.loans.rows.filter((loan) => loan.direction === 'lent'),
-                        }}
-                        onLoan={(id) => openDetail('loan', id)}
-                      />
-                    </Section>
-                  )}
-                </>
-              )}
-            </ReanimatedAnimated.View>
-          </>
+          <ReanimatedAnimated.View key={tab} entering={CONTENT_ENTER}>
+            {tab === 'overview' && (
+              <PlanOverviewTab
+                data={scoped}
+                refreshToken={refreshToken}
+                hideAmounts={hideAmounts}
+                actions={actions}
+              />
+            )}
+            {tab === 'upcoming' && <PlanUpcomingTab data={scoped} actions={actions} />}
+            {tab === 'money' && (
+              <PlanMoneyTab
+                data={scoped}
+                refreshToken={refreshToken}
+                hideAmounts={hideAmounts}
+                actions={actions}
+              />
+            )}
+            {tab === 'debt' && <PlanDebtTab data={scoped} actions={actions} />}
+          </ReanimatedAnimated.View>
         )}
       </ReanimatedAnimated.ScrollView>
       <SkyHeader
@@ -681,7 +153,7 @@ export default function PlanScreen() {
             accessibilityLabel="Add to your plan"
             disabled={!scoped}
             accessibilityState={{ disabled: !scoped }}
-            onPress={() => setCreationMenu(true)}
+            onPress={sheets.openMenu}
             style={withPressedTint(accent, styles.addPlan)}
           >
             <Feather name="plus" size={16} color={theme.colors.textPrimary} />
@@ -691,206 +163,16 @@ export default function PlanScreen() {
         collapse={collapse}
         wallpaper
         summary={
-          data && data.hideAmounts === hideAmounts && data.dueSoon.count > 0 ? (
+          scoped && scoped.dueSoon.count > 0 ? (
             <HeaderSummary
-              figure={formatMoney(data.dueSoon.totalMinor)}
+              figure={formatMoney(scoped.dueSoon.totalMinor)}
               rest={`due in ${PLAN_DAYS} days`}
               dot={theme.colors.slice.due}
             />
           ) : undefined
         }
       />
-      {scoped && (
-        <LoanComparison
-          refreshToken={scoped}
-          visible={comparisonOpen}
-          hidden={hideAmounts}
-          currency={scoped.currency}
-          loans={scoped.loans.rows.filter((loan) => loan.direction === 'borrowed')}
-          onClose={() => setComparisonOpen(false)}
-          onOpenLoan={(id) => {
-            setComparisonOpen(false);
-            openDetail('loan', id);
-          }}
-        />
-      )}
-      {creationMenu && scoped && (
-        <ModalSheet
-          visible
-          title="Add to your plan"
-          subtitle="Give your next commitment a place."
-          onClose={() => setCreationMenu(false)}
-        >
-          {(
-            [
-              ['new-rule', 'Add recurring', 'Bills, subscriptions or income', 'repeat'],
-              ['new-loan', 'Add loan', 'Track borrowing or lending', 'plus'],
-              ['new-budget', 'Add budget', 'Set a category spending limit', 'pie-chart'],
-              ['new-goal', 'Add goal', 'Save for something important', 'flag'],
-            ] as const
-          ).map(([kind, label, description, icon]) => (
-            <Pressable
-              key={kind}
-              accessibilityRole="button"
-              accessibilityLabel={label}
-              onPress={() => {
-                setCreationMenu(false);
-                openDetail(kind, '');
-              }}
-              style={withPressed(styles.menuRow)}
-            >
-              <Feather name={icon} size={20} color={theme.colors.link} />
-              <View style={{ flex: 1, gap: 4 }}>
-                <Text style={styles.menuTitle}>{label}</Text>
-                <Text style={styles.menuDescription}>{description}</Text>
-              </View>
-              <Feather name="chevron-right" size={16} color={theme.colors.textMuted} />
-            </Pressable>
-          ))}
-        </ModalSheet>
-      )}
-      {detail?.kind === 'new-account' && scoped && (
-        <AddAccountModal
-          visible
-          onClose={() => setDetail(null)}
-          onCreated={() => {
-            setDetail(null);
-            void reload();
-          }}
-        />
-      )}
-      {detail?.kind === 'new-loan' && scoped && (
-        <AddLoanModal
-          visible
-          onClose={() => setDetail(null)}
-          onCreated={() => {
-            setDetail(null);
-            void reload();
-          }}
-        />
-      )}
-      {selectedLoan && scoped && (
-        <LoanDetailModal
-          key={selectedLoan.id}
-          loan={selectedLoan}
-          hue={loanHues(scoped.loanDetails)[selectedLoan.id]}
-          onClose={() => setDetail(null)}
-          onChanged={() => void reload()}
-        />
-      )}
-      {selectedBudget && scoped && (
-        <BudgetDetailModal
-          key={selectedBudget.budget.id}
-          progress={selectedBudget}
-          accounts={scoped.accounts}
-          categories={scoped.categories}
-          currency={scoped.currency}
-          onClose={() => setDetail(null)}
-          onChanged={() => void reload()}
-        />
-      )}
-      {selectedPerson && (
-        <PersonDetailModal
-          key={selectedPerson.id}
-          person={selectedPerson}
-          initialTab="history"
-          onClose={() => setDetail(null)}
-          onChanged={() => void reload()}
-        />
-      )}
-      {selectedGoal && scoped && (
-        <GoalOverviewModal
-          key={selectedGoal.id}
-          goal={selectedGoal}
-          accounts={scoped.accounts}
-          onClose={() => setDetail(null)}
-          onChanged={() => void reload()}
-          onMoveMoney={(accountId) => {
-            setDetail(null);
-            router.push({
-              pathname: '/add-transaction',
-              params: { type: 'transfer', toAccountId: accountId },
-            });
-          }}
-        />
-      )}
-      {detail?.kind === 'new-goal' && scoped && (
-        <AddGoalModal
-          visible
-          accounts={scoped.accounts}
-          onClose={() => setDetail(null)}
-          onCreated={() => {
-            setDetail(null);
-            void reload();
-          }}
-        />
-      )}
-      {detail?.kind === 'new-budget' && scoped && (
-        <AddBudgetModal
-          visible
-          editing={null}
-          categories={budgetCategories(scoped.categories, hideAmounts)}
-          budgetedCategoryIds={new Set(scoped.budgetDetails.map((b) => b.budget.categoryId))}
-          onClose={() => setDetail(null)}
-          onSaved={() => {
-            setDetail(null);
-            void reload();
-          }}
-        />
-      )}
-      {(selectedRule || detail?.kind === 'new-rule') && scoped && (
-        <RuleModal
-          key={selectedRule?.id ?? 'new-rule'}
-          visible
-          editing={selectedRule ?? null}
-          accounts={scoped.accounts}
-          categories={scoped.categories}
-          onClose={() => setDetail(null)}
-          onSaved={() => {
-            setDetail(null);
-            void reload();
-          }}
-          onDeleted={() => {
-            setDetail(null);
-            void reload();
-          }}
-        />
-      )}
-      {refundTx && scoped && (
-        <TransactionDetailModal
-          key={refundTx.id}
-          tx={refundTx}
-          accounts={scoped.accounts}
-          categories={scoped.categories}
-          onClose={() => setRefundTx(null)}
-          onEdit={(tx) => {
-            setRefundTx(null);
-            router.push({ pathname: '/add-transaction', params: { id: tx.id } });
-          }}
-          onChanged={() => {
-            setRefundTx(null);
-            void reload();
-          }}
-        />
-      )}
-      {paying && (
-        <PayInstallmentSheet
-          installment={paying.installment}
-          direction={paying.direction}
-          account={paying.account}
-          categoryId={paying.categoryId}
-          linkedAccountMissing={paying.linkedAccountMissing}
-          balanceMinor={
-            paying.account
-              ? data?.hideAmounts === hideAmounts
-                ? data.balances[paying.account.id]
-                : undefined
-              : undefined
-          }
-          onClose={() => setPaying(null)}
-          onPaid={reload}
-        />
-      )}
+      <PlanSheets sheets={sheets} data={scoped} hideAmounts={hideAmounts} reload={reload} />
     </View>
   );
 }
@@ -905,9 +187,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 5,
   },
-  menuRow: { minHeight: 68, paddingVertical: 12, flexDirection: 'row', alignItems: 'center', gap: 14 },
-  menuTitle: { fontFamily: theme.font.bodyMedium, fontSize: 15, color: theme.colors.textPrimary },
-  menuDescription: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
   tabs: { marginHorizontal: 16, marginTop: theme.layout.screenTopGap, marginBottom: SCREEN.sectionGap },
   headLinkText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.link },
   container: { flex: 1, backgroundColor: theme.colors.background },

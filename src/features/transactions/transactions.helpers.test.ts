@@ -11,6 +11,7 @@ import {
   emptyPeriodTitle,
   searchDayLabel,
   entryDateLabel,
+  searchSuggestionsFor,
 } from './transactions.helpers';
 import { dayMonth, dayMonthYear, weekdayDayMonth, weekdayDayMonthYear } from '@/lib/dateLabels';
 import { toLocalIsoDate } from '@/lib/date';
@@ -254,5 +255,59 @@ describe('entryDateLabel', () => {
     expect(entryDateLabel('2026-03-04', today)).toBe(weekdayDayMonth('2026-03-04'));
     expect(entryDateLabel('2024-03-04', today)).toBe(weekdayDayMonthYear('2024-03-04'));
     expect(entryDateLabel('2024-03-04', today)).toContain('2024');
+  });
+});
+
+describe('searchSuggestionsFor', () => {
+  const cats = new Map<string, Category>([
+    ['food', { id: 'food', name: 'Food', kind: 'expense' } as Category],
+    ['travel', { id: 'travel', name: 'Travel', kind: 'expense' } as Category],
+    ['rent', { id: 'rent', name: 'Rent', kind: 'expense' } as Category],
+  ]);
+  const entry = (
+    id: string,
+    categoryId: string | null,
+    amountMinor: number,
+    type = 'expense',
+    date = '2026-09-25'
+  ) => ({ id, type, categoryId, amountMinor, date, accountId: 'bank' }) as Transaction;
+  const none = new Set<string>();
+
+  it('offers the first two categories seen, an amount, and the newest day', () => {
+    const rows = [
+      entry('a', 'food', 25000),
+      entry('b', 'travel', 9000),
+      entry('c', 'food', 100),
+      entry('d', 'rent', 5),
+    ];
+    expect(searchSuggestionsFor(rows, cats, none)).toEqual(['Food', 'Travel', '250', dayMonth('2026-09-25')]);
+  });
+
+  it('names each category once, and leaves out an amount too short to search for', () => {
+    // 4.00 rounds to "4": under the two-character minimum, so the chip would do nothing.
+    const rows = [entry('a', 'food', 400), entry('b', 'food', 900)];
+    expect(searchSuggestionsFor(rows, cats, none)).toEqual(['Food', dayMonth('2026-09-25')]);
+  });
+
+  it('takes its amount from spending, never from income or from a sensitive category like savings', () => {
+    const withSavings = new Map(cats).set('save', {
+      id: 'save',
+      name: 'Savings',
+      kind: 'expense',
+      isSensitive: true,
+    } as Category);
+    const rows = [
+      entry('pay', 'food', 5000000, 'income'),
+      entry('save', 'save', 7700000),
+      entry('shop', 'travel', 12300),
+    ];
+    const suggested = searchSuggestionsFor(rows, withSavings, none);
+    expect(suggested).toContain('123');
+    expect(suggested).not.toContain('77000');
+    expect(suggested).not.toContain('50000');
+  });
+
+  it('has nothing to suggest from an empty period', () => {
+    expect(searchSuggestionsFor([], cats, none)).toEqual([]);
   });
 });

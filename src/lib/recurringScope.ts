@@ -3,7 +3,7 @@ import type { Account, RecurringRule } from '@/types';
 /** Default-currency summaries never convert or add money from other denominations. */
 export function recurringRulesInCurrency(
   rules: RecurringRule[],
-  accounts: Account[],
+  accounts: Pick<Account, 'id' | 'currency'>[],
   currency: string
 ): RecurringRule[] {
   const ids = new Set(accounts.filter((a) => a.currency === currency).map((a) => a.id));

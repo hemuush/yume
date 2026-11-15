@@ -4,28 +4,28 @@ import { AmountCard } from '@/features/add/AddSections';
 import type { AddEntryModel } from '@/features/add/types/addEntryModel';
 import type { ReactElement } from 'react';
 
-type Props = {
-  model: Pick<
-    AddEntryModel,
-    | 'type'
-    | 'refund'
-    | 'currency'
-    | 'expr'
-    | 'sum'
-    | 'shownAmount'
-    | 'padVisible'
-    | 'isLinked'
-    | 'setSearchFocused'
-    | 'setNoteEditing'
-    | 'setPadOpen'
-    | 'setError'
-    | 'invalidAmount'
-    | 'roundingNote'
-    | 'frequentAmounts'
-    | 'amountMinor'
-    | 'setExpr'
-  >;
-};
+/** What this section of the Add page reads from the model; it is drawn again only when one of them changes. */
+export const AMOUNT_KEYS = [
+  'type',
+  'refund',
+  'currency',
+  'expr',
+  'sum',
+  'shownAmount',
+  'padVisible',
+  'isLinked',
+  'setSearchFocused',
+  'setNoteEditing',
+  'setPadOpen',
+  'setError',
+  'invalidAmount',
+  'roundingNote',
+  'frequentAmounts',
+  'amountMinor',
+  'setExpr',
+] as const satisfies readonly (keyof AddEntryModel)[];
+
+type Props = { model: Pick<AddEntryModel, (typeof AMOUNT_KEYS)[number]> };
 export function AddEntryAmount({ model }: Props): ReactElement {
   const {
     type,

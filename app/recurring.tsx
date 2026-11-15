@@ -1,52 +1,39 @@
 import { ScreenLoadError } from '@/components/ScreenLoadError';
 import { Appear } from '@/components/Appear';
 import { LoadFade } from '@/components/LoadFade';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { memo, useMemo, useState } from 'react';
 import { View } from 'react-native';
 import { Text } from '@/components/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { listRecurringRules, setRecurringRuleActive } from '@/db/recurring';
-import { listAccounts, listCategories } from '@/db/ledger';
-import {
-  getDefaultCurrency,
-  getHiddenSubscriptionSuggestions,
-  hideSubscriptionSuggestion,
-} from '@/db/settings';
-import { getSubscriptionSuggestions, subscriptionTotals, SubscriptionSuggestion } from '@/db/subscriptions';
 import { RecurringHero } from '@/features/recurring/RecurringHero';
+import { RecurringSheets } from '@/features/recurring/RecurringSheets';
+import { RuleListItem } from '@/features/recurring/RuleListItem';
 import { SuggestionsList } from '@/features/recurring/SuggestionsList';
 import { SectionHead } from '@/features/recurring/SectionHead';
-import { costShares, sortRunning, runMarks } from '@/features/recurring/recurring.helpers';
+import { createRecurringSheets } from '@/features/recurring/recurringSheetsStore';
+import { useRecurringData } from '@/features/recurring/useRecurringData';
+import { useRecurringModel } from '@/features/recurring/useRecurringModel';
+import { useRuleActions } from '@/features/recurring/useRuleActions';
 import { ListCard } from '@/components/SummaryCard';
 import { SummarySkeleton } from '@/components/ListSkeleton';
 import { HomeWallpaper } from '@/features/home/HomeWallpaper';
 import { useAccent } from '@/theme/AccentContext';
-import { nextMonthlyDateAfter, toLocalIsoDate } from '@/lib/date';
-import { Account, Category, RecurringRule } from '@/types';
 import { SkyHeader, HeaderSummary } from '@/features/home/SkyHeader';
 import ReanimatedAnimated from 'react-native-reanimated';
 import { formatMoney } from '@/lib/money';
 import { useCollapsingHeader } from '@/lib/useCollapsingHeader';
-import { useScreenLoad } from '@/lib/useScreenLoad';
 import { AddButton } from '@/components/AddButton';
 import { EmptyState } from '@/components/EmptyState';
 import { theme } from '@/constants/theme';
 import { styles } from '@/features/recurring/recurring.styles';
-import { RuleRow } from '@/features/recurring/RuleRow';
-import { RuleModal } from '@/features/recurring/RuleModal';
 import { Skeleton } from '@/components/Skeleton';
 import { PrimaryButton } from '@/components/PrimaryButton';
-import { AddAccountModal } from '@/features/profile/AddAccountModal';
 import { usePrivacy } from '@/theme/PrivacyContext';
-import { isSavingsEntry } from '@/lib/privateSummary';
-import { recurringRulesInCurrency } from '@/lib/recurringScope';
-import { savingsAccountIdsOf } from '@/lib/account';
-import { investRole, investmentIdsOf } from '@/lib/investment';
 import { parentNameOf } from '@/lib/categoryLabel';
-import { ModalSheet } from '@/components/ModalSheet';
-import { weekdayDayMonth } from '@/lib/dateLabels';
-import { errorMessage } from '@/lib/errorMessage';
-import { showAlert } from '@/components/AppDialog';
+
+// The hero and the suggestions compare their props by identity: they are drawn again only when what they show changes.
+const Hero = memo(RecurringHero);
+const Suggestions = memo(SuggestionsList);
 
 /**
  * Rent, subscriptions, salary: rules caught up on app open (runDueRecurringRules, src/db/recurring.ts, via
@@ -55,110 +42,57 @@ import { showAlert } from '@/components/AppDialog';
 export default function RecurringScreen() {
   const insets = useSafeAreaInsets();
   const { accent, secondary } = useAccent();
-  const todayIso = toLocalIsoDate(new Date());
   // The header sits over the page and shrinks as it scrolls.
   const { collapse, headerHeight, scrollHandler, scrollRef } = useCollapsingHeader();
-  const [rules, setRules] = useState<RecurringRule[]>([]);
-  const [accounts, setAccounts] = useState<Account[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [currency, setCurrency] = useState('INR');
-  const [modalVisible, setModalVisible] = useState(false);
-  const [editingRule, setEditingRule] = useState<RecurringRule | null>(null);
-  const [suggestions, setSuggestions] = useState<SubscriptionSuggestion[]>([]);
-  // "Make recurring" on a suggestion: the rule form, filled in from it.
-  const [fromSuggestion, setFromSuggestion] = useState<SubscriptionSuggestion | null>(null);
-  const [addAccountVisible, setAddAccountVisible] = useState(false);
-  const [selectedRunDate, setSelectedRunDate] = useState<string | null>(null);
-
-  const pendingPause = useRef(new Set<string>());
-  const [busyRuleIds, setBusyRuleIds] = useState<Set<string>>(new Set());
-
-  const loadRules = useCallback(async () => {
-    const [r, allAccs, cats, hidden, defaultCurrency] = await Promise.all([
-      listRecurringRules(),
-      listAccounts(true),
-      listCategories(true),
-      getHiddenSubscriptionSuggestions(),
-      getDefaultCurrency(),
-    ]);
-    // Archived accounts stay out, except one a rule still uses: editing that rule must keep it there, not
-    // quietly move it to whichever account comes first.
-    const inUse = new Set(r.flatMap((rule) => [rule.accountId, rule.toAccountId]));
-    const accs = allAccs.filter((a) => !a.archived || inUse.has(a.id));
-    setRules(r);
-    // A suggestion is a nicety — if it fails, the rules still show.
-    setSuggestions(await getSubscriptionSuggestions(hidden).catch(() => []));
-    setAccounts(accs);
-    setCategories(cats);
-    setCurrency(defaultCurrency);
-  }, []);
-  // `loaded` keeps "Add an account first" (an `accounts.length === 0` check)
-  // from flashing on every cold open before the DB has answered.
-  const { loaded, hasData, loadError, reload: load } = useScreenLoad(loadRules);
-
-  const { hideAmounts } = usePrivacy();
-  const categoriesById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
-  const savingsIds = useMemo(() => savingsAccountIdsOf(accounts), [accounts]);
-  const investIds = useMemo(() => investmentIdsOf(accounts), [accounts]);
-  const isHidden = (r: RecurringRule) => hideAmounts && isSavingsEntry(r, categoriesById, savingsIds);
-  const accountName = (id: string) => accounts.find((a) => a.id === id)?.name ?? '—';
-
-  const activeRules = useMemo(() => sortRunning(rules.filter((r) => r.active)), [rules]);
-  const pausedRules = rules.filter((r) => !r.active);
-  const visibleRules = recurringRulesInCurrency(
-    rules.filter((r) => !isHidden(r)),
+  // Which sheet is open is kept outside React state, so opening or closing one does not redraw the page behind it.
+  const [sheets] = useState(createRecurringSheets);
+  const {
+    rules,
     accounts,
-    currency
+    categories,
+    suggestions,
+    currency,
+    today,
+    // `loaded` keeps "Add an account first" (an `accounts.length === 0` check) from flashing on every cold open before
+    // the DB has answered.
+    loaded,
+    hasData,
+    loadError,
+    reload: load,
+    setRuleActive,
+    dropSuggestion,
+  } = useRecurringData();
+  const { hideAmounts } = usePrivacy();
+  const model = useRecurringModel({ rules, accounts, categories, currency, today }, hideAmounts);
+  const { busyRuleIds, togglePause, hideSuggestion } = useRuleActions({
+    reload: load,
+    setRuleActive,
+    dropSuggestion,
+  });
+  // A savings or investment charge (an SIP) shows its amount: left out while those are hidden.
+  const shownSuggestions = useMemo(
+    () => (hideAmounts ? suggestions.filter((s) => !s.isSensitive) : suggestions),
+    [hideAmounts, suggestions]
   );
-  const shares = costShares(visibleRules, categoriesById);
-  const nextDate = visibleRules
-    .filter((r) => r.active)
-    .reduce<string | null>((min, r) => (min === null || r.nextRunDate < min ? r.nextRunDate : min), null);
+  const { activeRules, pausedRules, categoriesById, masked, investIds, accountName, accountCurrency } = model;
 
-  // Memoized: the form resets whenever its prefill changes identity, so a
-  // fresh object each render would wipe whatever was typed.
-  const rulePrefill = useMemo(
-    () =>
-      fromSuggestion
-        ? {
-            type: 'expense' as const,
-            accountId: fromSuggestion.accountId,
-            toAccountId: null,
-            categoryId: fromSuggestion.categoryId,
-            amountMinor: fromSuggestion.amountMinor,
-            note: fromSuggestion.note,
-            nextRunDate: nextMonthlyDateAfter(fromSuggestion.date, toLocalIsoDate(new Date())),
-          }
-        : undefined,
-    [fromSuggestion]
+  const ruleRow = (rule: (typeof rules)[number], i: number, muted?: boolean) => (
+    <RuleListItem
+      key={rule.id}
+      rule={rule}
+      category={rule.categoryId ? categoriesById.get(rule.categoryId) : undefined}
+      parentName={parentNameOf(rule.categoryId, categoriesById)}
+      masked={masked.has(rule.id)}
+      investIds={investIds}
+      accountName={accountName}
+      currency={accountCurrency(rule.accountId)}
+      index={i}
+      busy={busyRuleIds.has(rule.id)}
+      muted={muted}
+      onTogglePause={togglePause}
+      onOpen={sheets.openRule}
+    />
   );
-
-  const hideSuggestion = async (s: SubscriptionSuggestion) => {
-    setSuggestions((prev) => prev.filter((x) => x.key !== s.key));
-    try {
-      await hideSubscriptionSuggestion(s.key);
-    } catch (e) {
-      // It was not saved, so it would be back on the next visit with no word why: say so, and show it again now.
-      showAlert('Couldn’t hide it', errorMessage(e));
-      void load();
-    }
-  };
-
-  const togglePause = async (rule: RecurringRule) => {
-    if (pendingPause.current.has(rule.id)) return;
-    pendingPause.current.add(rule.id);
-    setBusyRuleIds(new Set(pendingPause.current));
-    try {
-      await setRecurringRuleActive(rule.id, !rule.active);
-      setRules((current) => current.map((r) => (r.id === rule.id ? { ...r, active: !rule.active } : r)));
-      await load();
-    } catch (e) {
-      showAlert('Couldn’t update recurring entry', errorMessage(e));
-    } finally {
-      pendingPause.current.delete(rule.id);
-      setBusyRuleIds(new Set(pendingPause.current));
-    }
-  };
 
   if (!hasData && loadError)
     return <ScreenLoadError title="Recurring" message={loadError} onRetry={() => void load()} />;
@@ -206,67 +140,41 @@ export default function RecurringScreen() {
               title="Add an account first"
               subtitle="A recurring entry needs an account to come out of, or go into."
             >
-              <PrimaryButton title="Add an account" onPress={() => setAddAccountVisible(true)} />
+              <PrimaryButton title="Add an account" onPress={sheets.openAccountForm} />
             </EmptyState>
           ) : rules.length === 0 && suggestions.length === 0 ? (
             <EmptyState
               title="Nothing recurring yet"
               subtitle="Plan rent, subscriptions or salary so you can see what is coming."
             >
-              <PrimaryButton title="Add a recurring entry" onPress={() => setModalVisible(true)} />
+              <PrimaryButton title="Add a recurring entry" onPress={sheets.openAdd} />
             </EmptyState>
           ) : (
             <>
               {(activeRules.length > 0 || suggestions.length > 0) && (
-                <RecurringHero
-                  totals={subscriptionTotals(visibleRules)}
+                <Hero
+                  totals={model.totals}
                   currency={currency}
-                  hasOtherCurrencies={rules.some(
-                    (r) =>
-                      r.active &&
-                      !isHidden(r) &&
-                      accounts.find((a) => a.id === r.accountId)?.currency !== currency
-                  )}
-                  shares={shares}
-                  nextDate={nextDate}
-                  marks={runMarks(
-                    visibleRules.filter((r) => r.active),
-                    todayIso
-                  )}
-                  today={todayIso}
-                  onDatePress={setSelectedRunDate}
+                  hasOtherCurrencies={model.hasOtherCurrencies}
+                  shares={model.shares}
+                  nextDate={model.nextDate}
+                  marks={model.marks}
+                  today={model.todayIso}
+                  onDatePress={sheets.openRunDate}
                 />
               )}
               {activeRules.length > 0 && (
                 <>
                   <SectionHead title="Running" note={activeRules.length > 1 ? 'Biggest first' : undefined} />
-                  <ListCard style={styles.list}>
-                    {activeRules.map((rule, i) => (
-                      <RuleRow
-                        key={rule.id}
-                        rule={rule}
-                        category={rule.categoryId ? categoriesById.get(rule.categoryId) : undefined}
-                        parentName={parentNameOf(rule.categoryId, categoriesById)}
-                        masked={isHidden(rule)}
-                        investRole={investRole(rule, investIds)}
-                        accountName={accountName}
-                        index={i}
-                        onTogglePause={() => void togglePause(rule)}
-                        busy={busyRuleIds.has(rule.id)}
-                        currency={accounts.find((a) => a.id === rule.accountId)?.currency}
-                        onPress={() => setEditingRule(rule)}
-                      />
-                    ))}
-                  </ListCard>
+                  <ListCard style={styles.list}>{activeRules.map((rule, i) => ruleRow(rule, i))}</ListCard>
                   <Text style={styles.footnote}>
                     Due entries are added when you open Yume. Paused rules don’t create entries.
                   </Text>
                 </>
               )}
-              <SuggestionsList
-                // A savings or investment charge (an SIP) shows its amount: left out while those are hidden.
-                suggestions={hideAmounts ? suggestions.filter((s) => !s.isSensitive) : suggestions}
-                onMakeRecurring={setFromSuggestion}
+              <Suggestions
+                suggestions={shownSuggestions}
+                onMakeRecurring={sheets.fromSuggestion}
                 onHide={hideSuggestion}
               />
               {pausedRules.length > 0 && (
@@ -276,23 +184,7 @@ export default function RecurringScreen() {
                     note={`${pausedRules.length} ${pausedRules.length === 1 ? 'rule' : 'rules'}`}
                   />
                   <ListCard style={styles.list}>
-                    {pausedRules.map((rule, i) => (
-                      <RuleRow
-                        key={rule.id}
-                        rule={rule}
-                        category={rule.categoryId ? categoriesById.get(rule.categoryId) : undefined}
-                        parentName={parentNameOf(rule.categoryId, categoriesById)}
-                        masked={isHidden(rule)}
-                        investRole={investRole(rule, investIds)}
-                        accountName={accountName}
-                        index={i}
-                        onTogglePause={() => void togglePause(rule)}
-                        busy={busyRuleIds.has(rule.id)}
-                        currency={accounts.find((a) => a.id === rule.accountId)?.currency}
-                        onPress={() => setEditingRule(rule)}
-                        muted
-                      />
-                    ))}
+                    {pausedRules.map((rule, i) => ruleRow(rule, i, true))}
                   </ListCard>
                 </>
               )}
@@ -303,9 +195,9 @@ export default function RecurringScreen() {
       <SkyHeader
         collapse={collapse}
         summary={
-          visibleRules.length > 0 ? (
+          model.hasVisibleRules ? (
             <HeaderSummary
-              figure={formatMoney(subscriptionTotals(visibleRules).monthlyMinor, currency)}
+              figure={formatMoney(model.totals.monthlyMinor, currency)}
               rest="a month"
               dot={theme.colors.slice.free}
             />
@@ -315,75 +207,21 @@ export default function RecurringScreen() {
         showBack
         hideUser
         wallpaper
-        actions={<AddButton onPress={() => setModalVisible(true)} disabled={accounts.length === 0} />}
+        actions={<AddButton onPress={sheets.openAdd} disabled={accounts.length === 0} />}
       />
-
-      <RuleModal
-        visible={modalVisible || !!editingRule || !!fromSuggestion}
-        editing={editingRule}
+      <RecurringSheets
+        sheets={sheets}
         accounts={accounts}
         categories={categories}
-        prefill={rulePrefill}
-        onClose={() => {
-          setModalVisible(false);
-          setEditingRule(null);
-          setFromSuggestion(null);
-        }}
-        onSaved={async () => {
-          setModalVisible(false);
-          setEditingRule(null);
-          setFromSuggestion(null);
-          await load();
-        }}
-        onDeleted={async () => {
-          setEditingRule(null);
-          await load();
-        }}
-      />
-      <ModalSheet
-        visible={!!selectedRunDate}
-        onClose={() => setSelectedRunDate(null)}
-        title={selectedRunDate ? weekdayDayMonth(selectedRunDate) : 'Upcoming entries'}
-      >
-        {selectedRunDate &&
-          activeRules
-            .filter((rule) => !isHidden(rule))
-            .flatMap((rule) =>
-              runMarks([rule], todayIso)
-                .filter((mark) => mark.date === selectedRunDate)
-                .map((mark) => ({ rule, mark }))
-            )
-            .map(({ rule, mark }, index) => (
-              <RuleRow
-                key={mark.key}
-                rule={{
-                  ...rule,
-                  nextRunDate: mark.key.slice(rule.id.length + 1),
-                  nextAmountMinor:
-                    mark.key === `${rule.id}-${rule.nextRunDate}` ? rule.nextAmountMinor : null,
-                }}
-                category={rule.categoryId ? categoriesById.get(rule.categoryId) : undefined}
-                parentName={parentNameOf(rule.categoryId, categoriesById)}
-                investRole={investRole(rule, investIds)}
-                accountName={accountName}
-                index={index}
-                onTogglePause={() => void togglePause(rule)}
-                busy={busyRuleIds.has(rule.id)}
-                currency={accounts.find((a) => a.id === rule.accountId)?.currency}
-                onPress={() => {
-                  setSelectedRunDate(null);
-                  setEditingRule(rule);
-                }}
-              />
-            ))}
-      </ModalSheet>
-      <AddAccountModal
-        visible={addAccountVisible}
-        onClose={() => setAddAccountVisible(false)}
-        onCreated={async () => {
-          setAddAccountVisible(false);
-          await load();
-        }}
+        categoriesById={categoriesById}
+        activeRules={activeRules}
+        masked={masked}
+        investIds={investIds}
+        accountName={accountName}
+        todayIso={model.todayIso}
+        busyRuleIds={busyRuleIds}
+        onTogglePause={togglePause}
+        reload={load}
       />
     </View>
   );

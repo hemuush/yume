@@ -111,8 +111,11 @@ export function getAddEntryPresentation(input: Input) {
   const wash = refund ? TYPE_WASH.income : typeWash(type, accent);
 
   const padTone = { bg: wash.bg, ink: wash.accent };
+  // Whether anything is typed: the category grid folds the pad away on a pick only then, without reading the amount itself.
+  const hasAmount = expr !== '';
   return {
     title,
+    hasAmount,
     sum,
     shownAmount,
     invalidAmount,

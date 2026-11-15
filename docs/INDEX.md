@@ -26,6 +26,16 @@ The [25 October repository re-audit](REPOSITORY_REAUDIT_2026_10_25.md) records p
 
 The [14 November performance pass](PERFORMANCE_2026_11_14.md) measures every screen with a ledger of up to 300,000 entries, fixes what scaled badly (Reports' cash-flow read, Activity's repeated redraws, date formatting) and adds bulk-data tests. It does not establish device smoothness.
 
+The [14 November Activity smoothness pass](ACTIVITY_SMOOTHNESS_2026_11_14.md) measures each Activity interaction (JavaScript cost per tap at 6 times slower CPU), removes a redraw after every period step, stops lines sliding under an opening group and skips exit animations when a day leaves, and splits the screen file into tested hooks and components. The animation changes rest on Reanimated's source and tests, not on a device.
+
+The [14 November Home pass](HOME_SMOOTHNESS_2026_11_14.md) applies the same method to Home: sheets move out of the page's state, a reload keeps what it did not change, the page's sections compare their props, and the 886-line screen is split into tested hooks and components. Opening or closing a sheet no longer redraws the page behind it.
+
+The [15 November Reports pass](REPORTS_SMOOTHNESS_2026_11_15.md) does the same for Reports: each interaction measured, the details of a period read once (not twice) when it lands, each tab its own memoized piece with its sections memoized, and the 940-line screen split into tested hooks and tabs.
+
+The [15 November Plan pass](PLAN_SMOOTHNESS_2026_11_15.md) applies it to Plan: which sheet is open moves out of the page's state, a reload keeps what it did not change, each tab is its own memoized piece, and the 932-line screen is split into tested hooks, a pure derivation and components. Opening or closing a sheet no longer redraws the tab behind it.
+
+The [15 November Loans, Recurring, Budgets and Add pass](LOANS_RECURRING_BUDGETS_ADD_SMOOTHNESS_2026_11_15.md) applies it to those four: Loans, Budgets and Recurring keep their sheets outside the page's state, keep unchanged rows on reload and compare their props, and Add's sections are drawn again only for the fields of the model they read, so a digit on the pad no longer redraws the header, the category grid and the sheets.
+
 Hands-on Android outcomes belong in [release device acceptance](RELEASE_DEVICE_CHECKS.md). A passing test suite or JavaScript export does not establish native compilation, notification delivery, accessibility or frame pacing.
 
 ## Maintained guides
