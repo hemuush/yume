@@ -3,6 +3,7 @@
  * data lands instead of reflowing: the Spent card, the filter row, then days with a heading above a card of entries.
  */
 import { StyleSheet } from 'react-native';
+import { theme } from '@/constants/theme';
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
 
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
@@ -33,17 +34,21 @@ it('draws the Spent card at the real card’s height, with its lettered bars, an
   act(() => tree.unmount());
 });
 
-it('has the filter row (the Filters button and four choices) and two days each with a heading above its entries', () => {
+it('has the filter row (the Filters button and four choices) and two days as Home’s card, each with its entries', () => {
   const tree = render();
   const styles = flat(tree);
-  // 40 dp tall controls: the Filters circle and the four type choices, all fully round.
-  const controls = styles.filter((s) => s.height === 40 && typeof s.width === 'number' && s.width !== 9);
-  expect(controls).toHaveLength(5);
-  expect(controls.every((s) => s.borderRadius === 20)).toBe(true);
-  // No marker rail beside a day: its heading sits over the card, which runs the full width.
-  expect(styles.filter((s) => s.width === 44 && s.alignItems === 'center')).toHaveLength(0);
+  // 40 dp round shapes: the Filters circle and the four type choices (5), and the five category discs (5).
+  const round = styles.filter((s) => s.height === 40 && typeof s.width === 'number' && s.borderRadius === 20);
+  expect(round).toHaveLength(10);
+  // No marker rail beside a day: the card (Home's, 12 dp inset) holds its heading and rows.
+  expect(
+    styles.filter((s) => s.width === 44 && s.alignItems === 'center' && s.height === undefined)
+  ).toHaveLength(5);
+  expect(
+    styles.filter((s) => s.paddingHorizontal === 12 && s.borderRadius === theme.radius.xl2)
+  ).toHaveLength(2);
   expect(styles.filter((s) => s.minHeight === 29)).toHaveLength(2);
-  // 3 + 2 entries, each with a 34 dp category mark.
-  expect(styles.filter((s) => s.width === 34 && s.height === 34)).toHaveLength(5);
+  // 3 + 2 entries, each with a 40 dp category disc like Home's.
+  expect(styles.filter((s) => s.width === 40 && s.height === 40 && s.borderRadius === 20)).toHaveLength(6);
   act(() => tree.unmount());
 });

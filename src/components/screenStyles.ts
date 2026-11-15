@@ -1,5 +1,6 @@
 import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
+import { EYEBROW } from '@/constants/textStyles';
 
 /**
  * The app's one visual system: every card, section heading and list row is built from these so no block gets
@@ -82,4 +83,17 @@ export const screenStyles = StyleSheet.create({
   },
   income: { color: theme.colors.incomeText },
   expense: { color: theme.colors.expenseText },
+  // A day named inside a list card, above its rows ("TODAY", with what the day spent at the right): Home's Recent
+  // activity and Activity's days. After the first, a hairline above it divides it from the day before.
+  dayHead: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    columnGap: 8,
+    paddingHorizontal: 14,
+    paddingTop: 12,
+    paddingBottom: 2,
+  },
+  dayHeadDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.borderSoft },
+  dayHeadText: { ...EYEBROW, fontFamily: theme.font.bodyBold, fontSize: 11, fontVariant: ['tabular-nums'] },
 });
