@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
 import { CountUpAmount } from '@/components/CountUpAmount';
@@ -22,7 +23,7 @@ import type { Portfolio } from '@/lib/portfolio';
  * The first card of the Investments page: what the holdings are worth, the return, the gain and the yearly
  * rate as chips, and what went in. With amounts hidden the figures are masked and the colours neutral.
  */
-export function InvestmentsHero({
+export const InvestmentsHero = memo(function InvestmentsHero({
   portfolio,
   rate,
   currency,
@@ -102,7 +103,7 @@ export function InvestmentsHero({
       )}
     </SummaryCard>
   );
-}
+});
 
 /** What a first-time visitor sees: three steps and one button. */
 export function StartTracking({ onAdd }: { onAdd: () => void }) {

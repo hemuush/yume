@@ -9,16 +9,17 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SkyHeader } from '@/features/home/SkyHeader';
 import ReanimatedAnimated from 'react-native-reanimated';
 import { useCollapsingHeader } from '@/lib/useCollapsingHeader';
-import { ToggleSwitch } from '@/components/ToggleSwitch';
-import { SettingsRow } from '@/components/SettingsRow';
 import { Section } from '@/components/Section';
 import { SCREEN } from '@/components/screenStyles';
+import { AlertRow, type AlertKey } from '@/features/notifications/AlertRow';
 import { SlotCard } from '@/features/notifications/SlotCard';
 import { CardRowsSkeleton } from '@/components/ListSkeleton';
 import { ScreenLoadError } from '@/components/ScreenLoadError';
 import type { NotificationPrefs } from '@/db/settings';
 import { useNotificationPreferences } from '@/features/notifications/useNotificationPreferences';
 import { useLocalDayRefresh } from '@/lib/useLocalDayRefresh';
+import { useStableCallback } from '@/lib/useStableCallback';
+import { keepIfEqual } from '@/lib/stableData';
 import {
   rebuildNotifications,
   requestNotificationPermission,
@@ -32,7 +33,6 @@ import { errorMessage } from '@/lib/errorMessage';
 import { showAlert } from '@/components/AppDialog';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { useAccent } from '@/theme/AccentContext';
-import { shade } from '@/lib/color';
 import { ListCard } from '@/components/SummaryCard';
 import { HomeWallpaper } from '@/features/home/HomeWallpaper';
 import { DayArc } from '@/features/notifications/DayArc';
@@ -74,7 +74,8 @@ export default function NotificationSettingsScreen() {
     try {
       const status = await getNotificationDeliveryStatus();
       if (!focused.current || request !== deliveryRequest.current) return;
-      setDelivery(status);
+      // The same status again (the usual answer) must not draw the page.
+      setDelivery((prev) => keepIfEqual(prev, status));
       setDeliveryError(null);
     } catch (e) {
       if (focused.current && request === deliveryRequest.current) setDeliveryError(errorMessage(e));
@@ -174,6 +175,18 @@ export default function NotificationSettingsScreen() {
     );
   };
 
+  // One function for each slot card and for every switch row, whatever the page last drew, so a card or row is drawn again
+  // only when its own value changes.
+  const toggleMorning = useStableCallback((on: boolean) => toggle('morningEnabled', on));
+  const toggleEvening = useStableCallback((on: boolean) => toggle('eveningEnabled', on));
+  const changeMorning = useStableCallback((minutes: number) => setSlotMinutes('morning', minutes));
+  const changeEvening = useStableCallback((minutes: number) => setSlotMinutes('evening', minutes));
+  const onAlert = useStableCallback((key: AlertKey, enabled: boolean) => {
+    // Suu's check-ins are in the app only: no phone permission to ask for.
+    if (key === 'suuCheckins') void save({ suuCheckins: enabled });
+    else void toggle(key, enabled);
+  });
+
   const settingsError = loadError ? (
     <ScreenLoadError title="Notifications" message={loadError} onRetry={() => void load()} embedded />
   ) : null;
@@ -262,16 +275,16 @@ export default function NotificationSettingsScreen() {
             sub="Check-in, EMIs, alerts"
             on={prefs.morningEnabled}
             minutes={morningMinutes}
-            onToggle={(v) => toggle('morningEnabled', v)}
-            onChange={(m) => setSlotMinutes('morning', m)}
+            onToggle={toggleMorning}
+            onChange={changeMorning}
           />
           <SlotCard
             kind="evening"
             sub="Log nudge if none today"
             on={prefs.eveningEnabled}
             minutes={eveningMinutes}
-            onToggle={(v) => toggle('eveningEnabled', v)}
-            onChange={(m) => setSlotMinutes('evening', m)}
+            onToggle={toggleEvening}
+            onChange={changeEvening}
           />
         </View>
         {noTimes && <Text style={styles.warn}>Switch on a time to get notifications.</Text>}
@@ -285,98 +298,41 @@ export default function NotificationSettingsScreen() {
           }
         >
           <ListCard>
-            <SettingsRow
-              icon="credit-card-outline"
-              iconBg={theme.colors.idGold}
-              label="Loan EMIs due"
-              sub="Due day, then daily for a week"
+            <AlertRow rowKey="billAlerts" value={prefs.billAlerts} dimmed={noTimes} onToggle={onAlert} />
+            <AlertRow
+              rowKey="overspendAlerts"
+              value={prefs.overspendAlerts}
               dimmed={noTimes}
-              right={
-                <ToggleSwitch
-                  accessibilityLabel="Loan EMIs due"
-                  value={prefs.billAlerts}
-                  onChange={(v) => toggle('billAlerts', v)}
-                />
-              }
-            />
-            <SettingsRow
-              icon="alert-outline"
-              iconBg={theme.colors.idCoral}
-              label="Spending alerts"
-              sub="Budget limits, big jumps"
               divider
-              dimmed={noTimes}
-              right={
-                <ToggleSwitch
-                  accessibilityLabel="Spending alerts"
-                  value={prefs.overspendAlerts}
-                  onChange={(v) => toggle('overspendAlerts', v)}
-                />
-              }
+              onToggle={onAlert}
             />
-            <SettingsRow
-              icon="repeat"
-              iconBg={theme.colors.accentTint}
-              label="Recurring expense heads-up"
-              sub="Day before a recurring expense"
-              divider
+            <AlertRow
+              rowKey="recurringAlerts"
+              value={prefs.recurringAlerts === true}
               dimmed={noTimes}
-              right={
-                <ToggleSwitch
-                  accessibilityLabel="Recurring expense heads-up"
-                  value={prefs.recurringAlerts === true}
-                  onChange={(v) => toggle('recurringAlerts', v)}
-                />
-              }
+              divider
+              onToggle={onAlert}
             />
-            <SettingsRow
-              icon="cash-refund"
-              iconBg={theme.colors.goldTint}
-              label="Refund follow-ups"
-              sub="Expected date, then 3 days later"
-              divider
+            <AlertRow
+              rowKey="refundAlerts"
+              value={prefs.refundAlerts === true}
               dimmed={noTimes}
-              right={
-                <ToggleSwitch
-                  accessibilityLabel="Refund follow-ups"
-                  value={prefs.refundAlerts === true}
-                  onChange={(v) => toggle('refundAlerts', v)}
-                />
-              }
+              divider
+              onToggle={onAlert}
             />
-            <SettingsRow
-              icon="chart-bar"
-              iconBg={theme.colors.accentTint}
-              label="Weekly wrap"
-              sub="Mondays"
-              divider
+            <AlertRow
+              rowKey="weeklySummary"
+              value={prefs.weeklySummary}
               dimmed={noTimes}
-              right={
-                <ToggleSwitch
-                  accessibilityLabel="Weekly wrap"
-                  value={prefs.weeklySummary}
-                  onChange={(v) => toggle('weeklySummary', v)}
-                />
-              }
+              divider
+              onToggle={onAlert}
             />
           </ListCard>
         </Section>
 
         <Section title="In the app">
           <ListCard>
-            <SettingsRow
-              icon="sprout"
-              iconBg={shade(secondary, 94)}
-              label="Suu’s check-ins"
-              sub="Two lines on the bell screen"
-              right={
-                <ToggleSwitch
-                  accessibilityLabel="Suu’s check-ins"
-                  value={prefs.suuCheckins}
-                  onChange={(v) => void save({ suuCheckins: v })}
-                />
-              }
-            />
+            <AlertRow rowKey="suuCheckins" value={prefs.suuCheckins} onToggle={onAlert} />
           </ListCard>
         </Section>
 

@@ -4,34 +4,24 @@ import { View, Pressable } from 'react-native';
 import { Text } from '@/components/Text';
 import { useFocusEffect, router } from 'expo-router';
 import Feather from '@expo/vector-icons/Feather';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import * as Application from 'expo-application';
 import {
   getHideWidgetValues,
-  setHideWidgetValues,
   getDefaultCurrency,
   setDefaultCurrency,
-  SUPPORTED_CURRENCIES,
   getDailySpendingGoal,
-  setDailySpendingGoal,
   getNotificationPrefs,
   getLastLocalBackupResult,
   NotificationPrefs,
 } from '@/db/settings';
 import { getTidyUpReport, tidyUpCount } from '@/db/tidyUp';
 import { countDeletedEntries } from '@/db/recentlyDeleted';
-import { toMinor, toMajor, getCurrencySymbol, formatMoney } from '@/lib/money';
 import { authenticate, isDeviceSecured } from '@/lib/appLock';
 import { useAppLock } from '@/lib/AppLockContext';
 import { usePrivacy } from '@/theme/PrivacyContext';
-import ReanimatedAnimated from 'react-native-reanimated';
 import { ToggleSwitch } from '@/components/ToggleSwitch';
 import { SettingsRow } from '@/components/SettingsRow';
 import { MovingRow } from '@/components/MovingRow';
-import { PANEL_ENTER, ROW_EXIT } from '@/lib/animation';
-import { AmountField } from '@/components/AmountField';
 import { PrimaryButton } from '@/components/PrimaryButton';
-import { YumeLogo } from '@/components/YumeLogo';
 import { useAccent, THEMES } from '@/theme/AccentContext';
 import { ThemeThumb } from './ThemePreview';
 import { theme } from '@/constants/theme';
@@ -41,10 +31,13 @@ import { styles } from './profile.styles';
 import { SafetyCheck } from './SafetyCheck';
 import { cardSurface } from '@/components/CardSurface';
 import { errorMessage } from '@/lib/errorMessage';
-import type { McIconName } from '@/components/iconName';
 import { withPressedTint } from '@/lib/pressed';
 import { haptics } from '@/lib/haptics';
-import { refreshAllWidgets } from '@/widgets/notifyWidgets';
+import { AboutYume } from './AboutYume';
+import { CurrencySetting } from './CurrencySetting';
+import { DailyGoalSetting } from './DailyGoalSetting';
+import { WidgetPrivacyRow } from './WidgetPrivacyRow';
+import { useStableCallback } from '@/lib/useStableCallback';
 import { showAlert } from '@/components/AppDialog';
 import { useStacked } from '@/lib/useStacked';
 
@@ -80,15 +73,6 @@ const ALERT_KEYS = [
   'refundAlerts',
 ] as const satisfies readonly (keyof NotificationPrefs)[];
 
-function AboutFact({ icon, text }: { icon: string; text: string }) {
-  return (
-    <View style={styles.aboutFactRow}>
-      <MaterialCommunityIcons name={icon as McIconName} size={15} color={theme.colors.textSecondary} />
-      <Text style={styles.aboutFactText}>{text}</Text>
-    </View>
-  );
-}
-
 /**
  * Settings starts with theme choices, then a safety overview and grouped preferences.
  */
@@ -98,25 +82,15 @@ export function SettingsSection() {
   const { lockEnabled, setLockEnabled } = useAppLock();
   const { hideAmounts, toggleHideAmounts } = usePrivacy();
   const [hideWidgets, setHideWidgets] = useState<boolean | null>(null);
-  const [widgetSaving, setWidgetSaving] = useState(false);
   const [currency, setCurrency] = useState('INR');
-  // Currency is a long pick-one list, so its row expands in place to show it
-  // rather than always taking up the screen.
-  const [currencyOpen, setCurrencyOpen] = useState(false);
   // How many things Tidy up has to look at — null until checked.
   const [tidyCount, setTidyCount] = useState<number | null>(null);
   // How many entries are waiting in Recently deleted — null until counted.
   const [deletedCount, setDeletedCount] = useState<number | null>(null);
-  const [aboutOpen, setAboutOpen] = useState(false);
   const activeTheme = THEMES.find((t) => t.id === themeId) ?? THEMES[0];
 
-  // One overall daily spending cap (Home's "Today" strip); `null` is off. `dailyGoalInput` is the
-  // accordion's draft text, reset from the real value on open so a typo never lingers after closing unsaved.
+  // One overall daily spending cap (Home's "Today" strip); `null` is off. Its accordion keeps its own draft.
   const [dailyGoal, setDailyGoalState] = useState<number | null>(null);
-  const [dailyGoalOpen, setDailyGoalOpen] = useState(false);
-  const [dailyGoalInput, setDailyGoalInput] = useState('');
-  const [dailyGoalError, setDailyGoalError] = useState<string | null>(null);
-  const [dailyGoalSaving, setDailyGoalSaving] = useState(false);
 
   const [notifPrefs, setNotifPrefs] = useState<NotificationPrefs | null>(null);
   const [lastBackupAt, setLastBackupAt] = useState<string | null>(null);
@@ -169,11 +143,9 @@ export function SettingsSection() {
     }, [load])
   );
 
-  const onSelectCurrency = async (code: string) => {
+  const onSelectCurrency = useStableCallback(async (code: string) => {
     const previous = currency;
     setCurrency(code);
-    // A pick-one list has nothing left to do once you've made the one choice.
-    setCurrencyOpen(false);
     try {
       await setDefaultCurrency(code);
     } catch (e) {
@@ -182,45 +154,7 @@ export function SettingsSection() {
       setCurrency(previous);
       showAlert('Couldn’t change currency', errorMessage(e));
     }
-  };
-
-  const toggleDailyGoal = () => {
-    if (!dailyGoalOpen) setDailyGoalInput(dailyGoal != null ? String(toMajor(dailyGoal)) : '');
-    setDailyGoalError(null);
-    setDailyGoalOpen((v) => !v);
-  };
-
-  const saveDailyGoal = async () => {
-    setDailyGoalError(null);
-    const minor = toMinor(parseFloat(dailyGoalInput || '0'));
-    if (!Number.isFinite(minor) || minor <= 0) {
-      setDailyGoalError('Enter a valid daily amount');
-      return;
-    }
-    setDailyGoalSaving(true);
-    try {
-      await setDailySpendingGoal(minor);
-      setDailyGoalState(minor);
-      setDailyGoalOpen(false);
-    } catch (e) {
-      setDailyGoalError(errorMessage(e));
-    } finally {
-      setDailyGoalSaving(false);
-    }
-  };
-
-  const clearDailyGoal = async () => {
-    setDailyGoalSaving(true);
-    try {
-      await setDailySpendingGoal(null);
-      setDailyGoalState(null);
-      setDailyGoalOpen(false);
-    } catch (e) {
-      setDailyGoalError(errorMessage(e));
-    } finally {
-      setDailyGoalSaving(false);
-    }
-  };
+  });
 
   const onToggleLock = async (enabled: boolean) => {
     try {
@@ -244,20 +178,6 @@ export function SettingsSection() {
       setLockEnabled(enabled);
     } catch (e) {
       showAlert('Couldn’t check the device lock', errorMessage(e));
-    }
-  };
-
-  const toggleWidgetPrivacy = async (enabled: boolean) => {
-    if (widgetSaving) return;
-    setWidgetSaving(true);
-    try {
-      await setHideWidgetValues(enabled);
-      setHideWidgets(enabled);
-      refreshAllWidgets();
-    } catch (e) {
-      showAlert('Couldn’t change widget privacy', errorMessage(e));
-    } finally {
-      setWidgetSaving(false);
     }
   };
 
@@ -355,89 +275,19 @@ export function SettingsSection() {
 
       <Section compact title="Money">
         <View style={[h.card, cardSurface.neutral, styles.settingsCard]}>
-          <SettingsRow
-            compact
-            icon="currency-inr"
-            iconBg={theme.colors.goldTint}
-            label="Default currency"
-            sub="New accounts and displayed amounts"
-            value={currencyLoaded ? currency : 'Unavailable'}
-            valueBelow={stackValues}
-            onPress={() => setCurrencyOpen((v) => !v)}
-            expanded={currencyOpen}
+          <CurrencySetting
+            currency={currency}
+            loaded={currencyLoaded}
+            stacked={stackValues}
+            onSelect={onSelectCurrency}
           />
-          {currencyOpen && (
-            <ReanimatedAnimated.View entering={PANEL_ENTER} exiting={ROW_EXIT} style={styles.accordionBody}>
-              <Text style={styles.pickerHint}>
-                Existing accounts keep whatever currency they were created with. Combined totals only add up
-                accounts in this currency.
-              </Text>
-              {SUPPORTED_CURRENCIES.map((c, i) => (
-                <Pressable
-                  key={c.code}
-                  style={withPressedTint(accent, [styles.pickerRow, i > 0 && h.divider])}
-                  onPress={() => onSelectCurrency(c.code)}
-                  accessibilityRole="button"
-                  accessibilityLabel={`${c.label}, ${c.code}`}
-                  accessibilityState={{ selected: currency === c.code }}
-                >
-                  <View style={styles.codeBubble}>
-                    <Text style={styles.codeText}>{c.code}</Text>
-                  </View>
-                  <Text style={[h.title, { flex: 1 }]}>{c.label}</Text>
-                  {currency === c.code && <Feather name="check" size={18} color={theme.colors.ink} />}
-                </Pressable>
-              ))}
-            </ReanimatedAnimated.View>
-          )}
-          <MovingRow>
-            <SettingsRow
-              compact
-              icon="gauge"
-              iconBg={theme.colors.goldTint}
-              label="Daily spending goal"
-              sub="Shown on Home each day"
-              value={
-                !goalLoaded || !currencyLoaded
-                  ? 'Unavailable'
-                  : dailyGoal != null
-                    ? `${formatMoney(dailyGoal, currency)}/day`
-                    : 'Not set'
-              }
-              valueBelow={stackValues}
-              onPress={toggleDailyGoal}
-              expanded={dailyGoalOpen}
-              divider
-            />
-          </MovingRow>
-          {dailyGoalOpen && (
-            <ReanimatedAnimated.View entering={PANEL_ENTER} exiting={ROW_EXIT} style={styles.accordionBody}>
-              <AmountField
-                label={`Amount per day (${getCurrencySymbol(currency)})`}
-                value={dailyGoalInput}
-                onChangeText={setDailyGoalInput}
-                placeholder="e.g. 800"
-              />
-              {dailyGoalError && <Text style={styles.errorText}>{dailyGoalError}</Text>}
-              <View style={styles.dailyGoalBtnRow}>
-                {dailyGoal != null && (
-                  <PrimaryButton
-                    title="Clear"
-                    variant="secondary"
-                    onPress={clearDailyGoal}
-                    disabled={dailyGoalSaving}
-                    style={styles.dailyGoalBtn}
-                  />
-                )}
-                <PrimaryButton
-                  title={dailyGoalSaving ? 'Saving…' : 'Save'}
-                  onPress={saveDailyGoal}
-                  disabled={dailyGoalSaving}
-                  style={styles.dailyGoalBtn}
-                />
-              </View>
-            </ReanimatedAnimated.View>
-          )}
+          <DailyGoalSetting
+            goal={dailyGoal}
+            currency={currency}
+            loaded={goalLoaded && currencyLoaded}
+            stacked={stackValues}
+            onChanged={setDailyGoalState}
+          />
           <MovingRow>
             <SettingsRow
               compact
@@ -479,22 +329,7 @@ export function SettingsSection() {
             }
             divider
           />
-          <SettingsRow
-            compact
-            icon="widgets-outline"
-            iconBg={theme.colors.accentTint}
-            label="Hide widget details"
-            sub="Hide financial details on your home screen. Quick Add stays available."
-            right={
-              <ToggleSwitch
-                accessibilityLabel="Hide widget details"
-                value={hideWidgets ?? false}
-                disabled={hideWidgets === null || widgetSaving}
-                onChange={toggleWidgetPrivacy}
-              />
-            }
-            divider
-          />
+          <WidgetPrivacyRow value={hideWidgets} onChanged={setHideWidgets} />
           <SettingsRow
             compact
             icon="bell-outline"
@@ -563,44 +398,7 @@ export function SettingsSection() {
         </View>
       </Section>
 
-      <View style={styles.footer}>
-        <YumeLogo size={30} />
-        <Text style={styles.footerName}>Yume · v{Application.nativeApplicationVersion ?? '1.0.0'}</Text>
-        <Text style={styles.footerSub}>Works fully offline.</Text>
-        <Pressable
-          onPress={() => setAboutOpen((v) => !v)}
-          hitSlop={8}
-          style={withPressedTint(accent, styles.footerLink)}
-          accessibilityRole="button"
-          accessibilityState={{ expanded: aboutOpen }}
-          accessibilityLabel="About Yume"
-        >
-          <Text style={styles.footerLinkText}>{aboutOpen ? 'Hide' : 'About Yume'}</Text>
-          <Feather
-            name={aboutOpen ? 'chevron-up' : 'chevron-right'}
-            size={14}
-            color={theme.colors.textSecondary}
-          />
-        </Pressable>
-      </View>
-      {aboutOpen && (
-        <ReanimatedAnimated.View entering={PANEL_ENTER} exiting={ROW_EXIT}>
-          <View style={[h.card, cardSurface.neutral, styles.aboutCard]}>
-            <Text style={styles.aboutTagline}>Track every rupee, on your terms.</Text>
-            <View style={styles.aboutFacts}>
-              <AboutFact icon="wifi-off" text="Works fully offline — no account, no server, no signup." />
-              <AboutFact
-                icon="lock-outline"
-                text="Your data never leaves this device unless you back it up."
-              />
-              <AboutFact
-                icon="file-document-outline"
-                text="Backups are plain JSON you can open and read yourself."
-              />
-            </View>
-          </View>
-        </ReanimatedAnimated.View>
-      )}
+      <AboutYume />
     </>
   );
 }
