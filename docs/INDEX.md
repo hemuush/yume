@@ -32,6 +32,8 @@ The [14 November Home pass](HOME_SMOOTHNESS_2026_11_14.md) applies the same meth
 
 The [15 November Reports pass](REPORTS_SMOOTHNESS_2026_11_15.md) does the same for Reports: each interaction measured, the details of a period read once (not twice) when it lands, each tab its own memoized piece with its sections memoized, and the 940-line screen split into tested hooks and tabs.
 
+The [15 November Plan pass](PLAN_SMOOTHNESS_2026_11_15.md) applies it to Plan: which sheet is open moves out of the page's state, a reload keeps what it did not change, each tab is its own memoized piece, and the 932-line screen is split into tested hooks, a pure derivation and components. Opening or closing a sheet no longer redraws the tab behind it.
+
 Hands-on Android outcomes belong in [release device acceptance](RELEASE_DEVICE_CHECKS.md). A passing test suite or JavaScript export does not establish native compilation, notification delivery, accessibility or frame pacing.
 
 ## Maintained guides

@@ -46,3 +46,20 @@ export function useStableValue<T>(value: T): T {
   // eslint-disable-next-line react-hooks/exhaustive-deps -- what it holds is the key
   return useMemo(() => value, [key]);
 }
+
+/**
+ * `next`, with each field replaced by the one already held when it holds the same things: the same object when nothing
+ * changed, otherwise a new object whose unchanged fields are still the very same objects.
+ */
+export function keepFieldsIfEqual<T extends object>(prev: T | null, next: T): T {
+  if (!prev) return next;
+  const keys = Object.keys(next) as (keyof T)[];
+  let changed = keys.length !== Object.keys(prev).length;
+  const out = { ...next };
+  for (const key of keys) {
+    const kept = keepIfEqual(prev[key], next[key]);
+    if (kept !== prev[key]) changed = true;
+    out[key] = kept;
+  }
+  return changed ? out : prev;
+}

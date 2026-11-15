@@ -8,8 +8,7 @@ import { stableIndexFromId } from '@/lib/color';
 import { withPressedTint } from '@/lib/pressed';
 import { useAccent } from '@/theme/AccentContext';
 import { personInitials } from '@/features/people/people.helpers';
-import type { HabitState, PeopleState } from './planOverview';
-import type { PlanPerson } from './PlanTiles';
+import type { HabitState, PeopleState, PlanPerson } from './planOverview';
 
 /** Kept days' sprouts grow a little taller each day; a missed day stays a small grey one. */
 const SPROUT_BASE = 10;

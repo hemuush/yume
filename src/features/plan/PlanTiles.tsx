@@ -8,7 +8,7 @@ import { stableIndexFromId } from '@/lib/color';
 import { personInitials } from '@/features/people/people.helpers';
 import { formatMoney } from '@/lib/money';
 import { usePressScale } from '@/lib/usePressScale';
-import { PeopleState } from './planOverview';
+import { PeopleState, type PlanPerson } from './planOverview';
 import { styles } from './plan.styles';
 import { Kicker } from '@/components/Frost';
 
@@ -57,15 +57,6 @@ function PlanTile({
 }
 
 /* ---------- Friends & Family ---------- */
-
-export interface PlanPerson {
-  id: string;
-  name: string;
-  balanceMinor: number;
-}
-
-/** How many people's balances show under the total. */
-export const PEOPLE_SHOWN = 3;
 
 export function PeopleTile({
   state,

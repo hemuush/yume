@@ -5,7 +5,14 @@
  */
 import { Text } from 'react-native';
 import { create, act } from 'react-test-renderer';
-import { keepIfEqual, reuseUnchanged, sameElements, useStableSet, useStableValue } from './stableData';
+import {
+  keepFieldsIfEqual,
+  keepIfEqual,
+  reuseUnchanged,
+  sameElements,
+  useStableSet,
+  useStableValue,
+} from './stableData';
 
 describe('keepIfEqual', () => {
   it('hands back the list already held when the new one holds the same things', () => {
@@ -107,5 +114,27 @@ describe('useStableValue', () => {
     expect(seen[2]).not.toBe(seen[0]);
     expect(seen[2]).toEqual([{ id: 'a', name: 'Bank of India' }]);
     act(() => tree.unmount());
+  });
+});
+
+describe('keepFieldsIfEqual', () => {
+  it('hands back the very same object when every field holds what it did', () => {
+    const prev = { a: [1, 2], b: { n: 1 }, c: 'x' };
+    expect(keepFieldsIfEqual(prev, { a: [1, 2], b: { n: 1 }, c: 'x' })).toBe(prev);
+  });
+
+  it('is a new object when a field changed, whose other fields are still the very same objects', () => {
+    const prev = { a: [1, 2], b: { n: 1 }, c: 'x' };
+    const next = { a: [1, 2], b: { n: 2 }, c: 'x' };
+    const out = keepFieldsIfEqual(prev, next);
+    expect(out).not.toBe(prev);
+    expect(out.a).toBe(prev.a);
+    expect(out.b).toBe(next.b);
+  });
+
+  it('takes the new object when there is nothing held, or the set of fields changed', () => {
+    const next = { a: 1 };
+    expect(keepFieldsIfEqual(null, next)).toBe(next);
+    expect(keepFieldsIfEqual({ a: 1 } as { a: number; b?: number }, { a: 1, b: 2 })).toEqual({ a: 1, b: 2 });
   });
 });
