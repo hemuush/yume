@@ -22,12 +22,13 @@ import { theme } from '@/constants/theme';
 import { buildDayLane, LaneLine, laneKey, type ValueNote } from './transactions.helpers';
 import { sameElements } from '@/lib/stableData';
 import { useDayReorder } from './useDayReorder';
-import { ICON, styles } from './TimelineDay.styles';
+import { styles } from './TimelineDay.styles';
+import { screenStyles as h, SCREEN } from '@/components/screenStyles';
 import { investLines, investRole } from '@/lib/investment';
 import { isSavingsEntry } from '@/lib/privateSummary';
 import { DraggableLine } from './DraggableLine';
 import { withPressedTint } from '@/lib/pressed';
-import { categorySpoken, joinSub, parentNameOf } from '@/lib/categoryLabel';
+import { categoryPath, categorySpoken, joinSub, parentNameOf } from '@/lib/categoryLabel';
 import { useStacked } from '@/lib/useStacked';
 
 const NO_ACCOUNTS: ReadonlySet<string> = new Set();
@@ -48,50 +49,36 @@ function dayTotalsOf(items: Transaction[]) {
   return { spent, received, back };
 }
 
-/**
- * The right-hand end of a line: the amount (spending in ink with its minus, money in green with its plus) and, under
- * it, the account it came from. The account lives here so the left side can be the entry's own name and category.
- */
+/** The amount at the right of a line: spending in ink with its minus, money in green with its plus. */
 function Amount({
   type,
   minor,
   masked,
   currency,
-  account,
 }: {
   type: Transaction['type'];
   minor: number;
   masked: boolean;
   currency: string;
-  account?: string | null;
 }) {
   return (
-    <View style={styles.side}>
-      <Text
-        style={[styles.amount, type === 'income' && styles.income]}
-        numberOfLines={1}
-        adjustsFontSizeToFit
-      >
-        {type === 'income' ? '+' : type === 'expense' ? '−' : ''}
-        {formatMaskableMoney(minor, { masked, currency })}
-      </Text>
-      {!!account && (
-        <Text style={styles.account} numberOfLines={1}>
-          {account}
-        </Text>
-      )}
-    </View>
+    <Text style={[styles.amount, type === 'income' && styles.income]} numberOfLines={1}>
+      {type === 'income' ? '+' : type === 'expense' ? '−' : ''}
+      {formatMaskableMoney(minor, { masked, currency })}
+    </Text>
   );
 }
 
 /**
- * One Activity day: a heading (the day, its date and what it spent, the total omitted for one line) above a card of
- * every entry, transfers as quiet end rows. 2+ same-category entries stack into an openable line; the screen holds open stacks (rows unmount).
+ * One Activity day, drawn like Home's Recent activity: one card with the day named inside it ("TODAY", and what it
+ * spent at the right, left out for one line) above its entries, transfers and value updates after them. 2+
+ * same-category entries stack into an openable line; the screen holds open stacks (rows unmount).
  */
 function TimelineDayView({
   date,
   label,
   dateLabel,
+  dateInHeading = true,
   items,
   categories,
   accountName,
@@ -109,8 +96,12 @@ function TimelineDayView({
   selected = false,
 }: {
   date: string;
+  /** "Today", "Yesterday", or the weekday: the day's name in the heading. */
   label: string;
+  /** The date ("Sun 15 Nov"): read out with the heading, and written after the name unless `dateInHeading` is off. */
   dateLabel: string;
+  /** Off for today and yesterday, which say enough on their own, as in Home. */
+  dateInHeading?: boolean;
   items: Transaction[];
   categories: Category[];
   accountName: (id: string) => string;
@@ -177,9 +168,13 @@ function TimelineDayView({
     if (line.kind === 'single') {
       const tx = line.tx;
       const cat = tx.categoryId ? categoriesById.get(tx.categoryId) : undefined;
-      // The entry's own name leads (its note, else its category); the category follows only when a note took the
-      // lead, and a subcategory still says its parent. With neither there is no second line.
-      const sub = joinSub([tx.note && categoryName(tx.categoryId), parentLine(tx.categoryId)]);
+      const category = categoryName(tx.categoryId);
+      // As Home's Recent activity words it: the entry's own name leads (its note, else its category); under it the
+      // category (after a note, with its parent) or just the parent, then the account.
+      const sub = joinSub([
+        tx.note ? category && categoryPath(category, parentLine(tx.categoryId)) : parentLine(tx.categoryId),
+        accountName(tx.accountId),
+      ]);
       return (
         <MovingRow key={tx.id} moving={slides}>
           {i > 0 && <View style={styles.separator} />}
@@ -192,22 +187,26 @@ function TimelineDayView({
           >
             <JustAddedGlow ids={[tx.id]} surface="activity" />
             <View style={styles.lead}>
-              <CategoryIcon name={cat?.icon ?? 'tag'} color={cat?.color} size={15} square={ICON} round />
+              <CategoryIcon
+                name={cat?.icon ?? 'tag'}
+                color={cat?.color ?? theme.colors.textMuted}
+                square={SCREEN.mark}
+                round
+              />
             </View>
             <View style={[styles.mid, stacked && styles.wideMid]}>
               <View style={styles.entryHead}>
-                <Text style={[styles.name, styles.stackName]}>{tx.note || categoryName(tx.categoryId)}</Text>
+                <Text style={[styles.name, styles.stackName]}>{tx.note || category}</Text>
                 {tx.isRefund && <StatusBadge label="Refund" tone="complete" />}
                 {tx.splitId && <StatusBadge label="Split" />}
               </View>
-              {!!sub && <Text style={styles.sub}>{sub}</Text>}
+              <Text style={styles.sub}>{sub}</Text>
             </View>
             <Amount
               type={tx.type}
               minor={tx.amountMinor}
               masked={hidden(tx)}
               currency={accountCurrency(tx.accountId)}
-              account={accountName(tx.accountId)}
             />
           </Pressable>
         </MovingRow>
@@ -219,7 +218,7 @@ function TimelineDayView({
     const name = categoryName(line.categoryId);
     const stackParent = parentNameOf(line.categoryId, categoriesById);
     const lineMasked = line.items.some(hidden);
-    // A stack from one account names it at its right end, like a single entry does; from several, just the count.
+    // A stack from one account names it, like a single entry does; from several, just the count.
     const sameAccount = line.items.every((t) => t.accountId === first.accountId);
     return (
       // moving={false}: the open panel animates its own height (Collapsible), so a layout animation on the row
@@ -245,7 +244,12 @@ function TimelineDayView({
                 {/* A new entry folded into this line glows the line. */}
                 <JustAddedGlow ids={line.items.map((t) => t.id)} surface="activity" />
                 <View style={styles.lead}>
-                  <CategoryIcon name={cat?.icon ?? 'tag'} color={cat?.color} size={15} square={ICON} round />
+                  <CategoryIcon
+                    name={cat?.icon ?? 'tag'}
+                    color={cat?.color ?? theme.colors.textMuted}
+                    square={SCREEN.mark}
+                    round
+                  />
                 </View>
                 <View style={[styles.mid, stacked && styles.wideMid]}>
                   <View style={styles.stackMid}>
@@ -260,22 +264,27 @@ function TimelineDayView({
                       />
                     </View>
                   </View>
-                  <Text style={styles.sub}>{joinSub([stackParent, `${line.items.length} entries`])}</Text>
+                  <Text style={styles.sub}>
+                    {joinSub([
+                      stackParent,
+                      `${line.items.length} entries`,
+                      sameAccount && accountName(first.accountId),
+                    ])}
+                  </Text>
                 </View>
                 <Amount
                   type={line.type}
                   minor={line.totalMinor}
                   masked={lineMasked}
                   currency={accountCurrency(first.accountId)}
-                  account={sameAccount ? accountName(first.accountId) : null}
                 />
               </Pressable>
               {/* The panel opens and closes by animating its own height, so the rows below move with it, frame by frame. */}
               <Collapsible open={open} warm={warm}>
                 {() =>
                   line.items.map((tx) => {
-                    // The category is already named above: the note leads and the account sits at the right end, or
-                    // with no note the account is the name.
+                    // The category is already named above: the note leads with the account under it, or with no
+                    // note the account is the name.
                     const label = tx.note || accountName(tx.accountId);
                     return (
                       <View key={tx.id}>
@@ -286,24 +295,26 @@ function TimelineDayView({
                           accessibilityRole="button"
                           accessibilityLabel={`${categorySpoken(name, stackParent)}${tx.isRefund ? ', refund' : ''}${tx.note ? `, ${tx.note}` : ''}, ${money(tx.amountMinor, hidden(tx), tx.accountId)}`}
                         >
-                          <View
-                            style={[
-                              styles.subDot,
-                              { backgroundColor: cat?.color ?? theme.colors.borderSoft },
-                            ]}
-                          />
+                          <View style={styles.subLead}>
+                            <View
+                              style={[
+                                styles.subDot,
+                                { backgroundColor: cat?.color ?? theme.colors.borderSoft },
+                              ]}
+                            />
+                          </View>
                           <View style={[styles.mid, stacked && styles.wideMid]}>
                             <View style={styles.entryHead}>
                               <Text style={[styles.name, styles.stackName]}>{label}</Text>
                               {tx.splitId && <StatusBadge label="Split" />}
                             </View>
+                            {!!tx.note && <Text style={styles.sub}>{accountName(tx.accountId)}</Text>}
                           </View>
                           <Amount
                             type={tx.type}
                             minor={tx.amountMinor}
                             masked={hidden(tx)}
                             currency={accountCurrency(tx.accountId)}
-                            account={tx.note ? accountName(tx.accountId) : null}
                           />
                         </Pressable>
                       </View>
@@ -318,23 +329,34 @@ function TimelineDayView({
     );
   };
 
-  // "₹1,420 spent · +₹82,000 in · ₹899 back": what the day did, in words, instead of one unlabelled net.
+  // What the day did, as Home's day heading writes it ("−₹1,420"), with money in as "+₹82,000" and refunds as
+  // "₹899 back" (they are not income), instead of one unlabelled net.
   const parts = [
-    totals.spent > 0 && ['spent', formatMoney(totals.spent)],
-    totals.received > 0 && ['in', formatMoney(totals.received)],
-    totals.back > 0 && ['back', formatMoney(totals.back)],
-  ].filter(Boolean) as [string, string][];
+    totals.spent > 0 && {
+      word: 'spent',
+      amount: formatMoney(totals.spent),
+      drawn: `−${formatMoney(totals.spent)}`,
+    },
+    totals.received > 0 && {
+      word: 'in',
+      amount: formatMoney(totals.received),
+      drawn: `+${formatMoney(totals.received)}`,
+    },
+    totals.back > 0 && {
+      word: 'back',
+      amount: formatMoney(totals.back),
+      drawn: `${formatMoney(totals.back)} back`,
+    },
+  ].filter(Boolean) as { word: string; amount: string; drawn: string }[];
   // One line alone would only repeat its own amount, so it has no total. A day of only transfers has nothing spent to
   // total: it says how many there were instead.
   const onlyTransfers = parts.length === 0 && lines.length === 0 && transfers.length > 1;
   const showTotal = onlyTransfers || (parts.length > 0 && !(lines.length === 1 && transfers.length === 0));
-  // Spoken plainly ("₹82,000 in"); drawn with a plus on the money that came in.
+  // Spoken in words ("₹82,000 in"), drawn as signed figures.
   const totalSpoken = onlyTransfers
     ? `${transfers.length} transfers`
-    : parts.map(([word, amount]) => `${amount} ${word}`).join(' · ');
-  const totalText = onlyTransfers
-    ? totalSpoken
-    : parts.map(([word, amount]) => `${word === 'in' ? '+' : ''}${amount} ${word}`).join(' · ');
+    : parts.map((part) => `${part.amount} ${part.word}`).join(' · ');
+  const totalText = onlyTransfers ? totalSpoken : parts.map((part) => part.drawn).join(' · ');
   return (
     // The day grows and shrinks with its stacks open or closed as their panels animate their own height (Collapsible),
     // and the days below, which are the list's own cells, move with it.
@@ -343,19 +365,20 @@ function TimelineDayView({
     // new one, until they have all finished.
     <LayoutAnimationConfig skipExiting>
       <ReanimatedAnimated.View entering={entering} style={styles.day}>
-        <View
-          style={[styles.head, selected && [styles.headOn, { backgroundColor: softTint(accent, 0.35) }]]}
-          accessible
-          accessibilityRole="header"
-          accessibilityLabel={`${label}, ${dateLabel}${showTotal ? `, ${totalSpoken}` : ''}`}
-        >
-          <Text style={styles.title}>
-            {label}
-            <Text style={styles.titleDate}> · {dateLabel}</Text>
-          </Text>
-          {showTotal && <Text style={styles.total}>{totalText}</Text>}
-        </View>
         <View style={styles.lane}>
+          <View
+            style={[
+              h.dayHead,
+              selected && styles.headOn,
+              selected && { backgroundColor: softTint(accent, 0.35) },
+            ]}
+            accessible
+            accessibilityRole="header"
+            accessibilityLabel={`${label}, ${dateLabel}${showTotal ? `, ${totalSpoken}` : ''}`}
+          >
+            <Text style={h.dayHeadText}>{dateInHeading ? `${label} · ${dateLabel}` : label}</Text>
+            {showTotal && <Text style={h.dayHeadText}>{totalText}</Text>}
+          </View>
           {shown.map((line, i) => (
             <DraggableLine
               key={laneKey(line)}
@@ -374,9 +397,10 @@ function TimelineDayView({
             const text = role
               ? investLines(tx, role, accountName)
               : {
-                  // The arrow stays with where it goes: "SBI → Emergency fund" wraps after "SBI", never leaving "fund" alone.
-                  title: keepTogether(`${accountName(tx.accountId)} → ${accountName(tx.toAccountId!)}`),
-                  sub: `${tx.note ? `${tx.note} · ` : ''}Transfer`,
+                  // As Home's row: "Transfer" (or the note) over "SBI → Emergency fund". The arrow stays with where it
+                  // goes: the line wraps after "SBI", never leaving "fund" alone.
+                  title: tx.note?.trim() || 'Transfer',
+                  sub: keepTogether(`${accountName(tx.accountId)} → ${accountName(tx.toAccountId!)}`),
                 };
             return (
               <View key={tx.id}>
@@ -395,21 +419,24 @@ function TimelineDayView({
                 >
                   <JustAddedGlow ids={[tx.id]} surface="activity" />
                   <View style={styles.lead}>
-                    <View style={[styles.transferIcon, { backgroundColor: softTint(secondary, 0.35) }]}>
-                      <Feather
-                        name={
-                          role === 'invest' ? 'trending-up' : role === 'withdraw' ? 'trending-down' : 'repeat'
-                        }
-                        size={16}
-                        color={theme.colors.ink}
-                      />
-                    </View>
+                    <CategoryIcon
+                      name={
+                        role === 'invest'
+                          ? 'trending-up'
+                          : role === 'withdraw'
+                            ? 'trending-down'
+                            : 'swap-horizontal'
+                      }
+                      color={secondary}
+                      square={SCREEN.mark}
+                      round
+                    />
                   </View>
                   <View style={[styles.mid, stacked && styles.wideMid]}>
-                    <Text style={[styles.name, styles.transferName]}>{text.title}</Text>
+                    <Text style={styles.name}>{text.title}</Text>
                     <Text style={styles.sub}>{text.sub}</Text>
                   </View>
-                  <Text style={[styles.amount, styles.transferAmount]} numberOfLines={1}>
+                  <Text style={styles.amount} numberOfLines={1}>
                     {money(tx.amountMinor, hidden(tx), tx.accountId)}
                   </Text>
                 </Pressable>
@@ -432,14 +459,10 @@ function TimelineDayView({
                   accessibilityLabel={`${accountName(note.accountId)} value updated to ${formatMaskableMoney(note.valueMinor, { masked, currency: cur })}`}
                 >
                   <View style={styles.lead}>
-                    <View
-                      style={[styles.transferIcon, { backgroundColor: softTint(theme.colors.idGold, 0.35) }]}
-                    >
-                      <Feather name="edit-3" size={15} color={theme.colors.ink} />
-                    </View>
+                    <CategoryIcon name="pencil" color={theme.colors.idGold} square={SCREEN.mark} round />
                   </View>
                   <View style={[styles.mid, stacked && styles.wideMid]}>
-                    <Text style={[styles.name, styles.transferName]}>
+                    <Text style={styles.name}>
                       {accountName(note.accountId)} now worth{' '}
                       {formatMaskableMoney(note.valueMinor, { masked, currency: cur })}
                     </Text>

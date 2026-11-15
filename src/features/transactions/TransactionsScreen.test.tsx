@@ -499,8 +499,9 @@ describe('Activity search results', () => {
     const year = new Date().getFullYear();
     const tree = await searchFor([entry('now', `${year}-01-05`), entry('old', `${year - 2}-03-04`)]);
     const shown = texts(tree);
-    expect(shown).toContain(dayMonth(`${year}-01-05`));
-    expect(shown).toContain(dayMonthYear(`${year - 2}-03-04`));
+    // Each result's day is named in its heading ("5 Jan · Monday"); a result from another year says the year.
+    expect(shown.some((t) => t.startsWith(`${dayMonth(`${year}-01-05`)} · `))).toBe(true);
+    expect(shown.some((t) => t.startsWith(`${dayMonthYear(`${year - 2}-03-04`)} · `))).toBe(true);
   });
 });
 

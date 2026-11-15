@@ -751,6 +751,8 @@ export default function TransactionsScreen() {
                       ? weekdayDayMonth(group.date)
                       : dayMonth(group.date)
                 }
+                // Today and yesterday are named alone, as in Home; any other day says its date too.
+                dateInHeading={group.date !== today && group.date !== yesterday}
                 entering={isArriving() ? CONTENT_ENTER : undefined}
                 items={group.items}
                 categories={categories}

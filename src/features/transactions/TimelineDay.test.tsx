@@ -1,5 +1,5 @@
 /**
- * One Activity day: a heading (day, date, what it spent) above one card holding every entry (transfers as quiet end rows),
+ * One Activity day, drawn like Home's Recent activity: one card with the day named inside it and every entry beneath,
  * 2+ entries of a category stack into a line that opens in place; every entry stays tappable (no "+N more").
  */
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
@@ -217,7 +217,7 @@ describe('TimelineDay with savings amounts hidden', () => {
       savingsAccountIds: new Set(['cash']),
     });
     const all = texts(r).join(' | ');
-    expect(all).toContain('₹250 spent · +₹500 in');
+    expect(all).toContain('−₹250 · +₹500');
     expect(all).not.toContain('••••');
   });
 
@@ -229,7 +229,7 @@ describe('TimelineDay with savings amounts hidden', () => {
     });
     const all = texts(r).join(' | ');
     // Only salary +500 and travel -50 are left to count.
-    expect(all).toContain('₹50 spent · +₹500 in');
+    expect(all).toContain('−₹50 · +₹500');
     expect(all).not.toContain('₹120');
     expect(all).not.toContain('₹80');
     expect(all).not.toContain('₹200');
@@ -251,7 +251,7 @@ describe('TimelineDay', () => {
     ).toBeGreaterThan(0);
     expect(all).not.toContain('5 entries');
     // Food 200 and travel 50 spent, salary 500 in; the transfer moves nothing.
-    expect(all).toContain('₹250 spent · +₹500 in');
+    expect(all).toContain('−₹250 · +₹500');
     expect(all).toContain('Bank →\u00A0Cash');
     expect(all).toContain('Transfer');
     expect(byLabel(r, '₹3,000 moved from Bank to Cash')).toHaveLength(1);
@@ -260,9 +260,9 @@ describe('TimelineDay', () => {
   it('stacks two Food entries into one closed line', () => {
     const toggle = jest.fn();
     const r = render(new Set(), toggle);
-    // The count is the stack's second line; its one account is at the right end, under the total, like a single entry's.
-    expect(texts(r)).toContain('2 entries');
-    expect(rowTexts(r, 'Food, 2 entries, ₹200')).toEqual(['Food', '2', '2 entries', '−₹200', 'Bank']);
+    // The count is the stack's second line, with its one account, like a single entry's.
+    expect(texts(r)).toContain('2 entries · Bank');
+    expect(rowTexts(r, 'Food, 2 entries, ₹200')).toEqual(['Food', '2', '2 entries · Bank', '−₹200']);
     expect(byLabel(r, 'Food, Lunch')).toHaveLength(0);
     const stack = byLabel(r, 'Food, 2 entries, ₹200');
     expect(stack).toHaveLength(1);
@@ -387,12 +387,11 @@ describe('TimelineDay with subcategories', () => {
         />
       );
     });
-    // The parent is the line under the name; the account is at the right end with the amount.
+    // The parent is the line under the name, before the account.
     expect(rowTexts(r, 'Flipkart Minutes, in Groceries')).toEqual([
       'Flipkart Minutes',
-      'Groceries',
+      'Groceries · Bank',
       '−₹210',
-      'Bank',
     ]);
     expect(byLabel(r, 'Flipkart Minutes, in Groceries')).toHaveLength(1);
   });
@@ -512,13 +511,13 @@ describe('days as a heading above a card', () => {
     }
   };
 
-  it('names the day above its entries, with its date and total, and says them as one heading', () =>
+  it('names the day inside the card, over its entries, with its total, and says them as one heading', () =>
     withWidth(() => {
       const tree = day();
       const shown = texts(tree);
-      expect(shown).toContain('Today');
-      expect(shown).toContain(' · Fri 25 Sept');
-      expect(shown).toContain(`${formatMoney(15000)} spent`);
+      // The day's name and date, then what it spent, drawn as Home's day heading ("−₹150").
+      expect(shown).toContain('Today · Fri 25 Sept');
+      expect(shown).toContain(`−${formatMoney(15000)}`);
       // No marker rail beside the day: its weekday and number are in the heading, not repeated at its side.
       expect(shown).not.toContain('FRI');
       expect(shown).not.toContain('25');
@@ -527,31 +526,58 @@ describe('days as a heading above a card', () => {
       act(() => tree.unmount());
     }));
 
-  it('puts the day’s entries on a card, not straight on the wallpaper', () =>
+  it('names today and yesterday alone, as Home does, when the date is left out of the heading', () =>
+    withWidth(() => {
+      const tree = day({ dateInHeading: false });
+      expect(texts(tree)).toContain('Today');
+      expect(texts(tree).some((t) => t.includes('Fri 25 Sept'))).toBe(false);
+      // The date is still read out with the heading.
+      expect(
+        tree.root.find((n) => n.props.accessibilityRole === 'header').props.accessibilityLabel
+      ).toContain('Fri 25 Sept');
+      act(() => tree.unmount());
+    }));
+
+  it('draws the day as Home’s list card, with the day’s heading inside it', () =>
     withWidth(() => {
       const tree = day();
       const lane = tree.root.find(
         (n) =>
           typeof n.type === 'string' &&
           StyleSheet.flatten(n.props.style)?.backgroundColor === theme.colors.surface &&
-          StyleSheet.flatten(n.props.style)?.borderRadius === theme.radius.xl
+          StyleSheet.flatten(n.props.style)?.borderRadius === theme.radius.xl2
       );
+      // The same card and the same 12 dp inset as Home's Recent activity; it does not clip, so a lifted line's
+      // shadow is not cut off.
       expect(StyleSheet.flatten(lane.props.style)).toMatchObject({
+        marginHorizontal: 16,
         borderWidth: StyleSheet.hairlineWidth,
         borderColor: theme.colors.borderSoft,
-        paddingHorizontal: 14,
+        paddingHorizontal: 12,
+        overflow: 'visible',
       });
+      expect(lane.findAll((n) => n.props.accessibilityRole === 'header').length).toBeGreaterThan(0);
       act(() => tree.unmount());
     }));
 
-  it('has no marker line or date circle beside the day: the card runs the full width', () =>
+  it('uses Home’s row: a 40 dp disc in a 44 dp slot, a 56 dp least height, 14 dp of side padding', () =>
+    withWidth(() => {
+      const tree = day();
+      const styles = tree.root
+        .findAll((n) => typeof n.type === 'string')
+        .map((n) => StyleSheet.flatten(n.props.style) ?? {});
+      expect(styles.some((s) => s.width === 44 && s.alignItems === 'center')).toBe(true);
+      expect(styles.some((s) => s.width === 40 && s.height === 40)).toBe(true);
+      expect(styles.some((s) => s.minHeight === 56 && s.paddingHorizontal === 14)).toBe(true);
+      act(() => tree.unmount());
+    }));
+
+  it('has no marker line beside the day: the card runs the full width', () =>
     withWidth(() => {
       const tree = day();
       const rail = tree.root.findAll((n) => {
         const flat = StyleSheet.flatten(n.props.style);
-        return (
-          typeof n.type === 'string' && !!flat && (flat.width === 44 || (flat.width === 2 && flat.flex === 1))
-        );
+        return typeof n.type === 'string' && !!flat && flat.width === 2 && flat.flex === 1;
       });
       expect(rail).toHaveLength(0);
       act(() => tree.unmount());
@@ -572,7 +598,7 @@ describe('days as a heading above a card', () => {
       expect(tint(false)).toBeUndefined();
     }));
 
-  it('says a day of only transfers by how many there were, and writes the money that came in with a plus', () =>
+  it('says a day of only transfers by how many there were, and draws spending and money in as signed figures', () =>
     withWidth(() => {
       const move = (id: string) => tx(id, { type: 'transfer', categoryId: null, toAccountId: 'cash' });
       const two = day({ items: [move('m1'), move('m2')] });
@@ -594,7 +620,7 @@ describe('days as a heading above a card', () => {
           tx('b', { type: 'income', categoryId: 'salary', amountMinor: 5000 }),
         ],
       });
-      expect(texts(mixed)).toContain(`${formatMoney(10000)} spent · +${formatMoney(5000)} in`);
+      expect(texts(mixed)).toContain(`−${formatMoney(10000)} · +${formatMoney(5000)}`);
       // Spoken without the sign: a screen reader says "in", not "plus".
       expect(mixed.root.find((n) => n.props.accessibilityRole === 'header').props.accessibilityLabel).toBe(
         `Today, Fri 25 Sept, ${formatMoney(10000)} spent · ${formatMoney(5000)} in`
@@ -608,21 +634,37 @@ describe('days as a heading above a card', () => {
       return { tree, row: (label: string) => rowTexts(tree, label) };
     };
 
-    it('leads with its note, puts the category under it, and the account under the amount', () =>
+    it('leads with its note and puts "category · account" under it, the amount alone at the right', () =>
       withWidth(() => {
         const { tree, row } = labelled([tx('a', { note: 'Lunch', amountMinor: 20000 })]);
-        expect(row('Food, Lunch')).toEqual(['Lunch', 'Food', `−${formatMoney(20000)}`, 'bank']);
+        expect(row('Food, Lunch')).toEqual(['Lunch', 'Food · bank', `−${formatMoney(20000)}`]);
         act(() => tree.unmount());
       }));
 
-    it('has no second line when there is no note and the category is the name', () =>
+    it('has the account alone under the category when there is no note', () =>
       withWidth(() => {
         const { tree, row } = labelled([tx('a', { amountMinor: 20000 })]);
-        expect(row('Food,')).toEqual(['Food', `−${formatMoney(20000)}`, 'bank']);
+        expect(row('Food,')).toEqual(['Food', 'bank', `−${formatMoney(20000)}`]);
         act(() => tree.unmount());
       }));
 
-    it('writes money in green with a plus, spending in ink with a minus, and a transfer with neither', () =>
+    it('never lets an amount shrink: not to fit, and not as a child of a column, in a row or in an open group', () => {
+      // On a phone an amount that shrinks to fit, inside a column that shrinks, was drawn a few dp tall in an open
+      // group. The amounts sit directly in their line, drawn at their own size, as on Home.
+      const open = render(new Set([`${DATE}|expense|food`]));
+      const amounts = open.root.findAllByType(Text).filter((t) => /^[−+]₹/.test(wordsOf(t)));
+      expect(amounts.length).toBeGreaterThan(3);
+      for (const amount of amounts) {
+        expect(amount.props.adjustsFontSizeToFit).toBeFalsy();
+        expect(StyleSheet.flatten(amount.props.style).flexShrink).toBeUndefined();
+        let parent = amount.parent;
+        while (parent && typeof parent.type !== 'string') parent = parent.parent;
+        expect(StyleSheet.flatten(parent!.props.style).flexDirection).toBe('row');
+      }
+      act(() => open.unmount());
+    });
+
+    it('writes money in green with a plus, spending and a transfer in ink, a transfer with no sign', () =>
       withWidth(() => {
         const { tree } = labelled([
           tx('a', { amountMinor: 1000 }),
@@ -634,7 +676,7 @@ describe('days as a heading above a card', () => {
             .color;
         expect(colour(`−${formatMoney(1000)}`)).toBe(theme.colors.textPrimary);
         expect(colour(`+${formatMoney(2000)}`)).toBe(theme.colors.incomeText);
-        expect(colour(formatMoney(3000))).toBe(theme.colors.textSecondary);
+        expect(colour(formatMoney(3000))).toBe(theme.colors.textPrimary);
         act(() => tree.unmount());
       }));
   });
@@ -648,12 +690,17 @@ describe('days as a heading above a card', () => {
       act(() => tree.unmount());
     }));
 
-  it('separates rows with a hairline that starts under the icon', () =>
+  it('separates rows with Home’s hairline, across the whole row', () =>
     withWidth(() => {
       const tree = day();
       const separators = tree.root.findAll((n) => {
         const flat = StyleSheet.flatten(n.props.style);
-        return !!flat && flat.height === StyleSheet.hairlineWidth && flat.marginLeft === 44;
+        return (
+          !!flat &&
+          flat.height === StyleSheet.hairlineWidth &&
+          flat.backgroundColor === theme.colors.borderSoft &&
+          flat.marginLeft === undefined
+        );
       });
       expect(separators.length).toBeGreaterThan(0);
       act(() => tree.unmount());
