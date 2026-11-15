@@ -124,7 +124,7 @@ export function ActivitySummaryStrip({
               })}
             </View>
             {/* Spread across the same width as the bars: each word is under its bar to within a dp or two, and a wider
-                word ("W1", "W") never has to fit its bar's own column. */}
+                word ("W1", "W") never has to fit the column of its bar. */}
             <View style={styles.labels}>
               {bars.map((bar, i) => (
                 <Text key={bar.key} style={[styles.label, bar.isCurrent && styles.labelNow]}>
