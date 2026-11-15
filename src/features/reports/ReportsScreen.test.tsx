@@ -221,6 +221,18 @@ jest.mock('@/db/ledger', () => ({
   ],
   listAccounts: async () => [],
 }));
+// How often the heatmap grid is drawn: what it shows is its own, so it should not redraw for what is beside it.
+const mockGrid = { renders: 0 };
+jest.mock('./SpendHeatmap', () => {
+  const actual = jest.requireActual('./SpendHeatmap');
+  return {
+    ...actual,
+    SpendHeatmap: (props: unknown) => {
+      mockGrid.renders++;
+      return actual.SpendHeatmap(props);
+    },
+  };
+});
 import ReportsScreen from '../../../app/(tabs)/reports';
 import { getRangeComparison } from '@/db/reports';
 // Date is frozen but animation timers are real. Unmount every screen before restoring the clock,
@@ -817,5 +829,36 @@ describe('Reports screen', () => {
       await pressText(tree, 'By account');
       expect(mockAccounts).toHaveBeenCalledWith({ start: '2026-10-01', end: '2026-10-31' }, 'expense', true);
     });
+  });
+});
+
+describe('what Reports reads and redraws', () => {
+  it('reads the biggest spends once when the period changes, after its own data has landed', async () => {
+    const tree = await render();
+    await settle();
+    mockLargest.mockClear();
+    await act(async () => byLabel(tree, 'Previous period').props.onPress());
+    await settle();
+    await settle();
+    // It used to be read as soon as the period changed, and again when the period's days landed.
+    expect(mockLargest).toHaveBeenCalledTimes(1);
+    act(() => tree.unmount());
+  });
+
+  it('does not draw the heatmap again when the picked day’s entries arrive', async () => {
+    const { HeatmapCard } = require('./HeatmapCard');
+    const tree = await render();
+    await settle();
+    await settle();
+    await act(async () => {
+      tree.root.findByType(HeatmapCard).props.onSelect('2026-10-12');
+    });
+    const afterPick = mockGrid.renders;
+    // The day's entries are read a moment after the finger settles, and land in a render of their own.
+    await settle();
+    await settle();
+    expect(mockListTransactions).toHaveBeenCalled();
+    expect(mockGrid.renders).toBe(afterPick);
+    act(() => tree.unmount());
   });
 });

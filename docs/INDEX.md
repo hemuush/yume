@@ -30,6 +30,8 @@ The [14 November Activity smoothness pass](ACTIVITY_SMOOTHNESS_2026_11_14.md) me
 
 The [14 November Home pass](HOME_SMOOTHNESS_2026_11_14.md) applies the same method to Home: sheets move out of the page's state, a reload keeps what it did not change, the page's sections compare their props, and the 886-line screen is split into tested hooks and components. Opening or closing a sheet no longer redraws the page behind it.
 
+The [15 November Reports pass](REPORTS_SMOOTHNESS_2026_11_15.md) does the same for Reports: each interaction measured, the details of a period read once (not twice) when it lands, each tab its own memoized piece with its sections memoized, and the 940-line screen split into tested hooks and tabs.
+
 Hands-on Android outcomes belong in [release device acceptance](RELEASE_DEVICE_CHECKS.md). A passing test suite or JavaScript export does not establish native compilation, notification delivery, accessibility or frame pacing.
 
 ## Maintained guides

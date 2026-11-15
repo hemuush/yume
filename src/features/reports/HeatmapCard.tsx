@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { memo, useState } from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { ActionSheet } from '@/components/ActionSheet';
@@ -9,6 +9,9 @@ import { spendHeatScale } from '@/lib/color';
 import { withPressed } from '@/lib/pressed';
 import { SpendHeatmap } from './SpendHeatmap';
 import type { HeatModel } from './reportsInsights';
+
+// The grid is the heavy part; it is drawn again only when what it shows changes, not when the inspector below it does.
+const Grid = memo(SpendHeatmap);
 
 export interface HeatScope {
   /** Null for "All". */
@@ -71,7 +74,7 @@ export function HeatmapCard({
         )}
       </View>
       <View style={styles.grid}>
-        <SpendHeatmap
+        <Grid
           model={model}
           selectedIso={selectedIso}
           onSelect={onSelect}
