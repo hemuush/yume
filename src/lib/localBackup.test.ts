@@ -37,6 +37,7 @@ import {
   backupFileDate,
   runLocalBackupIfDue,
   pickBackupFolder,
+  readLocalBackup,
 } from './localBackup';
 import { toLocalIsoDate } from './date';
 
@@ -418,5 +419,37 @@ describe('folder discovery and automatic backup protection', () => {
     saf.writeAsStringAsync.mockResolvedValue(undefined);
     await writeLocalBackupNow('content://folder', { preserveExisting: true });
     expect(saf.deleteAsync).not.toHaveBeenCalled();
+  });
+});
+
+describe('readLocalBackup', () => {
+  const read = StorageAccessFramework.readAsStringAsync as jest.Mock;
+
+  it('reads a backup file as it is', async () => {
+    read.mockResolvedValueOnce(
+      JSON.stringify({ formatVersion: 6, tables: { transactions: [], accounts: [] } })
+    );
+    await expect(readLocalBackup('content://folder/yume-2026-11-14.json')).resolves.toMatchObject({
+      formatVersion: 6,
+    });
+  });
+
+  it('says plainly that a damaged file is not a backup, instead of the parser’s own message', async () => {
+    read.mockResolvedValueOnce('{"formatVersion": 6, "tables": {');
+    await expect(readLocalBackup('content://folder/yume-2026-11-14.json')).rejects.toThrow(
+      'This backup file is damaged or isn’t a Yume backup. Nothing was changed.'
+    );
+  });
+
+  it('says the same for a file that is not JSON at all', async () => {
+    read.mockResolvedValueOnce('hello');
+    await expect(readLocalBackup('content://folder/notes.json')).rejects.toThrow(
+      /damaged or isn’t a Yume backup/
+    );
+  });
+
+  it('refuses a file too large to be a backup before reading it as JSON', async () => {
+    read.mockResolvedValueOnce('x'.repeat(150 * 1024 * 1024 + 1));
+    await expect(readLocalBackup('content://folder/huge.json')).rejects.toThrow(/too large/);
   });
 });

@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { View, Pressable, Animated } from 'react-native';
 import { Text } from '@/components/Text';
 import ReanimatedAnimated from 'react-native-reanimated';
@@ -27,14 +28,15 @@ const LOOK = {
  * One person with an open balance on Friends & Family, as a glass tile, its balance green when they owe you and red when you
  * owe them. Shows initial, name, balance and last activity; tapping opens the person's sheet, where Settle up lives.
  */
-export function PersonTile({
+export const PersonTile = memo(function PersonTile({
   person,
   color,
-  onPress,
+  onOpen,
 }: {
   person: PersonWithBalance;
   color: string;
-  onPress: () => void;
+  /** One function for every tile (it is handed the person), so a tile is drawn again only when its own person changes. */
+  onOpen: (person: PersonWithBalance) => void;
 }) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.98);
   const dispBalanceMinor = roundedMinor(person.balanceMinor);
@@ -44,7 +46,7 @@ export function PersonTile({
       <View style={styles.personTile}>
         <AnimatedPressable
           style={animatedStyle}
-          onPress={onPress}
+          onPress={() => onOpen(person)}
           onPressIn={onPressIn}
           onPressOut={onPressOut}
           accessibilityRole="button"
@@ -67,4 +69,4 @@ export function PersonTile({
       </View>
     </ReanimatedAnimated.View>
   );
-}
+});

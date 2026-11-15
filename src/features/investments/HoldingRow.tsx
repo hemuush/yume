@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
 import { SettingsRow } from '@/components/SettingsRow';
@@ -6,23 +7,25 @@ import { formatMaskableMoney } from '@/lib/money';
 import { dayMonthYear } from '@/lib/dateLabels';
 import { ageLabel, estimatedValue, INVESTMENT_KIND_LABEL } from '@/lib/investment';
 import type { Holding } from '@/lib/portfolio';
+import type { Account } from '@/types';
 import { GainBadge } from './GainPill';
 
 /**
  * One holding in a list: its name, kind and how old its value is, the estimate and maturity for a deposit,
  * the value and the gain. Opens the holding's sheet.
  */
-export function HoldingRow({
+export const HoldingRow = memo(function HoldingRow({
   holding,
   today,
   masked,
-  onPress,
+  onOpen,
   divider,
 }: {
   holding: Holding;
   today: string;
   masked: boolean;
-  onPress: () => void;
+  /** One function for every row (it is handed the account), so a row is drawn again only when its own holding changes. */
+  onOpen: (account: Account) => void;
   divider: boolean;
 }) {
   const cur = holding.account.currency;
@@ -45,7 +48,7 @@ export function HoldingRow({
       label={holding.name}
       sub={sub}
       subColor={holding.stale ? theme.colors.warnInk : undefined}
-      onPress={onPress}
+      onPress={() => onOpen(holding.account)}
       divider={divider}
       right={
         <View style={styles.rowRight}>
@@ -64,7 +67,7 @@ export function HoldingRow({
       }
     />
   );
-}
+});
 
 const styles = StyleSheet.create({
   rowRight: { alignItems: 'flex-end', gap: 3, flexShrink: 1 },

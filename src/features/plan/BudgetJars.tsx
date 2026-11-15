@@ -1,5 +1,5 @@
 import { View, Pressable } from 'react-native';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { CategoryGlyph } from '@/components/CategoryGlyph';
 import { Text } from '@/components/Text';
 import { Glass } from '@/components/Glass';
 import { cardSurface } from '@/components/CardSurface';
@@ -7,7 +7,6 @@ import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
 import { withPressed } from '@/lib/pressed';
 import { softTint } from '@/components/softTint';
-import type { McIconName } from '@/components/iconName';
 import { BudgetsSummary, PlanBudgetInput } from './planOverview';
 import { styles } from './plan.styles';
 import { PlanSummaryRow, PlanListAdd, summaryListStyle } from './PlanSummaryRow';
@@ -79,7 +78,7 @@ export function BudgetJars({
               name={b.categoryName}
               subtitle={`${Math.round(b.percentUsed)}% used`}
               amount={amount}
-              icon={(b.categoryIcon ?? 'tag') as McIconName}
+              icon={b.categoryIcon ?? 'tag'}
               progress={b.percentUsed}
               animKey={`plan:budget-row:${b.id}`}
               color={color}
@@ -129,11 +128,7 @@ function BudgetTile({ budget: b, onPress }: { budget: PlanBudgetInput; onPress: 
       <Glass radius={16} style={[styles.tileFill, cardSurface.neutral]}>
         <View style={styles.tileHead}>
           <View style={[styles.tileIcon, { backgroundColor: softTint(base, 0.6) }]}>
-            <MaterialCommunityIcons
-              name={(b.categoryIcon ?? 'tag') as McIconName}
-              size={14}
-              color={theme.colors.ink}
-            />
+            <CategoryGlyph name={b.categoryIcon ?? 'tag'} size={14} color={theme.colors.ink} />
           </View>
           <Text style={[styles.tilePct, b.overBudget && styles.tileOver]}>
             {Math.round(pct)}

@@ -282,5 +282,10 @@ export async function readLocalBackup(uri: string): Promise<BackupSnapshot> {
   // Same ceiling the file picker applies: parsing something this large could exhaust memory.
   if (isTooLargeForBackup(content.length) || isTooLargeForBackup(byteLength(content)))
     throw new Error('This file is too large to be a Yume backup.');
-  return JSON.parse(content);
+  try {
+    return JSON.parse(content);
+  } catch {
+    // The same words the restore itself uses for a file it cannot read, not the parser's own message.
+    throw new Error('This backup file is damaged or isn’t a Yume backup. Nothing was changed.');
+  }
 }

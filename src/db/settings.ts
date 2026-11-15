@@ -162,15 +162,6 @@ function readNotificationPrefs(value: string | undefined): NotificationPrefs {
   }
 }
 
-export async function setNotificationPrefs(prefs: NotificationPrefs): Promise<void> {
-  const db = await getDb();
-  await db.runAsync(
-    `INSERT INTO settings (key, value) VALUES (?, ?)
-     ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
-    [NOTIFICATION_PREFS_KEY, JSON.stringify(clampPrefTimes(prefs))]
-  );
-}
-
 /** Merge one UI change with live settings atomically; unrelated choices and restores cannot be overwritten. */
 export async function updateNotificationPrefs(patch: Partial<NotificationPrefs>): Promise<NotificationPrefs> {
   return withSettingsLock(async () => {

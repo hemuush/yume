@@ -6,6 +6,7 @@ import { listPeople } from '@/db/people';
 import { Account } from '@/types';
 import { EntryType, isTxType } from '@/features/add/addEntry';
 import { exprFromMinor } from '@/lib/padMath';
+import { NOTE_MAX_LENGTH } from '@/lib/textLimits';
 import { errorMessage } from '@/lib/errorMessage';
 import { getSplitParts } from '@/db/splits';
 import { draftFromSaved, DraftPart } from '@/features/add/splitDraft';
@@ -165,7 +166,8 @@ export function useAddEntryData(input: Input) {
           }
         }
         // A refund's note, or one typed into the daily reminder's "Type it in".
-        if (noteParam) setNote(noteParam);
+        // The note field stops at NOTE_MAX_LENGTH while typing; a link prefilling one must stop there too.
+        if (noteParam) setNote(noteParam.slice(0, NOTE_MAX_LENGTH));
         // A Quick Add widget shortcut opens with its category already picked.
         if (
           refundParam !== '1' &&

@@ -1,4 +1,4 @@
-import { ReactNode, useState } from 'react';
+import { memo, ReactNode, useState } from 'react';
 import { View, Pressable, Animated, useWindowDimensions } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { theme } from '@/constants/theme';
@@ -10,6 +10,7 @@ import { topLevelOnly, childrenOf } from '@/lib/categoryTree';
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { useAccent } from '@/theme/AccentContext';
 import { usePressScale } from '@/lib/usePressScale';
+import { useStableCallback } from '@/lib/useStableCallback';
 import { softTint } from '@/components/softTint';
 import { styles, TILE_COLUMNS, NARROW_TILES } from './categories.styles';
 
@@ -29,7 +30,8 @@ export function CategoryTile({
   count?: number;
   /** The parent whose pills are open below. */
   selected?: boolean;
-  onPress: () => void;
+  /** Both are handed the category, so one function can serve every tile and a tile is drawn again only for its own changes. */
+  onPress: (cat: Category) => void;
   onLongPress: (cat: Category) => void;
 }) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale();
@@ -42,7 +44,7 @@ export function CategoryTile({
       ]}
       onPressIn={onPressIn}
       onPressOut={onPressOut}
-      onPress={onPress}
+      onPress={() => onPress(category)}
       onLongPress={() => onLongPress(category)}
       accessibilityRole="button"
       accessibilityLabel={
@@ -79,6 +81,9 @@ export function CategoryTile({
     </AnimatedPressable>
   );
 }
+
+/** The tile that is drawn again only when what it shows changes. */
+export const MemoCategoryTile = memo(CategoryTile);
 
 function SubcategoryPill({
   category,
@@ -162,6 +167,12 @@ export function CategorySection({
 }) {
   const topLevel = topLevelOnly(cats);
   const [openId, setOpenId] = useState<string | null>(null);
+  // One function for every tile (it always acts on the categories as they are now): a parent opens or closes its panel, a
+  // childless one is edited.
+  const onTile = useStableCallback((cat: Category) => {
+    if (childrenOf(cats, cat.id).length) setOpenId((id) => (id === cat.id ? null : cat.id));
+    else onEdit(cat);
+  });
 
   return (
     <TileRows
@@ -169,11 +180,11 @@ export function CategorySection({
       renderTile={(cat) => {
         const kids = childrenOf(cats, cat.id);
         return (
-          <CategoryTile
+          <MemoCategoryTile
             category={cat}
             count={kids.length || undefined}
             selected={openId === cat.id}
-            onPress={() => (kids.length ? setOpenId((id) => (id === cat.id ? null : cat.id)) : onEdit(cat))}
+            onPress={onTile}
             onLongPress={onManage}
           />
         );

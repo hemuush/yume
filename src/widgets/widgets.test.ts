@@ -89,6 +89,16 @@ function expand(node: unknown): string[] {
   return expand(fn(el.props));
 }
 
+/** Every library widget piece in a widget, with its props: what the phone will be asked to draw. */
+function piecesOf(node: unknown): { name: string; props: Record<string, unknown> }[] {
+  if (node == null || node === false) return [];
+  if (Array.isArray(node)) return node.flatMap(piecesOf);
+  const el = node as React.ReactElement<Record<string, unknown> & { children?: unknown }>;
+  const fn = el.type as ((props: unknown) => unknown) & { __name__?: string };
+  if (fn.__name__) return [{ name: fn.__name__, props: el.props }, ...piecesOf(el.props.children)];
+  return piecesOf(fn(el.props));
+}
+
 describe('the five widgets', () => {
   const pack = { primary: '#A6B4F2', secondary: '#F0B79A' };
 
@@ -160,6 +170,22 @@ describe('the five widgets', () => {
     const cats = [{ id: 'c1', name: 'Cafe', icon: 'coffee', color: '#F0876A' }];
     expect(expand(QuickAddWidget({ primary: pack.primary, categories: cats }))).toContain('IconWidget');
     expect(expand(QuickAddWidget({ primary: pack.primary, categories: [] }))).toContain('TextWidget');
+  });
+
+  it('Quick Add draws a category’s own emoji as text and a built-in icon as a glyph', () => {
+    const coffee = '\u2615';
+    const cats = [
+      { id: 'c1', name: 'Coffee runs', icon: coffee, color: '#F0876A' },
+      { id: 'c2', name: 'Rent', icon: 'home', color: '#8FCBFF' },
+    ];
+    const pieces = piecesOf(QuickAddWidget({ primary: pack.primary, categories: cats }));
+    // The emoji is a plain text piece in the system font (no custom font), never a code from the icon font.
+    const emoji = pieces.filter((p) => p.name === 'TextWidget' && p.props.text === coffee);
+    expect(emoji).toHaveLength(1);
+    expect(emoji[0].props.style).not.toHaveProperty('fontFamily');
+    expect(pieces.some((p) => p.name === 'IconWidget' && p.props.icon === coffee)).toBe(false);
+    // The built-in name is still a glyph of the icon font.
+    expect(pieces.some((p) => p.name === 'IconWidget' && p.props.icon === '\u{F02DC}')).toBe(true);
   });
 
   it('Suu, Next Due and Accounts build', () => {

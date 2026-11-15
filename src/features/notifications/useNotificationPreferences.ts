@@ -4,6 +4,7 @@ import { rebuildNotifications } from '@/lib/notifications';
 import { onSettingsRestored } from '@/lib/dataEvents';
 import { errorMessage } from '@/lib/errorMessage';
 import { showAlert } from '@/components/AppDialog';
+import { keepIfEqual } from '@/lib/stableData';
 
 /** Optimistic choices are ordered patches: a failed earlier save cannot roll back or leak into a later one. */
 export function useNotificationPreferences(onScheduled: (success: boolean) => Promise<void>) {
@@ -17,8 +18,14 @@ export function useNotificationPreferences(onScheduled: (success: boolean) => Pr
   const mounted = useRef(true);
 
   const publish = useCallback(() => {
-    if (mounted.current && committed.current)
-      setPrefs(pending.current.reduce((base, change) => ({ ...base, ...change.patch }), committed.current));
+    if (mounted.current && committed.current) {
+      const next = pending.current.reduce(
+        (base, change) => ({ ...base, ...change.patch }),
+        committed.current
+      );
+      // A save that came back as the optimistic choice already shown changes nothing: the page is not drawn again.
+      setPrefs((prev) => keepIfEqual(prev, next));
+    }
   }, []);
 
   const load = useCallback(async () => {

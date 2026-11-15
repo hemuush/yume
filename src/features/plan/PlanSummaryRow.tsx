@@ -1,9 +1,8 @@
 import { Pressable, StyleSheet, View } from 'react-native';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { CategoryGlyph } from '@/components/CategoryGlyph';
 import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
-import type { McIconName } from '@/components/iconName';
 import { withPressedTint } from '@/lib/pressed';
 import { useAccent } from '@/theme/AccentContext';
 import { useStacked } from '@/lib/useStacked';
@@ -24,7 +23,7 @@ export function PlanSummaryRow({
   name: string;
   subtitle: string;
   amount: string;
-  icon: McIconName;
+  icon: string;
   progress?: number;
   /** Which bar this is (`plan:budget-row:<id>`): it keeps what it last showed and glides to a new value. */
   animKey: string;
@@ -42,7 +41,7 @@ export function PlanSummaryRow({
       style={withPressedTint(accent, s.row)}
     >
       <View style={s.icon}>
-        <MaterialCommunityIcons name={icon} size={18} color={color} />
+        <CategoryGlyph name={icon} size={18} color={color} />
       </View>
       <View style={s.content}>
         <View style={[s.line, stacked && s.stacked]}>

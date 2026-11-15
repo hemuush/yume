@@ -1,8 +1,7 @@
 import { View, StyleSheet } from 'react-native';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { theme } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
-import type { McIconName } from '@/components/iconName';
+import { CategoryGlyph } from '@/components/CategoryGlyph';
 import { softTint } from '@/components/softTint';
 
 interface Props {
@@ -32,7 +31,7 @@ export function CategoryIcon({ name, color, size = 16, square = 34, round = fals
         },
       ]}
     >
-      <MaterialCommunityIcons name={name as McIconName} size={size} color={theme.colors.ink} />
+      <CategoryGlyph name={name} size={size} color={theme.colors.ink} />
     </View>
   );
 }

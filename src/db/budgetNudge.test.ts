@@ -13,13 +13,7 @@ jest.mock('@/lib/notifications', () => ({ rebuildNotifications: async () => {} }
 import { CREATE_TABLES_SQL } from '@/db/schema';
 import { createAccount, createCategory, createTransaction } from '@/db/ledger';
 import { createBudget, dueBudgetNudge } from '@/db/budgets';
-import {
-  setNotificationPrefs,
-  getNotificationPrefs,
-  resetSettingsCache,
-  getAlertQueue,
-  setAlertQueue,
-} from '@/db/settings';
+import { updateNotificationPrefs, resetSettingsCache, getAlertQueue, setAlertQueue } from '@/db/settings';
 import { toLocalIsoDate } from '@/lib/date';
 
 const today = toLocalIsoDate(new Date());
@@ -69,7 +63,7 @@ describe('budget alerts', () => {
   it('follow the Overspending alerts switch', async () => {
     const travel = (await createCategory({ name: 'Travel', kind: 'expense' })).id;
     await createBudget({ categoryId: travel, limitAmountMinor: 10000, rollover: false });
-    await setNotificationPrefs({ ...(await getNotificationPrefs()), overspendAlerts: false });
+    await updateNotificationPrefs({ overspendAlerts: false });
     await spend(travel, 20000);
     expect(await queuedTitles()).toEqual([]);
   });

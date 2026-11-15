@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { getLoanProgress, listLoans, type LoanProgress } from '@/db/loans';
 import { toLocalIsoDate } from '@/lib/date';
 import { keepEntriesIfEqual, reuseUnchanged } from '@/lib/stableData';
@@ -24,8 +24,19 @@ export function useLoansData() {
   // What is held, so a reload that found nothing new sets no state at all (React still draws a component once for a
   // state update that changes nothing).
   const held = useRef(NONE);
+  // Only the newest load may land, and none after the page is gone: an older read that finishes late would put old
+  // loans back over newer ones.
+  const request = useRef(0);
+  useEffect(
+    () => () => {
+      request.current += 1;
+    },
+    []
+  );
   const loadLoans = useCallback(async () => {
+    const id = ++request.current;
     const [list, rows] = await Promise.all([listLoans(), getLoanProgress()]);
+    if (id !== request.current) return;
     const progress = Object.fromEntries(rows.map((p) => [p.loanId, p]));
     const today = toLocalIsoDate(new Date());
     const prev = held.current;
