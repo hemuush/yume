@@ -12,7 +12,6 @@ import {
   longWeekday,
   shortMonth,
   shortMonthYear,
-  shortWeekday,
   weekdayDayMonth,
   weekdayDayMonthYear,
 } from './dateLabels';
@@ -26,7 +25,6 @@ const LABELS: [string, (iso: string) => string, Intl.DateTimeFormatOptions][] = 
     weekdayDayMonthYear,
     { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' },
   ],
-  ['shortWeekday', shortWeekday, { weekday: 'short' }],
   ['longWeekday', longWeekday, { weekday: 'long' }],
   ['shortMonth', shortMonth, { month: 'short' }],
   ['longMonth', longMonth, { month: 'long' }],

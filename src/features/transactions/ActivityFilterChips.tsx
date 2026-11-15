@@ -20,6 +20,9 @@ import { shade } from '@/lib/color';
 import { useAccent } from '@/theme/AccentContext';
 import { useStacked } from '@/lib/useStacked';
 
+/** Chips are drawn 40 tall; this keeps their touch area 48. */
+const CHIP_SLOP = { top: 4, bottom: 4 } as const;
+
 // The one-tap type choices above the list — the same `filterType` the filter
 // sheet sets, just without opening it.
 // Investments are one of the types too, but a rare one: they live in the filter sheet, not on this row.
@@ -86,7 +89,7 @@ export function ActivityFilterChips({
         key={c.value}
         onPress={() => onFilterType(c.value)}
         // Drawn 40 tall; the touch area stays 48.
-        hitSlop={{ top: 4, bottom: 4 }}
+        hitSlop={CHIP_SLOP}
         style={withPressedTint(accent, [styles.typeBtn, on && { backgroundColor: ink, borderColor: ink }])}
         accessibilityRole="radio"
         accessibilityState={{ selected: on }}
@@ -107,6 +110,7 @@ export function ActivityFilterChips({
         <Pressable
           key={id}
           onPress={() => onRemoveCategory(id)}
+          hitSlop={CHIP_SLOP}
           style={withPressedTint(accent, [styles.chip, { backgroundColor: chipBg }])}
           accessibilityRole="button"
           accessibilityLabel={`Remove the ${categoryName(id)} filter`}
@@ -119,6 +123,7 @@ export function ActivityFilterChips({
         <Pressable
           key={id}
           onPress={() => onRemoveAccount(id)}
+          hitSlop={CHIP_SLOP}
           style={withPressedTint(accent, [styles.chip, { backgroundColor: chipBg }])}
           accessibilityRole="button"
           accessibilityLabel={`Remove the ${accountName(id)} filter`}
@@ -131,6 +136,7 @@ export function ActivityFilterChips({
       {!!expenseLabel && (
         <Pressable
           onPress={onRemoveLabel}
+          hitSlop={CHIP_SLOP}
           style={withPressedTint(accent, [styles.chip, { backgroundColor: chipBg }])}
           accessibilityRole="button"
           accessibilityLabel="Remove expense label filter"
@@ -144,6 +150,7 @@ export function ActivityFilterChips({
   const clearAll = picked > 0 && (
     <Pressable
       onPress={onClearAll}
+      hitSlop={CHIP_SLOP}
       style={withPressedTint(accent, styles.chip)}
       accessibilityRole="button"
       accessibilityLabel="Clear all Activity filters"

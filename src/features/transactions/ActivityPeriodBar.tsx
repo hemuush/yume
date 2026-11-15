@@ -4,6 +4,7 @@ import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
+import { themeInk } from '@/theme/interactionColors';
 import { usePressScale } from '@/lib/usePressScale';
 import { useStacked } from '@/lib/useStacked';
 import type { useSwipeDrag } from '@/lib/useSwipeDrag';
@@ -20,8 +21,9 @@ const VIEW_SCOPES: { label: string; value: ViewScope }[] = [
 ];
 
 /**
- * Under Activity's title: ‹ This week › in a frosted pill, Week | Month beside it. Dragging the pill (or the Spent
- * card below, which shares the same `swipe`) steps the period, same as the chevrons.
+ * Under Activity's title: one pill, ‹ This week ▾ ›, and the Week | Month switch beside it, drawn the same way as the
+ * filter chips below (the picked one in the theme's ink). Dragging the pill (or the Spent card below, which shares the
+ * same `swipe`) steps the period, same as the chevrons.
  */
 export function ActivityPeriodBar({
   heading,
@@ -47,18 +49,18 @@ export function ActivityPeriodBar({
   onScope: (scope: ViewScope) => void;
 }) {
   const { accent } = useAccent();
+  const ink = themeInk(accent);
   const stackPeriod = useStacked('early');
   const stepBackPress = usePressScale();
   const stepForwardPress = usePressScale();
   return (
     <View style={[styles.periodBar, stackPeriod && styles.periodBarStacked]}>
-      <View
-        style={[styles.periodRow, stackPeriod ? styles.periodRowStacked : styles.periodRowFlush]}
-        {...swipe.panHandlers}
-      >
-        {/* Only the contents follow the finger, inside the clipped pill, so a drag never slides the
-            pill over the Week | Month switch beside it. */}
-        <ReanimatedAnimated.View style={[styles.periodInner, swipe.dragStyle]}>
+      {/* The pill clips what slides inside it: a drag moves the arrows and the name together and never draws over the
+          Week | Month switch beside it. */}
+      <View style={[styles.periodPill, stackPeriod && styles.periodPillStacked]} {...swipe.panHandlers}>
+        <ReanimatedAnimated.View
+          style={[styles.periodInner, stackPeriod && styles.periodInnerStacked, swipe.dragStyle]}
+        >
           <AnimatedPressable
             onPress={onStepBack}
             onPressIn={stepBackPress.onPressIn}
@@ -73,11 +75,10 @@ export function ActivityPeriodBar({
           <Pressable
             onPress={onPickMonth}
             hitSlop={6}
-            style={withPressed(styles.periodTitleBtn)}
+            style={withPressed([styles.periodTitleBtn, stackPeriod && styles.periodTitleBtnStacked])}
             accessibilityRole="button"
             accessibilityLabel={`${heading.title}${heading.sub ? `, ${heading.sub}` : ''}. Pick a month`}
           >
-            <Feather name="calendar" size={14} color={theme.colors.ink} />
             <View style={styles.periodTitleCol}>
               <Text style={styles.periodTitle} numberOfLines={1}>
                 {heading.title}
@@ -88,7 +89,7 @@ export function ActivityPeriodBar({
                 </Text>
               )}
             </View>
-            <Feather name="chevron-down" size={14} color={theme.colors.ink} />
+            <Feather name="chevron-down" size={14} color={theme.colors.textSecondary} />
           </Pressable>
           <AnimatedPressable
             onPress={onStepForward}
@@ -106,7 +107,7 @@ export function ActivityPeriodBar({
         </ReanimatedAnimated.View>
       </View>
       <View
-        style={[styles.scopeSwitch, !stackPeriod && styles.scopeSwitchFlush]}
+        style={[styles.scopeSwitch, stackPeriod && styles.scopeSwitchStacked]}
         accessibilityRole="radiogroup"
       >
         {VIEW_SCOPES.map((o) => {
@@ -115,13 +116,16 @@ export function ActivityPeriodBar({
             <Pressable
               key={o.value}
               onPress={() => onScope(o.value)}
-              hitSlop={2}
-              style={withPressedTint(accent, [styles.scopeBtn, stackPeriod && styles.scopeBtnStacked])}
+              hitSlop={{ top: 4, bottom: 4 }}
+              style={withPressedTint(accent, [
+                styles.scopeBtn,
+                stackPeriod && styles.scopeBtnStacked,
+                on && { backgroundColor: ink },
+              ])}
               accessibilityRole="radio"
               accessibilityState={{ selected: on }}
             >
               <Text style={[styles.scopeText, on && styles.scopeTextOn]}>{o.label}</Text>
-              {on && <View style={styles.scopeUnderline} />}
             </Pressable>
           );
         })}

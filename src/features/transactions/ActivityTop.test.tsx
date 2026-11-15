@@ -210,7 +210,7 @@ describe('Activity filter bar', () => {
     dimensions.mockRestore();
   });
 
-  it('draws the picked type as a dark rounded button, like Home’s Add expense', () => {
+  it('draws the picked type as a dark pill, like the picked Week | Month beside it', () => {
     const { themeInk } = require('@/theme/interactionColors');
     const { theme } = require('@/constants/theme');
     const dimensions = jest
@@ -224,7 +224,7 @@ describe('Activity filter bar', () => {
       return StyleSheet.flatten(typeof raw === 'function' ? raw({ pressed: false }) : raw);
     };
     expect(style('Show all')).toMatchObject({
-      borderRadius: theme.radius.lg,
+      borderRadius: theme.radius.pill,
       backgroundColor: themeInk('#8FCBFF'),
     });
     expect(style('Show spent').backgroundColor).not.toBe(style('Show all').backgroundColor);
