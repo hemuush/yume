@@ -46,37 +46,13 @@ The screen was rendered on a real SQLite ledger (the same harness as the earlier
 
 ## Measured at 6 times slower CPU, in a browser
 
-> These numbers were taken on the first form of the redesign (a heading above the card, an amount-over-account column in every row), before the rows were redrawn as Home's. That form had two more nodes in each row than Home's rows do, so what is said below about the extra nodes describes it, not the current rows.
+The harness ([the earlier Activity pass](ACTIVITY_SMOOTHNESS_2026_11_14.md) used it too) runs each interaction on a 3,000-entry ledger with the CPU throttled 6 times and counts the JavaScript that blocks the page (tasks over 50 ms). "Before" is the build before the redesign, "after" is the current one (Home-like rows).
 
-The harness ([the earlier Activity pass](ACTIVITY_SMOOTHNESS_2026_11_14.md) used it too) runs each interaction on a 3,000-entry ledger with the CPU throttled 6 times and counts the JavaScript that blocks the page (tasks over 50 ms) and the longest gap between frames. "Before" is the build of the previous commit, "after" is this one.
+- **Size of the page.** The first screen holds 127 DOM nodes (it was 119): about eight more in the Spent card (the bars' letters and the chip), and nine in a row, the same as before. The first form of the redesign (the account in a column at the right of each row) held 132 and eleven per row, and its month step measured about twice as slow as before (median 439 ms of blocked JavaScript against 202, five repeats): the extra node per row and the nested column cost more than they looked. Drawing the rows as Home's removed that.
+- **Mount** to the first days: 767 ms after, 931 ms before (one run each, same conditions; the earlier runs on this machine of the same builds varied between 834 and 1,125 ms).
+- **Interactions, five repeats each, median blocked JavaScript (ms), before → after:** Week → Month 188 → 177, month filter chips 105 → 67 and 174 → 170, previous month 354 → 184, next month 253 → 225, Month → Week 147 → 82, opening an entry 245 → 132, closing it 3 → 11, opening search 51 → 62, typing in it 69 → 5, closing it 69 → 27. Scrolling a week and a month (flings of 2,500 and 6,000 px) blocked nothing before or after. The same build measured twice differs by up to 2 times (the original's month step: 179, 354 and 762 ms in three runs), so a difference of tens of milliseconds is not a finding; there is no step that is slower after in a way the repeats agree on.
 
-- **Size of the page.** The first screen holds 132 DOM nodes (it was 119): two more in each row (the right-hand column and the account text, 9 → 11) and about fifteen more in the Spent card (the bars' letters and the chip). Mounting to the first days took 1,431 ms after against 1,098 before in the quiet run (1,297 against 1,085 in the first); that is the cost of those nodes plus noise and was not tuned further.
-- **Interactions.** Scrolling a week and a month (flings of 2,500 and 6,000 px) had no blocking task before or after. For the rest the same build measured twice differs by up to 2 times (the old build's month step blocked for 326 ms in one run and 762 ms in the other), so a single number cannot tell a small change from noise. Most interactions are faster in one run and slower in the other. Three were slower after in both runs, by modest amounts: stepping to the next month (+45 and +93 ms of blocked JavaScript), switching back to Week (+8 and +78 ms) and closing Insights (a task of about 50 ms that was not there before).
-- **Repeated five times** on each build (medians of blocked JavaScript at 6 times slower CPU, before → after): Week → Month 173 → 183 ms, next month 383 → 401, opening Insights 37 → 43, closing it 19 → 9, opening an entry 91 → 89 (all unchanged); stepping back a month 202 → 439 ms (slower after in all five repeats) and Month → Week 100 → 167 ms (slower in three of the five). The new days are heavier to put on screen: each row has one more text and one more view, and the list mounts a few days per batch. React's own commit time for a month step at normal CPU speed, though, was the same on both builds in three runs each (about 22–26 ms in total), so the extra blocked time at 6 times is probably the browser's layout and styling of the extra nodes rather than more JavaScript of ours (not measured separately). The month step's 237 ms of difference is about 40 ms at normal speed, on a step that blocked about 34 ms before; it was not reduced further. On a phone the cost of those nodes is native views, which this harness does not measure.
-
-| Interaction | JS blocked, ms (quiet run, before → after) | Longest frame gap, ms (before → after) | JS blocked, ms (first run, before → after) |
-| ----------- | ------------------------------------------ | -------------------------------------- | ------------------------------------------ |
-| week: previous week | 392 → 446 | 450 → 500 | 416 → 329 |
-| week: next week | 204 → 180 | 250 → 233 | 161 → 227 |
-| chip: Spent | 67 → 103 | 117 → 150 | 53 → 12 |
-| chip: All | 119 → 9 | 167 → 50 | 4 → 140 |
-| scope: Month | 561 → 209 | 567 → 233 | 225 → 801 |
-| month: previous month | 762 → 194 | 700 → 250 | 326 → 409 |
-| month: next month | 226 → 319 | 250 → 333 | 247 → 291 |
-| month: chip Spent | 191 → 87 | 233 → 133 | 92 → 130 |
-| month: chip All | 330 → 395 | 383 → 450 | 104 → 84 |
-| scope: Week | 162 → 240 | 217 → 283 | 131 → 139 |
-| insights: open | 26 → 36 | 67 → 83 | 31 → 400 |
-| insights: close | 0 → 51 | 0 → 100 | 0 → 49 |
-| picker: open | 148 → 153 | 200 → 200 | 127 → 99 |
-| picker: close | 9 → 128 | 67 → 167 | 106 → 20 |
-| entry: open detail | 110 → 247 | 150 → 317 | 403 → 354 |
-| entry: close detail | 11 → 0 | 50 → 0 | 0 → 0 |
-| search: open | 363 → 52 | 400 → 100 | 242 → 84 |
-| search: type "food" | 164 → 54 | 150 → 100 | 148 → 98 |
-| search: close | 99 → 126 | 150 → 183 | 72 → 80 |
-
-The first run overlapped a type check and a lint run on the same machine for its last part, which is why its Insights and Week | Month numbers are higher; the quiet run is the one to read. Neither says anything about a phone.
+Neither says anything about a phone.
 
 ## Found on a phone afterwards: tiny amounts in an open group
 
