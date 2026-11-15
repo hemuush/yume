@@ -176,24 +176,10 @@ export const styles = StyleSheet.create({
   sub: { fontFamily: theme.font.body, fontSize: 13, lineHeight: 18, color: theme.colors.textSecondary },
 
   /* ---------- Friends & streak ---------- */
-  balanceLine: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'baseline',
-    justifyContent: 'space-between',
-    gap: 4,
-  },
-  compactValue: { fontFamily: theme.font.bodyMedium, fontSize: 18, lineHeight: 24 },
   tile: { flex: 1, minWidth: 0, padding: 14, gap: 6 },
   go: { position: 'absolute', top: 14, right: 14 },
   value: { ...figure },
   income: { color: theme.colors.incomeText },
-  over: { color: theme.colors.expenseText },
-  tileSub: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textMuted },
-  people: { flexDirection: 'row', gap: 6, marginTop: 'auto', overflow: 'hidden' },
-  person: { maxWidth: 50, alignItems: 'center', gap: 3 },
-  avatar: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
-  avatarText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.ink },
   sprouts: { flexDirection: 'row', alignItems: 'flex-end', gap: 6, minHeight: 32 },
 
   /* ---------- Coming up ---------- */

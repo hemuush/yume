@@ -33,9 +33,8 @@ import {
   getAlertQueue,
   addQueuedAlerts,
   setAlertQueue,
-  getNotificationPrefs,
   resetSettingsCache,
-  setNotificationPrefs,
+  updateNotificationPrefs,
 } from './settings';
 import { saveHideSensitiveAmounts } from './afterCommit';
 
@@ -72,8 +71,7 @@ beforeEach(async () => {
   N.getPermissionsAsync.mockResolvedValue({ granted: true } as Notifications.NotificationPermissionsStatus);
   N.getNotificationChannelAsync.mockResolvedValue(null);
   N.setNotificationChannelAsync.mockResolvedValue(null);
-  await setNotificationPrefs({
-    ...(await getNotificationPrefs()),
+  await updateNotificationPrefs({
     recurringAlerts: true,
     refundAlerts: true,
   });
@@ -190,8 +188,7 @@ it('cancels private OS payloads even when phone permission was revoked before hi
 
 it('clears stale private payloads even when attention topics have since been disabled', async () => {
   expect(scheduledText()).toContain('Private purchase');
-  await setNotificationPrefs({
-    ...(await getNotificationPrefs()),
+  await updateNotificationPrefs({
     recurringAlerts: false,
     refundAlerts: false,
   });
@@ -263,7 +260,7 @@ it('keeps follow-ups for a partial backdated refund and does not rebuild a rejec
 });
 
 it('removes queued sensitive budget copy on hide while retaining public alerts', async () => {
-  await setNotificationPrefs({ ...(await getNotificationPrefs()), overspendAlerts: true });
+  await updateNotificationPrefs({ overspendAlerts: true });
   for (const [name, sensitive] of [
     ['Queued medical', true],
     ['Public groceries', false],
@@ -292,7 +289,7 @@ it('removes queued sensitive budget copy on hide while retaining public alerts',
 });
 
 it('regenerates budget amounts and labels from live data before applying family privacy changes', async () => {
-  await setNotificationPrefs({ ...(await getNotificationPrefs()), overspendAlerts: true });
+  await updateNotificationPrefs({ overspendAlerts: true });
   const parent = await createCategory({ name: 'Public budget', kind: 'expense' });
   await createBudget({
     categoryId: parent.id,
@@ -330,7 +327,7 @@ it('regenerates budget amounts and labels from live data before applying family 
 });
 
 it('drops legacy queued copy without privacy provenance when hiding', async () => {
-  await setNotificationPrefs({ ...(await getNotificationPrefs()), overspendAlerts: true });
+  await updateNotificationPrefs({ overspendAlerts: true });
   await addQueuedAlerts([
     {
       id: 'old',
@@ -349,7 +346,7 @@ it('drops legacy queued copy without privacy provenance when hiding', async () =
 });
 
 it('removes queued spending-spike copy when its category becomes sensitive', async () => {
-  await setNotificationPrefs({ ...(await getNotificationPrefs()), overspendAlerts: true });
+  await updateNotificationPrefs({ overspendAlerts: true });
   const cat = await createCategory({ name: 'Spiking spend', kind: 'expense' });
   await createTransaction({
     type: 'expense',
@@ -390,7 +387,7 @@ it('refreshes bill eligibility when a category is archived and restored, without
 });
 
 it('refreshes logging reminders after person receipts, deletion, restoration and Undo', async () => {
-  await setNotificationPrefs({ ...(await getNotificationPrefs()), eveningEnabled: true });
+  await updateNotificationPrefs({ eveningEnabled: true });
   await rebuildNotifications();
   const person = await createPerson({ name: 'Friend' });
   const income = await createCategory({ name: 'Person receipts', kind: 'income' });
@@ -455,7 +452,7 @@ it('keeps an account archive and a person receipt committed when scheduling fail
 });
 
 it('preserves an alert queued during a rebuild while removing stale snapshot entries', async () => {
-  await setNotificationPrefs({ ...(await getNotificationPrefs()), overspendAlerts: true });
+  await updateNotificationPrefs({ overspendAlerts: true });
   const old = {
     id: 'expired',
     queuedAt: '2026-10-01T00:00:00.000Z',

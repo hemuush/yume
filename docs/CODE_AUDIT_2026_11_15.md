@@ -15,7 +15,7 @@ The repository has 1,227 tracked files: about 87,000 lines of non-test source (a
 | Check | Result |
 | --- | --- |
 | `tsc` (strict, no unused locals or parameters), `eslint` (no `any` in source), circular imports (593 modules), Prettier | clean, no warnings |
-| Full test suite | all pass: 12,496 tests in 452 suites (19 new tests with this audit: the randomized test, the damaged-backup message and the linked-note limit) |
+| Full test suite | all pass: 12,500 tests in 452 suites (23 new tests with this audit: the randomized test, the damaged-backup message, the linked-note limit, the newest-load guards and the single-balance People card) |
 | Coverage over the whole suite | 90.2% of lines, 84.3% of branches, 83.9% of functions; 6 files at 0% (all under 60 lines: a seeding helper, two widget entry points, one tiny sheet) |
 | Dead code | 0 orphan files; 100 exports not used by other source files, of which 89 are used by tests and 9 only inside their own file; 2 used nowhere (types I added last week, now removed) |
 | Silenced errors | 35 `.catch(() => {})`, each read: haptics, best-effort alerts and nudges, recent searches, cleanup of a half-written backup, serialization chains. None hides a failed money write |
@@ -50,15 +50,15 @@ Operations: expenses, income, transfers (including into a savings pot), edits, d
 
 ## Findings
 
-No data-loss, security or money-correctness defect was found. All findings are low.
+No data-loss, security or money-correctness defect was found. All findings are low, and F1 to F5 are fixed.
 
 | # | Severity | Finding | Status |
 | --- | --- | --- | --- |
 | F1 | Low | Restoring from the in-app list of folder backups showed the JSON parser's own message ("JSON Parse error: Unexpected character…") for a damaged file, where the file picker path says "This backup file is damaged or isn't a Yume backup. Nothing was changed." No data was at risk. Found by reading `readLocalBackup` | Fixed, with tests |
 | F2 | Low | The 120-character note limit was enforced only by the text field, so a `note` in a link (or any other prefill) could put a longer one on the Add screen and it would be saved as typed. Found by following the deep-link parameters into the form | Fixed, with a real-database test |
-| F3 | Info | `setNotificationPrefs` writes the whole preferences object without the settings lock that `updateNotificationPrefs` takes, and nothing in the app calls it (only tests). Anyone who used it later could overwrite a concurrent change | Not changed: used by tests as a fixture setter; recorded here so it is not used in the app |
-| F4 | Info | `PeopleTile` (in `PlanTiles.tsx`) is a component nothing renders; only its own test uses it | Not changed |
-| F5 | Info | `useLoansData` and `useRecurringData` have no explicit "newest load wins" counter (Budgets has one). The database queue is first-in-first-out and the loads have the same shape, so they finish in order; the shared `useScreenLoad` says each load function owns this guard | Not changed; a counter would be belt and braces |
+| F3 | Info | `setNotificationPrefs` writes the whole preferences object without the settings lock that `updateNotificationPrefs` takes, and nothing in the app calls it (only tests). Anyone who used it later could overwrite a concurrent change | Fixed afterwards: the setter is removed, and the tests that used it call `updateNotificationPrefs`, which takes the lock |
+| F4 | Info | `PeopleTile` (in `PlanTiles.tsx`) is a component nothing renders; only its own test uses it | Fixed afterwards: removed with the eight style entries only it used; its test now checks the live card (`PlanPeopleHabit`), plus a new one for a single balance |
+| F5 | Info | `useLoansData` and `useRecurringData` have no explicit "newest load wins" counter (Budgets has one). The database queue is first-in-first-out and the loads have the same shape, so they finish in order; the shared `useScreenLoad` says each load function owns this guard | Fixed afterwards: both loaders keep only the newest load, and Recurring also counts a pause or a hidden suggestion made on the page as newer than a read in flight; three tests fail without it |
 | F6 | Info | `newId` builds UUIDs from `Math.random`. Fine for record keys in one person's database (collisions are negligible and nothing treats an id as a secret), but not cryptographic | Not changed |
 | F7 | Info | Moderate `npm audit` findings, build-time only (see above) | Not changed |
 

@@ -6,8 +6,19 @@ let mockRules: Partial<RecurringRule>[] = [];
 let mockAccounts: { id: string; name: string; archived?: boolean; balanceMinor: number }[] = [];
 let mockSuggestions: { key: string; amountMinor: number }[] = [];
 let mockSuggestionsFail = false;
+// The next read of the rules waits here: an older load that finishes after a newer one.
+const mockHold: { next: boolean; release: (() => void) | null } = { next: false, release: null };
 jest.mock('@/db/recurring', () => ({
-  listRecurringRules: async () => JSON.parse(JSON.stringify(mockRules)),
+  listRecurringRules: async () => {
+    const snapshot = JSON.parse(JSON.stringify(mockRules));
+    if (mockHold.next) {
+      mockHold.next = false;
+      await new Promise<void>((resolve) => {
+        mockHold.release = resolve;
+      });
+    }
+    return snapshot;
+  },
 }));
 jest.mock('@/db/ledger', () => ({
   listAccounts: async () => JSON.parse(JSON.stringify(mockAccounts)),
@@ -51,6 +62,8 @@ beforeEach(() => {
   mockAccounts = [{ id: 'bank', name: 'Bank', balanceMinor: 1000 }];
   mockSuggestions = [{ key: 's1', amountMinor: 500 }];
   mockSuggestionsFail = false;
+  mockHold.next = false;
+  mockHold.release = null;
 });
 
 const settle = () => act(async () => {});
@@ -129,5 +142,43 @@ describe('useRecurringData', () => {
     await settle();
     act(() => result.current.dropSuggestion('s1'));
     expect(result.current.suggestions).toEqual([]);
+  });
+
+  it('never lets an older load land over a newer one', async () => {
+    const { result } = renderHook(useRecurringData);
+    await settle();
+    // A load starts and is slow; before it finishes, another starts and finishes with newer rules.
+    mockHold.next = true;
+    let older!: Promise<void>;
+    act(() => {
+      older = result.current.reload();
+    });
+    mockRules[1] = rule('b', { amountMinor: 999 });
+    await act(async () => {
+      await result.current.reload();
+    });
+    expect(result.current.rules[1].amountMinor).toBe(999);
+    await act(async () => {
+      mockHold.release!();
+      await older;
+    });
+    // The older read had taken the old amount; it finishes last and is thrown away.
+    expect(result.current.rules[1].amountMinor).toBe(999);
+  });
+
+  it('keeps a rule shown paused when a read that began before the pause finishes after it', async () => {
+    const { result } = renderHook(useRecurringData);
+    await settle();
+    mockHold.next = true;
+    let older!: Promise<void>;
+    act(() => {
+      older = result.current.reload();
+    });
+    act(() => result.current.setRuleActive('b', false));
+    await act(async () => {
+      mockHold.release!();
+      await older;
+    });
+    expect(result.current.rules[1]).toMatchObject({ id: 'b', active: false });
   });
 });
