@@ -18,7 +18,7 @@ export const styles = themedStyles(() =>
       // A warm frost: the gold tint let through the glass, so it reads as a note on the wallpaper.
       backgroundColor: 'rgba(255,239,204,0.8)',
       borderWidth: 1,
-      borderColor: 'rgba(255,255,255,0.9)',
+      borderColor: theme.colors.borderSoft,
     },
     lapsedHead: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
     lapsedHeadText: { flexGrow: 1, flexBasis: 180, minWidth: 0 },

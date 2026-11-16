@@ -186,7 +186,7 @@ export const styles = themedStyles(() =>
     // One weight picked or not: the fill and the light text show the pick, so switching never changes the width of
     // either word.
     scopeText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
-    scopeTextOn: { color: theme.colors.white },
+    scopeTextOn: { color: theme.colors.onInk },
 
     // ‹ This week 9–15 Nov ▾ › in one pill, Week | Month at its right end.
     periodBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
@@ -244,7 +244,7 @@ export const styles = themedStyles(() =>
       alignItems: 'center',
       gap: 10,
     },
-    dragHintText: { flex: 1, fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.white },
+    dragHintText: { flex: 1, fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.onInk },
     // The period, as a small chip in the shrunk header; it opens the month picker.
     periodChip: {
       minHeight: 44,
@@ -284,7 +284,7 @@ export const styles = themedStyles(() =>
       fontSize: 13,
       color: theme.colors.textSecondary,
     },
-    typeTextOn: { color: theme.colors.white },
+    typeTextOn: { color: theme.colors.onInk },
     filterGap: { height: 10 },
     chip: {
       flexDirection: 'row',
@@ -353,7 +353,7 @@ export const styles = themedStyles(() =>
       borderColor: theme.colors.borderSoft,
     },
     deleteBtnAsk: { backgroundColor: theme.colors.expenseText, borderColor: theme.colors.expenseText },
-    deleteAskText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.white },
+    deleteAskText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.onInk },
     // A split part's detail: the whole payment, this part in bold.
     splitCard: { ...flatSection(), marginBottom: 10, paddingHorizontal: 14, paddingVertical: 12, gap: 8 },
     splitCardTitle: { ...EYEBROW },

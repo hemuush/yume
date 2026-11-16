@@ -41,7 +41,7 @@ function Action({ type, label, icon, ink }: (typeof ACTIONS)[number] & { ink: st
       <Animated.View
         style={[styles.action, primary && { backgroundColor: ink, borderColor: ink }, animatedStyle]}
       >
-        <Feather name={icon} size={16} color={primary ? theme.colors.white : theme.colors.ink} />
+        <Feather name={icon} size={16} color={primary ? theme.colors.onInk : theme.colors.ink} />
         <Text style={[styles.label, primary && styles.labelPrimary]}>{label}</Text>
       </Animated.View>
     </Pressable>
@@ -83,6 +83,6 @@ const styles = themedStyles(() =>
       fontSize: 13,
       color: theme.colors.textPrimary,
     },
-    labelPrimary: { color: theme.colors.white },
+    labelPrimary: { color: theme.colors.onInk },
   })
 );

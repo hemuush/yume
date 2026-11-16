@@ -242,10 +242,11 @@ const styles = themedStyles(() =>
       color: theme.colors.textSecondary,
       marginBottom: 2,
     },
+    // The large Fredoka title of the home screen, like every other screen's.
     greet: {
-      fontFamily: theme.font.roundedMedium,
-      fontSize: 20,
-      lineHeight: 26,
+      fontFamily: theme.font.roundedBold,
+      fontSize: 28,
+      lineHeight: 34,
       letterSpacing: -0.2,
       color: theme.colors.ink,
       marginTop: 1,

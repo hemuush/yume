@@ -252,6 +252,6 @@ const styles = themedStyles(() =>
       backgroundColor: theme.colors.ink,
     },
     pillPressed: { opacity: theme.opacity.pressed },
-    pillText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.white },
+    pillText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.onInk },
   })
 );

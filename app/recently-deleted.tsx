@@ -346,7 +346,7 @@ const styles = themedStyles(() =>
     },
     /** The second line under an entry's title sits right under the first. */
     subNext: { marginTop: 0 },
-    restoreText: { fontFamily: theme.font.roundedBold, fontSize: 12, color: theme.colors.white },
+    restoreText: { fontFamily: theme.font.roundedBold, fontSize: 12, color: theme.colors.onInk },
     emptyAll: {
       alignSelf: 'stretch',
       alignItems: 'center',

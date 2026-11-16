@@ -1,9 +1,6 @@
 /**
  * Yume's colours as a table per mode. `theme.colors.x` (see `constants/theme.ts`) is the entry of the mode the app is
  * in right now, so a screen keeps reading `theme.colors.ink` and gets the right value in light or dark.
- *
- * This is the first step of the two-mode theme: both modes still hold today's colours, so nothing on screen
- * changes yet. The new light and dark values replace them in the steps that follow.
  */
 import { getScheme, type Scheme } from './scheme';
 
@@ -116,10 +113,90 @@ const LIGHT = {
 /** Every colour token a screen can read. Each mode's table must give every one a value. */
 export type Palette = typeof LIGHT;
 
+/**
+ * The dark mode: the same tokens on the warm near-black paper of the approved design. Text and the lead colours are
+ * lifted (the sky and the coral stay the logo's; green, red and amber are the lighter shades that read on dark),
+ * tints become deep washes, and lines are barely lighter than the page. Pastel fills used for category and account
+ * marks stay pastel, with dark ink on them.
+ */
+const DARK: Palette = {
+  background: '#12130F',
+  surface: '#1A1B16',
+  surfaceAlt: '#24251E',
+
+  ink: '#F6F2E6',
+  onInk: '#12130F',
+  inkSoft: '#B9B7AB',
+
+  primary: '#9EC5FC',
+  primaryTint: '#1F2B40',
+  secondary: '#8FE8C8',
+  secondaryTint: '#1D2F29',
+  secondaryDeep: '#4FD0A0',
+  accent: '#C9B8FF',
+  accentTint: '#2A2540',
+  gold: '#F0E1A8',
+  goldTint: '#332E1C',
+
+  coral: '#FC7B5E',
+
+  income: '#6FD6A5',
+  incomeTint: '#1D2E26',
+  expense: '#FF8F8A',
+  expenseTint: '#3B2A24',
+  incomeText: '#6FD6A5',
+  expenseText: '#FF8F8A',
+  warnInk: '#E8B84A',
+
+  textPrimary: '#F6F2E6',
+  textSecondary: '#B9B7AB',
+  textMuted: '#97958A',
+
+  white: '#FFFFFF',
+  flatLime: '#E0F0A8',
+  flatMint: '#8FE8C8',
+  flatPink: '#FFA8CE',
+  flatBlue: '#9EC5FC',
+  onFlat: '#12130F',
+
+  idTeal: '#1B2B28',
+  idSage: '#222A1B',
+  idCoral: '#33241F',
+  idCoralDeep: '#FC7B5E',
+  spentSoft: '#8F8C7C',
+  idGold: '#2E2A1A',
+  idGoldDeep: '#E0AC3F',
+  splitPalette: ['#9EC5FC', '#F0E1A8', '#8FE8C8', '#E2A6D8', '#F6BFD3', '#BEC8D4'],
+
+  borderSoft: '#2E2F27',
+  divider: '#26271F',
+
+  slice: {
+    spent: '#6E6D62',
+    saved: '#7AA2F0',
+    due: '#9EC5FC',
+    free: '#FC7B5E',
+    debt: '#BBA9F7',
+  },
+  dueTint: '#2E2A1A',
+  dueRow: '#26231A',
+  dueInk: '#E8B84A',
+  tray: '#1F201A',
+  trayTrack: '#2E2F27',
+  otherSlice: '#4A4A40',
+  link: '#9EC5FC',
+
+  inkWash: 'rgba(246,242,230,0.06)',
+  inkHairline: 'rgba(246,242,230,0.12)',
+  inkLine: 'rgba(246,242,230,0.18)',
+  inkOff: 'rgba(246,242,230,0.3)',
+  glass: 'rgba(255,255,255,0.08)',
+  scrim: 'rgba(0,0,0,0.55)',
+};
+
 export const PALETTES: Record<Scheme, Palette> = {
   light: LIGHT,
-  // Dark arrives with the dark palette; until then it is the same table.
-  dark: LIGHT,
+  dark: DARK,
 };
 
 export function getPalette(): Palette {

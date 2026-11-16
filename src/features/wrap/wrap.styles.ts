@@ -51,7 +51,7 @@ export const styles = themedStyles(() =>
     },
     chapterSelected: { backgroundColor: theme.colors.ink },
     chapterText: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
-    chapterTextSelected: { color: theme.colors.white },
+    chapterTextSelected: { color: theme.colors.onInk },
     close: {
       width: 44,
       height: 44,

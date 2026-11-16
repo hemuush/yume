@@ -49,7 +49,7 @@ export const styles = themedStyles(() =>
       borderRadius: 22,
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: 'rgba(255,255,255,0.7)',
+      backgroundColor: theme.colors.surface,
     },
     periodArrowOff: { opacity: theme.opacity.limit },
     // Reports' own header: a slimmer row; the arrows keep their 44 touch size.
@@ -113,7 +113,7 @@ export const styles = themedStyles(() =>
       borderRadius: 18,
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: 'rgba(255,255,255,0.7)',
+      backgroundColor: theme.colors.surface,
     },
     dayFoot: {
       marginTop: 4,

@@ -130,6 +130,6 @@ const styles = themedStyles(() =>
       borderRadius: theme.radius.pill,
       backgroundColor: theme.colors.ink,
     },
-    actionText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.white },
+    actionText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.onInk },
   })
 );

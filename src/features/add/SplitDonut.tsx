@@ -43,7 +43,7 @@ export function SplitDonut({
           cx={SIZE / 2}
           cy={SIZE / 2}
           r={R}
-          stroke="rgba(18,19,15,0.06)"
+          stroke={theme.colors.inkWash}
           strokeWidth={STROKE}
           fill="none"
         />

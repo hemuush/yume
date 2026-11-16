@@ -225,7 +225,7 @@ const styles = themedStyles(() =>
       marginBottom: 2,
     },
     line: { height: LINE_HEIGHT, justifyContent: 'center' },
-    rail: { height: 2, borderRadius: 1, backgroundColor: 'rgba(18,19,15,0.12)' },
+    rail: { height: 2, borderRadius: 1, backgroundColor: theme.colors.inkHairline },
     dot: { position: 'absolute', borderWidth: 3, backgroundColor: theme.colors.surface },
     axis: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, justifyContent: 'space-between', marginTop: 2 },
     axisText: { fontFamily: theme.font.bodyMedium, fontSize: 11, color: theme.colors.textMuted },

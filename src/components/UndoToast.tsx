@@ -4,6 +4,7 @@ import { Text } from '@/components/Text';
 import ReanimatedAnimated, { FadeInDown, FadeOutDown, ReduceMotion } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme } from '@/constants/theme';
+import { hexToRgba } from '@/lib/color';
 import { usePressScale } from '@/lib/usePressScale';
 import { haptics } from '@/lib/haptics';
 import { DURATIONS } from '@/lib/motionTimings';
@@ -196,7 +197,7 @@ const styles = themedStyles(() =>
       minWidth: 0,
       fontFamily: theme.font.bodyMedium,
       fontSize: 13,
-      color: theme.colors.white,
+      color: theme.colors.onInk,
     },
     undoChip: {
       minHeight: 44,
@@ -204,8 +205,8 @@ const styles = themedStyles(() =>
       borderRadius: theme.radius.pill,
       paddingHorizontal: 14,
       paddingVertical: 8,
-      backgroundColor: 'rgba(255,255,255,0.16)',
+      backgroundColor: hexToRgba(theme.colors.onInk, 0.16),
     },
-    undo: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.white },
+    undo: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.onInk },
   })
 );

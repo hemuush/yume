@@ -9,6 +9,7 @@ import { theme } from '@/constants/theme';
 import { AVATAR_COLORS } from '@/lib/hueFor';
 import { TYPE_WASH, typeWash } from '@/features/add/addEntry';
 import { THEMES } from '@/theme/themes';
+import { PALETTES } from '@/theme/palette';
 
 const channel = (v: number) => {
   const s = v / 255;
@@ -81,5 +82,43 @@ describe('graphic contrast', () => {
 describe('avatar initials', () => {
   it.each(AVATAR_COLORS)('ink initials read on %s', (background) => {
     expect(contrast(c.ink, background)).toBeGreaterThanOrEqual(4.5);
+  });
+});
+
+/** Both colour tables, not only the one the app starts in: text must read on every ground in light and in dark. */
+describe.each(['light', 'dark'] as const)('%s palette text contrast', (mode) => {
+  const p = PALETTES[mode];
+  const grounds = { page: p.background, card: p.surface, surfaceAlt: p.surfaceAlt, tray: p.tray };
+  const texts = {
+    textPrimary: p.textPrimary,
+    textSecondary: p.textSecondary,
+    textMuted: p.textMuted,
+    expenseText: p.expenseText,
+    incomeText: p.incomeText,
+    link: p.link,
+    warnInk: p.warnInk,
+  };
+  for (const [tn, text] of Object.entries(texts)) {
+    for (const [gn, ground] of Object.entries(grounds)) {
+      it(`${tn} reads on ${gn}`, () => {
+        expect(contrast(text, ground)).toBeGreaterThanOrEqual(4.5);
+      });
+    }
+  }
+
+  it('reads the text on an ink fill (a picked chip) and on the coral Add button', () => {
+    expect(contrast(p.onInk, p.ink)).toBeGreaterThanOrEqual(4.5);
+    expect(contrast(p.ink === '#16170F' ? p.ink : '#12130F', p.coral)).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it('tells the lines apart from the page without being loud', () => {
+    expect(contrast(p.borderSoft, p.background)).toBeGreaterThan(1.05);
+    expect(contrast(p.borderSoft, p.background)).toBeLessThan(2);
+  });
+
+  it('keeps the moon slices distinct from the page', () => {
+    for (const colour of Object.values(p.slice)) {
+      expect(contrast(colour, p.background)).toBeGreaterThanOrEqual(1.5);
+    }
   });
 });

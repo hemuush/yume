@@ -364,7 +364,7 @@ const styles = themedStyles(() =>
       borderWidth: 1.5,
       borderColor: 'transparent',
     },
-    trackOn: { borderColor: 'rgba(18,19,15,0.22)' },
+    trackOn: { borderColor: theme.colors.inkLine },
     fill: { width: '100%', borderRadius: 12, overflow: 'hidden' },
     goalTick: {
       position: 'absolute',
@@ -373,7 +373,7 @@ const styles = themedStyles(() =>
       height: 0,
       borderTopWidth: 1.5,
       borderStyle: 'dashed',
-      borderColor: 'rgba(18,19,15,0.35)',
+      borderColor: theme.colors.inkOff,
     },
     label: {
       alignSelf: 'stretch',
@@ -390,7 +390,7 @@ const styles = themedStyles(() =>
       height: 0,
       borderTopWidth: 1.5,
       borderStyle: 'dashed',
-      borderColor: 'rgba(18,19,15,0.35)',
+      borderColor: theme.colors.inkOff,
     },
     goalText: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted },
   })

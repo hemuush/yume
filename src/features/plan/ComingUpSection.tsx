@@ -249,7 +249,7 @@ const s = themedStyles(() =>
     income: { color: theme.colors.incomeText },
     // The Pay pill is part of the row, which is the one tap target (44 dp tall at least in practice).
     pay: { minHeight: 30, justifyContent: 'center', paddingHorizontal: 12, borderRadius: theme.radius.pill },
-    payText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.white },
+    payText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.onInk },
     emptyRow: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 64, paddingHorizontal: 14 },
   })
 );

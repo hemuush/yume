@@ -123,7 +123,7 @@ export function PrimaryButton({
         <Feather
           name={icon}
           size={compact ? 14 : 17}
-          color={secondary ? theme.colors.textPrimary : theme.colors.white}
+          color={secondary ? theme.colors.textPrimary : theme.colors.onInk}
         />
       )}
       <ReanimatedAnimated.Text

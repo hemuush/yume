@@ -80,7 +80,7 @@ export function DayArc({ morning, evening }: { morning: Slot; evening: Slot }) {
                   cx={x(s.minutes)}
                   cy={y(s.minutes)}
                   r={MARK}
-                  fill={theme.colors.white}
+                  fill={theme.colors.surface}
                   stroke={s.color}
                   strokeWidth={2.5}
                 />

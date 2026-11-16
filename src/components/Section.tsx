@@ -116,7 +116,7 @@ const styles = themedStyles(() =>
       alignItems: 'center',
       justifyContent: 'center',
     },
-    badgeText: { fontFamily: theme.font.monoBold, fontSize: 11, color: theme.colors.white },
+    badgeText: { fontFamily: theme.font.monoBold, fontSize: 11, color: theme.colors.onInk },
     seeAll: { flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 48, flexShrink: 0 },
     seeAllText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.link },
   })

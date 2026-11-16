@@ -78,9 +78,9 @@ export const styles = themedStyles(() =>
     potToday: {
       borderRadius: 18,
       paddingVertical: 6,
-      backgroundColor: 'rgba(255,255,255,0.85)',
+      backgroundColor: theme.colors.surface,
       borderWidth: 1,
-      borderColor: 'rgba(255,255,255,0.95)',
+      borderColor: theme.colors.borderSoft,
     },
     plantSlot: { height: 64, justifyContent: 'flex-end', alignItems: 'center' },
     soil: { width: 36, height: 11, backgroundColor: theme.colors.inkWash, borderRadius: 6 },
