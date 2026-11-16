@@ -6,7 +6,6 @@ import Animated, {
   useAnimatedStyle,
   withTiming,
 } from 'react-native-reanimated';
-import { LinearGradient } from 'expo-linear-gradient';
 import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
@@ -17,7 +16,7 @@ import { timing, PANEL_ENTER, ROW_EXIT } from '@/lib/animation';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 import { DURATIONS } from '@/lib/motionTimings';
 import { useAccent } from '@/theme/AccentContext';
-import { hexToRgba, hexToHsl, shade } from '@/lib/color';
+import { hexToRgba } from '@/lib/color';
 import { withPressed } from '@/lib/pressed';
 import { parseLocalIsoDate } from '@/lib/date';
 import { defaultBar, monthBars, weekBars, SpendBar } from './spendBarData';
@@ -31,8 +30,6 @@ type Range = 'week' | 'month';
 /** The tallest a capsule's fill gets, and the least a day with any spending shows. */
 const TRACK_H = 60;
 const FILL_MIN = 14;
-/** The lightest the capsule fill's second colour gets, so it still reads against the track in every theme. */
-const FILL_END_MAX_L = 72;
 /** The picked capsule stands a little taller than the rest. */
 const LIFT = 1.08;
 /** A day this many times the daily goal is a one-off, not a slip: said calmly. */
@@ -61,10 +58,8 @@ function Capsule({
   onSelect: () => void;
 }) {
   const reduce = useReduceMotion();
-  const { accent, secondary } = useAccent();
+  const { accent } = useAccent();
   const target = fillHeight(bar.totalMinor, maxMinor);
-  // A very light second colour would vanish into the track, so its lightness is capped.
-  const fillEnd = hexToHsl(secondary)[2] > FILL_END_MAX_L ? shade(secondary, FILL_END_MAX_L) : secondary;
   // A capsule shows at its height at once; a new value (another day's spending) just glides there.
   const height = useSharedValue(target);
   const lift = useSharedValue(selected ? LIFT : 1);
@@ -98,7 +93,12 @@ function Capsule({
         ]}
       >
         <Animated.View style={[styles.fill, { transformOrigin: 'bottom' }, fillStyle]}>
-          <LinearGradient colors={[accent, fillEnd]} style={StyleSheet.absoluteFill} />
+          <View
+            style={[
+              StyleSheet.absoluteFill,
+              { backgroundColor: selected ? theme.colors.slice.saved : accent },
+            ]}
+          />
         </Animated.View>
         {goalH != null && <View pointerEvents="none" style={[styles.goalTick, { bottom: goalH }]} />}
       </Animated.View>

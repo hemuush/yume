@@ -78,10 +78,10 @@ const LIGHT = {
   // Home's month slices, one colour per meaning everywhere they appear (ring, legend dots, meters).
   // Equal-lightness pastels so no slice shouts over another; they are fills only, never text.
   slice: {
-    spent: '#F6A88E',
-    saved: '#4FD09F',
-    due: '#EDB02F',
-    free: '#7DB9F2',
+    spent: '#8F8C7C', // warm grey: money already gone is quiet
+    saved: '#4F86D9', // set aside: the blue
+    due: '#9EC5FC', // bills still to pay: the sky
+    free: '#FC7B5E', // free to spend: the coral dot of the logo
     debt: '#BBA9F7',
   },
   // The "still to pay" family: the chip and date tile, a paler row behind a bill due soon, and its text.

@@ -1,14 +1,11 @@
 import { memo } from 'react';
 import { View, Pressable, ScrollView, StyleSheet, useWindowDimensions } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Text } from '@/components/Text';
 import { Amount } from '@/components/Amount';
-import type { McIconName } from '@/components/iconName';
 import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
-import { accountHue, accountIcon, accountKindShort, accountTypeLabel } from '@/lib/account';
-import { shade } from '@/lib/color';
+import { accountTypeLabel } from '@/lib/account';
 import { withPressed, withPressedTint } from '@/lib/pressed';
 import { useAccent } from '@/theme/AccentContext';
 import { Section } from '@/components/Section';
@@ -90,6 +87,7 @@ export function HomeAccounts({
     >
       <ScrollView
         horizontal
+        style={styles.strip}
         nestedScrollEnabled
         overScrollMode="never"
         showsHorizontalScrollIndicator={false}
@@ -98,8 +96,15 @@ export function HomeAccounts({
         decelerationRate="fast"
         contentContainerStyle={styles.row}
       >
-        {preview.map((a) => (
-          <AccountTile key={a.id} account={a} width={width} accent={accent} onOpen={onOpenAccount} />
+        {preview.map((a, i) => (
+          <AccountTile
+            key={a.id}
+            account={a}
+            width={width}
+            first={i === 0}
+            accent={accent}
+            onOpen={onOpenAccount}
+          />
         ))}
         <Pressable
           onPress={onAddAccount}
@@ -107,7 +112,7 @@ export function HomeAccounts({
           accessibilityLabel="Add an account"
           style={withPressed([styles.tile, styles.addTile, { width: Math.round(width * 0.8) }])}
         >
-          <Feather name="plus" size={22} color={theme.colors.textSecondary} />
+          <Feather name="plus" size={20} color={theme.colors.textSecondary} />
           <Text style={styles.addText}>Add account</Text>
         </Pressable>
       </ScrollView>
@@ -119,34 +124,23 @@ export function HomeAccounts({
 const AccountTile = memo(function AccountTile({
   account: a,
   width,
+  first,
   accent,
   onOpen,
 }: {
   account: Account;
   width: number;
+  first: boolean;
   accent: string;
   onOpen: (account: Account) => void;
 }) {
-  const hue = accountHue(a.type, accent);
   return (
     <Pressable
       onPress={() => onOpen(a)}
       accessibilityRole="button"
       accessibilityLabel={`${a.name}, ${accountTypeLabel(a)}. Open summary`}
-      style={withPressedTint(accent, [styles.tile, { width }])}
+      style={withPressedTint(accent, [styles.tile, first && styles.tileFirst, { width }])}
     >
-      <View style={styles.tileHead}>
-        <View style={[styles.icon, { backgroundColor: shade(hue, 88) }]}>
-          <MaterialCommunityIcons
-            name={accountIcon(a.type, !!a.investment) as McIconName}
-            size={17}
-            color={shade(hue, 30, 10)}
-          />
-        </View>
-        <Text style={styles.kind} numberOfLines={1}>
-          {accountKindShort(a)}
-        </Text>
-      </View>
       <Text style={styles.name} numberOfLines={1}>
         {a.name}
       </Text>
@@ -166,41 +160,38 @@ const styles = themedStyles(() =>
   StyleSheet.create({
     // No vertical padding: the tiles sit exactly where the section's other cards do (the cards have no shadow to
     // make room for).
-    row: { paddingHorizontal: 16, gap: TILE_GAP },
-    tile: { ...h.card, marginHorizontal: 0, minHeight: 112, padding: 12 },
-    tileHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
-    icon: { width: 32, height: 32, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-    name: {
-      marginTop: 10,
-      fontFamily: theme.font.bodyMedium,
-      fontSize: theme.typeSize.row,
-      color: theme.colors.textPrimary,
+    // The accounts at a glance: names over balances in columns between two hairlines, a hairline between the columns.
+    // The row starts on the 16dp gutter (the first column has no left padding of its own).
+    strip: {
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.borderSoft,
     },
-    kind: {
-      flexShrink: 1,
+    row: { paddingHorizontal: 16 },
+    tile: {
+      minHeight: 72,
+      paddingVertical: 12,
+      paddingHorizontal: 14,
+      justifyContent: 'center',
+      borderLeftWidth: StyleSheet.hairlineWidth,
+      borderLeftColor: theme.colors.borderSoft,
+    },
+    tileFirst: { paddingLeft: 0, borderLeftWidth: 0 },
+    name: {
       fontFamily: theme.font.body,
-      fontSize: 11,
-      textAlign: 'right',
-      color: theme.colors.textMuted,
+      fontSize: 12,
+      color: theme.colors.textSecondary,
     },
     balance: {
-      marginTop: 2,
-      fontFamily: theme.font.bodyMedium,
-      fontSize: 16,
-      lineHeight: 22,
+      marginTop: 4,
+      fontFamily: theme.font.bodyBold,
+      fontSize: 15,
+      lineHeight: 20,
       fontVariant: ['tabular-nums'],
       color: theme.colors.textPrimary,
     },
     balanceOwed: { color: theme.colors.expenseText },
-    addTile: {
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: 8,
-      backgroundColor: 'transparent',
-      borderWidth: 1,
-      borderStyle: 'dashed',
-      borderColor: theme.colors.borderSoft,
-    },
+    addTile: { alignItems: 'flex-start', gap: 6 },
     addText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textSecondary },
     wrap: { marginHorizontal: 16 },
     fresh: { ...h.card, marginHorizontal: 0, padding: 16, gap: 4 },
