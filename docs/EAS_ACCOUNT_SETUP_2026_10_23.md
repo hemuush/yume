@@ -56,3 +56,7 @@ Rollback: restore the prior app.json only if its remote project becomes valid ag
 ## 2026-11-12: new EAS project
 
 The project was recreated on expo.dev (same owner `hemant.shrma.3004`, slug `yume`). `app.json` now uses project ID `d67a3e31-1190-4b0c-9eac-cbc12b108e13`; the ID above is the retired one. The first build on the new project needs a new Android signing key, so installs signed by the old key must be uninstalled first. Run the EAS Build workflow with "verify only" to confirm the `EXPO_TOKEN` secret can reach the new project.
+
+## 2026-11-16: project linked again
+
+The owner shared the Project details page on expo.dev: slug `yume`, owner `hemant.shrma.3004`, project ID `e0f237e5-68f0-40a7-a9ef-18a41eb5c657`. `app.json` now uses that ID; `d67a3e31-1190-4b0c-9eac-cbc12b108e13` (the 12 November project) is retired. This was a link change only: no build had been started on the new project when it was made, and nothing here shows that the `EXPO_TOKEN` repository secret can reach it, or that it has an Android signing key (the workflow builds with `--non-interactive`, which cannot create one). The EAS Build run for #88 had failed with the Free plan's Android build quota, not because of this project.
