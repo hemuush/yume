@@ -18,6 +18,7 @@ import { useStacked } from '@/lib/useStacked';
 import { Kicker } from './PlanTiles';
 import { styles } from './plan.styles';
 import { noBreak } from '@/lib/keepTogether';
+import { themedStyles } from '@/theme/themedStyles';
 
 /**
  * Spending balance, scoped inflow/outflow and a compact forecast verdict. Without an account,
@@ -238,40 +239,42 @@ function Fact({ label, value, bad, good }: { label: string; value: string; bad?:
   );
 }
 
-const local = StyleSheet.create({
-  card: { paddingHorizontal: 14, paddingTop: 12, paddingBottom: 2, marginTop: 4, gap: 10 },
-  head: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
-  headCopy: { flex: 1, minWidth: 0 },
-  mark: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-  // The answer in words: Fredoka at section-title size, never a hero figure.
-  verdict: {
-    fontFamily: theme.font.roundedBold,
-    fontSize: theme.typeSize.section,
-    lineHeight: 21,
-    color: theme.colors.textPrimary,
-    fontVariant: ['tabular-nums'],
-  },
-  info: { width: 32, minHeight: 32, alignItems: 'center', justifyContent: 'center' },
-  // Now − out + in = the closing balance, read left to right.
-  sum: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 4, rowGap: 6 },
-  fact: { flexGrow: 1, flexBasis: 64, minWidth: 0 },
-  factHalf: { flexBasis: '45%' },
-  factValue: {
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 14,
-    lineHeight: 20,
-    color: theme.colors.textPrimary,
-    fontVariant: ['tabular-nums'],
-  },
-  link: {
-    minHeight: 44,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: theme.colors.divider,
-  },
-  linkText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.link },
-  chipOk: { backgroundColor: theme.colors.incomeTint },
-  chipBad: { backgroundColor: theme.colors.expenseTint },
-});
+const local = themedStyles(() =>
+  StyleSheet.create({
+    card: { paddingHorizontal: 14, paddingTop: 12, paddingBottom: 2, marginTop: 4, gap: 10 },
+    head: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
+    headCopy: { flex: 1, minWidth: 0 },
+    mark: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+    // The answer in words: Fredoka at section-title size, never a hero figure.
+    verdict: {
+      fontFamily: theme.font.roundedBold,
+      fontSize: theme.typeSize.section,
+      lineHeight: 21,
+      color: theme.colors.textPrimary,
+      fontVariant: ['tabular-nums'],
+    },
+    info: { width: 32, minHeight: 32, alignItems: 'center', justifyContent: 'center' },
+    // Now − out + in = the closing balance, read left to right.
+    sum: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 4, rowGap: 6 },
+    fact: { flexGrow: 1, flexBasis: 64, minWidth: 0 },
+    factHalf: { flexBasis: '45%' },
+    factValue: {
+      fontFamily: theme.font.bodyMedium,
+      fontSize: 14,
+      lineHeight: 20,
+      color: theme.colors.textPrimary,
+      fontVariant: ['tabular-nums'],
+    },
+    link: {
+      minHeight: 44,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: theme.colors.divider,
+    },
+    linkText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.link },
+    chipOk: { backgroundColor: theme.colors.incomeTint },
+    chipBad: { backgroundColor: theme.colors.expenseTint },
+  })
+);

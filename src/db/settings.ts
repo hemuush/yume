@@ -10,6 +10,7 @@ import {
   readCurrencyCache,
   setCurrencyCache,
 } from './currencyCache';
+import { isAppearancePreference, type AppearancePreference } from '@/theme/scheme';
 
 export { getCachedCurrency, primeCurrencyCache };
 
@@ -541,6 +542,7 @@ export function resetSettingsCache(): void {
   cachedLastLocalResult = undefined;
   cachedSpendSpikesSent = undefined;
   cachedHideSensitiveAmounts = undefined;
+  cachedAppearance = undefined;
   cachedHideWidgetValues = undefined;
   cachedBudgetNudgesSent = undefined;
   cachedMilestonesSeen = undefined;
@@ -816,6 +818,38 @@ export async function addQueuedAlerts(alerts: QueuedAlert[]): Promise<void> {
   await withSettingsLock(async () => {
     await writeAlertQueue([...(await getAlertQueue()).filter((a) => !ids.has(a.id)), ...alerts]);
   });
+}
+
+const APPEARANCE_KEY = 'appearance';
+let cachedAppearance: AppearancePreference | undefined; // undefined = not yet read
+
+/**
+ * Which colour mode the person chose: follow the phone (the default), or always light, or always dark. Anything
+ * stored that is not one of those three (an older or damaged value) reads as "system".
+ */
+export async function getAppearance(): Promise<AppearancePreference> {
+  if (cachedAppearance !== undefined) return cachedAppearance;
+  const db = await getDb();
+  const row = await db.getFirstAsync<{ value: string }>('SELECT value FROM settings WHERE key = ?', [
+    APPEARANCE_KEY,
+  ]);
+  cachedAppearance = isAppearancePreference(row?.value) ? row.value : 'system';
+  return cachedAppearance;
+}
+
+export function getCachedAppearance(): AppearancePreference {
+  return cachedAppearance ?? 'system';
+}
+
+export async function setAppearance(preference: AppearancePreference): Promise<void> {
+  if (!isAppearancePreference(preference)) throw new Error('Choose system, light or dark.');
+  const db = await getDb();
+  await db.runAsync(
+    `INSERT INTO settings (key, value) VALUES (?, ?)
+     ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
+    [APPEARANCE_KEY, preference]
+  );
+  cachedAppearance = preference;
 }
 
 const HIDE_SENSITIVE_AMOUNTS_KEY = 'hide_sensitive_amounts';

@@ -3,6 +3,7 @@ import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
 import { visitsLine } from './visits';
+import { themedStyles } from '@/theme/themedStyles';
 
 interface SplitItem {
   key: string;
@@ -59,20 +60,22 @@ export function SplitBreakdown({
   );
 }
 
-const styles = StyleSheet.create({
-  stack: { flexDirection: 'row', height: 12, borderRadius: theme.radius.pill, overflow: 'hidden', gap: 2 },
-  legend: { marginTop: 8 },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 6 },
-  dot: { width: 9, height: 9, borderRadius: 5 },
-  names: { flex: 1, minWidth: 0 },
-  name: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
-  visits: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 1 },
-  share: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
-  amount: {
-    fontFamily: theme.font.bodyBold,
-    fontSize: 12,
-    color: theme.colors.textPrimary,
-    minWidth: 62,
-    textAlign: 'right',
-  },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    stack: { flexDirection: 'row', height: 12, borderRadius: theme.radius.pill, overflow: 'hidden', gap: 2 },
+    legend: { marginTop: 8 },
+    row: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 6 },
+    dot: { width: 9, height: 9, borderRadius: 5 },
+    names: { flex: 1, minWidth: 0 },
+    name: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
+    visits: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 1 },
+    share: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
+    amount: {
+      fontFamily: theme.font.bodyBold,
+      fontSize: 12,
+      color: theme.colors.textPrimary,
+      minWidth: 62,
+      textAlign: 'right',
+    },
+  })
+);

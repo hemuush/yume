@@ -7,6 +7,7 @@ import { theme } from '@/constants/theme';
 import { shade } from '@/lib/color';
 import { withPressedTint } from '@/lib/pressed';
 import { useAccent } from '@/theme/AccentContext';
+import { themedStyles } from '@/theme/themedStyles';
 
 /**
  * The top card of Entry details: the category's icon, name and kind on the left, the amount on the right, and the
@@ -83,54 +84,56 @@ export function EntryHero({
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
-    borderRadius: 20,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: theme.colors.glass,
-    backgroundColor: theme.colors.surface,
-    marginBottom: 10,
-  },
-  // Wraps under the name when the amount is wide or the text is enlarged.
-  top: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 8,
-  },
-  identity: {
-    flexGrow: 1,
-    flexShrink: 1,
-    flexBasis: 150,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    minHeight: theme.accessibility.minTouchTarget,
-    borderRadius: 14,
-  },
-  icon: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center' },
-  names: { flex: 1, minWidth: 0 },
-  titleRow: { flexDirection: 'row', alignItems: 'center', gap: 2 },
-  title: { flexShrink: 1, fontFamily: theme.font.bodyBold, fontSize: 15, color: theme.colors.textPrimary },
-  kicker: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textSecondary },
-  amount: {
-    fontFamily: theme.font.body,
-    fontSize: 20,
-    lineHeight: 26,
-    fontVariant: ['tabular-nums'],
-  },
-  meta: {
-    fontFamily: theme.font.body,
-    fontSize: 12,
-    lineHeight: 18,
-    color: theme.colors.textSecondary,
-    marginTop: 8,
-    paddingTop: 8,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: theme.colors.inkHairline,
-  },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    card: {
+      borderRadius: 20,
+      paddingHorizontal: 14,
+      paddingVertical: 12,
+      overflow: 'hidden',
+      borderWidth: 1,
+      borderColor: theme.colors.glass,
+      backgroundColor: theme.colors.surface,
+      marginBottom: 10,
+    },
+    // Wraps under the name when the amount is wide or the text is enlarged.
+    top: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 8,
+    },
+    identity: {
+      flexGrow: 1,
+      flexShrink: 1,
+      flexBasis: 150,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+      minHeight: theme.accessibility.minTouchTarget,
+      borderRadius: 14,
+    },
+    icon: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center' },
+    names: { flex: 1, minWidth: 0 },
+    titleRow: { flexDirection: 'row', alignItems: 'center', gap: 2 },
+    title: { flexShrink: 1, fontFamily: theme.font.bodyBold, fontSize: 15, color: theme.colors.textPrimary },
+    kicker: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textSecondary },
+    amount: {
+      fontFamily: theme.font.body,
+      fontSize: 20,
+      lineHeight: 26,
+      fontVariant: ['tabular-nums'],
+    },
+    meta: {
+      fontFamily: theme.font.body,
+      fontSize: 12,
+      lineHeight: 18,
+      color: theme.colors.textSecondary,
+      marginTop: 8,
+      paddingTop: 8,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: theme.colors.inkHairline,
+    },
+  })
+);

@@ -28,6 +28,7 @@ import { wallpaperTop } from './HomeWallpaper';
 import { headerIsCollapsed } from './headerMotion';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 import { withPressed } from '@/lib/pressed';
+import { themedStyles } from '@/theme/themedStyles';
 
 function greetingWord(): string {
   const h = new Date().getHours();
@@ -220,44 +221,46 @@ export function HomeHeader({
   );
 }
 
-const styles = StyleSheet.create({
-  root: { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10 },
-  // The band's gap above and its padding below are equal, so the greeting sits centred between the brand row and the card.
-  fading: { gap: 8, paddingTop: 4 },
-  miniSlot: { flex: 1, minWidth: 0, alignItems: 'flex-end' },
-  band: { paddingHorizontal: HEADER.gutter, paddingBottom: 12, gap: 8, overflow: 'hidden' },
-  row: {
-    minHeight: HEADER.actionSize,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 12,
-  },
-  brandRow: { flexDirection: 'row', alignItems: 'center', gap: 7 },
-  brand: { fontFamily: theme.font.roundedBold, fontSize: 22, letterSpacing: 0.2, color: theme.colors.ink },
-  actions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  date: {
-    fontFamily: theme.font.body,
-    fontSize: 11,
-    lineHeight: 16,
-    letterSpacing: 0.2,
-    color: theme.colors.textSecondary,
-    marginBottom: 2,
-  },
-  greet: {
-    fontFamily: theme.font.roundedMedium,
-    fontSize: 20,
-    lineHeight: 26,
-    letterSpacing: -0.2,
-    color: theme.colors.ink,
-    marginTop: 1,
-  },
-  greetName: { fontFamily: theme.font.roundedBold },
-  insight: {
-    fontFamily: theme.font.body,
-    fontSize: 12,
-    lineHeight: 18,
-    color: theme.colors.textSecondary,
-    marginTop: 3,
-  },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    root: { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10 },
+    // The band's gap above and its padding below are equal, so the greeting sits centred between the brand row and the card.
+    fading: { gap: 8, paddingTop: 4 },
+    miniSlot: { flex: 1, minWidth: 0, alignItems: 'flex-end' },
+    band: { paddingHorizontal: HEADER.gutter, paddingBottom: 12, gap: 8, overflow: 'hidden' },
+    row: {
+      minHeight: HEADER.actionSize,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 12,
+    },
+    brandRow: { flexDirection: 'row', alignItems: 'center', gap: 7 },
+    brand: { fontFamily: theme.font.roundedBold, fontSize: 22, letterSpacing: 0.2, color: theme.colors.ink },
+    actions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    date: {
+      fontFamily: theme.font.body,
+      fontSize: 11,
+      lineHeight: 16,
+      letterSpacing: 0.2,
+      color: theme.colors.textSecondary,
+      marginBottom: 2,
+    },
+    greet: {
+      fontFamily: theme.font.roundedMedium,
+      fontSize: 20,
+      lineHeight: 26,
+      letterSpacing: -0.2,
+      color: theme.colors.ink,
+      marginTop: 1,
+    },
+    greetName: { fontFamily: theme.font.roundedBold },
+    insight: {
+      fontFamily: theme.font.body,
+      fontSize: 12,
+      lineHeight: 18,
+      color: theme.colors.textSecondary,
+      marginTop: 3,
+    },
+  })
+);

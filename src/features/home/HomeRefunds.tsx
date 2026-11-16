@@ -11,6 +11,7 @@ import { dayMonth } from '@/lib/dateLabels';
 import { toLocalIsoDate } from '@/lib/date';
 import { withPressed } from '@/lib/pressed';
 import { SCREEN } from '@/components/screenStyles';
+import { themedStyles } from '@/theme/themedStyles';
 
 export function HomeRefunds({
   refunds,
@@ -161,37 +162,39 @@ export function HomeRefunds({
     </View>
   );
 }
-const styles = StyleSheet.create({
-  // Inside Home's Coming up card (whose rows sit 26 in from its edge): the mark and text line up with theirs.
-  compactRow: { borderTopWidth: 0, paddingBottom: 6, paddingHorizontal: 26, gap: 12 },
-  body: { padding: 14, gap: 4 },
-  row: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    gap: 10,
-    padding: 14,
-    minHeight: 64,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: theme.colors.divider,
-  },
-  icon: {
-    width: SCREEN.lead,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: theme.colors.secondaryTint,
-  },
-  copy: { flex: 1, minWidth: 100, gap: 3 },
-  title: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textPrimary },
-  hint: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
-  overdue: { color: theme.colors.expenseText },
-  amount: {
-    fontFamily: theme.font.bodyBold,
-    fontSize: 13,
-    fontVariant: ['tabular-nums'],
-    color: theme.colors.textPrimary,
-    flexShrink: 1,
-  },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    // Inside Home's Coming up card (whose rows sit 26 in from its edge): the mark and text line up with theirs.
+    compactRow: { borderTopWidth: 0, paddingBottom: 6, paddingHorizontal: 26, gap: 12 },
+    body: { padding: 14, gap: 4 },
+    row: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      alignItems: 'center',
+      gap: 10,
+      padding: 14,
+      minHeight: 64,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: theme.colors.divider,
+    },
+    icon: {
+      width: SCREEN.lead,
+      height: 36,
+      borderRadius: 18,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: theme.colors.secondaryTint,
+    },
+    copy: { flex: 1, minWidth: 100, gap: 3 },
+    title: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textPrimary },
+    hint: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
+    overdue: { color: theme.colors.expenseText },
+    amount: {
+      fontFamily: theme.font.bodyBold,
+      fontSize: 13,
+      fontVariant: ['tabular-nums'],
+      color: theme.colors.textPrimary,
+      flexShrink: 1,
+    },
+  })
+);

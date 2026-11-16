@@ -7,6 +7,7 @@ import { usePressScale } from '@/lib/usePressScale';
 import { PeriodPicker } from '@/components/PeriodPicker';
 import { GLASS } from '@/components/Glass';
 import { PeriodCursor, periodLabel, periodRange, periodShortLabel } from '@/lib/period';
+import { themedStyles } from '@/theme/themedStyles';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -71,20 +72,22 @@ export function MonthPill({
   );
 }
 
-const styles = StyleSheet.create({
-  pill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    minHeight: 32,
-    paddingHorizontal: 12,
-    borderRadius: theme.radius.pill,
-    backgroundColor: GLASS.fillStrong,
-    borderWidth: 1,
-    borderColor: GLASS.edge,
-    maxWidth: 168,
-  },
-  pillText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.ink, flexShrink: 1 },
-  pillCompact: { gap: 4, minHeight: 36, paddingHorizontal: 12, maxWidth: 140 },
-  pillTextCompact: { fontFamily: theme.font.bodyMedium, fontSize: 12 },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    pill: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      minHeight: 32,
+      paddingHorizontal: 12,
+      borderRadius: theme.radius.pill,
+      backgroundColor: GLASS.fillStrong,
+      borderWidth: 1,
+      borderColor: GLASS.edge,
+      maxWidth: 168,
+    },
+    pillText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.ink, flexShrink: 1 },
+    pillCompact: { gap: 4, minHeight: 36, paddingHorizontal: 12, maxWidth: 140 },
+    pillTextCompact: { fontFamily: theme.font.bodyMedium, fontSize: 12 },
+  })
+);

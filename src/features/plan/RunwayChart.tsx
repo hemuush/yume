@@ -9,6 +9,7 @@ import { dayMonth, weekdayDayMonth } from '@/lib/dateLabels';
 import { useScrub } from '@/features/reports/useScrub';
 import { guideValues, smoothPath } from '@/lib/chartPath';
 import { runwayTicks, TICK_DATE_WIDTH, type Runway } from './runway';
+import { themedStyles } from '@/theme/themedStyles';
 
 const TOP = 30;
 const PAD = 8;
@@ -230,36 +231,42 @@ export function RunwayChart({ runway }: { runway: Runway }) {
   );
 }
 
-const styles = StyleSheet.create({
-  chart: { marginTop: 12 },
-  touch: { position: 'absolute', top: 0, right: 0 },
-  axis: { position: 'absolute', fontFamily: theme.font.body, fontSize: 10, color: theme.colors.textMuted },
-  guide: { left: 0, textAlign: 'right' },
-  tick: { textAlign: 'center' },
-  pill: {
-    position: 'absolute',
-    top: 0,
-    borderRadius: 14,
-    backgroundColor: theme.colors.ink,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  pillShort: { backgroundColor: theme.colors.expenseText },
-  pillText: { fontFamily: theme.font.bodyBold, fontSize: 10, color: theme.colors.surface },
-  read: {
-    marginTop: 10,
-    borderRadius: 14,
-    backgroundColor: theme.colors.surfaceAlt,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    gap: 2,
-  },
-  readHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 },
-  date: {
-    fontFamily: theme.font.bodyMedium,
-    fontSize: theme.typeSize.row - 1,
-    color: theme.colors.textSecondary,
-  },
-  bal: { fontFamily: theme.font.bodyBold, fontSize: 15, color: theme.colors.textPrimary },
-  moved: { fontFamily: theme.font.body, fontSize: theme.typeSize.row - 1, color: theme.colors.textSecondary },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    chart: { marginTop: 12 },
+    touch: { position: 'absolute', top: 0, right: 0 },
+    axis: { position: 'absolute', fontFamily: theme.font.body, fontSize: 10, color: theme.colors.textMuted },
+    guide: { left: 0, textAlign: 'right' },
+    tick: { textAlign: 'center' },
+    pill: {
+      position: 'absolute',
+      top: 0,
+      borderRadius: 14,
+      backgroundColor: theme.colors.ink,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    pillShort: { backgroundColor: theme.colors.expenseText },
+    pillText: { fontFamily: theme.font.bodyBold, fontSize: 10, color: theme.colors.surface },
+    read: {
+      marginTop: 10,
+      borderRadius: 14,
+      backgroundColor: theme.colors.surfaceAlt,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      gap: 2,
+    },
+    readHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 },
+    date: {
+      fontFamily: theme.font.bodyMedium,
+      fontSize: theme.typeSize.row - 1,
+      color: theme.colors.textSecondary,
+    },
+    bal: { fontFamily: theme.font.bodyBold, fontSize: 15, color: theme.colors.textPrimary },
+    moved: {
+      fontFamily: theme.font.body,
+      fontSize: theme.typeSize.row - 1,
+      color: theme.colors.textSecondary,
+    },
+  })
+);

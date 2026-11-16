@@ -8,6 +8,7 @@ import { cardUsage, HIGH_USE_PCT } from '@/lib/cardUsage';
 import { dayMonth } from '@/lib/dateLabels';
 import type { AccountCardCycle } from '@/db/cardCycles';
 import type { Account } from '@/types';
+import { themedStyles } from '@/theme/themedStyles';
 
 /** How much of a credit card's limit is used, as a bar and one line; nothing for a card with no limit. */
 export function CardUsageBar({ account, money }: { account: Account; money: (minor: number) => string }) {
@@ -176,44 +177,46 @@ export function CardBill({
   );
 }
 
-const styles = StyleSheet.create({
-  label: EYEBROW,
-  usage: { gap: 6, marginTop: 4 },
-  usageLine: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textSecondary },
-  usageBold: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
-  note: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textMuted, marginTop: 8 },
-  action: { marginTop: 10 },
-  lines: {
-    marginTop: 8,
-    marginHorizontal: -4,
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.radius.xl2,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    overflow: 'hidden',
-  },
-  billLine: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 9,
-  },
-  billDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.borderSoft },
-  billLabel: {
-    flexGrow: 1,
-    flexBasis: 140,
-    fontFamily: theme.font.body,
-    fontSize: 13,
-    color: theme.colors.textSecondary,
-  },
-  billLabelStrong: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
-  billValue: {
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 13,
-    fontVariant: ['tabular-nums'],
-    color: theme.colors.textPrimary,
-  },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    label: EYEBROW,
+    usage: { gap: 6, marginTop: 4 },
+    usageLine: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textSecondary },
+    usageBold: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
+    note: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textMuted, marginTop: 8 },
+    action: { marginTop: 10 },
+    lines: {
+      marginTop: 8,
+      marginHorizontal: -4,
+      backgroundColor: theme.colors.surface,
+      borderRadius: theme.radius.xl2,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.borderSoft,
+      overflow: 'hidden',
+    },
+    billLine: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 10,
+      paddingHorizontal: 14,
+      paddingVertical: 9,
+    },
+    billDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.borderSoft },
+    billLabel: {
+      flexGrow: 1,
+      flexBasis: 140,
+      fontFamily: theme.font.body,
+      fontSize: 13,
+      color: theme.colors.textSecondary,
+    },
+    billLabelStrong: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
+    billValue: {
+      fontFamily: theme.font.bodyMedium,
+      fontSize: 13,
+      fontVariant: ['tabular-nums'],
+      color: theme.colors.textPrimary,
+    },
+  })
+);

@@ -29,6 +29,8 @@ import { usePressScale } from '@/lib/usePressScale';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 import { useAccent } from '@/theme/AccentContext';
 import { themeInk, selectedFill } from '@/theme/interactionColors';
+import { themedStyles } from '@/theme/themedStyles';
+import { useSchemeVersion } from '@/theme/SchemeBoundary';
 
 type TabBarProps = Parameters<NonNullable<React.ComponentProps<typeof Tabs>['tabBar']>>[0];
 
@@ -129,6 +131,7 @@ export function PillTabBar({
   onAdd,
   onAddLongPress,
 }: TabBarProps & { onAdd: () => void; onAddLongPress: () => void }) {
+  useSchemeVersion();
   const { accent } = useAccent();
   const ink = themeInk(accent);
   const scale = useUiScale();
@@ -236,33 +239,35 @@ export function PillTabBar({
   );
 }
 
-const styles = StyleSheet.create({
-  dock: { position: 'absolute', left: 16, right: 16, flexDirection: 'row', alignItems: 'center', gap: 10 },
-  fade: { position: 'absolute', left: -16, right: -16 },
-  pill: {
-    flex: 1,
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 6,
-    backgroundColor: 'rgba(255,255,255,0.86)',
-    borderWidth: 1,
-    borderColor: GLASS.edge,
-    boxShadow: '0px 10px 28px rgba(16,32,51,0.12)',
-  },
-  tabs: { width: '100%', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  pillStacked: { paddingVertical: theme.space.sm, gap: theme.space.xs },
-  activeLabel: {
-    fontFamily: theme.font.bodyBold,
-    fontSize: 13,
-    color: theme.colors.ink,
-    textAlign: 'center',
-  },
-  tab: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7 },
-  label: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.ink },
-  add: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    boxShadow: '0px 10px 22px rgba(16,32,51,0.28)',
-  },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    dock: { position: 'absolute', left: 16, right: 16, flexDirection: 'row', alignItems: 'center', gap: 10 },
+    fade: { position: 'absolute', left: -16, right: -16 },
+    pill: {
+      flex: 1,
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: 6,
+      backgroundColor: 'rgba(255,255,255,0.86)',
+      borderWidth: 1,
+      borderColor: GLASS.edge,
+      boxShadow: '0px 10px 28px rgba(16,32,51,0.12)',
+    },
+    tabs: { width: '100%', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    pillStacked: { paddingVertical: theme.space.sm, gap: theme.space.xs },
+    activeLabel: {
+      fontFamily: theme.font.bodyBold,
+      fontSize: 13,
+      color: theme.colors.ink,
+      textAlign: 'center',
+    },
+    tab: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7 },
+    label: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.ink },
+    add: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      boxShadow: '0px 10px 22px rgba(16,32,51,0.28)',
+    },
+  })
+);

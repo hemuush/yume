@@ -7,6 +7,7 @@ import { withPressedTint } from '@/lib/pressed';
 import { useAccent } from '@/theme/AccentContext';
 import { useStacked } from '@/lib/useStacked';
 import { GrowFill } from '@/components/GrowFill';
+import { themedStyles, themedValue } from '@/theme/themedStyles';
 
 /** Compact budget/goal row; large text moves its amount below the name instead of truncating it. */
 export function PlanSummaryRow({
@@ -78,48 +79,60 @@ export function PlanListAdd({ label, onPress }: { label: string; onPress: () => 
   );
 }
 
-export const summaryListStyle = {
+export const summaryListStyle = themedValue(() => ({
   marginHorizontal: 16,
   paddingHorizontal: 14,
   borderRadius: 22,
   backgroundColor: theme.colors.surface,
   borderWidth: StyleSheet.hairlineWidth,
   borderColor: theme.colors.borderSoft,
-};
-const s = StyleSheet.create({
-  add: {
-    minHeight: 44,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: theme.colors.borderSoft,
-    marginTop: 4,
-  },
-  addText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.link },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8, minHeight: 52 },
-  icon: {
-    width: 32,
-    height: 32,
-    borderRadius: 11,
-    backgroundColor: theme.colors.primaryTint,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  content: { flex: 1, minWidth: 0, gap: 5 },
-  line: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  stacked: { flexDirection: 'column', alignItems: 'flex-start', gap: 5 },
-  copy: { flex: 1, minWidth: 0, gap: 2 },
-  name: { fontFamily: theme.font.bodyMedium, fontSize: 14, lineHeight: 20, color: theme.colors.textPrimary },
-  subtitle: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textSecondary },
-  amount: {
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 14,
-    lineHeight: 20,
-    flexShrink: 1,
-    fontVariant: ['tabular-nums'],
-  },
-  track: { height: 4, borderRadius: 2, backgroundColor: theme.colors.surfaceAlt, overflow: 'hidden' },
-  fill: { height: 4, borderRadius: 2 },
-});
+}));
+const s = themedStyles(() =>
+  StyleSheet.create({
+    add: {
+      minHeight: 44,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 6,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: theme.colors.borderSoft,
+      marginTop: 4,
+    },
+    addText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.link },
+    row: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8, minHeight: 52 },
+    icon: {
+      width: 32,
+      height: 32,
+      borderRadius: 11,
+      backgroundColor: theme.colors.primaryTint,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    content: { flex: 1, minWidth: 0, gap: 5 },
+    line: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+    stacked: { flexDirection: 'column', alignItems: 'flex-start', gap: 5 },
+    copy: { flex: 1, minWidth: 0, gap: 2 },
+    name: {
+      fontFamily: theme.font.bodyMedium,
+      fontSize: 14,
+      lineHeight: 20,
+      color: theme.colors.textPrimary,
+    },
+    subtitle: {
+      fontFamily: theme.font.body,
+      fontSize: 12,
+      lineHeight: 17,
+      color: theme.colors.textSecondary,
+    },
+    amount: {
+      fontFamily: theme.font.bodyMedium,
+      fontSize: 14,
+      lineHeight: 20,
+      flexShrink: 1,
+      fontVariant: ['tabular-nums'],
+    },
+    track: { height: 4, borderRadius: 2, backgroundColor: theme.colors.surfaceAlt, overflow: 'hidden' },
+    fill: { height: 4, borderRadius: 2 },
+  })
+);

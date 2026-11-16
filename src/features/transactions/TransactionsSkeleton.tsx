@@ -1,6 +1,7 @@
 import { View, StyleSheet } from 'react-native';
 import { Skeleton } from '@/components/Skeleton';
 import { screenStyles, SCREEN } from '@/components/screenStyles';
+import { themedStyles } from '@/theme/themedStyles';
 
 const BAR_HEIGHTS = [12, 22, 8, 40, 16, 26, 14];
 /** How many entries each placeholder day holds. */
@@ -65,48 +66,50 @@ export function TransactionsSkeleton() {
 
 const PREVIEW_W = 96;
 
-const styles = StyleSheet.create({
-  // The real card: 16 dp of side padding and 12 above and below, the figure and its chip on the left and the lettered
-  // bars on the right.
-  strip: {
-    marginTop: 8,
-    minHeight: 98,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  lead: { flex: 1 },
-  preview: { width: PREVIEW_W, gap: 7 },
-  bars: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', height: 40 },
-  // The filter row: the Filters button, then the type choices, in the real row's 44 dp.
-  filters: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginTop: 8,
-    minHeight: 44,
-    paddingHorizontal: 16,
-  },
-  // A day: Home's list card, the day named inside it (its heading line), then its rows.
-  day: { marginTop: 12 },
-  // The filter row's own 10 dp gap sits above the first day.
-  firstDay: { marginTop: 22 },
-  lane: { ...screenStyles.card, paddingHorizontal: 12 },
-  // Home's day heading: 12 dp above and 2 below a line of small capitals.
-  head: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    minHeight: 29,
-    paddingHorizontal: 14,
-    paddingTop: 12,
-    paddingBottom: 2,
-  },
-  // Home's row: 56 dp least, 14 dp of side padding, the 40 dp disc in its 44 dp slot.
-  row: { ...screenStyles.row, gap: 12 },
-  divider: screenStyles.divider,
-  slot: { width: SCREEN.lead, alignItems: 'center', justifyContent: 'center' },
-  rowMid: { flex: 1 },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    // The real card: 16 dp of side padding and 12 above and below, the figure and its chip on the left and the lettered
+    // bars on the right.
+    strip: {
+      marginTop: 8,
+      minHeight: 98,
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+    },
+    lead: { flex: 1 },
+    preview: { width: PREVIEW_W, gap: 7 },
+    bars: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', height: 40 },
+    // The filter row: the Filters button, then the type choices, in the real row's 44 dp.
+    filters: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      marginTop: 8,
+      minHeight: 44,
+      paddingHorizontal: 16,
+    },
+    // A day: Home's list card, the day named inside it (its heading line), then its rows.
+    day: { marginTop: 12 },
+    // The filter row's own 10 dp gap sits above the first day.
+    firstDay: { marginTop: 22 },
+    lane: { ...screenStyles.card, paddingHorizontal: 12 },
+    // Home's day heading: 12 dp above and 2 below a line of small capitals.
+    head: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      minHeight: 29,
+      paddingHorizontal: 14,
+      paddingTop: 12,
+      paddingBottom: 2,
+    },
+    // Home's row: 56 dp least, 14 dp of side padding, the 40 dp disc in its 44 dp slot.
+    row: { ...screenStyles.row, gap: 12 },
+    divider: screenStyles.divider,
+    slot: { width: SCREEN.lead, alignItems: 'center', justifyContent: 'center' },
+    rowMid: { flex: 1 },
+  })
+);

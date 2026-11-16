@@ -3,7 +3,7 @@ import { shade } from '@/lib/color';
 import type { Loan } from '@/types';
 
 // A loan's colour only says which one it is; the numbers carry the meaning.
-const BORROWED_HUES = [
+const borrowedHues = (): string[] => [
   theme.colors.idGold,
   theme.colors.idCoral,
   theme.colors.primary,
@@ -16,13 +16,14 @@ const BORROWED_HUES = [
  * loan keeps its colour when another one closes). Money lent is always mint.
  */
 export function loanHues(loans: Loan[]): Record<string, string> {
+  const palette = borrowedHues();
   const hues: Record<string, string> = {};
   let borrowedIndex = 0;
   for (const loan of loans) {
     if (loan.direction === 'lent') {
       hues[loan.id] = theme.colors.secondary;
     } else {
-      hues[loan.id] = BORROWED_HUES[borrowedIndex % BORROWED_HUES.length];
+      hues[loan.id] = palette[borrowedIndex % palette.length];
       borrowedIndex += 1;
     }
   }
@@ -37,15 +38,15 @@ export function loanIcon(loan: Pick<Loan, 'direction' | 'assetLabel'>): string {
   return loan.direction === 'borrowed' ? 'bank-outline' : 'hand-coin-outline';
 }
 
-const BAR_TONES: Record<string, string> = {
+const barTones = (): Record<string, string> => ({
   [theme.colors.idGold]: theme.colors.idGoldDeep,
   [theme.colors.idCoral]: theme.colors.idCoralDeep,
   [theme.colors.primary]: theme.colors.primary,
-};
+});
 
 /** The mid-tone a loan's thin bars are drawn in: still inside the pastel band, so it never reads as ink. */
 export function loanBarTone(hue: string): string {
-  return BAR_TONES[hue] ?? shade(hue, 62);
+  return barTones()[hue] ?? shade(hue, 62);
 }
 
 /** The pale fill behind a loan's icon tile. */

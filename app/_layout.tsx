@@ -1,5 +1,4 @@
 import { Stack, router, usePathname, useRootNavigationState } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
 import { useEffect, useRef, useState } from 'react';
 import { View, ActivityIndicator, StyleSheet, AppState, AppStateStatus } from 'react-native';
 import { Text } from '@/components/Text';
@@ -22,7 +21,13 @@ import { useScreenCaptureProtection } from '@/lib/useScreenCaptureProtection';
 import { CaptureProtectionScreen } from '@/components/CaptureProtectionScreen';
 import { CaptureReleaseFeedback } from '@/components/CaptureReleaseFeedback';
 import { AppLockSaveFeedback } from '@/components/AppLockSaveFeedback';
-import { getHasOnboarded, setHasOnboarded, getAppLockEnabled, getHideSensitiveAmounts } from '@/db/settings';
+import {
+  getHasOnboarded,
+  setHasOnboarded,
+  getAppLockEnabled,
+  getHideSensitiveAmounts,
+  getAppearance,
+} from '@/db/settings';
 import { listAccounts, listTransactions } from '@/db/ledger';
 import { runAppMaintenance } from '@/lib/runAppMaintenance';
 import { runWhenIdle } from '@/lib/runWhenIdle';
@@ -38,6 +43,9 @@ import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { refreshAllWidgets } from '@/widgets/notifyWidgets';
 import { AccentProvider, useAccent } from '@/theme/AccentContext';
 import { PrivacyProvider } from '@/theme/PrivacyContext';
+import { AppearanceProvider } from '@/theme/AppearanceContext';
+import { AppStatusBar } from '@/theme/AppStatusBar';
+import { stackScreenLayout } from '@/theme/SchemeBoundary';
 import { AppLockProvider, useAppLock } from '@/lib/AppLockContext';
 import { UndoToastProvider } from '@/components/UndoToast';
 import { MilestoneNoteProvider, BudgetMonthWatcher } from '@/components/MilestoneNote';
@@ -50,6 +58,7 @@ import { theme } from '@/constants/theme';
 import { ColumnFrame } from '@/components/ColumnFrame';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { errorMessage } from '@/lib/errorMessage';
+import { themedStyles } from '@/theme/themedStyles';
 
 /**
  * Anchors deep links into pushed screens (Next Due widget, Quick Add) on cold start to the tabs, so Home
@@ -99,11 +108,14 @@ export default function RootLayout() {
           void rebuildNotifications().catch((err) => console.error('rebuildNotifications failed:', err));
         });
 
-        // Prime masking before mounting any financial screen, including an unlocked cold launch.
+        // Prime masking and the colour mode before mounting any screen, including an unlocked cold launch, so
+        // nothing is drawn in the wrong mode and then corrected.
         const [locked, , alreadyOnboarded] = await Promise.all([
           getAppLockEnabled(),
           getHideSensitiveAmounts(),
           getHasOnboarded(),
+          // Only looks: a failed read must not hold the app back, it simply follows the phone.
+          getAppearance().catch(() => 'system'),
         ]);
         if (cancelled) return;
         setInitialLocked(locked);
@@ -158,15 +170,17 @@ export default function RootLayout() {
   return (
     <KeyboardProvider>
       <SafeAreaProvider>
-        <AppLockProvider initialLockEnabled={initialLocked}>
-          <AccentProvider>
-            <PrivacyProvider>
-              <ColumnFrame>
-                <AppGate needsOnboarding={needsOnboarding} initialLocked={initialLocked} />
-              </ColumnFrame>
-            </PrivacyProvider>
-          </AccentProvider>
-        </AppLockProvider>
+        <AppearanceProvider>
+          <AppLockProvider initialLockEnabled={initialLocked}>
+            <AccentProvider>
+              <PrivacyProvider>
+                <ColumnFrame>
+                  <AppGate needsOnboarding={needsOnboarding} initialLocked={initialLocked} />
+                </ColumnFrame>
+              </PrivacyProvider>
+            </AccentProvider>
+          </AppLockProvider>
+        </AppearanceProvider>
       </SafeAreaProvider>
     </KeyboardProvider>
   );
@@ -280,7 +294,7 @@ function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean;
   if (capture.isBlocked && !(isLocked && !showOnboarding)) {
     return (
       <ErrorBoundary>
-        <StatusBar style="dark" />
+        <AppStatusBar />
         <CaptureProtectionScreen
           status={capture.status === 'failed' ? 'failed' : 'checking'}
           onRetry={capture.retry}
@@ -292,7 +306,7 @@ function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean;
   if (showOnboarding) {
     return (
       <ErrorBoundary>
-        <StatusBar style="dark" />
+        <AppStatusBar />
         <Onboarding onDone={() => setShowOnboarding(false)} />
         <AppDialogHost />
       </ErrorBoundary>
@@ -304,7 +318,7 @@ function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean;
     // stay unmounted while locked, not just visually covered.
     return (
       <ErrorBoundary>
-        <StatusBar style="dark" />
+        <AppStatusBar />
         <LockScreen onUnlocked={() => setIsLocked(false)} />
       </ErrorBoundary>
     );
@@ -312,7 +326,7 @@ function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean;
 
   return (
     <ErrorBoundary>
-      <StatusBar style="dark" />
+      <AppStatusBar />
       {/* Yume’s own confirm/notice dialog, shown by showAlert() anywhere in the app. Never over the lock
           screen: a dialog is its own window, so it would sit on top of it with working buttons. */}
       <AppDialogHost />
@@ -328,6 +342,8 @@ function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean;
             the old state until a full remount. The screens here are light, so
             keeping them live costs little. */}
           <Stack
+            // Each pushed screen is drawn again when the colour mode changes (the tabs do their own).
+            screenLayout={stackScreenLayout}
             screenOptions={{
               headerShown: false,
               animation: 'slide_from_right',
@@ -370,25 +386,27 @@ function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean;
   );
 }
 
-const styles = StyleSheet.create({
-  center: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: theme.colors.background,
-    padding: 24,
-  },
-  errorText: {
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 15,
-    color: theme.colors.expenseText,
-    marginBottom: 8,
-  },
-  errorDetail: {
-    fontFamily: theme.font.body,
-    fontSize: 13,
-    color: theme.colors.textSecondary,
-    textAlign: 'center',
-  },
-  retry: { marginTop: 20, alignSelf: 'center', minWidth: 160 },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    center: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: theme.colors.background,
+      padding: 24,
+    },
+    errorText: {
+      fontFamily: theme.font.bodyMedium,
+      fontSize: 15,
+      color: theme.colors.expenseText,
+      marginBottom: 8,
+    },
+    errorDetail: {
+      fontFamily: theme.font.body,
+      fontSize: 13,
+      color: theme.colors.textSecondary,
+      textAlign: 'center',
+    },
+    retry: { marginTop: 20, alignSelf: 'center', minWidth: 160 },
+  })
+);

@@ -106,7 +106,7 @@ export function summarizeGoals(goals: PlanGoal[], today: string): GoalsTotals {
 }
 
 // A goal's colour only says which one it is; the numbers carry the meaning.
-const GOAL_HUES = [
+const goalHueList = (): string[] => [
   theme.colors.idTeal,
   theme.colors.primary,
   theme.colors.idGold,
@@ -116,9 +116,10 @@ const GOAL_HUES = [
 
 /** Each goal's identity colour by its place in the list, so it keeps it when another is archived or reached. */
 export function goalHues(goals: Pick<SavingsGoal, 'id'>[]): Record<string, string> {
+  const hueList = goalHueList();
   const hues: Record<string, string> = {};
   goals.forEach((g, i) => {
-    hues[g.id] = GOAL_HUES[i % GOAL_HUES.length];
+    hues[g.id] = hueList[i % hueList.length];
   });
   return hues;
 }

@@ -20,6 +20,7 @@ import { appIconSupported } from '@/lib/appIcon';
 import { getThemeIconFollows, setThemeIconFollows } from '@/db/settings';
 import { useSaveOnce } from '@/lib/useSaveOnce';
 import { PrimaryButton } from '@/components/PrimaryButton';
+import { themedStyles } from '@/theme/themedStyles';
 
 /**
  * The pack you're on as a live phone at the top, then every pack as a small Home preview in its colours, two
@@ -182,54 +183,56 @@ export default function ThemesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: theme.colors.background },
-  content: { paddingHorizontal: 16, gap: 12 },
-  caption: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textMuted },
-  live: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 12 },
-  phone: {
-    width: 120,
-    height: 200,
-    borderRadius: 22,
-    overflow: 'hidden',
-    borderWidth: 2,
-    borderColor: theme.colors.white,
-  },
-  liveText: { flex: 1, minWidth: 0, gap: 6 },
-  liveKicker: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textSecondary },
-  liveName: { fontFamily: theme.font.roundedBold, fontSize: 20, color: theme.colors.textPrimary },
-  pair: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: 2 },
-  pairItem: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  pairDot: { width: 14, height: 14, borderRadius: 7, borderWidth: 1.5, borderColor: theme.colors.white },
-  pairText: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 12 },
-  card: {
-    width: '48.5%',
-    padding: 7,
-    backgroundColor: GLASS.fill,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: GLASS.edge,
-    boxShadow: GLASS.shadow,
-  },
-  swatch: { borderRadius: 14, overflow: 'hidden' },
-  cardActive: { borderWidth: 2, borderColor: theme.colors.ink },
-  nameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 6,
-    paddingHorizontal: 4,
-    paddingTop: 9,
-    paddingBottom: 4,
-  },
-  name: { flex: 1, fontFamily: theme.font.roundedBold, fontSize: 13, color: theme.colors.textPrimary },
-  tick: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    backgroundColor: theme.colors.ink,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    container: { flex: 1, backgroundColor: theme.colors.background },
+    content: { paddingHorizontal: 16, gap: 12 },
+    caption: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textMuted },
+    live: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 12 },
+    phone: {
+      width: 120,
+      height: 200,
+      borderRadius: 22,
+      overflow: 'hidden',
+      borderWidth: 2,
+      borderColor: theme.colors.white,
+    },
+    liveText: { flex: 1, minWidth: 0, gap: 6 },
+    liveKicker: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textSecondary },
+    liveName: { fontFamily: theme.font.roundedBold, fontSize: 20, color: theme.colors.textPrimary },
+    pair: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: 2 },
+    pairItem: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+    pairDot: { width: 14, height: 14, borderRadius: 7, borderWidth: 1.5, borderColor: theme.colors.white },
+    pairText: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
+    grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 12 },
+    card: {
+      width: '48.5%',
+      padding: 7,
+      backgroundColor: GLASS.fill,
+      borderRadius: 20,
+      borderWidth: 1,
+      borderColor: GLASS.edge,
+      boxShadow: GLASS.shadow,
+    },
+    swatch: { borderRadius: 14, overflow: 'hidden' },
+    cardActive: { borderWidth: 2, borderColor: theme.colors.ink },
+    nameRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 6,
+      paddingHorizontal: 4,
+      paddingTop: 9,
+      paddingBottom: 4,
+    },
+    name: { flex: 1, fontFamily: theme.font.roundedBold, fontSize: 13, color: theme.colors.textPrimary },
+    tick: {
+      width: 16,
+      height: 16,
+      borderRadius: 8,
+      backgroundColor: theme.colors.ink,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+  })
+);

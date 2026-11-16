@@ -20,6 +20,7 @@ import { useAccent } from '@/theme/AccentContext';
 import { themeInk } from '@/theme/interactionColors';
 import type { SubscriptionTotals } from '@/db/subscriptions';
 import { CostShare, RunMark, RUN_WINDOW_DAYS, topShareLine, groupRunMarks } from './recurring.helpers';
+import { themedStyles } from '@/theme/themedStyles';
 
 const DAY_MS = 86400000;
 /** A run's dot grows with its amount, between these sizes. */
@@ -198,33 +199,35 @@ export function RecurringHero({
   );
 }
 
-const styles = StyleSheet.create({
-  // The timeline disclosure row sits flush with the card's bottom edge.
-  cardWithDisclosure: { paddingBottom: 4 },
-  timeline: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.divider },
-  figureRow: { flexDirection: 'row', alignItems: 'baseline', gap: 6, flexWrap: 'wrap' },
-  figureNote: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
-  title: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.textPrimary },
-  note: summaryNote,
-  dateGroups: { gap: 6 },
-  dateGroup: {
-    minHeight: 44,
-    justifyContent: 'center',
-    paddingHorizontal: 12,
-    borderRadius: 12,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-  },
-  dateText: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textPrimary },
-  lineLabel: {
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 12,
-    color: theme.colors.textMuted,
-    marginBottom: 2,
-  },
-  line: { height: LINE_HEIGHT, justifyContent: 'center' },
-  rail: { height: 2, borderRadius: 1, backgroundColor: 'rgba(18,19,15,0.12)' },
-  dot: { position: 'absolute', borderWidth: 3, backgroundColor: theme.colors.surface },
-  axis: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, justifyContent: 'space-between', marginTop: 2 },
-  axisText: { fontFamily: theme.font.bodyMedium, fontSize: 11, color: theme.colors.textMuted },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    // The timeline disclosure row sits flush with the card's bottom edge.
+    cardWithDisclosure: { paddingBottom: 4 },
+    timeline: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.divider },
+    figureRow: { flexDirection: 'row', alignItems: 'baseline', gap: 6, flexWrap: 'wrap' },
+    figureNote: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
+    title: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.textPrimary },
+    note: summaryNote,
+    dateGroups: { gap: 6 },
+    dateGroup: {
+      minHeight: 44,
+      justifyContent: 'center',
+      paddingHorizontal: 12,
+      borderRadius: 12,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.borderSoft,
+    },
+    dateText: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textPrimary },
+    lineLabel: {
+      fontFamily: theme.font.bodyMedium,
+      fontSize: 12,
+      color: theme.colors.textMuted,
+      marginBottom: 2,
+    },
+    line: { height: LINE_HEIGHT, justifyContent: 'center' },
+    rail: { height: 2, borderRadius: 1, backgroundColor: 'rgba(18,19,15,0.12)' },
+    dot: { position: 'absolute', borderWidth: 3, backgroundColor: theme.colors.surface },
+    axis: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, justifyContent: 'space-between', marginTop: 2 },
+    axisText: { fontFamily: theme.font.bodyMedium, fontSize: 11, color: theme.colors.textMuted },
+  })
+);

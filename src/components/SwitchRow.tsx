@@ -2,6 +2,7 @@ import { View, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
 import { ToggleSwitch } from '@/components/ToggleSwitch';
 import { theme } from '@/constants/theme';
+import { themedStyles } from '@/theme/themedStyles';
 
 /** A yes/no setting as one row: what it is, a line saying what it does, the switch on the right. */
 export function SwitchRow({
@@ -28,21 +29,23 @@ export function SwitchRow({
   );
 }
 
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    marginBottom: 12,
-    borderRadius: 18,
-    backgroundColor: theme.colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-  },
-  copy: { flex: 1, minWidth: 0 },
-  title: { fontFamily: theme.font.bodyMedium, fontSize: 14, color: theme.colors.textPrimary },
-  hint: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textMuted },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 12,
+      paddingHorizontal: 14,
+      paddingVertical: 10,
+      marginBottom: 12,
+      borderRadius: 18,
+      backgroundColor: theme.colors.surface,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.borderSoft,
+    },
+    copy: { flex: 1, minWidth: 0 },
+    title: { fontFamily: theme.font.bodyMedium, fontSize: 14, color: theme.colors.textPrimary },
+    hint: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textMuted },
+  })
+);

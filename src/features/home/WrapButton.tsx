@@ -12,6 +12,7 @@ import { withPressed } from '@/lib/pressed';
 import { haptics } from '@/lib/haptics';
 import { screenStyles as h } from '@/components/screenStyles';
 import type { ReadyWrap } from '@/features/wrap/wrapWindow';
+import { themedStyles } from '@/theme/themedStyles';
 
 const SIZE = 34;
 
@@ -113,63 +114,65 @@ export function WrapButton({ wraps, onPlay }: { wraps: ReadyWrap[]; onPlay: (wra
   );
 }
 
-const styles = StyleSheet.create({
-  hit: { width: SIZE, height: SIZE },
-  ring: {
-    width: SIZE,
-    height: SIZE,
-    borderRadius: SIZE / 2,
-    padding: 2,
-  },
-  ringSeen: {
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    backgroundColor: theme.colors.surface,
-  },
-  inner: {
-    flex: 1,
-    borderRadius: SIZE / 2,
-    backgroundColor: theme.colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  play: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: theme.colors.ink,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  playSeen: { backgroundColor: theme.colors.surfaceAlt },
-  // The play triangle's weight sits left of its box; this centres it by eye.
-  playIcon: { marginLeft: 2 },
-  count: {
-    position: 'absolute',
-    top: -4,
-    right: -5,
-    minWidth: 17,
-    height: 17,
-    paddingHorizontal: 4,
-    borderRadius: 9,
-    backgroundColor: theme.colors.ink,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  countText: { fontFamily: theme.font.monoBold, fontSize: 11, color: theme.colors.surface },
-  card: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.radius.xl2,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    overflow: 'hidden',
-  },
-  rowPlay: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
-    backgroundColor: theme.colors.ink,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    hit: { width: SIZE, height: SIZE },
+    ring: {
+      width: SIZE,
+      height: SIZE,
+      borderRadius: SIZE / 2,
+      padding: 2,
+    },
+    ringSeen: {
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.borderSoft,
+      backgroundColor: theme.colors.surface,
+    },
+    inner: {
+      flex: 1,
+      borderRadius: SIZE / 2,
+      backgroundColor: theme.colors.surface,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    play: {
+      width: 24,
+      height: 24,
+      borderRadius: 12,
+      backgroundColor: theme.colors.ink,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    playSeen: { backgroundColor: theme.colors.surfaceAlt },
+    // The play triangle's weight sits left of its box; this centres it by eye.
+    playIcon: { marginLeft: 2 },
+    count: {
+      position: 'absolute',
+      top: -4,
+      right: -5,
+      minWidth: 17,
+      height: 17,
+      paddingHorizontal: 4,
+      borderRadius: 9,
+      backgroundColor: theme.colors.ink,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    countText: { fontFamily: theme.font.monoBold, fontSize: 11, color: theme.colors.surface },
+    card: {
+      backgroundColor: theme.colors.surface,
+      borderRadius: theme.radius.xl2,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.borderSoft,
+      overflow: 'hidden',
+    },
+    rowPlay: {
+      width: 38,
+      height: 38,
+      borderRadius: 12,
+      backgroundColor: theme.colors.ink,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+  })
+);

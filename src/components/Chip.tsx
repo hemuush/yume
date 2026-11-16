@@ -6,6 +6,7 @@ import { theme } from '@/constants/theme';
 import { usePressScale } from '@/lib/usePressScale';
 import { softTint } from '@/components/softTint';
 import { useAccent } from '@/theme/AccentContext';
+import { themedStyles } from '@/theme/themedStyles';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -67,26 +68,28 @@ export function Chip({ label, active, onPress, activeBorderColor, icon, iconColo
   );
 }
 
-const styles = StyleSheet.create({
-  chip: {
-    flexDirection: 'row',
-    maxWidth: '100%',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: theme.radius.pill,
-    borderWidth: 1,
-    borderColor: theme.colors.borderSoft,
-    backgroundColor: theme.colors.surface,
-  },
-  chipWithIcon: { paddingLeft: 4, paddingVertical: 4 },
-  iconDisc: { width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-  text: {
-    fontSize: 12,
-    color: theme.colors.textSecondary,
-    fontFamily: theme.font.body,
-    flexShrink: 1,
-  },
-  textActive: { color: theme.colors.textPrimary, fontFamily: theme.font.bodyMedium },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    chip: {
+      flexDirection: 'row',
+      maxWidth: '100%',
+      alignItems: 'center',
+      gap: 6,
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      borderRadius: theme.radius.pill,
+      borderWidth: 1,
+      borderColor: theme.colors.borderSoft,
+      backgroundColor: theme.colors.surface,
+    },
+    chipWithIcon: { paddingLeft: 4, paddingVertical: 4 },
+    iconDisc: { width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+    text: {
+      fontSize: 12,
+      color: theme.colors.textSecondary,
+      fontFamily: theme.font.body,
+      flexShrink: 1,
+    },
+    textActive: { color: theme.colors.textPrimary, fontFamily: theme.font.bodyMedium },
+  })
+);

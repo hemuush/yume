@@ -2,6 +2,7 @@ import { View, StyleSheet } from 'react-native';
 import { Skeleton } from '@/components/Skeleton';
 import { screenStyles as h } from '@/components/screenStyles';
 import { useContentWidth } from '@/components/ColumnFrame';
+import { themedStyles } from '@/theme/themedStyles';
 
 export { CardRowsSkeleton } from '@/components/ListSkeleton';
 
@@ -53,13 +54,15 @@ export function AccountTilesSkeleton() {
   );
 }
 
-const styles = StyleSheet.create({
-  card: { ...h.card, padding: 16, gap: 10 },
-  ringRow: { flexDirection: 'row', alignItems: 'center', gap: 14 },
-  legend: { flex: 1, gap: 12 },
-  bar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  row: { flexDirection: 'row', gap: 8 },
-  week: { marginTop: 16 },
-  actions: { flexDirection: 'row', gap: 8, marginHorizontal: 16, marginTop: 10 },
-  accountTiles: { marginHorizontal: 16, flexDirection: 'row', gap: 10, overflow: 'hidden' },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    card: { ...h.card, padding: 16, gap: 10 },
+    ringRow: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+    legend: { flex: 1, gap: 12 },
+    bar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    row: { flexDirection: 'row', gap: 8 },
+    week: { marginTop: 16 },
+    actions: { flexDirection: 'row', gap: 8, marginHorizontal: 16, marginTop: 10 },
+    accountTiles: { marginHorizontal: 16, flexDirection: 'row', gap: 10, overflow: 'hidden' },
+  })
+);

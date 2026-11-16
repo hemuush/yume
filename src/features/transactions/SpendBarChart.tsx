@@ -10,6 +10,7 @@ import type { SpendBar } from './spendChart';
 import { useAccent } from '@/theme/AccentContext';
 import { themeInk } from '@/theme/interactionColors';
 import { shade } from '@/lib/color';
+import { themedStyles } from '@/theme/themedStyles';
 
 const MAX_BAR_HEIGHT = 52;
 // A day with any spend is at least this tall, so a small one still reads as a bar.
@@ -227,100 +228,102 @@ export function SpendBarChart({
   );
 }
 
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    justifyContent: 'space-between',
-    height: MAX_BAR_HEIGHT + 22,
-  },
-  col: {
-    width: `${100 / 7.4}%`,
-    alignItems: 'center',
-    height: '100%',
-    justifyContent: 'flex-end',
-    paddingVertical: 4,
-  },
-  dateBox: { alignItems: 'center', justifyContent: 'center' },
-  dateNum: {
-    minWidth: 22,
-    paddingHorizontal: 4,
-    borderRadius: 7,
-    overflow: 'hidden',
-    textAlign: 'center',
-    fontFamily: theme.font.roundedBold,
-    fontSize: 13,
-    color: theme.colors.textPrimary,
-  },
-  barTrack: {
-    width: '100%',
-    maxWidth: 26,
-    height: MAX_BAR_HEIGHT,
-    borderRadius: 13,
-    overflow: 'hidden',
-    justifyContent: 'flex-end',
-  },
-  trackOutside: { alignItems: 'center', justifyContent: 'center' },
-  // Fills the capsule from the bottom; the capsule's own corners round it.
-  stack: { width: '100%', borderRadius: 13 },
-  outsideDay: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: theme.colors.textMuted,
-    opacity: 0.35,
-  },
-  labelAway: { opacity: 0.45 },
-  label: {
-    fontFamily: theme.font.body,
-    fontSize: 11,
-    lineHeight: 15,
-    minHeight: 15,
-    color: theme.colors.textMuted,
-    marginTop: 6,
-  },
-  // Over the whole row, its columns the same width and spacing as the bars' own.
-  bubbleRow: {
-    position: 'absolute',
-    top: 0,
-    bottom: 0,
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  bubbleCol: { width: `${100 / 7.4}%`, height: '100%' },
-  bubbleWrap: { position: 'absolute', left: -24, right: -24, alignItems: 'center' },
-  bubble: { paddingHorizontal: 7, paddingVertical: 3, borderRadius: 8, backgroundColor: theme.colors.ink },
-  bubbleText: { fontFamily: theme.font.bodyBold, fontSize: 11, color: theme.colors.surface },
-  bubbleNub: {
-    position: 'absolute',
-    bottom: -3,
-    alignSelf: 'center',
-    width: 6,
-    height: 6,
-    borderRadius: 1,
-    backgroundColor: theme.colors.ink,
-    transform: [{ rotate: '45deg' }],
-  },
-  average: {
-    position: 'absolute',
-    borderTopWidth: 1,
-    borderStyle: 'dashed',
-    borderColor: theme.colors.inkOff,
-  },
-  // Sits on the line's right end, above the capsules.
-  averageLabel: { position: 'absolute', alignItems: 'flex-end' },
-  averageText: {
-    marginTop: -16,
-    paddingLeft: 4,
-    fontFamily: theme.font.body,
-    fontSize: 11,
-    lineHeight: 14,
-    color: theme.colors.textMuted,
-    backgroundColor: theme.colors.surface,
-    fontVariant: ['tabular-nums'],
-  },
-  labelToday: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
-  labelOn: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    row: {
+      flexDirection: 'row',
+      alignItems: 'flex-end',
+      justifyContent: 'space-between',
+      height: MAX_BAR_HEIGHT + 22,
+    },
+    col: {
+      width: `${100 / 7.4}%`,
+      alignItems: 'center',
+      height: '100%',
+      justifyContent: 'flex-end',
+      paddingVertical: 4,
+    },
+    dateBox: { alignItems: 'center', justifyContent: 'center' },
+    dateNum: {
+      minWidth: 22,
+      paddingHorizontal: 4,
+      borderRadius: 7,
+      overflow: 'hidden',
+      textAlign: 'center',
+      fontFamily: theme.font.roundedBold,
+      fontSize: 13,
+      color: theme.colors.textPrimary,
+    },
+    barTrack: {
+      width: '100%',
+      maxWidth: 26,
+      height: MAX_BAR_HEIGHT,
+      borderRadius: 13,
+      overflow: 'hidden',
+      justifyContent: 'flex-end',
+    },
+    trackOutside: { alignItems: 'center', justifyContent: 'center' },
+    // Fills the capsule from the bottom; the capsule's own corners round it.
+    stack: { width: '100%', borderRadius: 13 },
+    outsideDay: {
+      width: 4,
+      height: 4,
+      borderRadius: 2,
+      backgroundColor: theme.colors.textMuted,
+      opacity: 0.35,
+    },
+    labelAway: { opacity: 0.45 },
+    label: {
+      fontFamily: theme.font.body,
+      fontSize: 11,
+      lineHeight: 15,
+      minHeight: 15,
+      color: theme.colors.textMuted,
+      marginTop: 6,
+    },
+    // Over the whole row, its columns the same width and spacing as the bars' own.
+    bubbleRow: {
+      position: 'absolute',
+      top: 0,
+      bottom: 0,
+      left: 0,
+      right: 0,
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+    },
+    bubbleCol: { width: `${100 / 7.4}%`, height: '100%' },
+    bubbleWrap: { position: 'absolute', left: -24, right: -24, alignItems: 'center' },
+    bubble: { paddingHorizontal: 7, paddingVertical: 3, borderRadius: 8, backgroundColor: theme.colors.ink },
+    bubbleText: { fontFamily: theme.font.bodyBold, fontSize: 11, color: theme.colors.surface },
+    bubbleNub: {
+      position: 'absolute',
+      bottom: -3,
+      alignSelf: 'center',
+      width: 6,
+      height: 6,
+      borderRadius: 1,
+      backgroundColor: theme.colors.ink,
+      transform: [{ rotate: '45deg' }],
+    },
+    average: {
+      position: 'absolute',
+      borderTopWidth: 1,
+      borderStyle: 'dashed',
+      borderColor: theme.colors.inkOff,
+    },
+    // Sits on the line's right end, above the capsules.
+    averageLabel: { position: 'absolute', alignItems: 'flex-end' },
+    averageText: {
+      marginTop: -16,
+      paddingLeft: 4,
+      fontFamily: theme.font.body,
+      fontSize: 11,
+      lineHeight: 14,
+      color: theme.colors.textMuted,
+      backgroundColor: theme.colors.surface,
+      fontVariant: ['tabular-nums'],
+    },
+    labelToday: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
+    labelOn: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
+  })
+);

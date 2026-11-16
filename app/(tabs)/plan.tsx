@@ -30,6 +30,7 @@ import { useTabScrollPad } from '@/lib/uiScale';
 import { useStacked } from '@/lib/useStacked';
 import { useTabScrollToTop } from '@/lib/useTabScrollToTop';
 import { useAccent } from '@/theme/AccentContext';
+import { themedStyles } from '@/theme/themedStyles';
 
 /**
  * The gap under the tabs, per tab. Each tab's first block carries its own top margin (the runway card 4, the Upcoming
@@ -177,35 +178,37 @@ export default function PlanScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  addPlan: {
-    minHeight: 44,
-    paddingHorizontal: 12,
-    borderRadius: 22,
-    backgroundColor: theme.colors.surface,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-  },
-  tabs: { marginHorizontal: 16, marginTop: theme.layout.screenTopGap, marginBottom: SCREEN.sectionGap },
-  headLinkText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.link },
-  container: { flex: 1, backgroundColor: theme.colors.background },
-  errorBanner: {
-    marginHorizontal: SCREEN.gutter,
-    marginTop: theme.layout.screenTopGap,
-    marginBottom: 12,
-    padding: 14,
-    borderRadius: theme.radius.md,
-    backgroundColor: theme.colors.expenseTint,
-    borderWidth: theme.border.thin,
-    borderColor: theme.colors.expense,
-  },
-  errorTitle: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.expenseText },
-  errorDetail: {
-    fontFamily: theme.font.body,
-    fontSize: 12,
-    color: theme.colors.textSecondary,
-    marginTop: 3,
-    lineHeight: 16,
-  },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    addPlan: {
+      minHeight: 44,
+      paddingHorizontal: 12,
+      borderRadius: 22,
+      backgroundColor: theme.colors.surface,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 5,
+    },
+    tabs: { marginHorizontal: 16, marginTop: theme.layout.screenTopGap, marginBottom: SCREEN.sectionGap },
+    headLinkText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.link },
+    container: { flex: 1, backgroundColor: theme.colors.background },
+    errorBanner: {
+      marginHorizontal: SCREEN.gutter,
+      marginTop: theme.layout.screenTopGap,
+      marginBottom: 12,
+      padding: 14,
+      borderRadius: theme.radius.md,
+      backgroundColor: theme.colors.expenseTint,
+      borderWidth: theme.border.thin,
+      borderColor: theme.colors.expense,
+    },
+    errorTitle: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.expenseText },
+    errorDetail: {
+      fontFamily: theme.font.body,
+      fontSize: 12,
+      color: theme.colors.textSecondary,
+      marginTop: 3,
+      lineHeight: 16,
+    },
+  })
+);

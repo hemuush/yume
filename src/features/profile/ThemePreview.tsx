@@ -7,6 +7,7 @@ import { shade } from '@/lib/color';
 import { GLASS } from '@/components/Glass';
 import { wallpaperTop } from '@/features/home/HomeWallpaper';
 import type { ThemePack } from '@/theme/themes';
+import { themedStyles } from '@/theme/themedStyles';
 
 /**
  * A theme pack drawn as a mini Home in its own colours: the wallpaper (its wash and two soft blobs), glass
@@ -84,43 +85,47 @@ export function ThemeThumb({ pack }: { pack: ThemePack }) {
   );
 }
 
-const thumb = StyleSheet.create({
-  wrap: {
-    width: 44,
-    height: 30,
-    borderRadius: 8,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: GLASS.edge,
-  },
-  hill: { position: 'absolute', bottom: -5, width: 28, height: 17, borderRadius: 14 },
-});
+const thumb = themedStyles(() =>
+  StyleSheet.create({
+    wrap: {
+      width: 44,
+      height: 30,
+      borderRadius: 8,
+      overflow: 'hidden',
+      borderWidth: 1,
+      borderColor: GLASS.edge,
+    },
+    hill: { position: 'absolute', bottom: -5, width: 28, height: 17, borderRadius: 14 },
+  })
+);
 
-const styles = StyleSheet.create({
-  wrap: { overflow: 'hidden' },
-  glass: {
-    position: 'absolute',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: GLASS.edge,
-    backgroundColor: GLASS.fill,
-  },
-  dot: { position: 'absolute', top: 8, left: 8, width: 10, height: 10, borderRadius: 5 },
-  bar: {
-    position: 'absolute',
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: GLASS.fillStrong,
-    borderWidth: 1,
-    borderColor: GLASS.edge,
-  },
-  barTab: {
-    position: 'absolute',
-    left: 3,
-    top: 2,
-    width: 30,
-    height: 14,
-    borderRadius: 7,
-    backgroundColor: theme.colors.ink,
-  },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    wrap: { overflow: 'hidden' },
+    glass: {
+      position: 'absolute',
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: GLASS.edge,
+      backgroundColor: GLASS.fill,
+    },
+    dot: { position: 'absolute', top: 8, left: 8, width: 10, height: 10, borderRadius: 5 },
+    bar: {
+      position: 'absolute',
+      height: 20,
+      borderRadius: 10,
+      backgroundColor: GLASS.fillStrong,
+      borderWidth: 1,
+      borderColor: GLASS.edge,
+    },
+    barTab: {
+      position: 'absolute',
+      left: 3,
+      top: 2,
+      width: 30,
+      height: 14,
+      borderRadius: 7,
+      backgroundColor: theme.colors.ink,
+    },
+  })
+);

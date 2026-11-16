@@ -2,6 +2,7 @@ import { View, StyleSheet } from 'react-native';
 import Svg, { Path, Rect, Circle } from 'react-native-svg';
 import { theme } from '@/constants/theme';
 import { shade } from '@/lib/color';
+import { themedStyles } from '@/theme/themedStyles';
 
 const HILLS_HEIGHT = 26;
 /** The shorter edge under the shared SkyHeader: the same hills drawn flatter, with one small tree. */
@@ -59,6 +60,8 @@ export function HeaderHills({
   );
 }
 
-const styles = StyleSheet.create({
-  wrap: { height: HILLS_HEIGHT, marginTop: -1 },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    wrap: { height: HILLS_HEIGHT, marginTop: -1 },
+  })
+);

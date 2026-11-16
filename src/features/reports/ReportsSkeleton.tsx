@@ -1,6 +1,7 @@
 import { View, StyleSheet } from 'react-native';
 import { Skeleton } from '@/components/Skeleton';
 import { useContentWidth } from '@/components/ColumnFrame';
+import { themedStyles } from '@/theme/themedStyles';
 
 const SUMMARY_H = 124;
 const CALENDAR_H = 440;
@@ -18,4 +19,6 @@ export function ReportsSkeleton() {
     </View>
   );
 }
-const styles = StyleSheet.create({ wrap: { paddingHorizontal: 16, paddingTop: 12, gap: 10 } });
+const styles = themedStyles(() =>
+  StyleSheet.create({ wrap: { paddingHorizontal: 16, paddingTop: 12, gap: 10 } })
+);

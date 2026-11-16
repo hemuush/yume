@@ -10,6 +10,7 @@ import {
 } from '@/components/SummaryCard';
 import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
+import { themedStyles } from '@/theme/themedStyles';
 
 /**
  * Friends & Family's first card: the net of what you're owed against what you owe, then a bar split between
@@ -69,6 +70,8 @@ export function PeopleNet({
 }
 
 // The screen's content already clears the header with the usual gap, so the card adds none of its own.
-const styles = StyleSheet.create({
-  card: { marginTop: 0, marginBottom: 6 },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    card: { marginTop: 0, marginBottom: 6 },
+  })
+);

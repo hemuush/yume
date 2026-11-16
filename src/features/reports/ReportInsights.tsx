@@ -9,17 +9,18 @@ import { useAccent } from '@/theme/AccentContext';
 import { MoonPhase } from './MoonPhase';
 import type { StoryAction, StoryCard } from './reportsInsights';
 import { styles as shared } from './reports.styles';
+import { themedStyles, themedValue } from '@/theme/themedStyles';
 
 /** The round mark each read leads with. */
 const MARK = 32;
 
-const TONE_HEX = {
+const TONE_HEX = themedValue(() => ({
   coral: theme.colors.slice.spent,
-  sky: '#8FCBFF',
+  sky: theme.colors.primary,
   lavender: '#B7A4EC',
   mint: theme.colors.slice.saved,
   gold: theme.colors.slice.due,
-} as const;
+}));
 
 const ICON: Record<string, React.ComponentProps<typeof Feather>['name']> = {
   mover: 'trending-up',
@@ -94,25 +95,27 @@ export function ReportInsights({
   );
 }
 
-const s = StyleSheet.create({
-  block: { marginBottom: 10 },
-  card: { ...h.card, marginHorizontal: 0 },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 12, paddingVertical: 8 },
-  mark: {
-    width: MARK,
-    height: MARK,
-    borderRadius: MARK / 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  mid: { flex: 1, minWidth: 0, gap: 1 },
-  kicker: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
-  big: {
-    fontFamily: theme.font.bodyMedium,
-    fontSize: theme.typeSize.row,
-    lineHeight: 20,
-    color: theme.colors.textPrimary,
-  },
-  detail: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textSecondary },
-  foot: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textMuted },
-});
+const s = themedStyles(() =>
+  StyleSheet.create({
+    block: { marginBottom: 10 },
+    card: { ...h.card, marginHorizontal: 0 },
+    row: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 12, paddingVertical: 8 },
+    mark: {
+      width: MARK,
+      height: MARK,
+      borderRadius: MARK / 2,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    mid: { flex: 1, minWidth: 0, gap: 1 },
+    kicker: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
+    big: {
+      fontFamily: theme.font.bodyMedium,
+      fontSize: theme.typeSize.row,
+      lineHeight: 20,
+      color: theme.colors.textPrimary,
+    },
+    detail: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textSecondary },
+    foot: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textMuted },
+  })
+);

@@ -9,9 +9,11 @@ import { haptics } from '@/lib/haptics';
 import { DURATIONS } from '@/lib/motionTimings';
 import { MOTION } from '@/lib/animation';
 import { useAccent } from '@/theme/AccentContext';
+import { useSchemeVersion } from '@/theme/SchemeBoundary';
 import { themeInk } from '@/theme/interactionColors';
 import { showAlert } from '@/components/AppDialog';
 import { errorMessage } from '@/lib/errorMessage';
+import { themedStyles } from '@/theme/themedStyles';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -115,6 +117,7 @@ function ToastView({
   onUndo: (key: number) => void;
   queued: number;
 }) {
+  useSchemeVersion();
   const insets = useSafeAreaInsets();
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.94);
   const { accent } = useAccent();
@@ -167,40 +170,42 @@ export function useUndoToast() {
   return ctx;
 }
 
-const styles = StyleSheet.create({
-  wrap: { position: 'absolute', left: 20, right: 20, alignItems: 'center' },
-  // A deep-ink pill above the tab bar (the theme's own dark, as on the Add button), Undo on a light chip.
-  pill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    minHeight: 50,
-    borderRadius: theme.radius.pill,
-    paddingVertical: 8,
-    paddingLeft: 18,
-    paddingRight: 8,
-    maxWidth: 420,
-    width: '100%',
-    shadowColor: theme.colors.ink,
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.24,
-    shadowRadius: 18,
-    elevation: 10,
-  },
-  message: {
-    flex: 1,
-    minWidth: 0,
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 13,
-    color: theme.colors.white,
-  },
-  undoChip: {
-    minHeight: 44,
-    justifyContent: 'center',
-    borderRadius: theme.radius.pill,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    backgroundColor: 'rgba(255,255,255,0.16)',
-  },
-  undo: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.white },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    wrap: { position: 'absolute', left: 20, right: 20, alignItems: 'center' },
+    // A deep-ink pill above the tab bar (the theme's own dark, as on the Add button), Undo on a light chip.
+    pill: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      minHeight: 50,
+      borderRadius: theme.radius.pill,
+      paddingVertical: 8,
+      paddingLeft: 18,
+      paddingRight: 8,
+      maxWidth: 420,
+      width: '100%',
+      shadowColor: theme.colors.ink,
+      shadowOffset: { width: 0, height: 10 },
+      shadowOpacity: 0.24,
+      shadowRadius: 18,
+      elevation: 10,
+    },
+    message: {
+      flex: 1,
+      minWidth: 0,
+      fontFamily: theme.font.bodyMedium,
+      fontSize: 13,
+      color: theme.colors.white,
+    },
+    undoChip: {
+      minHeight: 44,
+      justifyContent: 'center',
+      borderRadius: theme.radius.pill,
+      paddingHorizontal: 14,
+      paddingVertical: 8,
+      backgroundColor: 'rgba(255,255,255,0.16)',
+    },
+    undo: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.white },
+  })
+);

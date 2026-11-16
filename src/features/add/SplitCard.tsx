@@ -7,6 +7,7 @@ import { withPressed } from '@/lib/pressed';
 import { categorySentence, parentNameOf } from '@/lib/categoryLabel';
 import { Category } from '@/types';
 import { DraftPart, partAmounts, splitProblem, splitProblemText } from './splitDraft';
+import { themedStyles } from '@/theme/themedStyles';
 
 /**
  * How a payment divides, as one bar: a segment per part, as wide as its share, in its category's colour.
@@ -118,44 +119,52 @@ export function SplitCard({
   );
 }
 
-const styles = StyleSheet.create({
-  meter: {
-    flexDirection: 'row',
-    gap: 2,
-    height: 8,
-    borderRadius: 4,
-    overflow: 'hidden',
-    backgroundColor: theme.colors.surfaceAlt,
-  },
-  wrap: { marginBottom: 18 },
-  // Frosted, like the category card it stands in for.
-  card: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.radius.xl2,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    padding: 16,
-    gap: 12,
-  },
-  head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  eyebrow: EYEBROW,
-  edit: {
-    minHeight: 44,
-    justifyContent: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: theme.radius.pill,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    backgroundColor: theme.colors.surface,
-  },
-  editText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textPrimary },
-  lines: { gap: 8 },
-  line: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  dot: { width: 10, height: 10, borderRadius: 3 },
-  name: { flex: 1, fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
-  amount: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textPrimary },
-  problem: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.expenseText },
-  remove: { alignSelf: 'center', minHeight: 44, justifyContent: 'center', marginTop: 12, paddingVertical: 4 },
-  removeText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textMuted },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    meter: {
+      flexDirection: 'row',
+      gap: 2,
+      height: 8,
+      borderRadius: 4,
+      overflow: 'hidden',
+      backgroundColor: theme.colors.surfaceAlt,
+    },
+    wrap: { marginBottom: 18 },
+    // Frosted, like the category card it stands in for.
+    card: {
+      backgroundColor: theme.colors.surface,
+      borderRadius: theme.radius.xl2,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.borderSoft,
+      padding: 16,
+      gap: 12,
+    },
+    head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    eyebrow: EYEBROW,
+    edit: {
+      minHeight: 44,
+      justifyContent: 'center',
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: theme.radius.pill,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.borderSoft,
+      backgroundColor: theme.colors.surface,
+    },
+    editText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textPrimary },
+    lines: { gap: 8 },
+    line: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+    dot: { width: 10, height: 10, borderRadius: 3 },
+    name: { flex: 1, fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
+    amount: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textPrimary },
+    problem: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.expenseText },
+    remove: {
+      alignSelf: 'center',
+      minHeight: 44,
+      justifyContent: 'center',
+      marginTop: 12,
+      paddingVertical: 4,
+    },
+    removeText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textMuted },
+  })
+);

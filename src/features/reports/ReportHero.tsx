@@ -11,6 +11,7 @@ import { useAccent } from '@/theme/AccentContext';
 import { themeInk } from '@/theme/interactionColors';
 import type { BudgetCover } from './reportsInsights';
 import { useStacked } from '@/lib/useStacked';
+import { themedStyles } from '@/theme/themedStyles';
 
 const money = (minor: number) => formatMoney(roundedMinor(minor));
 
@@ -129,35 +130,37 @@ export function ReportHero({
 const budgetSpoken = (b: BudgetCover) =>
   `${b.count} budget${b.count === 1 ? '' : 's'}: ${money(b.spentMinor)} of ${money(b.limitMinor)} used`;
 
-const styles = StyleSheet.create({
-  card: { ...h.card, marginHorizontal: 0, marginBottom: 10, paddingHorizontal: 14, paddingVertical: 12 },
-  // Compact: Spent leads at 20, Income and Kept beside it at 14, each with one small line under it.
-  figure: {
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 20,
-    lineHeight: 26,
-    letterSpacing: -0.2,
-    color: theme.colors.textPrimary,
-    fontVariant: ['tabular-nums'],
-  },
-  budget: { marginTop: 10, gap: 5 },
-  track: { height: 6, borderRadius: 3, overflow: 'hidden' },
-  fill: { height: 6, borderRadius: 3 },
-  budgetText: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
-  kpis: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
-  kpisStacked: { flexDirection: 'column', alignItems: 'stretch', gap: 8 },
-  // Income gets the most room (1.25): it carries the long line ("↑ 8% so far vs the month before"), which needs that
-  // width to stay on two lines at 360 dp; Spent leads (1.1). See `share`.
-  kpi: { minWidth: 0 },
-  kpiLabel: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
-  kpiValue: {
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 14,
-    lineHeight: 26,
-    color: theme.colors.textPrimary,
-    fontVariant: ['tabular-nums'],
-  },
-  kpiSub: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textMuted },
-  good: { color: theme.colors.incomeText },
-  bad: { color: theme.colors.expenseText },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    card: { ...h.card, marginHorizontal: 0, marginBottom: 10, paddingHorizontal: 14, paddingVertical: 12 },
+    // Compact: Spent leads at 20, Income and Kept beside it at 14, each with one small line under it.
+    figure: {
+      fontFamily: theme.font.bodyMedium,
+      fontSize: 20,
+      lineHeight: 26,
+      letterSpacing: -0.2,
+      color: theme.colors.textPrimary,
+      fontVariant: ['tabular-nums'],
+    },
+    budget: { marginTop: 10, gap: 5 },
+    track: { height: 6, borderRadius: 3, overflow: 'hidden' },
+    fill: { height: 6, borderRadius: 3 },
+    budgetText: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
+    kpis: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
+    kpisStacked: { flexDirection: 'column', alignItems: 'stretch', gap: 8 },
+    // Income gets the most room (1.25): it carries the long line ("↑ 8% so far vs the month before"), which needs that
+    // width to stay on two lines at 360 dp; Spent leads (1.1). See `share`.
+    kpi: { minWidth: 0 },
+    kpiLabel: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
+    kpiValue: {
+      fontFamily: theme.font.bodyMedium,
+      fontSize: 14,
+      lineHeight: 26,
+      color: theme.colors.textPrimary,
+      fontVariant: ['tabular-nums'],
+    },
+    kpiSub: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textMuted },
+    good: { color: theme.colors.incomeText },
+    bad: { color: theme.colors.expenseText },
+  })
+);

@@ -7,7 +7,7 @@ import { View } from 'react-native';
 import { Text } from '@/components/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { PersonWithBalance } from '@/db/people';
-import { theme, FLAT_PALETTE } from '@/constants/theme';
+import { theme, flatPalette } from '@/constants/theme';
 import { stableIndexFromId } from '@/lib/color';
 import { SkyHeader, HeaderSummary } from '@/features/home/SkyHeader';
 import ReanimatedAnimated from 'react-native-reanimated';
@@ -30,7 +30,7 @@ import { styles } from '@/features/people/people.styles';
 import { useStacked } from '@/lib/useStacked';
 
 // Hashed from the person's own id, not list position, so a rename or a new person never swaps anyone's colour.
-const colorOf = (p: PersonWithBalance) => FLAT_PALETTE[stableIndexFromId(p.id, FLAT_PALETTE.length)];
+const colorOf = (p: PersonWithBalance) => flatPalette()[stableIndexFromId(p.id, 4)];
 
 /**
  * Friends & Family: informal, interest-free IOUs. Reached from the Plan tab's

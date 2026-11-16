@@ -5,6 +5,8 @@ import { Text } from '@/components/Text';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { theme } from '@/constants/theme';
 import type { ScreenCaptureStatus } from '@/lib/useScreenCaptureProtection';
+import { themedStyles } from '@/theme/themedStyles';
+import { useSchemeVersion } from '@/theme/SchemeBoundary';
 
 /** Public recovery UI; no navigator, financial records or app dialogs mount behind it. */
 export function CaptureProtectionScreen({
@@ -14,6 +16,7 @@ export function CaptureProtectionScreen({
   status: Exclude<ScreenCaptureStatus, 'ready'>;
   onRetry: () => void;
 }): ReactElement {
+  useSchemeVersion();
   const insets = useSafeAreaInsets();
   const isFailed = status === 'failed';
   return (
@@ -56,22 +59,24 @@ export function CaptureProtectionScreen({
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: theme.colors.background },
-  content: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: theme.space.xxl },
-  title: {
-    fontFamily: theme.font.roundedBold,
-    fontSize: theme.typeSize.title,
-    color: theme.colors.ink,
-    textAlign: 'center',
-    marginBottom: theme.space.sm,
-  },
-  body: {
-    fontFamily: theme.font.body,
-    fontSize: theme.typeSize.row,
-    color: theme.colors.textSecondary,
-    textAlign: 'center',
-    marginBottom: theme.space.xl,
-  },
-  retry: { alignSelf: 'stretch' },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    screen: { flex: 1, backgroundColor: theme.colors.background },
+    content: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: theme.space.xxl },
+    title: {
+      fontFamily: theme.font.roundedBold,
+      fontSize: theme.typeSize.title,
+      color: theme.colors.ink,
+      textAlign: 'center',
+      marginBottom: theme.space.sm,
+    },
+    body: {
+      fontFamily: theme.font.body,
+      fontSize: theme.typeSize.row,
+      color: theme.colors.textSecondary,
+      textAlign: 'center',
+      marginBottom: theme.space.xl,
+    },
+    retry: { alignSelf: 'stretch' },
+  })
+);

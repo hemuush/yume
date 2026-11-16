@@ -13,6 +13,7 @@ import { getAccentColor, getCachedAccentColor, getThemeId, setThemeSelection } f
 import { THEMES, DEFAULT_THEME_ID, themeById } from './themes';
 import { theme } from '@/constants/theme';
 import { onSettingsRestored } from '@/lib/dataEvents';
+import { useSchemeVersion } from './SchemeBoundary';
 
 function contrastColor(hex: string): string {
   return contrastRatio(hex, theme.colors.ink) >= contrastRatio(hex, theme.colors.surface)
@@ -52,6 +53,9 @@ const AccentContext = createContext<AccentContextValue>({
 });
 
 export function AccentProvider({ children }: { children: ReactNode }) {
+  // `onAccent` is worked out from the page's ink and surface, which change with the colour mode, so this
+  // redraws on a change and `onAccent` below is worked out again.
+  useSchemeVersion();
   const [themeId, setThemeIdState] = useState(DEFAULT_THEME_ID);
   const [accent, setAccentState] = useState(getCachedAccentColor());
   const [themeSaveError, setThemeSaveError] = useState<AccentContextValue['themeSaveError']>(null);
@@ -118,6 +122,7 @@ export function AccentProvider({ children }: { children: ReactNode }) {
   const secondary = activePack.secondary;
   const dot = activePack.dot ?? activePack.secondary;
   const waitForThemePersistence = useCallback(() => writes.current, []);
+  const onAccent = contrastColor(accent);
 
   const value = useMemo(
     () => ({
@@ -125,12 +130,12 @@ export function AccentProvider({ children }: { children: ReactNode }) {
       accent,
       secondary,
       dot,
-      onAccent: contrastColor(accent),
+      onAccent,
       setTheme,
       themeSaveError,
       waitForThemePersistence,
     }),
-    [themeId, accent, secondary, dot, setTheme, themeSaveError, waitForThemePersistence]
+    [themeId, accent, secondary, dot, onAccent, setTheme, themeSaveError, waitForThemePersistence]
   );
 
   return <AccentContext.Provider value={value}>{children}</AccentContext.Provider>;

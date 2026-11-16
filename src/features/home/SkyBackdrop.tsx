@@ -3,6 +3,7 @@ import ReanimatedAnimated, { useAnimatedStyle, useDerivedValue, SharedValue } fr
 import { LinearGradient } from 'expo-linear-gradient';
 import { theme } from '@/constants/theme';
 import { shade, hexToRgba } from '@/lib/color';
+import { themedStyles } from '@/theme/themedStyles';
 
 const clamp01 = (v: number) => {
   'worklet';
@@ -64,12 +65,14 @@ export function SkyBackdrop({
   );
 }
 
-const styles = StyleSheet.create({
-  edge: { position: 'absolute', top: '100%', left: 0, right: 0, height: 16 },
-  bar: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-  },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    edge: { position: 'absolute', top: '100%', left: 0, right: 0, height: 16 },
+    bar: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+    },
+  })
+);

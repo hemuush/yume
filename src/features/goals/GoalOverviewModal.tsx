@@ -17,6 +17,7 @@ import { useAccent } from '@/theme/AccentContext';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import { theme } from '@/constants/theme';
 import type { Account, SavingsGoal } from '@/types';
+import { themedStyles } from '@/theme/themedStyles';
 
 /** Read first; edit, contribute or transfer only after choosing an action. */
 export function GoalOverviewModal({
@@ -157,11 +158,13 @@ export function GoalOverviewModal({
     </SheetFlow>
   );
 }
-const styles = StyleSheet.create({
-  actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  edit: { flexGrow: 1, flexBasis: 100 },
-  main: { flexGrow: 1.6, flexBasis: 160 },
-  note: { paddingHorizontal: 2, paddingVertical: 8, gap: 4, marginBottom: 6 },
-  caption: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textSecondary },
-  account: { fontFamily: theme.font.bodyMedium, fontSize: 14, color: theme.colors.textPrimary },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+    edit: { flexGrow: 1, flexBasis: 100 },
+    main: { flexGrow: 1.6, flexBasis: 160 },
+    note: { paddingHorizontal: 2, paddingVertical: 8, gap: 4, marginBottom: 6 },
+    caption: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textSecondary },
+    account: { fontFamily: theme.font.bodyMedium, fontSize: 14, color: theme.colors.textPrimary },
+  })
+);

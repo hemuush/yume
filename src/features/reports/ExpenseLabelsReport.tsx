@@ -9,6 +9,7 @@ import { usePrivacy } from '@/theme/PrivacyContext';
 import { theme } from '@/constants/theme';
 import { DateRange } from '@/types';
 import { dayMonthYear } from '@/lib/dateLabels';
+import { themedStyles } from '@/theme/themedStyles';
 
 export function ExpenseLabelsReport({
   visible,
@@ -169,27 +170,29 @@ export function ExpenseLabelsReport({
     </ModalSheet>
   );
 }
-const s = StyleSheet.create({
-  summary: { gap: 6, marginBottom: 16, minHeight: 88 },
-  status: {
-    fontFamily: theme.font.body,
-    fontSize: 18,
-    color: theme.colors.textSecondary,
-    paddingVertical: 4,
-  },
-  search: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: theme.colors.surfaceAlt,
-    borderRadius: 14,
-  },
-  input: { flex: 1, minWidth: 0, minHeight: 48, padding: 12, color: theme.colors.textPrimary },
-  clear: { minHeight: 44, minWidth: 44, paddingHorizontal: 12, justifyContent: 'center' },
-  caption: {
-    fontFamily: theme.font.body,
-    color: theme.colors.textMuted,
-    fontSize: 12,
-    marginTop: 16,
-    marginBottom: 4,
-  },
-});
+const s = themedStyles(() =>
+  StyleSheet.create({
+    summary: { gap: 6, marginBottom: 16, minHeight: 88 },
+    status: {
+      fontFamily: theme.font.body,
+      fontSize: 18,
+      color: theme.colors.textSecondary,
+      paddingVertical: 4,
+    },
+    search: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: theme.colors.surfaceAlt,
+      borderRadius: 14,
+    },
+    input: { flex: 1, minWidth: 0, minHeight: 48, padding: 12, color: theme.colors.textPrimary },
+    clear: { minHeight: 44, minWidth: 44, paddingHorizontal: 12, justifyContent: 'center' },
+    caption: {
+      fontFamily: theme.font.body,
+      color: theme.colors.textMuted,
+      fontSize: 12,
+      marginTop: 16,
+      marginBottom: 4,
+    },
+  })
+);

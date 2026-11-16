@@ -3,6 +3,7 @@ import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { SCREEN } from '@/components/screenStyles';
 import { parseLocalIsoDate } from '@/lib/date';
+import { themedStyles } from '@/theme/themedStyles';
 
 /**
  * A date as a small tile ("01" over "OCT") for rows about a day (Home's Upcoming, Plan's Coming up, recurring
@@ -34,24 +35,31 @@ export function DateTile({
   );
 }
 
-const styles = StyleSheet.create({
-  tile: {
-    minWidth: SCREEN.mark,
-    minHeight: SCREEN.mark,
-    paddingHorizontal: 6,
-    paddingVertical: 4,
-    borderRadius: 13,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  day: { fontFamily: theme.font.roundedBold, fontSize: 14, lineHeight: 17, color: theme.colors.textPrimary },
-  month: {
-    fontFamily: theme.font.bodyBold,
-    fontSize: 11,
-    letterSpacing: 0.7,
-    color: theme.colors.textSecondary,
-    marginTop: 1,
-  },
-  urgent: { color: theme.colors.expenseText },
-  soon: { color: theme.colors.warnInk },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    tile: {
+      minWidth: SCREEN.mark,
+      minHeight: SCREEN.mark,
+      paddingHorizontal: 6,
+      paddingVertical: 4,
+      borderRadius: 13,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    day: {
+      fontFamily: theme.font.roundedBold,
+      fontSize: 14,
+      lineHeight: 17,
+      color: theme.colors.textPrimary,
+    },
+    month: {
+      fontFamily: theme.font.bodyBold,
+      fontSize: 11,
+      letterSpacing: 0.7,
+      color: theme.colors.textSecondary,
+      marginTop: 1,
+    },
+    urgent: { color: theme.colors.expenseText },
+    soon: { color: theme.colors.warnInk },
+  })
+);

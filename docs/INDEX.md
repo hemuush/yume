@@ -4,6 +4,8 @@ Use maintained guides for implemented behavior. Dated audits preserve their own 
 
 ## Current verification
 
+The [16 November colour-mode engine](COLOUR_MODES_2026_11_16.md) is the first step of the single-theme light/dark redesign: `theme.colors` is read live from a per-mode table, style sheets are rebuilt on a mode change, and screens are drawn again without losing the person's place. Both modes still hold today's colours, so nothing on screen changes yet. It records the browser-harness checks (22 screens pixel-identical in light; a stale-colour scan and live-switch comparison that found and fixed three faults) and what is left.
+
 The [architecture guide](ARCHITECTURE.md#smoothness-pass--november-2026) describes the 9 November compact screen refinements and the Groww-referenced financial-typography follow-up. These source changes do not establish fresh physical-device acceptance.
 
 The [approved 10 November Home redesign](HOME_REDESIGN_2026_11_10.md) records the separate week card, section summary lines, day-grouped recent activity and the remaining Pixel acceptance checks. It supersedes the chart placement of the 5 November refinement and also records the compact Activity and Reports passes and the Plan overview redesign.

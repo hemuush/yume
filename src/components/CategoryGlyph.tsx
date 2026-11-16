@@ -3,6 +3,7 @@ import { Text } from '@/components/Text';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import type { McIconName } from '@/components/iconName';
 import { isEmojiIcon } from '@/lib/categoryIcon';
+import { themedStyles } from '@/theme/themedStyles';
 
 /**
  * A category's icon, drawn the one way every screen draws it: a built-in name as an icon in `color`, or the person's own
@@ -27,6 +28,8 @@ export function CategoryGlyph({ name, size, color }: { name: string; size: numbe
   return <MaterialCommunityIcons name={name as McIconName} size={size} color={color} />;
 }
 
-const styles = StyleSheet.create({
-  emoji: { textAlign: 'center', includeFontPadding: false },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    emoji: { textAlign: 'center', includeFontPadding: false },
+  })
+);

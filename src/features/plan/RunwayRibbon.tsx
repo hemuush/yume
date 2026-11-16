@@ -9,6 +9,7 @@ import { shade } from '@/lib/color';
 import { useAccent } from '@/theme/AccentContext';
 import { useScrub } from '@/features/reports/useScrub';
 import { Runway, runwayTicks, TICK_DATE_WIDTH } from './runway';
+import { themedStyles } from '@/theme/themedStyles';
 
 /** The balance line's height; the pips and date labels sit under it. */
 const LINE_H = 62;
@@ -166,47 +167,49 @@ export function RunwayRibbon({ runway }: { runway: Runway }) {
   );
 }
 
-const styles = StyleSheet.create({
-  wrap: { gap: 8 },
-  pips: { flexDirection: 'row', height: PIP_ROW, alignItems: 'center' },
-  pipSlot: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  pip: { width: 5, height: 5, borderRadius: 3, backgroundColor: theme.colors.trayTrack },
-  pipOn: { width: 9, height: 9, borderRadius: 5, borderWidth: 2, borderColor: theme.colors.ink },
-  tick: {
-    position: 'absolute',
-    top: 0,
-    textAlign: 'center',
-    fontFamily: theme.font.body,
-    fontSize: 11,
-    color: theme.colors.textMuted,
-  },
-  read: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'baseline',
-    columnGap: 8,
-    rowGap: 2,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    borderRadius: 12,
-    backgroundColor: theme.colors.tray,
-  },
-  readDate: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
-  readMoved: {
-    flexGrow: 1,
-    flexShrink: 1,
-    flexBasis: 120,
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 13,
-    color: theme.colors.textPrimary,
-    fontVariant: ['tabular-nums'],
-  },
-  readLeft: {
-    fontFamily: theme.font.body,
-    fontSize: 12,
-    color: theme.colors.textSecondary,
-    fontVariant: ['tabular-nums'],
-  },
-  in: { color: theme.colors.incomeText },
-  short: { fontFamily: theme.font.bodyBold, color: theme.colors.expenseText },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    wrap: { gap: 8 },
+    pips: { flexDirection: 'row', height: PIP_ROW, alignItems: 'center' },
+    pipSlot: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+    pip: { width: 5, height: 5, borderRadius: 3, backgroundColor: theme.colors.trayTrack },
+    pipOn: { width: 9, height: 9, borderRadius: 5, borderWidth: 2, borderColor: theme.colors.ink },
+    tick: {
+      position: 'absolute',
+      top: 0,
+      textAlign: 'center',
+      fontFamily: theme.font.body,
+      fontSize: 11,
+      color: theme.colors.textMuted,
+    },
+    read: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      alignItems: 'baseline',
+      columnGap: 8,
+      rowGap: 2,
+      paddingHorizontal: 10,
+      paddingVertical: 8,
+      borderRadius: 12,
+      backgroundColor: theme.colors.tray,
+    },
+    readDate: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
+    readMoved: {
+      flexGrow: 1,
+      flexShrink: 1,
+      flexBasis: 120,
+      fontFamily: theme.font.bodyMedium,
+      fontSize: 13,
+      color: theme.colors.textPrimary,
+      fontVariant: ['tabular-nums'],
+    },
+    readLeft: {
+      fontFamily: theme.font.body,
+      fontSize: 12,
+      color: theme.colors.textSecondary,
+      fontVariant: ['tabular-nums'],
+    },
+    in: { color: theme.colors.incomeText },
+    short: { fontFamily: theme.font.bodyBold, color: theme.colors.expenseText },
+  })
+);

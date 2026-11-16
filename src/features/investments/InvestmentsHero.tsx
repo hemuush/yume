@@ -18,6 +18,7 @@ import { formatMaskableMoney } from '@/lib/money';
 import { formatReturnPct, returnSpanLabel } from '@/lib/investment';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import type { Portfolio } from '@/lib/portfolio';
+import { themedStyles } from '@/theme/themedStyles';
 
 /**
  * The first card of the Investments page: what the holdings are worth, the return, the gain and the yearly
@@ -125,8 +126,10 @@ export function StartTracking({ onAdd }: { onAdd: () => void }) {
   );
 }
 
-const styles = StyleSheet.create({
-  title: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.textPrimary },
-  hint: { ...summaryNote, paddingHorizontal: 2 },
-  stepNo: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    title: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.textPrimary },
+    hint: { ...summaryNote, paddingHorizontal: 2 },
+    stepNo: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
+  })
+);

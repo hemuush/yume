@@ -14,6 +14,7 @@ import { payoffMonthShort } from '@/lib/loanPayoff';
 import { loanBarTone } from './loanIdentity';
 import type { DebtShare, LoanTotals } from './loanTotals';
 import type { Timeline } from './timelineLayout';
+import { themedStyles } from '@/theme/themedStyles';
 
 interface Fact {
   label: string;
@@ -182,87 +183,99 @@ export function LoansHero({
   );
 }
 
-const styles = StyleSheet.create({
-  // The flat card the other screens lead with; one lifted element over a list of flat ones.
-  hero: {
-    marginHorizontal: SCREEN.gutter,
-    marginTop: theme.layout.screenTopGap,
-    paddingHorizontal: 14,
-    paddingTop: 14,
-    paddingBottom: 4,
-    gap: 12,
-    boxShadow: '0px 1px 2px rgba(18,19,15,0.04), 0px 8px 24px rgba(18,19,15,0.05)',
-    overflow: 'visible',
-  },
-  top: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'flex-end',
-    justifyContent: 'space-between',
-    columnGap: 12,
-    rowGap: 4,
-    paddingHorizontal: 2,
-  },
-  topMain: { flexShrink: 1, minWidth: 0 },
-  label: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
-  figure: {
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 20,
-    lineHeight: 26,
-    letterSpacing: -0.2,
-    fontVariant: ['tabular-nums'],
-    color: theme.colors.textPrimary,
-  },
-  side: { flexShrink: 1, alignItems: 'flex-end' },
-  sideMain: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
-  sideNote: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted },
-  sideBold: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
-  share: { flexDirection: 'row', gap: 3, height: 8, borderRadius: 4, overflow: 'hidden' },
-  segment: { flexBasis: 0, minWidth: 6, height: 8, borderRadius: 4 },
-  facts: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 12, rowGap: 8, paddingHorizontal: 2 },
-  fact: { flexGrow: 1, minWidth: 0 },
-  factLabel: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
-  factValue: {
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 14,
-    fontVariant: ['tabular-nums'],
-    color: theme.colors.textPrimary,
-  },
-  good: { color: theme.colors.incomeText },
-  note: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textSecondary },
-  clear: { gap: 8, paddingBottom: 10 },
-  clearSub: { fontFamily: theme.font.body, fontSize: 13, lineHeight: 19, color: theme.colors.textSecondary },
-  title: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.textPrimary },
-  timeline: {
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: theme.colors.divider,
-  },
-  lanes: { gap: 10, paddingBottom: 10 },
-  lane: { gap: 5 },
-  laneHead: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    alignItems: 'baseline',
-    gap: 6,
-  },
-  laneName: { flexShrink: 1, fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textPrimary },
-  laneDate: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textMuted },
-  laneTrack: {
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: theme.colors.inkWash,
-    overflow: 'hidden',
-  },
-  laneFill: { height: '100%', borderRadius: 4 },
-  axis: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    borderTopWidth: 1,
-    borderTopColor: GLASS.edge,
-    borderStyle: 'dashed',
-    paddingTop: 6,
-  },
-  axisText: { fontFamily: theme.font.bodyMedium, fontSize: 11, color: theme.colors.textMuted },
-  axisEnd: { fontFamily: theme.font.bodyBold, color: theme.colors.incomeText },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    // The flat card the other screens lead with; one lifted element over a list of flat ones.
+    hero: {
+      marginHorizontal: SCREEN.gutter,
+      marginTop: theme.layout.screenTopGap,
+      paddingHorizontal: 14,
+      paddingTop: 14,
+      paddingBottom: 4,
+      gap: 12,
+      boxShadow: '0px 1px 2px rgba(18,19,15,0.04), 0px 8px 24px rgba(18,19,15,0.05)',
+      overflow: 'visible',
+    },
+    top: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      alignItems: 'flex-end',
+      justifyContent: 'space-between',
+      columnGap: 12,
+      rowGap: 4,
+      paddingHorizontal: 2,
+    },
+    topMain: { flexShrink: 1, minWidth: 0 },
+    label: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
+    figure: {
+      fontFamily: theme.font.bodyMedium,
+      fontSize: 20,
+      lineHeight: 26,
+      letterSpacing: -0.2,
+      fontVariant: ['tabular-nums'],
+      color: theme.colors.textPrimary,
+    },
+    side: { flexShrink: 1, alignItems: 'flex-end' },
+    sideMain: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
+    sideNote: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted },
+    sideBold: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
+    share: { flexDirection: 'row', gap: 3, height: 8, borderRadius: 4, overflow: 'hidden' },
+    segment: { flexBasis: 0, minWidth: 6, height: 8, borderRadius: 4 },
+    facts: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 12, rowGap: 8, paddingHorizontal: 2 },
+    fact: { flexGrow: 1, minWidth: 0 },
+    factLabel: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
+    factValue: {
+      fontFamily: theme.font.bodyMedium,
+      fontSize: 14,
+      fontVariant: ['tabular-nums'],
+      color: theme.colors.textPrimary,
+    },
+    good: { color: theme.colors.incomeText },
+    note: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textSecondary },
+    clear: { gap: 8, paddingBottom: 10 },
+    clearSub: {
+      fontFamily: theme.font.body,
+      fontSize: 13,
+      lineHeight: 19,
+      color: theme.colors.textSecondary,
+    },
+    title: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.textPrimary },
+    timeline: {
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: theme.colors.divider,
+    },
+    lanes: { gap: 10, paddingBottom: 10 },
+    lane: { gap: 5 },
+    laneHead: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent: 'space-between',
+      alignItems: 'baseline',
+      gap: 6,
+    },
+    laneName: {
+      flexShrink: 1,
+      fontFamily: theme.font.bodyBold,
+      fontSize: 12,
+      color: theme.colors.textPrimary,
+    },
+    laneDate: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textMuted },
+    laneTrack: {
+      height: 8,
+      borderRadius: 4,
+      backgroundColor: theme.colors.inkWash,
+      overflow: 'hidden',
+    },
+    laneFill: { height: '100%', borderRadius: 4 },
+    axis: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      borderTopWidth: 1,
+      borderTopColor: GLASS.edge,
+      borderStyle: 'dashed',
+      paddingTop: 6,
+    },
+    axisText: { fontFamily: theme.font.bodyMedium, fontSize: 11, color: theme.colors.textMuted },
+    axisEnd: { fontFamily: theme.font.bodyBold, color: theme.colors.incomeText },
+  })
+);

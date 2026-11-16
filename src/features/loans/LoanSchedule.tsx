@@ -16,6 +16,7 @@ import { shade } from '@/lib/color';
 import { useAccent } from '@/theme/AccentContext';
 import { softTint } from '@/components/softTint';
 import { useStacked } from '@/lib/useStacked';
+import { themedStyles } from '@/theme/themedStyles';
 
 function Marker({ status, isNext }: { status: LoanPayment['status']; isNext: boolean }) {
   const { accent } = useAccent();
@@ -142,34 +143,36 @@ export function LoanSchedule({
   );
 }
 
-const styles = StyleSheet.create({
-  yearHead: {
-    minHeight: 44,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    gap: 10,
-    paddingVertical: 12,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: theme.colors.borderSoft,
-  },
-  year: { fontFamily: theme.font.roundedBold, fontSize: 14, color: theme.colors.textPrimary },
-  yearSub: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted },
-  row: { gap: 12 },
-  content: { flex: 1, minWidth: 0 },
-  payment: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  paymentStacked: { flexDirection: 'column', alignItems: 'stretch' },
-  description: { flex: 1, minWidth: 0 },
-  amount: { alignItems: 'flex-end', flexShrink: 1 },
-  amountStacked: { alignItems: 'flex-start' },
-  rowNext: {
-    borderRadius: theme.radius.md,
-    paddingHorizontal: 10,
-  },
-  marker: { width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
-  markerPaid: { backgroundColor: theme.colors.incomeTint },
-  markerNext: { borderWidth: 2 },
-  markerFuture: { borderWidth: 1.5, borderColor: theme.colors.borderSoft },
-  overdueTag: { color: theme.colors.expenseText, backgroundColor: theme.colors.expenseTint },
-  nextTag: { color: theme.colors.textPrimary, backgroundColor: theme.colors.surface },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    yearHead: {
+      minHeight: 44,
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      alignItems: 'center',
+      gap: 10,
+      paddingVertical: 12,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: theme.colors.borderSoft,
+    },
+    year: { fontFamily: theme.font.roundedBold, fontSize: 14, color: theme.colors.textPrimary },
+    yearSub: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted },
+    row: { gap: 12 },
+    content: { flex: 1, minWidth: 0 },
+    payment: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    paymentStacked: { flexDirection: 'column', alignItems: 'stretch' },
+    description: { flex: 1, minWidth: 0 },
+    amount: { alignItems: 'flex-end', flexShrink: 1 },
+    amountStacked: { alignItems: 'flex-start' },
+    rowNext: {
+      borderRadius: theme.radius.md,
+      paddingHorizontal: 10,
+    },
+    marker: { width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
+    markerPaid: { backgroundColor: theme.colors.incomeTint },
+    markerNext: { borderWidth: 2 },
+    markerFuture: { borderWidth: 1.5, borderColor: theme.colors.borderSoft },
+    overdueTag: { color: theme.colors.expenseText, backgroundColor: theme.colors.expenseTint },
+    nextTag: { color: theme.colors.textPrimary, backgroundColor: theme.colors.surface },
+  })
+);

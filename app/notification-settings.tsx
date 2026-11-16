@@ -36,6 +36,7 @@ import { useAccent } from '@/theme/AccentContext';
 import { ListCard } from '@/components/SummaryCard';
 import { HomeWallpaper } from '@/features/home/HomeWallpaper';
 import { DayArc } from '@/features/notifications/DayArc';
+import { themedStyles } from '@/theme/themedStyles';
 
 type SwitchKey =
   | 'morningEnabled'
@@ -415,53 +416,61 @@ export default function NotificationSettingsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: theme.colors.background },
-  permissionBanner: {
-    marginHorizontal: SCREEN.gutter,
-    marginTop: 12,
-    padding: 14,
-    borderRadius: theme.radius.xl2,
-    backgroundColor: theme.colors.expenseTint,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  permissionTitle: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.expenseText },
-  permissionSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.expenseText },
-  slots: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginHorizontal: SCREEN.gutter, marginTop: 12 },
-  count: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textMuted },
-  live: { width: 10, height: 10, borderRadius: 5, marginRight: 2 },
-  troubleRow: {
-    minHeight: 56,
-    paddingHorizontal: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  troubleLabel: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
-  deliveryCard: { paddingHorizontal: 14, paddingBottom: 14 },
-  deliveryHint: {
-    fontFamily: theme.font.body,
-    fontSize: 12,
-    lineHeight: 18,
-    color: theme.colors.textSecondary,
-    marginTop: 6,
-  },
-  deliveryActions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 },
-  warn: {
-    fontFamily: theme.font.body,
-    fontSize: 12,
-    color: theme.colors.warnInk,
-    marginHorizontal: SCREEN.gutter,
-    marginTop: 8,
-  },
-  footNote: {
-    fontFamily: theme.font.body,
-    fontSize: 12,
-    color: theme.colors.textMuted,
-    marginHorizontal: SCREEN.gutter,
-    marginTop: 16,
-    lineHeight: 18,
-  },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    container: { flex: 1, backgroundColor: theme.colors.background },
+    permissionBanner: {
+      marginHorizontal: SCREEN.gutter,
+      marginTop: 12,
+      padding: 14,
+      borderRadius: theme.radius.xl2,
+      backgroundColor: theme.colors.expenseTint,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+    },
+    permissionTitle: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.expenseText },
+    permissionSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.expenseText },
+    slots: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 12,
+      marginHorizontal: SCREEN.gutter,
+      marginTop: 12,
+    },
+    count: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textMuted },
+    live: { width: 10, height: 10, borderRadius: 5, marginRight: 2 },
+    troubleRow: {
+      minHeight: 56,
+      paddingHorizontal: 14,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+    },
+    troubleLabel: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
+    deliveryCard: { paddingHorizontal: 14, paddingBottom: 14 },
+    deliveryHint: {
+      fontFamily: theme.font.body,
+      fontSize: 12,
+      lineHeight: 18,
+      color: theme.colors.textSecondary,
+      marginTop: 6,
+    },
+    deliveryActions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 },
+    warn: {
+      fontFamily: theme.font.body,
+      fontSize: 12,
+      color: theme.colors.warnInk,
+      marginHorizontal: SCREEN.gutter,
+      marginTop: 8,
+    },
+    footNote: {
+      fontFamily: theme.font.body,
+      fontSize: 12,
+      color: theme.colors.textMuted,
+      marginHorizontal: SCREEN.gutter,
+      marginTop: 16,
+      lineHeight: 18,
+    },
+  })
+);

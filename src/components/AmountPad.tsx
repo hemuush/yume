@@ -10,6 +10,7 @@ import { shade } from '@/lib/color';
 import { themeInk } from '@/theme/interactionColors';
 import { useAccent } from '@/theme/AccentContext';
 import { useUiScale } from '@/lib/uiScale';
+import { themedStyles } from '@/theme/themedStyles';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -149,27 +150,29 @@ export function PadButton({
   );
 }
 
-const styles = StyleSheet.create({
-  pad: { gap: 8 },
-  row: { flexDirection: 'row', gap: 8 },
-  key: {
-    flex: 1,
-    minHeight: 46,
-    borderRadius: theme.radius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    // The soft tray, so a key reads as a key on the cream panel it sits on.
-    backgroundColor: theme.colors.tray,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-  },
-  // The docked pad sits on a sheet's own cream, so its keys are the lighter surface with a hairline.
-  keyCompact: {
-    minHeight: 44,
-    backgroundColor: theme.colors.tray,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-  },
-  keyText: { fontFamily: theme.font.bodyMedium, fontSize: 20, color: theme.colors.textPrimary },
-  keyOperatorText: { fontFamily: theme.font.bodyMedium, fontSize: 20, color: theme.colors.link },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    pad: { gap: 8 },
+    row: { flexDirection: 'row', gap: 8 },
+    key: {
+      flex: 1,
+      minHeight: 46,
+      borderRadius: theme.radius.md,
+      alignItems: 'center',
+      justifyContent: 'center',
+      // The soft tray, so a key reads as a key on the cream panel it sits on.
+      backgroundColor: theme.colors.tray,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.borderSoft,
+    },
+    // The docked pad sits on a sheet's own cream, so its keys are the lighter surface with a hairline.
+    keyCompact: {
+      minHeight: 44,
+      backgroundColor: theme.colors.tray,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.borderSoft,
+    },
+    keyText: { fontFamily: theme.font.bodyMedium, fontSize: 20, color: theme.colors.textPrimary },
+    keyOperatorText: { fontFamily: theme.font.bodyMedium, fontSize: 20, color: theme.colors.link },
+  })
+);

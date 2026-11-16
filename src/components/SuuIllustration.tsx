@@ -11,6 +11,7 @@ import ReanimatedAnimated, {
 import { theme } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
 import { useReduceMotion } from '@/lib/useReduceMotion';
+import { themedStyles } from '@/theme/themedStyles';
 
 interface Props {
   size?: number;
@@ -89,7 +90,9 @@ export function SuuIllustration({ size = 90, pose = 'default', animate = true }:
   );
 }
 
-const styles = StyleSheet.create({
-  dot: { position: 'absolute' },
-  z: { position: 'absolute', fontFamily: theme.font.roundedBold, color: theme.colors.ink },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    dot: { position: 'absolute' },
+    z: { position: 'absolute', fontFamily: theme.font.roundedBold, color: theme.colors.ink },
+  })
+);

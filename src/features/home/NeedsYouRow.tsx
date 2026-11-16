@@ -12,6 +12,7 @@ import { withPressedTint } from '@/lib/pressed';
 import { softTint } from '@/components/softTint';
 import { useAccent } from '@/theme/AccentContext';
 import { themeInk } from '@/theme/interactionColors';
+import { themedStyles } from '@/theme/themedStyles';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -148,33 +149,35 @@ export function NeedsYouRow({
   );
 }
 
-const styles = StyleSheet.create({
-  row: { ...h.row },
-  divider: h.divider,
-  iconWrap: { ...h.iconTile, borderRadius: SCREEN.iconTile / 2 },
-  mid: h.mid,
-  title: h.title,
-  sub: h.sub,
-  subUrgent: h.subUrgent,
-  amount: h.amount,
-  cta: {
-    minHeight: 36,
-    paddingHorizontal: 14,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  ctaText: { fontFamily: theme.font.bodyBold, fontSize: 13 },
-  more: { width: 44, minHeight: 44, marginRight: -10, alignItems: 'center', justifyContent: 'center' },
-  menu: { flexDirection: 'row', gap: 8, paddingLeft: 56, paddingBottom: 10, paddingRight: 12 },
-  ghost: {
-    minHeight: 36,
-    paddingHorizontal: 14,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: theme.colors.tray,
-    boxShadow: `inset 0 0 0 1px ${theme.colors.inkHairline}`,
-  },
-  ghostText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    row: { ...h.row },
+    divider: h.divider,
+    iconWrap: { ...h.iconTile, borderRadius: SCREEN.iconTile / 2 },
+    mid: h.mid,
+    title: h.title,
+    sub: h.sub,
+    subUrgent: h.subUrgent,
+    amount: h.amount,
+    cta: {
+      minHeight: 36,
+      paddingHorizontal: 14,
+      borderRadius: 18,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    ctaText: { fontFamily: theme.font.bodyBold, fontSize: 13 },
+    more: { width: 44, minHeight: 44, marginRight: -10, alignItems: 'center', justifyContent: 'center' },
+    menu: { flexDirection: 'row', gap: 8, paddingLeft: 56, paddingBottom: 10, paddingRight: 12 },
+    ghost: {
+      minHeight: 36,
+      paddingHorizontal: 14,
+      borderRadius: 18,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: theme.colors.tray,
+      boxShadow: `inset 0 0 0 1px ${theme.colors.inkHairline}`,
+    },
+    ghostText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
+  })
+);

@@ -12,6 +12,7 @@ import { categoryPath, joinSub } from '@/lib/categoryLabel';
 import { screenStyles as h, SCREEN } from '@/components/screenStyles';
 import { useAccent } from '@/theme/AccentContext';
 import { useStacked } from '@/lib/useStacked';
+import { themedStyles } from '@/theme/themedStyles';
 
 /**
  * One recent-activity row: merchant/note leads, "category · account · day" beneath, amount right.
@@ -135,21 +136,23 @@ export function RecentTransactionRow({
 /** The category disc in a dense row, and the slot it sits in. */
 const DENSE_MARK = 32;
 
-const styles = StyleSheet.create({
-  row: { ...h.row, gap: 12 },
-  denseRow: { minHeight: 48, paddingVertical: 7, paddingHorizontal: 12, gap: 10 },
-  denseLead: { width: DENSE_MARK },
-  denseTitle: { fontFamily: theme.font.bodyMedium, fontSize: 14 },
-  denseSub: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, marginTop: 1 },
-  denseAmount: { fontFamily: theme.font.bodyMedium, fontSize: 14 },
-  lead: { width: SCREEN.lead, alignItems: 'center', justifyContent: 'center' },
-  stackedRow: { flexWrap: 'wrap', rowGap: 6 },
-  stackedMid: { flexGrow: 1, flexBasis: '70%' },
-  divider: h.divider,
-  mid: h.mid,
-  title: h.title,
-  sub: h.sub,
-  amount: h.amount,
-  income: h.income,
-  refund: { fontFamily: theme.font.bodyBold, color: theme.colors.incomeText },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    row: { ...h.row, gap: 12 },
+    denseRow: { minHeight: 48, paddingVertical: 7, paddingHorizontal: 12, gap: 10 },
+    denseLead: { width: DENSE_MARK },
+    denseTitle: { fontFamily: theme.font.bodyMedium, fontSize: 14 },
+    denseSub: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, marginTop: 1 },
+    denseAmount: { fontFamily: theme.font.bodyMedium, fontSize: 14 },
+    lead: { width: SCREEN.lead, alignItems: 'center', justifyContent: 'center' },
+    stackedRow: { flexWrap: 'wrap', rowGap: 6 },
+    stackedMid: { flexGrow: 1, flexBasis: '70%' },
+    divider: h.divider,
+    mid: h.mid,
+    title: h.title,
+    sub: h.sub,
+    amount: h.amount,
+    income: h.income,
+    refund: { fontFamily: theme.font.bodyBold, color: theme.colors.incomeText },
+  })
+);

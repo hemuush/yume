@@ -3,6 +3,7 @@ import Svg, { Circle } from 'react-native-svg';
 import { theme } from '@/constants/theme';
 import { Category } from '@/types';
 import type { DraftPart } from './splitDraft';
+import { themedStyles } from '@/theme/themedStyles';
 
 const SIZE = 84;
 const STROKE = 12;
@@ -71,6 +72,8 @@ export function SplitDonut({
   );
 }
 
-const styles = StyleSheet.create({
-  wrap: { width: SIZE, height: SIZE },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    wrap: { width: SIZE, height: SIZE },
+  })
+);

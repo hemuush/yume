@@ -5,6 +5,7 @@ import { Text } from '@/components/Text';
 import { LimitMeter, type LimitMeterTone } from '@/components/LimitMeter';
 import { theme } from '@/constants/theme';
 import { shade } from '@/lib/color';
+import { themedStyles } from '@/theme/themedStyles';
 
 /**
  * The top card of a budget's overview: the category and what is left on the first line, the meter with its pace
@@ -84,45 +85,47 @@ export function BudgetHero({
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
-    borderRadius: 20,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: theme.colors.glass,
-    backgroundColor: theme.colors.surface,
-    marginBottom: 10,
-  },
-  top: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 8,
-  },
-  identity: {
-    flexGrow: 1,
-    flexShrink: 1,
-    flexBasis: 150,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  icon: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center' },
-  names: { flex: 1, minWidth: 0 },
-  title: { fontFamily: theme.font.bodyMedium, fontSize: 15, color: theme.colors.textPrimary },
-  kicker: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textSecondary },
-  amount: { fontFamily: theme.font.body, fontSize: 20, lineHeight: 26, fontVariant: ['tabular-nums'] },
-  amountOver: { color: theme.colors.expenseText },
-  meter: { marginTop: 12 },
-  line: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 4, marginTop: 8 },
-  spent: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 18, color: theme.colors.textSecondary },
-  spentFigure: {
-    fontFamily: theme.font.bodyMedium,
-    color: theme.colors.textPrimary,
-    fontVariant: ['tabular-nums'],
-  },
-  status: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 18, color: theme.colors.textSecondary },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    card: {
+      borderRadius: 20,
+      paddingHorizontal: 14,
+      paddingVertical: 12,
+      overflow: 'hidden',
+      borderWidth: 1,
+      borderColor: theme.colors.glass,
+      backgroundColor: theme.colors.surface,
+      marginBottom: 10,
+    },
+    top: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 8,
+    },
+    identity: {
+      flexGrow: 1,
+      flexShrink: 1,
+      flexBasis: 150,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+    },
+    icon: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center' },
+    names: { flex: 1, minWidth: 0 },
+    title: { fontFamily: theme.font.bodyMedium, fontSize: 15, color: theme.colors.textPrimary },
+    kicker: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textSecondary },
+    amount: { fontFamily: theme.font.body, fontSize: 20, lineHeight: 26, fontVariant: ['tabular-nums'] },
+    amountOver: { color: theme.colors.expenseText },
+    meter: { marginTop: 12 },
+    line: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 4, marginTop: 8 },
+    spent: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 18, color: theme.colors.textSecondary },
+    spentFigure: {
+      fontFamily: theme.font.bodyMedium,
+      color: theme.colors.textPrimary,
+      fontVariant: ['tabular-nums'],
+    },
+    status: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 18, color: theme.colors.textSecondary },
+  })
+);

@@ -46,6 +46,7 @@ import { useHomeData } from '@/features/home/useHomeData';
 import { useOpenRefund } from '@/features/home/useOpenRefund';
 import { buildLoansSummary } from '@/features/plan/planOverview';
 import type { Transaction } from '@/types';
+import { themedStyles } from '@/theme/themedStyles';
 
 /** Scrolled past this, the month card's own period pill is under the header: the change came from the header's chip. */
 const CARD_OUT_OF_VIEW = 80;
@@ -488,26 +489,28 @@ export default function DashboardScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: theme.colors.background },
-  scroll: { flex: 1 },
-  heroGap: { marginTop: 4 },
-  errorBanner: {
-    marginHorizontal: SCREEN.gutter,
-    marginTop: 16,
-    padding: 16,
-    borderRadius: theme.radius.md,
-    backgroundColor: theme.colors.expenseTint,
-    borderWidth: theme.border.thin,
-    borderColor: theme.colors.expense,
-  },
-  errorTitle: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.expenseText },
-  errorDetail: {
-    fontFamily: theme.font.body,
-    fontSize: 12,
-    color: theme.colors.textSecondary,
-    marginTop: 4,
-    lineHeight: 16,
-  },
-  errorRetry: { marginTop: 10, alignSelf: 'flex-start' },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    container: { flex: 1, backgroundColor: theme.colors.background },
+    scroll: { flex: 1 },
+    heroGap: { marginTop: 4 },
+    errorBanner: {
+      marginHorizontal: SCREEN.gutter,
+      marginTop: 16,
+      padding: 16,
+      borderRadius: theme.radius.md,
+      backgroundColor: theme.colors.expenseTint,
+      borderWidth: theme.border.thin,
+      borderColor: theme.colors.expense,
+    },
+    errorTitle: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.expenseText },
+    errorDetail: {
+      fontFamily: theme.font.body,
+      fontSize: 12,
+      color: theme.colors.textSecondary,
+      marginTop: 4,
+      lineHeight: 16,
+    },
+    errorRetry: { marginTop: 10, alignSelf: 'flex-start' },
+  })
+);

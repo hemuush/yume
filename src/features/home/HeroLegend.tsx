@@ -2,6 +2,7 @@ import { View, Pressable, StyleSheet, useWindowDimensions } from 'react-native';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
+import { themedStyles } from '@/theme/themedStyles';
 
 export interface LegendItem {
   key: string;
@@ -76,36 +77,38 @@ export function HeroLegend({ items, side }: { items: LegendItem[]; side?: 'left'
   );
 }
 
-const styles = StyleSheet.create({
-  row: {
-    alignSelf: 'stretch',
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    columnGap: 8,
-    rowGap: 4,
-    marginTop: 12,
-    marginBottom: 8,
-  },
-  // Half of the legend beside the ring: the two halves are equal in width, which keeps the ring centred.
-  side: { flex: 1, minWidth: 0, justifyContent: 'center' },
-  colSide: { flexGrow: 0, flexBasis: 'auto', minWidth: 0, justifyContent: 'center' },
-  col: { flexGrow: 1, flexBasis: 0, minWidth: 60, gap: 1 },
-  colPair: { flexBasis: '45%' },
-  tap: { minHeight: 44 },
-  head: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  dot: { width: 8, height: 8, borderRadius: 4 },
-  label: {
-    flexShrink: 1,
-    fontFamily: theme.font.body,
-    fontSize: 12,
-    color: theme.colors.textSecondary,
-  },
-  amount: {
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 14,
-    color: theme.colors.textPrimary,
-    fontVariant: ['tabular-nums'],
-  },
-  amountOn: { fontFamily: theme.font.bodyBold },
-  amountEnd: { textAlign: 'right' },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    row: {
+      alignSelf: 'stretch',
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      columnGap: 8,
+      rowGap: 4,
+      marginTop: 12,
+      marginBottom: 8,
+    },
+    // Half of the legend beside the ring: the two halves are equal in width, which keeps the ring centred.
+    side: { flex: 1, minWidth: 0, justifyContent: 'center' },
+    colSide: { flexGrow: 0, flexBasis: 'auto', minWidth: 0, justifyContent: 'center' },
+    col: { flexGrow: 1, flexBasis: 0, minWidth: 60, gap: 1 },
+    colPair: { flexBasis: '45%' },
+    tap: { minHeight: 44 },
+    head: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+    dot: { width: 8, height: 8, borderRadius: 4 },
+    label: {
+      flexShrink: 1,
+      fontFamily: theme.font.body,
+      fontSize: 12,
+      color: theme.colors.textSecondary,
+    },
+    amount: {
+      fontFamily: theme.font.bodyMedium,
+      fontSize: 14,
+      color: theme.colors.textPrimary,
+      fontVariant: ['tabular-nums'],
+    },
+    amountOn: { fontFamily: theme.font.bodyBold },
+    amountEnd: { textAlign: 'right' },
+  })
+);

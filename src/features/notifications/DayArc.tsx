@@ -6,6 +6,7 @@ import { Text } from '@/components/Text';
 import { SummaryCard } from '@/components/SummaryCard';
 import { theme } from '@/constants/theme';
 import { formatSlotTime } from '@/lib/notificationTimes';
+import { themedStyles } from '@/theme/themedStyles';
 
 /** The arc runs from 5 AM (the morning slot's earliest) to midnight. */
 const START = 5 * 60;
@@ -123,26 +124,28 @@ export function DayArc({ morning, evening }: { morning: Slot; evening: Slot }) {
   );
 }
 
-const styles = StyleSheet.create({
-  card: { gap: 8 },
-  kicker: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textSecondary },
-  plot: { height: HEIGHT, marginTop: 4 },
-  icon: {
-    position: 'absolute',
-    width: MARK * 2,
-    height: MARK * 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  time: {
-    position: 'absolute',
-    width: 80,
-    textAlign: 'center',
-    fontFamily: theme.font.bodyBold,
-    fontSize: 12,
-    color: theme.colors.textPrimary,
-  },
-  axis: { flexDirection: 'row', justifyContent: 'space-between', marginTop: -10 },
-  noon: { position: 'absolute', top: 0, width: NOON_HALF * 2, textAlign: 'center' },
-  axisText: { fontFamily: theme.font.bodyMedium, fontSize: 11, color: theme.colors.textMuted },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    card: { gap: 8 },
+    kicker: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textSecondary },
+    plot: { height: HEIGHT, marginTop: 4 },
+    icon: {
+      position: 'absolute',
+      width: MARK * 2,
+      height: MARK * 2,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    time: {
+      position: 'absolute',
+      width: 80,
+      textAlign: 'center',
+      fontFamily: theme.font.bodyBold,
+      fontSize: 12,
+      color: theme.colors.textPrimary,
+    },
+    axis: { flexDirection: 'row', justifyContent: 'space-between', marginTop: -10 },
+    noon: { position: 'absolute', top: 0, width: NOON_HALF * 2, textAlign: 'center' },
+    axisText: { fontFamily: theme.font.bodyMedium, fontSize: 11, color: theme.colors.textMuted },
+  })
+);

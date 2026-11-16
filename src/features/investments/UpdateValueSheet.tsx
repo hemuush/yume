@@ -21,6 +21,7 @@ import { gainLabel, estimatedValue } from '@/lib/investment';
 import { plural } from '@/lib/plural';
 import { addValuation, updateValuation, deleteValuation, restoreValuation, Valuation } from '@/db/valuations';
 import type { Account } from '@/types';
+import { themedStyles } from '@/theme/themedStyles';
 
 /**
  * Records what a tracked account is worth now, or edits/deletes an earlier update. The estimate chip is the
@@ -269,27 +270,39 @@ export function UpdateValueSheet({
   );
 }
 
-const styles = StyleSheet.create({
-  errorText: { fontFamily: theme.font.body, color: theme.colors.expenseText, fontSize: 13, marginBottom: 12 },
-  estimateRow: { gap: 8, marginTop: -4, marginBottom: 14 },
-  estimateChip: {
-    alignSelf: 'flex-start',
-    borderRadius: theme.radius.pill,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-  },
-  pressed: { opacity: theme.opacity.pressed },
-  estimateText: { fontFamily: theme.font.monoBold, fontSize: 12, color: theme.colors.textPrimary },
-  estimateHint: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, lineHeight: 17 },
-  unitsBlock: { gap: 8, marginBottom: 6 },
-  unitsRow: { flexDirection: 'row', gap: 10 },
-  unitsHalf: { flex: 1 },
-  strip: {
-    backgroundColor: theme.colors.inkWash,
-    borderRadius: theme.radius.lg,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    marginTop: 4,
-  },
-  stripText: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    errorText: {
+      fontFamily: theme.font.body,
+      color: theme.colors.expenseText,
+      fontSize: 13,
+      marginBottom: 12,
+    },
+    estimateRow: { gap: 8, marginTop: -4, marginBottom: 14 },
+    estimateChip: {
+      alignSelf: 'flex-start',
+      borderRadius: theme.radius.pill,
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+    },
+    pressed: { opacity: theme.opacity.pressed },
+    estimateText: { fontFamily: theme.font.monoBold, fontSize: 12, color: theme.colors.textPrimary },
+    estimateHint: {
+      fontFamily: theme.font.body,
+      fontSize: 12,
+      color: theme.colors.textMuted,
+      lineHeight: 17,
+    },
+    unitsBlock: { gap: 8, marginBottom: 6 },
+    unitsRow: { flexDirection: 'row', gap: 10 },
+    unitsHalf: { flex: 1 },
+    strip: {
+      backgroundColor: theme.colors.inkWash,
+      borderRadius: theme.radius.lg,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      marginTop: 4,
+    },
+    stripText: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
+  })
+);

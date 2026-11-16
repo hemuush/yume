@@ -15,6 +15,7 @@ import { dayMonthYear } from '@/lib/dateLabels';
 import { toLocalIsoDate } from '@/lib/date';
 import { styles as shared } from './goals.styles';
 import { goalPlan, GOAL_PACE_LABEL } from './goalPlan';
+import { themedStyles } from '@/theme/themedStyles';
 
 /**
  * One goal as a row in the goals list: name and saved of target, a thin bar in the goal's colour, the share and
@@ -151,49 +152,51 @@ export function GoalCard({
   );
 }
 
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingVertical: 12,
-    paddingLeft: 14,
-    paddingRight: 8,
-  },
-  divider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.divider },
-  pressed: { backgroundColor: theme.colors.tray },
-  main: { flex: 1, minWidth: 0, gap: 6 },
-  top: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'baseline',
-    justifyContent: 'space-between',
-    columnGap: 8,
-  },
-  name: { flexShrink: 1, fontFamily: theme.font.bodyMedium, fontSize: 14, color: theme.colors.textPrimary },
-  amounts: { flexShrink: 1 },
-  saved: {
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 14,
-    fontVariant: ['tabular-nums'],
-    color: theme.colors.textPrimary,
-  },
-  of: {
-    fontFamily: theme.font.body,
-    fontSize: 12,
-    fontVariant: ['tabular-nums'],
-    color: theme.colors.textMuted,
-  },
-  track: { height: 6, borderRadius: 3, backgroundColor: theme.colors.inkHairline, overflow: 'hidden' },
-  fill: { height: '100%', borderRadius: 3 },
-  bottom: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', columnGap: 8 },
-  line: { flexShrink: 1, fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
-  pace: { flexShrink: 1, fontFamily: theme.font.bodyBold, fontSize: 12 },
-  onPace: { color: theme.colors.incomeText },
-  behind: { color: theme.colors.warnInk },
-  // A 44 dp touch area around a 32 dp circle.
-  hit: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
-  circle: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
-  circlePressed: { opacity: theme.opacity.pressed },
-  blocked: { opacity: theme.opacity.disabled },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+      paddingVertical: 12,
+      paddingLeft: 14,
+      paddingRight: 8,
+    },
+    divider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.divider },
+    pressed: { backgroundColor: theme.colors.tray },
+    main: { flex: 1, minWidth: 0, gap: 6 },
+    top: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      alignItems: 'baseline',
+      justifyContent: 'space-between',
+      columnGap: 8,
+    },
+    name: { flexShrink: 1, fontFamily: theme.font.bodyMedium, fontSize: 14, color: theme.colors.textPrimary },
+    amounts: { flexShrink: 1 },
+    saved: {
+      fontFamily: theme.font.bodyMedium,
+      fontSize: 14,
+      fontVariant: ['tabular-nums'],
+      color: theme.colors.textPrimary,
+    },
+    of: {
+      fontFamily: theme.font.body,
+      fontSize: 12,
+      fontVariant: ['tabular-nums'],
+      color: theme.colors.textMuted,
+    },
+    track: { height: 6, borderRadius: 3, backgroundColor: theme.colors.inkHairline, overflow: 'hidden' },
+    fill: { height: '100%', borderRadius: 3 },
+    bottom: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', columnGap: 8 },
+    line: { flexShrink: 1, fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
+    pace: { flexShrink: 1, fontFamily: theme.font.bodyBold, fontSize: 12 },
+    onPace: { color: theme.colors.incomeText },
+    behind: { color: theme.colors.warnInk },
+    // A 44 dp touch area around a 32 dp circle.
+    hit: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+    circle: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+    circlePressed: { opacity: theme.opacity.pressed },
+    blocked: { opacity: theme.opacity.disabled },
+  })
+);

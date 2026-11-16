@@ -9,6 +9,7 @@ import { spendHeatScale } from '@/lib/color';
 import { withPressed } from '@/lib/pressed';
 import { SpendHeatmap } from './SpendHeatmap';
 import type { HeatModel } from './reportsInsights';
+import { themedStyles } from '@/theme/themedStyles';
 
 // The grid is the heavy part; it is drawn again only when what it shows changes, not when the inspector below it does.
 const Grid = memo(SpendHeatmap);
@@ -112,44 +113,46 @@ export function HeatmapCard({
   );
 }
 
-const styles = StyleSheet.create({
-  card: { ...h.card, marginHorizontal: 0, paddingTop: 8, paddingBottom: 12, marginBottom: 10 },
-  head: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 8,
-    paddingHorizontal: 14,
-  },
-  title: {
-    flexShrink: 1,
-    fontFamily: theme.font.roundedBold,
-    fontSize: theme.typeSize.section,
-    color: theme.colors.textPrimary,
-  },
-  scope: {
-    minHeight: 32,
-    maxWidth: '55%',
-    flexShrink: 1,
-    paddingHorizontal: 11,
-    borderRadius: theme.radius.pill,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    backgroundColor: theme.colors.tray,
-  },
-  scopeText: {
-    flexShrink: 1,
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 12,
-    color: theme.colors.textPrimary,
-  },
-  chipDot: { width: 8, height: 8, borderRadius: 4 },
-  grid: { paddingHorizontal: theme.space.xs, paddingTop: 4 },
-  legend: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 18, paddingTop: 8 },
-  legendBar: { width: 72, flexDirection: 'row', height: 8, borderRadius: 4, overflow: 'hidden' },
-  legendStep: { flex: 1 },
-  legendText: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted },
-  legendBig: { flexDirection: 'row', alignItems: 'center', gap: 4, marginLeft: 'auto' },
-  legendBigDot: { width: 4, height: 4, borderRadius: 2, backgroundColor: theme.colors.textSecondary },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    card: { ...h.card, marginHorizontal: 0, paddingTop: 8, paddingBottom: 12, marginBottom: 10 },
+    head: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 8,
+      paddingHorizontal: 14,
+    },
+    title: {
+      flexShrink: 1,
+      fontFamily: theme.font.roundedBold,
+      fontSize: theme.typeSize.section,
+      color: theme.colors.textPrimary,
+    },
+    scope: {
+      minHeight: 32,
+      maxWidth: '55%',
+      flexShrink: 1,
+      paddingHorizontal: 11,
+      borderRadius: theme.radius.pill,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 5,
+      backgroundColor: theme.colors.tray,
+    },
+    scopeText: {
+      flexShrink: 1,
+      fontFamily: theme.font.bodyMedium,
+      fontSize: 12,
+      color: theme.colors.textPrimary,
+    },
+    chipDot: { width: 8, height: 8, borderRadius: 4 },
+    grid: { paddingHorizontal: theme.space.xs, paddingTop: 4 },
+    legend: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 18, paddingTop: 8 },
+    legendBar: { width: 72, flexDirection: 'row', height: 8, borderRadius: 4, overflow: 'hidden' },
+    legendStep: { flex: 1 },
+    legendText: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted },
+    legendBig: { flexDirection: 'row', alignItems: 'center', gap: 4, marginLeft: 'auto' },
+    legendBigDot: { width: 4, height: 4, borderRadius: 2, backgroundColor: theme.colors.textSecondary },
+  })
+);

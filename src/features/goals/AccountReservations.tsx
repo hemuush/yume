@@ -9,6 +9,7 @@ import { formatMaskableMoney } from '@/lib/money';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import { theme } from '@/constants/theme';
 import { InsightHeader, InsightStat, InsightRow, insight } from '@/components/InsightCard';
+import { themedStyles } from '@/theme/themedStyles';
 
 /** Account-level earmarks; totals include archived and completed goals. */
 export function AccountReservations({ account, onNavigate }: { account: Account; onNavigate: () => void }) {
@@ -79,8 +80,16 @@ export function AccountReservations({ account, onNavigate }: { account: Account;
     </View>
   );
 }
-const styles = StyleSheet.create({
-  card: { padding: 14, gap: 8, marginBottom: 14, borderRadius: 18, backgroundColor: theme.colors.surfaceAlt },
-  hint: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
-  warning: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.expenseText },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    card: {
+      padding: 14,
+      gap: 8,
+      marginBottom: 14,
+      borderRadius: 18,
+      backgroundColor: theme.colors.surfaceAlt,
+    },
+    hint: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
+    warning: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.expenseText },
+  })
+);

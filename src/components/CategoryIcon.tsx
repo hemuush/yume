@@ -3,6 +3,7 @@ import { theme } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
 import { CategoryGlyph } from '@/components/CategoryGlyph';
 import { softTint } from '@/components/softTint';
+import { themedStyles } from '@/theme/themedStyles';
 
 interface Props {
   name: string;
@@ -36,9 +37,11 @@ export function CategoryIcon({ name, color, size = 16, square = 34, round = fals
   );
 }
 
-const styles = StyleSheet.create({
-  chip: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    chip: {
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+  })
+);

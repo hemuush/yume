@@ -7,6 +7,7 @@ import { daysBetween } from '@/lib/investment';
 import { formatMaskableMoney } from '@/lib/money';
 import { dayMonthYear } from '@/lib/dateLabels';
 import type { SeriesPoint } from '@/lib/portfolio';
+import { themedStyles } from '@/theme/themedStyles';
 
 const HEIGHT = 112;
 const PAD = 8;
@@ -95,12 +96,14 @@ export function PortfolioChart({
   );
 }
 
-const styles = StyleSheet.create({
-  empty: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textMuted },
-  axis: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: PAD, marginTop: 2 },
-  axisText: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted },
-  legend: { flexDirection: 'row', gap: 14, paddingHorizontal: PAD, marginTop: 6 },
-  legendItem: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  swatch: { width: 14, height: 3, borderRadius: 2 },
-  dashed: { backgroundColor: theme.colors.textMuted, opacity: 0.6 },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    empty: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textMuted },
+    axis: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: PAD, marginTop: 2 },
+    axisText: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted },
+    legend: { flexDirection: 'row', gap: 14, paddingHorizontal: PAD, marginTop: 6 },
+    legendItem: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+    swatch: { width: 14, height: 3, borderRadius: 2 },
+    dashed: { backgroundColor: theme.colors.textMuted, opacity: 0.6 },
+  })
+);

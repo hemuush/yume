@@ -1,6 +1,7 @@
 import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
 import { EYEBROW } from '@/constants/textStyles';
+import { themedStyles } from '@/theme/themedStyles';
 
 /**
  * The app's one visual system: every card, section heading and list row is built from these so no block gets
@@ -21,79 +22,81 @@ export const SCREEN = {
   iconGlyph: 16,
 } as const;
 
-export const screenStyles = StyleSheet.create({
-  card: {
-    marginHorizontal: SCREEN.gutter,
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.radius.xl2,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    overflow: 'hidden',
-  },
-  // A card inside a sheet, which already has its own side padding.
-  cardInSheet: {
-    marginHorizontal: 0,
-    marginBottom: 12,
-    backgroundColor: theme.colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    borderRadius: 22,
-    overflow: 'hidden',
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    minHeight: SCREEN.rowMinHeight,
-  },
-  dividerLeft: { borderLeftWidth: StyleSheet.hairlineWidth, borderLeftColor: theme.colors.borderSoft },
-  divider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.borderSoft },
-  // Same compact footprint as CategoryIcon; same radius ratio (0.32×).
-  iconTile: {
-    width: SCREEN.iconTile,
-    height: SCREEN.iconTile,
-    borderRadius: SCREEN.iconTile * 0.32,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  mid: { flex: 1, minWidth: 0 },
-  title: {
-    fontFamily: theme.font.bodyMedium,
-    fontSize: theme.typeSize.row,
-    lineHeight: 20,
-    color: theme.colors.textPrimary,
-  },
-  sub: {
-    fontFamily: theme.font.body,
-    fontSize: 13,
-    lineHeight: 19,
-    color: theme.colors.textMuted,
-    marginTop: 4,
-  },
-  subUrgent: { fontFamily: theme.font.bodyBold, color: theme.colors.expenseText },
-  subSoon: { fontFamily: theme.font.bodyBold, color: theme.colors.warnInk },
-  amount: {
-    fontVariant: ['tabular-nums'],
-    fontFamily: theme.font.bodyMedium,
-    fontSize: theme.typeSize.row,
-    lineHeight: 20,
-    color: theme.colors.textPrimary,
-  },
-  income: { color: theme.colors.incomeText },
-  expense: { color: theme.colors.expenseText },
-  // A day named inside a list card, above its rows ("TODAY", with what the day spent at the right): Home's Recent
-  // activity and Activity's days. After the first, a hairline above it divides it from the day before.
-  dayHead: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    columnGap: 8,
-    paddingHorizontal: 14,
-    paddingTop: 12,
-    paddingBottom: 2,
-  },
-  dayHeadDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.borderSoft },
-  dayHeadText: { ...EYEBROW, fontFamily: theme.font.bodyBold, fontSize: 11, fontVariant: ['tabular-nums'] },
-});
+export const screenStyles = themedStyles(() =>
+  StyleSheet.create({
+    card: {
+      marginHorizontal: SCREEN.gutter,
+      backgroundColor: theme.colors.surface,
+      borderRadius: theme.radius.xl2,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.borderSoft,
+      overflow: 'hidden',
+    },
+    // A card inside a sheet, which already has its own side padding.
+    cardInSheet: {
+      marginHorizontal: 0,
+      marginBottom: 12,
+      backgroundColor: theme.colors.surface,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.borderSoft,
+      borderRadius: 22,
+      overflow: 'hidden',
+    },
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+      paddingVertical: 10,
+      paddingHorizontal: 14,
+      minHeight: SCREEN.rowMinHeight,
+    },
+    dividerLeft: { borderLeftWidth: StyleSheet.hairlineWidth, borderLeftColor: theme.colors.borderSoft },
+    divider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.borderSoft },
+    // Same compact footprint as CategoryIcon; same radius ratio (0.32×).
+    iconTile: {
+      width: SCREEN.iconTile,
+      height: SCREEN.iconTile,
+      borderRadius: SCREEN.iconTile * 0.32,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    mid: { flex: 1, minWidth: 0 },
+    title: {
+      fontFamily: theme.font.bodyMedium,
+      fontSize: theme.typeSize.row,
+      lineHeight: 20,
+      color: theme.colors.textPrimary,
+    },
+    sub: {
+      fontFamily: theme.font.body,
+      fontSize: 13,
+      lineHeight: 19,
+      color: theme.colors.textMuted,
+      marginTop: 4,
+    },
+    subUrgent: { fontFamily: theme.font.bodyBold, color: theme.colors.expenseText },
+    subSoon: { fontFamily: theme.font.bodyBold, color: theme.colors.warnInk },
+    amount: {
+      fontVariant: ['tabular-nums'],
+      fontFamily: theme.font.bodyMedium,
+      fontSize: theme.typeSize.row,
+      lineHeight: 20,
+      color: theme.colors.textPrimary,
+    },
+    income: { color: theme.colors.incomeText },
+    expense: { color: theme.colors.expenseText },
+    // A day named inside a list card, above its rows ("TODAY", with what the day spent at the right): Home's Recent
+    // activity and Activity's days. After the first, a hairline above it divides it from the day before.
+    dayHead: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent: 'space-between',
+      columnGap: 8,
+      paddingHorizontal: 14,
+      paddingTop: 12,
+      paddingBottom: 2,
+    },
+    dayHeadDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.borderSoft },
+    dayHeadText: { ...EYEBROW, fontFamily: theme.font.bodyBold, fontSize: 11, fontVariant: ['tabular-nums'] },
+  })
+);

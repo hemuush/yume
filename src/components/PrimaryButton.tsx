@@ -21,6 +21,7 @@ import { useReduceMotion } from '@/lib/useReduceMotion';
 
 import { useAccent } from '@/theme/AccentContext';
 import { interactionColors } from '@/theme/interactionColors';
+import { themedStyles } from '@/theme/themedStyles';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -137,27 +138,29 @@ export function PrimaryButton({
   );
 }
 
-const styles = StyleSheet.create({
-  base: {
-    borderRadius: theme.radius.pill,
-    paddingVertical: 12,
-    paddingHorizontal: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 48,
-  },
-  baseCompact: { paddingVertical: 7, paddingHorizontal: 14 },
-  withIcon: { flexDirection: 'row', gap: 8 },
-  textCompact: { fontFamily: theme.font.bodyMedium, fontSize: 13 },
-  primary: { backgroundColor: theme.colors.ink },
-  danger: { backgroundColor: theme.colors.expenseText },
-  secondary: {
-    backgroundColor: theme.colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-  },
-  text: { fontFamily: theme.font.bodyMedium, fontSize: 14, textAlign: 'center', flexShrink: 1 },
-  textPrimary: { color: theme.colors.surface },
-  textSecondary: { color: theme.colors.textPrimary },
-  disabled: { opacity: theme.opacity.disabled },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    base: {
+      borderRadius: theme.radius.pill,
+      paddingVertical: 12,
+      paddingHorizontal: 18,
+      alignItems: 'center',
+      justifyContent: 'center',
+      minHeight: 48,
+    },
+    baseCompact: { paddingVertical: 7, paddingHorizontal: 14 },
+    withIcon: { flexDirection: 'row', gap: 8 },
+    textCompact: { fontFamily: theme.font.bodyMedium, fontSize: 13 },
+    primary: { backgroundColor: theme.colors.ink },
+    danger: { backgroundColor: theme.colors.expenseText },
+    secondary: {
+      backgroundColor: theme.colors.surface,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.borderSoft,
+    },
+    text: { fontFamily: theme.font.bodyMedium, fontSize: 14, textAlign: 'center', flexShrink: 1 },
+    textPrimary: { color: theme.colors.surface },
+    textSecondary: { color: theme.colors.textPrimary },
+    disabled: { opacity: theme.opacity.disabled },
+  })
+);

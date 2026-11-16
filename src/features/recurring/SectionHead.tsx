@@ -3,6 +3,7 @@ import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { SECTION_GAP, SECTION_TITLE } from '@/constants/textStyles';
 import { SCREEN } from '@/components/screenStyles';
+import { themedStyles } from '@/theme/themedStyles';
 
 /** A heading above a card on Recurring: the rounded title, and a small note on the right. */
 export function SectionHead({ title, note }: { title: string; note?: string }) {
@@ -14,17 +15,19 @@ export function SectionHead({ title, note }: { title: string; note?: string }) {
   );
 }
 
-const styles = StyleSheet.create({
-  head: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-    alignItems: 'baseline',
-    justifyContent: 'space-between',
-    marginHorizontal: SCREEN.gutter,
-    marginTop: SECTION_GAP.top,
-    marginBottom: SECTION_GAP.bottom,
-  },
-  title: SECTION_TITLE,
-  note: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    head: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 6,
+      alignItems: 'baseline',
+      justifyContent: 'space-between',
+      marginHorizontal: SCREEN.gutter,
+      marginTop: SECTION_GAP.top,
+      marginBottom: SECTION_GAP.bottom,
+    },
+    title: SECTION_TITLE,
+    note: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
+  })
+);

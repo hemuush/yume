@@ -42,6 +42,7 @@ import { useAccent } from '@/theme/AccentContext';
 import { ListCard, SummaryCard, SummarySide, SummaryTop, summaryFigure } from '@/components/SummaryCard';
 import { HomeWallpaper } from '@/features/home/HomeWallpaper';
 import { DaysLeftRing } from '@/features/profile/DaysLeftRing';
+import { themedStyles } from '@/theme/themedStyles';
 
 /** Rows drawn at a time; "Show more" adds another page. The count and Delete all still cover every entry. */
 const PAGE = 100;
@@ -326,56 +327,58 @@ export default function RecentlyDeletedScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: theme.colors.background },
-  hint: {
-    fontFamily: theme.font.body,
-    fontSize: 12,
-    lineHeight: 17,
-    color: theme.colors.textSecondary,
-    paddingHorizontal: 2,
-  },
-  figureRow: { flexDirection: 'row', alignItems: 'baseline', gap: 6, flexWrap: 'wrap' },
-  figureNote: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
-  restore: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: theme.radius.pill,
-    backgroundColor: theme.colors.ink,
-  },
-  /** The second line under an entry's title sits right under the first. */
-  subNext: { marginTop: 0 },
-  restoreText: { fontFamily: theme.font.roundedBold, fontSize: 12, color: theme.colors.white },
-  emptyAll: {
-    alignSelf: 'stretch',
-    alignItems: 'center',
-    marginHorizontal: SCREEN.gutter,
-    marginTop: 24,
-    paddingVertical: 13,
-    borderRadius: theme.radius.pill,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    backgroundColor: theme.colors.surface,
-  },
-  more: { alignSelf: 'center', marginTop: 16, paddingVertical: 10, paddingHorizontal: 16 },
-  moreText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.link },
-  emptyAllText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.expenseText },
-  errorBanner: {
-    marginHorizontal: SCREEN.gutter,
-    marginTop: theme.layout.screenTopGap,
-    marginBottom: 4,
-    padding: 14,
-    borderRadius: theme.radius.md,
-    backgroundColor: theme.colors.expenseTint,
-    borderWidth: theme.border.thin,
-    borderColor: theme.colors.expense,
-  },
-  errorTitle: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.expenseText },
-  errorDetail: {
-    fontFamily: theme.font.body,
-    fontSize: 12,
-    color: theme.colors.textSecondary,
-    marginTop: 3,
-    lineHeight: 16,
-  },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    container: { flex: 1, backgroundColor: theme.colors.background },
+    hint: {
+      fontFamily: theme.font.body,
+      fontSize: 12,
+      lineHeight: 17,
+      color: theme.colors.textSecondary,
+      paddingHorizontal: 2,
+    },
+    figureRow: { flexDirection: 'row', alignItems: 'baseline', gap: 6, flexWrap: 'wrap' },
+    figureNote: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
+    restore: {
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: theme.radius.pill,
+      backgroundColor: theme.colors.ink,
+    },
+    /** The second line under an entry's title sits right under the first. */
+    subNext: { marginTop: 0 },
+    restoreText: { fontFamily: theme.font.roundedBold, fontSize: 12, color: theme.colors.white },
+    emptyAll: {
+      alignSelf: 'stretch',
+      alignItems: 'center',
+      marginHorizontal: SCREEN.gutter,
+      marginTop: 24,
+      paddingVertical: 13,
+      borderRadius: theme.radius.pill,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.borderSoft,
+      backgroundColor: theme.colors.surface,
+    },
+    more: { alignSelf: 'center', marginTop: 16, paddingVertical: 10, paddingHorizontal: 16 },
+    moreText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.link },
+    emptyAllText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.expenseText },
+    errorBanner: {
+      marginHorizontal: SCREEN.gutter,
+      marginTop: theme.layout.screenTopGap,
+      marginBottom: 4,
+      padding: 14,
+      borderRadius: theme.radius.md,
+      backgroundColor: theme.colors.expenseTint,
+      borderWidth: theme.border.thin,
+      borderColor: theme.colors.expense,
+    },
+    errorTitle: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.expenseText },
+    errorDetail: {
+      fontFamily: theme.font.body,
+      fontSize: 12,
+      color: theme.colors.textSecondary,
+      marginTop: 3,
+      lineHeight: 16,
+    },
+  })
+);

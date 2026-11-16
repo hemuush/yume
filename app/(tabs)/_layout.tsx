@@ -6,14 +6,18 @@ import { PillTabBar } from '@/components/PillTabBar';
 import { pushOnce } from '@/lib/pushOnce';
 import { DURATIONS } from '@/lib/motionTimings';
 import { useReduceMotion } from '@/lib/useReduceMotion';
+import { schemeScreenLayout, useSchemeVersion } from '@/theme/SchemeBoundary';
 
 export default function TabsLayout() {
   const [repeatSheetVisible, setRepeatSheetVisible] = useState(false);
   const reduce = useReduceMotion();
+  const schemeVersion = useSchemeVersion();
 
   return (
     <>
       <Tabs
+        // Each tab is drawn again when the colour mode changes; the bar above does so itself.
+        screenLayout={schemeScreenLayout}
         // The floating pill (PillTabBar): four tabs in a frosted pill and a round Add beside it.
         tabBar={(props) => (
           <PillTabBar
@@ -44,7 +48,11 @@ export default function TabsLayout() {
         <Tabs.Screen name="plan" options={{ title: 'Plan' }} />
         <Tabs.Screen name="reports" options={{ title: 'Reports' }} />
       </Tabs>
-      <RepeatEntrySheet visible={repeatSheetVisible} onClose={() => setRepeatSheetVisible(false)} />
+      <RepeatEntrySheet
+        key={schemeVersion}
+        visible={repeatSheetVisible}
+        onClose={() => setRepeatSheetVisible(false)}
+      />
     </>
   );
 }

@@ -4,6 +4,7 @@ import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
 import { shade } from '@/lib/color';
 import { useAccent } from '@/theme/AccentContext';
+import { themedStyles } from '@/theme/themedStyles';
 
 /**
  * What can be spent a day from here on, as a soft theme-tinted pill under the main figure. It is an estimate,
@@ -25,22 +26,24 @@ export function AllowanceTile({ perDayMinor, daysLeft }: { perDayMinor: number; 
   );
 }
 
-const styles = StyleSheet.create({
-  tile: {
-    alignSelf: 'flex-start',
-    flexShrink: 1,
-    minHeight: 26,
-    justifyContent: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    marginTop: 4,
-    borderRadius: theme.radius.pill,
-  },
-  text: { flexShrink: 1, fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
-  amount: {
-    fontFamily: theme.font.bodyBold,
-    fontSize: 12,
-    color: theme.colors.textPrimary,
-    fontVariant: ['tabular-nums'],
-  },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    tile: {
+      alignSelf: 'flex-start',
+      flexShrink: 1,
+      minHeight: 26,
+      justifyContent: 'center',
+      paddingHorizontal: 10,
+      paddingVertical: 4,
+      marginTop: 4,
+      borderRadius: theme.radius.pill,
+    },
+    text: { flexShrink: 1, fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
+    amount: {
+      fontFamily: theme.font.bodyBold,
+      fontSize: 12,
+      color: theme.colors.textPrimary,
+      fontVariant: ['tabular-nums'],
+    },
+  })
+);

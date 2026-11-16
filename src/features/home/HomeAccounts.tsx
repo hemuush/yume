@@ -14,6 +14,7 @@ import { useAccent } from '@/theme/AccentContext';
 import { Section } from '@/components/Section';
 import { screenStyles as h } from '@/components/screenStyles';
 import type { Account } from '@/types';
+import { themedStyles } from '@/theme/themedStyles';
 
 /** Accounts shown in the row; the rest are one tap away under "View all". */
 const PREVIEW_ACCOUNTS = 8;
@@ -161,55 +162,57 @@ const AccountTile = memo(function AccountTile({
   );
 });
 
-const styles = StyleSheet.create({
-  // No vertical padding: the tiles sit exactly where the section's other cards do (the cards have no shadow to
-  // make room for).
-  row: { paddingHorizontal: 16, gap: TILE_GAP },
-  tile: { ...h.card, marginHorizontal: 0, minHeight: 112, padding: 12 },
-  tileHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
-  icon: { width: 32, height: 32, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-  name: {
-    marginTop: 10,
-    fontFamily: theme.font.bodyMedium,
-    fontSize: theme.typeSize.row,
-    color: theme.colors.textPrimary,
-  },
-  kind: {
-    flexShrink: 1,
-    fontFamily: theme.font.body,
-    fontSize: 11,
-    textAlign: 'right',
-    color: theme.colors.textMuted,
-  },
-  balance: {
-    marginTop: 2,
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 16,
-    lineHeight: 22,
-    fontVariant: ['tabular-nums'],
-    color: theme.colors.textPrimary,
-  },
-  balanceOwed: { color: theme.colors.expenseText },
-  addTile: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderStyle: 'dashed',
-    borderColor: theme.colors.borderSoft,
-  },
-  addText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textSecondary },
-  wrap: { marginHorizontal: 16 },
-  fresh: { ...h.card, marginHorizontal: 0, padding: 16, gap: 4 },
-  freshHead: { minHeight: 40, flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 },
-  freshTitle: { flex: 1, fontFamily: theme.font.bodyBold, fontSize: 15, color: theme.colors.textPrimary },
-  freshBig: {
-    fontFamily: theme.font.body,
-    fontSize: theme.typeSize.title,
-    lineHeight: 26,
-    letterSpacing: -0.5,
-    color: theme.colors.textPrimary,
-  },
-  freshSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    // No vertical padding: the tiles sit exactly where the section's other cards do (the cards have no shadow to
+    // make room for).
+    row: { paddingHorizontal: 16, gap: TILE_GAP },
+    tile: { ...h.card, marginHorizontal: 0, minHeight: 112, padding: 12 },
+    tileHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
+    icon: { width: 32, height: 32, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+    name: {
+      marginTop: 10,
+      fontFamily: theme.font.bodyMedium,
+      fontSize: theme.typeSize.row,
+      color: theme.colors.textPrimary,
+    },
+    kind: {
+      flexShrink: 1,
+      fontFamily: theme.font.body,
+      fontSize: 11,
+      textAlign: 'right',
+      color: theme.colors.textMuted,
+    },
+    balance: {
+      marginTop: 2,
+      fontFamily: theme.font.bodyMedium,
+      fontSize: 16,
+      lineHeight: 22,
+      fontVariant: ['tabular-nums'],
+      color: theme.colors.textPrimary,
+    },
+    balanceOwed: { color: theme.colors.expenseText },
+    addTile: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 8,
+      backgroundColor: 'transparent',
+      borderWidth: 1,
+      borderStyle: 'dashed',
+      borderColor: theme.colors.borderSoft,
+    },
+    addText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textSecondary },
+    wrap: { marginHorizontal: 16 },
+    fresh: { ...h.card, marginHorizontal: 0, padding: 16, gap: 4 },
+    freshHead: { minHeight: 40, flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 },
+    freshTitle: { flex: 1, fontFamily: theme.font.bodyBold, fontSize: 15, color: theme.colors.textPrimary },
+    freshBig: {
+      fontFamily: theme.font.body,
+      fontSize: theme.typeSize.title,
+      lineHeight: 26,
+      letterSpacing: -0.5,
+      color: theme.colors.textPrimary,
+    },
+    freshSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
+  })
+);

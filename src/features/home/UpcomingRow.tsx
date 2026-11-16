@@ -6,6 +6,7 @@ import { DateTile } from '@/components/DateTile';
 import { toLocalIsoDate } from '@/lib/date';
 import { SCREEN } from '@/components/screenStyles';
 import { HomeRow } from './HomeRow';
+import { themedStyles } from '@/theme/themedStyles';
 
 /**
  * One Upcoming row (loan EMI or recurring rule's next occurrence), the same row as Budgets and Goals: the due
@@ -92,12 +93,14 @@ export function UpcomingRow({
   );
 }
 
-const styles = StyleSheet.create({
-  iconWrap: {
-    width: SCREEN.mark,
-    height: SCREEN.mark,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    iconWrap: {
+      width: SCREEN.mark,
+      height: SCREEN.mark,
+      borderRadius: 14,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+  })
+);

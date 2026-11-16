@@ -29,16 +29,17 @@ import { createLoansSheets } from '@/features/loans/loansSheetsStore';
 import { useLoansData } from '@/features/loans/useLoansData';
 import { SCREEN } from '@/components/screenStyles';
 import { showAlert } from '@/components/AppDialog';
+import { themedValue } from '@/theme/themedStyles';
 
 // The hero compares its props by identity: it is drawn again only when the totals, shares or timeline change.
 const Hero = memo(LoansHero);
 
-const listTitle = {
+const listTitle = themedValue(() => ({
   ...SECTION_TITLE,
   marginHorizontal: SCREEN.gutter,
   marginTop: SECTION_GAP.top,
   marginBottom: SECTION_GAP.bottom,
-};
+}));
 
 /**
  * Formal loans with a schedule (informal IOUs live in /people). Reached from the Plan Loans tile, Home EMI

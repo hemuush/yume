@@ -14,6 +14,7 @@ import { roundedMinor } from '@/lib/round';
 import type { Account, Category, Transaction } from '@/types';
 import { RecentTransactionRow } from './RecentTransactionRow';
 import { emptyRecentCopy } from './recentActivity';
+import { themedStyles } from '@/theme/themedStyles';
 
 /**
  * Home's "Recent activity": the browsed period's latest entries, each day named once above its rows. It compares its
@@ -95,6 +96,8 @@ export const HomeRecentActivity = memo(function HomeRecentActivity({
   );
 });
 
-const styles = StyleSheet.create({
-  recent: { ...h.card, paddingHorizontal: 12 },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    recent: { ...h.card, paddingHorizontal: 12 },
+  })
+);

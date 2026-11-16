@@ -5,6 +5,8 @@ import { Text } from '@/components/Text';
 import { ModalSheet } from '@/components/ModalSheet';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { theme } from '@/constants/theme';
+import { themedStyles } from '@/theme/themedStyles';
+import { useSchemeVersion } from '@/theme/SchemeBoundary';
 
 interface DialogButton {
   text: string;
@@ -36,6 +38,7 @@ export function showAlert(title: string, message?: string, buttons?: DialogButto
 }
 
 export function AppDialogHost() {
+  useSchemeVersion();
   const { width, fontScale } = useWindowDimensions();
   const [dialog, setDialog] = useState<Dialog | null>(null);
   const current = useRef<Dialog | null>(null);
@@ -107,31 +110,33 @@ export function AppDialogHost() {
   );
 }
 
-const styles = StyleSheet.create({
-  // The bin sits beside the title, so a delete dialog is no taller than any other.
-  head: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
-  headText: { flex: 1, minWidth: 0 },
-  icon: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: theme.colors.expenseTint,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  title: {
-    fontFamily: theme.font.roundedBold,
-    fontSize: 18,
-    color: theme.colors.textPrimary,
-  },
-  message: {
-    fontFamily: theme.font.body,
-    fontSize: 13,
-    lineHeight: 19,
-    color: theme.colors.textSecondary,
-    marginTop: 4,
-  },
-  buttons: { flexDirection: 'row', gap: 8 },
-  buttonsStacked: { flexDirection: 'column-reverse' },
-  button: { flex: 1 },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    // The bin sits beside the title, so a delete dialog is no taller than any other.
+    head: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
+    headText: { flex: 1, minWidth: 0 },
+    icon: {
+      width: 38,
+      height: 38,
+      borderRadius: 19,
+      backgroundColor: theme.colors.expenseTint,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    title: {
+      fontFamily: theme.font.roundedBold,
+      fontSize: 18,
+      color: theme.colors.textPrimary,
+    },
+    message: {
+      fontFamily: theme.font.body,
+      fontSize: 13,
+      lineHeight: 19,
+      color: theme.colors.textSecondary,
+      marginTop: 4,
+    },
+    buttons: { flexDirection: 'row', gap: 8 },
+    buttonsStacked: { flexDirection: 'column-reverse' },
+    button: { flex: 1 },
+  })
+);

@@ -1,6 +1,7 @@
 import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
 import { screenStyles as h, SCREEN } from '@/components/screenStyles';
+import { themedStyles } from '@/theme/themedStyles';
 
 /**
  * Activity's days are drawn from the same measures as Home's Recent activity (RecentTransactionRow and
@@ -12,49 +13,51 @@ import { screenStyles as h, SCREEN } from '@/components/screenStyles';
 /** A row's least height: Home's. */
 export const ROW_H = SCREEN.rowMinHeight;
 
-export const styles = StyleSheet.create({
-  // A day is one cell of the list: its card, with the day named inside it.
-  day: { marginTop: 12 },
-  // Home's list card. It does not clip (Home's does): a held line is lifted out of the card with a shadow, and a
-  // clipped card would cut that off; the rows round their own pressed tint instead.
-  lane: { ...h.card, paddingHorizontal: 12, overflow: 'visible' },
-  // The chart's picked day: its heading sits on a soft tint, so the list answers the tap.
-  headOn: { borderRadius: 10 },
-  // Between two lines of the day: across the whole row, as Home's hairline.
-  separator: { height: StyleSheet.hairlineWidth, backgroundColor: theme.colors.borderSoft },
-  lead: { width: SCREEN.lead, alignItems: 'center', justifyContent: 'center' },
-  line: {
-    ...h.row,
-    gap: 12,
-    // The pressed tint is a rounded tile, never a square corner over the card's curve.
-    borderRadius: theme.radius.md,
-  },
-  // Large text: the amount wraps under the name.
-  wrapLine: { flexWrap: 'wrap', rowGap: 6 },
-  wideMid: { flexGrow: 1, flexBasis: '70%' },
-  mid: h.mid,
-  stackMid: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6 },
-  stackChip: {
-    minHeight: 20,
-    paddingHorizontal: 6,
-    borderRadius: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-    backgroundColor: theme.colors.surfaceAlt,
-  },
-  stackCount: { fontFamily: theme.font.bodyBold, fontSize: 11, color: theme.colors.textSecondary },
-  entryHead: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6 },
-  name: h.title,
-  stackName: { flexShrink: 1 },
-  sub: h.sub,
-  // Spending reads in ink with its minus; only money in is green. Never shrunk to fit: an amount that shrinks inside
-  // a flex column was once drawn a few dp tall on a phone.
-  amount: h.amount,
-  income: h.income,
-  // An open group's entries: the same row, with a dot in the category's colour where the disc is, so their text
-  // lines up with the group's own.
-  subLine: { ...h.row, gap: 12, paddingVertical: 6, minHeight: 44, borderRadius: theme.radius.md },
-  subLead: { width: SCREEN.lead, alignItems: 'center', justifyContent: 'center' },
-  subDot: { width: 6, height: 6, borderRadius: 3 },
-});
+export const styles = themedStyles(() =>
+  StyleSheet.create({
+    // A day is one cell of the list: its card, with the day named inside it.
+    day: { marginTop: 12 },
+    // Home's list card. It does not clip (Home's does): a held line is lifted out of the card with a shadow, and a
+    // clipped card would cut that off; the rows round their own pressed tint instead.
+    lane: { ...h.card, paddingHorizontal: 12, overflow: 'visible' },
+    // The chart's picked day: its heading sits on a soft tint, so the list answers the tap.
+    headOn: { borderRadius: 10 },
+    // Between two lines of the day: across the whole row, as Home's hairline.
+    separator: { height: StyleSheet.hairlineWidth, backgroundColor: theme.colors.borderSoft },
+    lead: { width: SCREEN.lead, alignItems: 'center', justifyContent: 'center' },
+    line: {
+      ...h.row,
+      gap: 12,
+      // The pressed tint is a rounded tile, never a square corner over the card's curve.
+      borderRadius: theme.radius.md,
+    },
+    // Large text: the amount wraps under the name.
+    wrapLine: { flexWrap: 'wrap', rowGap: 6 },
+    wideMid: { flexGrow: 1, flexBasis: '70%' },
+    mid: h.mid,
+    stackMid: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6 },
+    stackChip: {
+      minHeight: 20,
+      paddingHorizontal: 6,
+      borderRadius: 10,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 2,
+      backgroundColor: theme.colors.surfaceAlt,
+    },
+    stackCount: { fontFamily: theme.font.bodyBold, fontSize: 11, color: theme.colors.textSecondary },
+    entryHead: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6 },
+    name: h.title,
+    stackName: { flexShrink: 1 },
+    sub: h.sub,
+    // Spending reads in ink with its minus; only money in is green. Never shrunk to fit: an amount that shrinks inside
+    // a flex column was once drawn a few dp tall on a phone.
+    amount: h.amount,
+    income: h.income,
+    // An open group's entries: the same row, with a dot in the category's colour where the disc is, so their text
+    // lines up with the group's own.
+    subLine: { ...h.row, gap: 12, paddingVertical: 6, minHeight: 44, borderRadius: theme.radius.md },
+    subLead: { width: SCREEN.lead, alignItems: 'center', justifyContent: 'center' },
+    subDot: { width: 6, height: 6, borderRadius: 3 },
+  })
+);

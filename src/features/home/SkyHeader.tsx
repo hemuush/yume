@@ -24,6 +24,7 @@ import { SkyBackdrop } from './SkyBackdrop';
 import { GLASS } from '@/components/Glass';
 import { wallpaperTop } from './HomeWallpaper';
 import { headerIsCollapsed } from './headerMotion';
+import { themedStyles } from '@/theme/themedStyles';
 
 /** The title row's height; the band keeps just this row (plus BAR_PAD) once collapsed. */
 const ROW = HEADER.actionSize;
@@ -225,61 +226,63 @@ export function SkyHeader({
   );
 }
 
-const styles = StyleSheet.create({
-  over: { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10 },
-  band: { paddingHorizontal: HEADER.gutter, paddingBottom: HEADER.bottomGap },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 10,
-    minHeight: ROW,
-    zIndex: 1,
-  },
-  titleBlock: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center' },
-  actions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  title: {
-    fontFamily: theme.font.roundedBold,
-    fontSize: theme.typeSize.title,
-    color: theme.colors.ink,
-    transformOrigin: 'left center',
-    // Never squeezed by what sits beside it: even a fraction of a point less than its text needs cuts the last
-    // letters to an ellipsis. Only a title longer than the whole row is cut (maxWidth).
-    flexShrink: 0,
-    maxWidth: '100%',
-  },
-  // The title is the one that must stay whole: when the row is short, the summary (invisible until the header
-  // collapses) gives way, so "Savings goals" never reads "Savings …" because of a figure nobody can see yet.
-  summary: { marginLeft: 10, flexShrink: 1, minWidth: 0 },
-  below: { gap: 10, paddingTop: 8, paddingBottom: 2 },
-  // Just the chevron, nudged so the icon (not its 40dp touch area) sits on the page gutter.
-  backBtn: {
-    width: HEADER.actionSize,
-    height: HEADER.actionSize,
-    borderRadius: HEADER.actionSize / 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: -9,
-    marginRight: -4,
-  },
-  closeBtn: {
-    marginLeft: 0,
-    marginRight: 4,
-    width: HEADER.actionSize,
-    height: HEADER.actionSize,
-    borderRadius: HEADER.actionSize / 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: GLASS.fillStrong,
-    borderWidth: 1,
-    borderColor: GLASS.edge,
-  },
-  subtitle: {
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 13,
-    color: theme.colors.textSecondary,
-  },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    over: { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10 },
+    band: { paddingHorizontal: HEADER.gutter, paddingBottom: HEADER.bottomGap },
+    titleRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 10,
+      minHeight: ROW,
+      zIndex: 1,
+    },
+    titleBlock: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center' },
+    actions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    title: {
+      fontFamily: theme.font.roundedBold,
+      fontSize: theme.typeSize.title,
+      color: theme.colors.ink,
+      transformOrigin: 'left center',
+      // Never squeezed by what sits beside it: even a fraction of a point less than its text needs cuts the last
+      // letters to an ellipsis. Only a title longer than the whole row is cut (maxWidth).
+      flexShrink: 0,
+      maxWidth: '100%',
+    },
+    // The title is the one that must stay whole: when the row is short, the summary (invisible until the header
+    // collapses) gives way, so "Savings goals" never reads "Savings …" because of a figure nobody can see yet.
+    summary: { marginLeft: 10, flexShrink: 1, minWidth: 0 },
+    below: { gap: 10, paddingTop: 8, paddingBottom: 2 },
+    // Just the chevron, nudged so the icon (not its 40dp touch area) sits on the page gutter.
+    backBtn: {
+      width: HEADER.actionSize,
+      height: HEADER.actionSize,
+      borderRadius: HEADER.actionSize / 2,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginLeft: -9,
+      marginRight: -4,
+    },
+    closeBtn: {
+      marginLeft: 0,
+      marginRight: 4,
+      width: HEADER.actionSize,
+      height: HEADER.actionSize,
+      borderRadius: HEADER.actionSize / 2,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: GLASS.fillStrong,
+      borderWidth: 1,
+      borderColor: GLASS.edge,
+    },
+    subtitle: {
+      fontFamily: theme.font.bodyMedium,
+      fontSize: 13,
+      color: theme.colors.textSecondary,
+    },
+  })
+);
 
 /**
  * The line a collapsed SkyHeader shows beside its title: a dot in the screen's colour, the figure in bold
@@ -297,9 +300,16 @@ export function HeaderSummary({ figure, rest, dot }: { figure?: string; rest: st
   );
 }
 
-const summaryStyles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', gap: 6, minWidth: 0 },
-  dot: { width: 6, height: 6, borderRadius: 3 },
-  text: { flexShrink: 1, fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
-  figure: { fontFamily: theme.font.monoBold, fontSize: 12, color: theme.colors.textPrimary },
-});
+const summaryStyles = themedStyles(() =>
+  StyleSheet.create({
+    row: { flexDirection: 'row', alignItems: 'center', gap: 6, minWidth: 0 },
+    dot: { width: 6, height: 6, borderRadius: 3 },
+    text: {
+      flexShrink: 1,
+      fontFamily: theme.font.bodyMedium,
+      fontSize: 12,
+      color: theme.colors.textSecondary,
+    },
+    figure: { fontFamily: theme.font.monoBold, fontSize: 12, color: theme.colors.textPrimary },
+  })
+);

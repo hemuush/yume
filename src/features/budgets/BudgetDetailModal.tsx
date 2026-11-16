@@ -21,6 +21,7 @@ import { budgetPace, BUDGET_PACE_LABEL } from '@/lib/pace';
 import { errorMessage } from '@/lib/errorMessage';
 import { theme } from '@/constants/theme';
 import { noBreak } from '@/lib/keepTogether';
+import { themedStyles } from '@/theme/themedStyles';
 
 /** A budget opens for reading; changing its limit is a separate, reversible step. */
 export function BudgetDetailModal({
@@ -180,20 +181,22 @@ export function BudgetDetailModal({
     </SheetFlow>
   );
 }
-const styles = StyleSheet.create({
-  errorBox: { paddingVertical: 4, gap: 12, marginBottom: 10 },
-  caption: { fontFamily: theme.font.body, fontSize: 13, lineHeight: 19, color: theme.colors.textSecondary },
-  headingRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'baseline',
-    justifyContent: 'space-between',
-    gap: 8,
-    marginTop: 6,
-    marginBottom: 8,
-    marginHorizontal: 2,
-  },
-  heading: { fontFamily: theme.font.roundedBold, fontSize: 14, color: theme.colors.textPrimary },
-  count: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
-  entries: { borderRadius: 20, backgroundColor: theme.colors.surface, overflow: 'hidden' },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    errorBox: { paddingVertical: 4, gap: 12, marginBottom: 10 },
+    caption: { fontFamily: theme.font.body, fontSize: 13, lineHeight: 19, color: theme.colors.textSecondary },
+    headingRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      alignItems: 'baseline',
+      justifyContent: 'space-between',
+      gap: 8,
+      marginTop: 6,
+      marginBottom: 8,
+      marginHorizontal: 2,
+    },
+    heading: { fontFamily: theme.font.roundedBold, fontSize: 14, color: theme.colors.textPrimary },
+    count: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
+    entries: { borderRadius: 20, backgroundColor: theme.colors.surface, overflow: 'hidden' },
+  })
+);

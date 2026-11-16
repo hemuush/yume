@@ -9,6 +9,7 @@ import { selectedFill } from '@/theme/interactionColors';
 import { useAccent } from '@/theme/AccentContext';
 import type { Runway, RunwayDay } from './runway';
 import { dueTone } from './planOverview';
+import { themedStyles } from '@/theme/themedStyles';
 
 type Mode = 'outgoing' | 'income';
 /** The first chip: every date in the window, one list under day headings. */
@@ -169,49 +170,51 @@ export function UpcomingDates({
     </View>
   );
 }
-const s = StyleSheet.create({
-  root: { gap: 8 },
-  // A pill switch like Reports and Activity use: one raised pill under the picked choice.
-  modeRow: {
-    marginHorizontal: 16,
-    padding: 2,
-    flexDirection: 'row',
-    borderRadius: 999,
-    backgroundColor: theme.colors.glass,
-    borderWidth: 1,
-    borderColor: theme.colors.borderSoft,
-  },
-  mode: { flex: 1, minHeight: 44, justifyContent: 'center', alignItems: 'center', borderRadius: 999 },
-  modeLabel: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textSecondary },
-  dates: { paddingHorizontal: 16, gap: 6 },
-  // A 44 dp touch area around a 32 dp pill.
-  pillHit: { minHeight: 44, justifyContent: 'center' },
-  pill: {
-    minHeight: 32,
-    paddingHorizontal: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: theme.colors.borderSoft,
-    backgroundColor: theme.colors.surface,
-  },
-  pillPressed: { backgroundColor: theme.colors.tray },
-  // The same weight picked or not, so picking a date never changes the width of the pills beside it.
-  pillText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
-  dot: { width: 7, height: 7, borderRadius: 4 },
-  activeText: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
-  dateLabel: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
-  summary: {
-    marginHorizontal: 16,
-    padding: 12,
-    gap: 8,
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.radius.xl,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-  },
-  summaryDay: { gap: 4 },
-  caption: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
-});
+const s = themedStyles(() =>
+  StyleSheet.create({
+    root: { gap: 8 },
+    // A pill switch like Reports and Activity use: one raised pill under the picked choice.
+    modeRow: {
+      marginHorizontal: 16,
+      padding: 2,
+      flexDirection: 'row',
+      borderRadius: 999,
+      backgroundColor: theme.colors.glass,
+      borderWidth: 1,
+      borderColor: theme.colors.borderSoft,
+    },
+    mode: { flex: 1, minHeight: 44, justifyContent: 'center', alignItems: 'center', borderRadius: 999 },
+    modeLabel: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textSecondary },
+    dates: { paddingHorizontal: 16, gap: 6 },
+    // A 44 dp touch area around a 32 dp pill.
+    pillHit: { minHeight: 44, justifyContent: 'center' },
+    pill: {
+      minHeight: 32,
+      paddingHorizontal: 12,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      borderRadius: 999,
+      borderWidth: 1,
+      borderColor: theme.colors.borderSoft,
+      backgroundColor: theme.colors.surface,
+    },
+    pillPressed: { backgroundColor: theme.colors.tray },
+    // The same weight picked or not, so picking a date never changes the width of the pills beside it.
+    pillText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
+    dot: { width: 7, height: 7, borderRadius: 4 },
+    activeText: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
+    dateLabel: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
+    summary: {
+      marginHorizontal: 16,
+      padding: 12,
+      gap: 8,
+      backgroundColor: theme.colors.surface,
+      borderRadius: theme.radius.xl,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.borderSoft,
+    },
+    summaryDay: { gap: 4 },
+    caption: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
+  })
+);

@@ -5,6 +5,7 @@ import { SCREEN } from '@/components/screenStyles';
 import { withPressedTint } from '@/lib/pressed';
 import { useAccent } from '@/theme/AccentContext';
 import { themeInk } from '@/theme/interactionColors';
+import { themedStyles } from '@/theme/themedStyles';
 
 export type ProfileTab = 'you' | 'settings';
 const TABS: { label: string; value: ProfileTab }[] = [
@@ -38,18 +39,20 @@ export function ProfileTabs({ value, onChange }: { value: ProfileTab; onChange: 
   );
 }
 
-const styles = StyleSheet.create({
-  bar: {
-    flexDirection: 'row',
-    marginHorizontal: SCREEN.gutter,
-    marginTop: 2,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: theme.colors.borderSoft,
-  },
-  tab: { flex: 1, minHeight: 44, alignItems: 'center', justifyContent: 'center' },
-  // One weight picked or not: the underline and the darker ink show the pick, and the word does not change width
-  // (the picked one stepped about 2 dp each time).
-  label: { fontFamily: theme.font.bodyMedium, fontSize: 14, color: theme.colors.textMuted },
-  labelOn: { color: theme.colors.textPrimary },
-  underline: { position: 'absolute', left: '30%', right: '30%', bottom: -1, height: 3, borderRadius: 2 },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    bar: {
+      flexDirection: 'row',
+      marginHorizontal: SCREEN.gutter,
+      marginTop: 2,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: theme.colors.borderSoft,
+    },
+    tab: { flex: 1, minHeight: 44, alignItems: 'center', justifyContent: 'center' },
+    // One weight picked or not: the underline and the darker ink show the pick, and the word does not change width
+    // (the picked one stepped about 2 dp each time).
+    label: { fontFamily: theme.font.bodyMedium, fontSize: 14, color: theme.colors.textMuted },
+    labelOn: { color: theme.colors.textPrimary },
+    underline: { position: 'absolute', left: '30%', right: '30%', bottom: -1, height: 3, borderRadius: 2 },
+  })
+);

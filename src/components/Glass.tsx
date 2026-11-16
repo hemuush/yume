@@ -1,4 +1,5 @@
 import { View, ViewProps, StyleSheet } from 'react-native';
+import { themedStyles } from '@/theme/themedStyles';
 
 /**
  * Frosted glass on Home's wallpaper: translucent white with a bright hairline edge and a soft drop. No real blur
@@ -30,6 +31,8 @@ export function Glass({
   );
 }
 
-const styles = StyleSheet.create({
-  glass: { borderWidth: 1, borderColor: GLASS.edge, boxShadow: GLASS.shadow },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    glass: { borderWidth: 1, borderColor: GLASS.edge, boxShadow: GLASS.shadow },
+  })
+);

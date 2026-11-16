@@ -8,6 +8,7 @@ import { withPressed } from '@/lib/pressed';
 import { useAccent } from '@/theme/AccentContext';
 import { selectedFill } from '@/theme/interactionColors';
 import { heatDayLabel, type HeatDay, type HeatModel } from './reportsInsights';
+import { themedStyles } from '@/theme/themedStyles';
 
 type Choice =
   | { kind: 'day'; key: string; label: string; search: string; day: HeatDay }
@@ -117,42 +118,44 @@ export function HeatmapDayPicker({
   );
 }
 
-const styles = StyleSheet.create({
-  launcher: {
-    minHeight: theme.accessibility.minTouchTarget,
-    marginTop: theme.space.sm,
-    padding: theme.space.md,
-    borderRadius: theme.radius.md,
-    backgroundColor: theme.colors.tray,
-  },
-  title: { fontFamily: theme.font.bodyBold, fontSize: theme.typeSize.row, color: theme.colors.link },
-  detail: { fontFamily: theme.font.body, fontSize: theme.typeSize.row, color: theme.colors.textPrimary },
-  search: {
-    minHeight: theme.accessibility.minTouchTarget,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    borderRadius: theme.radius.md,
-    padding: theme.space.sm,
-    marginBottom: theme.space.sm,
-    fontFamily: theme.font.body,
-    fontSize: theme.typeSize.row,
-    color: theme.colors.textPrimary,
-  },
-  row: {
-    minHeight: theme.accessibility.minTouchTarget,
-    padding: theme.space.md,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-  },
-  month: { backgroundColor: theme.colors.tray },
-  // The same quiet caption every other in-sheet empty line uses, with room around it.
-  empty: {
-    paddingVertical: theme.space.lg,
-    paddingHorizontal: theme.space.md,
-    fontFamily: theme.font.body,
-    fontSize: 13,
-    lineHeight: 18,
-    color: theme.colors.textSecondary,
-    textAlign: 'center',
-  },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    launcher: {
+      minHeight: theme.accessibility.minTouchTarget,
+      marginTop: theme.space.sm,
+      padding: theme.space.md,
+      borderRadius: theme.radius.md,
+      backgroundColor: theme.colors.tray,
+    },
+    title: { fontFamily: theme.font.bodyBold, fontSize: theme.typeSize.row, color: theme.colors.link },
+    detail: { fontFamily: theme.font.body, fontSize: theme.typeSize.row, color: theme.colors.textPrimary },
+    search: {
+      minHeight: theme.accessibility.minTouchTarget,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.borderSoft,
+      borderRadius: theme.radius.md,
+      padding: theme.space.sm,
+      marginBottom: theme.space.sm,
+      fontFamily: theme.font.body,
+      fontSize: theme.typeSize.row,
+      color: theme.colors.textPrimary,
+    },
+    row: {
+      minHeight: theme.accessibility.minTouchTarget,
+      padding: theme.space.md,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.borderSoft,
+    },
+    month: { backgroundColor: theme.colors.tray },
+    // The same quiet caption every other in-sheet empty line uses, with room around it.
+    empty: {
+      paddingVertical: theme.space.lg,
+      paddingHorizontal: theme.space.md,
+      fontFamily: theme.font.body,
+      fontSize: 13,
+      lineHeight: 18,
+      color: theme.colors.textSecondary,
+      textAlign: 'center',
+    },
+  })
+);

@@ -12,6 +12,7 @@ import { dayMonth, dayMonthYear } from '@/lib/dateLabels';
 import { noBreak } from '@/lib/keepTogether';
 import { router } from 'expo-router';
 import { InsightRow, InsightDisclosure, insight } from '@/components/InsightCard';
+import { themedStyles } from '@/theme/themedStyles';
 
 /** "1 Oct – 23 Oct vs 1 Sep – 23 Sep"; years are added only when the two periods are not in the same one. */
 function comparedLabel(ranges: { current: DateRange; previous: DateRange }): string {
@@ -165,34 +166,36 @@ function EffectRow({ label, value, detail }: { label: string; value: string; det
   );
 }
 
-const styles = StyleSheet.create({
-  section: {
-    gap: 4,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    marginTop: 10,
-    borderRadius: theme.radius.xl,
-    backgroundColor: theme.colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-  },
-  heading: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.textPrimary },
-  change: {
-    fontFamily: theme.font.body,
-    fontSize: 20,
-    color: theme.colors.textPrimary,
-    fontVariant: ['tabular-nums'],
-    marginVertical: 2,
-  },
-  changeWords: { fontFamily: theme.font.body, fontSize: 15, color: theme.colors.textSecondary },
-  footnote: { marginTop: 4 },
-  effect: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8, paddingVertical: 4 },
-  copy: { flexGrow: 1, flexBasis: 180, minWidth: 0, gap: 2 },
-  label: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
-  amount: {
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 13,
-    color: theme.colors.textPrimary,
-    fontVariant: ['tabular-nums'],
-  },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    section: {
+      gap: 4,
+      paddingHorizontal: 14,
+      paddingVertical: 12,
+      marginTop: 10,
+      borderRadius: theme.radius.xl,
+      backgroundColor: theme.colors.surface,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.borderSoft,
+    },
+    heading: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.textPrimary },
+    change: {
+      fontFamily: theme.font.body,
+      fontSize: 20,
+      color: theme.colors.textPrimary,
+      fontVariant: ['tabular-nums'],
+      marginVertical: 2,
+    },
+    changeWords: { fontFamily: theme.font.body, fontSize: 15, color: theme.colors.textSecondary },
+    footnote: { marginTop: 4 },
+    effect: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8, paddingVertical: 4 },
+    copy: { flexGrow: 1, flexBasis: 180, minWidth: 0, gap: 2 },
+    label: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
+    amount: {
+      fontFamily: theme.font.bodyMedium,
+      fontSize: 13,
+      color: theme.colors.textPrimary,
+      fontVariant: ['tabular-nums'],
+    },
+  })
+);

@@ -4,6 +4,7 @@ import { theme } from '@/constants/theme';
 import { SCREEN } from '@/components/screenStyles';
 import { withPressedTint } from '@/lib/pressed';
 import { useAccent } from '@/theme/AccentContext';
+import { themedStyles } from '@/theme/themedStyles';
 
 function Stat({
   value,
@@ -82,44 +83,46 @@ export function LinkTiles({
   );
 }
 
-const styles = StyleSheet.create({
-  strip: {
-    flexDirection: 'row',
-    marginHorizontal: SCREEN.gutter,
-    marginTop: 12,
-    borderRadius: theme.radius.xl,
-    backgroundColor: theme.colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    overflow: 'hidden',
-  },
-  stripEmbedded: {
-    marginHorizontal: 0,
-    marginTop: 0,
-    borderRadius: 0,
-    borderWidth: 0,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: theme.colors.divider,
-    backgroundColor: 'transparent',
-  },
-  stripStacked: { flexDirection: 'column' },
-  stat: {
-    flex: 1,
-    minWidth: 0,
-    minHeight: 56,
-    paddingHorizontal: 6,
-    paddingVertical: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  statStacked: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 14 },
-  dividerLeft: { borderLeftWidth: StyleSheet.hairlineWidth, borderLeftColor: theme.colors.divider },
-  dividerTop: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.divider },
-  value: {
-    fontFamily: theme.font.bodyBold,
-    fontSize: 16,
-    fontVariant: ['tabular-nums'],
-    color: theme.colors.textPrimary,
-  },
-  label: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    strip: {
+      flexDirection: 'row',
+      marginHorizontal: SCREEN.gutter,
+      marginTop: 12,
+      borderRadius: theme.radius.xl,
+      backgroundColor: theme.colors.surface,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.borderSoft,
+      overflow: 'hidden',
+    },
+    stripEmbedded: {
+      marginHorizontal: 0,
+      marginTop: 0,
+      borderRadius: 0,
+      borderWidth: 0,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: theme.colors.divider,
+      backgroundColor: 'transparent',
+    },
+    stripStacked: { flexDirection: 'column' },
+    stat: {
+      flex: 1,
+      minWidth: 0,
+      minHeight: 56,
+      paddingHorizontal: 6,
+      paddingVertical: 8,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    statStacked: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 14 },
+    dividerLeft: { borderLeftWidth: StyleSheet.hairlineWidth, borderLeftColor: theme.colors.divider },
+    dividerTop: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.divider },
+    value: {
+      fontFamily: theme.font.bodyBold,
+      fontSize: 16,
+      fontVariant: ['tabular-nums'],
+      color: theme.colors.textPrimary,
+    },
+    label: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
+  })
+);

@@ -22,6 +22,7 @@ import { RuleModal } from '@/features/recurring/RuleModal';
 import { TransactionDetailModal } from '@/features/transactions/TransactionDetailModal';
 import type { PlanData } from './planData';
 import { usePlanSheets, type PlanDetailKind, type PlanSheets as PlanSheetsStore } from './planSheetsStore';
+import { themedStyles } from '@/theme/themedStyles';
 
 /** The rows of "Add to your plan". */
 const NEW_ROWS = [
@@ -256,8 +257,10 @@ export function PlanSheets({
   );
 }
 
-const styles = StyleSheet.create({
-  menuRow: { minHeight: 68, paddingVertical: 12, flexDirection: 'row', alignItems: 'center', gap: 14 },
-  menuTitle: { fontFamily: theme.font.bodyMedium, fontSize: 15, color: theme.colors.textPrimary },
-  menuDescription: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    menuRow: { minHeight: 68, paddingVertical: 12, flexDirection: 'row', alignItems: 'center', gap: 14 },
+    menuTitle: { fontFamily: theme.font.bodyMedium, fontSize: 15, color: theme.colors.textPrimary },
+    menuDescription: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
+  })
+);

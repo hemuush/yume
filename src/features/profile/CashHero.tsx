@@ -4,6 +4,7 @@ import { CountUpAmount } from '@/components/CountUpAmount';
 import { screenStyles as h } from '@/components/screenStyles';
 import { theme } from '@/constants/theme';
 import { formatMaskableMoney } from '@/lib/money';
+import { themedStyles } from '@/theme/themedStyles';
 
 /**
  * First card on You, the flat summary card the other screens lead with: what is in your accounts right now at
@@ -42,33 +43,35 @@ export function CashHero({
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
-    ...h.card,
-    marginTop: 12,
-    borderWidth: 1,
-    boxShadow: '0px 1px 2px rgba(18,19,15,0.04), 0px 8px 24px rgba(18,19,15,0.05)',
-  },
-  top: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'flex-end',
-    justifyContent: 'space-between',
-    columnGap: 12,
-    rowGap: 2,
-    paddingHorizontal: 14,
-    paddingTop: 12,
-    paddingBottom: 10,
-  },
-  topMain: { flexShrink: 1, minWidth: 0 },
-  label: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
-  figure: {
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 20,
-    lineHeight: 26,
-    letterSpacing: -0.2,
-    fontVariant: ['tabular-nums'],
-    color: theme.colors.textPrimary,
-  },
-  sub: { flexShrink: 1, fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    card: {
+      ...h.card,
+      marginTop: 12,
+      borderWidth: 1,
+      boxShadow: '0px 1px 2px rgba(18,19,15,0.04), 0px 8px 24px rgba(18,19,15,0.05)',
+    },
+    top: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      alignItems: 'flex-end',
+      justifyContent: 'space-between',
+      columnGap: 12,
+      rowGap: 2,
+      paddingHorizontal: 14,
+      paddingTop: 12,
+      paddingBottom: 10,
+    },
+    topMain: { flexShrink: 1, minWidth: 0 },
+    label: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
+    figure: {
+      fontFamily: theme.font.bodyMedium,
+      fontSize: 20,
+      lineHeight: 26,
+      letterSpacing: -0.2,
+      fontVariant: ['tabular-nums'],
+      color: theme.colors.textPrimary,
+    },
+    sub: { flexShrink: 1, fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
+  })
+);

@@ -10,6 +10,7 @@ import { shade } from '@/lib/color';
 import { useAccent } from '@/theme/AccentContext';
 import { themeInk } from '@/theme/interactionColors';
 import { DueGroup, PlanDueItem, PlanRoute, dueTone } from './planOverview';
+import { themedStyles } from '@/theme/themedStyles';
 
 const KIND_LABEL: Record<PlanDueItem['kind'], string> = {
   emi: 'EMI',
@@ -192,63 +193,70 @@ export function ComingUpSection({
   );
 }
 
-const s = StyleSheet.create({
-  card: {
-    marginHorizontal: 16,
-    borderRadius: theme.radius.xl,
-    backgroundColor: theme.colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    overflow: 'hidden',
-    paddingBottom: 4,
-  },
-  dayHead: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'baseline',
-    justifyContent: 'space-between',
-    columnGap: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-  },
-  dayHeadText: {
-    flexShrink: 1,
-    fontFamily: theme.font.bodyBold,
-    fontSize: 12,
-    color: theme.colors.textSecondary,
-  },
-  dayHeadLate: { color: theme.colors.expenseText },
-  dayHeadNote: { fontFamily: theme.font.body, color: theme.colors.textSecondary },
-  dayTotal: {
-    fontFamily: theme.font.body,
-    fontSize: 12,
-    fontVariant: ['tabular-nums'],
-    color: theme.colors.textMuted,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    minHeight: 52,
-    paddingVertical: 6,
-    paddingHorizontal: 14,
-  },
-  icon: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
-  mid: { flex: 1, minWidth: 0 },
-  title: { fontFamily: theme.font.bodyMedium, fontSize: 14, lineHeight: 19, color: theme.colors.textPrimary },
-  sub: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 16, color: theme.colors.textMuted },
-  subUrgent: { fontFamily: theme.font.bodyBold, color: theme.colors.expenseText },
-  subSoon: { fontFamily: theme.font.bodyBold, color: theme.colors.warnInk },
-  amount: {
-    flexShrink: 0,
-    fontFamily: theme.font.bodyBold,
-    fontSize: 14,
-    fontVariant: ['tabular-nums'],
-    color: theme.colors.textPrimary,
-  },
-  income: { color: theme.colors.incomeText },
-  // The Pay pill is part of the row, which is the one tap target (44 dp tall at least in practice).
-  pay: { minHeight: 30, justifyContent: 'center', paddingHorizontal: 12, borderRadius: theme.radius.pill },
-  payText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.white },
-  emptyRow: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 64, paddingHorizontal: 14 },
-});
+const s = themedStyles(() =>
+  StyleSheet.create({
+    card: {
+      marginHorizontal: 16,
+      borderRadius: theme.radius.xl,
+      backgroundColor: theme.colors.surface,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.borderSoft,
+      overflow: 'hidden',
+      paddingBottom: 4,
+    },
+    dayHead: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      alignItems: 'baseline',
+      justifyContent: 'space-between',
+      columnGap: 8,
+      paddingHorizontal: 14,
+      paddingVertical: 8,
+    },
+    dayHeadText: {
+      flexShrink: 1,
+      fontFamily: theme.font.bodyBold,
+      fontSize: 12,
+      color: theme.colors.textSecondary,
+    },
+    dayHeadLate: { color: theme.colors.expenseText },
+    dayHeadNote: { fontFamily: theme.font.body, color: theme.colors.textSecondary },
+    dayTotal: {
+      fontFamily: theme.font.body,
+      fontSize: 12,
+      fontVariant: ['tabular-nums'],
+      color: theme.colors.textMuted,
+    },
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+      minHeight: 52,
+      paddingVertical: 6,
+      paddingHorizontal: 14,
+    },
+    icon: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+    mid: { flex: 1, minWidth: 0 },
+    title: {
+      fontFamily: theme.font.bodyMedium,
+      fontSize: 14,
+      lineHeight: 19,
+      color: theme.colors.textPrimary,
+    },
+    sub: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 16, color: theme.colors.textMuted },
+    subUrgent: { fontFamily: theme.font.bodyBold, color: theme.colors.expenseText },
+    subSoon: { fontFamily: theme.font.bodyBold, color: theme.colors.warnInk },
+    amount: {
+      flexShrink: 0,
+      fontFamily: theme.font.bodyBold,
+      fontSize: 14,
+      fontVariant: ['tabular-nums'],
+      color: theme.colors.textPrimary,
+    },
+    income: { color: theme.colors.incomeText },
+    // The Pay pill is part of the row, which is the one tap target (44 dp tall at least in practice).
+    pay: { minHeight: 30, justifyContent: 'center', paddingHorizontal: 12, borderRadius: theme.radius.pill },
+    payText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.white },
+    emptyRow: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 64, paddingHorizontal: 14 },
+  })
+);
