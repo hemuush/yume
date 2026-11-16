@@ -14,7 +14,7 @@ export const THEMES: ThemePack[] = [
   {
     id: 'yume',
     name: 'Yume',
-    primary: '#8FCBFF',
+    primary: '#9EC5FC',
     secondary: '#8FE8C8',
     dot: '#F0876A',
   },

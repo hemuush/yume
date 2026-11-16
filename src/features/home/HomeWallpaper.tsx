@@ -1,74 +1,25 @@
 import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import Svg, { Defs, RadialGradient, Stop, Circle } from 'react-native-svg';
 import { theme } from '@/constants/theme';
-import { shade } from '@/lib/color';
 
-/** The wallpaper's top colour: also the collapsed header bar's, so the bar has no seam against it. */
-export function wallpaperTop(accent: string): string {
-  return shade(accent, 88);
+/** The page colour a header bar and the page share, so the bar has no seam against it. */
+export function wallpaperTop(_accent?: string): string {
+  return theme.colors.background;
 }
 
 /**
- * Home's wallpaper: a soft wash of the theme colour at the top fading into the page colour, with two blurred
- * colour blobs (the theme colour at the top right, the second colour at the left) and two white glows (a pale
- * circle behind the upper left, and one at the bottom) for depth behind the glass cards. Static: nothing here re-renders on scroll.
+ * What sits behind a page that used to carry Home's coloured wallpaper: plain paper. The quiet look has no wash,
+ * blobs or glows; the component remains so screens keep one place that says what is behind them.
  */
-export const HomeWallpaper = memo(function HomeWallpaper({
-  accent,
-  secondary,
-  plain = true,
-}: {
-  accent: string;
-  secondary: string;
-  /** Default: a wash and one soft glow; opt out only for an intentionally richer decorative surface. */
+export const HomeWallpaper = memo(function HomeWallpaper(_props: {
+  accent?: string;
+  secondary?: string;
   plain?: boolean;
 }) {
-  const top = wallpaperTop(accent);
-  const mid = shade(accent, 94);
-  const blobA = shade(accent, 82);
-  const blobB = shade(secondary, 86);
   return (
-    <View pointerEvents="none" renderToHardwareTextureAndroid style={StyleSheet.absoluteFill}>
-      <LinearGradient
-        colors={[top, mid, theme.colors.background]}
-        locations={[0, 0.4, 1]}
-        style={StyleSheet.absoluteFill}
-      />
-      {plain && (
-        <Svg style={StyleSheet.absoluteFill}>
-          <Defs>
-            <RadialGradient id="wpGlow" cx="50%" cy="50%" r="50%">
-              <Stop offset="0" stopColor={secondary} stopOpacity={0.3} />
-              <Stop offset="1" stopColor={secondary} stopOpacity={0} />
-            </RadialGradient>
-          </Defs>
-          <Circle cx="105%" cy="58%" r="230" fill="url(#wpGlow)" />
-        </Svg>
-      )}
-      {!plain && (
-        <Svg style={StyleSheet.absoluteFill}>
-          <Defs>
-            <RadialGradient id="wpA" cx="50%" cy="50%" r="50%">
-              <Stop offset="0" stopColor={blobA} stopOpacity={0.8} />
-              <Stop offset="1" stopColor={blobA} stopOpacity={0} />
-            </RadialGradient>
-            <RadialGradient id="wpB" cx="50%" cy="50%" r="50%">
-              <Stop offset="0" stopColor={blobB} stopOpacity={0.5} />
-              <Stop offset="1" stopColor={blobB} stopOpacity={0} />
-            </RadialGradient>
-            <RadialGradient id="wpC" cx="50%" cy="50%" r="50%">
-              <Stop offset="0" stopColor="#FFFFFF" stopOpacity={0.45} />
-              <Stop offset="1" stopColor="#FFFFFF" stopOpacity={0} />
-            </RadialGradient>
-          </Defs>
-          <Circle cx="30%" cy="38%" r="240" fill="url(#wpC)" />
-          <Circle cx="95%" cy="0" r="240" fill="url(#wpA)" />
-          <Circle cx="0%" cy="46%" r="190" fill="url(#wpB)" />
-          <Circle cx="75%" cy="100%" r="300" fill="url(#wpC)" />
-        </Svg>
-      )}
-    </View>
+    <View
+      pointerEvents="none"
+      style={[StyleSheet.absoluteFill, { backgroundColor: theme.colors.background }]}
+    />
   );
 });

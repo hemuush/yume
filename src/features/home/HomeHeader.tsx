@@ -14,7 +14,6 @@ import ReanimatedAnimated, {
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme } from '@/constants/theme';
-import { useAccent } from '@/theme/AccentContext';
 import { SkyBackdrop } from './SkyBackdrop';
 import { YumeLogo } from '@/components/YumeLogo';
 import { HEADER } from '@/components/headerMetrics';
@@ -76,7 +75,6 @@ export function HomeHeader({
   onBrandPress?: () => void;
   children?: React.ReactNode;
 }) {
-  const { accent } = useAccent();
   const reduce = useReduceMotion();
   const insets = useSafeAreaInsets();
   // The same top spacing as every other screen's SkyHeader.
@@ -133,12 +131,10 @@ export function HomeHeader({
       onLayout={(e: LayoutChangeEvent) => onHeight(e.nativeEvent.layout.height)}
     >
       <SkyBackdrop
-        accent={accent}
         scrollY={scrollY}
         distance={distance}
         collapsedHeight={bandHeight > 0 && rowBottom > 0 ? rowBottom + COLLAPSED_BOTTOM_PAD : 0}
-        wash={false}
-        barColor={wallpaperTop(accent)}
+        barColor={wallpaperTop()}
       />
       <View
         style={[styles.band, { paddingTop: contentTop }]}

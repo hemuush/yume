@@ -16,7 +16,6 @@ import { Text, MAX_FONT_SCALE } from '@/components/Text';
 import { HEADER } from '@/components/headerMetrics';
 import { HeaderUserButton } from '@/components/AppHeader';
 import { theme } from '@/constants/theme';
-import { useAccent } from '@/theme/AccentContext';
 import { withPressed } from '@/lib/pressed';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 import type { CollapsingHeader } from '@/lib/useCollapsingHeader';
@@ -62,7 +61,6 @@ export function SkyHeader({
   /** The back button as a × in a frosted disc: a screen you close rather than step back from (Add). */
   closeIcon?: boolean;
 }) {
-  const { accent } = useAccent();
   const insets = useSafeAreaInsets();
   const reduce = useReduceMotion();
   const top = insets.top + HEADER.topGap;
@@ -140,12 +138,10 @@ export function SkyHeader({
     >
       {(collapse || !wallpaper) && (
         <SkyBackdrop
-          accent={accent}
           scrollY={scrollY}
           distance={distance}
           collapsedHeight={top + rowHeight + BAR_PAD}
-          wash={!wallpaper}
-          barColor={wallpaper ? wallpaperTop(accent) : undefined}
+          barColor={wallpaperTop()}
         />
       )}
       <View style={[styles.band, { paddingTop: top }]}>

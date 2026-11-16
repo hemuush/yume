@@ -186,7 +186,7 @@ export async function updateNotificationPrefs(patch: Partial<NotificationPrefs>)
 const ACCENT_COLOR_KEY = 'accent_color';
 // Sky-blue signature accent, seen by anyone who never opened the accent picker (theme.ts's `primary` matches it
 // for screens that skip `useAccent()`). Sage `#E0F0A8` (the old default) remains a selectable swatch below.
-const DEFAULT_ACCENT = '#8FCBFF';
+const DEFAULT_ACCENT = '#9EC5FC';
 let cachedAccent: string | null = null;
 
 export function getCachedAccentColor(): string {
@@ -196,6 +196,7 @@ export function getCachedAccentColor(): string {
 // A stored shade no longer offered would stay stuck forever (the hex is just a string, so a palette change in
 // code never reaches an existing install): remap once here, then persist.
 const LEGACY_ACCENT_REMAP: Record<string, string> = {
+  '#8FCBFF': '#9EC5FC', // the earlier sky blue, now the sky of the logo
   '#D6FF3D': '#E0F0A8', // original neon-lime mockup colour, softened
   '#FFB84D': '#F0A387', // original harsher gold/tan, straight to Terracotta like Tan below
   // Ink and Cream were dropped from ACCENT_SWATCHES: they're the app's text/page colours, not accents, so
