@@ -16,7 +16,7 @@ export const styles = themedStyles(() =>
       padding: 14,
       borderRadius: 22,
       // A warm frost: the gold tint let through the glass, so it reads as a note on the wallpaper.
-      backgroundColor: 'rgba(255,239,204,0.8)',
+      backgroundColor: theme.colors.dueRow,
       borderWidth: 1,
       borderColor: theme.colors.borderSoft,
     },

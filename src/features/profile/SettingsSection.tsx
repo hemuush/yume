@@ -24,6 +24,9 @@ import { MovingRow } from '@/components/MovingRow';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { useAccent, THEMES } from '@/theme/AccentContext';
 import { ThemeThumb } from './ThemePreview';
+import { SegmentedControl } from '@/components/SegmentedControl';
+import { useAppearance } from '@/theme/AppearanceContext';
+import type { AppearancePreference } from '@/theme/scheme';
 import { theme } from '@/constants/theme';
 import { Section } from '@/components/Section';
 import { screenStyles as h } from '@/components/screenStyles';
@@ -73,12 +76,19 @@ const ALERT_KEYS = [
   'refundAlerts',
 ] as const satisfies readonly (keyof NotificationPrefs)[];
 
+const COLOUR_MODES: { value: AppearancePreference; label: string }[] = [
+  { value: 'system', label: 'System' },
+  { value: 'light', label: 'Light' },
+  { value: 'dark', label: 'Dark' },
+];
+
 /**
  * Settings starts with theme choices, then a safety overview and grouped preferences.
  */
 export function SettingsSection() {
   const stackValues = useStacked();
   const { accent, themeId, setTheme, themeSaveError } = useAccent();
+  const { preference: colourMode, setPreference: setColourMode } = useAppearance();
   const { lockEnabled, setLockEnabled } = useAppLock();
   const { hideAmounts, toggleHideAmounts } = usePrivacy();
   const [hideWidgets, setHideWidgets] = useState<boolean | null>(null);
@@ -211,6 +221,18 @@ export function SettingsSection() {
           </Text>
         )}
         <View style={[h.card, cardSurface.neutral, styles.settingsCard]}>
+          <View style={styles.modeRow}>
+            <Text style={styles.appearanceTitle}>Colour mode</Text>
+            <SegmentedControl
+              compact
+              options={COLOUR_MODES}
+              value={colourMode}
+              onChange={(next) => {
+                haptics.tap();
+                void setColourMode(next);
+              }}
+            />
+          </View>
           <Pressable
             onPress={() => router.push('/themes')}
             style={withPressedTint(accent, styles.appearanceHead)}

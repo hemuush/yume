@@ -31,6 +31,7 @@ import { useStacked } from '@/lib/useStacked';
 import { useTabScrollToTop } from '@/lib/useTabScrollToTop';
 import { useAccent } from '@/theme/AccentContext';
 import { themedStyles } from '@/theme/themedStyles';
+import { useKeptAcrossModeChange } from '@/theme/useKeptAcrossModeChange';
 
 /**
  * The gap under the tabs, per tab. Each tab's first block carries its own top margin (the runway card 4, the Upcoming
@@ -45,7 +46,7 @@ export default function PlanScreen() {
   const insets = useSafeAreaInsets();
   const tabScrollPad = useTabScrollPad();
   const { accent, secondary } = useAccent();
-  const [tab, setTab] = useState<PlanTab>('overview');
+  const [tab, setTab] = useKeptAcrossModeChange<PlanTab>('plan-tab', 'overview');
   // Which sheet is open is kept outside React state, so opening or closing one does not redraw the page behind it.
   const [sheets] = useState(createPlanSheets);
   const { hideAmounts, data, scoped, version, loaded, loadError, reload } = usePlanData();
@@ -57,7 +58,7 @@ export default function PlanScreen() {
     const picked = TABS.find((t) => t.value === requested);
     if (picked) setTab(picked.value);
     router.setParams({ tab: undefined });
-  }, [tabParam]);
+  }, [tabParam, setTab]);
   // Leaving Plan drops a payment lookup still in flight.
   useFocusEffect(useCallback(() => () => sheets.cancelPayment(), [sheets]));
   useEffect(() => () => sheets.cancelPayment(), [sheets]);
@@ -70,7 +71,7 @@ export default function PlanScreen() {
       setTab(next);
       scrollRef.current?.scrollTo({ y: 0, animated: false });
     },
-    [scrollRef]
+    [scrollRef, setTab]
   );
   // What the parts of the page can do, as one object that keeps its identity: they compare their props, and are drawn
   // again only for what they show.

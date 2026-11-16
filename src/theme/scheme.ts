@@ -13,10 +13,17 @@ export const APPEARANCE_PREFERENCES: readonly AppearancePreference[] = ['system'
 let current: Scheme = 'light';
 /** Bumped on every change, so a cached style sheet knows it was made for another mode. */
 let version = 0;
+/** When the mode last changed (0 = never), so a screen drawn again can tell it was drawn again for that. */
+let changedAt = 0;
 const listeners = new Set<() => void>();
 
 export function getScheme(): Scheme {
   return current;
+}
+
+/** Whether the mode changed in the last moments, i.e. the screen being made is being drawn again for it. */
+export function schemeChangedJustNow(withinMs = 2000): boolean {
+  return changedAt > 0 && Date.now() - changedAt < withinMs;
 }
 
 export function getSchemeVersion(): number {
@@ -28,6 +35,7 @@ export function applyScheme(next: Scheme): boolean {
   if (next === current) return false;
   current = next;
   version += 1;
+  changedAt = Date.now();
   listeners.forEach((listener) => listener());
   return true;
 }

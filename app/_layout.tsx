@@ -45,7 +45,7 @@ import { AccentProvider, useAccent } from '@/theme/AccentContext';
 import { PrivacyProvider } from '@/theme/PrivacyContext';
 import { AppearanceProvider } from '@/theme/AppearanceContext';
 import { AppStatusBar } from '@/theme/AppStatusBar';
-import { stackScreenLayout } from '@/theme/SchemeBoundary';
+import { stackScreenLayout, useSchemeVersion } from '@/theme/SchemeBoundary';
 import { AppLockProvider, useAppLock } from '@/lib/AppLockContext';
 import { UndoToastProvider } from '@/components/UndoToast';
 import { MilestoneNoteProvider, BudgetMonthWatcher } from '@/components/MilestoneNote';
@@ -68,7 +68,20 @@ export const unstable_settings = {
   anchor: '(tabs)',
 };
 
+/**
+ * The colour mode is decided above everything, so even the first spinner (or a failed start) is drawn in the right mode
+ * instead of cream flashing on a dark phone; the saved choice replaces the phone's setting as soon as it is read.
+ */
 export default function RootLayout() {
+  return (
+    <AppearanceProvider>
+      <RootGate />
+    </AppearanceProvider>
+  );
+}
+
+function RootGate() {
+  useSchemeVersion();
   const [dbReady, setDbReady] = useState(false);
   const [needsOnboarding, setNeedsOnboarding] = useState<boolean | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -170,17 +183,15 @@ export default function RootLayout() {
   return (
     <KeyboardProvider>
       <SafeAreaProvider>
-        <AppearanceProvider>
-          <AppLockProvider initialLockEnabled={initialLocked}>
-            <AccentProvider>
-              <PrivacyProvider>
-                <ColumnFrame>
-                  <AppGate needsOnboarding={needsOnboarding} initialLocked={initialLocked} />
-                </ColumnFrame>
-              </PrivacyProvider>
-            </AccentProvider>
-          </AppLockProvider>
-        </AppearanceProvider>
+        <AppLockProvider initialLockEnabled={initialLocked}>
+          <AccentProvider>
+            <PrivacyProvider>
+              <ColumnFrame>
+                <AppGate needsOnboarding={needsOnboarding} initialLocked={initialLocked} />
+              </ColumnFrame>
+            </PrivacyProvider>
+          </AccentProvider>
+        </AppLockProvider>
       </SafeAreaProvider>
     </KeyboardProvider>
   );

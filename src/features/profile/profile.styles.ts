@@ -87,6 +87,7 @@ export const styles = themedStyles(() =>
     // ---- Settings: rows ----
     settingsCard: { borderWidth: 1, borderRadius: 16, overflow: 'hidden' },
     themeError: { color: theme.colors.expenseText, padding: theme.space.md },
+    modeRow: { paddingHorizontal: 14, paddingTop: 12, paddingBottom: 6, gap: 8 },
     appearanceHead: {
       flexDirection: 'row',
       alignItems: 'center',

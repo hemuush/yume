@@ -8,7 +8,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "scheme": "yume",
     "android": {
       "package": "com.yume.app",
@@ -182,7 +182,11 @@
           "image": "./assets/splash-icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#FEFBF1"
+          "backgroundColor": "#FEFBF1",
+          "dark": {
+            "image": "./assets/splash-icon.png",
+            "backgroundColor": "#12130F"
+          }
         }
       ]
     ],
