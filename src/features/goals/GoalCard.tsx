@@ -6,7 +6,6 @@ import { CountUpAmount } from '@/components/CountUpAmount';
 import { SavingsGoal } from '@/types';
 import { formatMoney, formatMaskableMoney } from '@/lib/money';
 import { theme } from '@/constants/theme';
-import { shade } from '@/lib/color';
 import { selectedFill, themeInk } from '@/theme/interactionColors';
 import { goalProgress } from '@/lib/savingsGoalProgress';
 import { usePrivacy } from '@/theme/PrivacyContext';
@@ -25,7 +24,6 @@ import { themedStyles } from '@/theme/themedStyles';
  */
 export function GoalCard({
   goal,
-  hue = theme.colors.idTeal,
   accountName,
   accountAvailable = true,
   divider = false,
@@ -33,8 +31,6 @@ export function GoalCard({
   onContribute,
 }: {
   goal: SavingsGoal;
-  /** The goal's identity colour (goalHues). */
-  hue?: string;
   /** The linked account's name, shown when the goal follows or reserves in it. */
   accountName?: string | null;
   accountAvailable?: boolean;
@@ -53,7 +49,6 @@ export function GoalCard({
   const blocked = following && !accountAvailable;
 
   const fillPct = hideAmounts ? 0 : Math.min(100, Math.max(0, percent));
-  const fillColor = reached ? theme.colors.slice.saved : hue;
 
   const when = goal.targetDate ? `By ${dayMonthYear(goal.targetDate)}` : 'No target date';
   const line = [
@@ -106,7 +101,7 @@ export function GoalCard({
           </Text>
         </View>
         <View style={styles.track}>
-          <View style={[styles.fill, { width: `${fillPct}%`, backgroundColor: shade(fillColor, 60) }]} />
+          <View style={[styles.fill, { width: `${fillPct}%`, backgroundColor: theme.colors.ink }]} />
         </View>
         <View style={styles.bottom}>
           <Text style={styles.line}>{line}</Text>

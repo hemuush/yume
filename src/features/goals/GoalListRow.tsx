@@ -10,14 +10,12 @@ import { GoalCard } from './GoalCard';
  */
 export const GoalListRow = memo(function GoalListRow({
   goal,
-  hue,
   divider,
   account,
   onOpen,
   onContribute,
 }: {
   goal: SavingsGoal;
-  hue?: string;
   divider: boolean;
   /** The account the goal is linked to, when it has one. */
   account?: Account;
@@ -28,7 +26,6 @@ export const GoalListRow = memo(function GoalListRow({
     <MovingRow>
       <GoalCard
         goal={goal}
-        hue={hue}
         divider={divider}
         accountName={account?.name}
         accountAvailable={!!account && !account.archived}

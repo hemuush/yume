@@ -68,10 +68,7 @@ export const styles = themedStyles(() =>
     followGroup: {
       marginTop: -4,
       marginBottom: 12,
-      borderRadius: 18,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.colors.borderSoft,
-      backgroundColor: theme.colors.surface,
+      ...flatSection(),
       overflow: 'hidden',
     },
     followOpt: {

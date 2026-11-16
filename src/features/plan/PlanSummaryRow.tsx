@@ -8,6 +8,7 @@ import { useAccent } from '@/theme/AccentContext';
 import { useStacked } from '@/lib/useStacked';
 import { GrowFill } from '@/components/GrowFill';
 import { themedStyles, themedValue } from '@/theme/themedStyles';
+import { flatSection } from '@/components/screenStyles';
 
 /** Compact budget/goal row; large text moves its amount below the name instead of truncating it. */
 export function PlanSummaryRow({
@@ -80,12 +81,9 @@ export function PlanListAdd({ label, onPress }: { label: string; onPress: () => 
 }
 
 export const summaryListStyle = themedValue(() => ({
-  marginHorizontal: 16,
+  ...flatSection(),
+  marginHorizontal: 2,
   paddingHorizontal: 14,
-  borderRadius: 22,
-  backgroundColor: theme.colors.surface,
-  borderWidth: StyleSheet.hairlineWidth,
-  borderColor: theme.colors.borderSoft,
 }));
 const s = themedStyles(() =>
   StyleSheet.create({

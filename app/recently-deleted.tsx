@@ -269,7 +269,7 @@ export default function RecentlyDeletedScreen() {
                             <Pressable
                               onPress={() => void restore(entry)}
                               disabled={busyId != null}
-                              hitSlop={8}
+                              hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
                               accessibilityRole="button"
                               accessibilityLabel={`Restore ${title}${entry.note ? `, ${entry.note}` : ''}`}
                               style={withPressed(styles.restore)}

@@ -28,7 +28,6 @@ import { getDefaultCurrency } from '@/db/settings';
 import { EntryMonth, listEntryMonths } from '@/db/exportSummary';
 import { openPeriod, previewFor, stepPeriod } from '@/features/export/exportChoice';
 import { withPressed } from '@/lib/pressed';
-import { shade } from '@/lib/color';
 import { themedStyles } from '@/theme/themedStyles';
 import { flatSection } from '@/components/screenStyles';
 
@@ -196,13 +195,7 @@ export default function ExportScreen() {
                 selected: format === choice.value,
                 disabled: busy,
               }}
-              style={withPressed([
-                styles.format,
-                format === choice.value && {
-                  borderColor: theme.colors.textSecondary,
-                  backgroundColor: shade(accent, 94),
-                },
-              ])}
+              style={withPressed([styles.format])}
             >
               <View
                 style={[
@@ -247,12 +240,9 @@ const styles = themedStyles(() =>
     // In the sky header, under the title, as on What-if and Suu's garden.
     intro: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textSecondary },
     card: {
-      padding: 14,
+      ...flatSection(),
+      paddingVertical: 14,
       gap: 14,
-      backgroundColor: theme.colors.surface,
-      borderRadius: 22,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.colors.borderSoft,
     },
     // A step's heading above its block, in the same type as every other section heading.
     label: SECTION_TITLE,

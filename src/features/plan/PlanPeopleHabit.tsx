@@ -10,6 +10,7 @@ import { useAccent } from '@/theme/AccentContext';
 import { personInitials } from '@/features/people/people.helpers';
 import type { HabitState, PeopleState, PlanPerson } from './planOverview';
 import { themedStyles } from '@/theme/themedStyles';
+import { flatSection } from '@/components/screenStyles';
 
 /** Kept days' sprouts grow a little taller each day; a missed day stays a small grey one. */
 const SPROUT_BASE = 10;
@@ -159,12 +160,9 @@ export function PlanPeopleHabit({
 const s = themedStyles(() =>
   StyleSheet.create({
     card: {
-      marginHorizontal: 16,
+      ...flatSection(),
+      marginHorizontal: 4,
       paddingHorizontal: 12,
-      borderRadius: 22,
-      backgroundColor: theme.colors.surface,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.colors.borderSoft,
     },
     row: { minHeight: 52, paddingVertical: 7, flexDirection: 'row', alignItems: 'center', gap: 10 },
     divider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.divider },
