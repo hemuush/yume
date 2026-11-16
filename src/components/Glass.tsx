@@ -1,38 +1,38 @@
 import { View, ViewProps, StyleSheet } from 'react-native';
-import { themedStyles } from '@/theme/themedStyles';
+import { theme } from '@/constants/theme';
+import { themedStyles, themedValue } from '@/theme/themedStyles';
 
 /**
- * Frosted glass on Home's wallpaper: translucent white with a bright hairline edge and a soft drop. No real blur
- * (Android only blurs fast from API 31), so the wallpaper behind is kept soft enough that plain translucency
- * reads as frost. `tone="strong"` is the brighter glass used for a control sitting on a glass card.
+ * The fill and edge of a control that sits on the page (a round header button, a period pill, a search field): white
+ * on the paper with a hairline edge, no shadow. The name is from the earlier frosted-glass look; the colours are the
+ * quiet look's, and they follow the colour mode.
  */
-export const GLASS = {
-  fill: 'rgba(255,255,255,0.55)',
-  fillStrong: 'rgba(255,255,255,0.78)',
-  edge: 'rgba(255,255,255,0.9)',
-  shadow: '0px 8px 24px rgba(16,32,51,0.06)',
-} as const;
+export const GLASS = themedValue(() => ({
+  fill: theme.colors.surface,
+  fillStrong: theme.colors.surface,
+  edge: theme.colors.borderSoft,
+  shadow: 'none',
+}));
 
+/**
+ * A block on the paper: no fill and no rounded box, just a hairline above it. (It was a frosted card; the quiet look has
+ * no cards, so `radius` and `tone` are kept only so callers need not change.)
+ */
 export function Glass({
-  radius = 24,
-  tone = 'soft',
   style,
-  ...rest
+  radius: _radius,
+  tone: _tone,
+  ...view
 }: ViewProps & { radius?: number; tone?: 'soft' | 'strong' }) {
-  return (
-    <View
-      {...rest}
-      style={[
-        styles.glass,
-        { borderRadius: radius, backgroundColor: tone === 'strong' ? GLASS.fillStrong : GLASS.fill },
-        style,
-      ]}
-    />
-  );
+  return <View {...view} style={[styles.glass, style]} />;
 }
 
 const styles = themedStyles(() =>
   StyleSheet.create({
-    glass: { borderWidth: 1, borderColor: GLASS.edge, boxShadow: GLASS.shadow },
+    glass: {
+      backgroundColor: 'transparent',
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.borderSoft,
+    },
   })
 );

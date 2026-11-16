@@ -2,9 +2,6 @@ import { useCallback, useContext, useId, useLayoutEffect, useState } from 'react
 import { SheetFlowContext } from './SheetFlow';
 import { Keyboard, View, Modal, Pressable, Animated, StyleSheet, useWindowDimensions } from 'react-native';
 import { Text } from '@/components/Text';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useAccent } from '@/theme/AccentContext';
-import { shade } from '@/lib/color';
 import { SheetSurfaceProvider } from './SheetSurface';
 import Feather from '@expo/vector-icons/Feather';
 import {
@@ -142,15 +139,9 @@ function StandaloneSheet(props: Props) {
   );
 }
 
+/** The sheet has no coloured header wash any more: it is plain white. Kept so each sheet still marks where it was. */
 function SheetWash() {
-  const { accent } = useAccent();
-  return (
-    <LinearGradient
-      pointerEvents="none"
-      colors={[shade(accent ?? theme.colors.primary, 94), theme.colors.surface]}
-      style={styles.wash}
-    />
-  );
+  return null;
 }
 
 function ModalCloseButton({
@@ -541,7 +532,6 @@ const styles = themedStyles(() =>
     },
     alignBottom: { justifyContent: 'flex-end' },
     alignCenter: { justifyContent: 'center' },
-    wash: { position: 'absolute', top: 0, left: 0, right: 0, height: 112 },
 
     header: {
       flexDirection: 'row',

@@ -320,17 +320,16 @@ export function PlanOverviewPanels({
 
 const s = themedStyles(() =>
   StyleSheet.create({
-    alerts: { marginHorizontal: 16, gap: 6 },
-    // One tinted line per alert: the tint says "look", so no icon tile or card is needed.
+    alerts: { marginHorizontal: 16 },
+    // One line per alert between hairlines: the red icon says "look", so no tint, icon tile or card is needed.
     alert: {
-      minHeight: 44,
+      minHeight: 48,
       flexDirection: 'row',
       alignItems: 'center',
       gap: 10,
-      paddingHorizontal: 12,
-      paddingVertical: 6,
-      borderRadius: 16,
-      backgroundColor: theme.colors.expenseTint,
+      paddingVertical: 8,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: theme.colors.borderSoft,
     },
     alertCopy: { flex: 1, minWidth: 0, flexDirection: 'row', flexWrap: 'wrap', columnGap: 6 },
     alertTitle: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
@@ -346,13 +345,11 @@ const s = themedStyles(() =>
       flexGrow: 1,
       flexBasis: '45%',
       minWidth: 0,
-      paddingHorizontal: 12,
+      paddingHorizontal: 0,
       paddingVertical: 10,
       gap: 5,
-      borderRadius: 18,
-      backgroundColor: theme.colors.surface,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.colors.borderSoft,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: theme.colors.borderSoft,
     },
     tileWide: { flexBasis: '100%' },
     tileHead: { flexDirection: 'row', alignItems: 'center', gap: 6 },

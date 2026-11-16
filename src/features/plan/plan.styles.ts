@@ -128,7 +128,7 @@ export const styles = themedStyles(() =>
     addText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textSecondary },
     tileWrap: { flex: 1, minWidth: 0 },
     // Compact tiles: the icon and the figure share a row, so a tile is about 95 dp, with no empty space.
-    tileFill: { flex: 1, padding: 10, gap: 6, overflow: 'hidden', borderWidth: 1 },
+    tileFill: { flex: 1, paddingVertical: 10, paddingHorizontal: 0, gap: 6, overflow: 'hidden' },
     // A debt tile's body keeps its padding; the amber due strip runs edge to edge under it.
     debtTile: { padding: 0, gap: 0, justifyContent: 'space-between' },
     debtBody: { padding: 10, gap: 6 },
