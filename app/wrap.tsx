@@ -100,7 +100,7 @@ const styles = themedStyles(() =>
     },
     title: {
       fontFamily: theme.font.roundedBold,
-      fontSize: 20,
+      fontSize: 22,
       color: theme.colors.textPrimary,
       textAlign: 'center',
     },

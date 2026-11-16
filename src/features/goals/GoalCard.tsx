@@ -172,11 +172,11 @@ const styles = themedStyles(() =>
       justifyContent: 'space-between',
       columnGap: 8,
     },
-    name: { flexShrink: 1, fontFamily: theme.font.bodyMedium, fontSize: 14, color: theme.colors.textPrimary },
+    name: { flexShrink: 1, fontFamily: theme.font.bodyMedium, fontSize: 15, color: theme.colors.textPrimary },
     amounts: { flexShrink: 1 },
     saved: {
       fontFamily: theme.font.bodyMedium,
-      fontSize: 14,
+      fontSize: 15,
       fontVariant: ['tabular-nums'],
       color: theme.colors.textPrimary,
     },

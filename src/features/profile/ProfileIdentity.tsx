@@ -130,9 +130,9 @@ const local = themedStyles(() =>
       // A circular View's background can render clipped to a stale layout on Android.
       overflow: 'hidden',
     },
-    avatarInitial: { fontFamily: theme.font.roundedBold, fontSize: 16 },
+    avatarInitial: { fontFamily: theme.font.roundedBold, fontSize: 17 },
     text: { flex: 1, minWidth: 0, minHeight: 44, justifyContent: 'center' },
-    name: { fontFamily: theme.font.roundedBold, fontSize: 16, color: theme.colors.textPrimary },
+    name: { fontFamily: theme.font.roundedBold, fontSize: 17, color: theme.colors.textPrimary },
     sub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
     editButton: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
     editForm: { marginTop: 4, gap: 8 },

@@ -52,7 +52,7 @@ export const styles = themedStyles(() =>
     forecastFigure: { gap: 2, flex: 1, minWidth: 0 },
     forecastValue: {
       fontFamily: theme.font.bodyMedium,
-      fontSize: 30,
+      fontSize: 28,
       lineHeight: 36,
       letterSpacing: -0.3,
       fontVariant: ['tabular-nums'],
@@ -68,7 +68,7 @@ export const styles = themedStyles(() =>
     },
     forecastMetricValue: {
       fontFamily: theme.font.bodyMedium,
-      fontSize: 16,
+      fontSize: 17,
       lineHeight: 22,
       color: theme.colors.textPrimary,
       fontVariant: ['tabular-nums'],
@@ -84,7 +84,7 @@ export const styles = themedStyles(() =>
     forecastStatusWarning: { backgroundColor: theme.colors.surface },
     forecastStatusTitle: {
       fontFamily: theme.font.bodyMedium,
-      fontSize: 14,
+      fontSize: 15,
       lineHeight: 20,
       color: theme.colors.textPrimary,
     },
@@ -144,7 +144,7 @@ export const styles = themedStyles(() =>
     tilePct: {
       flexShrink: 1,
       fontFamily: theme.font.bodyBold,
-      fontSize: 14,
+      fontSize: 15,
       lineHeight: 20,
       fontVariant: ['tabular-nums'],
       color: theme.colors.textPrimary,

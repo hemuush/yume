@@ -183,7 +183,7 @@ const styles = themedStyles(() =>
     kicker: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 16, color: theme.colors.textSecondary },
     figure: {
       fontFamily: theme.font.bodyBold,
-      fontSize: 24,
+      fontSize: 22,
       lineHeight: 30,
       letterSpacing: -0.3,
       fontVariant: ['tabular-nums'],

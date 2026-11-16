@@ -179,7 +179,7 @@ const styles = themedStyles(() =>
     topContent: { width: '100%', maxWidth: 420, alignSelf: 'center' },
     hills: { position: 'absolute', bottom: 0, left: 0, right: 0, opacity: 0.5 },
     wordmark: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 24 },
-    wordmarkText: { fontFamily: theme.font.roundedBold, fontSize: 24, color: theme.colors.textPrimary },
+    wordmarkText: { fontFamily: theme.font.roundedBold, fontSize: 22, color: theme.colors.textPrimary },
     identityRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
     card: {
       alignSelf: 'stretch',

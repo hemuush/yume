@@ -68,7 +68,7 @@ export function ExpenseLabelsReport({
         {status === 'ready' ? (
           <Amount
             minor={rows.reduce((total, row) => total + row.totalMinor, 0)}
-            style={{ fontVariant: ['tabular-nums'], fontSize: 20 }}
+            style={{ fontVariant: ['tabular-nums'], fontSize: 22 }}
           />
         ) : (
           <Text style={s.status} accessibilityLiveRegion="polite">
@@ -175,7 +175,7 @@ const s = themedStyles(() =>
     summary: { gap: 6, marginBottom: 16, minHeight: 88 },
     status: {
       fontFamily: theme.font.body,
-      fontSize: 18,
+      fontSize: 17,
       color: theme.colors.textSecondary,
       paddingVertical: 4,
     },

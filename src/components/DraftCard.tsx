@@ -101,7 +101,7 @@ const styles = themedStyles(() =>
     emi: { alignItems: 'flex-end' },
     amount: {
       fontFamily: theme.font.body,
-      fontSize: 20,
+      fontSize: 22,
       lineHeight: 26,
       fontVariant: ['tabular-nums'],
       color: theme.colors.textPrimary,

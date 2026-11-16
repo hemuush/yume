@@ -173,7 +173,7 @@ const styles = themedStyles(() =>
     heading: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.textPrimary },
     change: {
       fontFamily: theme.font.body,
-      fontSize: 20,
+      fontSize: 22,
       color: theme.colors.textPrimary,
       fontVariant: ['tabular-nums'],
       marginVertical: 2,

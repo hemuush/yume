@@ -59,7 +59,7 @@ const styles = themedStyles(() =>
       alignItems: 'center',
       justifyContent: 'center',
     },
-    title: { fontFamily: theme.font.roundedBold, fontSize: 20, color: theme.colors.ink },
+    title: { fontFamily: theme.font.roundedBold, fontSize: 22, color: theme.colors.ink },
     detail: { fontFamily: theme.font.body, fontSize: 13, lineHeight: 21, color: theme.colors.textSecondary },
   })
 );

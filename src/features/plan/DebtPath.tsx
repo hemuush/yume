@@ -170,7 +170,7 @@ const local = themedStyles(() =>
     label: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
     figure: {
       fontFamily: theme.font.bodyMedium,
-      fontSize: 20,
+      fontSize: 22,
       lineHeight: 26,
       letterSpacing: -0.2,
       color: theme.colors.textPrimary,
@@ -187,7 +187,7 @@ const local = themedStyles(() =>
     segment: { flexBasis: 0, minWidth: 6, height: 8, borderRadius: 4 },
     fact: { gap: 0 },
     factLabel: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
-    factValue: { fontFamily: theme.font.bodyMedium, fontSize: 14, fontVariant: ['tabular-nums'] },
+    factValue: { fontFamily: theme.font.bodyMedium, fontSize: 15, fontVariant: ['tabular-nums'] },
     compare: {
       minHeight: 44,
       flexDirection: 'row',

@@ -127,7 +127,7 @@ const styles = themedStyles(() =>
     kicker: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textSecondary },
     amount: {
       fontFamily: theme.font.body,
-      fontSize: 20,
+      fontSize: 22,
       lineHeight: 26,
       fontVariant: ['tabular-nums'],
       color: theme.colors.textPrimary,

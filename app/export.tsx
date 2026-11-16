@@ -267,7 +267,7 @@ const styles = themedStyles(() =>
     },
     formatIcon: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
     formatText: { flex: 1, minWidth: 0, gap: 4 },
-    formatTitle: { fontFamily: theme.font.bodyBold, fontSize: 14, color: theme.colors.textPrimary },
+    formatTitle: { fontFamily: theme.font.bodyBold, fontSize: 15, color: theme.colors.textPrimary },
     radio: {
       width: 22,
       height: 22,
@@ -302,7 +302,7 @@ const styles = themedStyles(() =>
       flex: 1,
       textAlign: 'center',
       fontFamily: theme.font.roundedBold,
-      fontSize: 20,
+      fontSize: 22,
       color: theme.colors.textPrimary,
     },
     preview: {

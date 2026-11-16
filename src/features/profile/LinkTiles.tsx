@@ -119,7 +119,7 @@ const styles = themedStyles(() =>
     dividerTop: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.divider },
     value: {
       fontFamily: theme.font.bodyBold,
-      fontSize: 16,
+      fontSize: 17,
       fontVariant: ['tabular-nums'],
       color: theme.colors.textPrimary,
     },

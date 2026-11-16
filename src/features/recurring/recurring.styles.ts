@@ -50,7 +50,7 @@ export const styles = themedStyles(() =>
     row: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8 },
     rowDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.borderSoft },
     rowMuted: { opacity: 0.6 },
-    rowTitle: { fontFamily: theme.font.bodyMedium, fontSize: 14, color: theme.colors.textPrimary },
+    rowTitle: { fontFamily: theme.font.bodyMedium, fontSize: 15, color: theme.colors.textPrimary },
     rowSub: {
       fontFamily: theme.font.body,
       fontSize: 12,
@@ -85,7 +85,7 @@ export const styles = themedStyles(() =>
     ruleAmount: {
       fontFamily: theme.font.bodyMedium,
       fontVariant: ['tabular-nums'],
-      fontSize: 14,
+      fontSize: 15,
       color: theme.colors.textPrimary,
     },
     make: {

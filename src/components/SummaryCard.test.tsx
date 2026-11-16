@@ -44,8 +44,8 @@ describe('SummaryCard pieces', () => {
     expect(texts(tree)).toEqual(['Left this month', '₹14,820', '₹690 a day', '13 days left']);
   });
 
-  it('keeps the lead figure at 20 px', () => {
-    expect(summaryFigure.fontSize).toBe(20);
+  it('keeps the lead figure at 22 px', () => {
+    expect(summaryFigure.fontSize).toBe(22);
   });
 
   it('colours a fact or the side line by tone, and leaves the rest neutral', () => {

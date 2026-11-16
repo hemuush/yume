@@ -42,7 +42,7 @@ export const styles = themedStyles(() =>
       textTransform: 'uppercase',
       color: theme.colors.textMuted,
     },
-    transferName: { fontFamily: theme.font.bodyBold, fontSize: 14, color: theme.colors.textPrimary },
+    transferName: { fontFamily: theme.font.bodyBold, fontSize: 15, color: theme.colors.textPrimary },
     transferBal: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
     swapBtn: {
       position: 'absolute',
@@ -181,7 +181,7 @@ export const styles = themedStyles(() =>
       color: theme.colors.textPrimary,
     },
     noAccountCard: { marginBottom: 18 },
-    noAccountTitle: { fontFamily: theme.font.roundedBold, fontSize: 14, color: theme.colors.textPrimary },
+    noAccountTitle: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.textPrimary },
     noAccountText: {
       fontFamily: theme.font.body,
       fontSize: 12,
@@ -345,7 +345,7 @@ export const styles = themedStyles(() =>
     },
     repeatBtnText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
     draftCard: { ...flatSection(), marginBottom: 12, padding: 14, gap: 8 },
-    draftTitle: { fontFamily: theme.font.bodyBold, fontSize: 14, color: theme.colors.textPrimary },
+    draftTitle: { fontFamily: theme.font.bodyBold, fontSize: 15, color: theme.colors.textPrimary },
     draftText: {
       fontFamily: theme.font.body,
       fontSize: 12,

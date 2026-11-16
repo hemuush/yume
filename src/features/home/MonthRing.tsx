@@ -1,14 +1,13 @@
 import { StyleSheet, View } from 'react-native';
-import Svg, { Circle, Defs, LinearGradient, Stop } from 'react-native-svg';
+import Svg, { Circle } from 'react-native-svg';
 import { theme } from '@/constants/theme';
-import { hexToHsl, shade } from '@/lib/color';
 import { heroPct, type HeroSlices } from './heroSlices';
 
 /** The four slices of the month, in the order the ring draws them. */
 export type SliceKey = 'spent' | 'saved' | 'due' | 'free';
 
 /** The ring's width and height; the same on every phone, so the card stays small. */
-const RING_SIZE = 112;
+const RING_SIZE = 176;
 const STROKE = 10;
 const R = (RING_SIZE - STROKE) / 2;
 const GAP = 2.5;
@@ -16,13 +15,10 @@ const GAP = 2.5;
 const MIN_BAR = 2;
 /** The slices that were not picked step back. */
 const DIM = 0.35;
-/** How much lighter a slice's first colour is than its own: the ring gets a little depth, still flat in feel. */
-const SHEEN = 5;
-const brighter = (hex: string) => shade(hex, Math.min(88, hexToHsl(hex)[2] + SHEEN));
 
 /**
  * The month as one ring: spent, saved, bills still to pay and free, in the colours of the legend beside it. It is
- * still: it draws at once, each slice a touch lighter along one side, and the slices that were not picked are
+ * still: it draws at once, each slice one flat colour, and the slices that were not picked are
  * dimmed. The figure for the picked slice sits in the middle (`children`).
  */
 export function MonthRing({
@@ -82,18 +78,11 @@ export function MonthRing({
               style={[StyleSheet.absoluteFill, { opacity: focus != null && focus !== part.key ? DIM : 1 }]}
             >
               <Svg width={RING_SIZE} height={RING_SIZE}>
-                <Defs>
-                  <LinearGradient id={`ring-${part.key}`} x1="0" y1="0" x2="1" y2="0">
-                    {/* The ring is turned a quarter, so offset 0 is its bottom: its own colour there, lighter at the top. */}
-                    <Stop offset="0" stopColor={part.color} />
-                    <Stop offset="1" stopColor={brighter(part.color)} />
-                  </LinearGradient>
-                </Defs>
                 <Circle
                   cx={c}
                   cy={c}
                   r={R}
-                  stroke={`url(#ring-${part.key})`}
+                  stroke={part.color}
                   strokeWidth={STROKE}
                   strokeLinecap={whole || !roomy ? 'butt' : 'round'}
                   fill="none"

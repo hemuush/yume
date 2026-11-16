@@ -235,7 +235,7 @@ const styles = themedStyles(() =>
   StyleSheet.create({
     chart: { marginTop: 12 },
     touch: { position: 'absolute', top: 0, right: 0 },
-    axis: { position: 'absolute', fontFamily: theme.font.body, fontSize: 10, color: theme.colors.textMuted },
+    axis: { position: 'absolute', fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted },
     guide: { left: 0, textAlign: 'right' },
     tick: { textAlign: 'center' },
     pill: {
@@ -247,7 +247,7 @@ const styles = themedStyles(() =>
       justifyContent: 'center',
     },
     pillShort: { backgroundColor: theme.colors.expenseText },
-    pillText: { fontFamily: theme.font.bodyBold, fontSize: 10, color: theme.colors.surface },
+    pillText: { fontFamily: theme.font.bodyBold, fontSize: 11, color: theme.colors.surface },
     read: {
       marginTop: 10,
       borderRadius: 14,

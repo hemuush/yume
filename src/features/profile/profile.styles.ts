@@ -55,7 +55,7 @@ export const styles = themedStyles(() =>
       borderColor: theme.colors.borderSoft,
       backgroundColor: theme.colors.surface,
       fontFamily: theme.font.bodyMedium,
-      fontSize: 14,
+      fontSize: 15,
       color: theme.colors.textPrimary,
     },
 
@@ -87,7 +87,7 @@ export const styles = themedStyles(() =>
     // ---- Settings: rows ----
     settingsCard: { overflow: 'hidden' },
     modeRow: { paddingHorizontal: 14, paddingTop: 12, paddingBottom: 6, gap: 8 },
-    appearanceTitle: { fontFamily: theme.font.bodyMedium, fontSize: 14, color: theme.colors.textPrimary },
+    appearanceTitle: { fontFamily: theme.font.bodyMedium, fontSize: 15, color: theme.colors.textPrimary },
     // Opens in place under the row that opened it, inside the same card.
     accordionBody: {
       paddingHorizontal: 14,

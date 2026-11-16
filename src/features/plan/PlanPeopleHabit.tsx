@@ -189,7 +189,7 @@ const s = themedStyles(() =>
     copy: { flex: 1, minWidth: 0 },
     title: {
       fontFamily: theme.font.bodyMedium,
-      fontSize: 14,
+      fontSize: 15,
       lineHeight: 20,
       color: theme.colors.textPrimary,
     },
@@ -205,7 +205,7 @@ const s = themedStyles(() =>
     endLine: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, textAlign: 'right' },
     value: {
       fontFamily: theme.font.bodyMedium,
-      fontSize: 14,
+      fontSize: 15,
       lineHeight: 20,
       color: theme.colors.textPrimary,
       fontVariant: ['tabular-nums'],

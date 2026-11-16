@@ -136,7 +136,7 @@ export const styles = themedStyles(() =>
     sumKicker: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
     headlineAmt: {
       fontFamily: theme.font.bodyMedium,
-      fontSize: 20,
+      fontSize: 22,
       lineHeight: 26,
       letterSpacing: -0.2,
       fontVariant: ['tabular-nums'],
@@ -220,7 +220,7 @@ export const styles = themedStyles(() =>
     periodTitleCol: { flexShrink: 1, minWidth: 0 },
     periodTitle: {
       fontFamily: theme.font.bodyBold,
-      fontSize: 14,
+      fontSize: 15,
       lineHeight: 18,
       color: theme.colors.textPrimary,
     },

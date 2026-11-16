@@ -165,6 +165,6 @@ const styles = themedStyles(() =>
     main: { flexGrow: 1.6, flexBasis: 160 },
     note: { paddingHorizontal: 2, paddingVertical: 8, gap: 4, marginBottom: 6 },
     caption: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textSecondary },
-    account: { fontFamily: theme.font.bodyMedium, fontSize: 14, color: theme.colors.textPrimary },
+    account: { fontFamily: theme.font.bodyMedium, fontSize: 15, color: theme.colors.textPrimary },
   })
 );

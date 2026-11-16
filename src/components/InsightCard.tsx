@@ -147,7 +147,7 @@ export const insight = themedStyles(() =>
     },
     value: {
       fontFamily: theme.font.bodyMedium,
-      fontSize: 20,
+      fontSize: 22,
       color: theme.colors.textPrimary,
       fontVariant: ['tabular-nums'],
     },

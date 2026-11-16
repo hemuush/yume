@@ -6,7 +6,7 @@ import { withPressed } from '@/lib/pressed';
 import { tooTight } from '@/lib/tooTight';
 
 import { useAccent } from '@/theme/AccentContext';
-import { interactionColors, selectedFill } from '@/theme/interactionColors';
+import { interactionColors } from '@/theme/interactionColors';
 import { themedStyles } from '@/theme/themedStyles';
 
 /**
@@ -49,7 +49,7 @@ export function SheetTabs<T extends string>({
             variant === 'pill' && styles.pillTab,
             option.value === value &&
               (variant === 'pill'
-                ? { backgroundColor: selectedFill(accent) }
+                ? [styles.pillPicked]
                 : [styles.selected, { borderBottomColor: colors.ink }]),
           ])}
         >
@@ -100,10 +100,10 @@ const styles = themedStyles(() =>
       padding: 3,
       gap: 4,
       borderRadius: 24,
-      backgroundColor: theme.colors.surface,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.colors.borderSoft,
+      backgroundColor: theme.colors.surfaceAlt,
     },
+    // The picked tab is a white piece raised from the warm track.
+    pillPicked: { backgroundColor: theme.colors.surface, boxShadow: '0px 1px 2px rgba(60,50,20,0.12)' },
     pillTab: { borderBottomWidth: 0, borderRadius: 21 },
     pillActive: { color: theme.colors.textPrimary },
     label: {

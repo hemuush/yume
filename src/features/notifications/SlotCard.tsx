@@ -100,7 +100,7 @@ const styles = themedStyles(() =>
     clock: {
       flexShrink: 1,
       fontFamily: theme.font.roundedBold,
-      fontSize: 18,
+      fontSize: 17,
       color: theme.colors.textPrimary,
       textAlign: 'center',
     },

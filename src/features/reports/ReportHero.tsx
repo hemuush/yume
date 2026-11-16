@@ -136,7 +136,7 @@ const styles = themedStyles(() =>
     // Compact: Spent leads at 20, Income and Kept beside it at 14, each with one small line under it.
     figure: {
       fontFamily: theme.font.bodyMedium,
-      fontSize: 20,
+      fontSize: 22,
       lineHeight: 26,
       letterSpacing: -0.2,
       color: theme.colors.textPrimary,
@@ -154,7 +154,7 @@ const styles = themedStyles(() =>
     kpiLabel: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
     kpiValue: {
       fontFamily: theme.font.bodyMedium,
-      fontSize: 14,
+      fontSize: 15,
       lineHeight: 26,
       color: theme.colors.textPrimary,
       fontVariant: ['tabular-nums'],

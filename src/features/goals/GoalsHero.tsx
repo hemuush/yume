@@ -83,7 +83,7 @@ const styles = themedStyles(() =>
     label: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
     figure: {
       fontFamily: theme.font.bodyMedium,
-      fontSize: 20,
+      fontSize: 22,
       lineHeight: 26,
       letterSpacing: -0.2,
       fontVariant: ['tabular-nums'],

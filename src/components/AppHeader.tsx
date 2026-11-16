@@ -169,7 +169,7 @@ const styles = themedStyles(() =>
     },
     glass: { borderWidth: 1, borderColor: GLASS.edge, backgroundColor: GLASS.fillStrong },
     initial: { fontFamily: theme.font.bodyBold, fontSize: 13 },
-    initialLarge: { fontFamily: theme.font.bodyBold, fontSize: 14 },
+    initialLarge: { fontFamily: theme.font.bodyBold, fontSize: 15 },
     countBadge: {
       position: 'absolute',
       top: -4,

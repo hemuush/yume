@@ -116,7 +116,7 @@ const styles = themedStyles(() =>
     names: { flex: 1, minWidth: 0 },
     title: { fontFamily: theme.font.bodyMedium, fontSize: 15, color: theme.colors.textPrimary },
     kicker: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textSecondary },
-    amount: { fontFamily: theme.font.body, fontSize: 20, lineHeight: 26, fontVariant: ['tabular-nums'] },
+    amount: { fontFamily: theme.font.body, fontSize: 22, lineHeight: 26, fontVariant: ['tabular-nums'] },
     amountOver: { color: theme.colors.expenseText },
     meter: { marginTop: 12 },
     line: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 4, marginTop: 8 },

@@ -48,7 +48,7 @@ const styles = themedStyles(() =>
     },
     day: {
       fontFamily: theme.font.roundedBold,
-      fontSize: 14,
+      fontSize: 15,
       lineHeight: 17,
       color: theme.colors.textPrimary,
     },

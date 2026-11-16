@@ -46,10 +46,10 @@ export const styles = themedStyles(() =>
     },
     headValue: {
       fontFamily: theme.font.bodyMedium,
-      fontSize: 20,
+      fontSize: 28,
       textAlign: 'center',
       fontVariant: ['tabular-nums'],
-      lineHeight: 26,
+      lineHeight: 34,
       letterSpacing: -0.3,
       color: theme.colors.textPrimary,
     },

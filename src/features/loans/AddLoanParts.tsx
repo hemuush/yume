@@ -148,7 +148,7 @@ const styles = themedStyles(() =>
       minWidth: 48,
       textAlign: 'center',
       fontFamily: theme.font.monoBold,
-      fontSize: 20,
+      fontSize: 22,
       color: theme.colors.textPrimary,
     },
   })

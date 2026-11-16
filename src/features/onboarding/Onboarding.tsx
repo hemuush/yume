@@ -561,6 +561,6 @@ const styles = themedStyles(() =>
       marginBottom: 8,
     },
     restoreLinkText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.link },
-    ctaText: { fontFamily: theme.font.bodyBold, fontSize: 14, color: theme.colors.surface },
+    ctaText: { fontFamily: theme.font.bodyBold, fontSize: 15, color: theme.colors.surface },
   })
 );

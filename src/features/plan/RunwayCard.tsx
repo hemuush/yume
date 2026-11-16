@@ -260,7 +260,7 @@ const local = themedStyles(() =>
     factHalf: { flexBasis: '45%' },
     factValue: {
       fontFamily: theme.font.bodyMedium,
-      fontSize: 14,
+      fontSize: 15,
       lineHeight: 20,
       color: theme.colors.textPrimary,
       fontVariant: ['tabular-nums'],

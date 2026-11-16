@@ -327,7 +327,7 @@ const styles = themedStyles(() =>
     },
     dayAmount: {
       fontFamily: theme.font.bodyMedium,
-      fontSize: 16,
+      fontSize: 17,
       lineHeight: 22,
       color: theme.colors.textPrimary,
       fontVariant: ['tabular-nums'],

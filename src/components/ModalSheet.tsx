@@ -541,7 +541,7 @@ const styles = themedStyles(() =>
       minHeight: 48,
     },
     headerText: { flex: 1, minWidth: 0 },
-    title: { fontFamily: theme.font.roundedBold, fontSize: 20, color: theme.colors.textPrimary },
+    title: { fontFamily: theme.font.roundedBold, fontSize: 22, color: theme.colors.textPrimary },
     subtitle: {
       fontFamily: theme.font.body,
       fontSize: 12,

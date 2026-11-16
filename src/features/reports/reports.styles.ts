@@ -75,7 +75,7 @@ export const styles = themedStyles(() =>
       backgroundColor: GLASS.fillStrong,
       borderRadius: theme.radius.pill,
     },
-    granChipText: { fontFamily: theme.font.bodyMedium, fontSize: 14, color: theme.colors.ink },
+    granChipText: { fontFamily: theme.font.bodyMedium, fontSize: 15, color: theme.colors.ink },
     // The Days tab's heatmap card.
 
     // Shared section headings.
@@ -233,7 +233,7 @@ export const styles = themedStyles(() =>
       borderTopColor: theme.colors.divider,
     },
     trackMid: { flex: 1, minWidth: 0 },
-    trackName: { fontFamily: theme.font.bodyMedium, fontSize: 14, color: theme.colors.textPrimary },
+    trackName: { fontFamily: theme.font.bodyMedium, fontSize: 15, color: theme.colors.textPrimary },
     trackSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 2 },
     trackEnd: { alignItems: 'flex-end', gap: 4 },
     trackPct: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textMuted },
@@ -326,7 +326,7 @@ export const styles = themedStyles(() =>
     breakdownAmount: {
       fontVariant: ['tabular-nums'],
       fontFamily: theme.font.bodyMedium,
-      fontSize: 20,
+      fontSize: 22,
       lineHeight: 26,
       letterSpacing: -0.2,
       color: theme.colors.textPrimary,
@@ -367,7 +367,7 @@ export const styles = themedStyles(() =>
     catName: {
       flexShrink: 1,
       fontFamily: theme.font.bodyMedium,
-      fontSize: 14,
+      fontSize: 15,
       color: theme.colors.textPrimary,
     },
     catDot: { width: 10, height: 10, borderRadius: 5 },
@@ -382,7 +382,7 @@ export const styles = themedStyles(() =>
     catAmt: {
       fontVariant: ['tabular-nums'],
       fontFamily: theme.font.bodyMedium,
-      fontSize: 14,
+      fontSize: 15,
       lineHeight: 20,
       color: theme.colors.textPrimary,
     },
@@ -416,7 +416,7 @@ export const styles = themedStyles(() =>
     dayMid: { flex: 1, minWidth: 0 },
     dayName: {
       fontFamily: theme.font.bodyMedium,
-      fontSize: 14,
+      fontSize: 15,
       lineHeight: 20,
       color: theme.colors.textPrimary,
     },
@@ -429,7 +429,7 @@ export const styles = themedStyles(() =>
     dayAmt: {
       fontVariant: ['tabular-nums'],
       fontFamily: theme.font.bodyMedium,
-      fontSize: 14,
+      fontSize: 15,
       color: theme.colors.textPrimary,
     },
     daySpinner: { paddingVertical: 24 },
@@ -449,7 +449,7 @@ export const styles = themedStyles(() =>
     dayTotalValue: {
       fontVariant: ['tabular-nums'],
       fontFamily: theme.font.bodyMedium,
-      fontSize: 14,
+      fontSize: 15,
       color: theme.colors.textPrimary,
     },
   })

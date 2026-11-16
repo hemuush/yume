@@ -152,7 +152,7 @@ const styles = themedStyles(() =>
     headText: { flex: 1, minWidth: 0, flexDirection: 'row', flexWrap: 'wrap', columnGap: 6 },
     label: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textPrimary },
     headSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
-    value: { fontFamily: theme.font.bodyBold, fontSize: 14, color: theme.colors.textPrimary, flexShrink: 1 },
+    value: { fontFamily: theme.font.bodyBold, fontSize: 15, color: theme.colors.textPrimary, flexShrink: 1 },
     // The sum, on a brighter pane: each part, then a rule and the total.
     sumLines: {
       marginTop: 10,

@@ -73,6 +73,6 @@ export const HoldingRow = memo(function HoldingRow({
 const styles = themedStyles(() =>
   StyleSheet.create({
     rowRight: { alignItems: 'flex-end', gap: 3, flexShrink: 1 },
-    rowValue: { fontFamily: theme.font.bodyBold, fontSize: 14, color: theme.colors.textPrimary },
+    rowValue: { fontFamily: theme.font.bodyBold, fontSize: 15, color: theme.colors.textPrimary },
   })
 );

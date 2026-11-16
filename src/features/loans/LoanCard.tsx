@@ -180,7 +180,7 @@ const styles = themedStyles(() =>
       justifyContent: 'center',
     },
     headText: { flex: 1, minWidth: 0 },
-    name: { fontFamily: theme.font.bodyMedium, fontSize: 14, color: theme.colors.textPrimary },
+    name: { fontFamily: theme.font.bodyMedium, fontSize: 15, color: theme.colors.textPrimary },
     sub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 2 },
     figs: {
       flexDirection: 'row',
@@ -192,7 +192,7 @@ const styles = themedStyles(() =>
     },
     outstanding: {
       fontFamily: theme.font.bodyBold,
-      fontSize: 20,
+      fontSize: 22,
       fontVariant: ['tabular-nums'],
       color: theme.colors.textPrimary,
       flexShrink: 1,
@@ -227,13 +227,7 @@ const styles = themedStyles(() =>
       borderTopWidth: StyleSheet.hairlineWidth,
       borderTopColor: theme.colors.borderSoft,
     },
-    footerDue: {
-      backgroundColor: theme.colors.dueTint,
-      borderRadius: 12,
-      paddingHorizontal: 10,
-      paddingBottom: 6,
-      borderTopWidth: 0,
-    },
+    footerDue: { paddingBottom: 6 },
     footerText: { flexGrow: 1, flexBasis: 180, minWidth: 0 },
     nextLabel: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.dueInk },
     nextLabelDue: { fontFamily: theme.font.bodyBold },

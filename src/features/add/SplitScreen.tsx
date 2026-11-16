@@ -391,7 +391,7 @@ const styles = themedStyles(() =>
     legendItem: { flexDirection: 'row', alignItems: 'center', gap: 5, maxWidth: '100%' },
     legendKey: { width: 9, height: 9, borderRadius: 5 },
     legendText: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
-    total: { fontFamily: theme.font.bodyBold, fontSize: 20, color: theme.colors.textPrimary },
+    total: { fontFamily: theme.font.bodyBold, fontSize: 22, color: theme.colors.textPrimary },
     meta: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 4 },
     parts: { marginTop: 14 },
     pickArea: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12, minWidth: 0 },

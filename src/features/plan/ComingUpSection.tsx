@@ -232,7 +232,7 @@ const s = themedStyles(() =>
     mid: { flex: 1, minWidth: 0 },
     title: {
       fontFamily: theme.font.bodyMedium,
-      fontSize: 14,
+      fontSize: 15,
       lineHeight: 19,
       color: theme.colors.textPrimary,
     },
@@ -242,7 +242,7 @@ const s = themedStyles(() =>
     amount: {
       flexShrink: 0,
       fontFamily: theme.font.bodyBold,
-      fontSize: 14,
+      fontSize: 15,
       fontVariant: ['tabular-nums'],
       color: theme.colors.textPrimary,
     },

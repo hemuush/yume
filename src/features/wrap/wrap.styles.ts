@@ -104,8 +104,8 @@ export const styles = themedStyles(() =>
       lineHeight: 28,
       color: theme.colors.textPrimary,
     },
-    huge: { fontFamily: theme.font.monoBold, fontSize: 48, lineHeight: 56, color: theme.colors.textPrimary },
-    body: { fontFamily: theme.font.body, fontSize: 14, lineHeight: 21, color: theme.colors.textSecondary },
+    huge: { fontFamily: theme.font.monoBold, fontSize: 40, lineHeight: 56, color: theme.colors.textPrimary },
+    body: { fontFamily: theme.font.body, fontSize: 15, lineHeight: 21, color: theme.colors.textSecondary },
     bodyStrong: { fontFamily: theme.font.monoBold, color: theme.colors.textPrimary },
     center: { textAlign: 'center' },
     gapS: { marginTop: 6 },
@@ -122,7 +122,7 @@ export const styles = themedStyles(() =>
     insightLabel: { flex: 1, fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textPrimary },
     insightAmount: {
       fontFamily: theme.font.monoBold,
-      fontSize: 26,
+      fontSize: 28,
       color: theme.colors.textPrimary,
       marginVertical: 6,
     },
@@ -194,7 +194,7 @@ export const styles = themedStyles(() =>
     cardTotal: {
       fontVariant: ['tabular-nums'],
       fontFamily: theme.font.monoBold,
-      fontSize: 32,
+      fontSize: 34,
       lineHeight: 40,
       color: theme.colors.textPrimary,
       marginTop: 6,

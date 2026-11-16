@@ -158,7 +158,7 @@ const styles = themedStyles(() =>
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: theme.colors.borderSoft,
     },
-    text: { fontFamily: theme.font.bodyMedium, fontSize: 14, textAlign: 'center', flexShrink: 1 },
+    text: { fontFamily: theme.font.bodyMedium, fontSize: 15, textAlign: 'center', flexShrink: 1 },
     textPrimary: { color: theme.colors.surface },
     textSecondary: { color: theme.colors.textPrimary },
     disabled: { opacity: theme.opacity.disabled },

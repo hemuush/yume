@@ -159,7 +159,7 @@ const styles = themedStyles(() =>
     kind: { flexShrink: 1, fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted },
     name: {
       fontFamily: theme.font.bodyMedium,
-      fontSize: 14,
+      fontSize: 15,
       lineHeight: 18,
       color: theme.colors.textPrimary,
     },

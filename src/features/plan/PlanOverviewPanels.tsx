@@ -354,7 +354,7 @@ const s = themedStyles(() =>
     tileName: { flex: 1, fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
     figure: {
       fontFamily: theme.font.bodyMedium,
-      fontSize: 14,
+      fontSize: 15,
       lineHeight: 20,
       color: theme.colors.textPrimary,
       fontVariant: ['tabular-nums'],

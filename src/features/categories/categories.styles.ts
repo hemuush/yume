@@ -42,7 +42,7 @@ export const styles = themedStyles(() =>
       marginTop: 6,
       marginBottom: 12,
     },
-    collectionTitle: { ...SECTION_TITLE, fontFamily: theme.font.roundedBold, fontSize: 18 },
+    collectionTitle: { ...SECTION_TITLE, fontFamily: theme.font.roundedBold, fontSize: 17 },
     collectionCount: {
       flexShrink: 1,
       fontFamily: theme.font.body,
@@ -50,7 +50,7 @@ export const styles = themedStyles(() =>
       color: theme.colors.textMuted,
     },
     emptyCard: { ...flatSection(), marginHorizontal: -4, padding: 20, gap: 12 },
-    emptyTitle: { fontFamily: theme.font.roundedBold, fontSize: 18, color: theme.colors.textPrimary },
+    emptyTitle: { fontFamily: theme.font.roundedBold, fontSize: 17, color: theme.colors.textPrimary },
     emptyText: {
       fontFamily: theme.font.body,
       fontSize: 13,
@@ -91,7 +91,7 @@ export const styles = themedStyles(() =>
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: theme.colors.borderSoft,
     },
-    panelTitle: { ...SECTION_TITLE, fontFamily: theme.font.roundedBold, fontSize: 14 },
+    panelTitle: { ...SECTION_TITLE, fontFamily: theme.font.roundedBold, fontSize: 15 },
     panelCount: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
     pillRow: {
       flexDirection: 'row',
@@ -156,7 +156,7 @@ export const styles = themedStyles(() =>
       marginVertical: 8,
       marginBottom: 18,
     },
-    appearanceTitle: { ...SECTION_TITLE, fontFamily: theme.font.roundedBold, fontSize: 16, marginBottom: 16 },
+    appearanceTitle: { ...SECTION_TITLE, fontFamily: theme.font.roundedBold, fontSize: 17, marginBottom: 16 },
     pickerLabel: {
       fontFamily: theme.font.bodyMedium,
       fontSize: 12,

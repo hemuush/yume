@@ -195,7 +195,7 @@ const styles = themedStyles(() =>
       marginBottom: 8,
       marginHorizontal: 2,
     },
-    heading: { fontFamily: theme.font.roundedBold, fontSize: 14, color: theme.colors.textPrimary },
+    heading: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.textPrimary },
     count: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
     entries: { borderRadius: 20, backgroundColor: theme.colors.surface, overflow: 'hidden' },
   })

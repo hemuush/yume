@@ -176,7 +176,7 @@ const s = themedStyles(() =>
       borderBottomColor: theme.colors.divider,
     },
     title: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.textPrimary },
-    amount: { fontFamily: theme.font.bodyMedium, fontSize: 20 },
+    amount: { fontFamily: theme.font.bodyMedium, fontSize: 22 },
     track: { height: 5, backgroundColor: theme.colors.surfaceAlt, borderRadius: 4, overflow: 'hidden' },
     fill: { height: '100%', borderRadius: 4 },
   })

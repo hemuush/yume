@@ -137,7 +137,7 @@ const local = themedStyles(() =>
     dateDay: {
       fontFamily: theme.font.bodyBold,
       fontVariant: ['tabular-nums'],
-      fontSize: 14,
+      fontSize: 15,
       color: theme.colors.textPrimary,
     },
     dateMonth: { fontFamily: theme.font.bodyMedium, fontSize: 11, color: theme.colors.textSecondary },

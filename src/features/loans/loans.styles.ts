@@ -67,12 +67,12 @@ export const styles = themedStyles(() =>
       borderBottomWidth: StyleSheet.hairlineWidth,
       borderBottomColor: theme.colors.borderSoft,
     },
-    rowLabel: { fontFamily: theme.font.bodyMedium, fontSize: 14, color: theme.colors.textPrimary },
+    rowLabel: { fontFamily: theme.font.bodyMedium, fontSize: 15, color: theme.colors.textPrimary },
     rowSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 2 },
     rowValue: {
       fontVariant: ['tabular-nums'],
       fontFamily: theme.font.bodyBold,
-      fontSize: 14,
+      fontSize: 15,
       color: theme.colors.textPrimary,
     },
     // A soft pill (the app's chip language) rather than grey capitals.
@@ -136,7 +136,7 @@ export const styles = themedStyles(() =>
       borderColor: theme.colors.borderSoft,
     },
     assetCopy: { flex: 1, minWidth: 0 },
-    assetTitle: { fontFamily: theme.font.bodyMedium, fontSize: 14, color: theme.colors.textPrimary },
+    assetTitle: { fontFamily: theme.font.bodyMedium, fontSize: 15, color: theme.colors.textPrimary },
     assetHint: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textMuted },
     chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 14 },
     forecast: { paddingHorizontal: 14, paddingBottom: 12, gap: 4 },
