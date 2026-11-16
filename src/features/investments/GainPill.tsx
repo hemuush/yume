@@ -5,6 +5,7 @@ import { usePrivacy } from '@/theme/PrivacyContext';
 import { toLocalIsoDate } from '@/lib/date';
 import { gainLabel, isValueStale, valueAgeDays, ageLabel } from '@/lib/investment';
 import type { Account } from '@/types';
+import { themedStyles } from '@/theme/themedStyles';
 
 /** A gain as a pill: green when up, red when down; hidden amounts mask the gain and the percentage together. */
 export function GainBadge({
@@ -66,13 +67,15 @@ export function StalePill({ account }: { account: Account }) {
   );
 }
 
-const styles = StyleSheet.create({
-  pill: {
-    alignSelf: 'flex-start',
-    borderRadius: theme.radius.pill,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-  },
-  neutral: { backgroundColor: theme.colors.inkWash },
-  text: { fontFamily: theme.font.bodyBold, fontSize: 11 },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    pill: {
+      alignSelf: 'flex-start',
+      borderRadius: theme.radius.pill,
+      paddingHorizontal: 8,
+      paddingVertical: 3,
+    },
+    neutral: { backgroundColor: theme.colors.inkWash },
+    text: { fontFamily: theme.font.bodyBold, fontSize: 11 },
+  })
+);

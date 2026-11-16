@@ -8,6 +8,7 @@ import { listExpenseLabels } from '@/db/expenseLabels';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import { theme } from '@/constants/theme';
 import { NOTE_MAX_LENGTH } from '@/lib/textLimits';
+import { themedStyles } from '@/theme/themedStyles';
 
 export function ExpenseLabelSheet({
   visible,
@@ -137,8 +138,10 @@ export function ExpenseLabelSheet({
     </ModalSheet>
   );
 }
-const s = StyleSheet.create({
-  hint: { fontFamily: theme.font.body, color: theme.colors.textMuted, fontSize: 13, marginBottom: 12 },
-  action: { minHeight: 44, justifyContent: 'center' },
-  link: { fontFamily: theme.font.body, color: theme.colors.link, fontSize: 13 },
-});
+const s = themedStyles(() =>
+  StyleSheet.create({
+    hint: { fontFamily: theme.font.body, color: theme.colors.textMuted, fontSize: 13, marginBottom: 12 },
+    action: { minHeight: 44, justifyContent: 'center' },
+    link: { fontFamily: theme.font.body, color: theme.colors.link, fontSize: 13 },
+  })
+);

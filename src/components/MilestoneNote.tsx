@@ -12,6 +12,8 @@ import { DURATIONS } from '@/lib/motionTimings';
 import { MOTION } from '@/lib/animation';
 import { budgetMonthCopy, budgetMonthHeld, budgetMonthKey, MilestoneCopy } from '@/lib/milestones';
 import { usePrivacy } from '@/theme/PrivacyContext';
+import { themedStyles } from '@/theme/themedStyles';
+import { useSchemeVersion } from '@/theme/SchemeBoundary';
 
 interface Shown extends MilestoneCopy {
   key: number;
@@ -72,6 +74,7 @@ export function useMilestoneNote(): Show {
 }
 
 function NoteView({ note, onDismiss }: { note: Shown; onDismiss: () => void }) {
+  useSchemeVersion();
   const insets = useSafeAreaInsets();
   return (
     <ReanimatedAnimated.View
@@ -178,26 +181,28 @@ export function BudgetMonthWatcher() {
   return null;
 }
 
-const styles = StyleSheet.create({
-  wrap: { position: 'absolute', left: 20, right: 20, alignItems: 'center' },
-  card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    maxWidth: 420,
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.radius.xl2,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    shadowColor: theme.colors.ink,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.12,
-    shadowRadius: 16,
-    elevation: 8,
-  },
-  copy: { flexShrink: 1, gap: 2 },
-  title: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.ink },
-  body: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textMuted },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    wrap: { position: 'absolute', left: 20, right: 20, alignItems: 'center' },
+    card: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      maxWidth: 420,
+      backgroundColor: theme.colors.surface,
+      borderRadius: theme.radius.xl2,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.borderSoft,
+      paddingVertical: 12,
+      paddingHorizontal: 16,
+      shadowColor: theme.colors.ink,
+      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: 0.12,
+      shadowRadius: 16,
+      elevation: 8,
+    },
+    copy: { flexShrink: 1, gap: 2 },
+    title: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.ink },
+    body: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textMuted },
+  })
+);

@@ -175,14 +175,7 @@ export default function GardenScreen() {
                 </EmptyState>
               ) : (
                 <>
-                  <Glass
-                    radius={24}
-                    tone="strong"
-                    style={[
-                      styles.streakSummary,
-                      { backgroundColor: shade(secondary, 94), borderColor: secondary },
-                    ]}
-                  >
+                  <Glass radius={24} tone="strong" style={styles.streakSummary}>
                     <View style={styles.summaryHead}>
                       <SuuIllustration size={16} pose={streakToday > 0 ? 'default' : 'sleepy'} />
                       <Text style={styles.streakValue}>

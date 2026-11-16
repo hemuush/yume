@@ -31,6 +31,8 @@ import { withPressed } from '@/lib/pressed';
 import { showAlert } from '@/components/AppDialog';
 import { errorMessage } from '@/lib/errorMessage';
 import { useSaveOnce } from '@/lib/useSaveOnce';
+import { themedStyles } from '@/theme/themedStyles';
+import { useSchemeVersion } from '@/theme/SchemeBoundary';
 
 interface Slide {
   title: string;
@@ -51,7 +53,7 @@ interface StarterAccount {
   icon: string;
   color: string;
 }
-const STARTER_ACCOUNTS: StarterAccount[] = [
+const starterAccounts = (): StarterAccount[] => [
   { key: 'bank', type: 'bank', name: 'Bank account', icon: 'bank', color: theme.colors.primary },
   { key: 'cash', type: 'cash', name: 'Cash', icon: 'cash', color: theme.colors.gold },
   { key: 'upi', type: 'wallet', name: 'UPI wallet', icon: 'wallet', color: theme.colors.accent },
@@ -95,6 +97,7 @@ const SLIDES: Slide[] = [
  * launch URL ("/"), so `initialRouteName="onboarding"` on the Stack was ignored.
  */
 export function Onboarding({ onDone }: { onDone: () => void }) {
+  useSchemeVersion();
   const runAction = useSaveOnce(async (action: () => Promise<void>) => {
     await action();
   });
@@ -124,7 +127,7 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
 
   /** Creates the picked starter accounts. False if any failed (the user stays on this step to retry or skip). */
   const createPickedAccounts = async (): Promise<boolean> => {
-    for (const starter of STARTER_ACCOUNTS) {
+    for (const starter of starterAccounts()) {
       if (!picked[starter.key] || createdKeys.current.has(starter.key)) continue;
       const typedMinor = toMinor(parseFloat(openings[starter.key] || '0'));
       try {
@@ -332,7 +335,7 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
                 keyboardShouldPersistTaps="handled"
                 showsVerticalScrollIndicator={false}
               >
-                {STARTER_ACCOUNTS.map((starter) => {
+                {starterAccounts().map((starter) => {
                   const on = !!picked[starter.key];
                   return (
                     <View key={starter.key} style={styles.accountCard}>
@@ -423,139 +426,141 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
   );
 }
 
-const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: theme.colors.background },
-  container: { flex: 1, backgroundColor: theme.colors.background, paddingHorizontal: 28 },
-  // Full width: undoes the page's side padding.
-  sky: { marginHorizontal: -28, overflow: 'hidden' },
-  skyBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 24,
-  },
-  brand: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  brandText: { fontFamily: theme.font.roundedBold, fontSize: 13, color: theme.colors.textSecondary },
-  skip: {
-    minHeight: 44,
-    justifyContent: 'center',
-    backgroundColor: theme.colors.glass,
-    borderRadius: theme.radius.pill,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-  },
-  skipText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textSecondary },
-  illustWrap: {
-    alignSelf: 'center',
-    marginTop: 28,
-    marginBottom: 6,
-    width: 200,
-    height: 170,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  illustWrapSmall: { marginTop: 8, marginBottom: 0, width: 120, height: 96 },
-  kickerRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 14 },
-  kicker: { ...EYEBROW, color: theme.colors.textSecondary },
-  titleCompact: { marginTop: 6 },
-  accountsScroll: { flexGrow: 0, flexShrink: 1, marginTop: 18, alignSelf: 'stretch' },
-  accountsList: { gap: 10, paddingBottom: 4 },
-  // A white card; picked, it gets a strip in the account's colour along its top.
-  accountCard: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.radius.xl2,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    padding: 10,
-    paddingTop: 12,
-    overflow: 'hidden',
-  },
-  accountStrip: { position: 'absolute', top: 0, left: 0, right: 0, height: 4 },
-  accountHead: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 12 },
-  accountName: { flex: 1, fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textPrimary },
-  check: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    borderWidth: 1.5,
-    borderColor: theme.colors.borderSoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  checkOn: { backgroundColor: theme.colors.ink, borderColor: theme.colors.ink },
-  openingInput: {
-    marginTop: 10,
-    backgroundColor: theme.colors.surfaceAlt,
-    borderRadius: theme.radius.lg,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    fontFamily: theme.font.monoBold,
-    fontSize: 13,
-    color: theme.colors.textPrimary,
-  },
-  accountsError: {
-    fontFamily: theme.font.bodyBold,
-    fontSize: 12,
-    color: theme.colors.expenseText,
-    textAlign: 'center',
-    marginTop: 4,
-  },
-  title: {
-    fontFamily: theme.font.roundedBold,
-    fontSize: 22,
-    color: theme.colors.textPrimary,
-    marginTop: 8,
-  },
-  subtitle: {
-    fontFamily: theme.font.body,
-    fontSize: 13,
-    color: theme.colors.textSecondary,
-    marginTop: 8,
-    lineHeight: 19,
-  },
-  nameInput: {
-    marginTop: 20,
-    alignSelf: 'stretch',
-    backgroundColor: theme.colors.surfaceAlt,
-    borderWidth: 1.5,
-    borderColor: 'transparent',
-    borderRadius: theme.radius.lg,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 15,
-    color: theme.colors.textPrimary,
-    textAlign: 'center',
-  },
-  nameInputFocused: { backgroundColor: theme.colors.surface, borderColor: theme.colors.link },
-  dots: { flexDirection: 'row', gap: 6, marginTop: 24 },
-  // A plain muted fill, not an outlined dot: a hairline border was barely visible on the cream page.
-  dot: {
-    width: 7,
-    height: 7,
-    borderRadius: 4,
-    backgroundColor: theme.colors.textMuted,
-    opacity: 0.35,
-  },
-  cta: {
-    marginTop: 'auto',
-    marginBottom: 24,
-    backgroundColor: theme.colors.ink,
-    borderRadius: theme.radius.lg,
-    paddingVertical: 15,
-    alignItems: 'center',
-  },
-  ctaWithLink: { marginBottom: 6 },
-  ctaBusy: { opacity: 0.6 },
-  restoreLink: {
-    minHeight: 44,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 10,
-    marginBottom: 8,
-  },
-  restoreLinkText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.link },
-  ctaText: { fontFamily: theme.font.bodyBold, fontSize: 14, color: theme.colors.surface },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    root: { flex: 1, backgroundColor: theme.colors.background },
+    container: { flex: 1, backgroundColor: theme.colors.background, paddingHorizontal: 28 },
+    // Full width: undoes the page's side padding.
+    sky: { marginHorizontal: -28, overflow: 'hidden' },
+    skyBar: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: 24,
+    },
+    brand: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+    brandText: { fontFamily: theme.font.roundedBold, fontSize: 13, color: theme.colors.textSecondary },
+    skip: {
+      minHeight: 44,
+      justifyContent: 'center',
+      backgroundColor: theme.colors.glass,
+      borderRadius: theme.radius.pill,
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+    },
+    skipText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textSecondary },
+    illustWrap: {
+      alignSelf: 'center',
+      marginTop: 28,
+      marginBottom: 6,
+      width: 200,
+      height: 170,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    illustWrapSmall: { marginTop: 8, marginBottom: 0, width: 120, height: 96 },
+    kickerRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 14 },
+    kicker: { ...EYEBROW, color: theme.colors.textSecondary },
+    titleCompact: { marginTop: 6 },
+    accountsScroll: { flexGrow: 0, flexShrink: 1, marginTop: 18, alignSelf: 'stretch' },
+    accountsList: { gap: 10, paddingBottom: 4 },
+    // A white card; picked, it gets a strip in the account's colour along its top.
+    accountCard: {
+      backgroundColor: theme.colors.surface,
+      borderRadius: theme.radius.xl2,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.borderSoft,
+      padding: 10,
+      paddingTop: 12,
+      overflow: 'hidden',
+    },
+    accountStrip: { position: 'absolute', top: 0, left: 0, right: 0, height: 4 },
+    accountHead: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 12 },
+    accountName: { flex: 1, fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textPrimary },
+    check: {
+      width: 22,
+      height: 22,
+      borderRadius: 11,
+      borderWidth: 1.5,
+      borderColor: theme.colors.borderSoft,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    checkOn: { backgroundColor: theme.colors.ink, borderColor: theme.colors.ink },
+    openingInput: {
+      marginTop: 10,
+      backgroundColor: theme.colors.surfaceAlt,
+      borderRadius: theme.radius.lg,
+      paddingHorizontal: 14,
+      paddingVertical: 10,
+      fontFamily: theme.font.monoBold,
+      fontSize: 13,
+      color: theme.colors.textPrimary,
+    },
+    accountsError: {
+      fontFamily: theme.font.bodyBold,
+      fontSize: 12,
+      color: theme.colors.expenseText,
+      textAlign: 'center',
+      marginTop: 4,
+    },
+    title: {
+      fontFamily: theme.font.roundedBold,
+      fontSize: 22,
+      color: theme.colors.textPrimary,
+      marginTop: 8,
+    },
+    subtitle: {
+      fontFamily: theme.font.body,
+      fontSize: 13,
+      color: theme.colors.textSecondary,
+      marginTop: 8,
+      lineHeight: 19,
+    },
+    nameInput: {
+      marginTop: 20,
+      alignSelf: 'stretch',
+      backgroundColor: theme.colors.surfaceAlt,
+      borderWidth: 1.5,
+      borderColor: 'transparent',
+      borderRadius: theme.radius.lg,
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      fontFamily: theme.font.bodyMedium,
+      fontSize: 15,
+      color: theme.colors.textPrimary,
+      textAlign: 'center',
+    },
+    nameInputFocused: { backgroundColor: theme.colors.surface, borderColor: theme.colors.link },
+    dots: { flexDirection: 'row', gap: 6, marginTop: 24 },
+    // A plain muted fill, not an outlined dot: a hairline border was barely visible on the cream page.
+    dot: {
+      width: 7,
+      height: 7,
+      borderRadius: 4,
+      backgroundColor: theme.colors.textMuted,
+      opacity: 0.35,
+    },
+    cta: {
+      marginTop: 'auto',
+      marginBottom: 24,
+      backgroundColor: theme.colors.ink,
+      borderRadius: theme.radius.lg,
+      paddingVertical: 15,
+      alignItems: 'center',
+    },
+    ctaWithLink: { marginBottom: 6 },
+    ctaBusy: { opacity: 0.6 },
+    restoreLink: {
+      minHeight: 44,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 6,
+      paddingVertical: 10,
+      marginBottom: 8,
+    },
+    restoreLinkText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.link },
+    ctaText: { fontFamily: theme.font.bodyBold, fontSize: 15, color: theme.colors.surface },
+  })
+);

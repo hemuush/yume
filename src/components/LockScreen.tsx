@@ -10,15 +10,18 @@ import Feather from '@expo/vector-icons/Feather';
 import { HeaderHills } from '@/features/home/HeaderHills';
 import { theme } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
+import { useSchemeVersion } from '@/theme/SchemeBoundary';
 import { shade } from '@/lib/color';
 import { authenticate, isDeviceSecured } from '@/lib/appLock';
 import { useAppLock } from '@/lib/AppLockContext';
+import { themedStyles } from '@/theme/themedStyles';
 
 /**
  * Yume's app-level lock gate (never a password of its own, see `tryUnlock`). Reuses Home's "Dreamlight"
  * gradient with a top-aligned summary and one automatic device-authentication prompt per lock visit.
  */
 export function LockScreen({ onUnlocked }: { onUnlocked: () => void }) {
+  useSchemeVersion();
   const insets = useSafeAreaInsets();
   const { accent, secondary } = useAccent();
   const { setLockEnabled } = useAppLock();
@@ -169,51 +172,53 @@ export function LockScreen({ onUnlocked }: { onUnlocked: () => void }) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  content: { flexGrow: 1, paddingHorizontal: 20 },
-  topContent: { width: '100%', maxWidth: 420, alignSelf: 'center' },
-  hills: { position: 'absolute', bottom: 0, left: 0, right: 0, opacity: 0.5 },
-  wordmark: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 24 },
-  wordmarkText: { fontFamily: theme.font.roundedBold, fontSize: 24, color: theme.colors.textPrimary },
-  identityRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
-  card: {
-    alignSelf: 'stretch',
-    borderRadius: 22,
-    backgroundColor: theme.colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-  },
-  cardBody: { padding: 20 },
-  kickerRow: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6 },
-  kicker: {
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 12,
-    color: theme.colors.textSecondary,
-    flexShrink: 1,
-  },
-  title: {
-    fontFamily: theme.font.roundedBold,
-    fontSize: 22,
-    color: theme.colors.textPrimary,
-    marginTop: 8,
-  },
-  subtitle: {
-    fontFamily: theme.font.body,
-    fontSize: 13,
-    lineHeight: 19,
-    color: theme.colors.textSecondary,
-    marginTop: 6,
-  },
-  // The same expense red every error/destructive bit of text in the app
-  // uses — not a separate colour invented just for this screen.
-  failedText: {
-    fontFamily: theme.font.body,
-    fontSize: 12,
-    color: theme.colors.expenseText,
-    marginTop: 12,
-    lineHeight: 17,
-  },
-  unlockBtn: { marginTop: 18, width: '100%' },
-  turnOffBtn: { marginTop: 12, opacity: 1 },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    container: { flex: 1 },
+    content: { flexGrow: 1, paddingHorizontal: 20 },
+    topContent: { width: '100%', maxWidth: 420, alignSelf: 'center' },
+    hills: { position: 'absolute', bottom: 0, left: 0, right: 0, opacity: 0.5 },
+    wordmark: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 24 },
+    wordmarkText: { fontFamily: theme.font.roundedBold, fontSize: 22, color: theme.colors.textPrimary },
+    identityRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
+    card: {
+      alignSelf: 'stretch',
+      borderRadius: 22,
+      backgroundColor: theme.colors.surface,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.borderSoft,
+    },
+    cardBody: { padding: 20 },
+    kickerRow: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6 },
+    kicker: {
+      fontFamily: theme.font.bodyMedium,
+      fontSize: 12,
+      color: theme.colors.textSecondary,
+      flexShrink: 1,
+    },
+    title: {
+      fontFamily: theme.font.roundedBold,
+      fontSize: 22,
+      color: theme.colors.textPrimary,
+      marginTop: 8,
+    },
+    subtitle: {
+      fontFamily: theme.font.body,
+      fontSize: 13,
+      lineHeight: 19,
+      color: theme.colors.textSecondary,
+      marginTop: 6,
+    },
+    // The same expense red every error/destructive bit of text in the app
+    // uses — not a separate colour invented just for this screen.
+    failedText: {
+      fontFamily: theme.font.body,
+      fontSize: 12,
+      color: theme.colors.expenseText,
+      marginTop: 12,
+      lineHeight: 17,
+    },
+    unlockBtn: { marginTop: 18, width: '100%' },
+    turnOffBtn: { marginTop: 12, opacity: 1 },
+  })
+);

@@ -15,6 +15,7 @@ import type { DateRange } from '@/types';
 import { dayMonthYear } from '@/lib/dateLabels';
 import { withPressed } from '@/lib/pressed';
 import { shade } from '@/lib/color';
+import { themedStyles } from '@/theme/themedStyles';
 
 const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
@@ -223,56 +224,58 @@ export function RangeSheet({
   );
 }
 
-const styles = StyleSheet.create({
-  instruction: {
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 13,
-    color: theme.colors.textPrimary,
-    marginBottom: 12,
-  },
-  picks: { gap: 8, paddingBottom: 14 },
-  pick: {
-    paddingHorizontal: 12,
-    minHeight: 44,
-    justifyContent: 'center',
-    paddingVertical: 8,
-    borderRadius: theme.radius.pill,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    backgroundColor: theme.colors.surface,
-  },
-  pickText: { fontFamily: theme.font.roundedMedium, fontSize: 13, color: theme.colors.textPrimary },
-  pickTextOn: { fontFamily: theme.font.roundedBold },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 },
-  navBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
-  monthLabel: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.textPrimary },
-  row: { flexDirection: 'row' },
-  slot: { flex: 1, minWidth: 0 },
-  weekday: {
-    textAlign: 'center',
-    fontFamily: theme.font.bodyBold,
-    fontSize: 11,
-    color: theme.colors.textMuted,
-    marginBottom: 4,
-  },
-  cell: { minHeight: 44, paddingVertical: 4, alignItems: 'center', justifyContent: 'center' },
-  day: {
-    minWidth: 36,
-    minHeight: 36,
-    padding: 4,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'transparent',
-  },
-  dayText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
-  dayTextDisabled: { color: theme.colors.textMuted, opacity: theme.opacity.disabled },
-  summary: {
-    fontFamily: theme.font.body,
-    fontSize: 12,
-    color: theme.colors.textSecondary,
-    textAlign: 'center',
-    marginTop: 10,
-  },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    instruction: {
+      fontFamily: theme.font.bodyMedium,
+      fontSize: 13,
+      color: theme.colors.textPrimary,
+      marginBottom: 12,
+    },
+    picks: { gap: 8, paddingBottom: 14 },
+    pick: {
+      paddingHorizontal: 12,
+      minHeight: 44,
+      justifyContent: 'center',
+      paddingVertical: 8,
+      borderRadius: theme.radius.pill,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.borderSoft,
+      backgroundColor: theme.colors.surface,
+    },
+    pickText: { fontFamily: theme.font.roundedMedium, fontSize: 13, color: theme.colors.textPrimary },
+    pickTextOn: { fontFamily: theme.font.roundedBold },
+    header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 },
+    navBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+    monthLabel: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.textPrimary },
+    row: { flexDirection: 'row' },
+    slot: { flex: 1, minWidth: 0 },
+    weekday: {
+      textAlign: 'center',
+      fontFamily: theme.font.bodyBold,
+      fontSize: 11,
+      color: theme.colors.textMuted,
+      marginBottom: 4,
+    },
+    cell: { minHeight: 44, paddingVertical: 4, alignItems: 'center', justifyContent: 'center' },
+    day: {
+      minWidth: 36,
+      minHeight: 36,
+      padding: 4,
+      borderRadius: 16,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: 'transparent',
+    },
+    dayText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
+    dayTextDisabled: { color: theme.colors.textMuted, opacity: theme.opacity.disabled },
+    summary: {
+      fontFamily: theme.font.body,
+      fontSize: 12,
+      color: theme.colors.textSecondary,
+      textAlign: 'center',
+      marginTop: 10,
+    },
+  })
+);

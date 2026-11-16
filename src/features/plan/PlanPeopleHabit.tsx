@@ -2,13 +2,15 @@ import { View, Pressable, StyleSheet } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Text } from '@/components/Text';
-import { theme, FLAT_PALETTE } from '@/constants/theme';
+import { theme, flatPalette } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
 import { stableIndexFromId } from '@/lib/color';
 import { withPressedTint } from '@/lib/pressed';
 import { useAccent } from '@/theme/AccentContext';
 import { personInitials } from '@/features/people/people.helpers';
 import type { HabitState, PeopleState, PlanPerson } from './planOverview';
+import { themedStyles } from '@/theme/themedStyles';
+import { flatSection } from '@/components/screenStyles';
 
 /** Kept days' sprouts grow a little taller each day; a missed day stays a small grey one. */
 const SPROUT_BASE = 10;
@@ -75,10 +77,7 @@ export function PlanPeopleHabit({
                 accessibilityRole="button"
                 accessibilityLabel={`Open ${p.name} details`}
                 accessibilityHint={`${formatMoney(Math.abs(p.balanceMinor))} ${p.balanceMinor > 0 ? 'to collect' : 'to pay back'}`}
-                style={[
-                  s.face,
-                  { backgroundColor: FLAT_PALETTE[stableIndexFromId(p.id, FLAT_PALETTE.length)] },
-                ]}
+                style={[s.face, { backgroundColor: flatPalette()[stableIndexFromId(p.id, 4)] }]}
               >
                 <Text style={s.faceText}>{personInitials(p.name)}</Text>
               </Pressable>
@@ -158,55 +157,59 @@ export function PlanPeopleHabit({
   );
 }
 
-const s = StyleSheet.create({
-  card: {
-    marginHorizontal: 16,
-    paddingHorizontal: 12,
-    borderRadius: 22,
-    backgroundColor: theme.colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-  },
-  row: { minHeight: 52, paddingVertical: 7, flexDirection: 'row', alignItems: 'center', gap: 10 },
-  divider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.divider },
-  faces: { flexDirection: 'row', gap: 4 },
-  face: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  faceText: { fontFamily: theme.font.bodyBold, fontSize: 11, color: theme.colors.ink },
-  mark: {
-    width: 32,
-    height: 32,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: theme.colors.surfaceAlt,
-  },
-  markGreen: { backgroundColor: theme.colors.incomeTint },
-  copy: { flex: 1, minWidth: 0 },
-  title: { fontFamily: theme.font.bodyMedium, fontSize: 14, lineHeight: 20, color: theme.colors.textPrimary },
-  sub: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textSecondary },
-  end: { flexShrink: 1, alignItems: 'flex-end', gap: 2 },
-  balance: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'baseline',
-    justifyContent: 'flex-end',
-    columnGap: 5,
-  },
-  endLine: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, textAlign: 'right' },
-  value: {
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 14,
-    lineHeight: 20,
-    color: theme.colors.textPrimary,
-    fontVariant: ['tabular-nums'],
-  },
-  good: { color: theme.colors.incomeText },
-  bad: { color: theme.colors.expenseText },
-  sprouts: { flexDirection: 'row', alignItems: 'flex-end', gap: 3 },
-});
+const s = themedStyles(() =>
+  StyleSheet.create({
+    card: {
+      ...flatSection(),
+      marginHorizontal: 4,
+      paddingHorizontal: 12,
+    },
+    row: { minHeight: 52, paddingVertical: 7, flexDirection: 'row', alignItems: 'center', gap: 10 },
+    divider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.divider },
+    faces: { flexDirection: 'row', gap: 4 },
+    face: {
+      width: 30,
+      height: 30,
+      borderRadius: 15,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    faceText: { fontFamily: theme.font.bodyBold, fontSize: 11, color: theme.colors.ink },
+    mark: {
+      width: 32,
+      height: 32,
+      borderRadius: 10,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: theme.colors.surfaceAlt,
+    },
+    markGreen: { backgroundColor: theme.colors.incomeTint },
+    copy: { flex: 1, minWidth: 0 },
+    title: {
+      fontFamily: theme.font.bodyMedium,
+      fontSize: 15,
+      lineHeight: 20,
+      color: theme.colors.textPrimary,
+    },
+    sub: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textSecondary },
+    end: { flexShrink: 1, alignItems: 'flex-end', gap: 2 },
+    balance: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      alignItems: 'baseline',
+      justifyContent: 'flex-end',
+      columnGap: 5,
+    },
+    endLine: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, textAlign: 'right' },
+    value: {
+      fontFamily: theme.font.bodyMedium,
+      fontSize: 15,
+      lineHeight: 20,
+      color: theme.colors.textPrimary,
+      fontVariant: ['tabular-nums'],
+    },
+    good: { color: theme.colors.incomeText },
+    bad: { color: theme.colors.expenseText },
+    sprouts: { flexDirection: 'row', alignItems: 'flex-end', gap: 3 },
+  })
+);

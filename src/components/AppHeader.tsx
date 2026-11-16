@@ -13,6 +13,7 @@ import { usePressScale } from '@/lib/usePressScale';
 import { getCachedUserName, getUserName } from '@/db/settings';
 import { onSettingsRestored } from '@/lib/dataEvents';
 import { useReturnOrPush } from '@/lib/useReturnOrPush';
+import { themedStyles } from '@/theme/themedStyles';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -147,50 +148,52 @@ export function HeaderIconButton({
   );
 }
 
-const styles = StyleSheet.create({
-  iconBtn: {
-    width: HEADER.actionSize,
-    height: HEADER.actionSize,
-    borderRadius: HEADER.actionSize / 2,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  // A header action: just the icon on the header, no disc and no border (the quiet bar).
-  bare: {
-    width: HEADER.actionSize,
-    height: HEADER.actionSize,
-    borderRadius: HEADER.actionSize / 2,
-    borderWidth: 0,
-    backgroundColor: 'transparent',
-  },
-  glass: { borderWidth: 1, borderColor: GLASS.edge, backgroundColor: GLASS.fillStrong },
-  initial: { fontFamily: theme.font.bodyBold, fontSize: 13 },
-  initialLarge: { fontFamily: theme.font.bodyBold, fontSize: 14 },
-  countBadge: {
-    position: 'absolute',
-    top: -4,
-    right: -4,
-    // Grows with the text size instead of clipping a larger count inside a fixed circle.
-    minWidth: 17,
-    minHeight: 17,
-    paddingHorizontal: 4,
-    borderRadius: 9,
-    backgroundColor: theme.colors.ink,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  countText: { fontFamily: theme.font.monoBold, fontSize: 11, color: theme.colors.surface },
-  badge: {
-    position: 'absolute',
-    top: -2,
-    right: -2,
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: theme.colors.expense,
-    borderWidth: 2,
-    borderColor: theme.colors.surface,
-  },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    iconBtn: {
+      width: HEADER.actionSize,
+      height: HEADER.actionSize,
+      borderRadius: HEADER.actionSize / 2,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.borderSoft,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    // A header action: just the icon on the header, no disc and no border (the quiet bar).
+    bare: {
+      width: HEADER.actionSize,
+      height: HEADER.actionSize,
+      borderRadius: HEADER.actionSize / 2,
+      borderWidth: 0,
+      backgroundColor: 'transparent',
+    },
+    glass: { borderWidth: 1, borderColor: GLASS.edge, backgroundColor: GLASS.fillStrong },
+    initial: { fontFamily: theme.font.bodyBold, fontSize: 13 },
+    initialLarge: { fontFamily: theme.font.bodyBold, fontSize: 15 },
+    countBadge: {
+      position: 'absolute',
+      top: -4,
+      right: -4,
+      // Grows with the text size instead of clipping a larger count inside a fixed circle.
+      minWidth: 17,
+      minHeight: 17,
+      paddingHorizontal: 4,
+      borderRadius: 9,
+      backgroundColor: theme.colors.ink,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    countText: { fontFamily: theme.font.monoBold, fontSize: 11, color: theme.colors.surface },
+    badge: {
+      position: 'absolute',
+      top: -2,
+      right: -2,
+      width: 10,
+      height: 10,
+      borderRadius: 5,
+      backgroundColor: theme.colors.expense,
+      borderWidth: 2,
+      borderColor: theme.colors.surface,
+    },
+  })
+);

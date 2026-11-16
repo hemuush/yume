@@ -6,6 +6,7 @@ import { SegmentedControl } from '@/components/SegmentedControl';
 import { EmptyState } from '@/components/EmptyState';
 import { TrendChart, MIN_TREND_POINTS } from './TrendChart';
 import { CashFlowCard } from './CashFlowCard';
+import { themedStyles } from '@/theme/themedStyles';
 type Props = Omit<React.ComponentProps<typeof TrendChart>, 'fixedKind'> & {
   cashFlow: React.ComponentProps<typeof CashFlowCard>['points'];
 };
@@ -61,6 +62,8 @@ export function ReportTrends({ cashFlow, ...props }: Props) {
     </View>
   );
 }
-const s = StyleSheet.create({
-  switch: { marginBottom: 12 },
-});
+const s = themedStyles(() =>
+  StyleSheet.create({
+    switch: { marginBottom: 12 },
+  })
+);

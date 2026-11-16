@@ -1,8 +1,7 @@
 import { View, StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
-import { useAccent } from '@/theme/AccentContext';
 import { CategoryGlyph } from '@/components/CategoryGlyph';
-import { softTint } from '@/components/softTint';
+import { themedStyles } from '@/theme/themedStyles';
 
 interface Props {
   name: string;
@@ -13,11 +12,9 @@ interface Props {
   round?: boolean;
 }
 
-// A category's icon in a soft, borderless tinted square, matching the calm hairline register
-// (Home hero and summary cards), not the older thick-ink outline.
-export function CategoryIcon({ name, color, size = 16, square = 34, round = false }: Props) {
-  const { accent } = useAccent();
-  const resolvedColor = color ?? accent;
+// A category's icon in a quiet neutral disc: the colour belongs to the category in the charts and bars, not to every
+// row of a list. `color` is kept so callers need not change; it no longer tints the disc.
+export function CategoryIcon({ name, size = 16, square = 34, round = false }: Props) {
   return (
     <View
       style={[
@@ -26,8 +23,7 @@ export function CategoryIcon({ name, color, size = 16, square = 34, round = fals
           width: square,
           height: square,
           borderRadius: round ? square / 2 : square * 0.32,
-          backgroundColor: softTint(resolvedColor, 0.25),
-          boxShadow: `inset 0 0 0 1px ${theme.colors.inkHairline}`,
+          backgroundColor: theme.colors.surfaceAlt,
         },
       ]}
     >
@@ -36,9 +32,11 @@ export function CategoryIcon({ name, color, size = 16, square = 34, round = fals
   );
 }
 
-const styles = StyleSheet.create({
-  chip: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    chip: {
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+  })
+);

@@ -1,7 +1,8 @@
-import { View, Pressable, StyleSheet, useWindowDimensions } from 'react-native';
+import { View, Pressable, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
+import { themedStyles } from '@/theme/themedStyles';
 
 export interface LegendItem {
   key: string;
@@ -18,23 +19,14 @@ export interface LegendItem {
   selected?: boolean;
 }
 
-/** Below this font scale the columns sit in one row; above it they pair up so each keeps its figure whole. */
-const PAIR_AT = 1.15;
-
 /**
- * One column per slice of the month (spent, saved, bills still to pay, free): its colour and name and amount.
- * Shares remain in the accessible label, without a third row competing with the main amount. Bills opens the sum.
- * By default it is a wrapping row under the ring. With `side` it is one half of the legend flanking the ring:
- * the slices stacked, flush to the card's left or right edge, so the ring between two equal halves sits exactly
- * in the middle of the card.
+ * One row per slice of the month (spent, saved, bills still to pay, free) under the ring: its colour dot and name on
+ * the left, the amount and its share on the right, a hairline between rows. Bills opens the sum.
  */
-export function HeroLegend({ items, side }: { items: LegendItem[]; side?: 'left' | 'right' }) {
-  const { width, fontScale } = useWindowDimensions();
-  const pair = width < 360 || fontScale > PAIR_AT;
-  const edge = side === 'right' ? 'flex-end' : 'flex-start';
+export function HeroLegend({ items }: { items: LegendItem[] }) {
   return (
-    <View style={side ? [styles.side, { alignItems: edge }] : styles.row}>
-      {items.map((it) => {
+    <View style={styles.list}>
+      {items.map((it, index) => {
         const Container = it.onPress ? Pressable : View;
         const amount = formatMoney(it.minor);
         return (
@@ -46,28 +38,23 @@ export function HeroLegend({ items, side }: { items: LegendItem[]; side?: 'left'
             accessibilityHint={it.onPress ? it.hint : undefined}
             accessible
             accessibilityLabel={`${it.label}, ${amount}, ${it.share}`}
-            style={[
-              styles.col,
-              { minWidth: Math.max(60, amount.length * 7) },
-              !side && pair && styles.colPair,
-              it.onPress && styles.tap,
-              side && [styles.colSide, { alignItems: edge }],
-            ]}
+            style={[styles.row, index > 0 && styles.rowDivider]}
           >
-            <View style={styles.head}>
-              <View style={[styles.dot, { backgroundColor: it.color }]} />
-              <Text style={styles.label} numberOfLines={1}>
-                {it.label}
-              </Text>
-            </View>
+            <View style={[styles.dot, { backgroundColor: it.color }]} />
+            <Text style={styles.label} numberOfLines={1}>
+              {it.label}
+            </Text>
             <Text
-              style={[styles.amount, it.selected && styles.amountOn, side === 'right' && styles.amountEnd]}
+              style={[styles.amount, it.selected && styles.amountOn]}
               numberOfLines={1}
-              // A big figure shrinks to fit its half of the legend instead of being cut to "₹1,23,45…".
+              // A big figure shrinks to fit instead of being cut to "₹1,23,45…".
               adjustsFontSizeToFit
               minimumFontScale={0.75}
             >
               {amount}
+            </Text>
+            <Text style={styles.share} numberOfLines={1}>
+              {it.share}
             </Text>
           </Container>
         );
@@ -76,36 +63,35 @@ export function HeroLegend({ items, side }: { items: LegendItem[]; side?: 'left'
   );
 }
 
-const styles = StyleSheet.create({
-  row: {
-    alignSelf: 'stretch',
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    columnGap: 8,
-    rowGap: 4,
-    marginTop: 12,
-    marginBottom: 8,
-  },
-  // Half of the legend beside the ring: the two halves are equal in width, which keeps the ring centred.
-  side: { flex: 1, minWidth: 0, justifyContent: 'center' },
-  colSide: { flexGrow: 0, flexBasis: 'auto', minWidth: 0, justifyContent: 'center' },
-  col: { flexGrow: 1, flexBasis: 0, minWidth: 60, gap: 1 },
-  colPair: { flexBasis: '45%' },
-  tap: { minHeight: 44 },
-  head: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  dot: { width: 8, height: 8, borderRadius: 4 },
-  label: {
-    flexShrink: 1,
-    fontFamily: theme.font.body,
-    fontSize: 12,
-    color: theme.colors.textSecondary,
-  },
-  amount: {
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 14,
-    color: theme.colors.textPrimary,
-    fontVariant: ['tabular-nums'],
-  },
-  amountOn: { fontFamily: theme.font.bodyBold },
-  amountEnd: { textAlign: 'right' },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    list: { alignSelf: 'stretch', marginTop: 12 },
+    row: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 10 },
+    rowDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.borderSoft },
+    dot: { width: 8, height: 8, borderRadius: 4 },
+    label: {
+      flex: 1,
+      minWidth: 0,
+      fontFamily: theme.font.bodyMedium,
+      fontSize: 15,
+      color: theme.colors.textPrimary,
+    },
+    amount: {
+      flexShrink: 1,
+      fontFamily: theme.font.bodyMedium,
+      fontSize: 15,
+      color: theme.colors.textPrimary,
+      fontVariant: ['tabular-nums'],
+      textAlign: 'right',
+    },
+    amountOn: { fontFamily: theme.font.bodyBold },
+    share: {
+      minWidth: 34,
+      textAlign: 'right',
+      fontFamily: theme.font.body,
+      fontSize: 12,
+      color: theme.colors.textMuted,
+      fontVariant: ['tabular-nums'],
+    },
+  })
+);

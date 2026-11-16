@@ -396,7 +396,7 @@ export function TransactionDetailModal({
                 <Feather
                   name="trash-2"
                   size={18}
-                  color={askDelete ? theme.colors.white : theme.colors.expense}
+                  color={askDelete ? theme.colors.onInk : theme.colors.expense}
                 />
                 {askDelete && (
                   <Text style={styles.deleteAskText}>{tx.splitId ? 'Delete split?' : 'Delete?'}</Text>

@@ -3,6 +3,7 @@ import { EASE_OUT } from '@/lib/motionTimings';
 import { Animated, StyleSheet } from 'react-native';
 import { SuuIllustration } from '@/components/SuuIllustration';
 import { useReduceMotion } from '@/lib/useReduceMotion';
+import { themedStyles } from '@/theme/themedStyles';
 
 /**
  * Suu's "welcome back" pop, played once after pull-to-refresh ends (overshoot in, two wobbles, settle out).
@@ -52,6 +53,8 @@ export function SuuRefreshBadge({ refreshing }: { refreshing: boolean }) {
   );
 }
 
-const styles = StyleSheet.create({
-  badge: { position: 'absolute', top: 4, alignSelf: 'center', zIndex: 20 },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    badge: { position: 'absolute', top: 4, alignSelf: 'center', zIndex: 20 },
+  })
+);

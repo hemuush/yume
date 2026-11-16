@@ -5,6 +5,7 @@ import { usePressScale } from '@/lib/usePressScale';
 
 import { useAccent } from '@/theme/AccentContext';
 import { themeInk } from '@/theme/interactionColors';
+import { themedStyles } from '@/theme/themedStyles';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -43,14 +44,16 @@ export function AddButton({ label = '+ Add', disabled, style, ...rest }: Props) 
   );
 }
 
-const styles = StyleSheet.create({
-  btn: {
-    paddingHorizontal: 14,
-    minHeight: 36,
-    justifyContent: 'center',
-    borderRadius: theme.radius.pill,
-    backgroundColor: theme.colors.ink,
-  },
-  text: { fontFamily: theme.font.roundedBold, fontSize: 13, color: theme.colors.surface },
-  disabled: { opacity: theme.opacity.disabled },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    btn: {
+      paddingHorizontal: 14,
+      minHeight: 36,
+      justifyContent: 'center',
+      borderRadius: theme.radius.pill,
+      backgroundColor: theme.colors.ink,
+    },
+    text: { fontFamily: theme.font.roundedBold, fontSize: 13, color: theme.colors.surface },
+    disabled: { opacity: theme.opacity.disabled },
+  })
+);

@@ -6,6 +6,7 @@ import { formatMoney } from '@/lib/money';
 import { dayMonth } from '@/lib/dateLabels';
 import { Runway } from './runway';
 import { RunwayChart } from './RunwayChart';
+import { themedStyles } from '@/theme/themedStyles';
 
 /** Read-only explanation of the same loaded runway, never a second calculation. */
 export function ForecastDetails({ runway, onClose }: { runway: Runway; onClose: () => void }) {
@@ -53,40 +54,42 @@ export function ForecastDetails({ runway, onClose }: { runway: Runway; onClose: 
   );
 }
 
-const styles = StyleSheet.create({
-  chart: { marginBottom: 16 },
-  note: {
-    fontFamily: theme.font.body,
-    fontSize: 13,
-    lineHeight: 19,
-    color: theme.colors.textSecondary,
-    marginBottom: 14,
-  },
-  facts: {
-    backgroundColor: theme.colors.surfaceAlt,
-    borderRadius: 22,
-    padding: 14,
-    gap: 14,
-    marginBottom: 16,
-  },
-  row: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    alignItems: 'baseline',
-    gap: 8,
-  },
-  label: {
-    flexGrow: 1,
-    flexBasis: 140,
-    fontFamily: theme.font.body,
-    fontSize: 13,
-    color: theme.colors.textSecondary,
-  },
-  value: {
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 13,
-    color: theme.colors.textPrimary,
-    fontVariant: ['tabular-nums'],
-  },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    chart: { marginBottom: 16 },
+    note: {
+      fontFamily: theme.font.body,
+      fontSize: 13,
+      lineHeight: 19,
+      color: theme.colors.textSecondary,
+      marginBottom: 14,
+    },
+    facts: {
+      backgroundColor: theme.colors.surfaceAlt,
+      borderRadius: 22,
+      padding: 14,
+      gap: 14,
+      marginBottom: 16,
+    },
+    row: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent: 'space-between',
+      alignItems: 'baseline',
+      gap: 8,
+    },
+    label: {
+      flexGrow: 1,
+      flexBasis: 140,
+      fontFamily: theme.font.body,
+      fontSize: 13,
+      color: theme.colors.textSecondary,
+    },
+    value: {
+      fontFamily: theme.font.bodyMedium,
+      fontSize: 13,
+      color: theme.colors.textPrimary,
+      fontVariant: ['tabular-nums'],
+    },
+  })
+);

@@ -1,3 +1,4 @@
+import { useKeptAcrossModeChange } from '@/theme/useKeptAcrossModeChange';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, ScrollView, ScrollViewInstance } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -41,7 +42,7 @@ export default function ReportsScreen() {
   // "Where it went" (spending) or "Where it came from" (income).
   const [flow, setFlow] = useState<'expense' | 'income'>('expense');
   // Overview, Breakdown or Trends: one lens at a time under the period control.
-  const [tab, setTab] = useState<ReportTab>('days');
+  const [tab, setTab] = useKeptAcrossModeChange<ReportTab>('reports-tab', 'days');
   // `?month=-1` opens a month (0 = this, -1 = last); `?from=&to=` (YYYY-MM-DD) opens that range. The tab
   // may already be mounted, so react to each new link, then clear the param.
   const {
@@ -188,7 +189,7 @@ export default function ReportsScreen() {
       if (a.type === 'category') pickCategory(a.id);
       else setSelectedCat(null);
     },
-    [scrollToTop, pickCategory]
+    [scrollToTop, pickCategory, setTab]
   );
   const onScope = useCallback(
     (id: string | null) => {
@@ -225,7 +226,7 @@ export default function ReportsScreen() {
       clearFiltered();
       setTab('days');
     },
-    [clearFiltered]
+    [clearFiltered, setTab]
   );
   const changeFlow = useCallback((f: 'expense' | 'income') => {
     setFlow(f);

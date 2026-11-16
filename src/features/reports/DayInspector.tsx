@@ -12,6 +12,7 @@ import { useAccent } from '@/theme/AccentContext';
 import { weekdayDayMonth } from '@/lib/dateLabels';
 import type { Category, Transaction } from '@/types';
 import { noBreak } from '@/lib/keepTogether';
+import { themedStyles } from '@/theme/themedStyles';
 
 interface DayMixPart {
   id: string;
@@ -133,47 +134,49 @@ export function DayInspector({
   );
 }
 
-const styles = StyleSheet.create({
-  box: {
-    marginHorizontal: 12,
-    marginTop: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderRadius: 16,
-    backgroundColor: theme.colors.tray,
-  },
-  top: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  main: { flex: 1, minWidth: 0 },
-  date: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textSecondary },
-  amount: {
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 16,
-    lineHeight: 22,
-    color: theme.colors.textPrimary,
-    fontVariant: ['tabular-nums'],
-  },
-  figure: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline', columnGap: 6 },
-  sub: { flexShrink: 1, fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
-  open: {
-    minHeight: 32,
-    paddingHorizontal: 12,
-    borderRadius: theme.radius.pill,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: theme.colors.surface,
-  },
-  openText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.link },
-  mixBar: { flexDirection: 'row', gap: 2, height: 6, marginTop: 8, borderRadius: 3, overflow: 'hidden' },
-  mixSeg: {
-    flexBasis: 0,
-    minWidth: 3,
-    borderRadius: 2,
-    boxShadow: `inset 0px 0px 0px 1px ${theme.colors.inkHairline}`,
-  },
-  mixText: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 12, rowGap: 2, marginTop: 8 },
-  mixItem: { flexDirection: 'row', alignItems: 'center', gap: 5, maxWidth: '100%' },
-  mixDot: { width: 8, height: 8, borderRadius: 4 },
-  mixLabel: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
-  mixAmount: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    box: {
+      marginHorizontal: 12,
+      marginTop: 10,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: theme.colors.borderSoft,
+    },
+    top: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+    main: { flex: 1, minWidth: 0 },
+    date: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textSecondary },
+    amount: {
+      fontFamily: theme.font.bodyMedium,
+      fontSize: 17,
+      lineHeight: 22,
+      color: theme.colors.textPrimary,
+      fontVariant: ['tabular-nums'],
+    },
+    figure: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline', columnGap: 6 },
+    sub: { flexShrink: 1, fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
+    open: {
+      minHeight: 32,
+      paddingHorizontal: 12,
+      borderRadius: theme.radius.pill,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      backgroundColor: theme.colors.surface,
+    },
+    openText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.link },
+    mixBar: { flexDirection: 'row', gap: 2, height: 6, marginTop: 8, borderRadius: 3, overflow: 'hidden' },
+    mixSeg: {
+      flexBasis: 0,
+      minWidth: 3,
+      borderRadius: 2,
+      boxShadow: `inset 0px 0px 0px 1px ${theme.colors.inkHairline}`,
+    },
+    mixText: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 12, rowGap: 2, marginTop: 8 },
+    mixItem: { flexDirection: 'row', alignItems: 'center', gap: 5, maxWidth: '100%' },
+    mixDot: { width: 8, height: 8, borderRadius: 4 },
+    mixLabel: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
+    mixAmount: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
+  })
+);

@@ -11,6 +11,7 @@ import { haptics } from '@/lib/haptics';
 import { parseLocalIsoDate, toLocalIsoDate, addDaysToIsoDate } from '@/lib/date';
 import { useSheetSurface } from './SheetSurface';
 import { withPressed } from '@/lib/pressed';
+import { themedStyles } from '@/theme/themedStyles';
 
 /** "5 Oct 2026" — the full date, since form dates are often in another year. */
 function dateFieldLabel(iso: string): string {
@@ -114,28 +115,30 @@ export function DateField({
   );
 }
 
-const styles = StyleSheet.create({
-  wrap: { marginBottom: 14 },
-  sheetChip: { backgroundColor: theme.colors.surface, borderColor: theme.colors.borderSoft },
-  label: {
-    ...FIELD_LABEL,
-    color: theme.colors.textMuted,
-    marginBottom: 6,
-  },
-  row: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: {
-    minHeight: 44,
-    justifyContent: 'center',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 13,
-    paddingVertical: 9,
-    borderRadius: theme.radius.pill,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    backgroundColor: theme.colors.surface,
-  },
-  chipText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
-  chipTextOn: { color: theme.colors.surface },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    wrap: { marginBottom: 14 },
+    sheetChip: { backgroundColor: theme.colors.surface, borderColor: theme.colors.borderSoft },
+    label: {
+      ...FIELD_LABEL,
+      color: theme.colors.textMuted,
+      marginBottom: 6,
+    },
+    row: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+    chip: {
+      minHeight: 44,
+      justifyContent: 'center',
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      paddingHorizontal: 13,
+      paddingVertical: 9,
+      borderRadius: theme.radius.pill,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.borderSoft,
+      backgroundColor: theme.colors.surface,
+    },
+    chipText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
+    chipTextOn: { color: theme.colors.surface },
+  })
+);

@@ -1,18 +1,18 @@
+import { useMemo } from 'react';
 import { contrastRatio } from '@/lib/color';
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-  useRef,
-  ReactNode,
-} from 'react';
-import { getAccentColor, getCachedAccentColor, getThemeId, setThemeSelection } from '@/db/settings';
-import { THEMES, DEFAULT_THEME_ID, themeById } from './themes';
 import { theme } from '@/constants/theme';
-import { onSettingsRestored } from '@/lib/dataEvents';
+import { useSchemeVersion } from './SchemeBoundary';
+
+interface AccentValue {
+  /** The sky of the logo: the lead colour of buttons, tabs and marks. Follows the colour mode. */
+  accent: string;
+  /** The mint beside it. */
+  secondary: string;
+  /** Suu's dot: the coral of the logo. */
+  dot: string;
+  /** The text colour that reads on `accent`. */
+  onAccent: string;
+}
 
 function contrastColor(hex: string): string {
   return contrastRatio(hex, theme.colors.ink) >= contrastRatio(hex, theme.colors.surface)
@@ -20,124 +20,22 @@ function contrastColor(hex: string): string {
     : theme.colors.surface;
 }
 
-interface AccentContextValue {
-  /** The active pack's id — drives which card the Theme picker highlights. */
-  themeId: string;
-  /** The active pack's primary; keeps the original name/shape so every `useAccent().accent` reader
-   *  (buttons, active tab, Reports' moon phase, home widget, ...) works unchanged. */
-  accent: string;
-  /** The active pack's secondary — new. */
-  secondary: string;
-  /** Suu's dot colour — usually equal to `secondary`, except the default
-   *  pack, which keeps Suu's original coral. */
-  dot: string;
-  onAccent: string;
-  setTheme: (id: string) => void;
-  themeSaveError: { message: string; attempt: number } | null;
-  /** Waits for choices already queued, so background widget reads see the final persisted accent. */
-  waitForThemePersistence: () => Promise<void>;
-}
-
-const cachedInitial = themeById(DEFAULT_THEME_ID)!;
-
-const AccentContext = createContext<AccentContextValue>({
-  themeId: DEFAULT_THEME_ID,
-  accent: getCachedAccentColor(),
-  secondary: cachedInitial.secondary,
-  dot: cachedInitial.dot ?? cachedInitial.secondary,
-  onAccent: contrastColor(getCachedAccentColor()),
-  setTheme: () => {},
-  themeSaveError: null,
-  waitForThemePersistence: async () => {},
-});
-
-export function AccentProvider({ children }: { children: ReactNode }) {
-  const [themeId, setThemeIdState] = useState(DEFAULT_THEME_ID);
-  const [accent, setAccentState] = useState(getCachedAccentColor());
-  const [themeSaveError, setThemeSaveError] = useState<AccentContextValue['themeSaveError']>(null);
-  const committed = useRef({ id: DEFAULT_THEME_ID, accent: getCachedAccentColor() });
-  const writes = useRef<Promise<void>>(Promise.resolve());
-  const restoreEpoch = useRef(0);
-  const generation = useRef(0);
-
-  useEffect(() => {
-    // Reads the last-picked pack. A pre-theme install has no `theme_id` row (null), so it keeps the stored
-    // accent hex as-is, with the default pack's secondary, rather than snapping back to Yume's.
-    const read = () => {
-      const call = ++generation.current;
-      return Promise.all([getThemeId(), getAccentColor()])
-        .then(([id, hex]) => {
-          if (call !== generation.current) return;
-          setAccentState(hex);
-          setThemeIdState(id ?? DEFAULT_THEME_ID);
-          committed.current = { id: id ?? DEFAULT_THEME_ID, accent: hex };
-          setThemeSaveError(null);
-        })
-        .catch(() => {});
-    };
-    void read();
-    // A restore brings back the backup's theme.
-    const unsubscribe = onSettingsRestored(() => {
-      restoreEpoch.current += 1;
-      void read();
-    });
-    return () => {
-      generation.current += 1;
-      unsubscribe();
-    };
-  }, []);
-
-  const setTheme = useCallback((id: string) => {
-    const pack = themeById(id);
-    if (!pack) return;
-    const call = ++generation.current;
-    const epoch = restoreEpoch.current;
-    setThemeIdState(id);
-    setAccentState(pack.primary);
-    setThemeSaveError(null);
-    writes.current = writes.current.then(async () => {
-      // Superseded or restored choices that haven't started no longer need a disk write.
-      if (call !== generation.current) return;
-      try {
-        await setThemeSelection(id, pack.primary);
-        if (epoch === restoreEpoch.current) committed.current = { id, accent: pack.primary };
-      } catch (error) {
-        // Local diagnostics match ErrorBoundary's offline reporting policy; no financial values are involved.
-        console.error('Theme preference could not be saved:', error);
-        if (call !== generation.current) return;
-        setThemeIdState(committed.current.id);
-        setAccentState(committed.current.accent);
-        setThemeSaveError({ message: 'Couldn’t save this theme. Choose it again to retry.', attempt: call });
-      }
-    });
-  }, []);
-
-  // A pack this install hasn't selected (the pre-theme fallback above) gets the default pack's
-  // `secondary`/`dot`.
-  const activePack = themeById(themeId) ?? cachedInitial;
-  const secondary = activePack.secondary;
-  const dot = activePack.dot ?? activePack.secondary;
-  const waitForThemePersistence = useCallback(() => writes.current, []);
-
-  const value = useMemo(
+/**
+ * The app's one accent, as a hook so every screen asks the same way it did when the accent was a choice. There is
+ * a single theme now (the sky and coral of the logo), so there is nothing to pick, save or restore; the values are
+ * read from the colour table and are worked out again when the colour mode changes.
+ */
+export function useAccent(): AccentValue {
+  const version = useSchemeVersion();
+  return useMemo(
     () => ({
-      themeId,
-      accent,
-      secondary,
-      dot,
-      onAccent: contrastColor(accent),
-      setTheme,
-      themeSaveError,
-      waitForThemePersistence,
+      accent: theme.colors.primary,
+      secondary: theme.colors.secondary,
+      dot: theme.colors.coral,
+      onAccent: contrastColor(theme.colors.primary),
     }),
-    [themeId, accent, secondary, dot, setTheme, themeSaveError, waitForThemePersistence]
+    // The colours come from the table of the mode in use, which `version` stands for.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [version]
   );
-
-  return <AccentContext.Provider value={value}>{children}</AccentContext.Provider>;
 }
-
-export function useAccent(): AccentContextValue {
-  return useContext(AccentContext);
-}
-
-export { THEMES };

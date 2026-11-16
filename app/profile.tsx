@@ -1,3 +1,4 @@
+import { useKeptAcrossModeChange } from '@/theme/useKeptAcrossModeChange';
 import { ScreenLoadError } from '@/components/ScreenLoadError';
 import { Appear } from '@/components/Appear';
 import { LoadFade } from '@/components/LoadFade';
@@ -45,11 +46,11 @@ export default function ProfileScreen() {
   const [savingName, setSavingName] = useState(false);
   const [draft, setDraft] = useState('');
   const [memberSince, setMemberSince] = useState<number | null>(null);
-  const [tab, setTab] = useState<ProfileTab>('you');
+  const [tab, setTab] = useKeptAcrossModeChange<ProfileTab>('profile-tab', 'you');
   const { tab: requestedTab } = useLocalSearchParams<{ tab?: string }>();
   useEffect(() => {
     if (requestedTab === 'settings' || requestedTab === 'you') setTab(requestedTab);
-  }, [requestedTab]);
+  }, [requestedTab, setTab]);
 
   const loadIdentity = useCallback(async () => {
     const [userName, since] = await Promise.all([getUserName(), getMemberSinceYear()]);

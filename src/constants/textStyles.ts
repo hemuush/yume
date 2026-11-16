@@ -1,17 +1,18 @@
 import { TextStyle } from 'react-native';
 import { theme } from './theme';
 
+import { themedValue } from '@/theme/themedStyles';
 /**
  * The app's shared text roles, so a heading or label looks the same on every screen. Spread one into a
  * style and add only placement (margins, alignment, a colour where it carries meaning).
  */
 
 /** A section heading above a card or list: Home's "Recent activity", Categories' groups. */
-export const SECTION_TITLE: TextStyle = {
+export const SECTION_TITLE = themedValue<TextStyle>(() => ({
   fontFamily: theme.font.bodyMedium,
   fontSize: theme.typeSize.section,
   color: theme.colors.textPrimary,
-};
+}));
 
 /** The gap above a section heading, and below it before its card. */
 export const SECTION_GAP = { top: 16, bottom: 8 } as const;
@@ -20,18 +21,18 @@ export const SECTION_GAP = { top: 16, bottom: 8 } as const;
  * A small uppercase label: a figure's caption ("SPENT", "YOU OWE"), a
  * divider inside a list ("PAUSED", "CLOSED"), a group of settings rows.
  */
-export const EYEBROW: TextStyle = {
+export const EYEBROW = themedValue<TextStyle>(() => ({
   fontFamily: theme.font.bodyBold,
   fontSize: 12,
   letterSpacing: 0.6,
   textTransform: 'uppercase',
   color: theme.colors.textMuted,
-};
+}));
 
 /** A form field's label, above its input (FormInput, DateField, pickers). */
-export const FIELD_LABEL: TextStyle = {
+export const FIELD_LABEL = themedValue<TextStyle>(() => ({
   fontSize: 12,
   fontFamily: theme.font.bodyMedium,
   letterSpacing: 0,
   color: theme.colors.textSecondary,
-};
+}));

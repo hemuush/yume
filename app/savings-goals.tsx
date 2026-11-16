@@ -25,7 +25,7 @@ import { reuseUnchanged } from '@/lib/stableData';
 import { HomeWallpaper } from '@/features/home/HomeWallpaper';
 import { useAccent } from '@/theme/AccentContext';
 import { GoalsHero } from '@/features/goals/GoalsHero';
-import { goalHues, summarizeGoals } from '@/features/goals/goalPlan';
+import { summarizeGoals } from '@/features/goals/goalPlan';
 import { useToday } from '@/features/budgets/useToday';
 import { errorMessage } from '@/lib/errorMessage';
 import { AddGoalModal } from '@/features/goals/AddGoalModal';
@@ -164,7 +164,6 @@ export default function SavingsGoalsScreen() {
   const visibleGoals = showArchived ? archivedGoals : activeGoals;
   const today = useToday();
   const totals = useMemo(() => summarizeGoals(activeGoals, today), [activeGoals, today]);
-  const hues = useMemo(() => goalHues(allGoals), [allGoals]);
   const accountsById = useMemo(() => new Map(accounts.map((a) => [a.id, a])), [accounts]);
   const selectedGoal = allGoals.find((g) => g.id === editingGoal?.id);
   useEffect(() => {
@@ -237,7 +236,6 @@ export default function SavingsGoalsScreen() {
                 <GoalListRow
                   key={goal.id}
                   goal={goal}
-                  hue={hues[goal.id]}
                   divider={i > 0}
                   account={accountsById.get(goal.linkedAccountId ?? '')}
                   onOpen={setEditingGoal}

@@ -14,13 +14,14 @@ import {
 import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
 import type { BudgetsHeroFigures, BudgetsTone } from './budgetsOverview';
+import { themedStyles, themedValue } from '@/theme/themedStyles';
 
 /** The bar's fill takes the month's tone: calm green, amber once ahead of pace, coral once over. */
-const FILL: Record<BudgetsTone, string> = {
+const FILL = themedValue<Record<BudgetsTone, string>>(() => ({
   ok: theme.colors.slice.saved,
   ahead: theme.colors.slice.due,
   over: theme.colors.slice.spent,
-};
+}));
 
 /** What needs a look, in one fact: the budgets over, the ones ahead of pace, or that all is well. */
 function lookFact(h: BudgetsHeroFigures): SummaryFact {
@@ -97,9 +98,11 @@ export function BudgetsHero({ figures: h }: { figures: BudgetsHeroFigures }) {
   );
 }
 
-const styles = StyleSheet.create({
-  bar: { marginTop: 0 },
-  barCaption: { flexDirection: 'row', justifyContent: 'space-between', gap: 8, marginTop: 6 },
-  captionText: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted },
-  note: summaryNote,
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    bar: { marginTop: 0 },
+    barCaption: { flexDirection: 'row', justifyContent: 'space-between', gap: 8, marginTop: 6 },
+    captionText: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted },
+    note: summaryNote,
+  })
+);

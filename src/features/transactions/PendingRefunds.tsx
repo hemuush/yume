@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
-import { View, StyleSheet } from 'react-native';
-import { theme } from '@/constants/theme';
+import { View } from 'react-native';
 import { Text } from '@/components/Text';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { listExpectedRefunds, ExpectedRefund } from '@/db/refundTracking';
@@ -12,6 +11,7 @@ import { dayMonthYear } from '@/lib/dateLabels';
 import { styles } from './transactions.styles';
 import { InsightHeader, InsightRow, insight } from '@/components/InsightCard';
 import { toLocalIsoDate } from '@/lib/date';
+import { flatSection } from '@/components/screenStyles';
 export function PendingRefunds({
   refreshToken,
   onOpen,
@@ -52,10 +52,7 @@ export function PendingRefunds({
         {
           marginVertical: 0,
           marginTop: 16,
-          borderRadius: 24,
-          backgroundColor: theme.colors.surface,
-          borderWidth: StyleSheet.hairlineWidth,
-          borderColor: theme.colors.borderSoft,
+          ...flatSection(),
           gap: 8,
         },
       ]}

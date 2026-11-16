@@ -16,6 +16,7 @@ import { styles } from './loans.styles';
 import { shortMonthYear } from '@/lib/dateLabels';
 import { errorMessage } from '@/lib/errorMessage';
 import { CompletionCard } from '@/components/CompletionCard';
+import { themedStyles } from '@/theme/themedStyles';
 
 /**
  * Jurisdiction-specific tax-on-fee conventions offered as a labelled one-tap fill, never a silent default.
@@ -85,22 +86,24 @@ function PreviewRow({
   );
 }
 
-const previewStyles = StyleSheet.create({
-  card: {
-    marginTop: 10,
-    marginBottom: 6,
-    padding: 12,
-    gap: 6,
-    borderRadius: theme.radius.lg,
-    backgroundColor: theme.colors.incomeTint,
-  },
-  head: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textSecondary },
-  row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: 12 },
-  label: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textPrimary },
-  value: { fontFamily: theme.font.monoBold, fontSize: 13, color: theme.colors.textPrimary },
-  valueStrong: { color: theme.colors.incomeText },
-  was: { fontFamily: theme.font.mono, color: theme.colors.textMuted, textDecorationLine: 'line-through' },
-});
+const previewStyles = themedStyles(() =>
+  StyleSheet.create({
+    card: {
+      marginTop: 10,
+      marginBottom: 6,
+      padding: 12,
+      gap: 6,
+      borderRadius: theme.radius.lg,
+      backgroundColor: theme.colors.incomeTint,
+    },
+    head: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textSecondary },
+    row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: 12 },
+    label: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textPrimary },
+    value: { fontFamily: theme.font.monoBold, fontSize: 13, color: theme.colors.textPrimary },
+    valueStrong: { color: theme.colors.incomeText },
+    was: { fontFamily: theme.font.mono, color: theme.colors.textMuted, textDecorationLine: 'line-through' },
+  })
+);
 
 function PrepaymentReveal({ summary, lent }: { summary: PrepaymentSummary; lent: boolean }) {
   const closed = summary.newRemainingCount === 0;
@@ -125,12 +128,14 @@ function PrepaymentReveal({ summary, lent }: { summary: PrepaymentSummary; lent:
     </CompletionCard>
   );
 }
-const revealStyles = StyleSheet.create({
-  result: { backgroundColor: theme.colors.incomeTint, borderRadius: 14, padding: 14, gap: 6 },
-  label: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
-  value: { fontFamily: theme.font.monoBold, fontSize: 20, color: theme.colors.incomeText },
-  previous: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
-});
+const revealStyles = themedStyles(() =>
+  StyleSheet.create({
+    result: { backgroundColor: theme.colors.incomeTint, borderRadius: 14, padding: 14, gap: 6 },
+    label: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
+    value: { fontFamily: theme.font.monoBold, fontSize: 22, color: theme.colors.incomeText },
+    previous: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
+  })
+);
 
 export function PrepayModal({
   loan,

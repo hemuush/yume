@@ -538,24 +538,25 @@ describe('days as a heading above a card', () => {
       act(() => tree.unmount());
     }));
 
-  it('draws the day as Home’s list card, with the day’s heading inside it', () =>
+  it('draws the day as Home’s list section, with the day’s heading inside it', () =>
     withWidth(() => {
       const tree = day();
       const lane = tree.root.find(
         (n) =>
           typeof n.type === 'string' &&
-          StyleSheet.flatten(n.props.style)?.backgroundColor === theme.colors.surface &&
-          StyleSheet.flatten(n.props.style)?.borderRadius === theme.radius.xl2
+          StyleSheet.flatten(n.props.style)?.borderTopWidth === StyleSheet.hairlineWidth &&
+          StyleSheet.flatten(n.props.style)?.borderBottomWidth === StyleSheet.hairlineWidth
       );
-      // The same card and the same 12 dp inset as Home's Recent activity; it does not clip, so a lifted line's
-      // shadow is not cut off.
+      // The same section and the same 2 dp margin as Home's Recent activity (the rows keep their own 14 dp inset, so
+      // their content sits on the 16 dp gutter): the paper itself between two hairlines, no fill and no rounded box.
+      // It does not clip, so a lifted line's shadow is not cut off.
       expect(StyleSheet.flatten(lane.props.style)).toMatchObject({
-        marginHorizontal: 16,
-        borderWidth: StyleSheet.hairlineWidth,
+        marginHorizontal: 2,
+        backgroundColor: 'transparent',
         borderColor: theme.colors.borderSoft,
-        paddingHorizontal: 12,
         overflow: 'visible',
       });
+      expect(StyleSheet.flatten(lane.props.style).borderRadius).toBeUndefined();
       expect(lane.findAll((n) => n.props.accessibilityRole === 'header').length).toBeGreaterThan(0);
       act(() => tree.unmount());
     }));

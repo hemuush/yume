@@ -27,6 +27,7 @@ import type { Upcoming } from './upcomingItems';
 import { UpcomingRow } from './UpcomingRow';
 import { HomeRow } from './HomeRow';
 import { HomeRefunds } from './HomeRefunds';
+import { themedStyles } from '@/theme/themedStyles';
 
 const FILTERS: { key: ComingUpFilter; label: string }[] = [
   { key: 'all', label: 'All' },
@@ -298,41 +299,48 @@ export function HomeComingUp({
   );
 }
 
-const styles = StyleSheet.create({
-  card: { ...h.card, paddingHorizontal: 12, paddingBottom: 6 },
-  chips: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-    paddingTop: 10,
-    paddingBottom: 6,
-    paddingHorizontal: 14,
-  },
-  // Sized so All, Payments, Budgets and Goals share one line on a 360 dp phone; the same weight selected or not,
-  // so picking one never changes its width either.
-  chip: {
-    minHeight: 36,
-    paddingHorizontal: 10,
-    borderRadius: theme.radius.pill,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: theme.colors.tray,
-  },
-  chipText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textSecondary },
-  chipTextOn: { color: theme.colors.textPrimary },
-  chipDot: {
-    position: 'absolute',
-    top: 4,
-    right: 3,
-    width: 7,
-    height: 7,
-    borderRadius: 4,
-    backgroundColor: theme.colors.slice.due,
-  },
-  ringText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textPrimary },
-  refunds: { marginTop: 4, marginHorizontal: -12, borderRadius: 20, backgroundColor: theme.colors.surface },
-  empty: { minHeight: 80, flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14 },
-  copy: { flex: 1, minWidth: 0, gap: 5 },
-  emptyTitle: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
-  emptyHint: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 18, color: theme.colors.textSecondary },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    card: { ...h.card, paddingBottom: 6 },
+    chips: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 6,
+      paddingTop: 10,
+      paddingBottom: 6,
+      paddingHorizontal: 14,
+    },
+    // Sized so All, Payments, Budgets and Goals share one line on a 360 dp phone; the same weight selected or not,
+    // so picking one never changes its width either.
+    chip: {
+      minHeight: 36,
+      paddingHorizontal: 10,
+      borderRadius: theme.radius.pill,
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: theme.colors.tray,
+    },
+    chipText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textSecondary },
+    chipTextOn: { color: theme.colors.textPrimary },
+    chipDot: {
+      position: 'absolute',
+      top: 4,
+      right: 3,
+      width: 7,
+      height: 7,
+      borderRadius: 4,
+      backgroundColor: theme.colors.slice.due,
+    },
+    ringText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textPrimary },
+    refunds: { marginTop: 4, marginHorizontal: -12, borderRadius: 20, backgroundColor: theme.colors.surface },
+    empty: { minHeight: 80, flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14 },
+    copy: { flex: 1, minWidth: 0, gap: 5 },
+    emptyTitle: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
+    emptyHint: {
+      fontFamily: theme.font.body,
+      fontSize: 12,
+      lineHeight: 18,
+      color: theme.colors.textSecondary,
+    },
+  })
+);

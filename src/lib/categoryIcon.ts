@@ -3,7 +3,8 @@
  *
  * - a built-in icon name (Material Community Icons, such as `silverware-fork-knife`): plain lower-case words joined by
  *   dashes, which is all the default categories and every category made before custom emoji ever used;
- * - one emoji the person typed or pasted from their own keyboard (`☕`, `🍜`, `👨‍👩‍👧‍👦`, `🇮🇳`).
+ * - one emoji, kept only for a category that already has one (an earlier build let a person type one; the category form
+ *   no longer offers that, but such a category keeps its emoji and draws it, and a backup holding one restores it).
  *
  * Anything else is not an icon, and `normalizeCategoryIcon` turns it into the default tag, so a damaged backup or a
  * stray value never reaches the screen as a blank or broken tile.
@@ -125,22 +126,4 @@ export function normalizeCategoryIcon(value: unknown): string {
   if (typeof value !== 'string') return DEFAULT_CATEGORY_ICON;
   const icon = value.trim();
   return isBuiltInIconName(icon) || isEmojiIcon(icon) ? icon : DEFAULT_CATEGORY_ICON;
-}
-
-/** What typing in the "your own emoji" field means. */
-export type EmojiInput =
-  | { kind: 'empty' }
-  | { kind: 'ok'; emoji: string }
-  /** More than one emoji (or an emoji with other text after it). */
-  | { kind: 'many' }
-  /** Letters, digits or other symbols: nothing an emoji keyboard makes. */
-  | { kind: 'notEmoji' };
-
-export function parseEmojiInput(text: string): EmojiInput {
-  const value = text.trim();
-  if (value.length === 0) return { kind: 'empty' };
-  if (isEmojiIcon(value)) return { kind: 'ok', emoji: value };
-  // An emoji at the front with something after it is "too many"; anything else is not an emoji at all.
-  const cps = codePointsOf(value);
-  return emojiEnd(cps) !== null ? { kind: 'many' } : { kind: 'notEmoji' };
 }

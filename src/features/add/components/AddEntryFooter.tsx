@@ -59,7 +59,6 @@ export const FOOTER_KEYS = [
   'setPadOpen',
   'onPadKey',
   'clearAmount',
-  'padTone',
 ] as const satisfies readonly (keyof AddEntryModel)[];
 
 type Props = { model: Pick<AddEntryModel, (typeof FOOTER_KEYS)[number]> };
@@ -106,7 +105,6 @@ export function AddEntryFooter({ model }: Props): ReactElement {
     setPadOpen,
     onPadKey,
     clearAmount,
-    padTone,
   } = model;
 
   const onPickAccount = useCallback(() => setAccountSheetOpen(true), [setAccountSheetOpen]);
@@ -199,7 +197,7 @@ export function AddEntryFooter({ model }: Props): ReactElement {
         />
       </View>
       {padVisible ? (
-        <AmountPad onKey={onPadKey} onClear={clearAmount} tone={padTone}>
+        <AmountPad onKey={onPadKey} onClear={clearAmount}>
           {actions}
         </AmountPad>
       ) : (

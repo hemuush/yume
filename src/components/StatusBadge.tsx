@@ -1,6 +1,7 @@
 import { View, StyleSheet } from 'react-native';
 import { Text } from './Text';
 import { theme } from '@/constants/theme';
+import { themedStyles } from '@/theme/themedStyles';
 
 /** A non-interactive status; words carry the meaning as well as colour. */
 export function StatusBadge({
@@ -32,13 +33,15 @@ export function StatusBadge({
     </View>
   );
 }
-const styles = StyleSheet.create({
-  badge: {
-    alignSelf: 'flex-start',
-    maxWidth: '100%',
-    borderRadius: theme.radius.pill,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  label: { fontFamily: theme.font.bodyMedium, fontSize: 12, lineHeight: 16 },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    badge: {
+      alignSelf: 'flex-start',
+      maxWidth: '100%',
+      borderRadius: theme.radius.pill,
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+    },
+    label: { fontFamily: theme.font.bodyMedium, fontSize: 12, lineHeight: 16 },
+  })
+);

@@ -28,7 +28,8 @@ import { getDefaultCurrency } from '@/db/settings';
 import { EntryMonth, listEntryMonths } from '@/db/exportSummary';
 import { openPeriod, previewFor, stepPeriod } from '@/features/export/exportChoice';
 import { withPressed } from '@/lib/pressed';
-import { shade } from '@/lib/color';
+import { themedStyles } from '@/theme/themedStyles';
+import { flatSection } from '@/components/screenStyles';
 
 type Format = 'pdf' | 'excel';
 
@@ -194,13 +195,7 @@ export default function ExportScreen() {
                 selected: format === choice.value,
                 disabled: busy,
               }}
-              style={withPressed([
-                styles.format,
-                format === choice.value && {
-                  borderColor: theme.colors.textSecondary,
-                  backgroundColor: shade(accent, 94),
-                },
-              ])}
+              style={withPressed([styles.format])}
             >
               <View
                 style={[
@@ -237,87 +232,83 @@ export default function ExportScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: theme.colors.background },
-  scroll: { flex: 1 },
-  content: { paddingHorizontal: 16, gap: 12 },
-  // In the sky header, under the title, as on What-if and Suu's garden.
-  intro: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textSecondary },
-  card: {
-    padding: 14,
-    gap: 14,
-    backgroundColor: theme.colors.surface,
-    borderRadius: 22,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-  },
-  // A step's heading above its block, in the same type as every other section heading.
-  label: SECTION_TITLE,
-  formats: { gap: 10 },
-  format: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 14,
-    gap: 12,
-    minHeight: 86,
-    borderRadius: theme.radius.xl,
-    backgroundColor: theme.colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-  },
-  formatIcon: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-  formatText: { flex: 1, minWidth: 0, gap: 4 },
-  formatTitle: { fontFamily: theme.font.bodyBold, fontSize: 14, color: theme.colors.textPrimary },
-  radio: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    borderWidth: 1,
-    borderColor: theme.colors.inkOff,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  radioOn: { backgroundColor: theme.colors.ink, borderColor: theme.colors.ink },
-  footer: {
-    padding: 16,
-    paddingTop: 12,
-    gap: 8,
-    backgroundColor: theme.colors.surface,
-    borderTopWidth: 1,
-    borderTopColor: theme.colors.borderSoft,
-  },
-  stepper: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
-  step: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: theme.colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-  },
-  stepOff: { opacity: theme.opacity.limit },
-  period: {
-    flex: 1,
-    textAlign: 'center',
-    fontFamily: theme.font.roundedBold,
-    fontSize: 20,
-    color: theme.colors.textPrimary,
-  },
-  preview: {
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 13,
-    color: theme.colors.textPrimary,
-    textAlign: 'center',
-  },
-  hint: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textMuted },
-  foot: {
-    fontFamily: theme.font.body,
-    fontSize: 12,
-    lineHeight: 17,
-    color: theme.colors.textMuted,
-    textAlign: 'center',
-    paddingHorizontal: 8,
-  },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    container: { flex: 1, backgroundColor: theme.colors.background },
+    scroll: { flex: 1 },
+    content: { paddingHorizontal: 16, gap: 12 },
+    // In the sky header, under the title, as on What-if and Suu's garden.
+    intro: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textSecondary },
+    card: {
+      ...flatSection(),
+      paddingVertical: 14,
+      gap: 14,
+    },
+    // A step's heading above its block, in the same type as every other section heading.
+    label: SECTION_TITLE,
+    formats: { gap: 10 },
+    format: {
+      ...flatSection(),
+      flexDirection: 'row',
+      alignItems: 'center',
+      padding: 14,
+      gap: 12,
+      minHeight: 86,
+    },
+    formatIcon: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+    formatText: { flex: 1, minWidth: 0, gap: 4 },
+    formatTitle: { fontFamily: theme.font.bodyBold, fontSize: 15, color: theme.colors.textPrimary },
+    radio: {
+      width: 22,
+      height: 22,
+      borderRadius: 11,
+      borderWidth: 1,
+      borderColor: theme.colors.inkOff,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    radioOn: { backgroundColor: theme.colors.ink, borderColor: theme.colors.ink },
+    footer: {
+      padding: 16,
+      paddingTop: 12,
+      gap: 8,
+      backgroundColor: theme.colors.surface,
+      borderTopWidth: 1,
+      borderTopColor: theme.colors.borderSoft,
+    },
+    stepper: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
+    step: {
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: theme.colors.surface,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.borderSoft,
+    },
+    stepOff: { opacity: theme.opacity.limit },
+    period: {
+      flex: 1,
+      textAlign: 'center',
+      fontFamily: theme.font.roundedBold,
+      fontSize: 22,
+      color: theme.colors.textPrimary,
+    },
+    preview: {
+      fontFamily: theme.font.bodyMedium,
+      fontSize: 13,
+      color: theme.colors.textPrimary,
+      textAlign: 'center',
+    },
+    hint: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textMuted },
+    foot: {
+      fontFamily: theme.font.body,
+      fontSize: 12,
+      lineHeight: 17,
+      color: theme.colors.textMuted,
+      textAlign: 'center',
+      paddingHorizontal: 8,
+    },
+  })
+);

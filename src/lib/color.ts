@@ -1,5 +1,6 @@
 // Small pure colour-space helpers that derive matching light/dark shades of one hue (e.g. the user's accent)
-// instead of unrelated fixed colours; dependency-free like every src/lib module.
+// instead of unrelated fixed colours. Their only dependency is the colour mode, for `shade`.
+import { getScheme } from '@/theme/scheme';
 
 /** #RGB/#RRGGBB (with or without '#') to [h 0-360, s 0-100, l 0-100]. */
 export function hexToHsl(hex: string): [number, number, number] {
@@ -63,6 +64,21 @@ export function hslToHex(h: number, s: number, l: number): string {
  * colour. `saturationDelta` nudges saturation; deep shades read better slightly more saturated, not muddy.
  */
 export function shade(hex: string, lightness: number, saturationDelta = 0): string {
+  const [h, s] = hexToHsl(hex);
+  return hslToHex(h, s + saturationDelta, getScheme() === 'dark' ? darkLightness(lightness) : lightness);
+}
+
+/**
+ * The lightness a shade asked for in light mode, mirrored for dark mode: a pale tint (94) becomes a deep wash (about
+ * 8), a deep icon or text shade (30) becomes a light one (70). Pairs written as "a tint with a deep shade on it" keep
+ * their contrast, so the many tints derived from the accent follow the colour mode without a second set of numbers.
+ */
+function darkLightness(lightness: number): number {
+  return Math.min(92, Math.max(8, 100 - lightness));
+}
+
+/** Like `shade`, but the same in both colour modes (a fill that is dark by design, such as the primary button). */
+export function fixedShade(hex: string, lightness: number, saturationDelta = 0): string {
   const [h, s] = hexToHsl(hex);
   return hslToHex(h, s + saturationDelta, lightness);
 }

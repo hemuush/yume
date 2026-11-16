@@ -2,7 +2,7 @@
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
 import { StyleSheet, View } from 'react-native';
-import { Circle, Stop } from 'react-native-svg';
+import { Circle } from 'react-native-svg';
 import { theme } from '@/constants/theme';
 import { heroSlices } from './heroSlices';
 import { MonthRing } from './MonthRing';
@@ -15,14 +15,10 @@ const mount = (node: React.ReactElement) => {
   return r;
 };
 const strokes = (r: ReactTestRenderer) => r.root.findAllByType(Circle).map((c) => c.props.stroke);
-/** Each slice is a circle painted by its own gradient; its own colour is the gradient's first stop (offset 0). */
-const sliceColours = (r: ReactTestRenderer) =>
-  r.root
-    .findAllByType(Stop)
-    .filter((s) => s.props.offset === '0')
-    .map((s) => s.props.stopColor);
+/** Each slice is one circle in its own flat colour; the first circle is the empty track under them. */
 const arcsOf = (r: ReactTestRenderer) =>
-  r.root.findAllByType(Circle).filter((c) => String(c.props.stroke).startsWith('url(#ring-'));
+  r.root.findAllByType(Circle).filter((c) => c.props.stroke !== theme.colors.trayTrack);
+const sliceColours = (r: ReactTestRenderer) => arcsOf(r).map((c) => c.props.stroke);
 /** The views the slices sit in: the one that is dimmed. */
 const sliceViews = (r: ReactTestRenderer) =>
   r.root
@@ -49,7 +45,10 @@ it('draws the month’s money only: the track and the slices, no second ring for
   const r = mount(<MonthRing slices={heroSlices(100_000, 40_000, 10_000, 20_000)} hideSavings={false} />);
   expect(strokes(r)).toEqual([
     theme.colors.trayTrack,
-    ...['spent', 'saved', 'due', 'free'].map((k) => `url(#ring-${k})`),
+    theme.colors.slice.spent,
+    theme.colors.slice.saved,
+    theme.colors.slice.due,
+    theme.colors.slice.free,
   ]);
   act(() => r.unmount());
 });
@@ -74,7 +73,7 @@ it('dims the slices that were not picked', () => {
 it('keeps round-capped arcs from running into each other, and draws one slice as a closed ring', () => {
   const r = mount(<MonthRing slices={heroSlices(100_000, 40_000, 0, 0)} hideSavings={false} />);
   const arcs = arcsOf(r);
-  const circumference = 2 * Math.PI * ((112 - 10) / 2);
+  const circumference = 2 * Math.PI * ((176 - 10) / 2);
   const [spent, free] = arcs.map((c) => c.props);
   const len = (p: Record<string, unknown>) => parseFloat(String(p.strokeDasharray));
   // Each arc's visible length (dash plus its two round caps) leaves a gap before the next one starts.
@@ -95,7 +94,7 @@ it('draws very small slices as thin flat bars in their own slots, so Free is alw
   );
   const arcs = arcsOf(r);
   expect(arcs).toHaveLength(4);
-  const circumference = 2 * Math.PI * ((112 - 10) / 2);
+  const circumference = 2 * Math.PI * ((176 - 10) / 2);
   const spans = arcs.map((c) => {
     const length = parseFloat(String(c.props.strokeDasharray));
     const start = -Number(c.props.strokeDashoffset);

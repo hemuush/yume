@@ -2,7 +2,7 @@ import { View, Pressable, StyleSheet } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
 import { ToggleSwitch } from '@/components/ToggleSwitch';
-import { screenStyles as h } from '@/components/screenStyles';
+import { screenStyles as h, flatSection } from '@/components/screenStyles';
 import { theme } from '@/constants/theme';
 import { withPressedTint } from '@/lib/pressed';
 import { useAccent } from '@/theme/AccentContext';
@@ -13,6 +13,7 @@ import {
   formatSlotTime,
   slotRangeLabel,
 } from '@/lib/notificationTimes';
+import { themedStyles } from '@/theme/themedStyles';
 
 const NAMES: Record<TimeSlotKind, string> = { morning: 'Morning', evening: 'Evening' };
 
@@ -79,39 +80,30 @@ export function SlotCard({
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
-    flexGrow: 1,
-    // Wide enough that two never share a phone's row: side by side each had about 49 dp for the time, and "9:00 AM"
-    // ended "9:0…". Stacked, the time has room, and so has the 44 dp pair of buttons.
-    flexBasis: 200,
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.radius.xl2,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    padding: 14,
-    gap: 6,
-  },
-  head: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
-  name: { fontFamily: theme.font.bodyBold, fontSize: theme.typeSize.row, color: theme.colors.textPrimary },
-  sub: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textSecondary },
-  time: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 4 },
-  off: { opacity: theme.opacity.disabled },
-  step: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: theme.colors.tray,
-    boxShadow: `inset 0 0 0 1px ${theme.colors.inkHairline}`,
-  },
-  clock: {
-    flexShrink: 1,
-    fontFamily: theme.font.roundedBold,
-    fontSize: 18,
-    color: theme.colors.textPrimary,
-    textAlign: 'center',
-  },
-  range: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, textAlign: 'center' },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    card: { ...flatSection(), flexGrow: 1, flexBasis: 200, padding: 14, gap: 6 },
+    head: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
+    name: { fontFamily: theme.font.bodyBold, fontSize: theme.typeSize.row, color: theme.colors.textPrimary },
+    sub: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textSecondary },
+    time: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 4 },
+    off: { opacity: theme.opacity.disabled },
+    step: {
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: theme.colors.tray,
+      boxShadow: `inset 0 0 0 1px ${theme.colors.inkHairline}`,
+    },
+    clock: {
+      flexShrink: 1,
+      fontFamily: theme.font.roundedBold,
+      fontSize: 17,
+      color: theme.colors.textPrimary,
+      textAlign: 'center',
+    },
+    range: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, textAlign: 'center' },
+  })
+);

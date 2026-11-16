@@ -9,6 +9,7 @@ import { withPressed } from '@/lib/pressed';
 import { BIG_DAY_FACTOR, HeatDay, HeatModel, heatDayLabel } from './reportsInsights';
 import { HeatmapDayPicker } from './HeatmapDayPicker';
 import { useFontScale } from '@/lib/useFontScale';
+import { themedStyles } from '@/theme/themedStyles';
 
 const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 const CELL_GAP = 4;
@@ -262,52 +263,54 @@ export function SpendHeatmap({
   );
 }
 
-const styles = StyleSheet.create({
-  weekRow: { flexDirection: 'row', alignItems: 'center', marginBottom: CELL_GAP, gap: COLUMN_GAP },
-  slot: { flex: 1, minWidth: theme.accessibility.minTouchTarget },
-  weekday: {
-    minHeight: HEAD_H - CELL_GAP,
-    textAlign: 'center',
-    fontFamily: theme.font.body,
-    fontSize: 11,
-    color: theme.colors.textMuted,
-  },
-  cell: {
-    minWidth: theme.accessibility.minTouchTarget,
-    minHeight: CELL_H,
-    borderRadius: 11,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cellEmpty: { borderWidth: StyleSheet.hairlineWidth, borderColor: theme.colors.borderSoft },
-  cellFuture: { borderWidth: 0, opacity: 0.35 },
-  cellSelected: { borderWidth: 2, borderColor: theme.colors.textSecondary },
-  cellLabel: { fontFamily: theme.font.body, fontSize: 12 },
-  cellLabelTop: { fontFamily: theme.font.bodyBold },
-  todayDot: {
-    position: 'absolute',
-    bottom: 5,
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: theme.colors.textSecondary,
-  },
-  bigDot: {
-    position: 'absolute',
-    top: 6,
-    right: 6,
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: theme.colors.textSecondary,
-  },
-  matrix: { gap: DOT_GAP },
-  matrixRow: { flexDirection: 'row', alignItems: 'center', height: DOT_H },
-  matrixLabelWrap: { width: LABEL_W, justifyContent: 'center' },
-  matrixLabel: { fontFamily: theme.font.body, fontSize: MATRIX_LABEL_SIZE, color: theme.colors.textMuted },
-  matrixLabelOn: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
-  dotSlot: { flex: 1, minWidth: 0, paddingHorizontal: 1 },
-  dot: { height: DOT_H, borderRadius: 4 },
-  dotFuture: { borderWidth: 0, opacity: 0.35 },
-  dotSelected: { borderWidth: 1.5, borderColor: theme.colors.textSecondary },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    weekRow: { flexDirection: 'row', alignItems: 'center', marginBottom: CELL_GAP, gap: COLUMN_GAP },
+    slot: { flex: 1, minWidth: theme.accessibility.minTouchTarget },
+    weekday: {
+      minHeight: HEAD_H - CELL_GAP,
+      textAlign: 'center',
+      fontFamily: theme.font.body,
+      fontSize: 11,
+      color: theme.colors.textMuted,
+    },
+    cell: {
+      minWidth: theme.accessibility.minTouchTarget,
+      minHeight: CELL_H,
+      borderRadius: 11,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    cellEmpty: { borderWidth: StyleSheet.hairlineWidth, borderColor: theme.colors.borderSoft },
+    cellFuture: { borderWidth: 0, opacity: 0.35 },
+    cellSelected: { borderWidth: 2, borderColor: theme.colors.textSecondary },
+    cellLabel: { fontFamily: theme.font.body, fontSize: 12 },
+    cellLabelTop: { fontFamily: theme.font.bodyBold },
+    todayDot: {
+      position: 'absolute',
+      bottom: 5,
+      width: 4,
+      height: 4,
+      borderRadius: 2,
+      backgroundColor: theme.colors.textSecondary,
+    },
+    bigDot: {
+      position: 'absolute',
+      top: 6,
+      right: 6,
+      width: 4,
+      height: 4,
+      borderRadius: 2,
+      backgroundColor: theme.colors.textSecondary,
+    },
+    matrix: { gap: DOT_GAP },
+    matrixRow: { flexDirection: 'row', alignItems: 'center', height: DOT_H },
+    matrixLabelWrap: { width: LABEL_W, justifyContent: 'center' },
+    matrixLabel: { fontFamily: theme.font.body, fontSize: MATRIX_LABEL_SIZE, color: theme.colors.textMuted },
+    matrixLabelOn: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
+    dotSlot: { flex: 1, minWidth: 0, paddingHorizontal: 1 },
+    dot: { height: DOT_H, borderRadius: 4 },
+    dotFuture: { borderWidth: 0, opacity: 0.35 },
+    dotSelected: { borderWidth: 1.5, borderColor: theme.colors.textSecondary },
+  })
+);

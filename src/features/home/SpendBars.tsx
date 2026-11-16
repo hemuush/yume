@@ -6,7 +6,6 @@ import Animated, {
   useAnimatedStyle,
   withTiming,
 } from 'react-native-reanimated';
-import { LinearGradient } from 'expo-linear-gradient';
 import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
@@ -17,21 +16,20 @@ import { timing, PANEL_ENTER, ROW_EXIT } from '@/lib/animation';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 import { DURATIONS } from '@/lib/motionTimings';
 import { useAccent } from '@/theme/AccentContext';
-import { hexToRgba, hexToHsl, shade } from '@/lib/color';
+import { hexToRgba } from '@/lib/color';
 import { withPressed } from '@/lib/pressed';
 import { parseLocalIsoDate } from '@/lib/date';
 import { defaultBar, monthBars, weekBars, SpendBar } from './spendBarData';
 import { WorkingRow } from './WorkingRow';
 import { styles as hero } from './hero.styles';
 import { LimitMeter } from '@/components/LimitMeter';
+import { themedStyles } from '@/theme/themedStyles';
 
 type Range = 'week' | 'month';
 
 /** The tallest a capsule's fill gets, and the least a day with any spending shows. */
 const TRACK_H = 60;
 const FILL_MIN = 14;
-/** The lightest the capsule fill's second colour gets, so it still reads against the track in every theme. */
-const FILL_END_MAX_L = 72;
 /** The picked capsule stands a little taller than the rest. */
 const LIFT = 1.08;
 /** A day this many times the daily goal is a one-off, not a slip: said calmly. */
@@ -60,10 +58,8 @@ function Capsule({
   onSelect: () => void;
 }) {
   const reduce = useReduceMotion();
-  const { accent, secondary } = useAccent();
+  const { accent } = useAccent();
   const target = fillHeight(bar.totalMinor, maxMinor);
-  // A very light second colour would vanish into the track, so its lightness is capped.
-  const fillEnd = hexToHsl(secondary)[2] > FILL_END_MAX_L ? shade(secondary, FILL_END_MAX_L) : secondary;
   // A capsule shows at its height at once; a new value (another day's spending) just glides there.
   const height = useSharedValue(target);
   const lift = useSharedValue(selected ? LIFT : 1);
@@ -97,7 +93,12 @@ function Capsule({
         ]}
       >
         <Animated.View style={[styles.fill, { transformOrigin: 'bottom' }, fillStyle]}>
-          <LinearGradient colors={[accent, fillEnd]} style={StyleSheet.absoluteFill} />
+          <View
+            style={[
+              StyleSheet.absoluteFill,
+              { backgroundColor: selected ? theme.colors.slice.saved : accent },
+            ]}
+          />
         </Animated.View>
         {goalH != null && <View pointerEvents="none" style={[styles.goalTick, { bottom: goalH }]} />}
       </Animated.View>
@@ -298,97 +299,99 @@ export function SpendBars({
   );
 }
 
-const styles = StyleSheet.create({
-  wrap: { paddingTop: 2 },
-  head: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    columnGap: 8,
-  },
-  headMain: { flexGrow: 1, flexShrink: 1, minHeight: 44, justifyContent: 'center' },
-  dayRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    columnGap: 8,
-    rowGap: 4,
-  },
-  dayFigure: { flexShrink: 1, gap: 2 },
-  meter: { marginTop: 4, marginBottom: 8 },
-  dayTitle: {
-    fontFamily: theme.font.body,
-    fontSize: 12,
-    color: theme.colors.textSecondary,
-  },
-  dayAmount: {
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 16,
-    lineHeight: 22,
-    color: theme.colors.textPrimary,
-    fontVariant: ['tabular-nums'],
-  },
-  chip: {
-    minHeight: 28,
-    justifyContent: 'center',
-    paddingHorizontal: 12,
-    borderRadius: theme.radius.pill,
-    backgroundColor: theme.colors.tray,
-  },
-  chipOk: { backgroundColor: theme.colors.incomeTint },
-  chipWarn: { backgroundColor: theme.colors.dueTint },
-  chipText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textSecondary },
-  insights: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 3, marginLeft: 'auto' },
-  insightsText: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.link },
-  note: {
-    fontFamily: theme.font.body,
-    fontSize: 12,
-    lineHeight: 17,
-    color: theme.colors.textMuted,
-    paddingBottom: 6,
-  },
-  bars: { flexDirection: 'row', gap: 6, paddingTop: 2, paddingBottom: 2 },
-  col: { flex: 1, minWidth: 0, alignItems: 'center', gap: 4 },
-  track: {
-    flex: 1,
-    width: '100%',
-    maxWidth: 28,
-    minHeight: TRACK_H,
-    borderRadius: 14,
-    overflow: 'hidden',
-    justifyContent: 'flex-end',
-    borderWidth: 1.5,
-    borderColor: 'transparent',
-  },
-  trackOn: { borderColor: 'rgba(18,19,15,0.22)' },
-  fill: { width: '100%', borderRadius: 12, overflow: 'hidden' },
-  goalTick: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    height: 0,
-    borderTopWidth: 1.5,
-    borderStyle: 'dashed',
-    borderColor: 'rgba(18,19,15,0.35)',
-  },
-  label: {
-    alignSelf: 'stretch',
-    textAlign: 'center',
-    minHeight: 16,
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 11,
-    color: theme.colors.textMuted,
-  },
-  labelOn: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
-  goalKey: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingTop: 2, paddingBottom: 4 },
-  goalSwatch: {
-    width: 14,
-    height: 0,
-    borderTopWidth: 1.5,
-    borderStyle: 'dashed',
-    borderColor: 'rgba(18,19,15,0.35)',
-  },
-  goalText: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    wrap: { paddingTop: 2 },
+    head: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      columnGap: 8,
+    },
+    headMain: { flexGrow: 1, flexShrink: 1, minHeight: 44, justifyContent: 'center' },
+    dayRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      columnGap: 8,
+      rowGap: 4,
+    },
+    dayFigure: { flexShrink: 1, gap: 2 },
+    meter: { marginTop: 4, marginBottom: 8 },
+    dayTitle: {
+      fontFamily: theme.font.body,
+      fontSize: 12,
+      color: theme.colors.textSecondary,
+    },
+    dayAmount: {
+      fontFamily: theme.font.bodyMedium,
+      fontSize: 17,
+      lineHeight: 22,
+      color: theme.colors.textPrimary,
+      fontVariant: ['tabular-nums'],
+    },
+    chip: {
+      minHeight: 28,
+      justifyContent: 'center',
+      paddingHorizontal: 12,
+      borderRadius: theme.radius.pill,
+      backgroundColor: theme.colors.tray,
+    },
+    chipOk: { backgroundColor: theme.colors.incomeTint },
+    chipWarn: { backgroundColor: theme.colors.dueTint },
+    chipText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textSecondary },
+    insights: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 3, marginLeft: 'auto' },
+    insightsText: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.link },
+    note: {
+      fontFamily: theme.font.body,
+      fontSize: 12,
+      lineHeight: 17,
+      color: theme.colors.textMuted,
+      paddingBottom: 6,
+    },
+    bars: { flexDirection: 'row', gap: 6, paddingTop: 2, paddingBottom: 2 },
+    col: { flex: 1, minWidth: 0, alignItems: 'center', gap: 4 },
+    track: {
+      flex: 1,
+      width: '100%',
+      maxWidth: 28,
+      minHeight: TRACK_H,
+      borderRadius: 14,
+      overflow: 'hidden',
+      justifyContent: 'flex-end',
+      borderWidth: 1.5,
+      borderColor: 'transparent',
+    },
+    trackOn: { borderColor: theme.colors.inkLine },
+    fill: { width: '100%', borderRadius: 12, overflow: 'hidden' },
+    goalTick: {
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      height: 0,
+      borderTopWidth: 1.5,
+      borderStyle: 'dashed',
+      borderColor: theme.colors.inkOff,
+    },
+    label: {
+      alignSelf: 'stretch',
+      textAlign: 'center',
+      minHeight: 16,
+      fontFamily: theme.font.bodyMedium,
+      fontSize: 11,
+      color: theme.colors.textMuted,
+    },
+    labelOn: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
+    goalKey: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingTop: 2, paddingBottom: 4 },
+    goalSwatch: {
+      width: 14,
+      height: 0,
+      borderTopWidth: 1.5,
+      borderStyle: 'dashed',
+      borderColor: theme.colors.inkOff,
+    },
+    goalText: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted },
+  })
+);

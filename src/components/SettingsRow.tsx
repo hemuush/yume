@@ -9,6 +9,7 @@ import { usePressScale } from '@/lib/usePressScale';
 import { screenStyles as h } from '@/components/screenStyles';
 import { useSheetSurface } from './SheetSurface';
 import type { McIconName } from '@/components/iconName';
+import { themedStyles } from '@/theme/themedStyles';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -128,25 +129,27 @@ export function SettingsRow({
   );
 }
 
-const styles = StyleSheet.create({
-  valueBelow: {
-    fontFamily: theme.font.bodyBold,
-    fontSize: 13,
-    color: theme.colors.textPrimary,
-    marginTop: 6,
-  },
-  value: {
-    fontFamily: theme.font.bodyBold,
-    fontSize: 13,
-    color: theme.colors.textSecondary,
-    flexShrink: 1,
-    maxWidth: '40%',
-    textAlign: 'right',
-  },
-  dimmed: { opacity: theme.opacity.disabled },
-  compactRow: { minHeight: 52, paddingVertical: 8 },
-  compactSub: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, marginTop: 0 },
-  compactValue: { fontFamily: theme.font.bodyBold, fontSize: 12 },
-  round: { borderRadius: 19 },
-  sheetIcon: { width: 40, height: 40, borderRadius: 20 },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    valueBelow: {
+      fontFamily: theme.font.bodyBold,
+      fontSize: 13,
+      color: theme.colors.textPrimary,
+      marginTop: 6,
+    },
+    value: {
+      fontFamily: theme.font.bodyBold,
+      fontSize: 13,
+      color: theme.colors.textSecondary,
+      flexShrink: 1,
+      maxWidth: '40%',
+      textAlign: 'right',
+    },
+    dimmed: { opacity: theme.opacity.disabled },
+    compactRow: { minHeight: 52, paddingVertical: 8 },
+    compactSub: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, marginTop: 0 },
+    compactValue: { fontFamily: theme.font.bodyBold, fontSize: 12 },
+    round: { borderRadius: 19 },
+    sheetIcon: { width: 40, height: 40, borderRadius: 20 },
+  })
+);

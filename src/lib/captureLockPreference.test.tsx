@@ -54,6 +54,9 @@ jest.mock('@/db/settings', () => ({
   getAppLockEnabled: async () => false,
   setAppLockEnabled: jest.fn(async () => {}),
   getHideSensitiveAmounts: async () => false,
+  getAppearance: async () => 'system',
+  getCachedAppearance: () => 'system',
+  setAppearance: jest.fn(async () => {}),
 }));
 jest.mock('@/db/ledger', () => ({ listAccounts: jest.fn(), listTransactions: jest.fn() }));
 jest.mock('@/lib/runAppMaintenance', () => ({ runAppMaintenance: async () => {} }));

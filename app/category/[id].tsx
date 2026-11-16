@@ -20,7 +20,7 @@ import { useScreenLoad } from '@/lib/useScreenLoad';
 import { theme } from '@/constants/theme';
 import { SkyHeader, HeaderSummary } from '@/features/home/SkyHeader';
 import { ListCard, SummaryCard, SummaryFacts, SummaryTop, summaryFigure } from '@/components/SummaryCard';
-import { SCREEN } from '@/components/screenStyles';
+import { SCREEN, flatSection } from '@/components/screenStyles';
 import { HomeWallpaper } from '@/features/home/HomeWallpaper';
 import { useAccent } from '@/theme/AccentContext';
 import ReanimatedAnimated from 'react-native-reanimated';
@@ -41,6 +41,7 @@ import { SplitBreakdown } from '@/features/reports/SplitBreakdown';
 import { withPressed } from '@/lib/pressed';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import { inParent } from '@/lib/categoryLabel';
+import { themedStyles } from '@/theme/themedStyles';
 
 const isThisMonth = (w: ReportWindow) => w.granularity === 'month' && w.offset === 0;
 
@@ -427,77 +428,80 @@ export default function CategoryScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: theme.colors.background },
-  chartCard: { padding: 14 },
-  heroRefund: {
-    fontFamily: theme.font.body,
-    fontSize: 12,
-    color: theme.colors.incomeText,
-    paddingHorizontal: 2,
-  },
-  heroAction: { marginHorizontal: SCREEN.gutter, marginTop: 12 },
-  noLimit: {
-    marginHorizontal: SCREEN.gutter,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    minHeight: 44,
-    paddingHorizontal: 14,
-    paddingVertical: 11,
-    borderRadius: theme.radius.xl,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    backgroundColor: theme.colors.surface,
-  },
-  noLimitText: { flex: 1, fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textSecondary },
-  activityLink: { minHeight: 44, maxWidth: '55%', flexDirection: 'row', alignItems: 'center', gap: 6 },
-  activityLinkText: {
-    flexShrink: 1,
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 12,
-    color: theme.colors.link,
-  },
-  parentPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-    minHeight: 32,
-    paddingLeft: 12,
-    paddingRight: 8,
-    borderRadius: theme.radius.pill,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    backgroundColor: theme.colors.surface,
-    maxWidth: '100%',
-  },
-  parentPillText: {
-    flexShrink: 1,
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 12,
-    color: theme.colors.textSecondary,
-  },
-  empty: {
-    fontFamily: theme.font.body,
-    fontSize: 13,
-    color: theme.colors.textMuted,
-    marginHorizontal: SCREEN.gutter,
-  },
-  errorBanner: {
-    marginHorizontal: SCREEN.gutter,
-    marginTop: theme.layout.screenTopGap,
-    marginBottom: 4,
-    padding: 14,
-    borderRadius: theme.radius.md,
-    backgroundColor: theme.colors.expenseTint,
-    borderWidth: theme.border.thin,
-    borderColor: theme.colors.expense,
-  },
-  errorTitle: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.expenseText },
-  errorDetail: {
-    fontFamily: theme.font.body,
-    fontSize: 12,
-    color: theme.colors.textSecondary,
-    marginTop: 3,
-  },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    container: { flex: 1, backgroundColor: theme.colors.background },
+    chartCard: { padding: 14 },
+    heroRefund: {
+      fontFamily: theme.font.body,
+      fontSize: 12,
+      color: theme.colors.incomeText,
+    },
+    heroAction: { marginHorizontal: SCREEN.gutter, marginTop: 12 },
+    noLimit: {
+      ...flatSection(),
+      marginHorizontal: 2,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+      minHeight: 44,
+      paddingHorizontal: 14,
+      paddingVertical: 11,
+    },
+    noLimitText: {
+      flex: 1,
+      fontFamily: theme.font.bodyBold,
+      fontSize: 13,
+      color: theme.colors.textSecondary,
+    },
+    activityLink: { minHeight: 44, maxWidth: '55%', flexDirection: 'row', alignItems: 'center', gap: 6 },
+    activityLinkText: {
+      flexShrink: 1,
+      fontFamily: theme.font.bodyMedium,
+      fontSize: 12,
+      color: theme.colors.link,
+    },
+    parentPill: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 2,
+      minHeight: 32,
+      paddingLeft: 12,
+      paddingRight: 8,
+      borderRadius: theme.radius.pill,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.borderSoft,
+      backgroundColor: theme.colors.surface,
+      maxWidth: '100%',
+    },
+    parentPillText: {
+      flexShrink: 1,
+      fontFamily: theme.font.bodyMedium,
+      fontSize: 12,
+      color: theme.colors.textSecondary,
+    },
+    empty: {
+      fontFamily: theme.font.body,
+      fontSize: 13,
+      color: theme.colors.textMuted,
+      marginHorizontal: SCREEN.gutter,
+    },
+    errorBanner: {
+      marginHorizontal: SCREEN.gutter,
+      marginTop: theme.layout.screenTopGap,
+      marginBottom: 4,
+      padding: 14,
+      borderRadius: theme.radius.md,
+      backgroundColor: theme.colors.expenseTint,
+      borderWidth: theme.border.thin,
+      borderColor: theme.colors.expense,
+    },
+    errorTitle: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.expenseText },
+    errorDetail: {
+      fontFamily: theme.font.body,
+      fontSize: 12,
+      color: theme.colors.textSecondary,
+      marginTop: 3,
+    },
+  })
+);

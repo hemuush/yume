@@ -9,6 +9,7 @@ import { ageLabel, estimatedValue, INVESTMENT_KIND_LABEL } from '@/lib/investmen
 import type { Holding } from '@/lib/portfolio';
 import type { Account } from '@/types';
 import { GainBadge } from './GainPill';
+import { themedStyles } from '@/theme/themedStyles';
 
 /**
  * One holding in a list: its name, kind and how old its value is, the estimate and maturity for a deposit,
@@ -69,7 +70,9 @@ export const HoldingRow = memo(function HoldingRow({
   );
 });
 
-const styles = StyleSheet.create({
-  rowRight: { alignItems: 'flex-end', gap: 3, flexShrink: 1 },
-  rowValue: { fontFamily: theme.font.bodyBold, fontSize: 14, color: theme.colors.textPrimary },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    rowRight: { alignItems: 'flex-end', gap: 3, flexShrink: 1 },
+    rowValue: { fontFamily: theme.font.bodyBold, fontSize: 15, color: theme.colors.textPrimary },
+  })
+);

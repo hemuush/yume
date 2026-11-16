@@ -10,6 +10,7 @@ import { screenStyles } from '@/components/screenStyles';
 import { useStacked } from '@/lib/useStacked';
 import type { SpendBar } from './spendChart';
 import { usePeriodSlide } from './usePeriodSlide';
+import { themedStyles } from '@/theme/themedStyles';
 
 /** The tallest a mini bar is drawn; the rest are in proportion to the biggest. */
 const BAR_MAX = 40;
@@ -164,69 +165,76 @@ function barColor(bar: SpendBar) {
   return bar.state || bar.totalMinor === 0 ? theme.colors.trayTrack : theme.colors.slice.free;
 }
 
-const styles = StyleSheet.create({
-  strip: {
-    marginHorizontal: 16,
-    marginTop: 8,
-    // The same side padding as Home's month card and as this card's loading placeholder.
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  // The figure, its comparison and the bars glide together; the chevron stays put.
-  glide: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 12 },
-  lead: { flex: 1, minWidth: 0, gap: 2 },
-  kicker: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 16, color: theme.colors.textSecondary },
-  figure: {
-    fontFamily: theme.font.bodyBold,
-    fontSize: 24,
-    lineHeight: 30,
-    letterSpacing: -0.3,
-    fontVariant: ['tabular-nums'],
-    color: theme.colors.textPrimary,
-  },
-  changeRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    columnGap: 6,
-    rowGap: 2,
-    marginTop: 2,
-  },
-  chip: {
-    minHeight: 22,
-    paddingLeft: 6,
-    paddingRight: 8,
-    borderRadius: 11,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-  },
-  chipLess: { backgroundColor: theme.colors.incomeTint },
-  chipMore: { backgroundColor: theme.colors.expenseTint },
-  chipText: { fontFamily: theme.font.bodyBold, fontSize: 12, fontVariant: ['tabular-nums'] },
-  more: { color: theme.colors.expenseText },
-  less: { color: theme.colors.incomeText },
-  changeText: { flexShrink: 1, fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
-  preview: { width: PREVIEW_W, gap: 3 },
-  bars: { flexDirection: 'row', alignItems: 'flex-end', gap: 4, height: BAR_MAX },
-  col: { flex: 1, alignItems: 'center', justifyContent: 'flex-end' },
-  bar: { width: '100%', maxWidth: 16, borderRadius: 4 },
-  // Not here yet: an outline, not a bar, so it never reads as a day with nothing spent.
-  barFuture: {
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderStyle: 'dashed',
-    borderColor: theme.colors.inkOff,
-  },
-  labels: { flexDirection: 'row', justifyContent: 'space-between' },
-  label: {
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 11,
-    lineHeight: 14,
-    color: theme.colors.textMuted,
-  },
-  labelNow: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    strip: {
+      marginHorizontal: 0,
+      marginTop: 8,
+      // The same side padding as Home's month card and as this card's loading placeholder.
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+    },
+    // The figure, its comparison and the bars glide together; the chevron stays put.
+    glide: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 12 },
+    lead: { flex: 1, minWidth: 0, gap: 2 },
+    kicker: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 16, color: theme.colors.textSecondary },
+    figure: {
+      fontFamily: theme.font.bodyBold,
+      fontSize: 22,
+      lineHeight: 30,
+      letterSpacing: -0.3,
+      fontVariant: ['tabular-nums'],
+      color: theme.colors.textPrimary,
+    },
+    changeRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      alignItems: 'center',
+      columnGap: 6,
+      rowGap: 2,
+      marginTop: 2,
+    },
+    chip: {
+      minHeight: 22,
+      paddingLeft: 6,
+      paddingRight: 8,
+      borderRadius: 11,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 2,
+    },
+    chipLess: { backgroundColor: theme.colors.incomeTint },
+    chipMore: { backgroundColor: theme.colors.expenseTint },
+    chipText: { fontFamily: theme.font.bodyBold, fontSize: 12, fontVariant: ['tabular-nums'] },
+    more: { color: theme.colors.expenseText },
+    less: { color: theme.colors.incomeText },
+    changeText: {
+      flexShrink: 1,
+      fontFamily: theme.font.body,
+      fontSize: 12,
+      color: theme.colors.textSecondary,
+    },
+    preview: { width: PREVIEW_W, gap: 3 },
+    bars: { flexDirection: 'row', alignItems: 'flex-end', gap: 4, height: BAR_MAX },
+    col: { flex: 1, alignItems: 'center', justifyContent: 'flex-end' },
+    bar: { width: '100%', maxWidth: 16, borderRadius: 4 },
+    // Not here yet: an outline, not a bar, so it never reads as a day with nothing spent.
+    barFuture: {
+      backgroundColor: 'transparent',
+      borderWidth: 1,
+      borderStyle: 'dashed',
+      borderColor: theme.colors.inkOff,
+    },
+    labels: { flexDirection: 'row', justifyContent: 'space-between' },
+    label: {
+      fontFamily: theme.font.bodyMedium,
+      fontSize: 11,
+      lineHeight: 14,
+      color: theme.colors.textMuted,
+    },
+    labelNow: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
+  })
+);

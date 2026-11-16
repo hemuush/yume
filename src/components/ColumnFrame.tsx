@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react';
 import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import { theme } from '@/constants/theme';
+import { themedStyles } from '@/theme/themedStyles';
+import { useSchemeVersion } from '@/theme/SchemeBoundary';
 
 /**
  * The widest the app's content gets, in dp. A phone is narrower and is untouched. Android 16 ignores the
@@ -15,6 +17,7 @@ export const sheetWidth = { alignSelf: 'center', width: '100%', maxWidth: MAX_CO
 export const dialogWidth = { alignSelf: 'center', width: '100%', maxWidth: MAX_CONTENT_WIDTH - 48 } as const;
 
 export function ColumnFrame({ children }: { children: ReactNode }) {
+  useSchemeVersion();
   return (
     <View style={styles.outside}>
       <View style={styles.column}>{children}</View>
@@ -27,7 +30,9 @@ export function useContentWidth(): number {
   return Math.min(useWindowDimensions().width, MAX_CONTENT_WIDTH);
 }
 
-const styles = StyleSheet.create({
-  outside: { flex: 1, alignItems: 'center', backgroundColor: theme.colors.background },
-  column: { flex: 1, width: '100%', maxWidth: MAX_CONTENT_WIDTH },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    outside: { flex: 1, alignItems: 'center', backgroundColor: theme.colors.background },
+    column: { flex: 1, width: '100%', maxWidth: MAX_CONTENT_WIDTH },
+  })
+);

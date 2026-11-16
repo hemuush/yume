@@ -14,13 +14,14 @@ import type { McIconName } from '@/components/iconName';
 import { theme } from '@/constants/theme';
 import { payoffMonthShort } from '@/lib/loanPayoff';
 import type { LoanProgress } from '@/db/loans';
-import { loanBarTone, loanGlyph, loanIcon, loanTint } from './loanIdentity';
-import { SCREEN } from '@/components/screenStyles';
+import { loanGlyph, loanIcon, loanTint } from './loanIdentity';
+import { flatSection } from '@/components/screenStyles';
 import { DUE_SOON_DAYS } from '@/lib/dueDate';
 import { daysUntilIsoDate, toLocalIsoDate } from '@/lib/date';
 
 import { useAccent } from '@/theme/AccentContext';
 import { themeInk } from '@/theme/interactionColors';
+import { themedStyles } from '@/theme/themedStyles';
 
 /**
  * One loan in the list: flat card with its pale tile, progress and debt-free month; open loans end with the
@@ -117,7 +118,7 @@ export function LoanCard({
             <GrowFill
               animKey={`loan:${loan.id}`}
               pct={fraction * 100}
-              style={[styles.fill, { backgroundColor: isClosed ? theme.colors.textMuted : loanBarTone(hue) }]}
+              style={[styles.fill, { backgroundColor: isClosed ? theme.colors.textMuted : theme.colors.ink }]}
             />
           </View>
           <View style={styles.caption}>
@@ -166,91 +167,85 @@ export function LoanCard({
   );
 }
 
-const styles = StyleSheet.create({
-  // Flat supporting surface; identity colour is confined to the icon and progress.
-  card: {
-    marginHorizontal: SCREEN.gutter,
-    marginBottom: 12,
-    padding: 14,
-    borderRadius: theme.radius.xl,
-    backgroundColor: theme.colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-  },
-  head: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  icon: {
-    width: 34,
-    height: 34,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headText: { flex: 1, minWidth: 0 },
-  name: { fontFamily: theme.font.bodyMedium, fontSize: 14, color: theme.colors.textPrimary },
-  sub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 2 },
-  figs: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'baseline',
-    justifyContent: 'space-between',
-    gap: 8,
-    marginTop: 6,
-  },
-  outstanding: {
-    fontFamily: theme.font.bodyBold,
-    fontSize: 20,
-    fontVariant: ['tabular-nums'],
-    color: theme.colors.textPrimary,
-    flexShrink: 1,
-  },
-  left: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted, marginTop: 2 },
-  paidOff: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.incomeText },
-  track: {
-    height: 5,
-    borderRadius: 4,
-    backgroundColor: theme.colors.inkHairline,
-    marginTop: 8,
-    overflow: 'hidden',
-  },
-  fill: { height: '100%', borderRadius: 4 },
-  caption: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 6, marginTop: 6 },
-  captionText: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, flexShrink: 1 },
-  captionBold: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
-  // A separated payment row instead of a second card inside the loan.
-  footer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    gap: 10,
-    marginTop: 6,
-    paddingTop: 6,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: theme.colors.borderSoft,
-  },
-  footerDue: {
-    backgroundColor: theme.colors.dueTint,
-    borderRadius: 12,
-    paddingHorizontal: 10,
-    paddingBottom: 6,
-    borderTopWidth: 0,
-  },
-  footerText: { flexGrow: 1, flexBasis: 180, minWidth: 0 },
-  nextLabel: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.dueInk },
-  nextLabelDue: { fontFamily: theme.font.bodyBold },
-  nextLine: {
-    fontFamily: theme.font.bodyBold,
-    fontSize: 13,
-    color: theme.colors.textPrimary,
-    marginTop: 2,
-  },
-  nextAmount: { fontFamily: theme.font.bodyBold, fontVariant: ['tabular-nums'] },
-  pill: {
-    minHeight: 44,
-    justifyContent: 'center',
-    paddingHorizontal: 14,
-    borderRadius: theme.radius.pill,
-    backgroundColor: theme.colors.ink,
-  },
-  pillPressed: { opacity: theme.opacity.pressed },
-  pillText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.white },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    // Flat supporting surface; identity colour is confined to the icon and progress.
+    card: { ...flatSection(), marginHorizontal: 2, marginBottom: 12, padding: 14 },
+    head: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+    icon: {
+      width: 34,
+      height: 34,
+      borderRadius: 20,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    headText: { flex: 1, minWidth: 0 },
+    name: { fontFamily: theme.font.bodyMedium, fontSize: 15, color: theme.colors.textPrimary },
+    sub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 2 },
+    figs: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      alignItems: 'baseline',
+      justifyContent: 'space-between',
+      gap: 8,
+      marginTop: 6,
+    },
+    outstanding: {
+      fontFamily: theme.font.bodyBold,
+      fontSize: 22,
+      fontVariant: ['tabular-nums'],
+      color: theme.colors.textPrimary,
+      flexShrink: 1,
+    },
+    left: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted, marginTop: 2 },
+    paidOff: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.incomeText },
+    track: {
+      height: 5,
+      borderRadius: 4,
+      backgroundColor: theme.colors.inkHairline,
+      marginTop: 8,
+      overflow: 'hidden',
+    },
+    fill: { height: '100%', borderRadius: 4 },
+    caption: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent: 'space-between',
+      gap: 6,
+      marginTop: 6,
+    },
+    captionText: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, flexShrink: 1 },
+    captionBold: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
+    // A separated payment row instead of a second card inside the loan.
+    footer: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      alignItems: 'center',
+      gap: 10,
+      marginTop: 6,
+      paddingTop: 6,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: theme.colors.borderSoft,
+    },
+    footerDue: { paddingBottom: 6 },
+    footerText: { flexGrow: 1, flexBasis: 180, minWidth: 0 },
+    nextLabel: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.dueInk },
+    nextLabelDue: { fontFamily: theme.font.bodyBold },
+    nextLine: {
+      fontFamily: theme.font.bodyBold,
+      fontSize: 13,
+      color: theme.colors.textPrimary,
+      marginTop: 2,
+    },
+    nextAmount: { fontFamily: theme.font.bodyBold, fontVariant: ['tabular-nums'] },
+    pill: {
+      minHeight: 44,
+      justifyContent: 'center',
+      paddingHorizontal: 14,
+      borderRadius: theme.radius.pill,
+      backgroundColor: theme.colors.ink,
+    },
+    pillPressed: { opacity: theme.opacity.pressed },
+    pillText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.onInk },
+  })
+);

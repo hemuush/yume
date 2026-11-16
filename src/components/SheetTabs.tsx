@@ -6,7 +6,8 @@ import { withPressed } from '@/lib/pressed';
 import { tooTight } from '@/lib/tooTight';
 
 import { useAccent } from '@/theme/AccentContext';
-import { interactionColors, selectedFill } from '@/theme/interactionColors';
+import { interactionColors } from '@/theme/interactionColors';
+import { themedStyles } from '@/theme/themedStyles';
 
 /**
  * Match the main page filters, with a clear selected state and light tap feedback. When the longest word would not
@@ -48,7 +49,7 @@ export function SheetTabs<T extends string>({
             variant === 'pill' && styles.pillTab,
             option.value === value &&
               (variant === 'pill'
-                ? { backgroundColor: selectedFill(accent) }
+                ? [styles.pillPicked]
                 : [styles.selected, { borderBottomColor: colors.ink }]),
           ])}
         >
@@ -67,48 +68,50 @@ export function SheetTabs<T extends string>({
   );
 }
 
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.borderSoft,
-    marginBottom: 12,
-  },
-  tab: {
-    flex: 1,
-    minHeight: 48,
-    paddingHorizontal: 6,
-    paddingVertical: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderBottomWidth: 2,
-    borderBottomColor: 'transparent',
-  },
-  selected: {
-    borderBottomColor: theme.colors.ink,
-    backgroundColor: theme.colors.surface,
-    borderTopLeftRadius: 12,
-    borderTopRightRadius: 12,
-  },
-  rowWrap: { flexWrap: 'wrap' },
-  // A share of the row that fits two to a line (a zero basis would let all of them squeeze onto one).
-  tabWrap: { flex: undefined, flexGrow: 1, flexBasis: '45%' },
-  pillRow: {
-    borderBottomWidth: 0,
-    padding: 3,
-    gap: 4,
-    borderRadius: 24,
-    backgroundColor: theme.colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-  },
-  pillTab: { borderBottomWidth: 0, borderRadius: 21 },
-  pillActive: { color: theme.colors.textPrimary },
-  label: {
-    fontFamily: theme.font.body,
-    fontSize: 13,
-    color: theme.colors.textSecondary,
-    textAlign: 'center',
-  },
-  active: { fontFamily: theme.font.bodyMedium, color: theme.colors.textPrimary },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    row: {
+      flexDirection: 'row',
+      borderBottomWidth: 1,
+      borderBottomColor: theme.colors.borderSoft,
+      marginBottom: 12,
+    },
+    tab: {
+      flex: 1,
+      minHeight: 48,
+      paddingHorizontal: 6,
+      paddingVertical: 10,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderBottomWidth: 2,
+      borderBottomColor: 'transparent',
+    },
+    selected: {
+      borderBottomColor: theme.colors.ink,
+      backgroundColor: theme.colors.surface,
+      borderTopLeftRadius: 12,
+      borderTopRightRadius: 12,
+    },
+    rowWrap: { flexWrap: 'wrap' },
+    // A share of the row that fits two to a line (a zero basis would let all of them squeeze onto one).
+    tabWrap: { flex: undefined, flexGrow: 1, flexBasis: '45%' },
+    pillRow: {
+      borderBottomWidth: 0,
+      padding: 3,
+      gap: 4,
+      borderRadius: 24,
+      backgroundColor: theme.colors.surfaceAlt,
+    },
+    // The picked tab is a white piece raised from the warm track.
+    pillPicked: { backgroundColor: theme.colors.surface, boxShadow: '0px 1px 2px rgba(60,50,20,0.12)' },
+    pillTab: { borderBottomWidth: 0, borderRadius: 21 },
+    pillActive: { color: theme.colors.textPrimary },
+    label: {
+      fontFamily: theme.font.body,
+      fontSize: 13,
+      color: theme.colors.textSecondary,
+      textAlign: 'center',
+    },
+    active: { fontFamily: theme.font.bodyMedium, color: theme.colors.textPrimary },
+  })
+);

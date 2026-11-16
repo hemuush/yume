@@ -8,6 +8,7 @@ import { SECTION_TITLE, SECTION_GAP } from '@/constants/textStyles';
 
 import { useAccent } from '@/theme/AccentContext';
 import { themeInk } from '@/theme/interactionColors';
+import { themedStyles } from '@/theme/themedStyles';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -83,38 +84,40 @@ export function Section({
   );
 }
 
-const styles = StyleSheet.create({
-  wrap: { marginTop: SECTION_GAP.top },
-  wrapFirst: { marginTop: theme.layout.screenTopGap },
-  head: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginHorizontal: SCREEN.gutter,
-    marginBottom: SECTION_GAP.bottom,
-    minHeight: 24,
-    gap: 8,
-  },
-  titleRow: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 8 },
-  titleCol: { flexShrink: 1, minWidth: 0, gap: 1 },
-  title: { ...SECTION_TITLE, flexShrink: 1 },
-  subtitle: {
-    fontFamily: theme.font.body,
-    fontSize: 12,
-    lineHeight: 17,
-    color: theme.colors.textMuted,
-    fontVariant: ['tabular-nums'],
-  },
-  badge: {
-    minWidth: 20,
-    minHeight: 20,
-    paddingHorizontal: 6,
-    borderRadius: theme.radius.pill,
-    backgroundColor: theme.colors.expense,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  badgeText: { fontFamily: theme.font.monoBold, fontSize: 11, color: theme.colors.white },
-  seeAll: { flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 48, flexShrink: 0 },
-  seeAllText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.link },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    wrap: { marginTop: SECTION_GAP.top },
+    wrapFirst: { marginTop: theme.layout.screenTopGap },
+    head: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginHorizontal: SCREEN.gutter,
+      marginBottom: SECTION_GAP.bottom,
+      minHeight: 24,
+      gap: 8,
+    },
+    titleRow: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 8 },
+    titleCol: { flexShrink: 1, minWidth: 0, gap: 1 },
+    title: { ...SECTION_TITLE, flexShrink: 1 },
+    subtitle: {
+      fontFamily: theme.font.body,
+      fontSize: 12,
+      lineHeight: 17,
+      color: theme.colors.textMuted,
+      fontVariant: ['tabular-nums'],
+    },
+    badge: {
+      minWidth: 20,
+      minHeight: 20,
+      paddingHorizontal: 6,
+      borderRadius: theme.radius.pill,
+      backgroundColor: theme.colors.expense,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    badgeText: { fontFamily: theme.font.monoBold, fontSize: 11, color: theme.colors.onInk },
+    seeAll: { flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 48, flexShrink: 0 },
+    seeAllText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.link },
+  })
+);

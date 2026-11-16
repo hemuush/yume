@@ -16,7 +16,7 @@ import { gainLabel } from '@/lib/investment';
 import { goalProgress } from '@/lib/savingsGoalProgress';
 import { keepTogether } from '@/lib/keepTogether';
 import type { Portfolio } from '@/lib/portfolio';
-import { useStacked } from '@/lib/useStacked';
+import { themedStyles } from '@/theme/themedStyles';
 
 type Alert = { key: string; title: string; detail: string; onPress: () => void };
 
@@ -98,7 +98,6 @@ export function PlanOverviewPanels({
   onTab: (tab: PlanTab) => void;
   onBudget: (id: string) => void;
 }) {
-  const oneColumn = useStacked('late');
   const overdue = groups
     .flatMap((g) => g.items)
     .filter((item) => item.dueDate < today && (item.kind === 'bill' || item.kind === 'emi'));
@@ -309,7 +308,7 @@ export function PlanOverviewPanels({
       <Section compact title="Your plans">
         <View style={s.grid}>
           {[debtTile, budgetTile, goalTile, investTile].map((tile) => (
-            <PlanStatusTile key={tile.key} tile={tile} wide={oneColumn} />
+            <PlanStatusTile key={tile.key} tile={tile} wide />
           ))}
         </View>
       </Section>
@@ -317,60 +316,59 @@ export function PlanOverviewPanels({
   );
 }
 
-const s = StyleSheet.create({
-  alerts: { marginHorizontal: 16, gap: 6 },
-  // One tinted line per alert: the tint says "look", so no icon tile or card is needed.
-  alert: {
-    minHeight: 44,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    backgroundColor: theme.colors.expenseTint,
-  },
-  alertCopy: { flex: 1, minWidth: 0, flexDirection: 'row', flexWrap: 'wrap', columnGap: 6 },
-  alertTitle: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
-  alertDetail: {
-    flexShrink: 1,
-    fontFamily: theme.font.body,
-    fontSize: 13,
-    color: theme.colors.textPrimary,
-    fontVariant: ['tabular-nums'],
-  },
-  grid: { marginHorizontal: 16, flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  tile: {
-    flexGrow: 1,
-    flexBasis: '45%',
-    minWidth: 0,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    gap: 5,
-    borderRadius: 18,
-    backgroundColor: theme.colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-  },
-  tileWide: { flexBasis: '100%' },
-  tileHead: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  tileName: { flex: 1, fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
-  figure: {
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 14,
-    lineHeight: 20,
-    color: theme.colors.textPrimary,
-    fontVariant: ['tabular-nums'],
-  },
-  unit: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
-  track: {
-    flexDirection: 'row',
-    height: 5,
-    borderRadius: 3,
-    overflow: 'hidden',
-    backgroundColor: theme.colors.trayTrack,
-  },
-  note: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textMuted },
-  bad: { fontFamily: theme.font.bodyMedium, color: theme.colors.expenseText },
-  good: { fontFamily: theme.font.bodyMedium, color: theme.colors.incomeText },
-});
+const s = themedStyles(() =>
+  StyleSheet.create({
+    alerts: { marginHorizontal: 16 },
+    // One line per alert between hairlines: the red icon says "look", so no tint, icon tile or card is needed.
+    alert: {
+      minHeight: 48,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+      paddingVertical: 8,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: theme.colors.borderSoft,
+    },
+    alertCopy: { flex: 1, minWidth: 0, flexDirection: 'row', flexWrap: 'wrap', columnGap: 6 },
+    alertTitle: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
+    alertDetail: {
+      flexShrink: 1,
+      fontFamily: theme.font.body,
+      fontSize: 13,
+      color: theme.colors.textPrimary,
+      fontVariant: ['tabular-nums'],
+    },
+    grid: { marginHorizontal: 16, flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+    tile: {
+      flexGrow: 1,
+      flexBasis: '45%',
+      minWidth: 0,
+      paddingHorizontal: 0,
+      paddingVertical: 10,
+      gap: 5,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: theme.colors.borderSoft,
+    },
+    tileWide: { flexBasis: '100%' },
+    tileHead: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+    tileName: { flex: 1, fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
+    figure: {
+      fontFamily: theme.font.bodyMedium,
+      fontSize: 15,
+      lineHeight: 20,
+      color: theme.colors.textPrimary,
+      fontVariant: ['tabular-nums'],
+    },
+    unit: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
+    track: {
+      flexDirection: 'row',
+      height: 5,
+      borderRadius: 3,
+      overflow: 'hidden',
+      backgroundColor: theme.colors.trayTrack,
+    },
+    note: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textMuted },
+    bad: { fontFamily: theme.font.bodyMedium, color: theme.colors.expenseText },
+    good: { fontFamily: theme.font.bodyMedium, color: theme.colors.incomeText },
+  })
+);

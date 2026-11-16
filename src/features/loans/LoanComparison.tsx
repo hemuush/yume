@@ -11,6 +11,7 @@ import { dayMonthYear } from '@/lib/dateLabels';
 import { theme } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
 import { themeInk } from '@/theme/interactionColors';
+import { themedStyles } from '@/theme/themedStyles';
 
 interface Candidate {
   id: string;
@@ -159,22 +160,24 @@ export function LoanComparison({
     </ModalSheet>
   );
 }
-const s = StyleSheet.create({
-  hint: {
-    fontFamily: theme.font.body,
-    fontSize: 12,
-    lineHeight: 18,
-    color: theme.colors.textSecondary,
-    marginBottom: 8,
-  },
-  card: {
-    gap: 8,
-    paddingVertical: 12,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: theme.colors.divider,
-  },
-  title: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.textPrimary },
-  amount: { fontFamily: theme.font.bodyMedium, fontSize: 20 },
-  track: { height: 5, backgroundColor: theme.colors.surfaceAlt, borderRadius: 4, overflow: 'hidden' },
-  fill: { height: '100%', borderRadius: 4 },
-});
+const s = themedStyles(() =>
+  StyleSheet.create({
+    hint: {
+      fontFamily: theme.font.body,
+      fontSize: 12,
+      lineHeight: 18,
+      color: theme.colors.textSecondary,
+      marginBottom: 8,
+    },
+    card: {
+      gap: 8,
+      paddingVertical: 12,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: theme.colors.divider,
+    },
+    title: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.textPrimary },
+    amount: { fontFamily: theme.font.bodyMedium, fontSize: 22 },
+    track: { height: 5, backgroundColor: theme.colors.surfaceAlt, borderRadius: 4, overflow: 'hidden' },
+    fill: { height: '100%', borderRadius: 4 },
+  })
+);

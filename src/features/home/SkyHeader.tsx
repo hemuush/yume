@@ -16,7 +16,6 @@ import { Text, MAX_FONT_SCALE } from '@/components/Text';
 import { HEADER } from '@/components/headerMetrics';
 import { HeaderUserButton } from '@/components/AppHeader';
 import { theme } from '@/constants/theme';
-import { useAccent } from '@/theme/AccentContext';
 import { withPressed } from '@/lib/pressed';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 import type { CollapsingHeader } from '@/lib/useCollapsingHeader';
@@ -24,12 +23,15 @@ import { SkyBackdrop } from './SkyBackdrop';
 import { GLASS } from '@/components/Glass';
 import { wallpaperTop } from './HomeWallpaper';
 import { headerIsCollapsed } from './headerMotion';
+import { themedStyles } from '@/theme/themedStyles';
 
 /** The title row's height; the band keeps just this row (plus BAR_PAD) once collapsed. */
 const ROW = HEADER.actionSize;
 const BAR_PAD = 6;
-/** The title steps down from 22 to 17 as the header collapses. */
-const TITLE_SCALE = 17 / 22;
+/** The large title: 34 on a tab's own screen, 28 on a screen opened from another. */
+const TITLE_SIZE = { root: 34, pushed: 28 } as const;
+/** Where the title ends up when the header collapses, whatever size it started at. */
+const COLLAPSED_TITLE_SIZE = 18;
 
 /** Shared title/actions header. Optional collapse pins the title and reveals the summary/accessory. */
 export function SkyHeader({
@@ -61,10 +63,11 @@ export function SkyHeader({
   /** The back button as a × in a frosted disc: a screen you close rather than step back from (Add). */
   closeIcon?: boolean;
 }) {
-  const { accent } = useAccent();
   const insets = useSafeAreaInsets();
   const reduce = useReduceMotion();
   const top = insets.top + HEADER.topGap;
+  const titleSize = showBack ? TITLE_SIZE.pushed : TITLE_SIZE.root;
+  const titleScale = COLLAPSED_TITLE_SIZE / titleSize;
 
   // Measured, not hardcoded, so a larger system font still collapses to exactly the title row.
   const fallbackY = useSharedValue(0);
@@ -113,7 +116,7 @@ export function SkyHeader({
     return { transform: [{ translateY: shift.value }] };
   });
   const titleStyle = useAnimatedStyle(() => {
-    const s = reduce ? 1 : interpolate(progress(), [0, 1], [1, TITLE_SCALE]);
+    const s = reduce ? 1 : interpolate(progress(), [0, 1], [1, titleScale]);
     return { transform: [{ scale: s }] };
   });
   const fadeStyle = useAnimatedStyle(() => {
@@ -124,7 +127,7 @@ export function SkyHeader({
   const summaryStyle = useAnimatedStyle(() => {
     const p = progress();
     const t = interpolate(p, [0.55, 0.95], [0, 1], Extrapolation.CLAMP);
-    const shrink = reduce ? 0 : titleWidth.value * (1 - TITLE_SCALE);
+    const shrink = reduce ? 0 : titleWidth.value * (1 - titleScale);
     return { opacity: t, transform: [{ translateX: -shrink + (reduce ? 0 : (1 - t) * 6) }] };
   });
   const accessoryStyle = useAnimatedStyle(() => {
@@ -139,12 +142,10 @@ export function SkyHeader({
     >
       {(collapse || !wallpaper) && (
         <SkyBackdrop
-          accent={accent}
           scrollY={scrollY}
           distance={distance}
           collapsedHeight={top + rowHeight + BAR_PAD}
-          wash={!wallpaper}
-          barColor={wallpaper ? wallpaperTop(accent) : undefined}
+          barColor={wallpaperTop()}
         />
       )}
       <View style={[styles.band, { paddingTop: top }]}>
@@ -170,7 +171,11 @@ export function SkyHeader({
           <View style={styles.titleBlock}>
             <ReanimatedAnimated.Text
               maxFontSizeMultiplier={MAX_FONT_SCALE}
-              style={[styles.title, titleStyle]}
+              style={[
+                styles.title,
+                { fontSize: titleSize, lineHeight: Math.round(titleSize * 1.2) },
+                titleStyle,
+              ]}
               accessibilityRole="header"
               numberOfLines={1}
               onLayout={(e) => {
@@ -225,61 +230,62 @@ export function SkyHeader({
   );
 }
 
-const styles = StyleSheet.create({
-  over: { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10 },
-  band: { paddingHorizontal: HEADER.gutter, paddingBottom: HEADER.bottomGap },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 10,
-    minHeight: ROW,
-    zIndex: 1,
-  },
-  titleBlock: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center' },
-  actions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  title: {
-    fontFamily: theme.font.roundedBold,
-    fontSize: theme.typeSize.title,
-    color: theme.colors.ink,
-    transformOrigin: 'left center',
-    // Never squeezed by what sits beside it: even a fraction of a point less than its text needs cuts the last
-    // letters to an ellipsis. Only a title longer than the whole row is cut (maxWidth).
-    flexShrink: 0,
-    maxWidth: '100%',
-  },
-  // The title is the one that must stay whole: when the row is short, the summary (invisible until the header
-  // collapses) gives way, so "Savings goals" never reads "Savings …" because of a figure nobody can see yet.
-  summary: { marginLeft: 10, flexShrink: 1, minWidth: 0 },
-  below: { gap: 10, paddingTop: 8, paddingBottom: 2 },
-  // Just the chevron, nudged so the icon (not its 40dp touch area) sits on the page gutter.
-  backBtn: {
-    width: HEADER.actionSize,
-    height: HEADER.actionSize,
-    borderRadius: HEADER.actionSize / 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: -9,
-    marginRight: -4,
-  },
-  closeBtn: {
-    marginLeft: 0,
-    marginRight: 4,
-    width: HEADER.actionSize,
-    height: HEADER.actionSize,
-    borderRadius: HEADER.actionSize / 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: GLASS.fillStrong,
-    borderWidth: 1,
-    borderColor: GLASS.edge,
-  },
-  subtitle: {
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 13,
-    color: theme.colors.textSecondary,
-  },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    over: { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10 },
+    band: { paddingHorizontal: HEADER.gutter, paddingBottom: HEADER.bottomGap },
+    titleRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 10,
+      minHeight: ROW,
+      zIndex: 1,
+    },
+    titleBlock: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center' },
+    actions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    title: {
+      fontFamily: theme.font.roundedBold,
+      color: theme.colors.ink,
+      transformOrigin: 'left center',
+      // Never squeezed by what sits beside it: even a fraction of a point less than its text needs cuts the last
+      // letters to an ellipsis. Only a title longer than the whole row is cut (maxWidth).
+      flexShrink: 0,
+      maxWidth: '100%',
+    },
+    // The title is the one that must stay whole: when the row is short, the summary (invisible until the header
+    // collapses) gives way, so "Savings goals" never reads "Savings …" because of a figure nobody can see yet.
+    summary: { marginLeft: 10, flexShrink: 1, minWidth: 0 },
+    below: { gap: 10, paddingTop: 8, paddingBottom: 2 },
+    // Just the chevron, nudged so the icon (not its 40dp touch area) sits on the page gutter.
+    backBtn: {
+      width: HEADER.actionSize,
+      height: HEADER.actionSize,
+      borderRadius: HEADER.actionSize / 2,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginLeft: -9,
+      marginRight: -4,
+    },
+    closeBtn: {
+      marginLeft: 0,
+      marginRight: 4,
+      width: HEADER.actionSize,
+      height: HEADER.actionSize,
+      borderRadius: HEADER.actionSize / 2,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: GLASS.fillStrong,
+      borderWidth: 1,
+      borderColor: GLASS.edge,
+    },
+    subtitle: {
+      fontFamily: theme.font.bodyMedium,
+      fontSize: 13,
+      color: theme.colors.textSecondary,
+    },
+  })
+);
 
 /**
  * The line a collapsed SkyHeader shows beside its title: a dot in the screen's colour, the figure in bold
@@ -297,9 +303,16 @@ export function HeaderSummary({ figure, rest, dot }: { figure?: string; rest: st
   );
 }
 
-const summaryStyles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', gap: 6, minWidth: 0 },
-  dot: { width: 6, height: 6, borderRadius: 3 },
-  text: { flexShrink: 1, fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
-  figure: { fontFamily: theme.font.monoBold, fontSize: 12, color: theme.colors.textPrimary },
-});
+const summaryStyles = themedStyles(() =>
+  StyleSheet.create({
+    row: { flexDirection: 'row', alignItems: 'center', gap: 6, minWidth: 0 },
+    dot: { width: 6, height: 6, borderRadius: 3 },
+    text: {
+      flexShrink: 1,
+      fontFamily: theme.font.bodyMedium,
+      fontSize: 12,
+      color: theme.colors.textSecondary,
+    },
+    figure: { fontFamily: theme.font.monoBold, fontSize: 12, color: theme.colors.textPrimary },
+  })
+);

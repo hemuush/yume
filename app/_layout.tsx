@@ -1,5 +1,4 @@
 import { Stack, router, usePathname, useRootNavigationState } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
 import { useEffect, useRef, useState } from 'react';
 import { View, ActivityIndicator, StyleSheet, AppState, AppStateStatus } from 'react-native';
 import { Text } from '@/components/Text';
@@ -22,7 +21,13 @@ import { useScreenCaptureProtection } from '@/lib/useScreenCaptureProtection';
 import { CaptureProtectionScreen } from '@/components/CaptureProtectionScreen';
 import { CaptureReleaseFeedback } from '@/components/CaptureReleaseFeedback';
 import { AppLockSaveFeedback } from '@/components/AppLockSaveFeedback';
-import { getHasOnboarded, setHasOnboarded, getAppLockEnabled, getHideSensitiveAmounts } from '@/db/settings';
+import {
+  getHasOnboarded,
+  setHasOnboarded,
+  getAppLockEnabled,
+  getHideSensitiveAmounts,
+  getAppearance,
+} from '@/db/settings';
 import { listAccounts, listTransactions } from '@/db/ledger';
 import { runAppMaintenance } from '@/lib/runAppMaintenance';
 import { runWhenIdle } from '@/lib/runWhenIdle';
@@ -36,20 +41,22 @@ import {
 } from '@/lib/notifications';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { refreshAllWidgets } from '@/widgets/notifyWidgets';
-import { AccentProvider, useAccent } from '@/theme/AccentContext';
 import { PrivacyProvider } from '@/theme/PrivacyContext';
+import { AppearanceProvider } from '@/theme/AppearanceContext';
+import { AppStatusBar } from '@/theme/AppStatusBar';
+import { stackScreenLayout, useSchemeVersion } from '@/theme/SchemeBoundary';
 import { AppLockProvider, useAppLock } from '@/lib/AppLockContext';
 import { UndoToastProvider } from '@/components/UndoToast';
 import { MilestoneNoteProvider, BudgetMonthWatcher } from '@/components/MilestoneNote';
 import { AppDialogHost } from '@/components/AppDialog';
-import { syncAppIcon } from '@/lib/appIcon';
-import { ThemeSaveFeedback } from '@/theme/ThemeSaveFeedback';
+import { restoreDefaultAppIcon } from '@/lib/appIcon';
 import { LockScreen } from '@/components/LockScreen';
 import { Onboarding } from '@/features/onboarding/Onboarding';
 import { theme } from '@/constants/theme';
 import { ColumnFrame } from '@/components/ColumnFrame';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { errorMessage } from '@/lib/errorMessage';
+import { themedStyles } from '@/theme/themedStyles';
 
 /**
  * Anchors deep links into pushed screens (Next Due widget, Quick Add) on cold start to the tabs, so Home
@@ -59,7 +66,20 @@ export const unstable_settings = {
   anchor: '(tabs)',
 };
 
+/**
+ * The colour mode is decided above everything, so even the first spinner (or a failed start) is drawn in the right mode
+ * instead of cream flashing on a dark phone; the saved choice replaces the phone's setting as soon as it is read.
+ */
 export default function RootLayout() {
+  return (
+    <AppearanceProvider>
+      <RootGate />
+    </AppearanceProvider>
+  );
+}
+
+function RootGate() {
+  useSchemeVersion();
   const [dbReady, setDbReady] = useState(false);
   const [needsOnboarding, setNeedsOnboarding] = useState<boolean | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -99,11 +119,14 @@ export default function RootLayout() {
           void rebuildNotifications().catch((err) => console.error('rebuildNotifications failed:', err));
         });
 
-        // Prime masking before mounting any financial screen, including an unlocked cold launch.
+        // Prime masking and the colour mode before mounting any screen, including an unlocked cold launch, so
+        // nothing is drawn in the wrong mode and then corrected.
         const [locked, , alreadyOnboarded] = await Promise.all([
           getAppLockEnabled(),
           getHideSensitiveAmounts(),
           getHasOnboarded(),
+          // Only looks: a failed read must not hold the app back, it simply follows the phone.
+          getAppearance().catch(() => 'system'),
         ]);
         if (cancelled) return;
         setInitialLocked(locked);
@@ -159,13 +182,11 @@ export default function RootLayout() {
     <KeyboardProvider>
       <SafeAreaProvider>
         <AppLockProvider initialLockEnabled={initialLocked}>
-          <AccentProvider>
-            <PrivacyProvider>
-              <ColumnFrame>
-                <AppGate needsOnboarding={needsOnboarding} initialLocked={initialLocked} />
-              </ColumnFrame>
-            </PrivacyProvider>
-          </AccentProvider>
+          <PrivacyProvider>
+            <ColumnFrame>
+              <AppGate needsOnboarding={needsOnboarding} initialLocked={initialLocked} />
+            </ColumnFrame>
+          </PrivacyProvider>
         </AppLockProvider>
       </SafeAreaProvider>
     </KeyboardProvider>
@@ -173,7 +194,6 @@ export default function RootLayout() {
 }
 
 function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean; initialLocked: boolean }) {
-  const { waitForThemePersistence } = useAccent();
   const { lockEnabled } = useAppLock();
   const [isLocked, setIsLocked] = useState(initialLocked);
   const [showOnboarding, setShowOnboarding] = useState(needsOnboarding);
@@ -263,9 +283,10 @@ function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean;
   useEffect(() => {
     const sub = AppState.addEventListener('change', (next: AppStateStatus) => {
       if (next === 'background') {
-        void waitForThemePersistence().then(refreshAllWidgets);
-        // Swapped only once the app is out of sight: some launchers restart the app while they refresh it.
-        void waitForThemePersistence().then(() => syncAppIcon());
+        void refreshAllWidgets();
+        // Put back only once the app is out of sight: some launchers restart the app while they refresh it. (An
+        // earlier version could switch the launcher icon to a theme's; there is one theme now.)
+        void restoreDefaultAppIcon();
       }
       if (next === 'active') {
         runWhenIdle(() => {
@@ -274,13 +295,13 @@ function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean;
       }
     });
     return () => sub.remove();
-  }, [waitForThemePersistence]);
+  }, []);
 
   // Public authentication stays mounted while protection recovers; financial/onboarding content does not.
   if (capture.isBlocked && !(isLocked && !showOnboarding)) {
     return (
       <ErrorBoundary>
-        <StatusBar style="dark" />
+        <AppStatusBar />
         <CaptureProtectionScreen
           status={capture.status === 'failed' ? 'failed' : 'checking'}
           onRetry={capture.retry}
@@ -292,7 +313,7 @@ function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean;
   if (showOnboarding) {
     return (
       <ErrorBoundary>
-        <StatusBar style="dark" />
+        <AppStatusBar />
         <Onboarding onDone={() => setShowOnboarding(false)} />
         <AppDialogHost />
       </ErrorBoundary>
@@ -304,7 +325,7 @@ function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean;
     // stay unmounted while locked, not just visually covered.
     return (
       <ErrorBoundary>
-        <StatusBar style="dark" />
+        <AppStatusBar />
         <LockScreen onUnlocked={() => setIsLocked(false)} />
       </ErrorBoundary>
     );
@@ -312,14 +333,13 @@ function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean;
 
   return (
     <ErrorBoundary>
-      <StatusBar style="dark" />
+      <AppStatusBar />
       {/* Yume’s own confirm/notice dialog, shown by showAlert() anywhere in the app. Never over the lock
           screen: a dialog is its own window, so it would sit on top of it with working buttons. */}
       <AppDialogHost />
       <AppLockSaveFeedback />
       <CaptureReleaseFeedback protection={capture} />
       <UndoToastProvider>
-        <ThemeSaveFeedback />
         <MilestoneNoteProvider>
           {/* freezeOnBlur is left OFF: with it on (the navigator default), a
             blurred screen’s React tree is suspended and can miss context
@@ -328,6 +348,8 @@ function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean;
             the old state until a full remount. The screens here are light, so
             keeping them live costs little. */}
           <Stack
+            // Each pushed screen is drawn again when the colour mode changes (the tabs do their own).
+            screenLayout={stackScreenLayout}
             screenOptions={{
               headerShown: false,
               animation: 'slide_from_right',
@@ -359,7 +381,6 @@ function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean;
             <Stack.Screen name="category/[id]" />
             <Stack.Screen name="loans" />
             <Stack.Screen name="recently-deleted" />
-            <Stack.Screen name="themes" />
             {/* A Wrap fades in over the screen it was opened from, like a story, rather than sliding. */}
             <Stack.Screen name="wrap" options={{ animation: 'fade' }} />
           </Stack>
@@ -370,25 +391,27 @@ function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean;
   );
 }
 
-const styles = StyleSheet.create({
-  center: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: theme.colors.background,
-    padding: 24,
-  },
-  errorText: {
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 15,
-    color: theme.colors.expenseText,
-    marginBottom: 8,
-  },
-  errorDetail: {
-    fontFamily: theme.font.body,
-    fontSize: 13,
-    color: theme.colors.textSecondary,
-    textAlign: 'center',
-  },
-  retry: { marginTop: 20, alignSelf: 'center', minWidth: 160 },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    center: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: theme.colors.background,
+      padding: 24,
+    },
+    errorText: {
+      fontFamily: theme.font.bodyMedium,
+      fontSize: 15,
+      color: theme.colors.expenseText,
+      marginBottom: 8,
+    },
+    errorDetail: {
+      fontFamily: theme.font.body,
+      fontSize: 13,
+      color: theme.colors.textSecondary,
+      textAlign: 'center',
+    },
+    retry: { marginTop: 20, alignSelf: 'center', minWidth: 160 },
+  })
+);
