@@ -39,6 +39,7 @@ import {
   sipsOf,
   splitOf,
 } from '@/lib/portfolio';
+import { themedStyles } from '@/theme/themedStyles';
 
 /**
  * Investments as one page: what they are worth, the gain and the yearly rate, the trend, where the money sits,
@@ -217,10 +218,12 @@ export default function InvestmentsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: theme.colors.background },
-  hint: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textMuted },
-  hintPad: { marginHorizontal: SCREEN.gutter, marginTop: 6 },
-  mainActions: { flexDirection: 'row', gap: 8, marginHorizontal: SCREEN.gutter, marginTop: 12 },
-  mainAction: { flex: 1 },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    container: { flex: 1, backgroundColor: theme.colors.background },
+    hint: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textMuted },
+    hintPad: { marginHorizontal: SCREEN.gutter, marginTop: 6 },
+    mainActions: { flexDirection: 'row', gap: 8, marginHorizontal: SCREEN.gutter, marginTop: 12 },
+    mainAction: { flex: 1 },
+  })
+);

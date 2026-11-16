@@ -10,6 +10,7 @@ import { loadMonthWrap, loadWeekWrap, Wrap, wrapRange } from '@/features/wrap/wr
 import { WrapPlayer } from '@/features/wrap/WrapPlayer';
 import { HomeWallpaper } from '@/features/home/HomeWallpaper';
 import { useAccent } from '@/theme/AccentContext';
+import { themedStyles } from '@/theme/themedStyles';
 
 /**
  * `/wrap?period=month|week` (last month / last full week) from Home's Wrap button or the Monday
@@ -88,26 +89,28 @@ export default function WrapScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  center: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 32,
-  },
-  title: {
-    fontFamily: theme.font.roundedBold,
-    fontSize: 20,
-    color: theme.colors.textPrimary,
-    textAlign: 'center',
-  },
-  detail: {
-    fontFamily: theme.font.body,
-    fontSize: 13,
-    color: theme.colors.textSecondary,
-    textAlign: 'center',
-    marginTop: 6,
-  },
-  button: { marginTop: 20, alignSelf: 'stretch' },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    center: {
+      flex: 1,
+      backgroundColor: theme.colors.background,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: 32,
+    },
+    title: {
+      fontFamily: theme.font.roundedBold,
+      fontSize: 22,
+      color: theme.colors.textPrimary,
+      textAlign: 'center',
+    },
+    detail: {
+      fontFamily: theme.font.body,
+      fontSize: 13,
+      color: theme.colors.textSecondary,
+      textAlign: 'center',
+      marginTop: 6,
+    },
+    button: { marginTop: 20, alignSelf: 'stretch' },
+  })
+);

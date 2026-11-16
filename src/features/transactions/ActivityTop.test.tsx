@@ -225,7 +225,7 @@ describe('Activity filter bar', () => {
     };
     expect(style('Show all')).toMatchObject({
       borderRadius: theme.radius.pill,
-      backgroundColor: themeInk('#8FCBFF'),
+      backgroundColor: themeInk('#9EC5FC'),
     });
     expect(style('Show spent').backgroundColor).not.toBe(style('Show all').backgroundColor);
     act(() => tree.unmount());

@@ -20,6 +20,7 @@ import { haptics } from '@/lib/haptics';
 import { withPressed } from '@/lib/pressed';
 import { softTint } from './softTint';
 import { useAccent } from '@/theme/AccentContext';
+import { themedStyles } from '@/theme/themedStyles';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 /**
@@ -340,68 +341,70 @@ function MedalTile({
   );
 }
 
-const styles = StyleSheet.create({
-  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  // Columns are an equal share of the width (see `cols` above), so only rows need a gap.
-  medalGrid: { flexDirection: 'row', flexWrap: 'wrap', rowGap: 14 },
-  medalGridCompact: { rowGap: 8 },
-  medalBody: { alignItems: 'center', alignSelf: 'stretch' },
-  // Selection changes the ring and tint while vertical padding stays fixed.
-  medalBodyCompact: { paddingVertical: 2 },
-  medalDimmed: { opacity: 0.35 },
-  // The picked tile: a light theme tint behind the whole tile, not only a ring.
-  medalBodyActive: { borderRadius: 16, paddingVertical: 4 },
-  medalItem: { width: 64, alignItems: 'center' },
-  medalItemSub: { width: 56, alignItems: 'center' },
-  medalRing: { borderRadius: 30, borderWidth: 2, borderColor: 'transparent', padding: 2 },
-  // One consistent "selected" ring across the picker (ink), instead of each
-  // tile lighting up in its own category colour.
-  medalRingActive: { borderColor: theme.colors.textSecondary },
-  medalRingSub: { opacity: 0.88 },
-  medalName: {
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 11,
-    lineHeight: 13,
-    color: theme.colors.textSecondary,
-    marginTop: 5,
-    textAlign: 'center',
-    paddingHorizontal: 2,
-  },
-  medalNameActive: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
-  medalHint: {
-    fontFamily: theme.font.body,
-    fontSize: 11,
-    color: theme.colors.textMuted,
-    textAlign: 'center',
-  },
-  search: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 12,
-    paddingHorizontal: 12,
-    borderRadius: theme.radius.pill,
-    backgroundColor: theme.colors.inkWash,
-  },
-  searchInput: {
-    flex: 1,
-    paddingVertical: 9,
-    fontFamily: theme.font.body,
-    fontSize: 13,
-    color: theme.colors.textPrimary,
-  },
-  searchCompact: { marginBottom: 8 },
-  noMatch: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, paddingVertical: 8 },
-  subGroup: {
-    marginTop: 10,
-    paddingTop: 10,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: theme.colors.borderSoft,
-  },
-  subGroupLabel: {
-    fontSize: 12,
-    fontFamily: theme.font.bodyBold,
-    color: theme.colors.textMuted,
-    marginBottom: 8,
-  },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+    // Columns are an equal share of the width (see `cols` above), so only rows need a gap.
+    medalGrid: { flexDirection: 'row', flexWrap: 'wrap', rowGap: 14 },
+    medalGridCompact: { rowGap: 8 },
+    medalBody: { alignItems: 'center', alignSelf: 'stretch' },
+    // Selection changes the ring and tint while vertical padding stays fixed.
+    medalBodyCompact: { paddingVertical: 2 },
+    medalDimmed: { opacity: 0.35 },
+    // The picked tile: a light theme tint behind the whole tile, not only a ring.
+    medalBodyActive: { borderRadius: 16, paddingVertical: 4 },
+    medalItem: { width: 64, alignItems: 'center' },
+    medalItemSub: { width: 56, alignItems: 'center' },
+    medalRing: { borderRadius: 30, borderWidth: 2, borderColor: 'transparent', padding: 2 },
+    // One consistent "selected" ring across the picker (ink), instead of each
+    // tile lighting up in its own category colour.
+    medalRingActive: { borderColor: theme.colors.textSecondary },
+    medalRingSub: { opacity: 0.88 },
+    medalName: {
+      fontFamily: theme.font.bodyMedium,
+      fontSize: 11,
+      lineHeight: 13,
+      color: theme.colors.textSecondary,
+      marginTop: 5,
+      textAlign: 'center',
+      paddingHorizontal: 2,
+    },
+    medalNameActive: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
+    medalHint: {
+      fontFamily: theme.font.body,
+      fontSize: 11,
+      color: theme.colors.textMuted,
+      textAlign: 'center',
+    },
+    search: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      marginBottom: 12,
+      paddingHorizontal: 12,
+      borderRadius: theme.radius.pill,
+      backgroundColor: theme.colors.inkWash,
+    },
+    searchInput: {
+      flex: 1,
+      paddingVertical: 9,
+      fontFamily: theme.font.body,
+      fontSize: 13,
+      color: theme.colors.textPrimary,
+    },
+    searchCompact: { marginBottom: 8 },
+    noMatch: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, paddingVertical: 8 },
+    subGroup: {
+      marginTop: 10,
+      paddingTop: 10,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: theme.colors.borderSoft,
+    },
+    subGroupLabel: {
+      fontSize: 12,
+      fontFamily: theme.font.bodyBold,
+      color: theme.colors.textMuted,
+      marginBottom: 8,
+    },
+  })
+);

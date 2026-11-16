@@ -12,6 +12,7 @@ import { useAccent } from '@/theme/AccentContext';
 import type { LargestExpense } from '@/db/reports';
 import type { Category } from '@/types';
 import { styles } from './reports.styles';
+import { themedStyles } from '@/theme/themedStyles';
 
 /** Fewer entries than this and a "top 5" is just the list. */
 const BIGGEST_MIN_ENTRIES = 3;
@@ -123,15 +124,17 @@ export function BiggestSpends({
 }
 
 // This list only: the day sheet's rows keep the shared, roomier size.
-const compact = StyleSheet.create({
-  row: { minHeight: 48, gap: 10, paddingVertical: 6, paddingHorizontal: 12 },
-  sub: { fontFamily: theme.font.body, fontSize: 12, marginTop: 1 },
-  foot: {
-    marginTop: 0,
-    paddingTop: 9,
-    paddingBottom: 2,
-    paddingHorizontal: 14,
-    fontFamily: theme.font.body,
-    fontSize: 12,
-  },
-});
+const compact = themedStyles(() =>
+  StyleSheet.create({
+    row: { minHeight: 48, gap: 10, paddingVertical: 6, paddingHorizontal: 12 },
+    sub: { fontFamily: theme.font.body, fontSize: 12, marginTop: 1 },
+    foot: {
+      marginTop: 0,
+      paddingTop: 9,
+      paddingBottom: 2,
+      paddingHorizontal: 14,
+      fontFamily: theme.font.body,
+      fontSize: 12,
+    },
+  })
+);

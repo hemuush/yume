@@ -1,4 +1,4 @@
-import { SegmentedControl } from '@/components/SegmentedControl';
+import { UnderlineTabs } from '@/components/UnderlineTabs';
 
 export type PlanTab = 'overview' | 'upcoming' | 'money' | 'debt';
 export const PLAN_TABS: { label: string; value: PlanTab }[] = [
@@ -8,15 +8,7 @@ export const PLAN_TABS: { label: string; value: PlanTab }[] = [
   { label: 'Debt', value: 'debt' },
 ];
 
-/** Keep every destination visible; enlarged labels get two rows of two pills. */
-export function PlanNavigation({
-  value,
-  onChange,
-  stacked,
-}: {
-  value: PlanTab;
-  onChange: (value: PlanTab) => void;
-  stacked: boolean;
-}) {
-  return <SegmentedControl options={PLAN_TABS} value={value} onChange={onChange} onBand stacked={stacked} />;
+/** Plan's four parts as plain text tabs; every destination stays reachable (the row scrolls under large text). */
+export function PlanNavigation({ value, onChange }: { value: PlanTab; onChange: (value: PlanTab) => void }) {
+  return <UnderlineTabs options={PLAN_TABS} value={value} onChange={onChange} />;
 }

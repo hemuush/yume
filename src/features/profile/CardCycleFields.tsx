@@ -2,6 +2,7 @@ import { View, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
 import { AmountField } from '@/components/AmountField';
 import { theme } from '@/constants/theme';
+import { themedStyles } from '@/theme/themedStyles';
 
 /**
  * A credit card's statement day and bill due day, side by side (Add/Edit account), taken from its statement.
@@ -86,16 +87,18 @@ export function MinDueFields({
   );
 }
 
-const styles = StyleSheet.create({
-  row: { flexDirection: 'row', gap: 10 },
-  half: { flex: 1 },
-  // Sits under the fields and keeps the form's 14 gap before whatever follows.
-  hint: {
-    fontFamily: theme.font.body,
-    fontSize: 12,
-    lineHeight: 17,
-    color: theme.colors.textMuted,
-    marginTop: -6,
-    marginBottom: 14,
-  },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    row: { flexDirection: 'row', gap: 10 },
+    half: { flex: 1 },
+    // Sits under the fields and keeps the form's 14 gap before whatever follows.
+    hint: {
+      fontFamily: theme.font.body,
+      fontSize: 12,
+      lineHeight: 17,
+      color: theme.colors.textMuted,
+      marginTop: -6,
+      marginBottom: 14,
+    },
+  })
+);

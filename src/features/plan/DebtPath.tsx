@@ -17,6 +17,7 @@ import { styles } from './plan.styles';
 
 import { PlanListAdd } from './PlanSummaryRow';
 import { theme } from '@/constants/theme';
+import { themedStyles } from '@/theme/themedStyles';
 
 /**
  * The Debt tab's summary, the same flat card as the other screens: when you are debt-free, what is left and
@@ -148,55 +149,56 @@ export function DebtPath({
   );
 }
 
-const local = StyleSheet.create({
-  summary: { gap: 8, minHeight: 44 },
-  card: {
-    marginTop: 0,
-    boxShadow: '0px 1px 2px rgba(18,19,15,0.04), 0px 8px 24px rgba(18,19,15,0.05)',
-    overflow: 'visible',
-    marginHorizontal: SCREEN.gutter,
-  },
-  top: { paddingHorizontal: 14, paddingTop: 12, paddingBottom: 12, gap: 8 },
-  head: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'flex-end',
-    justifyContent: 'space-between',
-    columnGap: 12,
-    rowGap: 4,
-  },
-  headMain: { flexShrink: 1, minWidth: 0 },
-  label: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
-  figure: {
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 20,
-    lineHeight: 26,
-    letterSpacing: -0.2,
-    color: theme.colors.textPrimary,
-  },
-  side: { flexShrink: 1, alignItems: 'flex-end' },
-  sideMain: {
-    fontFamily: theme.font.bodyBold,
-    fontSize: 13,
-    fontVariant: ['tabular-nums'],
-    color: theme.colors.textPrimary,
-  },
-  sideNote: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted },
-  split: { flexDirection: 'row', gap: 3, height: 8, borderRadius: 4, overflow: 'hidden' },
-  segment: { flexBasis: 0, minWidth: 6, height: 8, borderRadius: 4 },
-  fact: { gap: 0 },
-  factLabel: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
-  factValue: { fontFamily: theme.font.bodyMedium, fontSize: 14, fontVariant: ['tabular-nums'] },
-  compare: {
-    minHeight: 44,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 14,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: theme.colors.divider,
-    borderBottomLeftRadius: theme.radius.xl2,
-    borderBottomRightRadius: theme.radius.xl2,
-  },
-  compareText: { fontFamily: theme.font.bodyBold, fontSize: 13 },
-});
+const local = themedStyles(() =>
+  StyleSheet.create({
+    summary: { gap: 8, minHeight: 44 },
+    card: {
+      marginTop: 0,
+      overflow: 'visible',
+      marginHorizontal: SCREEN.gutter - SCREEN.rowInset,
+    },
+    top: { paddingHorizontal: 14, paddingTop: 12, paddingBottom: 12, gap: 8 },
+    head: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      alignItems: 'flex-end',
+      justifyContent: 'space-between',
+      columnGap: 12,
+      rowGap: 4,
+    },
+    headMain: { flexShrink: 1, minWidth: 0 },
+    label: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
+    figure: {
+      fontFamily: theme.font.bodyMedium,
+      fontSize: 22,
+      lineHeight: 26,
+      letterSpacing: -0.2,
+      color: theme.colors.textPrimary,
+    },
+    side: { flexShrink: 1, alignItems: 'flex-end' },
+    sideMain: {
+      fontFamily: theme.font.bodyBold,
+      fontSize: 13,
+      fontVariant: ['tabular-nums'],
+      color: theme.colors.textPrimary,
+    },
+    sideNote: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted },
+    split: { flexDirection: 'row', gap: 3, height: 8, borderRadius: 4, overflow: 'hidden' },
+    segment: { flexBasis: 0, minWidth: 6, height: 8, borderRadius: 4 },
+    fact: { gap: 0 },
+    factLabel: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
+    factValue: { fontFamily: theme.font.bodyMedium, fontSize: 15, fontVariant: ['tabular-nums'] },
+    compare: {
+      minHeight: 44,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: 14,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: theme.colors.divider,
+      borderBottomLeftRadius: theme.radius.xl2,
+      borderBottomRightRadius: theme.radius.xl2,
+    },
+    compareText: { fontFamily: theme.font.bodyBold, fontSize: 13 },
+  })
+);

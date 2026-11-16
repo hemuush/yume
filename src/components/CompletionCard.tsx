@@ -5,6 +5,8 @@ import Feather from '@expo/vector-icons/Feather';
 import { Text } from './Text';
 import { theme } from '@/constants/theme';
 import { useReduceMotion } from '@/lib/useReduceMotion';
+import { themedStyles } from '@/theme/themedStyles';
+import { flatSection } from '@/components/screenStyles';
 
 /** A single short fade; the result and actions never wait for decorative motion. */
 export function CompletionCard({
@@ -46,23 +48,18 @@ export function CompletionCard({
     </Animated.View>
   );
 }
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.radius.xl,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    padding: 20,
-    gap: 12,
-  },
-  badge: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: theme.colors.incomeTint,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  title: { fontFamily: theme.font.roundedBold, fontSize: 20, color: theme.colors.ink },
-  detail: { fontFamily: theme.font.body, fontSize: 13, lineHeight: 21, color: theme.colors.textSecondary },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    card: { ...flatSection(), padding: 20, gap: 12 },
+    badge: {
+      width: 52,
+      height: 52,
+      borderRadius: 26,
+      backgroundColor: theme.colors.incomeTint,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    title: { fontFamily: theme.font.roundedBold, fontSize: 22, color: theme.colors.ink },
+    detail: { fontFamily: theme.font.body, fontSize: 13, lineHeight: 21, color: theme.colors.textSecondary },
+  })
+);

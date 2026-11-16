@@ -4,6 +4,7 @@ import { Animated, StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 import { JustAddedSurface, justAddedVersion, subscribeJustAdded, takeJustAdded } from '@/lib/justAdded';
+import { themedStyles } from '@/theme/themedStyles';
 
 /** How long the gold holds before it starts to fade. */
 const HOLD_MS = 450;
@@ -53,6 +54,15 @@ export function JustAddedGlow({ ids, surface }: { ids: string[]; surface: JustAd
   return <Animated.View pointerEvents="none" style={[styles.glow, { opacity: glow }]} />;
 }
 
-const styles = StyleSheet.create({
-  glow: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: theme.colors.idGold },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    glow: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: theme.colors.idGold,
+    },
+  })
+);

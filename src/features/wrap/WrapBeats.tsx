@@ -164,7 +164,7 @@ function KeptBeat({ beat, still }: { beat: BeatOf<'kept'>; still: boolean }) {
               <CountUpPct
                 to={Math.round(beat.keptPct)}
                 still={still}
-                style={[styles.huge, { fontSize: 32, lineHeight: 38 }]}
+                style={[styles.huge, { fontSize: 34, lineHeight: 38 }]}
               />
             </View>
             <Rise delay={600} still={still}>

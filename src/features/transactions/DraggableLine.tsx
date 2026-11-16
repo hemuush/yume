@@ -2,6 +2,7 @@ import { ReactNode, useEffect, useRef, useState } from 'react';
 import { Animated, PanResponder, StyleSheet } from 'react-native';
 import { shade } from '@/lib/color';
 import { useAccent } from '@/theme/AccentContext';
+import { themedStyles } from '@/theme/themedStyles';
 
 /**
  * A day's line draggable once held (TimelineDay lifts it on long press); lifted, it takes over touch from the
@@ -61,11 +62,13 @@ export function DraggableLine({
   );
 }
 
-const styles = StyleSheet.create({
-  // Lifted out of the card: a white-ish tile with a soft drop, a touch larger than the rest.
-  lifted: {
-    zIndex: 2,
-    borderRadius: 16,
-    boxShadow: '0px 10px 24px rgba(16,32,51,0.18)',
-  },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    // Lifted out of the card: a white-ish tile with a soft drop, a touch larger than the rest.
+    lifted: {
+      zIndex: 2,
+      borderRadius: 16,
+      boxShadow: '0px 10px 24px rgba(16,32,51,0.18)',
+    },
+  })
+);

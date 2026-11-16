@@ -6,6 +6,7 @@ import { theme } from '@/constants/theme';
 import { usePressScale } from '@/lib/usePressScale';
 import { useAccent } from '@/theme/AccentContext';
 import { themeInk } from '@/theme/interactionColors';
+import { themedStyles } from '@/theme/themedStyles';
 
 const ACTIONS: {
   type: 'expense' | 'income' | 'transfer';
@@ -40,7 +41,7 @@ function Action({ type, label, icon, ink }: (typeof ACTIONS)[number] & { ink: st
       <Animated.View
         style={[styles.action, primary && { backgroundColor: ink, borderColor: ink }, animatedStyle]}
       >
-        <Feather name={icon} size={16} color={primary ? theme.colors.white : theme.colors.ink} />
+        <Feather name={icon} size={16} color={primary ? theme.colors.onInk : theme.colors.ink} />
         <Text style={[styles.label, primary && styles.labelPrimary]}>{label}</Text>
       </Animated.View>
     </Pressable>
@@ -59,27 +60,29 @@ export function HeroActions() {
   );
 }
 
-const styles = StyleSheet.create({
-  row: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  wrap: { flexGrow: 1, flexBasis: 88 },
-  action: {
-    minHeight: 48,
-    paddingHorizontal: 6,
-    paddingVertical: 8,
-    borderRadius: theme.radius.lg,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    backgroundColor: theme.colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-  },
-  label: {
-    fontFamily: theme.font.bodyMedium,
-    flexShrink: 1,
-    fontSize: 13,
-    color: theme.colors.textPrimary,
-  },
-  labelPrimary: { color: theme.colors.white },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    row: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+    wrap: { flexGrow: 1, flexBasis: 88 },
+    action: {
+      minHeight: 48,
+      paddingHorizontal: 6,
+      paddingVertical: 8,
+      borderRadius: theme.radius.lg,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 6,
+      backgroundColor: theme.colors.surface,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.borderSoft,
+    },
+    label: {
+      fontFamily: theme.font.bodyMedium,
+      flexShrink: 1,
+      fontSize: 13,
+      color: theme.colors.textPrimary,
+    },
+    labelPrimary: { color: theme.colors.onInk },
+  })
+);

@@ -4,6 +4,7 @@ import { theme } from '@/constants/theme';
 import { compactMoney } from '@/lib/compactMoney';
 import { formatMoney } from '@/lib/money';
 import { shortMonth } from '@/lib/dateLabels';
+import { themedStyles } from '@/theme/themedStyles';
 
 const TRACK = 72;
 
@@ -73,42 +74,44 @@ export function MonthBars({
   );
 }
 
-const styles = StyleSheet.create({
-  plot: { position: 'relative' },
-  cols: { flexDirection: 'row', gap: 8, height: '100%' },
-  labels: { flexDirection: 'row', gap: 8 },
-  col: { flex: 1, minWidth: 0, alignItems: 'center', justifyContent: 'flex-end' },
-  value: {
-    position: 'absolute',
-    maxWidth: '100%',
-    fontFamily: theme.font.bodyMedium,
-    fontVariant: ['tabular-nums'],
-    fontSize: 11,
-    color: theme.colors.textSecondary,
-  },
-  bar: {
-    width: '70%',
-    borderTopLeftRadius: 7,
-    borderTopRightRadius: 7,
-    borderBottomLeftRadius: 3,
-    borderBottomRightRadius: 3,
-  },
-  label: {
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 11,
-    flex: 1,
-    textAlign: 'center',
-    minHeight: 18,
-    paddingTop: 3,
-    color: theme.colors.textMuted,
-  },
-  lastText: { color: theme.colors.textPrimary, fontFamily: theme.font.bodyBold },
-  usual: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    height: 1.5,
-    backgroundColor: theme.colors.ink,
-    opacity: 0.3,
-  },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    plot: { position: 'relative' },
+    cols: { flexDirection: 'row', gap: 8, height: '100%' },
+    labels: { flexDirection: 'row', gap: 8 },
+    col: { flex: 1, minWidth: 0, alignItems: 'center', justifyContent: 'flex-end' },
+    value: {
+      position: 'absolute',
+      maxWidth: '100%',
+      fontFamily: theme.font.bodyMedium,
+      fontVariant: ['tabular-nums'],
+      fontSize: 11,
+      color: theme.colors.textSecondary,
+    },
+    bar: {
+      width: '70%',
+      borderTopLeftRadius: 7,
+      borderTopRightRadius: 7,
+      borderBottomLeftRadius: 3,
+      borderBottomRightRadius: 3,
+    },
+    label: {
+      fontFamily: theme.font.bodyMedium,
+      fontSize: 11,
+      flex: 1,
+      textAlign: 'center',
+      minHeight: 18,
+      paddingTop: 3,
+      color: theme.colors.textMuted,
+    },
+    lastText: { color: theme.colors.textPrimary, fontFamily: theme.font.bodyBold },
+    usual: {
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      height: 1.5,
+      backgroundColor: theme.colors.ink,
+      opacity: 0.3,
+    },
+  })
+);

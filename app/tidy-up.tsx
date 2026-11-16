@@ -43,6 +43,7 @@ import { useAccent } from '@/theme/AccentContext';
 import Feather from '@expo/vector-icons/Feather';
 import { ListCard, SummaryCard, SummaryTop, summaryFigure } from '@/components/SummaryCard';
 import { HomeWallpaper } from '@/features/home/HomeWallpaper';
+import { themedStyles } from '@/theme/themedStyles';
 
 /** "23 Sep 1:53 pm" from created_at (UTC, "YYYY-MM-DD HH:MM:SS"). */
 const savedLabel = (createdAt: string) => {
@@ -412,67 +413,67 @@ export default function TidyUpScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: theme.colors.background },
-  intro: {
-    fontFamily: theme.font.body,
-    fontSize: 12,
-    lineHeight: 17,
-    color: theme.colors.textSecondary,
-    paddingHorizontal: 2,
-  },
-  headline: {
-    fontFamily: theme.font.body,
-    fontSize: 13,
-    color: theme.colors.textSecondary,
-    paddingHorizontal: 2,
-  },
-  checks: { gap: 2 },
-  check: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 36 },
-  checkMark: { width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-  checkOk: { backgroundColor: theme.colors.incomeTint },
-  checkTodo: { backgroundColor: theme.colors.expenseTint },
-  checkLabel: { flex: 1, fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
-  checkFound: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textMuted },
-  // What a fix changes, on a brighter pane under the item.
-  after: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 8,
-    marginLeft: 50,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    borderRadius: 14,
-    backgroundColor: theme.colors.tray,
-    boxShadow: `inset 0 0 0 1px ${theme.colors.inkHairline}`,
-  },
-  afterText: {
-    flex: 1,
-    fontFamily: theme.font.body,
-    fontSize: 12,
-    lineHeight: 17,
-    color: theme.colors.textSecondary,
-  },
-  afterBold: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
-  item: { paddingHorizontal: 14, paddingVertical: 12, gap: 10 },
-  itemTop: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
-  actions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 8 },
-  action: { flexShrink: 1 },
-  errorBanner: {
-    marginHorizontal: SCREEN.gutter,
-    marginTop: theme.layout.screenTopGap,
-    marginBottom: 4,
-    padding: 14,
-    borderRadius: theme.radius.md,
-    backgroundColor: theme.colors.expenseTint,
-    borderWidth: theme.border.thin,
-    borderColor: theme.colors.expense,
-  },
-  errorTitle: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.expenseText },
-  errorDetail: {
-    fontFamily: theme.font.body,
-    fontSize: 12,
-    color: theme.colors.textSecondary,
-    marginTop: 3,
-  },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    container: { flex: 1, backgroundColor: theme.colors.background },
+    intro: {
+      fontFamily: theme.font.body,
+      fontSize: 12,
+      lineHeight: 17,
+      color: theme.colors.textSecondary,
+    },
+    headline: {
+      fontFamily: theme.font.body,
+      fontSize: 13,
+      color: theme.colors.textSecondary,
+    },
+    checks: { gap: 2 },
+    check: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 36 },
+    checkMark: { width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+    checkOk: { backgroundColor: theme.colors.incomeTint },
+    checkTodo: { backgroundColor: theme.colors.expenseTint },
+    checkLabel: { flex: 1, fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
+    checkFound: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textMuted },
+    // What a fix changes, on a brighter pane under the item.
+    after: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: 8,
+      marginLeft: 50,
+      paddingHorizontal: 10,
+      paddingVertical: 8,
+      borderRadius: 14,
+      backgroundColor: theme.colors.tray,
+      boxShadow: `inset 0 0 0 1px ${theme.colors.inkHairline}`,
+    },
+    afterText: {
+      flex: 1,
+      fontFamily: theme.font.body,
+      fontSize: 12,
+      lineHeight: 17,
+      color: theme.colors.textSecondary,
+    },
+    afterBold: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
+    item: { paddingHorizontal: 14, paddingVertical: 12, gap: 10 },
+    itemTop: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
+    actions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 8 },
+    action: { flexShrink: 1 },
+    errorBanner: {
+      marginHorizontal: SCREEN.gutter,
+      marginTop: theme.layout.screenTopGap,
+      marginBottom: 4,
+      padding: 14,
+      borderRadius: theme.radius.md,
+      backgroundColor: theme.colors.expenseTint,
+      borderWidth: theme.border.thin,
+      borderColor: theme.colors.expense,
+    },
+    errorTitle: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.expenseText },
+    errorDetail: {
+      fontFamily: theme.font.body,
+      fontSize: 12,
+      color: theme.colors.textSecondary,
+      marginTop: 3,
+    },
+  })
+);

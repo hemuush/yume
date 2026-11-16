@@ -16,6 +16,7 @@ import { useAccent } from '@/theme/AccentContext';
 import { screenStyles as h, SCREEN } from '@/components/screenStyles';
 import type { Account } from '@/types';
 import { useStacked } from '@/lib/useStacked';
+import { themedStyles } from '@/theme/themedStyles';
 
 const ACCOUNT_TYPE_LABEL: Record<Account['type'], string> = {
   bank: 'Bank',
@@ -140,42 +141,43 @@ const AccountTile = memo(function AccountTile({
   );
 });
 
-const styles = StyleSheet.create({
-  grid: { marginHorizontal: SCREEN.gutter, gap: GAP },
-  row: { flexDirection: 'row', gap: GAP },
-  slot: { flex: 1, minWidth: 0 },
-  tile: {
-    flex: 1,
-    minWidth: 0,
-    padding: 12,
-    gap: 6,
-    borderRadius: theme.radius.xl,
-    backgroundColor: theme.colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-  },
-  head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 6 },
-  kind: { flexShrink: 1, fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted },
-  name: {
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 14,
-    lineHeight: 18,
-    color: theme.colors.textPrimary,
-  },
-  foot: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 6,
-  },
-  amount: {
-    flexShrink: 1,
-    fontFamily: theme.font.bodyBold,
-    fontSize: 15,
-    fontVariant: ['tabular-nums'],
-    color: theme.colors.textPrimary,
-  },
-  quiet: { color: theme.colors.textMuted },
-  usage: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    grid: { marginHorizontal: SCREEN.gutter, gap: GAP },
+    row: { flexDirection: 'row', gap: GAP },
+    slot: { flex: 1, minWidth: 0 },
+    tile: {
+      flex: 1,
+      minWidth: 0,
+      paddingVertical: 12,
+      paddingHorizontal: 0,
+      gap: 6,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: theme.colors.borderSoft,
+    },
+    head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 6 },
+    kind: { flexShrink: 1, fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted },
+    name: {
+      fontFamily: theme.font.bodyMedium,
+      fontSize: 15,
+      lineHeight: 18,
+      color: theme.colors.textPrimary,
+    },
+    foot: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 6,
+    },
+    amount: {
+      flexShrink: 1,
+      fontFamily: theme.font.bodyBold,
+      fontSize: 15,
+      fontVariant: ['tabular-nums'],
+      color: theme.colors.textPrimary,
+    },
+    quiet: { color: theme.colors.textMuted },
+    usage: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted },
+  })
+);

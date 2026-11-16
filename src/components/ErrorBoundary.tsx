@@ -3,6 +3,8 @@ import { View, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { PrimaryButton } from './PrimaryButton';
+import { themedStyles } from '@/theme/themedStyles';
+import { useSchemeVersion } from '@/theme/SchemeBoundary';
 
 interface Props {
   children: ReactNode;
@@ -31,42 +33,48 @@ export class ErrorBoundary extends Component<Props, State> {
 
   render() {
     if (this.state.error) {
-      return (
-        <View style={styles.container}>
-          <Text style={styles.title}>Something went wrong</Text>
-          <Text style={styles.body}>
-            Your entries are safe on this phone. Try again, and if it keeps happening, close Yume and reopen
-            it.
-          </Text>
-          <Text style={styles.detail}>{this.state.error.message}</Text>
-          <PrimaryButton title="Try again" onPress={this.reset} style={{ marginTop: 20, minWidth: 160 }} />
-        </View>
-      );
+      return <ErrorFallback error={this.state.error} onRetry={this.reset} />;
     }
     return this.props.children;
   }
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: theme.colors.background,
-    padding: 28,
-  },
-  title: {
-    fontFamily: theme.font.roundedBold,
-    fontSize: 18,
-    color: theme.colors.textPrimary,
-    marginBottom: 8,
-  },
-  body: {
-    fontFamily: theme.font.body,
-    fontSize: 13,
-    color: theme.colors.textSecondary,
-    textAlign: 'center',
-    marginBottom: 14,
-  },
-  detail: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, textAlign: 'center' },
-});
+function ErrorFallback({ error, onRetry }: { error: Error; onRetry: () => void }) {
+  useSchemeVersion();
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>Something went wrong</Text>
+      <Text style={styles.body}>
+        Your entries are safe on this phone. Try again, and if it keeps happening, close Yume and reopen it.
+      </Text>
+      <Text style={styles.detail}>{error.message}</Text>
+      <PrimaryButton title="Try again" onPress={onRetry} style={{ marginTop: 20, minWidth: 160 }} />
+    </View>
+  );
+}
+
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: theme.colors.background,
+      padding: 28,
+    },
+    title: {
+      fontFamily: theme.font.roundedBold,
+      fontSize: 17,
+      color: theme.colors.textPrimary,
+      marginBottom: 8,
+    },
+    body: {
+      fontFamily: theme.font.body,
+      fontSize: 13,
+      color: theme.colors.textSecondary,
+      textAlign: 'center',
+      marginBottom: 14,
+    },
+    detail: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, textAlign: 'center' },
+  })
+);

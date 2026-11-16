@@ -2,6 +2,7 @@ import { View, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { useStacked } from '@/lib/useStacked';
+import { themedStyles } from '@/theme/themedStyles';
 
 interface LoanStat {
   label: string;
@@ -29,27 +30,29 @@ export function LoanStatGrid({ stats }: { stats: LoanStat[] }) {
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
-    flexDirection: 'row',
-    borderRadius: theme.radius.xl,
-    marginBottom: 10,
-    backgroundColor: theme.colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    overflow: 'hidden',
-  },
-  cardStacked: { flexDirection: 'column' },
-  cell: { flex: 1, minWidth: 0, paddingHorizontal: 12, paddingVertical: 10 },
-  dividerLeft: { borderLeftWidth: StyleSheet.hairlineWidth, borderLeftColor: theme.colors.divider },
-  dividerTop: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.divider },
-  label: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
-  value: {
-    fontFamily: theme.font.bodyMedium,
-    fontVariant: ['tabular-nums'],
-    fontSize: 15,
-    color: theme.colors.textPrimary,
-    marginTop: 2,
-  },
-  sub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary, marginTop: 1 },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    card: {
+      flexDirection: 'row',
+      borderRadius: theme.radius.xl,
+      marginBottom: 10,
+      backgroundColor: theme.colors.surface,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.borderSoft,
+      overflow: 'hidden',
+    },
+    cardStacked: { flexDirection: 'column' },
+    cell: { flex: 1, minWidth: 0, paddingHorizontal: 12, paddingVertical: 10 },
+    dividerLeft: { borderLeftWidth: StyleSheet.hairlineWidth, borderLeftColor: theme.colors.divider },
+    dividerTop: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.divider },
+    label: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
+    value: {
+      fontFamily: theme.font.bodyMedium,
+      fontVariant: ['tabular-nums'],
+      fontSize: 15,
+      color: theme.colors.textPrimary,
+      marginTop: 2,
+    },
+    sub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary, marginTop: 1 },
+  })
+);

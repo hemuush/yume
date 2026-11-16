@@ -29,6 +29,7 @@ import { PrimaryButton } from '@/components/PrimaryButton';
 import { theme } from '@/constants/theme';
 import { PadButton } from '@/components/AmountPad';
 import { applyPadKey, type PadKey } from '@/lib/padMath';
+import { themedStyles } from '@/theme/themedStyles';
 
 /** What the docked pad edits: the focused field's current text and how to change it. */
 interface AmountSlot {
@@ -228,18 +229,20 @@ export const AmountField = forwardRef<TextInputInstance, Props>(function AmountF
   );
 });
 
-const styles = StyleSheet.create({
-  dockContent: { flex: 1 },
-  screenDock: {
-    paddingHorizontal: 16,
-    paddingTop: 10,
-    backgroundColor: theme.colors.surfaceAlt,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: theme.colors.borderSoft,
-  },
-  pad: { gap: 7 },
-  row: { flexDirection: 'row', gap: 7 },
-  gap: { flex: 1 },
-  done: { paddingVertical: 11 },
-  figure: { fontFamily: theme.font.bodyBold, fontVariant: ['tabular-nums'], fontSize: 15 },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    dockContent: { flex: 1 },
+    screenDock: {
+      paddingHorizontal: 16,
+      paddingTop: 10,
+      backgroundColor: theme.colors.surfaceAlt,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: theme.colors.borderSoft,
+    },
+    pad: { gap: 7 },
+    row: { flexDirection: 'row', gap: 7 },
+    gap: { flex: 1 },
+    done: { paddingVertical: 11 },
+    figure: { fontFamily: theme.font.bodyBold, fontVariant: ['tabular-nums'], fontSize: 15 },
+  })
+);

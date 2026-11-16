@@ -6,6 +6,7 @@ import { theme } from '@/constants/theme';
 import { longMonthYear } from '@/lib/dateLabels';
 import { DEEP_STREAK, GardenMonth } from './gardenMonth';
 import { showAlert } from '@/components/AppDialog';
+import { themedStyles } from '@/theme/themedStyles';
 
 const WEEKDAYS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
@@ -105,50 +106,52 @@ export function GardenMonthCard({ month, today }: { month: GardenMonth; today: s
   );
 }
 
-const styles = StyleSheet.create({
-  card: { marginHorizontal: 16, marginTop: 10, paddingHorizontal: 14, paddingVertical: 12, gap: 6 },
-  grid: { gap: 4 },
-  head: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 8,
-    flexWrap: 'wrap',
-    marginBottom: 4,
-  },
-  row: { flexDirection: 'row', gap: 4 },
-  weekday: {
-    flex: 1,
-    textAlign: 'center',
-    fontFamily: theme.font.bodyBold,
-    fontSize: 11,
-    color: theme.colors.textMuted,
-  },
-  cell: {
-    flex: 1,
-    minHeight: 40,
-    paddingVertical: 8,
-    minWidth: 0,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: GLASS.fillStrong,
-    borderWidth: 1,
-    borderColor: GLASS.edge,
-  },
-  blank: { backgroundColor: 'transparent', borderColor: 'transparent' },
-  kept: { backgroundColor: '#B6E3C6', borderColor: '#B6E3C6' },
-  keptDeep: { backgroundColor: '#6FC290', borderColor: '#6FC290' },
-  missed: { backgroundColor: theme.colors.surfaceAlt, borderColor: theme.colors.borderSoft },
-  untracked: { backgroundColor: 'transparent', borderStyle: 'dashed', borderColor: theme.colors.textMuted },
-  legend: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 12, marginTop: 6 },
-  legendItem: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  swatch: { width: 12, height: 12, borderRadius: 4, borderWidth: 1 },
-  swatchDashed: { borderStyle: 'dashed' },
-  legendText: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
-  faint: { opacity: 0.45 },
-  today: { borderWidth: 2, borderColor: theme.colors.ink },
-  day: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
-  stateMark: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textPrimary },
-  dayKept: { color: theme.colors.ink },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    card: { marginHorizontal: 16, marginTop: 10, paddingHorizontal: 14, paddingVertical: 12, gap: 6 },
+    grid: { gap: 4 },
+    head: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 8,
+      flexWrap: 'wrap',
+      marginBottom: 4,
+    },
+    row: { flexDirection: 'row', gap: 4 },
+    weekday: {
+      flex: 1,
+      textAlign: 'center',
+      fontFamily: theme.font.bodyBold,
+      fontSize: 11,
+      color: theme.colors.textMuted,
+    },
+    cell: {
+      flex: 1,
+      minHeight: 40,
+      paddingVertical: 8,
+      minWidth: 0,
+      borderRadius: 8,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: GLASS.fillStrong,
+      borderWidth: 1,
+      borderColor: GLASS.edge,
+    },
+    blank: { backgroundColor: 'transparent', borderColor: 'transparent' },
+    kept: { backgroundColor: '#B6E3C6', borderColor: '#B6E3C6' },
+    keptDeep: { backgroundColor: '#6FC290', borderColor: '#6FC290' },
+    missed: { backgroundColor: theme.colors.surfaceAlt, borderColor: theme.colors.borderSoft },
+    untracked: { backgroundColor: 'transparent', borderStyle: 'dashed', borderColor: theme.colors.textMuted },
+    legend: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 12, marginTop: 6 },
+    legendItem: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+    swatch: { width: 12, height: 12, borderRadius: 4, borderWidth: 1 },
+    swatchDashed: { borderStyle: 'dashed' },
+    legendText: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
+    faint: { opacity: 0.45 },
+    today: { borderWidth: 2, borderColor: theme.colors.ink },
+    day: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
+    stateMark: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textPrimary },
+    dayKept: { color: theme.colors.ink },
+  })
+);

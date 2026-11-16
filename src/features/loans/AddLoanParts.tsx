@@ -7,6 +7,7 @@ import { haptics } from '@/lib/haptics';
 import { useFontScale } from '@/lib/useFontScale';
 import type { McIconName } from '@/components/iconName';
 import { useAccent } from '@/theme/AccentContext';
+import { themedStyles } from '@/theme/themedStyles';
 
 export interface Option<T extends string> {
   value: T;
@@ -107,46 +108,48 @@ export function CountStepper({
   );
 }
 
-const styles = StyleSheet.create({
-  row: { flexDirection: 'row', gap: 8, marginBottom: 12 },
-  rowStacked: { flexDirection: 'column' },
-  // Shared only side by side: in a column a zero flex basis has no height to share.
-  cardShared: { flex: 1 },
-  card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderRadius: 18,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    backgroundColor: theme.colors.surface,
-  },
-  pressed: { opacity: theme.opacity.pressed },
-  copy: { flex: 1, minWidth: 0 },
-  title: {
-    fontFamily: theme.font.roundedMedium,
-    fontSize: 13,
-    color: theme.colors.textSecondary,
-  },
-  titleActive: { fontFamily: theme.font.roundedBold, color: theme.colors.textPrimary },
-  sub: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 15, color: theme.colors.textMuted },
-  stepper: { flexDirection: 'row', alignItems: 'center', gap: 16, marginBottom: 14 },
-  stepBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: theme.colors.surfaceAlt,
-  },
-  stepOff: { opacity: theme.opacity.limit },
-  count: {
-    minWidth: 48,
-    textAlign: 'center',
-    fontFamily: theme.font.monoBold,
-    fontSize: 20,
-    color: theme.colors.textPrimary,
-  },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    row: { flexDirection: 'row', gap: 8, marginBottom: 12 },
+    rowStacked: { flexDirection: 'column' },
+    // Shared only side by side: in a column a zero flex basis has no height to share.
+    cardShared: { flex: 1 },
+    card: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      borderRadius: 18,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.borderSoft,
+      backgroundColor: theme.colors.surface,
+    },
+    pressed: { opacity: theme.opacity.pressed },
+    copy: { flex: 1, minWidth: 0 },
+    title: {
+      fontFamily: theme.font.roundedMedium,
+      fontSize: 13,
+      color: theme.colors.textSecondary,
+    },
+    titleActive: { fontFamily: theme.font.roundedBold, color: theme.colors.textPrimary },
+    sub: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 15, color: theme.colors.textMuted },
+    stepper: { flexDirection: 'row', alignItems: 'center', gap: 16, marginBottom: 14 },
+    stepBtn: {
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: theme.colors.surfaceAlt,
+    },
+    stepOff: { opacity: theme.opacity.limit },
+    count: {
+      minWidth: 48,
+      textAlign: 'center',
+      fontFamily: theme.font.monoBold,
+      fontSize: 22,
+      color: theme.colors.textPrimary,
+    },
+  })
+);

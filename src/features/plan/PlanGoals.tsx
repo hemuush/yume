@@ -179,7 +179,7 @@ function GoalCard({ goal, masked, onPress }: { goal: SavingsGoal; masked: boolea
             <GrowFill
               animKey={`plan:goal:${goal.id}`}
               pct={pct}
-              style={[styles.tileProgress, { backgroundColor: hue }]}
+              style={[styles.tileProgress, { backgroundColor: theme.colors.ink }]}
             />
           </View>
         )}

@@ -6,7 +6,6 @@ import { CountUpAmount } from '@/components/CountUpAmount';
 import { SavingsGoal } from '@/types';
 import { formatMoney, formatMaskableMoney } from '@/lib/money';
 import { theme } from '@/constants/theme';
-import { shade } from '@/lib/color';
 import { selectedFill, themeInk } from '@/theme/interactionColors';
 import { goalProgress } from '@/lib/savingsGoalProgress';
 import { usePrivacy } from '@/theme/PrivacyContext';
@@ -15,6 +14,7 @@ import { dayMonthYear } from '@/lib/dateLabels';
 import { toLocalIsoDate } from '@/lib/date';
 import { styles as shared } from './goals.styles';
 import { goalPlan, GOAL_PACE_LABEL } from './goalPlan';
+import { themedStyles } from '@/theme/themedStyles';
 
 /**
  * One goal as a row in the goals list: name and saved of target, a thin bar in the goal's colour, the share and
@@ -24,7 +24,6 @@ import { goalPlan, GOAL_PACE_LABEL } from './goalPlan';
  */
 export function GoalCard({
   goal,
-  hue = theme.colors.idTeal,
   accountName,
   accountAvailable = true,
   divider = false,
@@ -32,8 +31,6 @@ export function GoalCard({
   onContribute,
 }: {
   goal: SavingsGoal;
-  /** The goal's identity colour (goalHues). */
-  hue?: string;
   /** The linked account's name, shown when the goal follows or reserves in it. */
   accountName?: string | null;
   accountAvailable?: boolean;
@@ -52,7 +49,6 @@ export function GoalCard({
   const blocked = following && !accountAvailable;
 
   const fillPct = hideAmounts ? 0 : Math.min(100, Math.max(0, percent));
-  const fillColor = reached ? theme.colors.slice.saved : hue;
 
   const when = goal.targetDate ? `By ${dayMonthYear(goal.targetDate)}` : 'No target date';
   const line = [
@@ -105,7 +101,7 @@ export function GoalCard({
           </Text>
         </View>
         <View style={styles.track}>
-          <View style={[styles.fill, { width: `${fillPct}%`, backgroundColor: shade(fillColor, 60) }]} />
+          <View style={[styles.fill, { width: `${fillPct}%`, backgroundColor: theme.colors.ink }]} />
         </View>
         <View style={styles.bottom}>
           <Text style={styles.line}>{line}</Text>
@@ -151,49 +147,51 @@ export function GoalCard({
   );
 }
 
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingVertical: 12,
-    paddingLeft: 14,
-    paddingRight: 8,
-  },
-  divider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.divider },
-  pressed: { backgroundColor: theme.colors.tray },
-  main: { flex: 1, minWidth: 0, gap: 6 },
-  top: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'baseline',
-    justifyContent: 'space-between',
-    columnGap: 8,
-  },
-  name: { flexShrink: 1, fontFamily: theme.font.bodyMedium, fontSize: 14, color: theme.colors.textPrimary },
-  amounts: { flexShrink: 1 },
-  saved: {
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 14,
-    fontVariant: ['tabular-nums'],
-    color: theme.colors.textPrimary,
-  },
-  of: {
-    fontFamily: theme.font.body,
-    fontSize: 12,
-    fontVariant: ['tabular-nums'],
-    color: theme.colors.textMuted,
-  },
-  track: { height: 6, borderRadius: 3, backgroundColor: theme.colors.inkHairline, overflow: 'hidden' },
-  fill: { height: '100%', borderRadius: 3 },
-  bottom: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', columnGap: 8 },
-  line: { flexShrink: 1, fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
-  pace: { flexShrink: 1, fontFamily: theme.font.bodyBold, fontSize: 12 },
-  onPace: { color: theme.colors.incomeText },
-  behind: { color: theme.colors.warnInk },
-  // A 44 dp touch area around a 32 dp circle.
-  hit: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
-  circle: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
-  circlePressed: { opacity: theme.opacity.pressed },
-  blocked: { opacity: theme.opacity.disabled },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+      paddingVertical: 12,
+      paddingLeft: 14,
+      paddingRight: 8,
+    },
+    divider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.divider },
+    pressed: { backgroundColor: theme.colors.tray },
+    main: { flex: 1, minWidth: 0, gap: 6 },
+    top: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      alignItems: 'baseline',
+      justifyContent: 'space-between',
+      columnGap: 8,
+    },
+    name: { flexShrink: 1, fontFamily: theme.font.bodyMedium, fontSize: 15, color: theme.colors.textPrimary },
+    amounts: { flexShrink: 1 },
+    saved: {
+      fontFamily: theme.font.bodyMedium,
+      fontSize: 15,
+      fontVariant: ['tabular-nums'],
+      color: theme.colors.textPrimary,
+    },
+    of: {
+      fontFamily: theme.font.body,
+      fontSize: 12,
+      fontVariant: ['tabular-nums'],
+      color: theme.colors.textMuted,
+    },
+    track: { height: 6, borderRadius: 3, backgroundColor: theme.colors.inkHairline, overflow: 'hidden' },
+    fill: { height: '100%', borderRadius: 3 },
+    bottom: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', columnGap: 8 },
+    line: { flexShrink: 1, fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
+    pace: { flexShrink: 1, fontFamily: theme.font.bodyBold, fontSize: 12 },
+    onPace: { color: theme.colors.incomeText },
+    behind: { color: theme.colors.warnInk },
+    // A 44 dp touch area around a 32 dp circle.
+    hit: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+    circle: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+    circlePressed: { opacity: theme.opacity.pressed },
+    blocked: { opacity: theme.opacity.disabled },
+  })
+);

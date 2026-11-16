@@ -32,6 +32,8 @@ import { listRecurringRules } from '@/db/recurring';
 import { InvestmentPanel, NextSip } from '@/features/investments/InvestmentPanel';
 import { UpdateValueSheet } from '@/features/investments/UpdateValueSheet';
 import { toLocalIsoDate } from '@/lib/date';
+import { themedStyles } from '@/theme/themedStyles';
+import { flatSection } from '@/components/screenStyles';
 
 /**
  * Read-only peek at one account: balance, in/out bars (real vs own-account transfers), net, bill, entries.
@@ -465,96 +467,90 @@ function FlowRow({
   );
 }
 
-const styles = StyleSheet.create({
-  footerRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  footerBtn: { flexGrow: 1, flexBasis: 140 },
-  label: EYEBROW,
-  sectionGap: { marginTop: 18 },
-  flows: { gap: 8, marginTop: 8 },
-  flowRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  flowLabel: {
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 12,
-    color: theme.colors.textSecondary,
-    width: 30,
-  },
-  track: {
-    flex: 1,
-    height: 8,
-    borderRadius: theme.radius.pill,
-    backgroundColor: theme.colors.inkWash,
-    overflow: 'hidden',
-  },
-  fill: {
-    position: 'absolute',
-    top: 0,
-    bottom: 0,
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
-    transformOrigin: 'left',
-  },
-  flowDetail: {
-    fontFamily: theme.font.body,
-    fontSize: 12,
-    color: theme.colors.textMuted,
-    marginLeft: 40,
-    marginTop: 2,
-  },
-  netRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'baseline',
-    gap: 8,
-    marginTop: 10,
-    paddingTop: 8,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: theme.colors.borderSoft,
-  },
-  netLabel: {
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 12,
-    color: theme.colors.textSecondary,
-    width: 30,
-  },
-  netValue: {
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 13,
-    fontVariant: ['tabular-nums'],
-    color: theme.colors.textPrimary,
-  },
-  netText: {
-    flexGrow: 1,
-    flexBasis: 120,
-    fontFamily: theme.font.body,
-    fontSize: 12,
-    color: theme.colors.textSecondary,
-  },
-  flowValue: {
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 13,
-    fontVariant: ['tabular-nums'],
-    minWidth: 92,
-    textAlign: 'right',
-  },
-  latest: {
-    marginTop: 8,
-    marginHorizontal: -4,
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.radius.xl2,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    overflow: 'hidden',
-  },
-  empty: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textMuted, marginTop: 8 },
-  seeAll: {
-    minHeight: 48,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 4,
-    marginTop: 10,
-    paddingVertical: 8,
-  },
-  seeAllText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.link },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    footerRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+    footerBtn: { flexGrow: 1, flexBasis: 140 },
+    label: EYEBROW,
+    sectionGap: { marginTop: 18 },
+    flows: { gap: 8, marginTop: 8 },
+    flowRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+    flowLabel: {
+      fontFamily: theme.font.bodyMedium,
+      fontSize: 12,
+      color: theme.colors.textSecondary,
+      width: 30,
+    },
+    track: {
+      flex: 1,
+      height: 8,
+      borderRadius: theme.radius.pill,
+      backgroundColor: theme.colors.inkWash,
+      overflow: 'hidden',
+    },
+    fill: {
+      position: 'absolute',
+      top: 0,
+      bottom: 0,
+      left: 0,
+      right: 0,
+      flexDirection: 'row',
+      transformOrigin: 'left',
+    },
+    flowDetail: {
+      fontFamily: theme.font.body,
+      fontSize: 12,
+      color: theme.colors.textMuted,
+      marginLeft: 40,
+      marginTop: 2,
+    },
+    netRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      alignItems: 'baseline',
+      gap: 8,
+      marginTop: 10,
+      paddingTop: 8,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: theme.colors.borderSoft,
+    },
+    netLabel: {
+      fontFamily: theme.font.bodyMedium,
+      fontSize: 12,
+      color: theme.colors.textSecondary,
+      width: 30,
+    },
+    netValue: {
+      fontFamily: theme.font.bodyMedium,
+      fontSize: 13,
+      fontVariant: ['tabular-nums'],
+      color: theme.colors.textPrimary,
+    },
+    netText: {
+      flexGrow: 1,
+      flexBasis: 120,
+      fontFamily: theme.font.body,
+      fontSize: 12,
+      color: theme.colors.textSecondary,
+    },
+    flowValue: {
+      fontFamily: theme.font.bodyMedium,
+      fontSize: 13,
+      fontVariant: ['tabular-nums'],
+      minWidth: 92,
+      textAlign: 'right',
+    },
+    latest: { ...flatSection(), marginTop: 8, marginHorizontal: -4, overflow: 'hidden' },
+    empty: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textMuted, marginTop: 8 },
+    seeAll: {
+      minHeight: 48,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 4,
+      marginTop: 10,
+      paddingVertical: 8,
+    },
+    seeAllText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.link },
+  })
+);

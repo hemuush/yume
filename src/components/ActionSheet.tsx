@@ -7,6 +7,7 @@ import { usePressScale } from '@/lib/usePressScale';
 
 import { useAccent } from '@/theme/AccentContext';
 import { interactionColors } from '@/theme/interactionColors';
+import { themedStyles } from '@/theme/themedStyles';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -85,32 +86,34 @@ function ActionSheetRow({ item, onClose }: { item: ActionSheetItem; onClose: () 
   );
 }
 
-const styles = StyleSheet.create({
-  list: {
-    gap: 8,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    minHeight: 60,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: 18,
-    backgroundColor: theme.colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-  },
-  destructiveRow: { backgroundColor: theme.colors.expenseTint, borderColor: theme.colors.expenseTint },
-  icon: {
-    width: 40,
-    height: 40,
-    borderRadius: 14,
-    backgroundColor: theme.colors.surfaceAlt,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  iconDestructive: { backgroundColor: theme.colors.expenseTint },
-  rowLabel: { flex: 1, fontFamily: theme.font.bodyMedium, fontSize: 14, color: theme.colors.textPrimary },
-  rowLabelDestructive: { color: theme.colors.expenseText },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    list: {
+      gap: 8,
+    },
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+      minHeight: 60,
+      paddingVertical: 10,
+      paddingHorizontal: 12,
+      borderRadius: 18,
+      backgroundColor: theme.colors.surface,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.borderSoft,
+    },
+    destructiveRow: { backgroundColor: theme.colors.expenseTint, borderColor: theme.colors.expenseTint },
+    icon: {
+      width: 40,
+      height: 40,
+      borderRadius: 14,
+      backgroundColor: theme.colors.surfaceAlt,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    iconDestructive: { backgroundColor: theme.colors.expenseTint },
+    rowLabel: { flex: 1, fontFamily: theme.font.bodyMedium, fontSize: 15, color: theme.colors.textPrimary },
+    rowLabelDestructive: { color: theme.colors.expenseText },
+  })
+);

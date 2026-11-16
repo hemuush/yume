@@ -2,7 +2,7 @@ import { act, create, ReactTestRenderer } from 'react-test-renderer';
 import { Text } from 'react-native';
 import type { ReactNode } from 'react';
 import RootLayout from '../../app/_layout';
-import { getHideSensitiveAmounts } from '@/db/settings';
+import { getAppearance, getHideSensitiveAmounts } from '@/db/settings';
 import { preventScreenCaptureAsync } from 'expo-screen-capture';
 import { router } from 'expo-router';
 import type { NotificationRoute } from '@/lib/notifications';
@@ -36,6 +36,9 @@ jest.mock('@/db/settings', () => ({
   setHasOnboarded: jest.fn(),
   getAppLockEnabled: async () => false,
   getHideSensitiveAmounts: jest.fn(),
+  getAppearance: jest.fn(async () => 'system'),
+  getCachedAppearance: () => 'system',
+  setAppearance: jest.fn(async () => {}),
 }));
 jest.mock('@/db/ledger', () => ({ listAccounts: jest.fn(), listTransactions: jest.fn() }));
 jest.mock('@/lib/runAppMaintenance', () => ({ runAppMaintenance: async () => {} }));
@@ -100,6 +103,17 @@ it('does not mount financial screens until the saved privacy preference is loade
     finish(true);
   });
   expect(shown()).toContain('Financial screens');
+});
+
+it('still opens when the saved colour mode cannot be read (it only changes how the app looks)', async () => {
+  jest.mocked(getHideSensitiveAmounts).mockResolvedValue(false);
+  jest.mocked(getAppearance).mockRejectedValueOnce(new Error('Appearance read failed'));
+  jest.mocked(getAppearance).mockRejectedValueOnce(new Error('Appearance read failed'));
+  await act(async () => {
+    tree = create(<RootLayout />);
+  });
+  expect(shown()).toContain('Financial screens');
+  expect(shown()).not.toContain('Database failed to start');
 });
 
 it('keeps financial screens unmounted when the privacy preference cannot be read', async () => {

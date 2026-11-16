@@ -1,6 +1,7 @@
 import { View, StyleSheet } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { theme } from '@/constants/theme';
+import { themedStyles } from '@/theme/themedStyles';
 
 const SIZE = 48;
 const STROKE = 3;
@@ -55,6 +56,8 @@ export function DaysLeftRing({ daysLeft, children }: { daysLeft: number; childre
   );
 }
 
-const styles = StyleSheet.create({
-  wrap: { width: SIZE, height: SIZE, alignItems: 'center', justifyContent: 'center' },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    wrap: { width: SIZE, height: SIZE, alignItems: 'center', justifyContent: 'center' },
+  })
+);

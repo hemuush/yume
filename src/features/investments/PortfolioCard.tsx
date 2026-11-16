@@ -5,6 +5,7 @@ import { SegmentedControl } from '@/components/SegmentedControl';
 import { theme } from '@/constants/theme';
 import { seriesSince, type SeriesPoint } from '@/lib/portfolio';
 import { PortfolioChart } from './PortfolioChart';
+import { themedStyles } from '@/theme/themedStyles';
 
 type Range = '6m' | '1y' | 'all';
 const RANGE_MONTHS: Record<Range, number | null> = { '6m': 6, '1y': 12, all: null };
@@ -40,7 +41,9 @@ export const PortfolioCard = memo(function PortfolioCard({
   );
 });
 
-const styles = StyleSheet.create({
-  // Cards sit on the screen gutter like every other screen's.
-  card: { padding: 14, gap: 10, marginTop: 12 },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    // Cards sit on the screen gutter like every other screen's.
+    card: { padding: 14, gap: 10, marginTop: 12 },
+  })
+);

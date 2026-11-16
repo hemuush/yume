@@ -12,6 +12,7 @@ import { withPressedTint } from '@/lib/pressed';
 import { screenStyles as h } from '@/components/screenStyles';
 import { useAccent } from '@/theme/AccentContext';
 import { cardSurface } from '@/components/CardSurface';
+import { themedStyles } from '@/theme/themedStyles';
 
 /** "+₹1,600" / "−₹23,18,958" / "₹0": a true minus sign, and a plus for the lines of a sum. */
 function signedMoney(minor: number, plus = true, masked = false, currency?: string): string {
@@ -142,60 +143,67 @@ export function TrackedCard({
   );
 }
 
-const styles = StyleSheet.create({
-  card: { marginTop: 10, paddingBottom: 4 },
-  // At the foot of the money map, which draws the glass and the padding.
-  embedded: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.divider },
-  head: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, minHeight: 44 },
-  headText: { flex: 1, minWidth: 0, flexDirection: 'row', flexWrap: 'wrap', columnGap: 6 },
-  label: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textPrimary },
-  headSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
-  value: { fontFamily: theme.font.bodyBold, fontSize: 14, color: theme.colors.textPrimary, flexShrink: 1 },
-  // The sum, on a brighter pane: each part, then a rule and the total.
-  sumLines: {
-    marginTop: 10,
-    paddingHorizontal: 0,
-    paddingVertical: 10,
-    gap: 8,
-  },
-  inset: { marginHorizontal: 14, marginBottom: 10 },
-  sumLine: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 10 },
-  sumKey: { width: 10, height: 10, borderRadius: 3 },
-  sumLabel: { flex: 1, fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textSecondary },
-  sumValue: {
-    fontVariant: ['tabular-nums'],
-    fontFamily: theme.font.bodyBold,
-    fontSize: 13,
-    color: theme.colors.textPrimary,
-  },
-  sumTotal: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    gap: 10,
-    paddingTop: 7,
-    borderTopWidth: 1.5,
-    borderTopColor: theme.colors.ink,
-  },
-  sumTotalLabel: { flex: 1, fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textPrimary },
-  hint: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    marginTop: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderRadius: 16,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    backgroundColor: theme.colors.surface,
-  },
-  hintWarn: { backgroundColor: theme.colors.idGold },
-  hintText: {
-    flex: 1,
-    fontFamily: theme.font.body,
-    fontSize: 12,
-    lineHeight: 16,
-    color: theme.colors.textSecondary,
-  },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    card: { marginTop: 10, paddingBottom: 4 },
+    // At the foot of the money map, which draws the glass and the padding.
+    embedded: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.divider },
+    head: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, minHeight: 44 },
+    headText: { flex: 1, minWidth: 0, flexDirection: 'row', flexWrap: 'wrap', columnGap: 6 },
+    label: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textPrimary },
+    headSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
+    value: { fontFamily: theme.font.bodyBold, fontSize: 15, color: theme.colors.textPrimary, flexShrink: 1 },
+    // The sum, on a brighter pane: each part, then a rule and the total.
+    sumLines: {
+      marginTop: 10,
+      paddingHorizontal: 0,
+      paddingVertical: 10,
+      gap: 8,
+    },
+    inset: { marginHorizontal: 14, marginBottom: 10 },
+    sumLine: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 10 },
+    sumKey: { width: 10, height: 10, borderRadius: 3 },
+    sumLabel: { flex: 1, fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textSecondary },
+    sumValue: {
+      fontVariant: ['tabular-nums'],
+      fontFamily: theme.font.bodyBold,
+      fontSize: 13,
+      color: theme.colors.textPrimary,
+    },
+    sumTotal: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      alignItems: 'center',
+      gap: 10,
+      paddingTop: 7,
+      borderTopWidth: 1.5,
+      borderTopColor: theme.colors.ink,
+    },
+    sumTotalLabel: {
+      flex: 1,
+      fontFamily: theme.font.bodyBold,
+      fontSize: 13,
+      color: theme.colors.textPrimary,
+    },
+    hint: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+      marginTop: 8,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      borderRadius: 16,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.borderSoft,
+      backgroundColor: theme.colors.surface,
+    },
+    hintWarn: { backgroundColor: theme.colors.idGold },
+    hintText: {
+      flex: 1,
+      fontFamily: theme.font.body,
+      fontSize: 12,
+      lineHeight: 16,
+      color: theme.colors.textSecondary,
+    },
+  })
+);

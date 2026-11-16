@@ -11,9 +11,10 @@ import { ROW_LAYOUT, ROW_EXIT } from '@/lib/animation';
 import { lastActivityShort, personInitials } from './people.helpers';
 import { styles } from './people.styles';
 
+import { themedValue } from '@/theme/themedStyles';
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-const LOOK = {
+const LOOK = themedValue(() => ({
   owed: {
     amount: theme.colors.incomeText,
     label: 'Owes you',
@@ -22,7 +23,7 @@ const LOOK = {
     amount: theme.colors.expenseText,
     label: 'You owe',
   },
-} as const;
+}));
 
 /**
  * One person with an open balance on Friends & Family, as a glass tile, its balance green when they owe you and red when you

@@ -51,7 +51,7 @@ export function TransferAccounts({
           accessibilityRole="button"
           accessibilityLabel="Swap From and To"
         >
-          <Feather name="repeat" size={15} color={theme.colors.white} />
+          <Feather name="repeat" size={15} color={theme.colors.onInk} />
         </Pressable>
       )}
       <ModalSheet

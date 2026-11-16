@@ -4,7 +4,6 @@ import {
   isBuiltInIconName,
   isEmojiIcon,
   normalizeCategoryIcon,
-  parseEmojiInput,
 } from './categoryIcon';
 
 // Written as escapes so the file reads the same in every editor.
@@ -117,19 +116,5 @@ describe('normalizeCategoryIcon', () => {
     'x'.repeat(500),
   ])('falls back to the tag for %j', (value) => {
     expect(normalizeCategoryIcon(value)).toBe(DEFAULT_CATEGORY_ICON);
-  });
-});
-
-describe('parseEmojiInput', () => {
-  it('says what was typed', () => {
-    expect(parseEmojiInput('')).toEqual({ kind: 'empty' });
-    expect(parseEmojiInput('   ')).toEqual({ kind: 'empty' });
-    expect(parseEmojiInput(` ${RAMEN} `)).toEqual({ kind: 'ok', emoji: RAMEN });
-    expect(parseEmojiInput(FAMILY)).toEqual({ kind: 'ok', emoji: FAMILY });
-    expect(parseEmojiInput(COFFEE + RAMEN)).toEqual({ kind: 'many' });
-    expect(parseEmojiInput(COFFEE + ' x')).toEqual({ kind: 'many' });
-    expect(parseEmojiInput('coffee')).toEqual({ kind: 'notEmoji' });
-    expect(parseEmojiInput('x' + COFFEE)).toEqual({ kind: 'notEmoji' });
-    expect(parseEmojiInput('12')).toEqual({ kind: 'notEmoji' });
   });
 });

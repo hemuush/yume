@@ -135,7 +135,8 @@ describe('month card', () => {
     expect(
       r.root.findAll((n) => n.props.accessibilityLabel === 'Saved, ₹99,500, 51%').length
     ).toBeGreaterThan(0);
-    expect(all).not.toContain('49%');
+    // Each slice shows its share beside its amount, as a quiet figure on the right of its row.
+    expect(all).toContain('49%');
     expect(all).not.toContain('Bills left');
     expect(all).toContain('₹2,955 left');
     expect(byLabel(r, 'How this adds up')).toBeDefined();
@@ -651,23 +652,22 @@ describe('the ring in the middle of the card', () => {
     }
   };
 
-  it('splits the legend into two halves on either side of the ring, so the ring is centred', () =>
+  it('draws the legend once, as rows under the ring', () =>
     withScreen({ width: 412, fontScale: 1 }, () => {
       const r = render({ dueMinor: 10_000 });
       const legends = r.root.findAllByType(HeroLegend);
-      expect(legends.map((l) => l.props.side)).toEqual(['left', 'right']);
-      // Four slices (spent, saved, bills left, free): two on each side, so the halves are equal.
-      expect(legends.map((l) => (l.props.items as unknown[]).length)).toEqual([2, 2]);
-      // The ring sits between them in the row.
-      const row = r.root.findByType(MonthRing).parent!;
-      const order = row.children
+      expect(legends).toHaveLength(1);
+      // Four slices (spent, saved, bills left, free), after the ring in the same column.
+      expect((legends[0].props.items as unknown[]).length).toBe(4);
+      const column = r.root.findByType(MonthRing).parent!;
+      const order = column.children
         .filter((c) => typeof c !== 'string')
         .map((c) => (typeof c !== 'string' && c.type === MonthRing ? 'ring' : 'legend'));
-      expect(order).toEqual(['legend', 'ring', 'legend']);
+      expect(order).toEqual(['ring', 'legend']);
       act(() => r.unmount());
     }));
 
-  it('keeps the legend whole (still tappable) across the two halves', () =>
+  it('keeps every row of the legend (still tappable)', () =>
     withScreen({ width: 412, fontScale: 1 }, () => {
       const r = render({ dueMinor: 10_000 });
       for (const label of ['Spent, ₹', 'Saved, ₹', 'Bills left, ₹']) {

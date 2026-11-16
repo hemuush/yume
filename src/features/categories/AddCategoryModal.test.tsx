@@ -103,12 +103,8 @@ const field = (t: ReactTestRenderer, label: string) =>
   t.root.findAllByProps({ testID: 'name' }).find((n) => n.props.label === label)!;
 const type = (t: ReactTestRenderer, name: string) =>
   act(async () => field(t, 'Name').props.onChangeText(name));
-const typeEmoji = (t: ReactTestRenderer, text: string) =>
-  act(async () => field(t, 'Your emoji').props.onChangeText(text));
 const preview = (t: ReactTestRenderer) => byId(t, 'card').props.icon;
-const openEmoji = (t: ReactTestRenderer) => act(() => pressable(t, 'Use your own emoji').props.onPress());
 const COFFEE = '\u2615';
-const RAMEN = '\u{1F35C}';
 
 afterEach(() => {
   act(() => mounted.splice(0).forEach((t) => t.unmount()));
@@ -226,17 +222,34 @@ describe('AddCategoryModal — new category', () => {
     }
   });
 
-  it('offers the fifteen built-in icons, and no longer a browse-all list', async () => {
+  it('offers the whole built-in icon list: the first 24 at once, the rest under Browse all icons', async () => {
     const { tree } = await render();
     measureGrid(tree);
-    expect(CATEGORY_ICON_CHOICES).toHaveLength(15);
-    expect(new Set(CATEGORY_ICON_CHOICES).size).toBe(15);
-    for (const name of CATEGORY_ICON_CHOICES) {
-      expect(pressable(tree, `${name.replace(/-/g, ' ')} icon`)).toBeDefined();
-    }
-    expect(pressable(tree, 'Browse all icons')).toBeUndefined();
-    expect(pressable(tree, 'Use your own emoji')).toBeDefined();
+    expect(CATEGORY_ICON_CHOICES.length).toBe(94);
+    expect(new Set(CATEGORY_ICON_CHOICES).size).toBe(CATEGORY_ICON_CHOICES.length);
+    const label = (name: string) => `${name.replace(/-/g, ' ')} icon`;
+    for (const name of CATEGORY_ICON_CHOICES.slice(0, 24)) expect(pressable(tree, label(name))).toBeDefined();
+    expect(pressable(tree, label(CATEGORY_ICON_CHOICES[24]))).toBeUndefined();
+    act(() => pressable(tree, 'Browse all icons').props.onPress());
+    for (const name of CATEGORY_ICON_CHOICES) expect(pressable(tree, label(name))).toBeDefined();
+    // The emoji field of an earlier build is gone.
+    expect(pressable(tree, 'Use your own emoji')).toBeUndefined();
     expect(field(tree, 'Your emoji')).toBeUndefined();
+  });
+
+  it('browses all icons and keeps a chosen extra icon visible when collapsed', async () => {
+    const { tree } = await render();
+    measureGrid(tree);
+    const iconName = CATEGORY_ICON_CHOICES[CATEGORY_ICON_CHOICES.length - 1];
+    const iconLabel = `${iconName.replace(/-/g, ' ')} icon`;
+    expect(pressable(tree, iconLabel)).toBeUndefined();
+    act(() => pressable(tree, 'Browse all icons').props.onPress());
+    act(() => pressable(tree, iconLabel).props.onPress());
+    act(() => pressable(tree, 'Show fewer icons').props.onPress());
+    expect(pressable(tree, iconLabel).props.accessibilityState).toEqual({ selected: true });
+    await type(tree, 'My category');
+    await save(tree);
+    expect(mockCreate.mock.calls[0][0]).toEqual(expect.objectContaining({ icon: iconName }));
   });
 
   it('picks a built-in icon', async () => {
@@ -247,96 +260,6 @@ describe('AddCategoryModal — new category', () => {
     await type(tree, 'Trips');
     await save(tree);
     expect(mockCreate.mock.calls[0][0]).toEqual(expect.objectContaining({ icon: 'airplane' }));
-  });
-});
-
-describe('AddCategoryModal — your own emoji', () => {
-  it('opens a field, shows the emoji in the preview as it is typed, and saves it as the icon', async () => {
-    const { tree } = await render();
-    measureGrid(tree);
-    await openEmoji(tree);
-    expect(field(tree, 'Your emoji')).toBeDefined();
-    expect(preview(tree)).toBe(CATEGORY_ICON_CHOICES[0]);
-    await typeEmoji(tree, COFFEE);
-    expect(preview(tree)).toBe(COFFEE);
-    expect(pressable(tree, 'Your own emoji, selected')).toBeDefined();
-    // The built-in tiles are no longer marked as chosen.
-    expect(pressable(tree, 'tag icon').props.accessibilityState).toEqual({ selected: false });
-    await type(tree, 'Coffee runs');
-    await save(tree);
-    expect(mockCreate.mock.calls[0][0]).toEqual(
-      expect.objectContaining({ icon: COFFEE, name: 'Coffee runs' })
-    );
-  });
-
-  it('keeps the last good emoji and refuses to save while the field holds two, or something that is not one', async () => {
-    const { tree } = await render();
-    measureGrid(tree);
-    await openEmoji(tree);
-    await typeEmoji(tree, COFFEE);
-    await typeEmoji(tree, COFFEE + RAMEN);
-    expect(texts(tree)).toContain('One emoji only.');
-    expect(preview(tree)).toBe(COFFEE);
-    await type(tree, 'Cafe');
-    await save(tree);
-    expect(mockCreate).not.toHaveBeenCalled();
-    expect(texts(tree)).toContain('Fix the emoji, or pick one of the icons instead.');
-    await typeEmoji(tree, 'coffee');
-    expect(texts(tree).some((t) => t.startsWith('That isn’t an emoji'))).toBe(true);
-    await typeEmoji(tree, RAMEN);
-    expect(texts(tree)).not.toContain('One emoji only.');
-    expect(preview(tree)).toBe(RAMEN);
-    await save(tree);
-    expect(mockCreate.mock.calls[0][0]).toEqual(expect.objectContaining({ icon: RAMEN }));
-  });
-
-  it('falls back to the tag icon when the emoji is cleared', async () => {
-    const { tree } = await render();
-    measureGrid(tree);
-    await openEmoji(tree);
-    await typeEmoji(tree, COFFEE);
-    await typeEmoji(tree, '  ');
-    expect(preview(tree)).toBe('tag');
-    await type(tree, 'Cafe');
-    await save(tree);
-    expect(mockCreate.mock.calls[0][0]).toEqual(expect.objectContaining({ icon: 'tag' }));
-  });
-
-  it('does not change the icon just by opening the field with nothing typed', async () => {
-    const { tree } = await render();
-    measureGrid(tree);
-    act(() => pressable(tree, 'airplane icon').props.onPress());
-    await openEmoji(tree);
-    expect(preview(tree)).toBe('airplane');
-  });
-
-  it('switches back to a built-in icon, and picks the typed emoji again from the row', async () => {
-    const { tree } = await render();
-    measureGrid(tree);
-    await openEmoji(tree);
-    await typeEmoji(tree, COFFEE);
-    act(() => pressable(tree, 'car icon').props.onPress());
-    expect(preview(tree)).toBe('car');
-    expect(field(tree, 'Your emoji')).toBeUndefined();
-    await openEmoji(tree);
-    expect(preview(tree)).toBe(COFFEE);
-    // A wrong emoji does not block a category whose icon was then picked from the list.
-    await typeEmoji(tree, 'zz');
-    act(() => pressable(tree, 'home icon').props.onPress());
-    await type(tree, 'Home stuff');
-    await save(tree);
-    expect(mockCreate.mock.calls[0][0]).toEqual(expect.objectContaining({ icon: 'home' }));
-  });
-
-  it('never offers an emoji field with nothing typed as a chosen icon', async () => {
-    const { tree } = await render();
-    measureGrid(tree);
-    await openEmoji(tree);
-    expect(pressable(tree, 'Your own emoji, selected')).toBeUndefined();
-    expect(pressable(tree, 'Use your own emoji').props.accessibilityState).toEqual({
-      selected: false,
-      expanded: true,
-    });
   });
 });
 
@@ -416,38 +339,27 @@ describe('AddCategoryModal — editing', () => {
 });
 
 describe('AddCategoryModal — editing the icon', () => {
-  it('opens a category that has an emoji with its field filled in, and saves it unchanged', async () => {
+  it('shows the icon of a category that is further down the list in the last of the first tiles, and lets it be switched', async () => {
+    const further = CATEGORY_ICON_CHOICES[40];
+    const { tree } = await render(cat({ id: 'x', name: 'Further', icon: further }));
+    measureGrid(tree);
+    expect(preview(tree)).toBe(further);
+    expect(pressable(tree, `${further.replace(/-/g, ' ')} icon`).props.accessibilityState).toEqual({
+      selected: true,
+    });
+    act(() => pressable(tree, 'car icon').props.onPress());
+    expect(preview(tree)).toBe('car');
+    await save(tree);
+    expect(mockUpdate.mock.calls[0][1]).toEqual(expect.objectContaining({ icon: 'car' }));
+  });
+
+  it('keeps an emoji a category already has (from an earlier build) and saves it unchanged, with no field for it', async () => {
     const { tree } = await render(cat({ id: 'coffee', name: 'Coffee runs', icon: COFFEE }));
     measureGrid(tree);
     expect(preview(tree)).toBe(COFFEE);
-    expect(field(tree, 'Your emoji').props.value).toBe(COFFEE);
-    expect(pressable(tree, 'Your own emoji, selected')).toBeDefined();
+    expect(field(tree, 'Your emoji')).toBeUndefined();
     await save(tree);
     expect(mockUpdate.mock.calls[0][1]).toEqual(expect.objectContaining({ icon: COFFEE }));
-  });
-
-  it('keeps the icon of a category that has one the picker no longer lists, and lets it be switched back to', async () => {
-    const { tree } = await render(cat({ id: 'fuel', name: 'Fuel', icon: 'gas-station' }));
-    measureGrid(tree);
-    expect(CATEGORY_ICON_CHOICES).not.toContain('gas-station');
-    expect(preview(tree)).toBe('gas-station');
-    expect(pressable(tree, 'gas station icon').props.accessibilityState).toEqual({ selected: true });
-    act(() => pressable(tree, 'car icon').props.onPress());
-    expect(preview(tree)).toBe('car');
-    // Still on offer while this sheet is open, so nothing is lost by trying another.
-    act(() => pressable(tree, 'gas station icon').props.onPress());
-    expect(preview(tree)).toBe('gas-station');
-    await save(tree);
-    expect(mockUpdate.mock.calls[0][1]).toEqual(expect.objectContaining({ icon: 'gas-station' }));
-  });
-
-  it('does not show an extra tile for a category whose icon is on the list', async () => {
-    const { tree } = await render(cat({ id: 'x', name: 'X', icon: 'car' }));
-    measureGrid(tree);
-    const tiles = tree.root.findAll(
-      (n) => typeof n.props.accessibilityLabel === 'string' && n.props.accessibilityLabel.endsWith(' icon')
-    );
-    expect(new Set(tiles.map((n) => n.props.accessibilityLabel)).size).toBe(CATEGORY_ICON_CHOICES.length);
   });
 
   it('draws a damaged icon as the tag, and saves it as the tag', async () => {

@@ -4,6 +4,7 @@ import { CategoryGlyph } from '@/components/CategoryGlyph';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { shade } from '@/lib/color';
+import { themedStyles } from '@/theme/themedStyles';
 
 /**
  * The thing being set up (a loan, a goal), as a slim card: its name and a line of detail on the left, one worked-out
@@ -66,50 +67,52 @@ export function DraftCard({
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
-    borderRadius: 20,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: theme.colors.glass,
-    backgroundColor: theme.colors.surface,
-    marginBottom: 10,
-  },
-  top: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 8,
-  },
-  identity: {
-    flexGrow: 1,
-    flexShrink: 1,
-    flexBasis: 150,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  icon: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center' },
-  names: { flex: 1, minWidth: 0 },
-  title: { fontFamily: theme.font.bodyMedium, fontSize: 15, color: theme.colors.textPrimary },
-  kicker: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textSecondary },
-  emi: { alignItems: 'flex-end' },
-  amount: {
-    fontFamily: theme.font.body,
-    fontSize: 20,
-    lineHeight: 26,
-    fontVariant: ['tabular-nums'],
-    color: theme.colors.textPrimary,
-  },
-  per: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 15, color: theme.colors.textSecondary },
-  meta: {
-    fontFamily: theme.font.body,
-    fontSize: 12,
-    lineHeight: 18,
-    color: theme.colors.textSecondary,
-    marginTop: 8,
-  },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    card: {
+      borderRadius: 20,
+      paddingHorizontal: 14,
+      paddingVertical: 12,
+      overflow: 'hidden',
+      borderWidth: 1,
+      borderColor: theme.colors.glass,
+      backgroundColor: theme.colors.surface,
+      marginBottom: 10,
+    },
+    top: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 8,
+    },
+    identity: {
+      flexGrow: 1,
+      flexShrink: 1,
+      flexBasis: 150,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+    },
+    icon: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center' },
+    names: { flex: 1, minWidth: 0 },
+    title: { fontFamily: theme.font.bodyMedium, fontSize: 15, color: theme.colors.textPrimary },
+    kicker: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textSecondary },
+    emi: { alignItems: 'flex-end' },
+    amount: {
+      fontFamily: theme.font.body,
+      fontSize: 22,
+      lineHeight: 26,
+      fontVariant: ['tabular-nums'],
+      color: theme.colors.textPrimary,
+    },
+    per: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 15, color: theme.colors.textSecondary },
+    meta: {
+      fontFamily: theme.font.body,
+      fontSize: 12,
+      lineHeight: 18,
+      color: theme.colors.textSecondary,
+      marginTop: 8,
+    },
+  })
+);

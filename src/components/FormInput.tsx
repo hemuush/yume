@@ -7,6 +7,7 @@ import { FIELD_LABEL } from '@/constants/textStyles';
 
 import { useAccent } from '@/theme/AccentContext';
 import { interactionColors } from '@/theme/interactionColors';
+import { themedStyles } from '@/theme/themedStyles';
 
 interface Props extends TextInputProps {
   label: string;
@@ -49,25 +50,27 @@ export const FormInput = forwardRef<TextInputInstance, Props>(function FormInput
   );
 });
 
-const styles = StyleSheet.create({
-  wrap: { marginBottom: 12 },
-  label: { ...FIELD_LABEL, marginBottom: 6 },
-  input: {
-    // A transparent border by default so the focus ring can appear without
-    // shifting the field's height.
-    borderWidth: 1,
-    borderColor: theme.colors.borderSoft,
-    borderRadius: theme.radius.lg,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    minHeight: 48,
-    fontSize: 13,
-    fontFamily: theme.font.body,
-    color: theme.colors.textPrimary,
-    backgroundColor: theme.colors.surfaceAlt,
-  },
-  sheetInput: { backgroundColor: theme.colors.surface, borderRadius: 18, minHeight: 52 },
-  inputFocused: {
-    backgroundColor: theme.colors.surface,
-  },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    wrap: { marginBottom: 12 },
+    label: { ...FIELD_LABEL, marginBottom: 6 },
+    input: {
+      // A transparent border by default so the focus ring can appear without
+      // shifting the field's height.
+      borderWidth: 1,
+      borderColor: theme.colors.borderSoft,
+      borderRadius: theme.radius.lg,
+      paddingHorizontal: 14,
+      paddingVertical: 10,
+      minHeight: 48,
+      fontSize: 13,
+      fontFamily: theme.font.body,
+      color: theme.colors.textPrimary,
+      backgroundColor: theme.colors.surfaceAlt,
+    },
+    sheetInput: { backgroundColor: theme.colors.surface, borderRadius: 18, minHeight: 52 },
+    inputFocused: {
+      backgroundColor: theme.colors.surface,
+    },
+  })
+);

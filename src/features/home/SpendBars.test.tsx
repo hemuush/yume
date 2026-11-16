@@ -1,11 +1,10 @@
 import { Text, StyleSheet } from 'react-native';
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
-import { LinearGradient } from 'expo-linear-gradient';
-import { THEMES } from '@/theme/themes';
-import { hexToRgba, hexToHsl, shade } from '@/lib/color';
+import { hexToRgba } from '@/lib/color';
+import { theme } from '@/constants/theme';
 import { haptics } from '@/lib/haptics';
 
-let mockPack = { primary: '#8FCBFF', secondary: '#8FE8C8' };
+const mockPack = { primary: '#9EC5FC', secondary: '#8FE8C8' };
 
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
 jest.mock('@/lib/useReduceMotion', () => ({ useReduceMotion: () => true }));
@@ -53,31 +52,28 @@ const heights = (r: ReactTestRenderer) =>
 const FULL = 60;
 const smaller = (ratio: number) => 14 + Math.sqrt(ratio) * (FULL - 14);
 
-// The fill's second colour is capped in lightness so it still reads against the track.
-const fillEnd = (hex: string) => (hexToHsl(hex)[2] > 72 ? shade(hex, 72) : hex);
-
-it.each(THEMES)(
-  'uses the selected $name palette for the capsules, without changing spending heights',
-  (pack) => {
-    mockPack = { primary: pack.primary, secondary: pack.secondary };
-    const tree = render([{ date: '2026-10-17', totalMinor: 10000 }], '2026-10-17');
-    const gradients = tree.root.findAllByType(LinearGradient);
-    expect(gradients).toHaveLength(7);
-    expect(
-      gradients.every(
-        (g) => g.props.colors[0] === pack.primary && g.props.colors[1] === fillEnd(pack.secondary)
-      )
-    ).toBe(true);
-    const tracks = tree.root.findAll(
-      (n) => String(n.type) === 'View' && StyleSheet.flatten(n.props.style)?.maxWidth === 28
-    );
-    expect(tracks).toHaveLength(7);
-    expect(
-      tracks.every((n) => StyleSheet.flatten(n.props.style).backgroundColor === hexToRgba(pack.primary, 0.2))
-    ).toBe(true);
-    expect(heights(tree)).toEqual([0, 0, 0, 0, 0, 0, FULL]);
-  }
-);
+it('draws the capsules in the accent, without changing spending heights', () => {
+  const pack = mockPack;
+  const tree = render([{ date: '2026-10-17', totalMinor: 10000 }], '2026-10-17');
+  // Each capsule's fill is one solid colour (no gradient): the theme colour, and the picked day in the deeper blue.
+  const colours = fills(tree).map((n) => {
+    const inner = n.findAll(
+      (c) => String(c.type) === 'View' && StyleSheet.flatten(c.props.style)?.backgroundColor !== undefined
+    )[0];
+    return StyleSheet.flatten(inner.props.style).backgroundColor;
+  });
+  expect(colours).toHaveLength(7);
+  expect(colours.filter((c) => c === pack.primary)).toHaveLength(6);
+  expect(colours.filter((c) => c === theme.colors.slice.saved)).toHaveLength(1);
+  const tracks = tree.root.findAll(
+    (n) => String(n.type) === 'View' && StyleSheet.flatten(n.props.style)?.maxWidth === 28
+  );
+  expect(tracks).toHaveLength(7);
+  expect(
+    tracks.every((n) => StyleSheet.flatten(n.props.style).backgroundColor === hexToRgba(pack.primary, 0.2))
+  ).toBe(true);
+  expect(heights(tree)).toEqual([0, 0, 0, 0, 0, 0, FULL]);
+});
 
 it('does not repeat haptics or selection updates when the selected day is tapped again', () => {
   const tree = render([], '2026-10-17');

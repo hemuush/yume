@@ -7,6 +7,7 @@ import { theme } from '@/constants/theme';
 import { formatMoney, formatMaskableMoney } from '@/lib/money';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import type { GoalsTotals } from './goalPlan';
+import { themedStyles } from '@/theme/themedStyles';
 
 /**
  * First card on Savings goals, the same flat summary card as Home, Activity, Reports and Loans: total saved
@@ -59,38 +60,39 @@ export function GoalsHero({ totals }: { totals: GoalsTotals }) {
   );
 }
 
-const styles = StyleSheet.create({
-  hero: {
-    marginHorizontal: SCREEN.gutter,
-    marginTop: 0,
-    marginBottom: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    gap: 8,
-    boxShadow: '0px 1px 2px rgba(18,19,15,0.04), 0px 8px 24px rgba(18,19,15,0.05)',
-    overflow: 'visible',
-  },
-  top: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'flex-end',
-    justifyContent: 'space-between',
-    columnGap: 12,
-    rowGap: 2,
-  },
-  topMain: { flexShrink: 1, minWidth: 0 },
-  label: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
-  figure: {
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 20,
-    lineHeight: 26,
-    letterSpacing: -0.2,
-    fontVariant: ['tabular-nums'],
-    color: theme.colors.textPrimary,
-  },
-  side: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, flexShrink: 1 },
-  bold: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
-  track: { height: 6, borderRadius: 3, backgroundColor: theme.colors.trayTrack, overflow: 'hidden' },
-  fill: { height: '100%', borderRadius: 3, backgroundColor: theme.colors.slice.saved },
-  note: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textSecondary },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    hero: {
+      marginHorizontal: SCREEN.gutter - SCREEN.rowInset,
+      marginTop: 0,
+      marginBottom: 12,
+      paddingHorizontal: 14,
+      paddingVertical: 12,
+      gap: 8,
+      overflow: 'visible',
+    },
+    top: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      alignItems: 'flex-end',
+      justifyContent: 'space-between',
+      columnGap: 12,
+      rowGap: 2,
+    },
+    topMain: { flexShrink: 1, minWidth: 0 },
+    label: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
+    figure: {
+      fontFamily: theme.font.bodyMedium,
+      fontSize: 22,
+      lineHeight: 26,
+      letterSpacing: -0.2,
+      fontVariant: ['tabular-nums'],
+      color: theme.colors.textPrimary,
+    },
+    side: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, flexShrink: 1 },
+    bold: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
+    track: { height: 6, borderRadius: 3, backgroundColor: theme.colors.trayTrack, overflow: 'hidden' },
+    fill: { height: '100%', borderRadius: 3, backgroundColor: theme.colors.ink },
+    note: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textSecondary },
+  })
+);

@@ -31,10 +31,9 @@ export function useStableModel<T extends object>(model: T): T {
     []
   );
   const data = model as Record<string, unknown>;
-  const padTone = useStableValue(data.padTone);
   const frequentAmounts = useStableValue(data.frequentAmounts);
   const friendAccounts = useStableValue(data.friendAccounts);
   const usual = useStableValue(data.usual);
   const totals = useStableValue(data.totals);
-  return { ...model, ...commands, padTone, frequentAmounts, friendAccounts, usual, totals };
+  return { ...model, ...commands, frequentAmounts, friendAccounts, usual, totals };
 }

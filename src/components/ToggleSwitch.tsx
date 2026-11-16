@@ -6,6 +6,7 @@ import { themeInk } from '@/theme/interactionColors';
 import { haptics } from '@/lib/haptics';
 import { DURATIONS, EASE_OUT } from '@/lib/motionTimings';
 import { useReduceMotion } from '@/lib/useReduceMotion';
+import { themedStyles } from '@/theme/themedStyles';
 
 interface Props {
   value: boolean;
@@ -85,25 +86,27 @@ export function ToggleSwitch({ value, onChange, disabled, small, accessibilityLa
   );
 }
 
-const styles = StyleSheet.create({
-  track: {
-    width: 46,
-    height: 26,
-    borderRadius: 13,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    justifyContent: 'center',
-  },
-  trackSmall: { width: 38, height: 22, borderRadius: 11 },
-  knobSmall: { width: 16, height: 16, borderRadius: 8, top: 3, left: 3 },
-  knob: {
-    position: 'absolute',
-    top: 4,
-    left: 4,
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    backgroundColor: theme.colors.ink,
-  },
-  disabled: { opacity: theme.opacity.disabled },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    track: {
+      width: 46,
+      height: 26,
+      borderRadius: 13,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.borderSoft,
+      justifyContent: 'center',
+    },
+    trackSmall: { width: 38, height: 22, borderRadius: 11 },
+    knobSmall: { width: 16, height: 16, borderRadius: 8, top: 3, left: 3 },
+    knob: {
+      position: 'absolute',
+      top: 4,
+      left: 4,
+      width: 18,
+      height: 18,
+      borderRadius: 9,
+      backgroundColor: theme.colors.ink,
+    },
+    disabled: { opacity: theme.opacity.disabled },
+  })
+);

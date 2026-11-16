@@ -866,7 +866,7 @@ export default function TransactionsScreen() {
             { bottom: insets.bottom + theme.layout.tabBar.height + 12, backgroundColor: ink },
           ]}
         >
-          <Feather name="move" size={16} color={theme.colors.white} />
+          <Feather name="move" size={16} color={theme.colors.onInk} />
           <Text style={styles.dragHintText}>Drag up or down, let go to drop it</Text>
         </ReanimatedAnimated.View>
       )}

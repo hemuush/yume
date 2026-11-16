@@ -184,7 +184,7 @@ describe('Activity period controls', () => {
       ['Week', 'Month'].filter((word) => {
         const raw = radio(word).props.style;
         const style = StyleSheet.flatten(typeof raw === 'function' ? raw({ pressed: false }) : raw);
-        return style?.backgroundColor === themeInk('#8FCBFF');
+        return style?.backgroundColor === themeInk('#9EC5FC');
       });
     expect(filled()).toEqual(['Week']);
     await act(async () => radio('Month').props.onPress());

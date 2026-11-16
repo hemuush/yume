@@ -7,6 +7,7 @@ import { SCREEN } from '@/components/screenStyles';
 import { useAccent } from '@/theme/AccentContext';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { styles } from './profile.styles';
+import { themedStyles } from '@/theme/themedStyles';
 
 interface Props {
   name: string | null;
@@ -115,26 +116,28 @@ export function ProfileIdentity({
   );
 }
 
-const local = StyleSheet.create({
-  // One slim line with no card: the avatar, the name with a line under it, and an edit button.
-  card: { marginHorizontal: SCREEN.gutter, marginTop: 8 },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  avatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    // A circular View's background can render clipped to a stale layout on Android.
-    overflow: 'hidden',
-  },
-  avatarInitial: { fontFamily: theme.font.roundedBold, fontSize: 16 },
-  text: { flex: 1, minWidth: 0, minHeight: 44, justifyContent: 'center' },
-  name: { fontFamily: theme.font.roundedBold, fontSize: 16, color: theme.colors.textPrimary },
-  sub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
-  editButton: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
-  editForm: { marginTop: 4, gap: 8 },
-  inputLabel: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
-  editActions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  editAction: { flexGrow: 1, flexBasis: 110 },
-});
+const local = themedStyles(() =>
+  StyleSheet.create({
+    // One slim line with no card: the avatar, the name with a line under it, and an edit button.
+    card: { marginHorizontal: SCREEN.gutter, marginTop: 8 },
+    row: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+    avatar: {
+      width: 36,
+      height: 36,
+      borderRadius: 12,
+      alignItems: 'center',
+      justifyContent: 'center',
+      // A circular View's background can render clipped to a stale layout on Android.
+      overflow: 'hidden',
+    },
+    avatarInitial: { fontFamily: theme.font.roundedBold, fontSize: 17 },
+    text: { flex: 1, minWidth: 0, minHeight: 44, justifyContent: 'center' },
+    name: { fontFamily: theme.font.roundedBold, fontSize: 17, color: theme.colors.textPrimary },
+    sub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
+    editButton: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+    editForm: { marginTop: 4, gap: 8 },
+    inputLabel: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
+    editActions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+    editAction: { flexGrow: 1, flexBasis: 110 },
+  })
+);

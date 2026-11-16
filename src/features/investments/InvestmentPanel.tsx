@@ -12,6 +12,8 @@ import { formatReturnPct, returnPct } from '@/lib/investment';
 import type { Valuation } from '@/db/valuations';
 import type { Account } from '@/types';
 import { GainBadge, StalePill } from './GainPill';
+import { themedStyles } from '@/theme/themedStyles';
+import { flatSection } from '@/components/screenStyles';
 
 export interface NextSip {
   amountMinor: number;
@@ -191,42 +193,29 @@ function Stat({
   );
 }
 
-const styles = StyleSheet.create({
-  labelRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8 },
-  label: { ...EYEBROW, marginBottom: 0 },
-  // A white card with a green strip, like the hero cards on Plan's screens.
-  trioCard: {
-    marginHorizontal: -4,
-    borderRadius: theme.radius.xl,
-    backgroundColor: theme.colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    overflow: 'hidden',
-  },
-  trio: { flexDirection: 'row' },
-  stat: { flex: 1, paddingVertical: 12, paddingHorizontal: 12, gap: 4 },
-  statDivider: { borderLeftWidth: StyleSheet.hairlineWidth, borderLeftColor: theme.colors.borderSoft },
-  statLabel: { ...EYEBROW, marginBottom: 0 },
-  statValue: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textPrimary },
-  pillRow: { marginTop: 10, marginBottom: 6, alignItems: 'flex-start' },
-  card: {
-    marginTop: 8,
-    marginHorizontal: -4,
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.radius.xl2,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    overflow: 'hidden',
-  },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, paddingVertical: 11 },
-  divider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.borderSoft },
-  tile: { width: 38, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-  rowText: { flex: 1 },
-  rowValue: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textPrimary },
-  rowMeta: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 2 },
-  empty: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textMuted, marginTop: 8 },
-  sip: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary, marginTop: 12 },
-  moreRow: { flexDirection: 'row', gap: 8, marginTop: 8 },
-  more: { flex: 1 },
-  update: { marginTop: 12 },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    labelRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8 },
+    label: { ...EYEBROW, marginBottom: 0 },
+    // A white card with a green strip, like the hero cards on Plan's screens.
+    trioCard: { ...flatSection(), marginHorizontal: -4, overflow: 'hidden' },
+    trio: { flexDirection: 'row' },
+    stat: { flex: 1, paddingVertical: 12, paddingHorizontal: 12, gap: 4 },
+    statDivider: { borderLeftWidth: StyleSheet.hairlineWidth, borderLeftColor: theme.colors.borderSoft },
+    statLabel: { ...EYEBROW, marginBottom: 0 },
+    statValue: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textPrimary },
+    pillRow: { marginTop: 10, marginBottom: 6, alignItems: 'flex-start' },
+    card: { ...flatSection(), marginTop: 8, marginHorizontal: -4, overflow: 'hidden' },
+    row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, paddingVertical: 11 },
+    divider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.borderSoft },
+    tile: { width: 38, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+    rowText: { flex: 1 },
+    rowValue: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textPrimary },
+    rowMeta: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 2 },
+    empty: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textMuted, marginTop: 8 },
+    sip: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary, marginTop: 12 },
+    moreRow: { flexDirection: 'row', gap: 8, marginTop: 8 },
+    more: { flex: 1 },
+    update: { marginTop: 12 },
+  })
+);

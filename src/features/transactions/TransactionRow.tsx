@@ -13,6 +13,7 @@ import { usePrivacy } from '@/theme/PrivacyContext';
 import { useAccent } from '@/theme/AccentContext';
 import { dayMonthYear, shortMonth } from '@/lib/dateLabels';
 import { useStacked } from '@/lib/useStacked';
+import { themedStyles } from '@/theme/themedStyles';
 
 const AnimatedRowPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -120,23 +121,25 @@ export function TransactionRow({
   );
 }
 
-const local = StyleSheet.create({
-  stacked: { flexWrap: 'wrap', rowGap: 6 },
-  wideMid: { flexGrow: 1, flexBasis: '65%' },
-  dateBadge: {
-    minWidth: 40,
-    minHeight: 44,
-    padding: 4,
-    borderRadius: 12,
-    backgroundColor: theme.colors.surfaceAlt,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  dateDay: {
-    fontFamily: theme.font.bodyBold,
-    fontVariant: ['tabular-nums'],
-    fontSize: 14,
-    color: theme.colors.textPrimary,
-  },
-  dateMonth: { fontFamily: theme.font.bodyMedium, fontSize: 11, color: theme.colors.textSecondary },
-});
+const local = themedStyles(() =>
+  StyleSheet.create({
+    stacked: { flexWrap: 'wrap', rowGap: 6 },
+    wideMid: { flexGrow: 1, flexBasis: '65%' },
+    dateBadge: {
+      minWidth: 40,
+      minHeight: 44,
+      padding: 4,
+      borderRadius: 12,
+      backgroundColor: theme.colors.surfaceAlt,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    dateDay: {
+      fontFamily: theme.font.bodyBold,
+      fontVariant: ['tabular-nums'],
+      fontSize: 15,
+      color: theme.colors.textPrimary,
+    },
+    dateMonth: { fontFamily: theme.font.bodyMedium, fontSize: 11, color: theme.colors.textSecondary },
+  })
+);

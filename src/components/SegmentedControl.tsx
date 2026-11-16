@@ -1,9 +1,7 @@
-import { selectedFill } from '@/theme/interactionColors';
 import { useEffect, useRef, useState } from 'react';
 import { View, Pressable, Animated, StyleSheet, LayoutChangeEvent, useWindowDimensions } from 'react-native';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
-import { GLASS } from '@/components/Glass';
 import { haptics } from '@/lib/haptics';
 import { usePressScale } from '@/lib/usePressScale';
 import { withPressedTint } from '@/lib/pressed';
@@ -12,6 +10,7 @@ import { useReduceMotion } from '@/lib/useReduceMotion';
 import { DURATIONS, EASE_OUT } from '@/lib/motionTimings';
 
 import { useAccent } from '@/theme/AccentContext';
+import { themedStyles } from '@/theme/themedStyles';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -53,7 +52,6 @@ function PillSwitch<T extends string>({
   compact = false,
 }: Props<T>) {
   const reduce = useReduceMotion();
-  const { accent } = useAccent();
   // The track's inner width; each segment's share is worked out per render, so
   // a switch whose options change (Add in edit mode) still sizes its pill right.
   const [innerWidth, setInnerWidth] = useState(0);
@@ -104,7 +102,7 @@ function PillSwitch<T extends string>({
           pointerEvents="none"
           style={[
             styles.pill,
-            { backgroundColor: selectedFill(accent) },
+            { backgroundColor: theme.colors.surface },
             { width: segWidth, transform: [{ translateX: x }] },
           ]}
         />
@@ -113,7 +111,7 @@ function PillSwitch<T extends string>({
         <Segment
           key={opt.value}
           active={opt.value === value}
-          fallbackInk={segWidth <= 0 ? selectedFill(accent) : undefined}
+          fallbackInk={segWidth <= 0 ? theme.colors.surface : undefined}
           label={opt.label}
           disabled={disabled}
           compact={compact}
@@ -147,7 +145,7 @@ function StackedSwitch<T extends string>({ options, value, onChange, disabled = 
                   }}
                   style={withPressedTint(accent, [
                     styles.stackTab,
-                    active && { backgroundColor: selectedFill(accent) },
+                    active && { backgroundColor: theme.colors.surface },
                   ])}
                 >
                   <Text style={[styles.stackLabel, active && styles.segmentTextActive]}>{opt.label}</Text>
@@ -203,75 +201,73 @@ function Segment({
   );
 }
 
-const styles = StyleSheet.create({
-  wrap: {
-    flexDirection: 'row',
-    backgroundColor: theme.colors.surfaceAlt,
-    borderRadius: theme.radius.pill,
-    padding: PAD,
-    marginBottom: 14,
-  },
-  pill: {
-    position: 'absolute',
-    top: PAD,
-    bottom: PAD,
-    left: PAD,
-    borderRadius: theme.radius.pill,
-    // The chosen segment is the theme colour with ink text, not a dark fill: ink is for the one primary button.
-    // No border and no elevation (on Android an elevated view draws above its later siblings, over the labels).
-  },
-  segment: {
-    flex: 1,
-    minHeight: 44,
-    paddingVertical: 6,
-    // Little side padding: the pill is drawn behind the whole segment, and a label such as "Money plan" in the
-    // heavier selected weight must stay on one line in a quarter of a 360 dp phone.
-    paddingHorizontal: 2,
-    borderRadius: theme.radius.pill,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  segmentText: {
-    fontSize: 13,
-    fontFamily: theme.font.body,
-    color: theme.colors.textSecondary,
-    textAlign: 'center',
-    flexShrink: 1,
-  },
-  wrapCompact: { marginBottom: 0, backgroundColor: theme.colors.tray, borderWidth: 0 },
-  segmentCompact: { minHeight: 32, paddingVertical: 4, paddingHorizontal: 12 },
-  segmentTextActive: { color: theme.colors.textPrimary, fontFamily: theme.font.bodyMedium },
-  // On a wallpaper (Add's header): a frosted track and an ink pill.
-  wrapBand: {
-    backgroundColor: GLASS.fill,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    marginBottom: 0,
-  },
-  stackTrack: {
-    padding: 4,
-    gap: 4,
-    borderRadius: 24,
-    backgroundColor: GLASS.fill,
-    borderWidth: 1,
-    borderColor: GLASS.edge,
-  },
-  stackRow: { flexDirection: 'row', gap: 4 },
-  stackTab: {
-    flex: 1,
-    minWidth: 0,
-    minHeight: 44,
-    borderRadius: theme.radius.pill,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 6,
-    paddingHorizontal: 4,
-  },
-  stackLabel: {
-    fontFamily: theme.font.body,
-    fontSize: 13,
-    color: theme.colors.textSecondary,
-    textAlign: 'center',
-  },
-  disabled: { opacity: theme.opacity.disabled },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    wrap: {
+      flexDirection: 'row',
+      backgroundColor: theme.colors.surfaceAlt,
+      borderRadius: theme.radius.pill,
+      padding: PAD,
+      marginBottom: 14,
+    },
+    pill: {
+      position: 'absolute',
+      top: PAD,
+      bottom: PAD,
+      left: PAD,
+      borderRadius: theme.radius.pill,
+      // The chosen segment is a white piece raised from the warm track, with ink text; no elevation (on Android an
+      // elevated view draws above its later siblings, over the labels), only a hairline-soft shadow.
+      boxShadow: '0px 1px 2px rgba(60,50,20,0.12)',
+    },
+    segment: {
+      flex: 1,
+      minHeight: 44,
+      paddingVertical: 6,
+      // Little side padding: the pill is drawn behind the whole segment, and a label such as "Money plan" in the
+      // heavier selected weight must stay on one line in a quarter of a 360 dp phone.
+      paddingHorizontal: 2,
+      borderRadius: theme.radius.pill,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    segmentText: {
+      fontSize: 13,
+      fontFamily: theme.font.body,
+      color: theme.colors.textSecondary,
+      textAlign: 'center',
+      flexShrink: 1,
+    },
+    wrapCompact: { marginBottom: 0, backgroundColor: theme.colors.tray, borderWidth: 0 },
+    segmentCompact: { minHeight: 32, paddingVertical: 4, paddingHorizontal: 12 },
+    segmentTextActive: { color: theme.colors.textPrimary, fontFamily: theme.font.bodyMedium },
+    // On a wallpaper (Add's header): a frosted track and an ink pill.
+    wrapBand: {
+      marginBottom: 0,
+    },
+    stackTrack: {
+      padding: 4,
+      gap: 4,
+      borderRadius: 24,
+      backgroundColor: theme.colors.surfaceAlt,
+    },
+    stackRow: { flexDirection: 'row', gap: 4 },
+    stackTab: {
+      flex: 1,
+      minWidth: 0,
+      minHeight: 44,
+      borderRadius: theme.radius.pill,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: 6,
+      paddingHorizontal: 4,
+    },
+    stackLabel: {
+      fontFamily: theme.font.body,
+      fontSize: 13,
+      color: theme.colors.textSecondary,
+      textAlign: 'center',
+    },
+    disabled: { opacity: theme.opacity.disabled },
+  })
+);

@@ -2,108 +2,19 @@
 // Calm register: cream surfaces, `borderSoft` hairlines, sky-blue `primary` + mint `secondary`, 74-83% pastels.
 
 import { StyleSheet } from 'react-native';
+import { getPalette, PALETTES, type Palette } from '@/theme/palette';
+import { themedStyles } from '@/theme/themedStyles';
+
+// `theme.colors.x` is the entry of the mode the app is in right now (see `theme/palette.ts` and `theme/scheme.ts`).
+// Each token is a getter, so a screen keeps reading `theme.colors.ink` and gets light or dark as the mode changes;
+// a style sheet written at module level must be wrapped in `themedStyles` to be made again after a change.
+const colors = {} as Readonly<Palette>;
+for (const key of Object.keys(PALETTES.light) as (keyof Palette)[]) {
+  Object.defineProperty(colors, key, { enumerable: true, get: () => getPalette()[key] });
+}
 
 export const theme = {
-  colors: {
-    background: '#F1EDE2',
-    surface: '#FFFDF8',
-    surfaceAlt: '#F3ECE0',
-
-    ink: '#12130F',
-    inkSoft: '#5B5748',
-
-    // Sky-blue is the signature accent: the same value as `flatBlue` (account tags), promoted to the lead role.
-    primary: '#8FCBFF',
-    primaryTint: '#EAF3FE',
-    secondary: '#8FE8C8', // mint
-    secondaryTint: '#E4FAF1',
-    // A deeper mint for a thin edge on a small mint dot (Home's Saved tile).
-    secondaryDeep: '#2FB98A',
-    accent: '#C9B8FF', // lavender
-    accentTint: '#F1ECFF',
-    gold: '#F0E1A8',
-    goldTint: '#FBF3E0',
-
-    income: '#1C9A5B',
-    incomeTint: '#DDF2E5',
-    expense: '#E23F55',
-    expenseTint: '#FBE1E4',
-    // Deeper income/expense shades for text and numbers under ~18px; the livelier pair above is for icons,
-    // bars and dots only (under 4.5:1 on the cream surfaces).
-    incomeText: '#167747',
-    expenseText: '#BD3547',
-    // Amber for warning text and small icons: idGoldDeep is ~2:1 on the cream
-    // surfaces, so it stays for fills (bars, tints) only.
-    warnInk: '#8A5A00',
-
-    textPrimary: '#12130F',
-    textSecondary: '#5B5748',
-    textMuted: '#6C685B', // 4.5:1+ on card, page and surfaceAlt
-
-    white: '#FFFFFF',
-    flatLime: '#E0F0A8',
-    flatMint: '#8FE8C8',
-    flatPink: '#FFA8CE',
-    flatBlue: '#8FCBFF',
-    onFlat: '#12130F',
-
-    // Identity-card tones: teal/sage (income, surplus) and coral/gold (spend, debt) are related families, pale
-    // fills; coral and gold also have a deeper tone for icon circles or figures. Never mix families on a card.
-    idTeal: '#DAF5F0',
-    idSage: '#E9F3DA',
-    idCoral: '#FFE3D6',
-    idCoralDeep: '#F0876A',
-    // The "spent" side of Home's moon — a step deeper than idCoral so it holds
-    // its own next to the mint and sky slices (signed off with the moon hero).
-    spentSoft: '#F6A88E',
-    idGold: '#FBF0CE',
-    idGoldDeep: '#E0AC3F',
-    // The colours a split bar gives its parts in turn (Investments' "Where it sits"), pale and distinct.
-    splitPalette: ['#8FCBFF', '#F0E1A8', '#8FE8C8', '#E2A6D8', '#F6BFD3', '#BEC8D4'],
-
-    // A soft warm hairline for the calm card style, separating cards by a thin line and whitespace.
-    // This is the default edge for cards, chips, inputs and sheets; `border` (ink) is the rare exception.
-    borderSoft: '#E8E1D1',
-    // A fainter line for dividers inside a card (Home's legend, the glance card's rows).
-    divider: '#F0EADD',
-
-    // Home's month slices, one colour per meaning everywhere they appear (ring, legend dots, meters).
-    // Equal-lightness pastels so no slice shouts over another; they are fills only, never text.
-    slice: {
-      spent: '#F6A88E',
-      saved: '#4FD09F',
-      due: '#EDB02F',
-      free: '#7DB9F2',
-      debt: '#BBA9F7',
-    },
-    // The "still to pay" family: the chip and date tile, a paler row behind a bill due soon, and its text.
-    dueTint: '#FCEFC9',
-    dueRow: '#FDF7E8',
-    dueInk: '#7A5100',
-    // The soft tray under the month card's figures (Today, pace) and its meter track.
-    tray: '#F8F3EA',
-    trayTrack: '#ECE4D4',
-    // The one grey segment that joins the thin categories in the Reports breakdown bar.
-    otherSlice: '#CFC8B6',
-    // Readable sky for links and the transfer icon: 5.6:1 on the card, 5:1 on the page.
-    link: '#2A69A6',
-
-    // Ink at very low opacity — a faint fill for inactive tracks, weekend
-    // cells, and other "barely there" surfaces on a cream ground.
-    inkWash: 'rgba(18,19,15,0.05)',
-    // Ink at a little more opacity — a hairline on a translucent chip.
-    inkHairline: 'rgba(18,19,15,0.1)',
-    // A clearer ink line for rails and rings that must read on cream (a timeline rail, a dot's ring), ~1.9:1.
-    inkLine: 'rgba(18,19,15,0.16)',
-    // Ink for an "off" state or a faint chart line that still has to be seen (~1.9:1 on the card).
-    inkOff: 'rgba(18,19,15,0.28)',
-    // White at partial opacity — a frosted chip or figure sitting on a
-    // pastel card, letting the card's colour show through.
-    glass: 'rgba(255,255,255,0.6)',
-    // The dimmed backdrop behind every sheet and dialog: warm ink, light
-    // enough that you still see where you were (calm sheets).
-    scrim: 'rgba(18,19,15,0.3)',
-  },
+  colors,
   radius: {
     sm: 8,
     md: 12,
@@ -123,7 +34,8 @@ export const theme = {
   // The one spacing scale. Gutter and card padding are roles on top of it (see SCREEN in screenStyles).
   space: { xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 24, xxxl: 32 },
   // Captions stay quiet; readable row text and firmer financial figures provide the hierarchy.
-  typeSize: { headline: 30, inputAmount: 36, title: 18, greeting: 16, section: 15, row: 14 },
+  // The ten sizes of the type scale are 11, 12, 13, 15, 17, 22, 28, 34, 40 and 56; these are the named ones.
+  typeSize: { headline: 28, inputAmount: 34, title: 17, greeting: 17, section: 15, row: 15 },
   // How faint a control gets: disabled (a button, row or switch that cannot be used), limit (an arrow or step
   // that has reached the end of its range) and pressed (while a finger is held on it).
   opacity: { disabled: 0.45, limit: 0.35, pressed: 0.6 },
@@ -155,11 +67,13 @@ export const theme = {
 
 // The button block passed as a ModalSheet `footer`: optional error line, Cancel/Save row, optional full-width
 // Delete. Shared so every modal's pinned footer lays out the same.
-export const modalFooterStyles = StyleSheet.create({
-  footerCol: { gap: 8 },
-  footerRow: { flexDirection: 'row', gap: 8 },
-  footerBtn: { flex: 1 },
-});
+export const modalFooterStyles = themedStyles(() =>
+  StyleSheet.create({
+    footerCol: { gap: 8 },
+    footerRow: { flexDirection: 'row', gap: 8 },
+    footerBtn: { flex: 1 },
+  })
+);
 
 // Every swatch sits in the app's 74-83% lightness pastel band; added colours fill hue gaps (rose, teal, sage,
 // tan, mauve, cyan, periwinkle, pale butter) instead of brightening the originals, so the picker stays calm.
@@ -186,7 +100,7 @@ export const CATEGORY_COLOR_PALETTE = [
 
 // The four flat pastel fills (lime, mint, pink, sky) with ink text/icons directly on them; People's avatar
 // tiles pick one by a stable hash of the person's id.
-export const FLAT_PALETTE = [
+export const flatPalette = (): string[] => [
   theme.colors.flatLime,
   theme.colors.flatMint,
   theme.colors.flatPink,

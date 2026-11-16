@@ -10,6 +10,7 @@ import {
   readCurrencyCache,
   setCurrencyCache,
 } from './currencyCache';
+import { isAppearancePreference, type AppearancePreference } from '@/theme/scheme';
 
 export { getCachedCurrency, primeCurrencyCache };
 
@@ -180,81 +181,6 @@ export async function updateNotificationPrefs(patch: Partial<NotificationPrefs>)
     });
     return updated;
   });
-}
-
-const ACCENT_COLOR_KEY = 'accent_color';
-// Sky-blue signature accent, seen by anyone who never opened the accent picker (theme.ts's `primary` matches it
-// for screens that skip `useAccent()`). Sage `#E0F0A8` (the old default) remains a selectable swatch below.
-const DEFAULT_ACCENT = '#8FCBFF';
-let cachedAccent: string | null = null;
-
-export function getCachedAccentColor(): string {
-  return cachedAccent ?? DEFAULT_ACCENT;
-}
-
-// A stored shade no longer offered would stay stuck forever (the hex is just a string, so a palette change in
-// code never reaches an existing install): remap once here, then persist.
-const LEGACY_ACCENT_REMAP: Record<string, string> = {
-  '#D6FF3D': '#E0F0A8', // original neon-lime mockup colour, softened
-  '#FFB84D': '#F0A387', // original harsher gold/tan, straight to Terracotta like Tan below
-  // Ink and Cream were dropped from ACCENT_SWATCHES: they're the app's text/page colours, not accents, so
-  // picking either turned buttons black or switched accents off.
-  '#12130F': '#E0F0A8',
-  '#FFFDF6': '#E0F0A8',
-  // Tan was dropped for reading muddy next to the other pastels — remapped
-  // to its closest replacement (Terracotta) rather than the plain default.
-  '#EFD3A8': '#F0A387',
-};
-
-export async function getAccentColor(): Promise<string> {
-  if (cachedAccent) return cachedAccent;
-  const db = await getDb();
-  const row = await db.getFirstAsync<{ value: string }>('SELECT value FROM settings WHERE key = ?', [
-    ACCENT_COLOR_KEY,
-  ]);
-  const stored = row?.value ?? DEFAULT_ACCENT;
-  const remapped = LEGACY_ACCENT_REMAP[stored];
-  cachedAccent = remapped ?? stored;
-  if (remapped) await setAccentColor(remapped);
-  return cachedAccent;
-}
-
-export async function setAccentColor(hex: string): Promise<void> {
-  const db = await getDb();
-  await db.runAsync(
-    `INSERT INTO settings (key, value) VALUES (?, ?)
-     ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
-    [ACCENT_COLOR_KEY, hex]
-  );
-  cachedAccent = hex;
-}
-
-const THEME_ID_KEY = 'theme_id';
-let cachedThemeId: string | null | undefined; // undefined = not yet read; null = read, nothing stored
-
-// The theme's `primary` is still written to `accent_color` so `getAccentColor()`/`useAccent()` readers keep
-// working; `theme_id` only records which pack the hex came from (to re-select its card and `secondary`).
-export async function getThemeId(): Promise<string | null> {
-  if (cachedThemeId !== undefined) return cachedThemeId;
-  const db = await getDb();
-  const row = await db.getFirstAsync<{ value: string }>('SELECT value FROM settings WHERE key = ?', [
-    THEME_ID_KEY,
-  ]);
-  cachedThemeId = row?.value ?? null;
-  return cachedThemeId;
-}
-
-/** One SQLite statement keeps the pack and its compatibility accent atomic, including their caches. */
-export async function setThemeSelection(id: string, hex: string): Promise<void> {
-  if (!id.trim() || !/^#[0-9a-f]{6}$/i.test(hex)) throw new Error('Choose a valid theme.');
-  const db = await getDb();
-  await db.runAsync(
-    `INSERT INTO settings (key, value) VALUES (?, ?), (?, ?)
-     ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
-    [THEME_ID_KEY, id, ACCENT_COLOR_KEY, hex]
-  );
-  cachedThemeId = id;
-  cachedAccent = hex;
 }
 
 const DAILY_SPENDING_GOAL_KEY = 'daily_spending_goal_minor';
@@ -529,9 +455,6 @@ export async function setLastLocalBackupResult(outcome: BackupOutcome): Promise<
  */
 export function resetSettingsCache(): void {
   setCurrencyCache(null);
-  cachedAccent = null;
-  cachedThemeId = undefined;
-  cachedThemeIcon = undefined;
   cachedDailySpendingGoal = undefined;
   cachedUserName = undefined;
   cachedLocalBackupFolder = undefined;
@@ -541,6 +464,7 @@ export function resetSettingsCache(): void {
   cachedLastLocalResult = undefined;
   cachedSpendSpikesSent = undefined;
   cachedHideSensitiveAmounts = undefined;
+  cachedAppearance = undefined;
   cachedHideWidgetValues = undefined;
   cachedBudgetNudgesSent = undefined;
   cachedMilestonesSeen = undefined;
@@ -818,6 +742,38 @@ export async function addQueuedAlerts(alerts: QueuedAlert[]): Promise<void> {
   });
 }
 
+const APPEARANCE_KEY = 'appearance';
+let cachedAppearance: AppearancePreference | undefined; // undefined = not yet read
+
+/**
+ * Which colour mode the person chose: follow the phone (the default), or always light, or always dark. Anything
+ * stored that is not one of those three (an older or damaged value) reads as "system".
+ */
+export async function getAppearance(): Promise<AppearancePreference> {
+  if (cachedAppearance !== undefined) return cachedAppearance;
+  const db = await getDb();
+  const row = await db.getFirstAsync<{ value: string }>('SELECT value FROM settings WHERE key = ?', [
+    APPEARANCE_KEY,
+  ]);
+  cachedAppearance = isAppearancePreference(row?.value) ? row.value : 'system';
+  return cachedAppearance;
+}
+
+export function getCachedAppearance(): AppearancePreference {
+  return cachedAppearance ?? 'system';
+}
+
+export async function setAppearance(preference: AppearancePreference): Promise<void> {
+  if (!isAppearancePreference(preference)) throw new Error('Choose system, light or dark.');
+  const db = await getDb();
+  await db.runAsync(
+    `INSERT INTO settings (key, value) VALUES (?, ?)
+     ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
+    [APPEARANCE_KEY, preference]
+  );
+  cachedAppearance = preference;
+}
+
 const HIDE_SENSITIVE_AMOUNTS_KEY = 'hide_sensitive_amounts';
 let cachedHideSensitiveAmounts: boolean | undefined;
 
@@ -1006,26 +962,6 @@ export async function setRecentSearches(queries: string[]): Promise<void> {
      ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
     [RECENT_SEARCHES_KEY, JSON.stringify(kept)]
   );
-}
-
-let cachedThemeIcon: boolean | undefined;
-/** Whether the launcher icon follows the selected theme; off by default. */
-export async function getThemeIconFollows(): Promise<boolean> {
-  if (cachedThemeIcon !== undefined) return cachedThemeIcon;
-  const db = await getDb();
-  const row = await db.getFirstAsync<{ value: string }>('SELECT value FROM settings WHERE key = ?', [
-    'theme_app_icon',
-  ]);
-  cachedThemeIcon = row?.value === '1';
-  return cachedThemeIcon;
-}
-export async function setThemeIconFollows(value: boolean): Promise<void> {
-  const db = await getDb();
-  await db.runAsync(
-    'INSERT INTO settings (key,value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value',
-    ['theme_app_icon', value ? '1' : '0']
-  );
-  cachedThemeIcon = value;
 }
 
 let cachedHideWidgetValues: boolean | undefined;

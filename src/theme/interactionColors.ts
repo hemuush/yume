@@ -1,9 +1,14 @@
 import { shade } from '@/lib/color';
 import { softTint } from '@/components/softTint';
+import { theme } from '@/constants/theme';
 
-/** Shared interaction colours; category and financial status colours remain semantic. */
-export function themeInk(accent: string): string {
-  return shade(accent, 16, -45);
+/**
+ * The ink of buttons, picked chips, switches and links: the page's own ink (near-black on the paper, cream on the dark),
+ * not a darkened accent. The parameter stays so callers read as before; there is one accent now and it does not tint
+ * the ink.
+ */
+export function themeInk(_accent?: string): string {
+  return theme.colors.ink;
 }
 
 export function interactionColors(accent: string) {

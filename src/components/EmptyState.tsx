@@ -2,6 +2,7 @@ import { View, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { SuuIllustration } from './SuuIllustration';
+import { themedStyles } from '@/theme/themedStyles';
 
 interface Props {
   illustration?: React.ReactNode;
@@ -31,25 +32,27 @@ export function EmptyState({
   );
 }
 
-const styles = StyleSheet.create({
-  wrap: { alignItems: 'center', paddingVertical: 24, paddingHorizontal: 20 },
-  title: {
-    fontFamily: theme.font.roundedMedium,
-    fontSize: theme.typeSize.title,
-    color: theme.colors.textPrimary,
-    marginTop: 14,
-    textAlign: 'center',
-    maxWidth: 360,
-    lineHeight: 24,
-  },
-  subtitle: {
-    fontFamily: theme.font.body,
-    fontSize: 13,
-    color: theme.colors.textSecondary,
-    marginTop: 4,
-    textAlign: 'center',
-    lineHeight: 20,
-    maxWidth: 360,
-  },
-  action: { alignSelf: 'center', width: '100%', maxWidth: 360, marginTop: 20 },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    wrap: { alignItems: 'center', paddingVertical: 24, paddingHorizontal: 20 },
+    title: {
+      fontFamily: theme.font.roundedMedium,
+      fontSize: theme.typeSize.title,
+      color: theme.colors.textPrimary,
+      marginTop: 14,
+      textAlign: 'center',
+      maxWidth: 360,
+      lineHeight: 24,
+    },
+    subtitle: {
+      fontFamily: theme.font.body,
+      fontSize: 13,
+      color: theme.colors.textSecondary,
+      marginTop: 4,
+      textAlign: 'center',
+      lineHeight: 20,
+      maxWidth: 360,
+    },
+    action: { alignSelf: 'center', width: '100%', maxWidth: 360, marginTop: 20 },
+  })
+);

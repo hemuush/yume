@@ -1,6 +1,6 @@
 /**
- * Theme-following launcher icon: which icon the settings call for, when the native switch is touched, and that
- * app.json's icon list, the packs and the generated art stay in step.
+ * The launcher icon is always Yume's own now: an earlier theme icon is put back, and the aliases that build still
+ * carries (app.json's icon list and the generated art) stay in step with the list the reset uses.
  */
 import fs from 'fs';
 import path from 'path';
@@ -12,15 +12,7 @@ jest.mock('expo', () => ({
     setIcon: (...a: unknown[]) => mockNative.setIcon(...a),
   }),
 }));
-const mockFollows = jest.fn();
-const mockThemeId = jest.fn();
-jest.mock('@/db/settings', () => ({
-  getThemeIconFollows: () => mockFollows(),
-  getThemeId: () => mockThemeId(),
-}));
-
-import { APP_ICON_IDS, syncAppIcon, wantedAppIcon } from './appIcon';
-import { THEMES } from '@/theme/themes';
+import { APP_ICON_IDS, DEFAULT_APP_ICON, restoreDefaultAppIcon } from './appIcon';
 
 const root = path.resolve(__dirname, '../..');
 const appJson = JSON.parse(fs.readFileSync(path.join(root, 'app.json'), 'utf8'));
@@ -31,55 +23,36 @@ const withThemeAppIcons = require('../../plugins/withThemeAppIcons');
 
 beforeEach(() => {
   mockNative.setIcon.mockResolvedValue(undefined);
-  mockFollows.mockResolvedValue(true);
-  mockThemeId.mockResolvedValue('hollowViolet');
-  mockNative.getIcon.mockReturnValue('yume');
+  mockNative.getIcon.mockReturnValue('hollowViolet');
 });
 
-describe('wantedAppIcon', () => {
-  it('follows the pack only when the setting is on', () => {
-    expect(wantedAppIcon(true, 'crimsonNight')).toBe('crimsonNight');
-    expect(wantedAppIcon(false, 'crimsonNight')).toBe('yume');
+describe('restoreDefaultAppIcon', () => {
+  it('puts Yume’s own icon back when an earlier version had switched to a theme’s', async () => {
+    expect(await restoreDefaultAppIcon()).toBe(true);
+    expect(mockNative.setIcon).toHaveBeenCalledWith(DEFAULT_APP_ICON, APP_ICON_IDS);
   });
-  it('falls back to Yume for a missing or unknown pack', () => {
-    expect(wantedAppIcon(true, null)).toBe('yume');
-    expect(wantedAppIcon(true, 'gone')).toBe('yume');
-  });
-});
-
-describe('syncAppIcon', () => {
-  it('switches to the theme icon when following', async () => {
-    expect(await syncAppIcon()).toBe(true);
-    expect(mockNative.setIcon).toHaveBeenCalledWith('hollowViolet', APP_ICON_IDS);
-  });
-  it('returns to Yume once the setting is off', async () => {
-    mockFollows.mockResolvedValue(false);
-    mockNative.getIcon.mockReturnValue('hollowViolet');
-    expect(await syncAppIcon()).toBe(true);
-    expect(mockNative.setIcon).toHaveBeenCalledWith('yume', APP_ICON_IDS);
-  });
-  it('leaves the launcher alone when it already matches', async () => {
-    mockNative.getIcon.mockReturnValue('hollowViolet');
-    expect(await syncAppIcon()).toBe(false);
+  it('leaves the launcher alone when it already shows Yume’s icon', async () => {
+    mockNative.getIcon.mockReturnValue('yume');
+    expect(await restoreDefaultAppIcon()).toBe(false);
     expect(mockNative.setIcon).not.toHaveBeenCalled();
   });
   it('does nothing when the current icon is unknown', async () => {
     mockNative.getIcon.mockReturnValue(null);
-    expect(await syncAppIcon()).toBe(false);
+    expect(await restoreDefaultAppIcon()).toBe(false);
     expect(mockNative.setIcon).not.toHaveBeenCalled();
   });
   it('swallows a native failure', async () => {
     jest.spyOn(console, 'error').mockImplementation(() => {});
     mockNative.setIcon.mockRejectedValue(new Error('boom'));
-    expect(await syncAppIcon()).toBe(false);
+    expect(await restoreDefaultAppIcon()).toBe(false);
   });
 });
 
 describe('icon set', () => {
-  it('has one icon per pack in app.json, Yume as the default', () => {
+  it('keeps the launcher aliases in app.json that the reset relies on, Yume as the default', () => {
     const props = iconPlugin[1];
     expect(props.defaultId).toBe('yume');
-    expect(props.icons.map((i: { id: string }) => i.id)).toEqual(THEMES.map((t) => t.id));
+    expect(props.icons.map((i: { id: string }) => i.id)).toEqual(APP_ICON_IDS);
   });
   it('ships art for every non-default icon at the same size as the current icon', () => {
     const size = (file: string) => {
@@ -131,7 +104,7 @@ describe('withThemeAppIcons manifest', () => {
   it('moves the launcher entry from MainActivity to the aliases, keeping its links', () => {
     const app = applied();
     expect(app.activity[0]['intent-filter']).toHaveLength(1);
-    expect(app['activity-alias']).toHaveLength(THEMES.length);
+    expect(app['activity-alias']).toHaveLength(APP_ICON_IDS.length);
   });
   it('enables only the default alias, all targeting MainActivity', () => {
     const enabled = applied()['activity-alias'].filter((a) => a.$['android:enabled'] === 'true');
@@ -142,7 +115,7 @@ describe('withThemeAppIcons manifest', () => {
     const m = manifest();
     withThemeAppIcons.applyAliases(m, iconPlugin[1]);
     withThemeAppIcons.applyAliases(m, iconPlugin[1]);
-    expect(m.manifest.application[0]).toHaveProperty('activity-alias.length', THEMES.length);
+    expect(m.manifest.application[0]).toHaveProperty('activity-alias.length', APP_ICON_IDS.length);
   });
 });
 

@@ -3,6 +3,7 @@ import { Text } from '@/components/Text';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import type { McIconName } from '@/components/iconName';
 import { isEmojiIcon } from '@/lib/categoryIcon';
+import { themedStyles } from '@/theme/themedStyles';
 
 /**
  * A category's icon, drawn the one way every screen draws it: a built-in name as an icon in `color`, or the person's own
@@ -24,9 +25,18 @@ export function CategoryGlyph({ name, size, color }: { name: string; size: numbe
       </Text>
     );
   }
-  return <MaterialCommunityIcons name={name as McIconName} size={size} color={color} />;
+  return <MaterialCommunityIcons name={outlineOf(name) as McIconName} size={size} color={color} />;
 }
 
-const styles = StyleSheet.create({
-  emoji: { textAlign: 'center', includeFontPadding: false },
-});
+/** The line version of a built-in icon where the font has one (`home` → `home-outline`); the quiet look draws lines. */
+export function outlineOf(name: string): string {
+  const glyphs = MaterialCommunityIcons.glyphMap as Record<string, number> | undefined;
+  if (!glyphs || name.endsWith('-outline') || glyphs[`${name}-outline`] === undefined) return name;
+  return `${name}-outline`;
+}
+
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    emoji: { textAlign: 'center', includeFontPadding: false },
+  })
+);

@@ -9,6 +9,8 @@ import { withPressedTint } from '@/lib/pressed';
 import { useAccent } from '@/theme/AccentContext';
 
 import { SegmentedControl } from '@/components/SegmentedControl';
+import { UnderlineTabs } from '@/components/UnderlineTabs';
+import { themedStyles } from '@/theme/themedStyles';
 
 export type ReportTab = 'days' | 'cats' | 'trends';
 const TAB_LABELS = [
@@ -17,17 +19,14 @@ const TAB_LABELS = [
   ['trends', 'Trends'],
 ] as const;
 
-/** Three lenses in the same pill switch as Plan's tabs, so the two screens read as one family. */
+/** Three lenses as the same plain text tabs as Plan's. */
 export function ReportTabs({ value, onChange }: { value: ReportTab; onChange: (value: ReportTab) => void }) {
   return (
-    <View style={s.tabs}>
-      <SegmentedControl
-        options={TAB_LABELS.map(([key, label]) => ({ label, value: key }))}
-        value={value}
-        onChange={onChange}
-        onBand
-      />
-    </View>
+    <UnderlineTabs
+      options={TAB_LABELS.map(([key, label]) => ({ label, value: key }))}
+      value={value}
+      onChange={onChange}
+    />
   );
 }
 
@@ -136,27 +135,35 @@ export function ComparisonNote({ label, partial }: { label: string; partial: boo
   );
 }
 
-const s = StyleSheet.create({
-  // The same margins as Plan's tabs.
-  tabs: { marginHorizontal: 16, marginTop: theme.layout.screenTopGap, marginBottom: 6 },
-  flow: { flexShrink: 1 },
-  group: {
-    minHeight: 32,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 12,
-    borderRadius: theme.radius.pill,
-    backgroundColor: theme.colors.tray,
-  },
-  groupText: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textPrimary },
-  comparison: { minHeight: 36, flexDirection: 'row', alignItems: 'center', gap: 8 },
-  note: { flex: 1, fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textMuted },
-  explanation: {
-    fontFamily: theme.font.body,
-    fontSize: 13,
-    lineHeight: 21,
-    color: theme.colors.textSecondary,
-    marginBottom: 14,
-  },
-});
+const s = themedStyles(() =>
+  StyleSheet.create({
+    // The same margins as Plan's tabs.
+    tabs: { marginHorizontal: 16, marginTop: theme.layout.screenTopGap, marginBottom: 6 },
+    flow: { flexShrink: 1 },
+    group: {
+      minHeight: 32,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      paddingHorizontal: 12,
+      borderRadius: theme.radius.pill,
+      backgroundColor: theme.colors.tray,
+    },
+    groupText: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textPrimary },
+    comparison: { minHeight: 36, flexDirection: 'row', alignItems: 'center', gap: 8 },
+    note: {
+      flex: 1,
+      fontFamily: theme.font.body,
+      fontSize: 12,
+      lineHeight: 17,
+      color: theme.colors.textMuted,
+    },
+    explanation: {
+      fontFamily: theme.font.body,
+      fontSize: 13,
+      lineHeight: 21,
+      color: theme.colors.textSecondary,
+      marginBottom: 14,
+    },
+  })
+);

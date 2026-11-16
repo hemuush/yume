@@ -1,176 +1,172 @@
 import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
 import { SECTION_TITLE, SECTION_GAP } from '@/constants/textStyles';
-import { SCREEN } from '@/components/screenStyles';
+import { SCREEN, flatSection } from '@/components/screenStyles';
+import { themedStyles } from '@/theme/themedStyles';
 
 // Shared by the Friends & Family screen, PersonTile, and the person modals.
-export const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: theme.colors.background },
-  // The page already pads by the top gap.
-  errorBanner: {
-    marginHorizontal: SCREEN.gutter,
-    marginBottom: 12,
-    padding: 14,
-    borderRadius: theme.radius.md,
-    backgroundColor: theme.colors.expenseTint,
-    borderWidth: theme.border.thin,
-    borderColor: theme.colors.expense,
-  },
-  errorTitle: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.expenseText },
-  errorDetail: {
-    fontFamily: theme.font.body,
-    fontSize: 12,
-    color: theme.colors.textSecondary,
-    marginTop: 3,
-    lineHeight: 16,
-  },
-  emptyText: {
-    fontFamily: theme.font.body,
-    marginHorizontal: SCREEN.gutter,
-    color: theme.colors.textMuted,
-    fontSize: 13,
-  },
-  // A row of person tiles (one or two across) and the headings that group them.
-  groupHead: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    // The colour dot and the title read as one label: together at the start, not at opposite edges.
-    gap: 8,
-    justifyContent: 'flex-start',
-    alignItems: 'center',
-    marginHorizontal: SCREEN.gutter,
-    marginTop: 14,
-    marginBottom: 8,
-  },
-  groupTitle: SECTION_TITLE,
-  groupDot: { width: 8, height: 8, borderRadius: 4, alignSelf: 'center' },
-  tileRow: { flexDirection: 'row', gap: 10, marginHorizontal: SCREEN.gutter, marginBottom: 10 },
-  tileCell: { flex: 1, minWidth: 0 },
-  // A white tile (StripCard) whose top strip says which way the money goes: mint they owe you, coral you owe.
-  personTile: {
-    padding: 14,
-    borderRadius: theme.radius.xl,
-    backgroundColor: theme.colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    overflow: 'hidden',
-  },
-  tileWho: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  tileAvatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    // A full pixel: the palest avatars (lime, mint) melt into the card with a half-pixel edge.
-    borderWidth: 1,
-    borderColor: theme.colors.inkHairline,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  tileInitial: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.onFlat },
-  tileName: {
-    flexShrink: 1,
-    minWidth: 0,
-    fontFamily: theme.font.roundedMedium,
-    fontSize: 14,
-    color: theme.colors.textPrimary,
-  },
-  tileAmount: {
-    fontVariant: ['tabular-nums'],
-    fontFamily: theme.font.body,
-    fontSize: 20,
-    letterSpacing: -0.4,
-    marginTop: 2,
-  },
-  tileMeta: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary, marginTop: 2 },
-  settledTitle: { ...SECTION_TITLE, marginHorizontal: SCREEN.gutter, marginTop: 12, marginBottom: 8 },
-  quietRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-  },
-  quietDivider: { borderTopWidth: 1, borderTopColor: theme.colors.divider },
-  quietAvatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: theme.colors.inkHairline,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  quietInitial: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.onFlat },
-  quietName: {
-    minWidth: 0,
-    fontFamily: theme.font.roundedMedium,
-    fontSize: 13,
-    color: theme.colors.textPrimary,
-  },
-  quietSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
-  // The detail sheet's linked-loan and history rows: a plain divided list
-  // suits a modal's inner list better than more tiles.
-  row: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    gap: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: theme.colors.borderSoft,
-  },
-  moreBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    backgroundColor: theme.colors.surface,
-  },
-  rowLabel: { fontFamily: theme.font.bodyMedium, fontSize: 14, color: theme.colors.textPrimary },
-  rowSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 2 },
-  rowValue: { fontVariant: ['tabular-nums'], fontFamily: theme.font.bodyBold, fontSize: 14 },
-  detailCopy: { flexGrow: 1, flexBasis: 120, minWidth: 0 },
-  footerStack: { flexDirection: 'column', gap: 8 },
-  footerStackButton: { flex: 0, width: '100%' },
-  // The Settle / History switch under a person's card.
-  sectionTitle: {
-    ...SECTION_TITLE,
-    marginTop: SECTION_GAP.top,
-    marginBottom: SECTION_GAP.bottom,
-  },
-  fieldLabel: {
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 13,
-    color: theme.colors.textSecondary,
-    marginBottom: 6,
-    marginTop: 4,
-  },
-  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 14 },
-  hintText: {
-    fontFamily: theme.font.body,
-    fontSize: 12,
-    color: theme.colors.textMuted,
-    marginBottom: 10,
-    lineHeight: 17,
-  },
-  errorText: {
-    fontFamily: theme.font.bodyBold,
-    color: theme.colors.expenseText,
-    fontSize: 13,
-    marginBottom: 12,
-  },
-  historyIcon: {
-    width: 30,
-    height: 30,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-  },
-  // The "Settle ₹X" chip under the amount.
-  settleRow: { flexDirection: 'row', marginTop: -4, marginBottom: 12 },
-});
+export const styles = themedStyles(() =>
+  StyleSheet.create({
+    container: { flex: 1, backgroundColor: theme.colors.background },
+    // The page already pads by the top gap.
+    errorBanner: {
+      marginHorizontal: SCREEN.gutter,
+      marginBottom: 12,
+      padding: 14,
+      borderRadius: theme.radius.md,
+      backgroundColor: theme.colors.expenseTint,
+      borderWidth: theme.border.thin,
+      borderColor: theme.colors.expense,
+    },
+    errorTitle: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.expenseText },
+    errorDetail: {
+      fontFamily: theme.font.body,
+      fontSize: 12,
+      color: theme.colors.textSecondary,
+      marginTop: 3,
+      lineHeight: 16,
+    },
+    emptyText: {
+      fontFamily: theme.font.body,
+      marginHorizontal: SCREEN.gutter,
+      color: theme.colors.textMuted,
+      fontSize: 13,
+    },
+    // A row of person tiles (one or two across) and the headings that group them.
+    groupHead: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      // The colour dot and the title read as one label: together at the start, not at opposite edges.
+      gap: 8,
+      justifyContent: 'flex-start',
+      alignItems: 'center',
+      marginHorizontal: SCREEN.gutter,
+      marginTop: 14,
+      marginBottom: 8,
+    },
+    groupTitle: SECTION_TITLE,
+    groupDot: { width: 8, height: 8, borderRadius: 4, alignSelf: 'center' },
+    tileRow: { flexDirection: 'row', gap: 10, marginHorizontal: SCREEN.gutter, marginBottom: 10 },
+    tileCell: { flex: 1, minWidth: 0 },
+    // A white tile (StripCard) whose top strip says which way the money goes: mint they owe you, coral you owe.
+    personTile: { ...flatSection(), padding: 14, overflow: 'hidden' },
+    tileWho: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    tileAvatar: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      // A full pixel: the palest avatars (lime, mint) melt into the card with a half-pixel edge.
+      borderWidth: 1,
+      borderColor: theme.colors.inkHairline,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    tileInitial: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.onFlat },
+    tileName: {
+      flexShrink: 1,
+      minWidth: 0,
+      fontFamily: theme.font.roundedMedium,
+      fontSize: 15,
+      color: theme.colors.textPrimary,
+    },
+    tileAmount: {
+      fontVariant: ['tabular-nums'],
+      fontFamily: theme.font.body,
+      fontSize: 22,
+      letterSpacing: -0.4,
+      marginTop: 2,
+    },
+    tileMeta: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary, marginTop: 2 },
+    settledTitle: { ...SECTION_TITLE, marginHorizontal: SCREEN.gutter, marginTop: 12, marginBottom: 8 },
+    quietRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      paddingHorizontal: 14,
+      paddingVertical: 10,
+    },
+    quietDivider: { borderTopWidth: 1, borderTopColor: theme.colors.divider },
+    quietAvatar: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      borderWidth: 1,
+      borderColor: theme.colors.inkHairline,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    quietInitial: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.onFlat },
+    quietName: {
+      minWidth: 0,
+      fontFamily: theme.font.roundedMedium,
+      fontSize: 13,
+      color: theme.colors.textPrimary,
+    },
+    quietSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
+    // The detail sheet's linked-loan and history rows: a plain divided list
+    // suits a modal's inner list better than more tiles.
+    row: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      alignItems: 'center',
+      gap: 10,
+      paddingHorizontal: 14,
+      paddingVertical: 12,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: theme.colors.borderSoft,
+    },
+    moreBtn: {
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.borderSoft,
+      backgroundColor: theme.colors.surface,
+    },
+    rowLabel: { fontFamily: theme.font.bodyMedium, fontSize: 15, color: theme.colors.textPrimary },
+    rowSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 2 },
+    rowValue: { fontVariant: ['tabular-nums'], fontFamily: theme.font.bodyBold, fontSize: 15 },
+    detailCopy: { flexGrow: 1, flexBasis: 120, minWidth: 0 },
+    footerStack: { flexDirection: 'column', gap: 8 },
+    footerStackButton: { flex: 0, width: '100%' },
+    // The Settle / History switch under a person's card.
+    sectionTitle: {
+      ...SECTION_TITLE,
+      marginTop: SECTION_GAP.top,
+      marginBottom: SECTION_GAP.bottom,
+    },
+    fieldLabel: {
+      fontFamily: theme.font.bodyMedium,
+      fontSize: 13,
+      color: theme.colors.textSecondary,
+      marginBottom: 6,
+      marginTop: 4,
+    },
+    chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 14 },
+    hintText: {
+      fontFamily: theme.font.body,
+      fontSize: 12,
+      color: theme.colors.textMuted,
+      marginBottom: 10,
+      lineHeight: 17,
+    },
+    errorText: {
+      fontFamily: theme.font.bodyBold,
+      color: theme.colors.expenseText,
+      fontSize: 13,
+      marginBottom: 12,
+    },
+    historyIcon: {
+      width: 30,
+      height: 30,
+      borderRadius: 10,
+      alignItems: 'center',
+      justifyContent: 'center',
+      flexShrink: 0,
+    },
+    // The "Settle ₹X" chip under the amount.
+    settleRow: { flexDirection: 'row', marginTop: -4, marginBottom: 12 },
+  })
+);

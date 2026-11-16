@@ -13,8 +13,9 @@ import { themeInk } from '@/theme/interactionColors';
 import { formatMoney, toMinor } from '@/lib/money';
 import { errorMessage } from '@/lib/errorMessage';
 import { theme } from '@/constants/theme';
-import { SCREEN } from '@/components/screenStyles';
+import { SCREEN, flatSection } from '@/components/screenStyles';
 import { useSaveOnce } from '@/lib/useSaveOnce';
+import { themedStyles } from '@/theme/themedStyles';
 
 export function MonthlyPlanCheck({
   input,
@@ -231,70 +232,68 @@ export function MonthlyPlanCheck({
     </View>
   );
 }
-const s = StyleSheet.create({
-  // The flat summary card the other screens lead with.
-  card: {
-    marginHorizontal: SCREEN.gutter,
-    marginTop: 12,
-    paddingHorizontal: 14,
-    paddingTop: 12,
-    paddingBottom: 4,
-    gap: 8,
-    borderRadius: 22,
-    backgroundColor: theme.colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    boxShadow: '0px 1px 2px rgba(18,19,15,0.04), 0px 8px 24px rgba(18,19,15,0.05)',
-  },
-  title: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.textPrimary },
-  top: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'flex-end',
-    justifyContent: 'space-between',
-    columnGap: 12,
-    rowGap: 2,
-  },
-  topMain: { flexShrink: 1, minWidth: 0 },
-  label: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
-  figure: {
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 20,
-    lineHeight: 26,
-    letterSpacing: -0.2,
-    fontVariant: ['tabular-nums'],
-    color: theme.colors.textPrimary,
-  },
-  income: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 4 },
-  incomeText: { fontFamily: theme.font.bodyBold, fontSize: 12 },
-  hint: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 18, color: theme.colors.textSecondary },
-  note: {
-    fontFamily: theme.font.body,
-    fontSize: 12,
-    lineHeight: 17,
-    color: theme.colors.textSecondary,
-    paddingBottom: 8,
-  },
-  value: {
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 14,
-    fontVariant: ['tabular-nums'],
-    color: theme.colors.textPrimary,
-  },
-  track: {
-    flexDirection: 'row',
-    gap: 2,
-    height: 8,
-    marginTop: -6,
-    borderRadius: 4,
-    overflow: 'hidden',
-    backgroundColor: theme.colors.trayTrack,
-  },
-  segment: { flexBasis: 0, height: 8 },
-  facts: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 12, rowGap: 8, paddingHorizontal: 2 },
-  fact: { flexGrow: 1, minWidth: 0 },
-  factLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  dot: { width: 8, height: 8, borderRadius: 4 },
-  disclosure: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.divider },
-  error: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.expenseText },
-});
+const s = themedStyles(() =>
+  StyleSheet.create({
+    // The flat summary card the other screens lead with.
+    card: {
+      ...flatSection(),
+      marginHorizontal: SCREEN.gutter - SCREEN.rowInset,
+      marginTop: 12,
+      paddingHorizontal: 14,
+      paddingTop: 12,
+      paddingBottom: 4,
+      gap: 8,
+    },
+    title: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.textPrimary },
+    top: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      alignItems: 'flex-end',
+      justifyContent: 'space-between',
+      columnGap: 12,
+      rowGap: 2,
+    },
+    topMain: { flexShrink: 1, minWidth: 0 },
+    label: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
+    figure: {
+      fontFamily: theme.font.bodyMedium,
+      fontSize: 22,
+      lineHeight: 26,
+      letterSpacing: -0.2,
+      fontVariant: ['tabular-nums'],
+      color: theme.colors.textPrimary,
+    },
+    income: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 4 },
+    incomeText: { fontFamily: theme.font.bodyBold, fontSize: 12 },
+    hint: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 18, color: theme.colors.textSecondary },
+    note: {
+      fontFamily: theme.font.body,
+      fontSize: 12,
+      lineHeight: 17,
+      color: theme.colors.textSecondary,
+      paddingBottom: 8,
+    },
+    value: {
+      fontFamily: theme.font.bodyMedium,
+      fontSize: 15,
+      fontVariant: ['tabular-nums'],
+      color: theme.colors.textPrimary,
+    },
+    track: {
+      flexDirection: 'row',
+      gap: 2,
+      height: 8,
+      marginTop: -6,
+      borderRadius: 4,
+      overflow: 'hidden',
+      backgroundColor: theme.colors.trayTrack,
+    },
+    segment: { flexBasis: 0, height: 8 },
+    facts: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 12, rowGap: 8, paddingHorizontal: 0 },
+    fact: { flexGrow: 1, minWidth: 0 },
+    factLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+    dot: { width: 8, height: 8, borderRadius: 4 },
+    disclosure: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.divider },
+    error: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.expenseText },
+  })
+);

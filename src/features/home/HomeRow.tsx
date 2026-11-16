@@ -7,6 +7,7 @@ import { screenStyles as h, SCREEN } from '@/components/screenStyles';
 
 import { useAccent } from '@/theme/AccentContext';
 import { themeInk } from '@/theme/interactionColors';
+import { themedStyles } from '@/theme/themedStyles';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -103,30 +104,32 @@ export function HomeRow({
   );
 }
 
-const styles = StyleSheet.create({
-  row: { ...h.row, minHeight: HOME_ROW_HEIGHT, gap: 12 },
-  divider: h.divider,
-  lead: { width: SCREEN.lead, alignItems: 'center', justifyContent: 'center' },
-  highlight: {
-    marginHorizontal: 8,
-    marginVertical: 4,
-    paddingHorizontal: 8,
-    borderRadius: 18,
-    borderTopWidth: 0,
-    backgroundColor: theme.colors.dueRow,
-  },
-  mid: h.mid,
-  title: h.title,
-  meter: { marginTop: 5, marginBottom: 3 },
-  sub: { ...h.sub, marginTop: 2, lineHeight: 18 },
-  end: { flexShrink: 0, alignItems: 'flex-end', gap: 4, maxWidth: '45%' },
-  value: h.amount,
-  action: {
-    minHeight: 44,
-    justifyContent: 'center',
-    paddingHorizontal: 16,
-    borderRadius: theme.radius.pill,
-    backgroundColor: theme.colors.ink,
-  },
-  actionText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.white },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    row: { ...h.row, minHeight: HOME_ROW_HEIGHT, gap: 12 },
+    divider: h.divider,
+    lead: { width: SCREEN.lead, alignItems: 'center', justifyContent: 'center' },
+    highlight: {
+      marginHorizontal: 8,
+      marginVertical: 4,
+      paddingHorizontal: 8,
+      borderRadius: 18,
+      borderTopWidth: 0,
+      backgroundColor: theme.colors.dueRow,
+    },
+    mid: h.mid,
+    title: h.title,
+    meter: { marginTop: 5, marginBottom: 3 },
+    sub: { ...h.sub, marginTop: 2, lineHeight: 18 },
+    end: { flexShrink: 0, alignItems: 'flex-end', gap: 4, maxWidth: '45%' },
+    value: h.amount,
+    action: {
+      minHeight: 44,
+      justifyContent: 'center',
+      paddingHorizontal: 16,
+      borderRadius: theme.radius.pill,
+      backgroundColor: theme.colors.ink,
+    },
+    actionText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.onInk },
+  })
+);

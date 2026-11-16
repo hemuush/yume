@@ -3,6 +3,7 @@ import Svg, { Path } from 'react-native-svg';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { theme } from '@/constants/theme';
 import type { McIconName } from '@/components/iconName';
+import { themedStyles } from '@/theme/themedStyles';
 
 const SIZE = 58;
 
@@ -37,15 +38,17 @@ export function BackupShield({ icon, tone }: { icon: McIconName; tone: 'ok' | 'f
   );
 }
 
-const styles = StyleSheet.create({
-  wrap: { width: SIZE, height: SIZE },
-  icon: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 4,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    wrap: { width: SIZE, height: SIZE },
+    icon: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 4,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+  })
+);

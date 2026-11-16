@@ -6,6 +6,7 @@ import { listGoalActivity, type GoalActivity } from '@/db/goalHistory';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
+import { themedStyles } from '@/theme/themedStyles';
 
 export function GoalHistory({ goalId, refreshToken }: { goalId: string; refreshToken?: object }) {
   const { hideAmounts } = usePrivacy();
@@ -118,19 +119,21 @@ export function GoalHistory({ goalId, refreshToken }: { goalId: string; refreshT
     </View>
   );
 }
-const styles = StyleSheet.create({
-  wrap: { gap: 4, paddingTop: 2 },
-  head: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 },
-  title: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.textPrimary },
-  hint: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textSecondary },
-  label: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textPrimary },
-  row: {
-    flexDirection: 'row',
-    gap: 12,
-    paddingVertical: 8,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: theme.colors.divider,
-  },
-  copy: { flex: 1, minWidth: 0, gap: 3 },
-  amounts: { alignItems: 'flex-end', gap: 3, flexShrink: 1 },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    wrap: { gap: 4, paddingTop: 2 },
+    head: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 },
+    title: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.textPrimary },
+    hint: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textSecondary },
+    label: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textPrimary },
+    row: {
+      flexDirection: 'row',
+      gap: 12,
+      paddingVertical: 8,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: theme.colors.divider,
+    },
+    copy: { flex: 1, minWidth: 0, gap: 3 },
+    amounts: { alignItems: 'flex-end', gap: 3, flexShrink: 1 },
+  })
+);

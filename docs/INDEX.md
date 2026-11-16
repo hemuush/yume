@@ -4,6 +4,8 @@ Use maintained guides for implemented behavior. Dated audits preserve their own 
 
 ## Current verification
 
+The [16 November quiet look and colour modes](COLOUR_MODES_2026_11_16.md) replace the six accent themes with one theme in a light and a dark mode: a colour engine (`theme.colors` read live from a table per mode, style sheets rebuilt on a change, screens drawn again without losing the person's place), the flat paper look (hairline sections instead of cards, large Fredoka titles, ink-filled picked chips, a coral Add dot), a real dark palette and a Colour mode control in Settings. It records the browser-harness checks (every screen rendered in both modes; a live switch matches a direct dark render; a stale-colour scan that found and fixed three faults), the rules for new code and what is not done.
+
 The [architecture guide](ARCHITECTURE.md#smoothness-pass--november-2026) describes the 9 November compact screen refinements and the Groww-referenced financial-typography follow-up. These source changes do not establish fresh physical-device acceptance.
 
 The [approved 10 November Home redesign](HOME_REDESIGN_2026_11_10.md) records the separate week card, section summary lines, day-grouped recent activity and the remaining Pixel acceptance checks. It supersedes the chart placement of the 5 November refinement and also records the compact Activity and Reports passes and the Plan overview redesign.
@@ -36,7 +38,7 @@ The [15 November Plan pass](PLAN_SMOOTHNESS_2026_11_15.md) applies it to Plan: w
 
 The [15 November Loans, Recurring, Budgets and Add pass](LOANS_RECURRING_BUDGETS_ADD_SMOOTHNESS_2026_11_15.md) applies it to those four: Loans, Budgets and Recurring keep their sheets outside the page's state, keep unchanged rows on reload and compare their props, and Add's sections are drawn again only for the fields of the model they read, so a digit on the pad no longer redraws the header, the category grid and the sheets.
 
-The [15 November category emoji change](CATEGORY_EMOJI_2026_11_15.md) lets a person give a category their own emoji (typed or pasted from their keyboard) and cuts the built-in icon picker from about 110 icons to fifteen; every icon already stored keeps drawing, and an emoji travels through the file backup, the folder backup, undo and the widgets.
+The [15 November category emoji change](CATEGORY_EMOJI_2026_11_15.md) is **superseded on 16 November**: the "your own emoji" field is removed and the category icon picker is back to the full built-in list (94 icons: 24 shown, the rest under Browse all icons). An emoji already stored on a category (from the short time the field existed) is still drawn, kept when the category is saved, and restored from a backup; nothing lets a person add one. The page records what the change did when it shipped.
 
 The [15 November Activity redesign](ACTIVITY_REDESIGN_2026_11_15.md) builds the approved design at the app's compact sizes: each day is one card drawn like Home's Recent activity (the day named inside it in small capitals with what it spent, Home's rows with "category · account" under the name, no date rail), the Spent strip became a card with a comparison chip and a lettered preview (a month's weeks on a square-root scale), the period is one pill with its arrows inside beside a filled Week | Month switch, and the filter chips are pills. It was rendered in a browser and measured at 6 times slower CPU, not seen on a phone.
 

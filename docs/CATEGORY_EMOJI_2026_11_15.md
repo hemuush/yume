@@ -1,5 +1,7 @@
 # Your own emoji for a category (15 November 2026)
 
+> **Superseded on 16 November 2026.** The "Use your own emoji" field, its validation and the cut to fifteen icons were removed at the owner's request: the category form offers the full built-in list again (94 icons, 24 shown and the rest under "Browse all icons", as before this change). The tolerance below stays: an emoji already stored on a category is drawn through `CategoryGlyph`, kept when the category is saved and restored from a backup. `parseEmojiInput` and the form's emoji field no longer exist. The rest of this page describes the change as it shipped.
+
 A person can give a category their own emoji, and the built-in icon picker is cut from about 110 icons to fifteen. Nothing here was run on a phone: the tests drive the real database, the real backup code and the real components in Jest, not an Android device.
 
 ## What changed for the person

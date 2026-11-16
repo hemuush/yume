@@ -1,9 +1,8 @@
 import { useCallback, useState } from 'react';
 import { Appear } from '@/components/Appear';
-import { View, Pressable } from 'react-native';
+import { View } from 'react-native';
 import { Text } from '@/components/Text';
 import { useFocusEffect, router } from 'expo-router';
-import Feather from '@expo/vector-icons/Feather';
 import {
   getHideWidgetValues,
   getDefaultCurrency,
@@ -22,8 +21,9 @@ import { ToggleSwitch } from '@/components/ToggleSwitch';
 import { SettingsRow } from '@/components/SettingsRow';
 import { MovingRow } from '@/components/MovingRow';
 import { PrimaryButton } from '@/components/PrimaryButton';
-import { useAccent, THEMES } from '@/theme/AccentContext';
-import { ThemeThumb } from './ThemePreview';
+import { SegmentedControl } from '@/components/SegmentedControl';
+import { useAppearance } from '@/theme/AppearanceContext';
+import type { AppearancePreference } from '@/theme/scheme';
 import { theme } from '@/constants/theme';
 import { Section } from '@/components/Section';
 import { screenStyles as h } from '@/components/screenStyles';
@@ -31,7 +31,6 @@ import { styles } from './profile.styles';
 import { SafetyCheck } from './SafetyCheck';
 import { cardSurface } from '@/components/CardSurface';
 import { errorMessage } from '@/lib/errorMessage';
-import { withPressedTint } from '@/lib/pressed';
 import { haptics } from '@/lib/haptics';
 import { AboutYume } from './AboutYume';
 import { CurrencySetting } from './CurrencySetting';
@@ -73,12 +72,18 @@ const ALERT_KEYS = [
   'refundAlerts',
 ] as const satisfies readonly (keyof NotificationPrefs)[];
 
+const COLOUR_MODES: { value: AppearancePreference; label: string }[] = [
+  { value: 'system', label: 'System' },
+  { value: 'light', label: 'Light' },
+  { value: 'dark', label: 'Dark' },
+];
+
 /**
- * Settings starts with theme choices, then a safety overview and grouped preferences.
+ * Settings starts with the colour mode, then a safety overview and grouped preferences.
  */
 export function SettingsSection() {
   const stackValues = useStacked();
-  const { accent, themeId, setTheme, themeSaveError } = useAccent();
+  const { preference: colourMode, setPreference: setColourMode } = useAppearance();
   const { lockEnabled, setLockEnabled } = useAppLock();
   const { hideAmounts, toggleHideAmounts } = usePrivacy();
   const [hideWidgets, setHideWidgets] = useState<boolean | null>(null);
@@ -87,7 +92,6 @@ export function SettingsSection() {
   const [tidyCount, setTidyCount] = useState<number | null>(null);
   // How many entries are waiting in Recently deleted — null until counted.
   const [deletedCount, setDeletedCount] = useState<number | null>(null);
-  const activeTheme = THEMES.find((t) => t.id === themeId) ?? THEMES[0];
 
   // One overall daily spending cap (Home's "Today" strip); `null` is off. Its accordion keeps its own draft.
   const [dailyGoal, setDailyGoalState] = useState<number | null>(null);
@@ -205,52 +209,18 @@ export function SettingsSection() {
         </Appear>
       )}
       <Section compact title="Appearance">
-        {themeSaveError && (
-          <Text accessibilityRole="alert" accessibilityLiveRegion="polite" style={styles.themeError}>
-            {themeSaveError.message}
-          </Text>
-        )}
         <View style={[h.card, cardSurface.neutral, styles.settingsCard]}>
-          <Pressable
-            onPress={() => router.push('/themes')}
-            style={withPressedTint(accent, styles.appearanceHead)}
-            accessibilityRole="button"
-            accessibilityLabel={`Theme: ${activeTheme.name}. Change theme`}
-          >
-            <ThemeThumb pack={activeTheme} />
-            <View style={h.mid}>
-              <Text style={styles.appearanceTitle}>Theme</Text>
-              <Text style={styles.themeName}>{activeTheme.name} · tap a colour to switch</Text>
-            </View>
-            <Feather name="chevron-right" size={16} color={theme.colors.textMuted} />
-          </Pressable>
-          <View style={styles.swatches}>
-            {THEMES.map((pack) => {
-              const active = pack.id === themeId;
-              return (
-                <Pressable
-                  key={pack.id}
-                  onPress={() => {
-                    if (active) return;
-                    haptics.tap();
-                    setTheme(pack.id);
-                  }}
-                  style={withPressedTint(accent, [styles.swatchHit, active && styles.swatchActive])}
-                  accessibilityRole="button"
-                  accessibilityLabel={`${pack.name} theme`}
-                  accessibilityState={{ selected: active }}
-                >
-                  <View style={[styles.swatch, { backgroundColor: pack.primary }]}>
-                    <View style={[styles.swatchHalf, { backgroundColor: pack.secondary }]} />
-                    {active && (
-                      <View style={styles.swatchCheck}>
-                        <Feather name="check" size={14} color={theme.colors.ink} />
-                      </View>
-                    )}
-                  </View>
-                </Pressable>
-              );
-            })}
+          <View style={styles.modeRow}>
+            <Text style={styles.appearanceTitle}>Colour mode</Text>
+            <SegmentedControl
+              compact
+              options={COLOUR_MODES}
+              value={colourMode}
+              onChange={(next) => {
+                haptics.tap();
+                void setColourMode(next);
+              }}
+            />
           </View>
         </View>
       </Section>

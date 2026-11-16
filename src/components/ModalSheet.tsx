@@ -2,9 +2,6 @@ import { useCallback, useContext, useId, useLayoutEffect, useState } from 'react
 import { SheetFlowContext } from './SheetFlow';
 import { Keyboard, View, Modal, Pressable, Animated, StyleSheet, useWindowDimensions } from 'react-native';
 import { Text } from '@/components/Text';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useAccent } from '@/theme/AccentContext';
-import { shade } from '@/lib/color';
 import { SheetSurfaceProvider } from './SheetSurface';
 import Feather from '@expo/vector-icons/Feather';
 import {
@@ -19,6 +16,7 @@ import { theme } from '@/constants/theme';
 import { usePressScale } from '@/lib/usePressScale';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 import { AmountPadHostProvider, useAmountPadHost } from '@/components/AmountField';
+import { themedStyles, themedValue } from '@/theme/themedStyles';
 
 /**
  * How much taller than its own content a page in a flow may be held, so it does not jump to the height of a taller
@@ -141,15 +139,9 @@ function StandaloneSheet(props: Props) {
   );
 }
 
+/** The sheet has no coloured header wash any more: it is plain white. Kept so each sheet still marks where it was. */
 function SheetWash() {
-  const { accent } = useAccent();
-  return (
-    <LinearGradient
-      pointerEvents="none"
-      colors={[shade(accent ?? theme.colors.primary, 94), theme.colors.surface]}
-      style={styles.wash}
-    />
-  );
+  return null;
 }
 
 function ModalCloseButton({
@@ -519,137 +511,138 @@ function ModalSheetBody({
  * navigation bar above the bottom of the screen. The Modal's own fade brings backdrop and sheet in together.
  * src/__tests__/sheetSurface.test.ts keeps layout animations off it.
  */
-const SHEET_SHADOW = {
+const SHEET_SHADOW = themedValue(() => ({
   shadowColor: theme.colors.ink,
   shadowOffset: { width: 0, height: -6 },
   shadowOpacity: 0.08,
   shadowRadius: 22,
   elevation: 8,
-} as const;
+}));
 
-const styles = StyleSheet.create({
-  flex: { flex: 1 },
-  backdrop: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: theme.colors.scrim,
-  },
-  alignBottom: { justifyContent: 'flex-end' },
-  alignCenter: { justifyContent: 'center' },
-  wash: { position: 'absolute', top: 0, left: 0, right: 0, height: 112 },
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    flex: { flex: 1 },
+    backdrop: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: theme.colors.scrim,
+    },
+    alignBottom: { justifyContent: 'flex-end' },
+    alignCenter: { justifyContent: 'center' },
 
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginBottom: 12,
-    minHeight: 48,
-  },
-  headerText: { flex: 1, minWidth: 0 },
-  title: { fontFamily: theme.font.roundedBold, fontSize: 20, color: theme.colors.textPrimary },
-  subtitle: {
-    fontFamily: theme.font.body,
-    fontSize: 12,
-    lineHeight: 18,
-    color: theme.colors.textSecondary,
-    marginTop: 4,
-  },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      marginBottom: 12,
+      minHeight: 48,
+    },
+    headerText: { flex: 1, minWidth: 0 },
+    title: { fontFamily: theme.font.roundedBold, fontSize: 22, color: theme.colors.textPrimary },
+    subtitle: {
+      fontFamily: theme.font.body,
+      fontSize: 12,
+      lineHeight: 18,
+      color: theme.colors.textSecondary,
+      marginTop: 4,
+    },
 
-  // --- pinned-footer layouts ---
-  framedPad: { paddingHorizontal: 20, paddingTop: 20 },
-  framedBody: { flexGrow: 0, flexShrink: 1 },
-  flowBody: { flexGrow: 1 },
-  framedSheet: {
-    backgroundColor: theme.colors.surface,
-    overflow: 'hidden',
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
-    flexShrink: 1,
-    ...SHEET_SHADOW,
-  },
-  framedSheetContent: { paddingHorizontal: 20, paddingBottom: 20 },
-  framedSheetFooter: {
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    // The sheet's own surface with a hairline above, not a second cream band.
-    backgroundColor: theme.colors.surface,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.divider,
-  },
-  framedDialogContent: { paddingHorizontal: 20, paddingBottom: 8 },
-  sheetDock: { paddingHorizontal: 16, paddingTop: 2, backgroundColor: theme.colors.surface },
-  dialogDock: { paddingHorizontal: 16, paddingBottom: 14, backgroundColor: theme.colors.surface },
-  inlineDock: { marginTop: 12 },
-  framedDialogFooter: {
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    backgroundColor: theme.colors.surface,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: theme.colors.divider,
-  },
-  footerRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
-  roundBtn: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: theme.colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  roundBtnDanger: { backgroundColor: theme.colors.expenseTint, borderColor: theme.colors.expenseTint },
-  disabled: { opacity: theme.opacity.disabled },
-  link: {
-    alignSelf: 'center',
-    minHeight: 44,
-    justifyContent: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-  },
-  linkText: { fontFamily: theme.font.roundedBold, fontSize: 13, color: theme.colors.textPrimary },
-  linkDanger: { color: theme.colors.expenseText },
+    // --- pinned-footer layouts ---
+    framedPad: { paddingHorizontal: 20, paddingTop: 20 },
+    framedBody: { flexGrow: 0, flexShrink: 1 },
+    flowBody: { flexGrow: 1 },
+    framedSheet: {
+      backgroundColor: theme.colors.surface,
+      overflow: 'hidden',
+      borderTopLeftRadius: 32,
+      borderTopRightRadius: 32,
+      flexShrink: 1,
+      ...SHEET_SHADOW,
+    },
+    framedSheetContent: { paddingHorizontal: 20, paddingBottom: 20 },
+    framedSheetFooter: {
+      paddingHorizontal: 20,
+      paddingTop: 12,
+      // The sheet's own surface with a hairline above, not a second cream band.
+      backgroundColor: theme.colors.surface,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.divider,
+    },
+    framedDialogContent: { paddingHorizontal: 20, paddingBottom: 8 },
+    sheetDock: { paddingHorizontal: 16, paddingTop: 2, backgroundColor: theme.colors.surface },
+    dialogDock: { paddingHorizontal: 16, paddingBottom: 14, backgroundColor: theme.colors.surface },
+    inlineDock: { marginTop: 12 },
+    framedDialogFooter: {
+      paddingHorizontal: 20,
+      paddingTop: 12,
+      backgroundColor: theme.colors.surface,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: theme.colors.divider,
+    },
+    footerRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
+    roundBtn: {
+      width: 48,
+      height: 48,
+      borderRadius: 24,
+      backgroundColor: theme.colors.surface,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.borderSoft,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    roundBtnDanger: { backgroundColor: theme.colors.expenseTint, borderColor: theme.colors.expenseTint },
+    disabled: { opacity: theme.opacity.disabled },
+    link: {
+      alignSelf: 'center',
+      minHeight: 44,
+      justifyContent: 'center',
+      paddingVertical: 10,
+      paddingHorizontal: 16,
+    },
+    linkText: { fontFamily: theme.font.roundedBold, fontSize: 13, color: theme.colors.textPrimary },
+    linkDanger: { color: theme.colors.expenseText },
 
-  sheet: {
-    backgroundColor: theme.colors.surface,
-    overflow: 'hidden',
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    ...SHEET_SHADOW,
-  },
-  dialog: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: 28,
-    padding: 20,
-    shadowColor: theme.colors.ink,
-    shadowOffset: { width: 0, height: 16 },
-    shadowOpacity: 0.2,
-    shadowRadius: 34,
-    elevation: 16,
-  },
-  dialogFramed: {
-    paddingTop: 0,
-    paddingHorizontal: 0,
-    paddingBottom: 0,
-    overflow: 'hidden',
-    alignSelf: 'stretch',
-  },
-  strip: { position: 'absolute', top: 0, left: 0, right: 0, height: 4 },
-  // The strip is clipped to the dialog's corners; the space under it keeps the title off it.
-  dialogStriped: { overflow: 'hidden', paddingTop: 22 },
-  closeBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: theme.colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+    sheet: {
+      backgroundColor: theme.colors.surface,
+      overflow: 'hidden',
+      borderTopLeftRadius: 32,
+      borderTopRightRadius: 32,
+      paddingHorizontal: 20,
+      paddingTop: 20,
+      ...SHEET_SHADOW,
+    },
+    dialog: {
+      backgroundColor: theme.colors.surface,
+      borderRadius: 28,
+      padding: 20,
+      shadowColor: theme.colors.ink,
+      shadowOffset: { width: 0, height: 16 },
+      shadowOpacity: 0.2,
+      shadowRadius: 34,
+      elevation: 16,
+    },
+    dialogFramed: {
+      paddingTop: 0,
+      paddingHorizontal: 0,
+      paddingBottom: 0,
+      overflow: 'hidden',
+      alignSelf: 'stretch',
+    },
+    strip: { position: 'absolute', top: 0, left: 0, right: 0, height: 4 },
+    // The strip is clipped to the dialog's corners; the space under it keeps the title off it.
+    dialogStriped: { overflow: 'hidden', paddingTop: 22 },
+    closeBtn: {
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      backgroundColor: theme.colors.surface,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.borderSoft,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+  })
+);

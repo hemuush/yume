@@ -6,7 +6,6 @@ import { cardSurface } from '@/components/CardSurface';
 import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
 import { withPressed } from '@/lib/pressed';
-import { softTint } from '@/components/softTint';
 import { BudgetsSummary, PlanBudgetInput } from './planOverview';
 import { styles } from './plan.styles';
 import { PlanSummaryRow, PlanListAdd, summaryListStyle } from './PlanSummaryRow';
@@ -67,11 +66,7 @@ export function BudgetJars({
           const amount = b.overBudget
             ? `${formatMoney(Math.max(0, -b.remainingMinor))} over`
             : `${formatMoney(b.remainingMinor)} left`;
-          const color = b.overBudget
-            ? theme.colors.expenseText
-            : b.percentUsed >= NEAR
-              ? theme.colors.warnInk
-              : theme.colors.link;
+          const color = b.overBudget ? theme.colors.expenseText : theme.colors.ink;
           return (
             <PlanSummaryRow
               key={b.id}
@@ -110,9 +105,8 @@ export function BudgetJars({
 function BudgetTile({ budget: b, onPress }: { budget: PlanBudgetInput; onPress: () => void }) {
   const pct = Math.max(0, b.percentUsed);
   const tone = b.overBudget ? 'over' : pct >= NEAR ? 'near' : 'calm';
-  const base = b.categoryColor ?? theme.colors.slice.saved;
-  // The bar says how the budget is doing: red once over, amber when close, else the category colour.
-  const fill = tone === 'over' ? theme.colors.expense : tone === 'near' ? theme.colors.slice.due : base;
+  // One ink for every bar, red once over.
+  const fill = tone === 'over' ? theme.colors.expense : theme.colors.ink;
   const left = b.overBudget
     ? `${formatMoney(-b.remainingMinor)} over`
     : `${formatMoney(b.remainingMinor)} left`;
@@ -127,7 +121,7 @@ function BudgetTile({ budget: b, onPress }: { budget: PlanBudgetInput; onPress: 
     >
       <Glass radius={16} style={[styles.tileFill, cardSurface.neutral]}>
         <View style={styles.tileHead}>
-          <View style={[styles.tileIcon, { backgroundColor: softTint(base, 0.6) }]}>
+          <View style={[styles.tileIcon, { backgroundColor: theme.colors.surfaceAlt }]}>
             <CategoryGlyph name={b.categoryIcon ?? 'tag'} size={14} color={theme.colors.ink} />
           </View>
           <Text style={[styles.tilePct, b.overBudget && styles.tileOver]}>

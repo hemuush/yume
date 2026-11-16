@@ -11,6 +11,7 @@ import { haptics } from '@/lib/haptics';
 import { gridRows } from '@/lib/gridRows';
 import { parseLocalIsoDate, toLocalIsoDate, addMonthsToIsoDate, addDaysToIsoDate } from '@/lib/date';
 import { withPressed } from '@/lib/pressed';
+import { themedStyles } from '@/theme/themedStyles';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -327,83 +328,85 @@ function DayCell({
   );
 }
 
-const styles = StyleSheet.create({
-  calendar: { width: '100%', maxWidth: 420, alignSelf: 'center' },
-  quickRow: { flexDirection: 'row', gap: 8, marginBottom: 8 },
-  quick: {
-    flex: 1,
-    alignItems: 'center',
-    minHeight: 44,
-    justifyContent: 'center',
-    paddingVertical: 8,
-    borderRadius: theme.radius.pill,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    backgroundColor: theme.colors.surface,
-  },
-  quickText: { fontFamily: theme.font.roundedMedium, fontSize: 13, color: theme.colors.textPrimary },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  navBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
-  titleBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 12,
-    minHeight: 44,
-    paddingVertical: 8,
-    flexShrink: 1,
-    borderRadius: theme.radius.pill,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-  },
-  monthLabel: {
-    flexShrink: 1,
-    fontFamily: theme.font.roundedBold,
-    fontSize: 15,
-    color: theme.colors.textPrimary,
-  },
-  row: { flexDirection: 'row' },
-  // Every slot takes an equal share of its row — see gridRows for why.
-  slot: { flex: 1, minWidth: 0 },
-  weekday: {
-    textAlign: 'center',
-    fontFamily: theme.font.bodyBold,
-    fontSize: 11,
-    color: theme.colors.textMuted,
-    marginBottom: 4,
-  },
-  cell: { minHeight: 44, paddingVertical: 4, alignItems: 'center', justifyContent: 'center' },
-  day: {
-    minWidth: 36,
-    minHeight: 36,
-    padding: 4,
-    borderRadius: 17,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'transparent',
-  },
-  dayToday: { borderColor: theme.colors.borderSoft },
-  dayText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
-  dayTextDisabled: { color: theme.colors.textMuted, opacity: theme.opacity.disabled },
-  yearStrip: { gap: 6, paddingBottom: 12 },
-  yearChip: {
-    width: 58,
-    alignItems: 'center',
-    minHeight: 44,
-    justifyContent: 'center',
-    paddingVertical: 7,
-    borderRadius: 12,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    backgroundColor: theme.colors.surface,
-  },
-  yearText: { fontFamily: theme.font.monoBold, fontSize: 12, color: theme.colors.textPrimary },
-  monthCell: { flex: 1, alignItems: 'center', paddingVertical: 12, margin: 3, borderRadius: 12 },
-  monthCellText: { fontFamily: theme.font.roundedMedium, fontSize: 13, color: theme.colors.textPrimary },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    calendar: { width: '100%', maxWidth: 420, alignSelf: 'center' },
+    quickRow: { flexDirection: 'row', gap: 8, marginBottom: 8 },
+    quick: {
+      flex: 1,
+      alignItems: 'center',
+      minHeight: 44,
+      justifyContent: 'center',
+      paddingVertical: 8,
+      borderRadius: theme.radius.pill,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.borderSoft,
+      backgroundColor: theme.colors.surface,
+    },
+    quickText: { fontFamily: theme.font.roundedMedium, fontSize: 13, color: theme.colors.textPrimary },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: 8,
+    },
+    navBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+    titleBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      paddingHorizontal: 12,
+      minHeight: 44,
+      paddingVertical: 8,
+      flexShrink: 1,
+      borderRadius: theme.radius.pill,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.borderSoft,
+    },
+    monthLabel: {
+      flexShrink: 1,
+      fontFamily: theme.font.roundedBold,
+      fontSize: 15,
+      color: theme.colors.textPrimary,
+    },
+    row: { flexDirection: 'row' },
+    // Every slot takes an equal share of its row — see gridRows for why.
+    slot: { flex: 1, minWidth: 0 },
+    weekday: {
+      textAlign: 'center',
+      fontFamily: theme.font.bodyBold,
+      fontSize: 11,
+      color: theme.colors.textMuted,
+      marginBottom: 4,
+    },
+    cell: { minHeight: 44, paddingVertical: 4, alignItems: 'center', justifyContent: 'center' },
+    day: {
+      minWidth: 36,
+      minHeight: 36,
+      padding: 4,
+      borderRadius: 17,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: 'transparent',
+    },
+    dayToday: { borderColor: theme.colors.borderSoft },
+    dayText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
+    dayTextDisabled: { color: theme.colors.textMuted, opacity: theme.opacity.disabled },
+    yearStrip: { gap: 6, paddingBottom: 12 },
+    yearChip: {
+      width: 58,
+      alignItems: 'center',
+      minHeight: 44,
+      justifyContent: 'center',
+      paddingVertical: 7,
+      borderRadius: 12,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.borderSoft,
+      backgroundColor: theme.colors.surface,
+    },
+    yearText: { fontFamily: theme.font.monoBold, fontSize: 12, color: theme.colors.textPrimary },
+    monthCell: { flex: 1, alignItems: 'center', paddingVertical: 12, margin: 3, borderRadius: 12 },
+    monthCellText: { fontFamily: theme.font.roundedMedium, fontSize: 13, color: theme.colors.textPrimary },
+  })
+);

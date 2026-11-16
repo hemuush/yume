@@ -5,6 +5,7 @@ import { screenStyles as h } from '@/components/screenStyles';
 import { theme } from '@/constants/theme';
 import { withPressedTint } from '@/lib/pressed';
 import { useAccent } from '@/theme/AccentContext';
+import { themedStyles } from '@/theme/themedStyles';
 
 function Guard({
   title,
@@ -126,50 +127,60 @@ export function SafetyCheck({
   );
 }
 
-const styles = StyleSheet.create({
-  // The flat summary card, with the three checks as small tiles under it.
-  card: {
-    ...h.card,
-    marginTop: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderWidth: 1,
-    gap: 4,
-    boxShadow: '0px 1px 2px rgba(18,19,15,0.04), 0px 8px 24px rgba(18,19,15,0.05)',
-    overflow: 'visible',
-  },
-  kicker: { fontFamily: theme.font.bodyBold, fontSize: 15, color: theme.colors.textPrimary },
-  headline: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textSecondary },
-  headlineBad: { fontFamily: theme.font.bodyBold, color: theme.colors.expenseText },
-  guards: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 },
-  guardsStack: { flexDirection: 'column' },
-  guardStack: { flexBasis: 'auto', flexGrow: 0 },
-  guard: {
-    flexGrow: 1,
-    flexBasis: 90,
-    minWidth: 0,
-    padding: 10,
-    gap: 4,
-    borderRadius: 14,
-    backgroundColor: theme.colors.tray,
-  },
-  guardBad: { backgroundColor: theme.colors.expenseTint },
-  guardHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 6 },
-  guardIcon: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: theme.colors.surface,
-  },
-  dot: { width: 8, height: 8, borderRadius: 4 },
-  guardTitle: {
-    flexShrink: 1,
-    fontFamily: theme.font.bodyBold,
-    fontSize: 12,
-    color: theme.colors.textPrimary,
-  },
-  guardSub: { fontFamily: theme.font.body, fontSize: 11, lineHeight: 15, color: theme.colors.textSecondary },
-  guardSubBad: { fontFamily: theme.font.bodyBold, color: theme.colors.expenseText },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    // The flat summary card, with the three checks as small tiles under it.
+    card: {
+      ...h.card,
+      marginTop: 12,
+      paddingHorizontal: 14,
+      paddingVertical: 12,
+      gap: 4,
+      overflow: 'visible',
+    },
+    kicker: { fontFamily: theme.font.bodyBold, fontSize: 15, color: theme.colors.textPrimary },
+    headline: {
+      fontFamily: theme.font.body,
+      fontSize: 12,
+      lineHeight: 17,
+      color: theme.colors.textSecondary,
+    },
+    headlineBad: { fontFamily: theme.font.bodyBold, color: theme.colors.expenseText },
+    guards: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 },
+    guardsStack: { flexDirection: 'column' },
+    guardStack: { flexBasis: 'auto', flexGrow: 0 },
+    guard: {
+      flexGrow: 1,
+      flexBasis: 90,
+      minWidth: 0,
+      padding: 10,
+      gap: 4,
+      borderRadius: 14,
+      backgroundColor: theme.colors.tray,
+    },
+    guardBad: { backgroundColor: theme.colors.expenseTint },
+    guardHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 6 },
+    guardIcon: {
+      width: 24,
+      height: 24,
+      borderRadius: 12,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: theme.colors.surface,
+    },
+    dot: { width: 8, height: 8, borderRadius: 4 },
+    guardTitle: {
+      flexShrink: 1,
+      fontFamily: theme.font.bodyBold,
+      fontSize: 12,
+      color: theme.colors.textPrimary,
+    },
+    guardSub: {
+      fontFamily: theme.font.body,
+      fontSize: 11,
+      lineHeight: 15,
+      color: theme.colors.textSecondary,
+    },
+    guardSubBad: { fontFamily: theme.font.bodyBold, color: theme.colors.expenseText },
+  })
+);

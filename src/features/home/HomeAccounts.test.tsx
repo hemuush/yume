@@ -197,14 +197,15 @@ it('sits the tiles flush under the section heading, with no extra vertical paddi
   act(() => tree.unmount());
 });
 
-it('captions an investment tile with its kind alone, which fits beside the icon, and keeps the full label for a screen reader', () => {
+it('shows an account as its name over its balance, and keeps the full kind in the label for a screen reader', () => {
   const fund = {
     ...account('Index fund', 'savings', 1_720_000),
     investment: { kind: 'mutual_fund', investedMinor: 1_500_000, takenOutMinor: 0, gainMinor: 220_000 },
   } as unknown as Account;
   const tree = render({ accounts: [fund], currency: 'INR' });
-  expect(texts(tree)).toContain('mutual fund');
-  // The full "investment · mutual fund" is about 125 dp in the 84 dp the icon leaves, so it was cut to "investment · mu…".
+  // The quiet look has no icon or caption on the column; the kind is only in the spoken label.
+  expect(texts(tree)).toContain('Index fund');
+  expect(texts(tree)).not.toContain('mutual fund');
   expect(texts(tree)).not.toContain('investment · mutual fund');
   const tile = tree.root.find(
     (n) =>

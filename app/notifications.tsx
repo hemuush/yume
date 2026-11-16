@@ -25,7 +25,7 @@ import { useUndoToast } from '@/components/UndoToast';
 import { theme } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
 import { Section } from '@/components/Section';
-import { SCREEN } from '@/components/screenStyles';
+import { SCREEN, flatSection } from '@/components/screenStyles';
 import { NeedsYouRow } from '@/features/home/NeedsYouRow';
 import { NEEDS_TONE } from '@/features/home/needsTone';
 import { HeaderIconButton } from '@/components/AppHeader';
@@ -51,6 +51,7 @@ import { withPressedTint } from '@/lib/pressed';
 import { errorMessage } from '@/lib/errorMessage';
 import { showAlert } from '@/components/AppDialog';
 import { payCardRoute } from '@/lib/payCard';
+import { themedStyles } from '@/theme/themedStyles';
 
 const TONES: NeedsYouTone[] = ['urgent', 'warn', 'info'];
 const GROUP_TITLE: Record<NeedsYouTone, string> = {
@@ -343,79 +344,77 @@ export default function NeedsYouScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: theme.colors.background },
-  figureRow: { flexDirection: 'row', alignItems: 'baseline', gap: 6, flexWrap: 'wrap' },
-  figureNote: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
-  errorBanner: {
-    marginHorizontal: SCREEN.gutter,
-    marginTop: theme.layout.screenTopGap,
-    marginBottom: 4,
-    padding: 14,
-    borderRadius: theme.radius.md,
-    backgroundColor: theme.colors.expenseTint,
-    borderWidth: theme.border.thin,
-    borderColor: theme.colors.expense,
-  },
-  errorTitle: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.expenseText },
-  errorDetail: {
-    fontFamily: theme.font.body,
-    fontSize: 12,
-    color: theme.colors.textSecondary,
-    marginTop: 3,
-    lineHeight: 16,
-  },
-  tones: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  toneChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    minHeight: 28,
-    paddingHorizontal: 11,
-    borderRadius: theme.radius.pill,
-    backgroundColor: theme.colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-  },
-  toneDot: { width: 8, height: 8, borderRadius: 4 },
-  toneText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textPrimary },
-  // Suu, then its lines in a bubble whose corner points back at it.
-  suu: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginHorizontal: SCREEN.gutter },
-  suuFace: { width: 38, height: 38 },
-  suuLines: {
-    flex: 1,
-    gap: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderRadius: theme.radius.xl,
-    borderTopLeftRadius: 4,
-    backgroundColor: theme.colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.borderSoft,
-    boxShadow: 'none',
-  },
-  suuText: {
-    fontFamily: theme.font.body,
-    fontSize: 13,
-    lineHeight: 19,
-    color: theme.colors.textSecondary,
-  },
-  dismissedToggle: {
-    minHeight: 44,
-    justifyContent: 'center',
-    alignSelf: 'center',
-    marginTop: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 9,
-    borderRadius: theme.radius.pill,
-    backgroundColor: theme.colors.surface,
-    borderWidth: 1,
-    borderColor: theme.colors.borderSoft,
-  },
-  dismissedToggleText: {
-    fontFamily: theme.font.bodyMedium,
-    fontSize: 12,
-    color: theme.colors.textSecondary,
-  },
-  dismissedList: { opacity: 0.75 },
-});
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    container: { flex: 1, backgroundColor: theme.colors.background },
+    figureRow: { flexDirection: 'row', alignItems: 'baseline', gap: 6, flexWrap: 'wrap' },
+    figureNote: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
+    errorBanner: {
+      marginHorizontal: SCREEN.gutter,
+      marginTop: theme.layout.screenTopGap,
+      marginBottom: 4,
+      padding: 14,
+      borderRadius: theme.radius.md,
+      backgroundColor: theme.colors.expenseTint,
+      borderWidth: theme.border.thin,
+      borderColor: theme.colors.expense,
+    },
+    errorTitle: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.expenseText },
+    errorDetail: {
+      fontFamily: theme.font.body,
+      fontSize: 12,
+      color: theme.colors.textSecondary,
+      marginTop: 3,
+      lineHeight: 16,
+    },
+    tones: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+    toneChip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      minHeight: 28,
+      paddingHorizontal: 11,
+      borderRadius: theme.radius.pill,
+      backgroundColor: theme.colors.surface,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.borderSoft,
+    },
+    toneDot: { width: 8, height: 8, borderRadius: 4 },
+    toneText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textPrimary },
+    // Suu, then its lines in a bubble whose corner points back at it.
+    suu: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginHorizontal: SCREEN.gutter },
+    suuFace: { width: 38, height: 38 },
+    suuLines: {
+      ...flatSection(),
+      flex: 1,
+      gap: 8,
+      paddingHorizontal: 14,
+      paddingVertical: 12,
+      borderTopLeftRadius: 4,
+    },
+    suuText: {
+      fontFamily: theme.font.body,
+      fontSize: 13,
+      lineHeight: 19,
+      color: theme.colors.textSecondary,
+    },
+    dismissedToggle: {
+      minHeight: 44,
+      justifyContent: 'center',
+      alignSelf: 'center',
+      marginTop: 20,
+      paddingHorizontal: 16,
+      paddingVertical: 9,
+      borderRadius: theme.radius.pill,
+      backgroundColor: theme.colors.surface,
+      borderWidth: 1,
+      borderColor: theme.colors.borderSoft,
+    },
+    dismissedToggleText: {
+      fontFamily: theme.font.bodyMedium,
+      fontSize: 12,
+      color: theme.colors.textSecondary,
+    },
+    dismissedList: { opacity: 0.75 },
+  })
+);
