@@ -9,10 +9,10 @@ import {
 } from '@/db/reports';
 import { getNextDueInstallment } from '@/db/loans';
 import { listRecurringRules } from '@/db/recurring';
-import { getAccentColor, getDefaultCurrency, getThemeId, getHideSensitiveAmounts } from '@/db/settings';
+import { getDefaultCurrency, getHideSensitiveAmounts } from '@/db/settings';
 import { recurringRulesInCurrency } from '@/lib/recurringScope';
 import { formatMaskableMoney, formatMoney } from '@/lib/money';
-import { resolveActiveTheme } from '@/theme/themes';
+import { BRAND } from '@/theme/brand';
 import { CURRENT_PERIOD, periodRange, previousPeriodRange } from '@/lib/period';
 import { roundedMinor } from '@/lib/round';
 import { isSavingsEntry, privateComparison } from '@/lib/privateSummary';
@@ -58,7 +58,7 @@ function coalesced<A extends unknown[], T>(
   };
 }
 
-const getActiveThemeOnce = coalesced(() => resolveActiveTheme(getThemeId, getAccentColor));
+const getActiveThemeOnce = coalesced(() => Promise.resolve(BRAND));
 // Keyed by the month asked for, so a widget built for a given `now` never reuses another month's comparison.
 const getMonthComparisonOnce = coalesced(
   (now: Date) =>

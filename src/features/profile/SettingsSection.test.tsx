@@ -55,10 +55,10 @@ jest.mock('@/lib/AppLockContext', () => ({ useAppLock: () => mockLock }));
 jest.mock('@/theme/PrivacyContext', () => ({
   usePrivacy: () => ({ hideAmounts: false, toggleHideAmounts: jest.fn() }),
 }));
-const mockSetTheme = jest.fn();
-jest.mock('@/theme/AccentContext', () => ({
-  THEMES: jest.requireActual('@/theme/themes').THEMES,
-  useAccent: () => ({ accent: '#8FCBFF', onAccent: '#12130F', themeId: 'yume', setTheme: mockSetTheme }),
+const mockSetPreference = jest.fn(async () => {});
+let mockPreference = 'system';
+jest.mock('@/theme/AppearanceContext', () => ({
+  useAppearance: () => ({ preference: mockPreference, scheme: 'light', setPreference: mockSetPreference }),
 }));
 
 import { SettingsSection, daysAgoLabel } from './SettingsSection';
@@ -231,12 +231,12 @@ describe('Profile · Settings section', () => {
     expect(texts(tree)).toContain('₹800/day');
   });
 
-  it('shows the current theme and opens the Theme page to change it', async () => {
+  it('offers the colour mode as System, Light and Dark, and saves the one picked', async () => {
+    mockPreference = 'system';
     const tree = await render();
-    expect(texts(tree).some((t) => t.startsWith('Yume · '))).toBe(true);
-    await press(tree, 'Theme: Yume. Change theme');
-    expect(router.push).toHaveBeenCalledWith('/themes');
-    expect(mockSetTheme).not.toHaveBeenCalled();
+    expect(texts(tree)).toEqual(expect.arrayContaining(['Colour mode', 'System', 'Light', 'Dark']));
+    await press(tree, 'Dark');
+    expect(mockSetPreference).toHaveBeenCalledWith('dark');
   });
 
   it('opens Backup and Export from separate settings rows', async () => {
@@ -268,14 +268,6 @@ describe('Profile · Settings section', () => {
     } finally {
       dimensions.mockRestore();
     }
-  });
-
-  it('changes the theme from a color choice and leaves the current choice alone', async () => {
-    const tree = await render();
-    await press(tree, 'Yume theme');
-    expect(mockSetTheme).not.toHaveBeenCalled();
-    await press(tree, 'Hollow Violet theme');
-    expect(mockSetTheme).toHaveBeenCalledWith('hollowViolet');
   });
 
   it('won’t turn the lock on when the phone itself has no screen lock', async () => {

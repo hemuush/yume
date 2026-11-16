@@ -1,5 +1,6 @@
 import { interactionColors, themeInk } from './interactionColors';
-import { THEMES } from './themes';
+import { PALETTES } from './palette';
+import { applyScheme } from './scheme';
 import { theme } from '@/constants/theme';
 
 function luminance(hex: string) {
@@ -18,13 +19,19 @@ function contrast(a: string, b: string) {
   return (values[0] + 0.05) / (values[1] + 0.05);
 }
 
-it.each(THEMES)('keeps small selected labels readable in $id', ({ primary }) => {
-  const colors = interactionColors(primary);
-  expect(contrast(colors.ink, theme.colors.surface)).toBeGreaterThanOrEqual(4.5);
-  expect(contrast(colors.ink, colors.tint)).toBeGreaterThanOrEqual(4.5);
-});
+afterEach(() => applyScheme('light'));
 
-it.each(['#000000', '#ffffff', '#ff0000', '#00ff00', '#0000ff'])(
-  'retains readable controls for a legacy accent %s',
-  (accent) => expect(contrast(themeInk(accent), theme.colors.surface)).toBeGreaterThanOrEqual(4.5)
-);
+describe.each(['light', 'dark'] as const)('in %s', (mode) => {
+  beforeEach(() => applyScheme(mode));
+
+  it('keeps small selected labels readable on the sky of the logo', () => {
+    const colors = interactionColors(PALETTES[mode].primary);
+    expect(contrast(colors.ink, theme.colors.surface)).toBeGreaterThanOrEqual(4.5);
+    expect(contrast(colors.ink, colors.tint)).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it.each(['#000000', '#ffffff', '#ff0000', '#00ff00', '#0000ff'])(
+    'retains readable controls for the accent %s',
+    (accent) => expect(contrast(themeInk(accent), theme.colors.surface)).toBeGreaterThanOrEqual(4.5)
+  );
+});

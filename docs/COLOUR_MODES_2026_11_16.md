@@ -1,47 +1,51 @@
-# Colour modes (light and dark) — engine, 16 November 2026
+# The quiet look and colour modes — 16 November 2026
 
-This is the first step of the single-theme redesign (one minimalist look in a light and a dark mode, replacing the eight accent themes). It builds the part that has to exist before any new colour can be shown: the app can now be drawn in either of two colour tables and switch between them while running. **Nothing on screen changes yet**: both tables still hold today's colours, there is no Appearance control in Settings, and `app.json` still declares `userInterfaceStyle: "light"`. The dark table, the Settings control and the restyle follow in later steps.
+One theme, in a light and a dark mode, replaces the six accent themes and the coloured, frosted look. The direction was chosen on a design canvas (direction "A": flat and quiet, ink-filled selection, the sky and coral of the logo, Fredoka titles, a floating white tab bar with a coral Add dot) and built in four steps. This page records what the code does now, the rules for new code, how it was checked, and what is not done.
+
+## What changed on screen
+
+- **Palette.** Paper `#FEFBF1`, white surface, warm hairlines, ink `#16170F`, the logo's sky `#9EC5FC` as the lead colour, coral `#FC7B5E` as the only warm accent (the Add button and the "free to spend" arc). Dark is the warm near-black `#12130F` with lifted text and status colours and deep tints. Both tables are in [palette.ts](../src/theme/palette.ts); `theme.colors.x` reads the table of the mode in use.
+- **Flat page.** No wallpaper, no header wash, no sheet wash. Cards are not boxes: `flatSection()` ([screenStyles.ts](../src/components/screenStyles.ts)) is a hairline above and below, with the content on the 16dp gutter (2dp margin + the rows' 14dp inset). Plan's tiles, Home's accounts (now a name-over-balance strip), "Needs attention" lines and Profile's account tiles are hairline rows. `Glass` is a plain block; `GLASS` tokens are white controls with a hairline edge.
+- **Type and controls.** Header titles are Fredoka 34 on a tab's own screen and 28 on a pushed one (collapsing to 18). A picked `Chip` is filled with ink (text `onInk`); the segmented control is a warm track with a raised white segment; the tab bar is a white pill with a coral Add dot; category discs are one neutral tone with line icons where the icon font has one; the week bars are solid sky with the picked day in blue; the month ring uses grey (spent), blue (set aside), sky (bills) and coral (free).
+- **Dark mode.** Settings › Appearance › Colour mode (System, Light, Dark). `shade()` mirrors its lightness in dark (a pale tint becomes a deep wash), and text on an ink fill uses `onInk`, so ink fills (primary buttons, picked chips, the undo toast) invert with readable text. `app.json` has `userInterfaceStyle: "automatic"` and a dark launch screen; the status bar, the navigation-bar icons and the window colour follow the app's mode ([AppStatusBar](../src/theme/AppStatusBar.tsx)).
+- **One theme.** The Themes screen, the six accent packs, the theme card in Settings and the "match the app icon" choice are gone. [AccentContext](../src/theme/AccentContext.tsx) is a hook returning the sky, mint, coral and the text colour on the sky. Opening the database deletes the old `theme_id`, `accent_color` and `theme_app_icon` rows; the widgets take the logo colours from [brand.ts](../src/theme/brand.ts). The launcher aliases stay in the build only so a phone that had picked a theme icon is put back to Yume's own icon ([appIcon.ts](../src/lib/appIcon.ts)).
 
 ## How colours reach a screen
 
 | Piece | Role |
 | --- | --- |
-| [scheme.ts](../src/theme/scheme.ts) | The mode in use (`light` or `dark`), a version number that goes up each time it changes, and subscribe/apply. `AppearancePreference` is what the person chose: `system`, `light` or `dark`. |
-| [palette.ts](../src/theme/palette.ts) | One colour table per mode (`PALETTES`). Every colour token must exist in both. |
-| [constants/theme.ts](../src/constants/theme.ts) | `theme.colors.x` is a getter reading the table of the mode in use, so a screen keeps writing `theme.colors.ink` and gets the right value in either mode. |
-| [themedStyles.ts](../src/theme/themedStyles.ts) | `themedStyles(() => StyleSheet.create({...}))` makes a style sheet that is rebuilt the first time it is read after the mode changes. `themedValue` is the same for a constant that is not a style sheet. All 183 module-level style sheets use it. |
-| [AppearanceContext.tsx](../src/theme/AppearanceContext.tsx) | Decides the mode (the saved choice, or the phone's own setting for `system`) and applies it. The first mode is applied while the first screen is made, so nothing is drawn in the wrong mode and corrected; later changes are applied before the next paint. A restored backup re-reads the saved choice. |
-| [SchemeBoundary.tsx](../src/theme/SchemeBoundary.tsx) | `useSchemeVersion()` re-renders a component when the mode changes. `SchemeBoundary` draws its children again from scratch; `schemeScreenLayout` / `stackScreenLayout` put one around every screen through the navigators' `screenLayout`. |
-| [AppStatusBar.tsx](../src/theme/AppStatusBar.tsx) | Dark status-bar icons on the light paper, light icons on the dark one. |
+| [scheme.ts](../src/theme/scheme.ts) | The mode in use, a version that goes up on each change, subscribe/apply, `schemeChangedJustNow`. `AppearancePreference` is `system`, `light` or `dark`. |
+| [palette.ts](../src/theme/palette.ts) | One table per mode; every token must exist in both. |
+| [themedStyles.ts](../src/theme/themedStyles.ts) | `themedStyles(() => StyleSheet.create({...}))` is rebuilt the first time it is read after the mode changes; `themedValue` is the same for a constant. |
+| [AppearanceContext.tsx](../src/theme/AppearanceContext.tsx) | Decides the mode (the saved choice or the phone's) and applies it before the first screen is made; sits above the spinner and the start-up error. A restored backup re-reads the choice. |
+| [SchemeBoundary.tsx](../src/theme/SchemeBoundary.tsx) | `useSchemeVersion()`, `SchemeBoundary`, and the `screenLayout`s that draw each pushed screen and each tab again on a change while the navigators and the selected tab stay put. |
+| [useKeptAcrossModeChange.ts](../src/theme/useKeptAcrossModeChange.ts) | Keeps a small choice (the tab on Profile, Plan, Reports) across that redraw, and only then. |
 
-The choice is stored in the `settings` table under `appearance` (`getAppearance`, `getCachedAppearance`, `setAppearance` in [settings.ts](../src/db/settings.ts)); a missing or unknown value reads as `system`. Startup reads it with the other preferences so the first screen already uses the right mode; a failed read never holds the app back (it follows the phone).
-
-## What a mode change does to the app
-
-- Each pushed screen is drawn again (its local state starts over; Add's draft recovery keeps what was typed). Navigation is untouched: the same screen stays on top, the screens beneath stay beneath, and Back still works.
-- The root stack leaves the screen that holds the tabs alone, so the tab navigator, and the tab the person is on, are not rebuilt. The tabs wrap their own screens, and the tab bar, the status bar, the dialog host, the undo toast, the milestone note, the lock screen, onboarding, the capture-protection screen, the error fallback and the repeat-entry sheet subscribe themselves.
-- `AccentProvider` works the text colour on the accent (`onAccent`) out again, because it is derived from the page's ink and surface.
+The saved choice is the `appearance` setting (a missing or unknown value reads as `system`); start-up reads it with the other preferences and a failed read never holds the app back.
 
 ## Rules for new code
 
-- Never read `theme.colors` outside a function, and never call `StyleSheet.create` outside `themedStyles`. Never spread or read a themed constant (`SECTION_TITLE`, a `themedStyles` sheet…) at the top of a file: that copies its colours as they are at load. [liveColours.test.ts](../src/__tests__/liveColours.test.ts) reads every source file and fails on all three.
-- Anything memoised from colours above the screens (a provider's `useMemo`) must list `useSchemeVersion()` as a dependency; a screen's own memoised values are rebuilt because the screen is drawn again.
-- A literal colour in a style (`'rgba(255,255,255,0.78)'`, a hard-coded hex) is not part of any table and will not change with the mode. Those are the next thing to sweep (see "Left for the next steps").
+- Never read `theme.colors` outside a function, never call `StyleSheet.create` outside `themedStyles`, and never spread or read a themed constant at the top of a file: [liveColours.test.ts](../src/__tests__/liveColours.test.ts) fails on all three.
+- Text or an icon on an ink fill uses `theme.colors.onInk`, never `white` or a literal. Tints derived from the accent use `shade()`/`softTint()`, never a literal. A literal colour in a style is not part of either table and will not change with the mode.
+- Anything memoised from colours above the screens (a provider's `useMemo`) must depend on `useSchemeVersion()`; a screen's own memoised values are rebuilt because the screen is drawn again.
+- A new card is a `flatSection()`, not a box.
 
-## Verification (this step)
+## Verification
 
-Run in a browser harness (the real screens on a real SQLite database through react-native-web), not on a device.
+Browser harness (the real screens on a real SQLite database through react-native-web), not a device.
 
-- **Light is unchanged:** 22 screens (Home, Activity, Plan, Reports, Add, Profile, Budgets, Goals, Loans, Recurring, People, Investments, Categories, Notifications, Tidy up, Backup, Export, Garden, What-if, Recently deleted, Split, Wrap) rendered before the engine and after it are pixel-identical.
-- **No stale colour:** the dark table was replaced by a "poison" table in which every colour is unique and unlike the light one, then each screen was scanned for pixels still showing a light-table colour. That found two real faults, fixed here: a constant spread at the top of `app/loans.tsx` (the "Your loans" heading kept its light colour) and a hard-coded sky in the Reports read marks. The scan also drove the guard test above (it now catches the loans pattern).
-- **Live switch:** each screen rendered in light and switched to dark while open matches the same screen rendered directly in dark, apart from antialiasing on one rounded card edge in Plan and Reports (about 30 pixels) and People's randomly generated avatar colours. That comparison found one more real fault, fixed here: the letter in the profile avatar kept the old colour because `onAccent` was memoised in a provider above the screens.
-- **Router:** [schemeNavigation.test.tsx](../src/theme/schemeNavigation.test.tsx) runs the real Expo Router with the same layouts and checks the tab is drawn again but the tab navigator is not, a pushed screen is drawn again and Back still returns to the same tab, and re-applying the same mode touches nothing. It fails if the layouts are removed.
-- **Unit tests:** scheme, palette, themed styles, the provider (9), startup with an unreadable appearance, the accent text colour, the guard test and the full suite.
+- **Engine, light unchanged:** before any colour changed, 22 screens rendered before and after the engine were pixel-identical.
+- **Stale colours:** a "poison" dark table (every colour unique) found a constant spread at the top of `app/loans.tsx`, a hard-coded sky in the Reports read marks and the text colour on the accent memoised above the screens; all fixed and the guard test extended.
+- **Dark and live switch:** all 22 screens were rendered in dark and reviewed; each screen switched live from light to dark matches the same screen rendered directly in dark (apart from People's randomly generated avatar colours and ~6 antialiased pixels in Reports). The real Colour mode control was clicked in the real Profile screen; the tab stayed on Settings.
+- **Alignment:** the left edge of every text on the 17 main screens was measured against the 16dp gutter after the sections were flattened.
+- **Router:** [schemeNavigation.test.tsx](../src/theme/schemeNavigation.test.tsx) runs the real Expo Router with the app's layouts: the tab is drawn again but the tab navigator is not, a pushed screen is drawn again and Back returns to the same tab; it fails without the layouts.
+- **Tests:** the full suite, typecheck and lint pass; contrast tests run over both tables (text on page, card, warm surface and tray; text on ink; the lines; the moon slices).
 
-Not verified here: a real phone (Android's own dark-mode switch, the system navigation bar), and animation during a switch.
+Not verified: a real phone (Android's own dark-mode switch, the navigation-bar icon style, the dark launch screen, the launcher-icon reset), animation during a switch, and the widgets (they keep their own light palette).
 
-## Left for the next steps
+## Not done
 
-- A real dark table (the placeholder equals light), then the Appearance control in Settings, `userInterfaceStyle: "automatic"`, the navigation-bar icon style and the launch/loading screens following the mode.
-- Literal colours not in a table: translucent whites in `Glass`, the tab bar, Garden, What-if, Reports and Budgets styles; shadows and hairlines written as `rgba(18,19,15,…)`; the one-off tones in `ReportInsights`; widgets and the PDF/Excel export (those keep their own light palettes).
-- The accent themes (`themes.ts`, `AccentContext`) still supply the accent and `DEFAULT_ACCENT` still seeds the avatar and header colours; the single-theme step removes them.
+- Type-scale snap to ten sizes and the 44/40 tap-target pass; the pace dot on budget bars; the "free after bills" line above Save on Add; the Add keypad restyle; Home's layout is still the older stack (brand row, date, greeting) rather than the canvas's.
+- Literal colours left on purpose or not yet reviewed: Frost chips' translucent greens/ambers/reds, Wrap and Garden tile pastels, the one-off tones in `ReportInsights`, account/category data colours.
+- The widgets and the PDF/Excel export keep light palettes of their own.
+- The six launcher aliases and their art (`assets/theme-icons`, `scripts/generateThemeIcons.py`, the native splash themes) can be removed in a later native build once no phone needs the reset.

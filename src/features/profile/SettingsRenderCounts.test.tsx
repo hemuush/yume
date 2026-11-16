@@ -60,9 +60,8 @@ jest.mock('@/lib/AppLockContext', () => ({
 jest.mock('@/theme/PrivacyContext', () => ({
   usePrivacy: () => ({ hideAmounts: false, toggleHideAmounts: jest.fn() }),
 }));
-jest.mock('@/theme/AccentContext', () => ({
-  THEMES: jest.requireActual('@/theme/themes').THEMES,
-  useAccent: () => ({ accent: '#8FCBFF', onAccent: '#12130F', themeId: 'yume', setTheme: jest.fn() }),
+jest.mock('@/theme/AppearanceContext', () => ({
+  useAppearance: () => ({ preference: 'system', scheme: 'light', setPreference: jest.fn() }),
 }));
 
 import { Text } from 'react-native';

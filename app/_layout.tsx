@@ -41,7 +41,6 @@ import {
 } from '@/lib/notifications';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { refreshAllWidgets } from '@/widgets/notifyWidgets';
-import { AccentProvider, useAccent } from '@/theme/AccentContext';
 import { PrivacyProvider } from '@/theme/PrivacyContext';
 import { AppearanceProvider } from '@/theme/AppearanceContext';
 import { AppStatusBar } from '@/theme/AppStatusBar';
@@ -50,8 +49,7 @@ import { AppLockProvider, useAppLock } from '@/lib/AppLockContext';
 import { UndoToastProvider } from '@/components/UndoToast';
 import { MilestoneNoteProvider, BudgetMonthWatcher } from '@/components/MilestoneNote';
 import { AppDialogHost } from '@/components/AppDialog';
-import { syncAppIcon } from '@/lib/appIcon';
-import { ThemeSaveFeedback } from '@/theme/ThemeSaveFeedback';
+import { restoreDefaultAppIcon } from '@/lib/appIcon';
 import { LockScreen } from '@/components/LockScreen';
 import { Onboarding } from '@/features/onboarding/Onboarding';
 import { theme } from '@/constants/theme';
@@ -184,13 +182,11 @@ function RootGate() {
     <KeyboardProvider>
       <SafeAreaProvider>
         <AppLockProvider initialLockEnabled={initialLocked}>
-          <AccentProvider>
-            <PrivacyProvider>
-              <ColumnFrame>
-                <AppGate needsOnboarding={needsOnboarding} initialLocked={initialLocked} />
-              </ColumnFrame>
-            </PrivacyProvider>
-          </AccentProvider>
+          <PrivacyProvider>
+            <ColumnFrame>
+              <AppGate needsOnboarding={needsOnboarding} initialLocked={initialLocked} />
+            </ColumnFrame>
+          </PrivacyProvider>
         </AppLockProvider>
       </SafeAreaProvider>
     </KeyboardProvider>
@@ -198,7 +194,6 @@ function RootGate() {
 }
 
 function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean; initialLocked: boolean }) {
-  const { waitForThemePersistence } = useAccent();
   const { lockEnabled } = useAppLock();
   const [isLocked, setIsLocked] = useState(initialLocked);
   const [showOnboarding, setShowOnboarding] = useState(needsOnboarding);
@@ -288,9 +283,10 @@ function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean;
   useEffect(() => {
     const sub = AppState.addEventListener('change', (next: AppStateStatus) => {
       if (next === 'background') {
-        void waitForThemePersistence().then(refreshAllWidgets);
-        // Swapped only once the app is out of sight: some launchers restart the app while they refresh it.
-        void waitForThemePersistence().then(() => syncAppIcon());
+        void refreshAllWidgets();
+        // Put back only once the app is out of sight: some launchers restart the app while they refresh it. (An
+        // earlier version could switch the launcher icon to a theme's; there is one theme now.)
+        void restoreDefaultAppIcon();
       }
       if (next === 'active') {
         runWhenIdle(() => {
@@ -299,7 +295,7 @@ function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean;
       }
     });
     return () => sub.remove();
-  }, [waitForThemePersistence]);
+  }, []);
 
   // Public authentication stays mounted while protection recovers; financial/onboarding content does not.
   if (capture.isBlocked && !(isLocked && !showOnboarding)) {
@@ -344,7 +340,6 @@ function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean;
       <AppLockSaveFeedback />
       <CaptureReleaseFeedback protection={capture} />
       <UndoToastProvider>
-        <ThemeSaveFeedback />
         <MilestoneNoteProvider>
           {/* freezeOnBlur is left OFF: with it on (the navigator default), a
             blurred screen’s React tree is suspended and can miss context
@@ -386,7 +381,6 @@ function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean;
             <Stack.Screen name="category/[id]" />
             <Stack.Screen name="loans" />
             <Stack.Screen name="recently-deleted" />
-            <Stack.Screen name="themes" />
             {/* A Wrap fades in over the screen it was opened from, like a story, rather than sliding. */}
             <Stack.Screen name="wrap" options={{ animation: 'fade' }} />
           </Stack>

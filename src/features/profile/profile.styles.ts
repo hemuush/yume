@@ -85,18 +85,9 @@ export const styles = themedStyles(() =>
     planLinkText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.link },
 
     // ---- Settings: rows ----
-    settingsCard: { borderWidth: 1, borderRadius: 16, overflow: 'hidden' },
-    themeError: { color: theme.colors.expenseText, padding: theme.space.md },
+    settingsCard: { overflow: 'hidden' },
     modeRow: { paddingHorizontal: 14, paddingTop: 12, paddingBottom: 6, gap: 8 },
-    appearanceHead: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 12,
-      minHeight: 56,
-      paddingHorizontal: 14,
-    },
     appearanceTitle: { fontFamily: theme.font.bodyMedium, fontSize: 14, color: theme.colors.textPrimary },
-    themeName: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
     // Opens in place under the row that opened it, inside the same card.
     accordionBody: {
       paddingHorizontal: 14,
@@ -129,21 +120,6 @@ export const styles = themedStyles(() =>
     // PrimaryButton because it sits inline in a settings row.
     dailyGoalBtnRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 2 },
     dailyGoalBtn: { flexGrow: 1, flexBasis: 120 },
-
-    // ---- Settings: inline theme swatches ----
-    swatches: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      paddingHorizontal: 8,
-      paddingBottom: 4,
-      borderTopWidth: StyleSheet.hairlineWidth,
-      borderTopColor: theme.colors.divider,
-    },
-    swatchHit: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
-    swatchActive: { borderWidth: 1.5, borderColor: theme.colors.ink },
-    swatch: { width: 26, height: 26, borderRadius: 13, overflow: 'hidden', justifyContent: 'flex-end' },
-    swatchHalf: { height: '50%' },
-    swatchCheck: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center' },
 
     // ---- Settings: About footer ----
     footer: { alignItems: 'center', gap: 2, paddingTop: 26, paddingBottom: 4 },

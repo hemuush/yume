@@ -343,6 +343,14 @@ async function applyIdempotentMigrations(db: AppDb): Promise<void> {
   await db.execAsync(
     'CREATE UNIQUE INDEX IF NOT EXISTS idx_account_valuations_unique_day ON account_valuations(account_id, date)'
   );
+  // The accent themes are gone (one theme, light and dark): their saved choice means nothing any more. A database that
+  // has no settings table yet has nothing to clear.
+  const settings = await db.getFirstAsync<{ name: string }>(
+    "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'settings'"
+  );
+  if (settings) {
+    await db.runAsync("DELETE FROM settings WHERE key IN ('theme_id', 'accent_color', 'theme_app_icon')");
+  }
 }
 
 /**

@@ -8,7 +8,6 @@ import path from 'path';
 import { theme } from '@/constants/theme';
 import { AVATAR_COLORS } from '@/lib/hueFor';
 import { TYPE_WASH, typeWash } from '@/features/add/addEntry';
-import { THEMES } from '@/theme/themes';
 import { PALETTES } from '@/theme/palette';
 
 const channel = (v: number) => {
@@ -66,8 +65,8 @@ describe('text contrast', () => {
     }
   );
 
-  it.each(THEMES)('keeps transfer labels readable in $name', (pack) => {
-    const wash = typeWash('transfer', pack.primary);
+  it('keeps transfer labels readable on the sky', () => {
+    const wash = typeWash('transfer', c.primary);
     expect(contrast(wash.accent, wash.bg)).toBeGreaterThanOrEqual(4.5);
     expect(contrast(wash.accent, c.surface)).toBeGreaterThanOrEqual(4.5);
   });

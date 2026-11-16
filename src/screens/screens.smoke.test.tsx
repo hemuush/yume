@@ -111,7 +111,6 @@ const SCREENS: [string, () => { default: React.ComponentType }][] = [
   ['recurring', () => require('../../app/recurring')],
   ['savings goals', () => require('../../app/savings-goals')],
   ['split', () => require('../../app/split')],
-  ['themes', () => require('../../app/themes')],
   ['tidy up', () => require('../../app/tidy-up')],
   ['what if', () => require('../../app/whatif')],
   ['wrap', () => require('../../app/wrap')],

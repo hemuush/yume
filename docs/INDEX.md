@@ -4,7 +4,7 @@ Use maintained guides for implemented behavior. Dated audits preserve their own 
 
 ## Current verification
 
-The [16 November colour-mode engine](COLOUR_MODES_2026_11_16.md) is the first step of the single-theme light/dark redesign: `theme.colors` is read live from a per-mode table, style sheets are rebuilt on a mode change, and screens are drawn again without losing the person's place. Both modes still hold today's colours, so nothing on screen changes yet. It records the browser-harness checks (22 screens pixel-identical in light; a stale-colour scan and live-switch comparison that found and fixed three faults) and what is left.
+The [16 November quiet look and colour modes](COLOUR_MODES_2026_11_16.md) replace the six accent themes with one theme in a light and a dark mode: a colour engine (`theme.colors` read live from a table per mode, style sheets rebuilt on a change, screens drawn again without losing the person's place), the flat paper look (hairline sections instead of cards, large Fredoka titles, ink-filled picked chips, a coral Add dot), a real dark palette and a Colour mode control in Settings. It records the browser-harness checks (every screen rendered in both modes; a live switch matches a direct dark render; a stale-colour scan that found and fixed three faults), the rules for new code and what is not done.
 
 The [architecture guide](ARCHITECTURE.md#smoothness-pass--november-2026) describes the 9 November compact screen refinements and the Groww-referenced financial-typography follow-up. These source changes do not establish fresh physical-device acceptance.
 
