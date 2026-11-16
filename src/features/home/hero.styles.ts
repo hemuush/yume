@@ -1,33 +1,56 @@
 import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
-import { screenStyles as h } from '@/components/screenStyles';
 import { themedStyles } from '@/theme/themedStyles';
 
 export const styles = themedStyles(() =>
   StyleSheet.create({
-    // Keep Home's cream surface and quiet edge consistent with the rest of the app.
-    card: { ...h.card, marginHorizontal: 0, paddingHorizontal: 16, paddingTop: 12, paddingBottom: 2 },
-    // The ring sits in the middle of the card. Alone (or with the legend dropped under it) it is centred on its own
-    // line; flanked, two equal legend halves hold it exactly in the middle.
-    heroRow: { alignItems: 'center', marginTop: 4 },
-    // The week's spending, in its own card under the Add buttons.
-    rhythm: { ...h.card, marginHorizontal: 0, paddingHorizontal: 16, paddingTop: 12, paddingBottom: 12 },
+    // Hero card: a true raised card with a subtle shadow for depth over the flat paper background.
+    card: {
+      marginHorizontal: 16,
+      backgroundColor: theme.colors.surface,
+      borderRadius: theme.radius.xl2,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.borderSoft,
+      paddingHorizontal: 18,
+      paddingTop: 16,
+      paddingBottom: 8,
+      shadowColor: theme.colors.ink,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.05,
+      shadowRadius: 10,
+      elevation: 2,
+    },
+    // The ring sits in the middle of the card; a little more breathing room above.
+    heroRow: { alignItems: 'center', marginTop: 10, marginBottom: 2 },
+    // The week's spending card — matches the hero card for visual consistency.
+    rhythm: {
+      marginHorizontal: 16,
+      backgroundColor: theme.colors.surface,
+      borderRadius: theme.radius.xl2,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.borderSoft,
+      paddingHorizontal: 18,
+      paddingTop: 16,
+      paddingBottom: 16,
+      shadowColor: theme.colors.ink,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.04,
+      shadowRadius: 8,
+      elevation: 2,
+    },
     footer: {
       flexDirection: 'row',
       flexWrap: 'wrap',
       alignItems: 'center',
       justifyContent: 'space-between',
       columnGap: 12,
-      marginTop: 4,
-      // As tall as with the "How it adds up" link (44): a month with no income has only its one-line caption here, and
-      // without the height it sat against the card's edge and the card grew by 27 dp when the first income arrived.
+      marginTop: 8,
       minHeight: 44,
-      // A wrapping row puts spare height after its last line; this centres the one-line caption in it instead.
       alignContent: 'center',
       borderTopWidth: StyleSheet.hairlineWidth,
       borderTopColor: theme.colors.divider,
     },
-    actions: { marginHorizontal: 16, marginTop: 10 },
+    actions: { marginHorizontal: 16, marginTop: 14 },
     bar: {
       flexDirection: 'row',
       flexWrap: 'wrap',
@@ -36,25 +59,26 @@ export const styles = themedStyles(() =>
       gap: 8,
       minHeight: 32,
     },
-    body: { gap: 2 },
+    body: { gap: 4 },
     figure: { alignSelf: 'stretch', minWidth: 0 },
 
     headLabel: {
-      fontFamily: theme.font.body,
-      fontSize: 12,
-      color: theme.colors.textSecondary,
+      fontFamily: theme.font.bodyBold,
+      fontSize: 11,
+      letterSpacing: 0.6,
+      textTransform: 'uppercase',
+      color: theme.colors.textMuted,
     },
     headValue: {
       fontFamily: theme.font.bodyMedium,
-      fontSize: 28,
+      fontSize: 30,
       textAlign: 'center',
       fontVariant: ['tabular-nums'],
-      lineHeight: 34,
-      letterSpacing: -0.3,
+      lineHeight: 36,
+      letterSpacing: -0.5,
       color: theme.colors.textPrimary,
     },
     headValueNeg: { color: theme.colors.expenseText },
-    // Under two links: the whole line, from the left, instead of squeezing in beside them.
     headCaptionFull: { flexBasis: '100%', marginTop: -6, paddingBottom: 8 },
     headCaption: {
       flexShrink: 1,
@@ -81,8 +105,8 @@ export const styles = themedStyles(() =>
     working: {
       marginTop: 6,
       marginBottom: 12,
-      borderRadius: 18,
-      backgroundColor: theme.colors.tray,
+      borderRadius: theme.radius.lg,
+      backgroundColor: theme.colors.surfaceAlt,
       paddingHorizontal: 14,
       paddingVertical: 8,
     },
