@@ -27,7 +27,6 @@ import { useCollapsingHeader } from '@/lib/useCollapsingHeader';
 import { formatMoney } from '@/lib/money';
 import { withPressedTint } from '@/lib/pressed';
 import { useTabScrollPad } from '@/lib/uiScale';
-import { useStacked } from '@/lib/useStacked';
 import { useTabScrollToTop } from '@/lib/useTabScrollToTop';
 import { useAccent } from '@/theme/AccentContext';
 import { themedStyles } from '@/theme/themedStyles';
@@ -42,7 +41,6 @@ const TAB_GAP: Record<PlanTab, number> = { overview: 16, upcoming: 12, money: 8,
 
 /** Plan previews open item sheets directly; collection links keep the full-screen routes. */
 export default function PlanScreen() {
-  const stackTiles = useStacked();
   const insets = useSafeAreaInsets();
   const tabScrollPad = useTabScrollPad();
   const { accent, secondary } = useAccent();
@@ -114,7 +112,7 @@ export default function PlanScreen() {
             data lands. After a failed first load only the notice above shows. */}
         {(!loadError || (loaded && data)) && (
           <View style={[styles.tabs, { marginBottom: TAB_GAP[tab] }]}>
-            <PlanNavigation value={tab} onChange={selectTab} stacked={stackTiles} />
+            <PlanNavigation value={tab} onChange={selectTab} />
           </View>
         )}
         {!loaded || !scoped ? (

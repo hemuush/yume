@@ -14,7 +14,7 @@ import type { McIconName } from '@/components/iconName';
 import { theme } from '@/constants/theme';
 import { payoffMonthShort } from '@/lib/loanPayoff';
 import type { LoanProgress } from '@/db/loans';
-import { loanBarTone, loanGlyph, loanIcon, loanTint } from './loanIdentity';
+import { loanGlyph, loanIcon, loanTint } from './loanIdentity';
 import { flatSection } from '@/components/screenStyles';
 import { DUE_SOON_DAYS } from '@/lib/dueDate';
 import { daysUntilIsoDate, toLocalIsoDate } from '@/lib/date';
@@ -118,7 +118,7 @@ export function LoanCard({
             <GrowFill
               animKey={`loan:${loan.id}`}
               pct={fraction * 100}
-              style={[styles.fill, { backgroundColor: isClosed ? theme.colors.textMuted : loanBarTone(hue) }]}
+              style={[styles.fill, { backgroundColor: isClosed ? theme.colors.textMuted : theme.colors.ink }]}
             />
           </View>
           <View style={styles.caption}>

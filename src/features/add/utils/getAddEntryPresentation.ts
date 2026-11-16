@@ -1,5 +1,4 @@
 import { formatMoney } from '@/lib/money';
-import { TYPE_WASH, typeWash } from '@/features/add/addEntry';
 import { hasOperator } from '@/lib/padMath';
 import { splitProblem } from '@/features/add/splitDraft';
 import { formatTyped, saveButtonTitle } from '@/features/add/saveEntry';
@@ -17,7 +16,7 @@ type Input = {
   staging: ReturnType<typeof createAddEntryStagingActions>;
 };
 export function getAddEntryPresentation(input: Input) {
-  const { editingId, accent } = input.environment;
+  const { editingId } = input.environment;
   const {
     expr,
     splitParts,
@@ -32,7 +31,6 @@ export function getAddEntryPresentation(input: Input) {
     isLinked,
     addingRow,
     saveDone,
-    type,
   } = input.state;
   const { amountValue, amountMinor, untouchedEdit } = input.draft;
   const { currency, effectiveAccountId } = input.derived;
@@ -107,10 +105,6 @@ export function getAddEntryPresentation(input: Input) {
 
   const formBusy = saving || addingRow || saveDone;
 
-  // The pad's sum keys wear the entry's colour (green for money back), like the amount above them.
-  const wash = refund ? TYPE_WASH.income : typeWash(type, accent);
-
-  const padTone = { bg: wash.bg, ink: wash.accent };
   // Whether anything is typed: the category grid folds the pad away on a pick only then, without reading the amount itself.
   const hasAmount = expr !== '';
   return {
@@ -126,6 +120,5 @@ export function getAddEntryPresentation(input: Input) {
     saveTitle,
     padVisible,
     formBusy,
-    padTone,
   };
 }

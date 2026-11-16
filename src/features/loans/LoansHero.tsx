@@ -159,7 +159,7 @@ export function LoansHero({
                         <GrowFill
                           animKey={`loan-timeline:${row.id}`}
                           pct={row.fraction * 100}
-                          style={[styles.laneFill, { backgroundColor: tone(row.id) }]}
+                          style={[styles.laneFill, { backgroundColor: theme.colors.ink }]}
                         />
                       </View>
                     </View>

@@ -9,6 +9,7 @@ import { withPressedTint } from '@/lib/pressed';
 import { useAccent } from '@/theme/AccentContext';
 
 import { SegmentedControl } from '@/components/SegmentedControl';
+import { UnderlineTabs } from '@/components/UnderlineTabs';
 import { themedStyles } from '@/theme/themedStyles';
 
 export type ReportTab = 'days' | 'cats' | 'trends';
@@ -18,17 +19,14 @@ const TAB_LABELS = [
   ['trends', 'Trends'],
 ] as const;
 
-/** Three lenses in the same pill switch as Plan's tabs, so the two screens read as one family. */
+/** Three lenses as the same plain text tabs as Plan's. */
 export function ReportTabs({ value, onChange }: { value: ReportTab; onChange: (value: ReportTab) => void }) {
   return (
-    <View style={s.tabs}>
-      <SegmentedControl
-        options={TAB_LABELS.map(([key, label]) => ({ label, value: key }))}
-        value={value}
-        onChange={onChange}
-        onBand
-      />
-    </View>
+    <UnderlineTabs
+      options={TAB_LABELS.map(([key, label]) => ({ label, value: key }))}
+      value={value}
+      onChange={onChange}
+    />
   );
 }
 

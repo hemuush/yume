@@ -10,7 +10,7 @@ import { shortMonthYear } from '@/lib/dateLabels';
 import { withPressed } from '@/lib/pressed';
 import { daysUntilIsoDate } from '@/lib/date';
 import { DUE_SOON_DAYS, dueDateLabel } from '@/lib/dueDate';
-import { loanBarTone, loanGlyph, loanTint } from '@/features/loans/loanIdentity';
+import { loanGlyph, loanTint } from '@/features/loans/loanIdentity';
 import { LoansSummary } from './planOverview';
 import { TileGrid } from './PlanGrid';
 import { styles } from './plan.styles';
@@ -84,10 +84,7 @@ export function DebtLoans({
                   <GrowFill
                     animKey={`plan:loan:${r.id}`}
                     pct={fraction * 100}
-                    style={[
-                      styles.tileProgress,
-                      { backgroundColor: lent ? theme.colors.slice.saved : loanBarTone(hue) },
-                    ]}
+                    style={[styles.tileProgress, { backgroundColor: theme.colors.ink }]}
                   />
                 </View>
                 <Text style={styles.tileAmt} numberOfLines={2}>

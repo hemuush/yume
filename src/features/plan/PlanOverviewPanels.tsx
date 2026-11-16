@@ -16,7 +16,6 @@ import { gainLabel } from '@/lib/investment';
 import { goalProgress } from '@/lib/savingsGoalProgress';
 import { keepTogether } from '@/lib/keepTogether';
 import type { Portfolio } from '@/lib/portfolio';
-import { useStacked } from '@/lib/useStacked';
 import { themedStyles } from '@/theme/themedStyles';
 
 type Alert = { key: string; title: string; detail: string; onPress: () => void };
@@ -99,7 +98,6 @@ export function PlanOverviewPanels({
   onTab: (tab: PlanTab) => void;
   onBudget: (id: string) => void;
 }) {
-  const oneColumn = useStacked('late');
   const overdue = groups
     .flatMap((g) => g.items)
     .filter((item) => item.dueDate < today && (item.kind === 'bill' || item.kind === 'emi'));
@@ -310,7 +308,7 @@ export function PlanOverviewPanels({
       <Section compact title="Your plans">
         <View style={s.grid}>
           {[debtTile, budgetTile, goalTile, investTile].map((tile) => (
-            <PlanStatusTile key={tile.key} tile={tile} wide={oneColumn} />
+            <PlanStatusTile key={tile.key} tile={tile} wide />
           ))}
         </View>
       </Section>

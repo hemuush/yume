@@ -14,7 +14,6 @@ jest.mock('@/theme/AccentContext', () => ({ useAccent: () => ({ accent: '#8FCBFF
 
 import { AmountPad } from './AmountPad';
 
-const TONE = { bg: '#eef', ink: '#00f' };
 const keyOf = (tree: ReturnType<typeof create>, label: string) =>
   tree.root.find((n) => n.props.accessibilityLabel === label && typeof n.props.onPress === 'function');
 
@@ -28,7 +27,7 @@ describe('AmountPad', () => {
     let tree!: ReturnType<typeof create>;
     act(() => {
       tree = create(
-        <AmountPad onKey={onKey} onClear={jest.fn()} tone={TONE}>
+        <AmountPad onKey={onKey} onClear={jest.fn()}>
           <Text>Save</Text>
         </AmountPad>
       );
@@ -44,7 +43,7 @@ describe('AmountPad', () => {
     let tree!: ReturnType<typeof create>;
     act(() => {
       tree = create(
-        <AmountPad onKey={jest.fn()} onClear={onClear} tone={TONE}>
+        <AmountPad onKey={jest.fn()} onClear={onClear}>
           {null}
         </AmountPad>
       );
@@ -58,7 +57,7 @@ describe('AmountPad', () => {
     const onKey = jest.fn();
     const onClear = jest.fn();
     const render = (label: string) => (
-      <AmountPad onKey={onKey} onClear={onClear} tone={TONE}>
+      <AmountPad onKey={onKey} onClear={onClear}>
         <Text>{label}</Text>
       </AmountPad>
     );
@@ -71,20 +70,5 @@ describe('AmountPad', () => {
     // The last row (Save, Add more) is new each time the footer is drawn: the sixteen keys above it are left alone.
     act(() => tree.update(render('Save ₹750')));
     expect(mockKeysDrawn).toBe(first);
-  });
-
-  it('draws its keys again when the colour changes', () => {
-    let tree!: ReturnType<typeof create>;
-    const render = (tone: { bg: string; ink: string }) => (
-      <AmountPad onKey={jest.fn()} onClear={jest.fn()} tone={tone}>
-        {null}
-      </AmountPad>
-    );
-    act(() => {
-      tree = create(render(TONE));
-    });
-    const first = mockKeysDrawn;
-    act(() => tree.update(render({ bg: '#efe', ink: '#0a0' })));
-    expect(mockKeysDrawn).toBeGreaterThan(first);
   });
 });

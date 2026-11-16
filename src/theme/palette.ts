@@ -82,8 +82,8 @@ const LIGHT = {
     debt: '#BBA9F7',
   },
   // The "still to pay" family: the chip and date tile, a paler row behind a bill due soon, and its text.
-  dueTint: '#FCEFC9',
-  dueRow: '#FDF7E8',
+  dueTint: '#F6F1E3',
+  dueRow: '#FBF7EA',
   dueInk: '#7A5100',
   // The soft tray under the month card's figures (Today, pace) and its meter track.
   tray: '#F8F3EA',
@@ -178,8 +178,8 @@ const DARK: Palette = {
     free: '#FC7B5E',
     debt: '#BBA9F7',
   },
-  dueTint: '#2E2A1A',
-  dueRow: '#26231A',
+  dueTint: '#24251E',
+  dueRow: '#1F201A',
   dueInk: '#E8B84A',
   tray: '#1F201A',
   trayTrack: '#2E2F27',
