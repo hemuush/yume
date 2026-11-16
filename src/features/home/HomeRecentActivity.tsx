@@ -5,6 +5,7 @@ import { Text } from '@/components/Text';
 import { EmptyState } from '@/components/EmptyState';
 import { Section } from '@/components/Section';
 import { screenStyles as h } from '@/components/screenStyles';
+import { theme } from '@/constants/theme';
 import { dayLabel } from '@/lib/date';
 import { investRole } from '@/lib/investment';
 import { formatMoney } from '@/lib/money';
@@ -98,6 +99,19 @@ export const HomeRecentActivity = memo(function HomeRecentActivity({
 
 const styles = themedStyles(() =>
   StyleSheet.create({
-    recent: { ...h.card },
+    // A raised card to match the other home sections.
+    recent: {
+      marginHorizontal: 16,
+      backgroundColor: theme.colors.surface,
+      borderRadius: theme.radius.xl2,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.borderSoft,
+      overflow: 'hidden',
+      shadowColor: theme.colors.ink,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.04,
+      shadowRadius: 8,
+      elevation: 2,
+    },
   })
 );

@@ -493,7 +493,7 @@ const styles = themedStyles(() =>
   StyleSheet.create({
     container: { flex: 1, backgroundColor: theme.colors.background },
     scroll: { flex: 1 },
-    heroGap: { marginTop: 4 },
+    heroGap: { marginTop: 8 },
     errorBanner: {
       marginHorizontal: SCREEN.gutter,
       marginTop: 16,

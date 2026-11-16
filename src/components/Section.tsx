@@ -46,8 +46,8 @@ export function Section({
   const { accent } = useAccent();
   const ink = themeInk(accent);
   return (
-    <View style={[styles.wrap, compact && { marginTop: 12 }, first && styles.wrapFirst]}>
-      <View style={[styles.head, compact && { marginBottom: 4 }]}>
+    <View style={[styles.wrap, compact && { marginTop: 16 }, first && styles.wrapFirst]}>
+      <View style={[styles.head, compact && { marginBottom: 6 }]}>
         {heading ?? (
           <View style={styles.titleRow}>
             <View style={styles.titleCol}>

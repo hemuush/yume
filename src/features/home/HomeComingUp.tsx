@@ -12,7 +12,7 @@ import { ProgressRing } from '@/components/ProgressRing';
 import { theme } from '@/constants/theme';
 import { haptics } from '@/lib/haptics';
 import { ROW_LAYOUT } from '@/lib/animation';
-import { screenStyles as h, SCREEN } from '@/components/screenStyles';
+import { SCREEN } from '@/components/screenStyles';
 import { categorySentence } from '@/lib/categoryLabel';
 import { formatMoney, formatMaskableMoney } from '@/lib/money';
 import { withPressed, withPressedTint } from '@/lib/pressed';
@@ -301,26 +301,40 @@ export function HomeComingUp({
 
 const styles = themedStyles(() =>
   StyleSheet.create({
-    card: { ...h.card, paddingBottom: 6 },
+    // A raised card to match the hero and rhythm cards above.
+    card: {
+      marginHorizontal: 16,
+      backgroundColor: theme.colors.surface,
+      borderRadius: theme.radius.xl2,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.borderSoft,
+      paddingBottom: 6,
+      overflow: 'hidden',
+      shadowColor: theme.colors.ink,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.04,
+      shadowRadius: 8,
+      elevation: 2,
+    },
     chips: {
       flexDirection: 'row',
       flexWrap: 'wrap',
-      gap: 6,
-      paddingTop: 10,
-      paddingBottom: 6,
+      gap: 8,
+      paddingTop: 12,
+      paddingBottom: 8,
       paddingHorizontal: 14,
     },
     // Sized so All, Payments, Budgets and Goals share one line on a 360 dp phone; the same weight selected or not,
     // so picking one never changes its width either.
     chip: {
       minHeight: 36,
-      paddingHorizontal: 10,
+      paddingHorizontal: 12,
       borderRadius: theme.radius.pill,
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: theme.colors.tray,
+      backgroundColor: theme.colors.surfaceAlt,
     },
-    chipText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textSecondary },
+    chipText: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
     chipTextOn: { color: theme.colors.textPrimary },
     chipDot: {
       position: 'absolute',
@@ -333,7 +347,7 @@ const styles = themedStyles(() =>
     },
     ringText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textPrimary },
     refunds: { marginTop: 4, marginHorizontal: -12, borderRadius: 20, backgroundColor: theme.colors.surface },
-    empty: { minHeight: 80, flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14 },
+    empty: { minHeight: 80, flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16 },
     copy: { flex: 1, minWidth: 0, gap: 5 },
     emptyTitle: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
     emptyHint: {

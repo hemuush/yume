@@ -220,10 +220,10 @@ export function HomeHeader({
 const styles = themedStyles(() =>
   StyleSheet.create({
     root: { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10 },
-    // The band's gap above and its padding below are equal, so the greeting sits centred between the brand row and the card.
-    fading: { gap: 8, paddingTop: 4 },
+    // A little more room between the greeting and the card beneath it.
+    fading: { gap: 6, paddingTop: 2 },
     miniSlot: { flex: 1, minWidth: 0, alignItems: 'flex-end' },
-    band: { paddingHorizontal: HEADER.gutter, paddingBottom: 12, gap: 8, overflow: 'hidden' },
+    band: { paddingHorizontal: HEADER.gutter, paddingBottom: 14, gap: 8, overflow: 'hidden' },
     row: {
       minHeight: HEADER.actionSize,
       flexDirection: 'row',
@@ -237,19 +237,19 @@ const styles = themedStyles(() =>
     date: {
       fontFamily: theme.font.body,
       fontSize: 11,
-      lineHeight: 16,
-      letterSpacing: 0.2,
-      color: theme.colors.textSecondary,
-      marginBottom: 2,
+      lineHeight: 15,
+      letterSpacing: 0.5,
+      textTransform: 'uppercase',
+      color: theme.colors.textMuted,
+      marginBottom: 3,
     },
-    // The large Fredoka title of the home screen, like every other screen's.
+    // The greeting: clean, large, confident. Fredoka keeps the character.
     greet: {
       fontFamily: theme.font.roundedBold,
-      fontSize: 28,
-      lineHeight: 34,
-      letterSpacing: -0.2,
+      fontSize: 26,
+      lineHeight: 31,
+      letterSpacing: -0.3,
       color: theme.colors.ink,
-      marginTop: 1,
     },
     greetName: { fontFamily: theme.font.roundedBold },
     insight: {
@@ -257,7 +257,7 @@ const styles = themedStyles(() =>
       fontSize: 12,
       lineHeight: 18,
       color: theme.colors.textSecondary,
-      marginTop: 3,
+      marginTop: 2,
     },
   })
 );

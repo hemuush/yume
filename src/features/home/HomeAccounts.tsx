@@ -96,24 +96,17 @@ export function HomeAccounts({
         decelerationRate="fast"
         contentContainerStyle={styles.row}
       >
-        {preview.map((a, i) => (
-          <AccountTile
-            key={a.id}
-            account={a}
-            width={width}
-            first={i === 0}
-            accent={accent}
-            onOpen={onOpenAccount}
-          />
+        {preview.map((a) => (
+          <AccountTile key={a.id} account={a} width={width} accent={accent} onOpen={onOpenAccount} />
         ))}
         <Pressable
           onPress={onAddAccount}
           accessibilityRole="button"
           accessibilityLabel="Add an account"
-          style={withPressed([styles.tile, styles.addTile, { width: Math.round(width * 0.8) }])}
+          style={withPressed([styles.tile, styles.addTile, { width: Math.round(width * 0.72) }])}
         >
-          <Feather name="plus" size={20} color={theme.colors.textSecondary} />
-          <Text style={styles.addText}>Add account</Text>
+          <Feather name="plus" size={18} color={theme.colors.textMuted} />
+          <Text style={styles.addText}>Add</Text>
         </Pressable>
       </ScrollView>
     </Section>
@@ -124,13 +117,11 @@ export function HomeAccounts({
 const AccountTile = memo(function AccountTile({
   account: a,
   width,
-  first,
   accent,
   onOpen,
 }: {
   account: Account;
   width: number;
-  first: boolean;
   accent: string;
   onOpen: (account: Account) => void;
 }) {
@@ -139,7 +130,7 @@ const AccountTile = memo(function AccountTile({
       onPress={() => onOpen(a)}
       accessibilityRole="button"
       accessibilityLabel={`${a.name}, ${accountTypeLabel(a)}. Open summary`}
-      style={withPressedTint(accent, [styles.tile, first && styles.tileFirst, { width }])}
+      style={withPressedTint(accent, [styles.tile, { width }])}
     >
       <Text style={styles.name} numberOfLines={1}>
         {a.name}
@@ -158,41 +149,47 @@ const AccountTile = memo(function AccountTile({
 
 const styles = themedStyles(() =>
   StyleSheet.create({
-    // No vertical padding: the tiles sit exactly where the section's other cards do (the cards have no shadow to
-    // make room for).
-    // The accounts at a glance: names over balances in columns between two hairlines, a hairline between the columns.
-    // The row starts on the 16dp gutter (the first column has no left padding of its own).
-    strip: {
-      borderTopWidth: StyleSheet.hairlineWidth,
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.colors.borderSoft,
-    },
-    row: { paddingHorizontal: 16 },
+    // A horizontally-scrolling strip of raised tiles with gentle gaps between them.
+    strip: { overflow: 'visible' },
+    row: { paddingHorizontal: 16, gap: 10 },
     tile: {
-      minHeight: 72,
-      paddingVertical: 12,
-      paddingHorizontal: 14,
+      minHeight: 80,
+      paddingVertical: 14,
+      paddingHorizontal: 16,
       justifyContent: 'center',
-      borderLeftWidth: StyleSheet.hairlineWidth,
-      borderLeftColor: theme.colors.borderSoft,
+      backgroundColor: theme.colors.surface,
+      borderRadius: theme.radius.xl,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.borderSoft,
+      shadowColor: theme.colors.ink,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.05,
+      shadowRadius: 6,
+      elevation: 2,
     },
-    tileFirst: { paddingLeft: 0, borderLeftWidth: 0 },
     name: {
-      fontFamily: theme.font.body,
+      fontFamily: theme.font.bodyMedium,
       fontSize: 12,
+      letterSpacing: 0.2,
       color: theme.colors.textSecondary,
     },
     balance: {
-      marginTop: 4,
+      marginTop: 6,
       fontFamily: theme.font.bodyBold,
-      fontSize: 15,
-      lineHeight: 20,
+      fontSize: 16,
+      lineHeight: 21,
       fontVariant: ['tabular-nums'],
       color: theme.colors.textPrimary,
     },
     balanceOwed: { color: theme.colors.expenseText },
-    addTile: { alignItems: 'flex-start', gap: 6 },
-    addText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textSecondary },
+    addTile: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 6,
+      backgroundColor: theme.colors.surfaceAlt,
+      borderStyle: 'dashed',
+    },
+    addText: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textMuted },
     wrap: { marginHorizontal: 16 },
     fresh: { ...h.card, marginHorizontal: 0, padding: 16, gap: 4 },
     freshHead: { minHeight: 40, flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 },

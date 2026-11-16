@@ -29,13 +29,13 @@ export function AllowanceTile({ perDayMinor, daysLeft }: { perDayMinor: number; 
 const styles = themedStyles(() =>
   StyleSheet.create({
     tile: {
-      alignSelf: 'flex-start',
+      alignSelf: 'center',
       flexShrink: 1,
-      minHeight: 26,
+      minHeight: 28,
       justifyContent: 'center',
-      paddingHorizontal: 10,
-      paddingVertical: 4,
-      marginTop: 4,
+      paddingHorizontal: 12,
+      paddingVertical: 5,
+      marginTop: 8,
       borderRadius: theme.radius.pill,
     },
     text: { flexShrink: 1, fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
