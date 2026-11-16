@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 import { applyScheme } from './scheme';
 import { useKeptAcrossModeChange } from './useKeptAcrossModeChange';
@@ -13,8 +14,10 @@ let setTab!: (value: string) => void;
 let tab = '';
 function Probe({ id }: { id: string }) {
   const [value, set] = useKeptAcrossModeChange(id, 'you');
-  tab = value;
-  setTab = set;
+  useEffect(() => {
+    tab = value;
+    setTab = set;
+  });
   return null;
 }
 
