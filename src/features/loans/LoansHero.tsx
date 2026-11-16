@@ -187,13 +187,12 @@ const styles = themedStyles(() =>
   StyleSheet.create({
     // The flat card the other screens lead with; one lifted element over a list of flat ones.
     hero: {
-      marginHorizontal: SCREEN.gutter,
+      marginHorizontal: SCREEN.gutter - SCREEN.rowInset,
       marginTop: theme.layout.screenTopGap,
       paddingHorizontal: 14,
       paddingTop: 14,
       paddingBottom: 4,
       gap: 12,
-      boxShadow: '0px 1px 2px rgba(18,19,15,0.04), 0px 8px 24px rgba(18,19,15,0.05)',
       overflow: 'visible',
     },
     top: {
@@ -203,7 +202,7 @@ const styles = themedStyles(() =>
       justifyContent: 'space-between',
       columnGap: 12,
       rowGap: 4,
-      paddingHorizontal: 2,
+      paddingHorizontal: 0,
     },
     topMain: { flexShrink: 1, minWidth: 0 },
     label: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
@@ -221,7 +220,7 @@ const styles = themedStyles(() =>
     sideBold: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
     share: { flexDirection: 'row', gap: 3, height: 8, borderRadius: 4, overflow: 'hidden' },
     segment: { flexBasis: 0, minWidth: 6, height: 8, borderRadius: 4 },
-    facts: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 12, rowGap: 8, paddingHorizontal: 2 },
+    facts: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 12, rowGap: 8, paddingHorizontal: 0 },
     fact: { flexGrow: 1, minWidth: 0 },
     factLabel: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
     factValue: {

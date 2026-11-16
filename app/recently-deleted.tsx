@@ -335,7 +335,6 @@ const styles = themedStyles(() =>
       fontSize: 12,
       lineHeight: 17,
       color: theme.colors.textSecondary,
-      paddingHorizontal: 2,
     },
     figureRow: { flexDirection: 'row', alignItems: 'baseline', gap: 6, flexWrap: 'wrap' },
     figureNote: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },

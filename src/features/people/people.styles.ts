@@ -1,7 +1,7 @@
 import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
 import { SECTION_TITLE, SECTION_GAP } from '@/constants/textStyles';
-import { SCREEN } from '@/components/screenStyles';
+import { SCREEN, flatSection } from '@/components/screenStyles';
 import { themedStyles } from '@/theme/themedStyles';
 
 // Shared by the Friends & Family screen, PersonTile, and the person modals.
@@ -49,14 +49,7 @@ export const styles = themedStyles(() =>
     tileRow: { flexDirection: 'row', gap: 10, marginHorizontal: SCREEN.gutter, marginBottom: 10 },
     tileCell: { flex: 1, minWidth: 0 },
     // A white tile (StripCard) whose top strip says which way the money goes: mint they owe you, coral you owe.
-    personTile: {
-      padding: 14,
-      borderRadius: theme.radius.xl,
-      backgroundColor: theme.colors.surface,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.colors.borderSoft,
-      overflow: 'hidden',
-    },
+    personTile: { ...flatSection(), padding: 14, overflow: 'hidden' },
     tileWho: { flexDirection: 'row', alignItems: 'center', gap: 8 },
     tileAvatar: {
       width: 32,

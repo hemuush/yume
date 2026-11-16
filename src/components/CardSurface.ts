@@ -2,16 +2,16 @@ import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
 import { themedStyles } from '@/theme/themedStyles';
 
-/** Flat supporting cards and one clear summary across financial screens. */
+/** The paper itself between hairlines: no fill, no shadow, no rounded box. */
 export const cardSurface = themedStyles(() =>
   StyleSheet.create({
     neutral: {
-      backgroundColor: theme.colors.surface,
+      backgroundColor: 'transparent',
       borderColor: theme.colors.borderSoft,
       boxShadow: 'none',
     },
     summary: {
-      backgroundColor: theme.colors.surface,
+      backgroundColor: 'transparent',
       borderColor: theme.colors.borderSoft,
       boxShadow: 'none',
     },

@@ -6,6 +6,7 @@ import { Text } from './Text';
 import { theme } from '@/constants/theme';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 import { themedStyles } from '@/theme/themedStyles';
+import { flatSection } from '@/components/screenStyles';
 
 /** A single short fade; the result and actions never wait for decorative motion. */
 export function CompletionCard({
@@ -49,14 +50,7 @@ export function CompletionCard({
 }
 const styles = themedStyles(() =>
   StyleSheet.create({
-    card: {
-      backgroundColor: theme.colors.surface,
-      borderRadius: theme.radius.xl,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.colors.borderSoft,
-      padding: 20,
-      gap: 12,
-    },
+    card: { ...flatSection(), padding: 20, gap: 12 },
     badge: {
       width: 52,
       height: 52,

@@ -98,6 +98,6 @@ export const HomeRecentActivity = memo(function HomeRecentActivity({
 
 const styles = themedStyles(() =>
   StyleSheet.create({
-    recent: { ...h.card, paddingHorizontal: 12 },
+    recent: { ...h.card },
   })
 );

@@ -6,13 +6,13 @@ import { themedStyles } from '@/theme/themedStyles';
 export const styles = themedStyles(() =>
   StyleSheet.create({
     // Keep Home's cream surface and quiet edge consistent with the rest of the app.
-    card: { ...h.card, paddingHorizontal: 16, paddingTop: 12, paddingBottom: 2 },
+    card: { ...h.card, marginHorizontal: 0, paddingHorizontal: 16, paddingTop: 12, paddingBottom: 2 },
     // The ring sits in the middle of the card. Alone (or with the legend dropped under it) it is centred on its own
     // line; flanked, two equal legend halves hold it exactly in the middle.
     heroRow: { alignItems: 'center', marginTop: 4 },
     heroRowFlanked: { flexDirection: 'row', columnGap: 12 },
     // The week's spending, in its own card under the Add buttons.
-    rhythm: { ...h.card, paddingHorizontal: 16, paddingTop: 12, paddingBottom: 12 },
+    rhythm: { ...h.card, marginHorizontal: 0, paddingHorizontal: 16, paddingTop: 12, paddingBottom: 12 },
     footer: {
       flexDirection: 'row',
       flexWrap: 'wrap',

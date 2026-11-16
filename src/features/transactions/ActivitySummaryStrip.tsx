@@ -168,7 +168,7 @@ function barColor(bar: SpendBar) {
 const styles = themedStyles(() =>
   StyleSheet.create({
     strip: {
-      marginHorizontal: 16,
+      marginHorizontal: 0,
       marginTop: 8,
       // The same side padding as Home's month card and as this card's loading placeholder.
       paddingHorizontal: 16,

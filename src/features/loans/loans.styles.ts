@@ -1,7 +1,7 @@
 import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
 import { SECTION_TITLE, SECTION_GAP } from '@/constants/textStyles';
-import { SCREEN } from '@/components/screenStyles';
+import { SCREEN, flatSection } from '@/components/screenStyles';
 import { themedStyles } from '@/theme/themedStyles';
 
 // Shared by the Loans screen and every loan modal (LoanCard, LoanDetailModal, AssetModal, AccountModal,
@@ -27,16 +27,7 @@ export const styles = themedStyles(() =>
       marginTop: 3,
       lineHeight: 16,
     },
-    card: {
-      marginHorizontal: 16,
-      marginBottom: 12,
-      padding: 16,
-      borderRadius: theme.radius.xl2,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.colors.borderSoft,
-      backgroundColor: theme.colors.surface,
-      boxShadow: 'none',
-    },
+    card: { ...flatSection(), marginHorizontal: 0, marginBottom: 12, padding: 16 },
     closedHeader: {
       minHeight: 44,
       flexDirection: 'row',

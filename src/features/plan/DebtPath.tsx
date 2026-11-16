@@ -154,9 +154,8 @@ const local = themedStyles(() =>
     summary: { gap: 8, minHeight: 44 },
     card: {
       marginTop: 0,
-      boxShadow: '0px 1px 2px rgba(18,19,15,0.04), 0px 8px 24px rgba(18,19,15,0.05)',
       overflow: 'visible',
-      marginHorizontal: SCREEN.gutter,
+      marginHorizontal: SCREEN.gutter - SCREEN.rowInset,
     },
     top: { paddingHorizontal: 14, paddingTop: 12, paddingBottom: 12, gap: 8 },
     head: {

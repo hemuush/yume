@@ -10,6 +10,7 @@ import { useAccent } from '@/theme/AccentContext';
 import type { Runway, RunwayDay } from './runway';
 import { dueTone } from './planOverview';
 import { themedStyles } from '@/theme/themedStyles';
+import { flatSection } from '@/components/screenStyles';
 
 type Mode = 'outgoing' | 'income';
 /** The first chip: every date in the window, one list under day headings. */
@@ -205,15 +206,7 @@ const s = themedStyles(() =>
     dot: { width: 7, height: 7, borderRadius: 4 },
     activeText: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
     dateLabel: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
-    summary: {
-      marginHorizontal: 16,
-      padding: 12,
-      gap: 8,
-      backgroundColor: theme.colors.surface,
-      borderRadius: theme.radius.xl,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.colors.borderSoft,
-    },
+    summary: { ...flatSection(), marginHorizontal: 4, padding: 12, gap: 8 },
     summaryDay: { gap: 4 },
     caption: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
   })

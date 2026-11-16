@@ -1,6 +1,6 @@
 import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
-import { SCREEN } from '@/components/screenStyles';
+import { SCREEN, flatSection } from '@/components/screenStyles';
 import { GLASS } from '@/components/Glass';
 import { themedStyles, themedValue } from '@/theme/themedStyles';
 
@@ -114,16 +114,7 @@ export const styles = themedStyles(() =>
     grid: { gap: 8, marginHorizontal: SCREEN.gutter },
     gridRow: { flexDirection: 'row', gap: 8 },
     gridTile: { flex: 1, minWidth: 0, padding: 10, gap: 2, overflow: 'hidden' },
-    tileAdd: {
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: 6,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderStyle: 'dashed',
-      borderColor: theme.colors.borderSoft,
-      backgroundColor: theme.colors.surface,
-      borderRadius: theme.radius.xl,
-    },
+    tileAdd: { ...flatSection(), alignItems: 'center', justifyContent: 'center', gap: 6 },
     tileSlim: { minHeight: 48, flexDirection: 'row', padding: 6 },
     addDisc: {
       width: 38,

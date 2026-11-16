@@ -25,7 +25,7 @@ import { useUndoToast } from '@/components/UndoToast';
 import { theme } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
 import { Section } from '@/components/Section';
-import { SCREEN } from '@/components/screenStyles';
+import { SCREEN, flatSection } from '@/components/screenStyles';
 import { NeedsYouRow } from '@/features/home/NeedsYouRow';
 import { NEEDS_TONE } from '@/features/home/needsTone';
 import { HeaderIconButton } from '@/components/AppHeader';
@@ -385,16 +385,12 @@ const styles = themedStyles(() =>
     suu: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginHorizontal: SCREEN.gutter },
     suuFace: { width: 38, height: 38 },
     suuLines: {
+      ...flatSection(),
       flex: 1,
       gap: 8,
       paddingHorizontal: 14,
       paddingVertical: 12,
-      borderRadius: theme.radius.xl,
       borderTopLeftRadius: 4,
-      backgroundColor: theme.colors.surface,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.colors.borderSoft,
-      boxShadow: 'none',
     },
     suuText: {
       fontFamily: theme.font.body,

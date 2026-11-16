@@ -1,17 +1,12 @@
 import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
 import { SECTION_TITLE, SECTION_GAP } from '@/constants/textStyles';
-import { SCREEN } from '@/components/screenStyles';
+import { SCREEN, flatSection } from '@/components/screenStyles';
 import { GLASS } from '@/components/Glass';
 import { themedStyles, themedValue } from '@/theme/themedStyles';
 
 /** Every Reports card: the app's one flat card (cream, rounded, a hairline edge), without the screen margin. */
-const CARD = themedValue(() => ({
-  backgroundColor: theme.colors.surface,
-  borderRadius: theme.radius.xl2,
-  borderWidth: StyleSheet.hairlineWidth,
-  borderColor: theme.colors.borderSoft,
-}));
+const CARD = themedValue(() => ({ ...flatSection() }));
 
 /** The even gap between Reports' blocks (heatmap card, day card, story cards, "Where it went"). */
 const BLOCK_GAP = SCREEN.sectionGap;
@@ -141,7 +136,7 @@ export const styles = themedStyles(() =>
     bigFoot: {
       marginTop: 4,
       paddingTop: 12,
-      paddingHorizontal: 16,
+      paddingHorizontal: 0,
       borderTopWidth: 1,
       borderTopColor: theme.colors.divider,
       fontFamily: theme.font.body,
@@ -161,7 +156,7 @@ export const styles = themedStyles(() =>
     // Trends: one line chart with a Spending / Net worth switch.
     trendCard: {
       ...CARD,
-      padding: 16,
+      paddingVertical: 16,
       gap: 8,
     },
     trendHead: {
@@ -232,7 +227,7 @@ export const styles = themedStyles(() =>
       alignItems: 'center',
       gap: 12,
       paddingVertical: 12,
-      paddingHorizontal: 16,
+      paddingHorizontal: 0,
       minHeight: 64,
       borderTopWidth: 1,
       borderTopColor: theme.colors.divider,
@@ -276,7 +271,7 @@ export const styles = themedStyles(() =>
 
     catCard: {
       ...CARD,
-      paddingHorizontal: 16,
+      paddingHorizontal: 0,
       overflow: 'hidden',
     },
     catBar: {
@@ -296,7 +291,7 @@ export const styles = themedStyles(() =>
       boxShadow: `inset 0px 0px 0px 1px ${theme.colors.inkHairline}`,
     },
     // The card over "Where it went": its title and group menu, the total and the split as one bar.
-    sumCard: { ...CARD, paddingHorizontal: 14, paddingTop: 10, paddingBottom: 4, marginBottom: 10 },
+    sumCard: { ...CARD, paddingHorizontal: 0, paddingTop: 10, paddingBottom: 4, marginBottom: 10 },
     sumKicker: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary, marginTop: 8 },
     sumHead: {
       flexDirection: 'row',

@@ -3,6 +3,7 @@ import { theme } from '@/constants/theme';
 import { EYEBROW, FIELD_LABEL } from '@/constants/textStyles';
 import { GLASS } from '@/components/Glass';
 import { themedStyles } from '@/theme/themedStyles';
+import { flatSection } from '@/components/screenStyles';
 
 // Shared by the Add screen (app/add-transaction.tsx) and its fields (AddFields.tsx).
 export const styles = themedStyles(() =>
@@ -10,13 +11,7 @@ export const styles = themedStyles(() =>
     container: { flex: 1, backgroundColor: theme.colors.background },
     section: { marginBottom: 12 },
     // One quiet cream surface for categories, transfer accounts and friend details.
-    fieldCard: {
-      padding: 12,
-      borderRadius: theme.radius.xl2,
-      backgroundColor: theme.colors.surface,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.colors.borderSoft,
-    },
+    fieldCard: { ...flatSection(), padding: 12 },
     // A friend entry's people: round avatars with an ink ring on the picked one.
     people: { gap: 10, paddingRight: 4 },
     person: { width: 60, alignItems: 'center', gap: 5 },
@@ -157,16 +152,7 @@ export const styles = themedStyles(() =>
     },
 
     // The amount leads; the label and caret retain the entry type's colour.
-    heroCard: {
-      marginBottom: 10,
-      paddingHorizontal: 16,
-      paddingTop: 8,
-      paddingBottom: 10,
-      borderRadius: theme.radius.xl2,
-      backgroundColor: theme.colors.surface,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.colors.borderSoft,
-    },
+    heroCard: { ...flatSection(), marginBottom: 10, paddingHorizontal: 16, paddingTop: 8, paddingBottom: 10 },
     recentRow: { flexDirection: 'row', gap: 6, paddingRight: 16, paddingBottom: 8 },
     recentChip: {
       minHeight: 44,
@@ -310,13 +296,7 @@ export const styles = themedStyles(() =>
     // A tinted note: amber, because the entry can't be edited here.
     linkedNote: { marginBottom: 16, backgroundColor: theme.colors.dueTint },
     // A flat note card.
-    noteCard: {
-      padding: 14,
-      borderRadius: theme.radius.xl,
-      backgroundColor: theme.colors.surface,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.colors.borderSoft,
-    },
+    noteCard: { ...flatSection(), padding: 14 },
     linkedText: {
       fontFamily: theme.font.body,
       fontSize: 12,
@@ -364,15 +344,7 @@ export const styles = themedStyles(() =>
       borderColor: theme.colors.borderSoft,
     },
     repeatBtnText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
-    draftCard: {
-      marginBottom: 12,
-      padding: 14,
-      gap: 8,
-      backgroundColor: theme.colors.surface,
-      borderRadius: theme.radius.xl2,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.colors.borderSoft,
-    },
+    draftCard: { ...flatSection(), marginBottom: 12, padding: 14, gap: 8 },
     draftTitle: { fontFamily: theme.font.bodyBold, fontSize: 14, color: theme.colors.textPrimary },
     draftText: {
       fontFamily: theme.font.body,

@@ -2,7 +2,7 @@ import { View, Pressable, StyleSheet } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
 import { ToggleSwitch } from '@/components/ToggleSwitch';
-import { screenStyles as h } from '@/components/screenStyles';
+import { screenStyles as h, flatSection } from '@/components/screenStyles';
 import { theme } from '@/constants/theme';
 import { withPressedTint } from '@/lib/pressed';
 import { useAccent } from '@/theme/AccentContext';
@@ -82,18 +82,7 @@ export function SlotCard({
 
 const styles = themedStyles(() =>
   StyleSheet.create({
-    card: {
-      flexGrow: 1,
-      // Wide enough that two never share a phone's row: side by side each had about 49 dp for the time, and "9:00 AM"
-      // ended "9:0…". Stacked, the time has room, and so has the 44 dp pair of buttons.
-      flexBasis: 200,
-      backgroundColor: theme.colors.surface,
-      borderRadius: theme.radius.xl2,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.colors.borderSoft,
-      padding: 14,
-      gap: 6,
-    },
+    card: { ...flatSection(), flexGrow: 1, flexBasis: 200, padding: 14, gap: 6 },
     head: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
     name: { fontFamily: theme.font.bodyBold, fontSize: theme.typeSize.row, color: theme.colors.textPrimary },
     sub: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textSecondary },

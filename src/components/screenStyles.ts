@@ -11,6 +11,8 @@ export const SCREEN = {
   /** Space above each section heading (and between a hero card and the block under it). */
   sectionGap: 16,
   gutter: 16,
+  /** The side padding a row or a card's content has inside its section. */
+  rowInset: 14,
   /** Padding inside a standalone card. */
   cardPad: 12,
   rowMinHeight: 56,
@@ -22,25 +24,37 @@ export const SCREEN = {
   iconGlyph: 16,
 } as const;
 
+/**
+ * The quiet look's card: no fill, no rounded box, just a hairline above and below. Spread it into a style that used
+ * to be a card (inside a `themedStyles` factory), and give the content the 16dp gutter by its padding and margin.
+ */
+export const flatSection = () =>
+  ({
+    backgroundColor: 'transparent',
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.borderSoft,
+  }) as const;
+
 export const screenStyles = themedStyles(() =>
   StyleSheet.create({
+    // The quiet look has no card boxes: a section is rows between two hairlines, on the paper itself. The content
+    // keeps the rows' own 14dp inset, so a 2dp margin puts it on the 16dp gutter the headings use.
     card: {
-      marginHorizontal: SCREEN.gutter,
-      backgroundColor: theme.colors.surface,
-      borderRadius: theme.radius.xl2,
-      borderWidth: StyleSheet.hairlineWidth,
+      marginHorizontal: SCREEN.gutter - SCREEN.rowInset,
+      backgroundColor: 'transparent',
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderBottomWidth: StyleSheet.hairlineWidth,
       borderColor: theme.colors.borderSoft,
-      overflow: 'hidden',
     },
-    // A card inside a sheet, which already has its own side padding.
+    // A section inside a sheet, which already has its own side padding.
     cardInSheet: {
       marginHorizontal: 0,
       marginBottom: 12,
-      backgroundColor: theme.colors.surface,
-      borderWidth: StyleSheet.hairlineWidth,
+      backgroundColor: 'transparent',
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderBottomWidth: StyleSheet.hairlineWidth,
       borderColor: theme.colors.borderSoft,
-      borderRadius: 22,
-      overflow: 'hidden',
     },
     row: {
       flexDirection: 'row',

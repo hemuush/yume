@@ -421,13 +421,11 @@ const styles = themedStyles(() =>
       fontSize: 12,
       lineHeight: 17,
       color: theme.colors.textSecondary,
-      paddingHorizontal: 2,
     },
     headline: {
       fontFamily: theme.font.body,
       fontSize: 13,
       color: theme.colors.textSecondary,
-      paddingHorizontal: 2,
     },
     checks: { gap: 2 },
     check: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 36 },

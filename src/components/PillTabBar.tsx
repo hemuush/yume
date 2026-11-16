@@ -20,7 +20,6 @@ import { hexToRgba } from '@/lib/color';
 import Feather from '@expo/vector-icons/Feather';
 import type { Tabs } from 'expo-router';
 import { Text } from '@/components/Text';
-import { GLASS } from '@/components/Glass';
 import { HomeIcon, ActivityIcon, PlanIcon, ReportsIcon } from '@/components/icons/TabIcons';
 import { theme } from '@/constants/theme';
 import { haptics } from '@/lib/haptics';
@@ -28,7 +27,7 @@ import { useUiScale } from '@/lib/uiScale';
 import { usePressScale } from '@/lib/usePressScale';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 import { useAccent } from '@/theme/AccentContext';
-import { themeInk, selectedFill } from '@/theme/interactionColors';
+import { selectedFill } from '@/theme/interactionColors';
 import { themedStyles } from '@/theme/themedStyles';
 import { useSchemeVersion } from '@/theme/SchemeBoundary';
 
@@ -57,7 +56,7 @@ function Tab({
   label: string;
   Icon: typeof HomeIcon;
   focused: boolean;
-  /** The chosen tab's pill: the theme colour itself, with ink on it. The Add button keeps the dark ink. */
+  /** The chosen tab's pill: the theme colour itself, with ink on it. The Add button is the coral dot. */
   fill: string;
   layout: { size: number; showLabel: boolean };
   onPress: () => void;
@@ -118,8 +117,8 @@ function Tab({
 }
 
 /**
- * The floating tab bar: a frosted pill holding the four tabs (only the active one shows its name, on a deep
- * pill of the theme colour) and, beside it, the round Add button. Long-press Add for "Log again". It steps
+ * The floating tab bar: a pill holding the four tabs (only the active one shows its name, on a deep
+ * pill of the theme colour) and, beside it, the round coral Add button. Long-press Add for "Log again". It steps
  * aside while the keyboard is up.
  */
 export function PillTabBar({
@@ -133,7 +132,6 @@ export function PillTabBar({
 }: TabBarProps & { onAdd: () => void; onAddLongPress: () => void }) {
   useSchemeVersion();
   const { accent } = useAccent();
-  const ink = themeInk(accent);
   const scale = useUiScale();
   const { width, fontScale } = useWindowDimensions();
   const stackedLabel = fontScale > PILL_BAR.maxInlineScale || width < PILL_BAR.narrowWidth;
@@ -228,11 +226,11 @@ export function PillTabBar({
         <RNAnimated.View
           style={[
             styles.add,
-            { width: height, height, borderRadius: height / 2, backgroundColor: ink },
+            { width: height, height, borderRadius: height / 2, backgroundColor: theme.colors.coral },
             add.animatedStyle,
           ]}
         >
-          <Feather name="plus" size={24} color={theme.colors.white} />
+          <Feather name="plus" size={24} color={theme.colors.ink} />
         </RNAnimated.View>
       </Pressable>
     </View>
@@ -249,10 +247,10 @@ const styles = themedStyles(() =>
       alignItems: 'center',
       justifyContent: 'center',
       paddingHorizontal: 6,
-      backgroundColor: 'rgba(255,255,255,0.86)',
+      backgroundColor: theme.colors.surface,
       borderWidth: 1,
-      borderColor: GLASS.edge,
-      boxShadow: '0px 10px 28px rgba(16,32,51,0.12)',
+      borderColor: theme.colors.borderSoft,
+      boxShadow: '0px 1px 2px rgba(60,50,20,0.04), 0px 10px 28px rgba(60,50,20,0.08)',
     },
     tabs: { width: '100%', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
     pillStacked: { paddingVertical: theme.space.sm, gap: theme.space.xs },
@@ -267,7 +265,7 @@ const styles = themedStyles(() =>
     add: {
       alignItems: 'center',
       justifyContent: 'center',
-      boxShadow: '0px 10px 22px rgba(16,32,51,0.28)',
+      boxShadow: '0px 6px 16px rgba(252,123,94,0.38)',
     },
   })
 );

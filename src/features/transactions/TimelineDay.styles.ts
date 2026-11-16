@@ -19,7 +19,7 @@ export const styles = themedStyles(() =>
     day: { marginTop: 12 },
     // Home's list card. It does not clip (Home's does): a held line is lifted out of the card with a shadow, and a
     // clipped card would cut that off; the rows round their own pressed tint instead.
-    lane: { ...h.card, paddingHorizontal: 12, overflow: 'visible' },
+    lane: { ...h.card, overflow: 'visible' },
     // The chart's picked day: its heading sits on a soft tint, so the list answers the tap.
     headOn: { borderRadius: 10 },
     // Between two lines of the day: across the whole row, as Home's hairline.

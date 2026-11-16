@@ -301,7 +301,7 @@ export function HomeComingUp({
 
 const styles = themedStyles(() =>
   StyleSheet.create({
-    card: { ...h.card, paddingHorizontal: 12, paddingBottom: 6 },
+    card: { ...h.card, paddingBottom: 6 },
     chips: {
       flexDirection: 'row',
       flexWrap: 'wrap',

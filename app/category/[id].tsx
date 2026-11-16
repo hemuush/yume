@@ -20,7 +20,7 @@ import { useScreenLoad } from '@/lib/useScreenLoad';
 import { theme } from '@/constants/theme';
 import { SkyHeader, HeaderSummary } from '@/features/home/SkyHeader';
 import { ListCard, SummaryCard, SummaryFacts, SummaryTop, summaryFigure } from '@/components/SummaryCard';
-import { SCREEN } from '@/components/screenStyles';
+import { SCREEN, flatSection } from '@/components/screenStyles';
 import { HomeWallpaper } from '@/features/home/HomeWallpaper';
 import { useAccent } from '@/theme/AccentContext';
 import ReanimatedAnimated from 'react-native-reanimated';
@@ -436,21 +436,17 @@ const styles = themedStyles(() =>
       fontFamily: theme.font.body,
       fontSize: 12,
       color: theme.colors.incomeText,
-      paddingHorizontal: 2,
     },
     heroAction: { marginHorizontal: SCREEN.gutter, marginTop: 12 },
     noLimit: {
-      marginHorizontal: SCREEN.gutter,
+      ...flatSection(),
+      marginHorizontal: 2,
       flexDirection: 'row',
       alignItems: 'center',
       gap: 10,
       minHeight: 44,
       paddingHorizontal: 14,
       paddingVertical: 11,
-      borderRadius: theme.radius.xl,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.colors.borderSoft,
-      backgroundColor: theme.colors.surface,
     },
     noLimitText: {
       flex: 1,

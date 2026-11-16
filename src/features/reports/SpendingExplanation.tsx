@@ -13,6 +13,7 @@ import { noBreak } from '@/lib/keepTogether';
 import { router } from 'expo-router';
 import { InsightRow, InsightDisclosure, insight } from '@/components/InsightCard';
 import { themedStyles } from '@/theme/themedStyles';
+import { flatSection } from '@/components/screenStyles';
 
 /** "1 Oct – 23 Oct vs 1 Sep – 23 Sep"; years are added only when the two periods are not in the same one. */
 function comparedLabel(ranges: { current: DateRange; previous: DateRange }): string {
@@ -168,16 +169,7 @@ function EffectRow({ label, value, detail }: { label: string; value: string; det
 
 const styles = themedStyles(() =>
   StyleSheet.create({
-    section: {
-      gap: 4,
-      paddingHorizontal: 14,
-      paddingVertical: 12,
-      marginTop: 10,
-      borderRadius: theme.radius.xl,
-      backgroundColor: theme.colors.surface,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.colors.borderSoft,
-    },
+    section: { ...flatSection(), gap: 4, paddingHorizontal: 14, paddingVertical: 12, marginTop: 10 },
     heading: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.textPrimary },
     change: {
       fontFamily: theme.font.body,

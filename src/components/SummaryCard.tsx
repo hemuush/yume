@@ -24,7 +24,7 @@ const TONE = themedValue<Record<FactTone, string>>(() => ({
   warn: theme.colors.warnInk,
 }));
 
-/** The card itself: surface fill, soft border and a lifted shadow, on the screen gutter under the header. */
+/** The summary section a screen leads with: figures on the paper between two hairlines, under the header. */
 export function SummaryCard({
   children,
   style,
@@ -129,20 +129,18 @@ export const summaryNote = themedValue(() => ({
 const styles = themedStyles(() =>
   StyleSheet.create({
     card: {
-      marginHorizontal: SCREEN.gutter,
       marginTop: theme.layout.screenTopGap,
-      padding: 14,
+      paddingVertical: 14,
+      // The figures inside have 2dp of their own, so 12 here and the 2dp margin put them on the 16dp gutter.
+      paddingHorizontal: SCREEN.rowInset,
       gap: 12,
-      boxShadow: '0px 1px 2px rgba(18,19,15,0.04), 0px 8px 24px rgba(18,19,15,0.05)',
       overflow: 'visible',
     },
     list: {
-      marginHorizontal: SCREEN.gutter,
-      backgroundColor: theme.colors.surface,
-      borderRadius: theme.radius.xl,
-      borderWidth: StyleSheet.hairlineWidth,
+      marginHorizontal: SCREEN.gutter - SCREEN.rowInset,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderBottomWidth: StyleSheet.hairlineWidth,
       borderColor: theme.colors.borderSoft,
-      overflow: 'hidden',
     },
     top: {
       flexDirection: 'row',
@@ -151,7 +149,7 @@ const styles = themedStyles(() =>
       justifyContent: 'space-between',
       columnGap: 12,
       rowGap: 4,
-      paddingHorizontal: 2,
+      paddingHorizontal: 0,
     },
     topMain: { flexShrink: 1, minWidth: 0 },
     label: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
@@ -168,7 +166,7 @@ const styles = themedStyles(() =>
       color: theme.colors.textMuted,
       textAlign: 'right',
     },
-    facts: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 12, rowGap: 8, paddingHorizontal: 2 },
+    facts: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 12, rowGap: 8, paddingHorizontal: 0 },
     fact: { flexGrow: 1, minWidth: 0 },
     factLabel: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
     factValue: {

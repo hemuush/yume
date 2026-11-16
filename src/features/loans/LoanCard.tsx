@@ -15,7 +15,7 @@ import { theme } from '@/constants/theme';
 import { payoffMonthShort } from '@/lib/loanPayoff';
 import type { LoanProgress } from '@/db/loans';
 import { loanBarTone, loanGlyph, loanIcon, loanTint } from './loanIdentity';
-import { SCREEN } from '@/components/screenStyles';
+import { flatSection } from '@/components/screenStyles';
 import { DUE_SOON_DAYS } from '@/lib/dueDate';
 import { daysUntilIsoDate, toLocalIsoDate } from '@/lib/date';
 
@@ -170,15 +170,7 @@ export function LoanCard({
 const styles = themedStyles(() =>
   StyleSheet.create({
     // Flat supporting surface; identity colour is confined to the icon and progress.
-    card: {
-      marginHorizontal: SCREEN.gutter,
-      marginBottom: 12,
-      padding: 14,
-      borderRadius: theme.radius.xl,
-      backgroundColor: theme.colors.surface,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.colors.borderSoft,
-    },
+    card: { ...flatSection(), marginHorizontal: 2, marginBottom: 12, padding: 14 },
     head: { flexDirection: 'row', alignItems: 'center', gap: 12 },
     icon: {
       width: 34,

@@ -13,7 +13,7 @@ import { themeInk } from '@/theme/interactionColors';
 import { formatMoney, toMinor } from '@/lib/money';
 import { errorMessage } from '@/lib/errorMessage';
 import { theme } from '@/constants/theme';
-import { SCREEN } from '@/components/screenStyles';
+import { SCREEN, flatSection } from '@/components/screenStyles';
 import { useSaveOnce } from '@/lib/useSaveOnce';
 import { themedStyles } from '@/theme/themedStyles';
 
@@ -236,17 +236,13 @@ const s = themedStyles(() =>
   StyleSheet.create({
     // The flat summary card the other screens lead with.
     card: {
-      marginHorizontal: SCREEN.gutter,
+      ...flatSection(),
+      marginHorizontal: SCREEN.gutter - SCREEN.rowInset,
       marginTop: 12,
       paddingHorizontal: 14,
       paddingTop: 12,
       paddingBottom: 4,
       gap: 8,
-      borderRadius: 22,
-      backgroundColor: theme.colors.surface,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.colors.borderSoft,
-      boxShadow: '0px 1px 2px rgba(18,19,15,0.04), 0px 8px 24px rgba(18,19,15,0.05)',
     },
     title: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.textPrimary },
     top: {
@@ -293,7 +289,7 @@ const s = themedStyles(() =>
       backgroundColor: theme.colors.trayTrack,
     },
     segment: { flexBasis: 0, height: 8 },
-    facts: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 12, rowGap: 8, paddingHorizontal: 2 },
+    facts: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 12, rowGap: 8, paddingHorizontal: 0 },
     fact: { flexGrow: 1, minWidth: 0 },
     factLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
     dot: { width: 8, height: 8, borderRadius: 4 },

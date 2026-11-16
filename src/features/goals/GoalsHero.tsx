@@ -63,13 +63,12 @@ export function GoalsHero({ totals }: { totals: GoalsTotals }) {
 const styles = themedStyles(() =>
   StyleSheet.create({
     hero: {
-      marginHorizontal: SCREEN.gutter,
+      marginHorizontal: SCREEN.gutter - SCREEN.rowInset,
       marginTop: 0,
       marginBottom: 12,
       paddingHorizontal: 14,
       paddingVertical: 12,
       gap: 8,
-      boxShadow: '0px 1px 2px rgba(18,19,15,0.04), 0px 8px 24px rgba(18,19,15,0.05)',
       overflow: 'visible',
     },
     top: {

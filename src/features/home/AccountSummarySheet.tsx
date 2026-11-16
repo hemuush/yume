@@ -33,6 +33,7 @@ import { InvestmentPanel, NextSip } from '@/features/investments/InvestmentPanel
 import { UpdateValueSheet } from '@/features/investments/UpdateValueSheet';
 import { toLocalIsoDate } from '@/lib/date';
 import { themedStyles } from '@/theme/themedStyles';
+import { flatSection } from '@/components/screenStyles';
 
 /**
  * Read-only peek at one account: balance, in/out bars (real vs own-account transfers), net, bill, entries.
@@ -539,15 +540,7 @@ const styles = themedStyles(() =>
       minWidth: 92,
       textAlign: 'right',
     },
-    latest: {
-      marginTop: 8,
-      marginHorizontal: -4,
-      backgroundColor: theme.colors.surface,
-      borderRadius: theme.radius.xl2,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.colors.borderSoft,
-      overflow: 'hidden',
-    },
+    latest: { ...flatSection(), marginTop: 8, marginHorizontal: -4, overflow: 'hidden' },
     empty: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textMuted, marginTop: 8 },
     seeAll: {
       minHeight: 48,

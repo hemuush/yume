@@ -3,6 +3,7 @@ import { theme } from '@/constants/theme';
 import { EYEBROW } from '@/constants/textStyles';
 import { GLASS } from '@/components/Glass';
 import { themedStyles } from '@/theme/themedStyles';
+import { flatSection } from '@/components/screenStyles';
 
 // Shared by the Transactions screen and its modals/rows (FilterModal, TransactionRow,
 // TransactionDetailModal).
@@ -123,13 +124,11 @@ export const styles = themedStyles(() =>
     // The selected chart amount can extend past its first/last column.
     // Compact: Spent, Money in and Left side by side as label-over-value figures, none of them a hero.
     sumCard: {
-      marginHorizontal: 16,
+      marginHorizontal: 2,
       marginTop: 12,
       paddingHorizontal: 14,
       paddingTop: 14,
       paddingBottom: 14,
-      // One lifted card over a list of flat ones. It is a single element, so the shadow costs nothing in scrolling.
-      boxShadow: '0px 1px 2px rgba(18,19,15,0.04), 0px 8px 24px rgba(18,19,15,0.05)',
       overflow: 'visible',
     },
     // The same content inside Insights: the sheet is the surface, so no card of its own.
@@ -356,16 +355,7 @@ export const styles = themedStyles(() =>
     deleteBtnAsk: { backgroundColor: theme.colors.expenseText, borderColor: theme.colors.expenseText },
     deleteAskText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.white },
     // A split part's detail: the whole payment, this part in bold.
-    splitCard: {
-      marginBottom: 10,
-      backgroundColor: theme.colors.surface,
-      borderRadius: theme.radius.xl2,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.colors.borderSoft,
-      paddingHorizontal: 14,
-      paddingVertical: 12,
-      gap: 8,
-    },
+    splitCard: { ...flatSection(), marginBottom: 10, paddingHorizontal: 14, paddingVertical: 12, gap: 8 },
     splitCardTitle: { ...EYEBROW },
     splitPart: {
       flexDirection: 'row',

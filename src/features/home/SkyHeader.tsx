@@ -28,8 +28,10 @@ import { themedStyles } from '@/theme/themedStyles';
 /** The title row's height; the band keeps just this row (plus BAR_PAD) once collapsed. */
 const ROW = HEADER.actionSize;
 const BAR_PAD = 6;
-/** The title steps down from 22 to 17 as the header collapses. */
-const TITLE_SCALE = 17 / 22;
+/** The large title: 34 on a tab's own screen, 28 on a screen opened from another. */
+const TITLE_SIZE = { root: 34, pushed: 28 } as const;
+/** Where the title ends up when the header collapses, whatever size it started at. */
+const COLLAPSED_TITLE_SIZE = 18;
 
 /** Shared title/actions header. Optional collapse pins the title and reveals the summary/accessory. */
 export function SkyHeader({
@@ -64,6 +66,8 @@ export function SkyHeader({
   const insets = useSafeAreaInsets();
   const reduce = useReduceMotion();
   const top = insets.top + HEADER.topGap;
+  const titleSize = showBack ? TITLE_SIZE.pushed : TITLE_SIZE.root;
+  const titleScale = COLLAPSED_TITLE_SIZE / titleSize;
 
   // Measured, not hardcoded, so a larger system font still collapses to exactly the title row.
   const fallbackY = useSharedValue(0);
@@ -112,7 +116,7 @@ export function SkyHeader({
     return { transform: [{ translateY: shift.value }] };
   });
   const titleStyle = useAnimatedStyle(() => {
-    const s = reduce ? 1 : interpolate(progress(), [0, 1], [1, TITLE_SCALE]);
+    const s = reduce ? 1 : interpolate(progress(), [0, 1], [1, titleScale]);
     return { transform: [{ scale: s }] };
   });
   const fadeStyle = useAnimatedStyle(() => {
@@ -123,7 +127,7 @@ export function SkyHeader({
   const summaryStyle = useAnimatedStyle(() => {
     const p = progress();
     const t = interpolate(p, [0.55, 0.95], [0, 1], Extrapolation.CLAMP);
-    const shrink = reduce ? 0 : titleWidth.value * (1 - TITLE_SCALE);
+    const shrink = reduce ? 0 : titleWidth.value * (1 - titleScale);
     return { opacity: t, transform: [{ translateX: -shrink + (reduce ? 0 : (1 - t) * 6) }] };
   });
   const accessoryStyle = useAnimatedStyle(() => {
@@ -167,7 +171,11 @@ export function SkyHeader({
           <View style={styles.titleBlock}>
             <ReanimatedAnimated.Text
               maxFontSizeMultiplier={MAX_FONT_SCALE}
-              style={[styles.title, titleStyle]}
+              style={[
+                styles.title,
+                { fontSize: titleSize, lineHeight: Math.round(titleSize * 1.2) },
+                titleStyle,
+              ]}
               accessibilityRole="header"
               numberOfLines={1}
               onLayout={(e) => {
@@ -238,7 +246,6 @@ const styles = themedStyles(() =>
     actions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
     title: {
       fontFamily: theme.font.roundedBold,
-      fontSize: theme.typeSize.title,
       color: theme.colors.ink,
       transformOrigin: 'left center',
       // Never squeezed by what sits beside it: even a fraction of a point less than its text needs cuts the last

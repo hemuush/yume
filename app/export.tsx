@@ -30,6 +30,7 @@ import { openPeriod, previewFor, stepPeriod } from '@/features/export/exportChoi
 import { withPressed } from '@/lib/pressed';
 import { shade } from '@/lib/color';
 import { themedStyles } from '@/theme/themedStyles';
+import { flatSection } from '@/components/screenStyles';
 
 type Format = 'pdf' | 'excel';
 
@@ -257,15 +258,12 @@ const styles = themedStyles(() =>
     label: SECTION_TITLE,
     formats: { gap: 10 },
     format: {
+      ...flatSection(),
       flexDirection: 'row',
       alignItems: 'center',
       padding: 14,
       gap: 12,
       minHeight: 86,
-      borderRadius: theme.radius.xl,
-      backgroundColor: theme.colors.surface,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.colors.borderSoft,
     },
     formatIcon: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
     formatText: { flex: 1, minWidth: 0, gap: 4 },

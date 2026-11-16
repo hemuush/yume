@@ -99,7 +99,7 @@ const s = themedStyles(() =>
   StyleSheet.create({
     block: { marginBottom: 10 },
     card: { ...h.card, marginHorizontal: 0 },
-    row: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 12, paddingVertical: 8 },
+    row: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 0, paddingVertical: 8 },
     mark: {
       width: MARK,
       height: MARK,

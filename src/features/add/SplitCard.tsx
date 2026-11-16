@@ -8,6 +8,7 @@ import { categorySentence, parentNameOf } from '@/lib/categoryLabel';
 import { Category } from '@/types';
 import { DraftPart, partAmounts, splitProblem, splitProblemText } from './splitDraft';
 import { themedStyles } from '@/theme/themedStyles';
+import { flatSection } from '@/components/screenStyles';
 
 /**
  * How a payment divides, as one bar: a segment per part, as wide as its share, in its category's colour.
@@ -131,14 +132,7 @@ const styles = themedStyles(() =>
     },
     wrap: { marginBottom: 18 },
     // Frosted, like the category card it stands in for.
-    card: {
-      backgroundColor: theme.colors.surface,
-      borderRadius: theme.radius.xl2,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.colors.borderSoft,
-      padding: 16,
-      gap: 12,
-    },
+    card: { ...flatSection(), padding: 16, gap: 12 },
     head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
     eyebrow: EYEBROW,
     edit: {

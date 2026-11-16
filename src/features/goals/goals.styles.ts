@@ -1,6 +1,6 @@
 import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
-import { SCREEN } from '@/components/screenStyles';
+import { SCREEN, flatSection } from '@/components/screenStyles';
 import { themedStyles } from '@/theme/themedStyles';
 
 // Shared by the Savings Goals screen and its GoalCard / AddGoalModal /
@@ -27,25 +27,9 @@ export const styles = themedStyles(() =>
       lineHeight: 16,
     },
 
-    card: {
-      marginHorizontal: 16,
-      marginBottom: 12,
-      padding: 16,
-      borderRadius: theme.radius.xl2,
-      backgroundColor: theme.colors.surface,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.colors.borderSoft,
-      boxShadow: 'none',
-    },
+    card: { ...flatSection(), marginHorizontal: 0, marginBottom: 12, padding: 16 },
     // The one card holding every goal row.
-    list: {
-      marginHorizontal: 16,
-      borderRadius: theme.radius.xl,
-      backgroundColor: theme.colors.surface,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.colors.borderSoft,
-      overflow: 'hidden',
-    },
+    list: { ...flatSection(), marginHorizontal: 16, overflow: 'hidden' },
     skeletonRow: { padding: 14, gap: 8 },
     skeletonDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.divider },
     cardArchived: { opacity: 0.6 },

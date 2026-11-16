@@ -48,8 +48,6 @@ const styles = themedStyles(() =>
     card: {
       ...h.card,
       marginTop: 12,
-      borderWidth: 1,
-      boxShadow: '0px 1px 2px rgba(18,19,15,0.04), 0px 8px 24px rgba(18,19,15,0.05)',
     },
     top: {
       flexDirection: 'row',

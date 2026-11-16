@@ -2,7 +2,7 @@ import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
 import { listScreenStyles } from '@/features/shared/listScreenStyles';
 import { SECTION_TITLE, SECTION_GAP } from '@/constants/textStyles';
-import { SCREEN } from '@/components/screenStyles';
+import { SCREEN, flatSection } from '@/components/screenStyles';
 import { themedStyles } from '@/theme/themedStyles';
 
 /** Maximum choices per row; the editor keeps every touch target at least 44dp. */
@@ -49,15 +49,7 @@ export const styles = themedStyles(() =>
       fontSize: 11,
       color: theme.colors.textMuted,
     },
-    emptyCard: {
-      marginHorizontal: SCREEN.gutter,
-      padding: 20,
-      gap: 12,
-      borderRadius: theme.radius.xl2,
-      backgroundColor: theme.colors.surface,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.colors.borderSoft,
-    },
+    emptyCard: { ...flatSection(), marginHorizontal: -4, padding: 20, gap: 12 },
     emptyTitle: { fontFamily: theme.font.roundedBold, fontSize: 18, color: theme.colors.textPrimary },
     emptyText: {
       fontFamily: theme.font.body,
@@ -73,13 +65,7 @@ export const styles = themedStyles(() =>
     gridRow: { flexDirection: 'row', marginHorizontal: -4 },
     cell: { width: `${100 / TILE_COLUMNS}%`, paddingHorizontal: 4 },
     panelWrap: { marginTop: 10 },
-    panel: {
-      padding: 14,
-      borderRadius: theme.radius.xl,
-      backgroundColor: theme.colors.surface,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.colors.borderSoft,
-    },
+    panel: { ...flatSection(), padding: 14 },
     panelHeader: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 10 },
     panelHeading: { flexGrow: 1, flexBasis: 140, minWidth: 0, gap: 4 },
     parentEdit: {
@@ -144,16 +130,7 @@ export const styles = themedStyles(() =>
       marginTop: 14,
       lineHeight: 17,
     },
-    tile: {
-      flex: 1,
-      minHeight: 126,
-      paddingHorizontal: 10,
-      paddingVertical: 12,
-      borderRadius: theme.radius.xl,
-      backgroundColor: theme.colors.surface,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.colors.borderSoft,
-    },
+    tile: { ...flatSection(), flex: 1, minHeight: 126, paddingHorizontal: 10, paddingVertical: 12 },
     tileSelected: { borderWidth: 1, borderColor: theme.colors.textSecondary },
     tileTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 4 },
     tileCount: {

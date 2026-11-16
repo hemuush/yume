@@ -3,7 +3,6 @@
  * data lands instead of reflowing: the Spent card, the filter row, then days with a heading above a card of entries.
  */
 import { StyleSheet } from 'react-native';
-import { theme } from '@/constants/theme';
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
 
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
@@ -45,7 +44,12 @@ it('has the filter row (the Filters button and four choices) and two days as Hom
     styles.filter((s) => s.width === 44 && s.alignItems === 'center' && s.height === undefined)
   ).toHaveLength(5);
   expect(
-    styles.filter((s) => s.paddingHorizontal === 12 && s.borderRadius === theme.radius.xl2)
+    styles.filter(
+      (s) =>
+        s.marginHorizontal === 2 &&
+        s.borderTopWidth === StyleSheet.hairlineWidth &&
+        s.borderBottomWidth === StyleSheet.hairlineWidth
+    )
   ).toHaveLength(2);
   expect(styles.filter((s) => s.minHeight === 29)).toHaveLength(2);
   // 3 + 2 entries, each with a 40 dp category disc like Home's.

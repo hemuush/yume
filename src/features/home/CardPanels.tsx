@@ -9,6 +9,7 @@ import { dayMonth } from '@/lib/dateLabels';
 import type { AccountCardCycle } from '@/db/cardCycles';
 import type { Account } from '@/types';
 import { themedStyles } from '@/theme/themedStyles';
+import { flatSection } from '@/components/screenStyles';
 
 /** How much of a credit card's limit is used, as a bar and one line; nothing for a card with no limit. */
 export function CardUsageBar({ account, money }: { account: Account; money: (minor: number) => string }) {
@@ -185,15 +186,7 @@ const styles = themedStyles(() =>
     usageBold: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
     note: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textMuted, marginTop: 8 },
     action: { marginTop: 10 },
-    lines: {
-      marginTop: 8,
-      marginHorizontal: -4,
-      backgroundColor: theme.colors.surface,
-      borderRadius: theme.radius.xl2,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.colors.borderSoft,
-      overflow: 'hidden',
-    },
+    lines: { ...flatSection(), marginTop: 8, marginHorizontal: -4, overflow: 'hidden' },
     billLine: {
       flexDirection: 'row',
       flexWrap: 'wrap',

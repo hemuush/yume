@@ -132,7 +132,7 @@ const budgetSpoken = (b: BudgetCover) =>
 
 const styles = themedStyles(() =>
   StyleSheet.create({
-    card: { ...h.card, marginHorizontal: 0, marginBottom: 10, paddingHorizontal: 14, paddingVertical: 12 },
+    card: { ...h.card, marginHorizontal: 0, marginBottom: 10, paddingHorizontal: 0, paddingVertical: 12 },
     // Compact: Spent leads at 20, Income and Kept beside it at 14, each with one small line under it.
     figure: {
       fontFamily: theme.font.bodyMedium,

@@ -11,6 +11,7 @@ import { useAccent } from '@/theme/AccentContext';
 import { themeInk } from '@/theme/interactionColors';
 import { DueGroup, PlanDueItem, PlanRoute, dueTone } from './planOverview';
 import { themedStyles } from '@/theme/themedStyles';
+import { flatSection } from '@/components/screenStyles';
 
 const KIND_LABEL: Record<PlanDueItem['kind'], string> = {
   emi: 'EMI',
@@ -195,15 +196,7 @@ export function ComingUpSection({
 
 const s = themedStyles(() =>
   StyleSheet.create({
-    card: {
-      marginHorizontal: 16,
-      borderRadius: theme.radius.xl,
-      backgroundColor: theme.colors.surface,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.colors.borderSoft,
-      overflow: 'hidden',
-      paddingBottom: 4,
-    },
+    card: { ...flatSection(), marginHorizontal: 16, overflow: 'hidden', paddingBottom: 4 },
     dayHead: {
       flexDirection: 'row',
       flexWrap: 'wrap',

@@ -71,6 +71,7 @@ const styles = themedStyles(() =>
     // The real card: 16 dp of side padding and 12 above and below, the figure and its chip on the left and the lettered
     // bars on the right.
     strip: {
+      marginHorizontal: 0,
       marginTop: 8,
       minHeight: 98,
       paddingHorizontal: 16,
@@ -95,7 +96,7 @@ const styles = themedStyles(() =>
     day: { marginTop: 12 },
     // The filter row's own 10 dp gap sits above the first day.
     firstDay: { marginTop: 22 },
-    lane: { ...screenStyles.card, paddingHorizontal: 12 },
+    lane: { ...screenStyles.card },
     // Home's day heading: 12 dp above and 2 below a line of small capitals.
     head: {
       flexDirection: 'row',

@@ -13,6 +13,8 @@ const LIGHT = {
   surfaceAlt: '#F6F1E3',
 
   ink: '#16170F',
+  // The colour of text or an icon on an ink fill (a picked chip, the dark toast): the paper itself.
+  onInk: '#FEFBF1',
   inkSoft: '#55564B',
 
   // Sky-blue is the signature accent: the same value as `flatBlue` (account tags), promoted to the lead role.
@@ -26,6 +28,9 @@ const LIGHT = {
   accentTint: '#F1ECFF',
   gold: '#F0E1A8',
   goldTint: '#FBF3E0',
+
+  // The logo's dot: the Add button and the "free to spend" arc, the only warm accent.
+  coral: '#FC7B5E',
 
   income: '#1B7A4F',
   incomeTint: '#DDF2E5',

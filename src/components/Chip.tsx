@@ -1,4 +1,3 @@
-import { selectedFill } from '@/theme/interactionColors';
 import { Animated, Pressable, StyleSheet, View } from 'react-native';
 import { CategoryGlyph } from '@/components/CategoryGlyph';
 import { Text } from '@/components/Text';
@@ -37,8 +36,8 @@ export function Chip({ label, active, onPress, activeBorderColor, icon, iconColo
       style={[
         styles.chip,
         icon && styles.chipWithIcon,
-        // Chosen: a wash of the theme colour with its own edge, not an ink outline.
-        active && !tinted && { backgroundColor: selectedFill(accent), borderColor: selectedFill(accent) },
+        // Chosen: filled with ink, like the picked filter chips on Activity.
+        active && !tinted && { backgroundColor: theme.colors.ink, borderColor: theme.colors.ink },
         tinted && { backgroundColor: softTint(activeBorderColor, 0.1), borderColor: activeBorderColor },
         animatedStyle,
       ]}
@@ -60,7 +59,7 @@ export function Chip({ label, active, onPress, activeBorderColor, icon, iconColo
           <CategoryGlyph name={icon} size={13} color={theme.colors.ink} />
         </View>
       )}
-      <Text style={[styles.text, active && styles.textActive]}>
+      <Text style={[styles.text, active && styles.textActive, active && !tinted && styles.textOnInk]}>
         {label}
         {more ? ' ›' : ''}
       </Text>
@@ -91,5 +90,6 @@ const styles = themedStyles(() =>
       flexShrink: 1,
     },
     textActive: { color: theme.colors.textPrimary, fontFamily: theme.font.bodyMedium },
+    textOnInk: { color: theme.colors.onInk },
   })
 );
