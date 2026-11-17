@@ -6,7 +6,7 @@ Yume targets Android with Expo SDK 58, React Native 0.88 and React 19.3.0. Read 
 
 | Setting            | Source and value                                                                                |
 | ------------------ | ----------------------------------------------------------------------------------------------- |
-| Expo owner/project | [app.json](app.json): `@hemant.shrma.3004/yume`, project `d67a3e31-1190-4b0c-9eac-cbc12b108e13` |
+| Expo owner/project | [app.json](app.json): `@hemant.shrma.3004/yume`, project `e0f237e5-68f0-40a7-a9ef-18a41eb5c657` |
 | Android identity   | `com.yume.app`, app version `1.0.0`, local version code `1`                                     |
 | Version policy     | [eas.json](eas.json): local versions, `autoIncrement: false` in both profiles                   |
 | Preview            | Internal installable APK, `arm64-v8a` only                                                      |
