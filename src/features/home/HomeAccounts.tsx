@@ -7,6 +7,7 @@ import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
 import { accountTypeLabel } from '@/lib/account';
 import { withPressed, withPressedTint } from '@/lib/pressed';
+import { haptics } from '@/lib/haptics';
 import { useAccent } from '@/theme/AccentContext';
 import { Section } from '@/components/Section';
 import { screenStyles as h } from '@/components/screenStyles';
@@ -42,7 +43,10 @@ export function HomeAccounts({
   if (accounts.length === 0) {
     return (
       <Pressable
-        onPress={onAddAccount}
+        onPress={() => {
+          haptics.tap();
+          onAddAccount();
+        }}
         style={withPressed(styles.wrap)}
         accessibilityRole="button"
         accessibilityLabel="Add an account"
@@ -100,7 +104,10 @@ export function HomeAccounts({
           <AccountTile key={a.id} account={a} width={width} accent={accent} onOpen={onOpenAccount} />
         ))}
         <Pressable
-          onPress={onAddAccount}
+          onPress={() => {
+            haptics.tap();
+            onAddAccount();
+          }}
           accessibilityRole="button"
           accessibilityLabel="Add an account"
           style={withPressed([styles.tile, styles.addTile, { width: Math.round(width * 0.72) }])}
@@ -127,7 +134,10 @@ const AccountTile = memo(function AccountTile({
 }) {
   return (
     <Pressable
-      onPress={() => onOpen(a)}
+      onPress={() => {
+        haptics.tap();
+        onOpen(a);
+      }}
       accessibilityRole="button"
       accessibilityLabel={`${a.name}, ${accountTypeLabel(a)}. Open summary`}
       style={withPressedTint(accent, [styles.tile, { width }])}
@@ -169,12 +179,12 @@ const styles = themedStyles(() =>
     },
     name: {
       fontFamily: theme.font.bodyMedium,
-      fontSize: 12,
+      fontSize: 11,
       letterSpacing: 0.2,
-      color: theme.colors.textSecondary,
+      color: theme.colors.textMuted,
     },
     balance: {
-      marginTop: 6,
+      marginTop: 4,
       fontFamily: theme.font.bodyBold,
       fontSize: 16,
       lineHeight: 21,

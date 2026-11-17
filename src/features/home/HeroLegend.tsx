@@ -40,8 +40,8 @@ export function HeroLegend({ items }: { items: LegendItem[] }) {
             accessibilityLabel={`${it.label}, ${amount}, ${it.share}`}
             style={[styles.row, index > 0 && styles.rowDivider]}
           >
-            <View style={[styles.dot, { backgroundColor: it.color }]} />
-            <Text style={styles.label} numberOfLines={1}>
+            <View style={[styles.dot, { backgroundColor: it.color }, it.selected && styles.dotSelected]} />
+            <Text style={[styles.label, it.selected && styles.labelSelected]} numberOfLines={1}>
               {it.label}
             </Text>
             <Text
@@ -53,7 +53,7 @@ export function HeroLegend({ items }: { items: LegendItem[] }) {
             >
               {amount}
             </Text>
-            <Text style={styles.share} numberOfLines={1}>
+            <Text style={[styles.share, it.selected && styles.shareSelected]} numberOfLines={1}>
               {it.share}
             </Text>
           </Container>
@@ -69,6 +69,7 @@ const styles = themedStyles(() =>
     row: { minHeight: 34, paddingVertical: 5, flexDirection: 'row', alignItems: 'center', gap: 8 },
     rowDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.borderSoft },
     dot: { width: 7, height: 7, borderRadius: 3.5 },
+    dotSelected: { transform: [{ scale: 1.25 }] },
     label: {
       flex: 1,
       minWidth: 0,
@@ -76,6 +77,7 @@ const styles = themedStyles(() =>
       fontSize: 13,
       color: theme.colors.textPrimary,
     },
+    labelSelected: { fontFamily: theme.font.bodyBold },
     amount: {
       flexShrink: 1,
       fontFamily: theme.font.bodyMedium,
@@ -93,5 +95,6 @@ const styles = themedStyles(() =>
       color: theme.colors.textMuted,
       fontVariant: ['tabular-nums'],
     },
+    shareSelected: { color: theme.colors.textPrimary, fontFamily: theme.font.bodyMedium },
   })
 );

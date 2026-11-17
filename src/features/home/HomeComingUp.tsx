@@ -319,9 +319,9 @@ const styles = themedStyles(() =>
     chips: {
       flexDirection: 'row',
       flexWrap: 'wrap',
-      gap: 8,
-      paddingTop: 12,
-      paddingBottom: 8,
+      gap: 6,
+      paddingTop: 10,
+      paddingBottom: 6,
       paddingHorizontal: 14,
     },
     // Sized so All, Payments, Budgets and Goals share one line on a 360 dp phone; the same weight selected or not,
