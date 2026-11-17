@@ -6,6 +6,7 @@ import { theme } from '@/constants/theme';
 import { usePressScale } from '@/lib/usePressScale';
 import { useAccent } from '@/theme/AccentContext';
 import { themeInk } from '@/theme/interactionColors';
+import { haptics } from '@/lib/haptics';
 import { themedStyles } from '@/theme/themedStyles';
 
 const ACTIONS: {
@@ -28,7 +29,10 @@ function Action({ type, label, icon, ink }: (typeof ACTIONS)[number] & { ink: st
   const primary = type === 'expense';
   return (
     <Pressable
-      onPress={() => pushOnce(`/add-transaction?type=${type}`)}
+      onPress={() => {
+        haptics.tap();
+        pushOnce(`/add-transaction?type=${type}`);
+      }}
       onPressIn={onPressIn}
       onPressOut={onPressOut}
       style={[
