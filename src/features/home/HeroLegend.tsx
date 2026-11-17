@@ -65,31 +65,31 @@ export function HeroLegend({ items }: { items: LegendItem[] }) {
 
 const styles = themedStyles(() =>
   StyleSheet.create({
-    list: { alignSelf: 'stretch', marginTop: 12 },
-    row: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 10 },
+    list: { alignSelf: 'stretch', marginTop: 8 },
+    row: { minHeight: 34, paddingVertical: 5, flexDirection: 'row', alignItems: 'center', gap: 8 },
     rowDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.borderSoft },
-    dot: { width: 8, height: 8, borderRadius: 4 },
+    dot: { width: 7, height: 7, borderRadius: 3.5 },
     label: {
       flex: 1,
       minWidth: 0,
       fontFamily: theme.font.bodyMedium,
-      fontSize: 15,
+      fontSize: 13,
       color: theme.colors.textPrimary,
     },
     amount: {
       flexShrink: 1,
       fontFamily: theme.font.bodyMedium,
-      fontSize: 15,
+      fontSize: 13,
       color: theme.colors.textPrimary,
       fontVariant: ['tabular-nums'],
       textAlign: 'right',
     },
     amountOn: { fontFamily: theme.font.bodyBold },
     share: {
-      minWidth: 34,
+      minWidth: 32,
       textAlign: 'right',
       fontFamily: theme.font.body,
-      fontSize: 12,
+      fontSize: 11,
       color: theme.colors.textMuted,
       fontVariant: ['tabular-nums'],
     },

@@ -378,7 +378,8 @@ const styles = themedStyles(() =>
     label: {
       alignSelf: 'stretch',
       textAlign: 'center',
-      minHeight: 16,
+      minHeight: 18,
+      lineHeight: 15,
       fontFamily: theme.font.bodyMedium,
       fontSize: 11,
       color: theme.colors.textMuted,

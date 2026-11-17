@@ -62,17 +62,17 @@ export function HeroActions() {
 
 const styles = themedStyles(() =>
   StyleSheet.create({
-    row: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+    row: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
     wrap: { flexGrow: 1, flexBasis: 88 },
     action: {
-      minHeight: 50,
-      paddingHorizontal: 10,
-      paddingVertical: 10,
+      minHeight: 46,
+      paddingHorizontal: 8,
+      paddingVertical: 8,
       borderRadius: theme.radius.pill,
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
-      gap: 7,
+      gap: 6,
       backgroundColor: theme.colors.surface,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: theme.colors.borderSoft,
@@ -85,7 +85,7 @@ const styles = themedStyles(() =>
     label: {
       fontFamily: theme.font.bodyMedium,
       flexShrink: 1,
-      fontSize: 13,
+      fontSize: 12,
       color: theme.colors.textPrimary,
     },
     labelPrimary: { color: theme.colors.onInk },
