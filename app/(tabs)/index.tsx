@@ -343,7 +343,7 @@ export default function DashboardScreen() {
         scrollEventThrottle={16}
         contentContainerStyle={{
           paddingTop: headerHeight,
-          paddingBottom: tabScrollPad + insets.bottom,
+          paddingBottom: tabScrollPad + insets.bottom + 24,
         }}
         refreshControl={
           <RefreshControl
