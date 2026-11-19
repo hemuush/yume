@@ -385,7 +385,7 @@ const styles = themedStyles(() =>
       gap: 6,
       justifyContent: 'space-between',
     },
-    emptyPortfolio: { padding: 12, color: theme.colors.textMuted, fontSize: 13 },
+    emptyPortfolio: { fontFamily: theme.font.body, padding: 12, color: theme.colors.textMuted, fontSize: 13 },
     portfolioRow: { flexDirection: 'row', alignItems: 'center' },
     portfolioFooter: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.home.edge },
     portfolioMore: { width: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' },

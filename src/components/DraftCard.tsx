@@ -98,7 +98,7 @@ const styles = themedStyles(() =>
       gap: 8,
     },
     ledgerCard: { backgroundColor: theme.colors.home.surface, borderColor: theme.colors.home.edge },
-    ledgerTitle: { fontSize: 13 },
+    ledgerTitle: { fontFamily: theme.font.bodyMedium, fontSize: 13 },
     ledgerAmount: { fontSize: 20, lineHeight: 24, fontFamily: theme.font.bodyMedium },
     identity: {
       flexGrow: 1,

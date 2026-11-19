@@ -64,12 +64,19 @@ export const styles = themedStyles(() =>
     },
     stackCount: { fontFamily: theme.font.bodyBold, fontSize: 11, color: theme.colors.textSecondary },
     entryHead: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6 },
-    name: { ...h.title, fontSize: 13, lineHeight: 18 },
+    name: { ...h.title, fontFamily: theme.font.bodyMedium, fontSize: 13, lineHeight: 18 },
     stackName: { flexShrink: 1 },
-    sub: { ...h.sub, fontSize: 12, lineHeight: 16, marginTop: 2, color: theme.colors.home.secondaryText },
+    sub: {
+      ...h.sub,
+      fontFamily: theme.font.body,
+      fontSize: 12,
+      lineHeight: 16,
+      marginTop: 2,
+      color: theme.colors.home.secondaryText,
+    },
     // Spending reads in ink with its minus; only money in is green. Never shrunk to fit: an amount that shrinks inside
     // a flex column was once drawn a few dp tall on a phone.
-    amount: { ...h.amount, fontSize: 13, lineHeight: 18 },
+    amount: { ...h.amount, fontFamily: theme.font.bodyMedium, fontSize: 13, lineHeight: 18 },
     income: h.income,
     // An open group's entries: the same row, with a dot in the category's colour where the disc is, so their text
     // lines up with the group's own.

@@ -837,7 +837,7 @@ describe('Home’s Recent activity and header, on a lived-in phone', () => {
   });
   afterEach(() => jest.restoreAllMocks());
 
-  it('opens the month Home is showing in Activity from View all, when it is a past month', async () => {
+  it('opens the current or past month Home is showing in Activity from View all', async () => {
     const { router } = require('expo-router');
     const push = jest.spyOn(router, 'push');
     const tree = await open(SCREENS[0][1]);
@@ -846,7 +846,10 @@ describe('Home’s Recent activity and header, on a lived-in phone', () => {
         (n) => n.props.accessibilityLabel === 'View all — Recent activity' && n.props.onPress
       )[0];
     act(() => viewAll().props.onPress());
-    expect(push).toHaveBeenLastCalledWith({ pathname: '/transactions' });
+    expect(push).toHaveBeenLastCalledWith({
+      pathname: '/transactions',
+      params: { month: toLocalIsoDate(new Date()).slice(0, 7) },
+    });
     await step(tree, 'decrement');
     await settle();
     act(() => viewAll().props.onPress());

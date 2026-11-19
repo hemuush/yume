@@ -4,6 +4,7 @@ import Feather from '@expo/vector-icons/Feather';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Appear } from '@/components/Appear';
+import { LoadFade } from '@/components/LoadFade';
 import { CardRowsSkeleton } from '@/components/ListSkeleton';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { SCREEN } from '@/components/screenStyles';
@@ -175,35 +176,37 @@ export default function PlanScreen() {
             </View>
           )
         ) : (
-          <View key={tab}>
-            {tab === 'overview' && (
-              <PlanOverviewTab data={scoped} refreshToken={refreshToken} actions={actions} />
-            )}
-            {tab === 'upcoming' && (
-              <PlanUpcomingTab
-                data={scoped}
-                actions={actions}
-                reload={reload}
-                recurringRefreshRef={recurringRefreshRef}
-                selection={scheduleSelection}
-                onSelectionChange={setScheduleSelection}
-              />
-            )}
-            {tab === 'money' && (
-              <PlanMoneyTab
-                data={scoped}
-                refreshToken={refreshToken}
-                hideAmounts={hideAmounts}
-                actions={actions}
-                focusSection={moneyFocus}
-                onSectionLayout={focusMoneySection}
-                reload={reload}
-              />
-            )}
-            {tab === 'debt' && (
-              <PlanDebtTab data={scoped} actions={actions} refreshToken={refreshToken} reload={reload} />
-            )}
-          </View>
+          <LoadFade loaded>
+            <View key={tab}>
+              {tab === 'overview' && (
+                <PlanOverviewTab data={scoped} refreshToken={refreshToken} actions={actions} />
+              )}
+              {tab === 'upcoming' && (
+                <PlanUpcomingTab
+                  data={scoped}
+                  actions={actions}
+                  reload={reload}
+                  recurringRefreshRef={recurringRefreshRef}
+                  selection={scheduleSelection}
+                  onSelectionChange={setScheduleSelection}
+                />
+              )}
+              {tab === 'money' && (
+                <PlanMoneyTab
+                  data={scoped}
+                  refreshToken={refreshToken}
+                  hideAmounts={hideAmounts}
+                  actions={actions}
+                  focusSection={moneyFocus}
+                  onSectionLayout={focusMoneySection}
+                  reload={reload}
+                />
+              )}
+              {tab === 'debt' && (
+                <PlanDebtTab data={scoped} actions={actions} refreshToken={refreshToken} reload={reload} />
+              )}
+            </View>
+          </LoadFade>
         )}
       </ScrollView>
       <PlanSheets sheets={sheets} data={scoped} hideAmounts={hideAmounts} reload={reload} />
