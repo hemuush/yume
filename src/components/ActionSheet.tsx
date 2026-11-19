@@ -164,7 +164,7 @@ const styles = themedStyles(() =>
     },
     iconDestructive: { backgroundColor: theme.colors.expenseTint },
     ledgerIcon: { width: 32, height: 32, borderRadius: 10, backgroundColor: theme.colors.home.control },
-    ledgerLabel: { fontSize: 13 },
+    ledgerLabel: { fontFamily: theme.font.bodyMedium, fontSize: 13 },
     rowLabel: { flex: 1, fontFamily: theme.font.bodyMedium, fontSize: 15, color: theme.colors.textPrimary },
     rowLabelDestructive: { color: theme.colors.expenseText },
   })

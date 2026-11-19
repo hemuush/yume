@@ -296,7 +296,7 @@ const s = themedStyles(() =>
       paddingBottom: 4,
     },
     headlineCopy: { flexGrow: 1, flexShrink: 1, flexBasis: 110, minWidth: 0, gap: 2 },
-    trailingFigure: { textAlign: 'right', fontSize: 27, lineHeight: 33 },
+    trailingFigure: { fontFamily: theme.font.bodyBold, textAlign: 'right', fontSize: 27, lineHeight: 33 },
     label: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.home.secondaryText },
     figure: {
       fontFamily: theme.font.bodyBold,

@@ -125,6 +125,6 @@ const styles = themedStyles(() =>
     ledgerRow: { backgroundColor: theme.colors.home.control, borderRadius: 18, marginBottom: 8 },
     ledgerTab: { minHeight: 44, paddingVertical: 6, borderRadius: 15 },
     ledgerPicked: { backgroundColor: theme.colors.home.selected },
-    ledgerLabel: { fontSize: 12, color: theme.colors.home.secondaryText },
+    ledgerLabel: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.home.secondaryText },
   })
 );

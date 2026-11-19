@@ -157,7 +157,7 @@ const styles = themedStyles(() =>
     keyCompact: { minHeight: 44 },
     ledgerKey: { borderRadius: theme.radius.md },
     ledgerOperator: { flex: 0.78, backgroundColor: theme.colors.entry.control },
-    ledgerText: { fontSize: 19 },
+    ledgerText: { fontFamily: theme.font.bodyMedium, fontSize: 19 },
     keyText: { fontFamily: theme.font.bodyMedium, fontSize: 22, color: theme.colors.textPrimary },
     keyOperatorText: { fontFamily: theme.font.body, fontSize: 22, color: theme.colors.textSecondary },
   })
