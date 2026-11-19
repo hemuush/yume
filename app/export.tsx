@@ -139,7 +139,7 @@ export default function ExportScreen() {
         {loadError && (
           <ScreenLoadError title="Export" message={loadError} onRetry={() => void reload()} embedded />
         )}
-        <Text style={styles.label}>1. Choose a period</Text>
+        <Text style={styles.label}>Period</Text>
         <View style={styles.card}>
           <SegmentedControl
             options={[
@@ -171,7 +171,7 @@ export default function ExportScreen() {
           </Text>
         </View>
 
-        <Text style={styles.label}>2. Choose a file type</Text>
+        <Text style={styles.label}>File type</Text>
         <View style={styles.formats} accessibilityRole="radiogroup">
           {(
             [
@@ -195,7 +195,7 @@ export default function ExportScreen() {
                 selected: format === choice.value,
                 disabled: busy,
               }}
-              style={withPressed([styles.format])}
+              style={withPressed([styles.format, format === choice.value && styles.formatSelected])}
             >
               <View
                 style={[
@@ -225,9 +225,7 @@ export default function ExportScreen() {
         />
         <Text style={styles.foot}>Choose where to save or share. Nothing is uploaded automatically.</Text>
       </View>
-      <SkyHeader collapse={collapse} title="Export" showBack hideUser wallpaper>
-        <Text style={styles.intro}>Create a report or spreadsheet in two steps.</Text>
-      </SkyHeader>
+      <SkyHeader collapse={collapse} title="Export" showBack hideUser wallpaper />
     </View>
   );
 }
@@ -237,8 +235,6 @@ const styles = themedStyles(() =>
     container: { flex: 1, backgroundColor: theme.colors.background },
     scroll: { flex: 1 },
     content: { paddingHorizontal: 16, gap: 12 },
-    // In the sky header, under the title, as on What-if and Suu's garden.
-    intro: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textSecondary },
     card: {
       ...flatSection(),
       paddingVertical: 14,
@@ -246,15 +242,19 @@ const styles = themedStyles(() =>
     },
     // A step's heading above its block, in the same type as every other section heading.
     label: SECTION_TITLE,
-    formats: { gap: 10 },
+    formats: { gap: 6 },
     format: {
-      ...flatSection(),
+      backgroundColor: theme.colors.surface,
+      borderRadius: theme.radius.md,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.borderSoft,
       flexDirection: 'row',
       alignItems: 'center',
       padding: 14,
       gap: 12,
-      minHeight: 86,
+      minHeight: 64,
     },
+    formatSelected: { backgroundColor: theme.colors.accentTint },
     formatIcon: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
     formatText: { flex: 1, minWidth: 0, gap: 4 },
     formatTitle: { fontFamily: theme.font.bodyBold, fontSize: 15, color: theme.colors.textPrimary },

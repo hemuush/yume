@@ -95,11 +95,7 @@ describe('NeedsYouRow', () => {
     const onPress = jest.fn();
     const tree = await render(emi, { onPress });
     expect(texts(tree)).toContain('Pay');
-    act(() =>
-      tree.root
-        .find((n) => n.props.accessibilityLabel === 'Pay: Home loan EMI' && n.props.onPress)
-        .props.onPress()
-    );
+    act(() => tree.root.find((n) => n.props.accessibilityHint === 'Pay' && n.props.onPress).props.onPress());
     expect(onPress).toHaveBeenCalledTimes(1);
   });
 

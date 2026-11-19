@@ -330,7 +330,6 @@ export function AccountDetailModal({
         }
       />
       <AccountReservations account={account} onNavigate={onClose} />
-      <FormInput label="Name" value={name} onChangeText={setName} placeholder="e.g. HDFC Savings" />
       <Text style={styles.fieldLabel}>Type</Text>
       <View style={styles.chipRow}>
         {ACCOUNT_CHOICES.map((t) => (
@@ -345,6 +344,7 @@ export function AccountDetailModal({
           />
         ))}
       </View>
+      <FormInput label="Name" value={name} onChangeText={setName} placeholder="e.g. HDFC Savings" />
       {choice === 'investment' && (
         <InvestmentFields
           kind={kind}

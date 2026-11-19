@@ -4,7 +4,9 @@ import type { Category } from '@/types';
 
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
 jest.mock('react-native-safe-area-context', () => ({ useSafeAreaInsets: () => ({ top: 0, bottom: 0 }) }));
-jest.mock('@/lib/useCollapsingHeader', () => ({ useCollapsingHeader: () => ({ headerHeight: 0 }) }));
+jest.mock('@/lib/useCollapsingHeader', () => ({
+  useCollapsingHeader: () => ({ headerHeight: 0, scrollRef: require('react').useRef(null) }),
+}));
 jest.mock('@/components/UndoToast', () => ({ useUndoToast: () => ({ show: jest.fn() }) }));
 jest.mock('@/features/home/SkyHeader', () => ({
   SkyHeader: ({ actions }: { actions: unknown }) => actions,
@@ -48,7 +50,7 @@ import { CategorySection, CategoryTile } from './CategorySection';
 import { AddCategoryModal } from './AddCategoryModal';
 import { SheetTabs } from '@/components/SheetTabs';
 import { AddButton } from '@/components/AddButton';
-import { HeaderIconButton } from '@/components/AppHeader';
+import { TextInput } from '@/components/Text';
 
 async function render() {
   let tree!: ReactTestRenderer;
@@ -80,9 +82,42 @@ it('switches category types, counts parents separately and creates in the select
 it('keeps archived categories reachable alongside either type', async () => {
   const tree = await render();
   act(() => tree.root.findByType(SheetTabs).props.onChange('income'));
-  act(() => tree.root.findByType(HeaderIconButton).props.onPress());
+  act(() =>
+    tree.root
+      .find(
+        (node) =>
+          node.props.accessibilityLabel === 'Show archived categories' &&
+          typeof node.props.onPress === 'function'
+      )
+      .props.onPress()
+  );
   expect(tree.root.findAllByType(CategoryTile).some((n) => n.props.category.id === 'Old category')).toBe(
     true
   );
   expect(tree.root.findAllByType(Text).some((n) => n.props.children === 'Archived')).toBe(true);
+  expect(tree.root.findAllByType(CategorySection)).toHaveLength(0);
+  act(() =>
+    tree.root
+      .find(
+        (node) =>
+          node.props.accessibilityLabel === 'Show active categories' &&
+          typeof node.props.onPress === 'function'
+      )
+      .props.onPress()
+  );
+  expect(tree.root.findByType(SheetTabs).props.value).toBe('income');
+});
+
+it('finds a subcategory directly, shows its parent and opens its editor', async () => {
+  const tree = await render();
+  act(() => tree.root.findByType(TextInput).props.onChangeText('COF'));
+  const tile = tree.root.findByType(CategoryTile);
+  expect(tile.props.category.id).toBe('Coffee');
+  expect(tile.props.context).toBe('Food');
+  act(() => tile.props.onPress(tile.props.category));
+  expect(
+    tree.root
+      .findAllByType(AddCategoryModal)
+      .some((node) => node.props.visible && node.props.category?.id === 'Coffee')
+  ).toBe(true);
 });

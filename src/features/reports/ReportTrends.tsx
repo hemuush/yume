@@ -44,14 +44,16 @@ export function ReportTrends({ cashFlow, ...props }: Props) {
     );
   return (
     <View>
-      <View style={s.switch}>
-        <SegmentedControl
-          options={options.map((o) => ({ label: o.label, value: o.key }))}
-          value={selected}
-          onChange={setMetric}
-          onBand
-        />
-      </View>
+      {options.length > 1 && (
+        <View style={s.switch}>
+          <SegmentedControl
+            options={options.map((o) => ({ label: o.label, value: o.key }))}
+            value={selected}
+            onChange={setMetric}
+            ledgerStyle
+          />
+        </View>
+      )}
       <Animated.View key={selected} entering={CONTENT_ENTER}>
         {selected === 'flow' ? (
           <CashFlowCard points={cashFlow} inProgress={!!props.inProgress} monthLink={props.monthLink} />

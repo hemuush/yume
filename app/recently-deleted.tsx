@@ -207,7 +207,7 @@ export default function RecentlyDeletedScreen() {
                 </Text>
               </SummaryCard>
               {groups.map((g) => (
-                <Section key={g.title} title={g.title}>
+                <Section compact key={g.title} title={g.title}>
                   <ListCard>
                     {g.items.map((entry, i) => {
                       const cat = categoryOf(entry.categoryId);
@@ -339,6 +339,8 @@ const styles = themedStyles(() =>
     figureRow: { flexDirection: 'row', alignItems: 'baseline', gap: 6, flexWrap: 'wrap' },
     figureNote: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
     restore: {
+      minHeight: 44,
+      justifyContent: 'center',
       paddingHorizontal: 12,
       paddingVertical: 6,
       borderRadius: theme.radius.pill,
@@ -346,7 +348,7 @@ const styles = themedStyles(() =>
     },
     /** The second line under an entry's title sits right under the first. */
     subNext: { marginTop: 0 },
-    restoreText: { fontFamily: theme.font.roundedBold, fontSize: 12, color: theme.colors.onInk },
+    restoreText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.onInk },
     emptyAll: {
       alignSelf: 'stretch',
       alignItems: 'center',

@@ -252,7 +252,7 @@ describe('Profile · You section', () => {
 
   it('folds archived accounts into one row that opens to show them', async () => {
     const tree = await render();
-    expect(texts(tree)).toEqual(expect.arrayContaining(['Archived accounts', '1 account · tap to show']));
+    expect(texts(tree)).toEqual(expect.arrayContaining(['Archived accounts', '1 account']));
     expect(texts(tree)).not.toContain('Old wallet');
     press(tree, 'Archived accounts');
     expect(texts(tree)).toEqual(expect.arrayContaining(['Old wallet', 'Wallet · archived']));

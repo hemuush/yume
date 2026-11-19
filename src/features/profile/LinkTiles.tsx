@@ -1,10 +1,11 @@
-import { Pressable, View, StyleSheet, useWindowDimensions } from 'react-native';
+import { Pressable, View, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { SCREEN } from '@/components/screenStyles';
 import { withPressedTint } from '@/lib/pressed';
 import { useAccent } from '@/theme/AccentContext';
 import { themedStyles } from '@/theme/themedStyles';
+import { useStacked } from '@/lib/useStacked';
 
 function Stat({
   value,
@@ -39,7 +40,6 @@ function Stat({
 
 /** Three shortcuts in one strip: the count over its name, each cell opening its screen. */
 export function LinkTiles({
-  embedded = false,
   entries,
   loans,
   friends,
@@ -47,8 +47,6 @@ export function LinkTiles({
   onLoans,
   onFriends,
 }: {
-  /** Sits at the foot of the summary card, which draws the edge: only a hairline above it. */
-  embedded?: boolean;
   entries: number;
   loans: number;
   friends: number;
@@ -56,10 +54,9 @@ export function LinkTiles({
   onLoans: () => void;
   onFriends: () => void;
 }) {
-  const { fontScale } = useWindowDimensions();
-  const stacked = fontScale > 1.2;
+  const stacked = useStacked();
   return (
-    <View style={[styles.strip, embedded && styles.stripEmbedded, stacked && styles.stripStacked]}>
+    <View style={[styles.strip, stacked && styles.stripStacked]}>
       <Stat
         value={entries}
         label={entries === 1 ? 'Entry' : 'Entries'}
@@ -88,21 +85,11 @@ const styles = themedStyles(() =>
     strip: {
       flexDirection: 'row',
       marginHorizontal: SCREEN.gutter,
-      marginTop: 12,
-      borderRadius: theme.radius.xl,
+      borderRadius: theme.radius.md,
       backgroundColor: theme.colors.surface,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: theme.colors.borderSoft,
       overflow: 'hidden',
-    },
-    stripEmbedded: {
-      marginHorizontal: 0,
-      marginTop: 0,
-      borderRadius: 0,
-      borderWidth: 0,
-      borderTopWidth: StyleSheet.hairlineWidth,
-      borderTopColor: theme.colors.divider,
-      backgroundColor: 'transparent',
     },
     stripStacked: { flexDirection: 'column' },
     stat: {

@@ -46,7 +46,6 @@ export function TrackedCard({
   hasLoans,
   masked,
   currency,
-  embedded = false,
 }: {
   totalMinor: number;
   accountsMinor: number;
@@ -61,12 +60,11 @@ export function TrackedCard({
   /** The currency every figure here is in (the app's default); falls back to it when omitted. */
   currency?: string;
   /** Sits under the cash hero in one shared card, so it draws no edge or margin of its own. */
-  embedded?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const { secondary } = useAccent();
   return (
-    <View style={embedded ? styles.embedded : [h.card, cardSurface.neutral, styles.card]}>
+    <View style={[h.card, cardSurface.neutral, styles.card]}>
       <Pressable
         style={withPressedTint(secondary, styles.head)}
         onPress={() => setOpen((v) => !v)}
@@ -147,7 +145,6 @@ const styles = themedStyles(() =>
   StyleSheet.create({
     card: { marginTop: 10, paddingBottom: 4 },
     // At the foot of the money map, which draws the glass and the padding.
-    embedded: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.divider },
     head: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, minHeight: 44 },
     headText: { flex: 1, minWidth: 0, flexDirection: 'row', flexWrap: 'wrap', columnGap: 6 },
     label: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textPrimary },

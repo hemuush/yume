@@ -913,10 +913,7 @@ export default function TransactionsScreen() {
         <ReanimatedAnimated.View
           entering={CONTENT_ENTER}
           pointerEvents="none"
-          style={[
-            styles.dragHint,
-            { bottom: insets.bottom + theme.layout.tabBar.height + 12, backgroundColor: ink },
-          ]}
+          style={[styles.dragHint, { bottom: insets.bottom + tabScrollPad - 12, backgroundColor: ink }]}
         >
           <Feather name="move" size={16} color={theme.colors.onInk} />
           <Text style={styles.dragHintText}>Drag up or down, let go to drop it</Text>

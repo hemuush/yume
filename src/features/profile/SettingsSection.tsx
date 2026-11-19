@@ -28,7 +28,6 @@ import { theme } from '@/constants/theme';
 import { Section } from '@/components/Section';
 import { screenStyles as h } from '@/components/screenStyles';
 import { styles } from './profile.styles';
-import { SafetyCheck } from './SafetyCheck';
 import { cardSurface } from '@/components/CardSurface';
 import { errorMessage } from '@/lib/errorMessage';
 import { haptics } from '@/lib/haptics';
@@ -48,8 +47,6 @@ export function daysAgoLabel(iso: string, now: Date = new Date()): string {
   if (days === 1) return 'yesterday';
   return `${days} days ago`;
 }
-
-const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 /** Undefined means a failed read; null remains a legitimate saved setting (for example, no daily goal). */
 async function orUnavailable<T>(read: () => Promise<T>): Promise<T | undefined> {
@@ -224,25 +221,6 @@ export function SettingsSection() {
           </View>
         </View>
       </Section>
-      {backupLoaded && (
-        <SafetyCheck
-          backup={backupOk ? 'ok' : lastBackupFailed ? 'failed' : 'never'}
-          backupSub={
-            lastBackupFailed
-              ? 'Failed · tap to check'
-              : lastBackupAt
-                ? capitalize(daysAgoLabel(lastBackupAt))
-                : 'Never backed up'
-          }
-          lockOn={lockEnabled}
-          alertsOn={alertsOn}
-          alertsTotal={ALERT_KEYS.length}
-          onBackup={() => router.push('/backup')}
-          onToggleLock={() => onToggleLock(!lockEnabled)}
-          onNotifications={() => router.push('/notification-settings')}
-        />
-      )}
-
       <Section compact title="Money">
         <View style={[h.card, cardSurface.neutral, styles.settingsCard]}>
           <CurrencySetting
@@ -272,7 +250,7 @@ export function SettingsSection() {
         </View>
       </Section>
 
-      <Section compact title="Privacy & alerts">
+      <Section compact title="Privacy & notifications">
         <View style={[h.card, cardSurface.neutral, styles.settingsCard]}>
           <SettingsRow
             compact
@@ -289,7 +267,7 @@ export function SettingsSection() {
             icon="eye-off-outline"
             iconBg={theme.colors.accentTint}
             label="Hide savings & investment amounts"
-            sub="Also on the eye icon at the top"
+            sub="Mask balances and totals that include them"
             right={
               <ToggleSwitch
                 accessibilityLabel="Hide savings and investment amounts"

@@ -4,6 +4,7 @@ import { LoadFade } from '@/components/LoadFade';
 import { useCallback, useState } from 'react';
 import { View, StyleSheet, Pressable } from 'react-native';
 import { Text } from '@/components/Text';
+import Feather from '@expo/vector-icons/Feather';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getMonthToDateComparison } from '@/db/reports';
@@ -27,16 +28,8 @@ import { useAccent } from '@/theme/AccentContext';
 import { Section } from '@/components/Section';
 import { SCREEN, flatSection } from '@/components/screenStyles';
 import { NeedsYouRow } from '@/features/home/NeedsYouRow';
-import { NEEDS_TONE } from '@/features/home/needsTone';
 import { HeaderIconButton } from '@/components/AppHeader';
-import {
-  ListCard,
-  SummaryCard,
-  SummarySide,
-  SummarySplit,
-  SummaryTop,
-  summaryFigure,
-} from '@/components/SummaryCard';
+import { ListCard } from '@/components/SummaryCard';
 import { HomeWallpaper } from '@/features/home/HomeWallpaper';
 import { SuuIllustration } from '@/components/SuuIllustration';
 import { NeedsYouItem, NeedsYouTone } from '@/features/home/needsYou';
@@ -74,10 +67,11 @@ export default function NeedsYouScreen() {
   const [shown, setShown] = useState<NeedsYouItem[] | null>(null);
   const [dismissed, setDismissed] = useState<NeedsYouItem[]>([]);
   const [showDismissed, setShowDismissed] = useState(false);
+  const [incomplete, setIncomplete] = useState(false);
   const [suuLines, setSuuLines] = useState<string[]>([]);
 
   const load = useCallback(async () => {
-    const [needs, prefs, comparison, accounts] = await Promise.all([
+    const [needs, prefsResult, comparisonResult, accountsResult] = await Promise.allSettled([
       loadNeedsYou(),
       getNotificationPrefs(),
       // As Home's Suu line: with savings hidden, savings and investment spending leave the comparison. This month so
@@ -85,19 +79,28 @@ export default function NeedsYouScreen() {
       getMonthToDateComparison().then((c) => privateComparison(c, getCachedHideSensitiveAmounts())),
       listAccounts(),
     ]);
-    setShown(needs.shown);
-    setDismissed(needs.dismissed);
-    const pct = comparison.expenseChangePct;
+    if (needs.status === 'rejected') throw needs.reason;
+    setShown(needs.value.shown);
+    setDismissed(needs.value.dismissed);
+    setIncomplete(
+      needs.value.incomplete ||
+        [prefsResult, comparisonResult, accountsResult].some((result) => result.status === 'rejected')
+    );
+    const enabled = prefsResult.status === 'fulfilled' && prefsResult.value.suuCheckins;
+    const pct = comparisonResult.status === 'fulfilled' ? comparisonResult.value.expenseChangePct : null;
     const lines: string[] = [];
     // Too few days of the month to say anything fair about its pace before the 5th (as for the month forecast).
-    if (prefs.suuCheckins && pct != null && new Date().getDate() >= PACE_MIN_DAY) {
+    if (enabled && pct != null && new Date().getDate() >= PACE_MIN_DAY) {
       lines.push(
         pct <= 0
           ? `You’re spending ${formatPctChange(pct)} less than at this point last month — nice pace.`
           : `You’re spending ${formatPctChange(pct)} more than at this point last month. A lighter week would even it out.`
       );
     }
-    const reminder = prefs.suuCheckins ? valueReminderLine(accounts, toLocalIsoDate(new Date())) : null;
+    const reminder =
+      enabled && accountsResult.status === 'fulfilled'
+        ? valueReminderLine(accountsResult.value, toLocalIsoDate(new Date()))
+        : null;
     if (reminder) lines.push(reminder);
     setSuuLines(lines);
   }, []);
@@ -191,6 +194,13 @@ export default function NeedsYouScreen() {
             </Appear>
           )}
 
+          {!loadError && incomplete && (
+            <Appear style={styles.errorBanner}>
+              <Text style={styles.errorTitle}>Some updates couldn’t load</Text>
+              <PrimaryButton title="Retry" compact variant="secondary" onPress={() => void reload()} />
+            </Appear>
+          )}
+
           {shown === null ? (
             // Bones only while loading: a failed load shows just its banner.
             loadError ? null : (
@@ -199,53 +209,29 @@ export default function NeedsYouScreen() {
               </View>
             )
           ) : shown.length === 0 ? (
-            <EmptyState
-              title="All caught up"
-              subtitle="Nothing needs you right now. Suu will say when something does."
-            >
-              <PrimaryButton
-                title="Choose what Yume mentions"
-                variant="secondary"
-                compact
-                onPress={() => router.push('/notification-settings')}
-              />
-            </EmptyState>
+            incomplete || loadError ? null : (
+              <EmptyState
+                title="All caught up"
+                subtitle="Nothing needs you right now. Suu will say when something does."
+              >
+                <PrimaryButton
+                  title="Choose what Yume mentions"
+                  variant="secondary"
+                  compact
+                  onPress={() => router.push('/notification-settings')}
+                />
+              </EmptyState>
+            )
           ) : (
             <>
-              <SummaryCard>
-                <SummaryTop
-                  label={shown.some((i) => i.tone === 'urgent') ? 'Needs you today' : 'Needs you'}
-                  figure={
-                    <View style={styles.figureRow}>
-                      <Text style={summaryFigure}>{shown.length}</Text>
-                      <Text style={styles.figureNote}>{shown.length === 1 ? 'thing' : 'things'}</Text>
-                    </View>
-                  }
-                  side={
-                    shown.some((i) => i.tone === 'urgent') ? <SummarySide main="Do these first" /> : undefined
-                  }
-                />
-                <SummarySplit
-                  parts={TONES.map((t) => ({
-                    key: t,
-                    weight: shown.filter((i) => i.tone === t).length,
-                    color: NEEDS_TONE[t].color,
-                  }))}
-                />
-                <View style={styles.tones}>
-                  {TONES.map((t) => {
-                    const n = shown.filter((i) => i.tone === t).length;
-                    return n > 0 ? (
-                      <View key={t} style={styles.toneChip}>
-                        <View style={[styles.toneDot, { backgroundColor: NEEDS_TONE[t].color }]} />
-                        <Text style={styles.toneText}>
-                          {n} {NEEDS_TONE[t].label}
-                        </Text>
-                      </View>
-                    ) : null;
-                  })}
+              <View style={styles.inboxSummary}>
+                <View style={styles.inboxIcon}>
+                  <Feather name="bell" size={17} color={theme.colors.link} />
                 </View>
-              </SummaryCard>
+                <Text style={styles.inboxCount}>
+                  {shown.length} {shown.length === 1 ? 'item to review' : 'items to review'}
+                </Text>
+              </View>
               {TONES.map((t) => {
                 const group = shown.filter((i) => i.tone === t);
                 return group.length > 0 ? (
@@ -347,8 +333,7 @@ export default function NeedsYouScreen() {
 const styles = themedStyles(() =>
   StyleSheet.create({
     container: { flex: 1, backgroundColor: theme.colors.background },
-    figureRow: { flexDirection: 'row', alignItems: 'baseline', gap: 6, flexWrap: 'wrap' },
-    figureNote: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
+
     errorBanner: {
       marginHorizontal: SCREEN.gutter,
       marginTop: theme.layout.screenTopGap,
@@ -367,20 +352,26 @@ const styles = themedStyles(() =>
       marginTop: 3,
       lineHeight: 16,
     },
-    tones: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-    toneChip: {
+    inboxSummary: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 6,
-      minHeight: 28,
-      paddingHorizontal: 11,
-      borderRadius: theme.radius.pill,
-      backgroundColor: theme.colors.surface,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.colors.borderSoft,
+      gap: 10,
+      marginHorizontal: SCREEN.gutter,
+      marginTop: 6,
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      backgroundColor: theme.colors.home.control,
+      borderRadius: theme.radius.md,
     },
-    toneDot: { width: 8, height: 8, borderRadius: 4 },
-    toneText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textPrimary },
+    inboxIcon: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      backgroundColor: theme.colors.surface,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    inboxCount: { flex: 1, fontFamily: theme.font.bodyBold, fontSize: 14, color: theme.colors.textPrimary },
     // Suu, then its lines in a bubble whose corner points back at it.
     suu: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginHorizontal: SCREEN.gutter },
     suuFace: { width: 38, height: 38 },

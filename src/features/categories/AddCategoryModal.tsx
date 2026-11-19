@@ -145,6 +145,7 @@ export function AddCategoryModal({
   const visibleIcons = showAllIcons ? CATEGORY_ICON_CHOICES : previewIcons;
   return (
     <ModalSheet
+      ledgerStyle
       dismissible={!saving}
       title={category ? 'Edit category' : 'New category'}
       visible={visible}
@@ -162,6 +163,7 @@ export function AddCategoryModal({
       }
     >
       <DraftCard
+        ledgerStyle
         hue={color}
         icon={icon}
         kicker={kind === 'income' ? 'Income' : 'Expense'}

@@ -138,13 +138,12 @@ it('draws nothing again for a reload that found the same categories', async () =
   expect(mockDrawn.tiles).toBe(drawn);
 });
 
-it('draws only that tile when a parent opens its panel', async () => {
+it('draws the expanded parent and its new child without redrawing other categories', async () => {
   const tree = await render();
   await settle(100);
   const drawn = mockDrawn.tiles;
   tapTile(tree, 'Food, 1 subcategory');
-  // Only the parent's tile (now selected) is drawn again; the other tiles are untouched.
-  expect(mockDrawn.tiles - drawn).toBe(1);
+  expect(mockDrawn.tiles - drawn).toBe(2);
 });
 
 it('draws only the tile that changed when one category is renamed', async () => {

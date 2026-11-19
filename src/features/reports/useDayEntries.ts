@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { listTransactions } from '@/db/ledger';
 import { getCachedCurrency } from '@/db/settings';
 import { errorMessage } from '@/lib/errorMessage';
@@ -17,13 +17,17 @@ export function useDayEntries({
   hideAmounts,
   catById,
   savingsIds,
+  version = 0,
 }: {
   iso: string;
   hideAmounts: boolean;
   catById: ReadonlyMap<string, Category>;
   savingsIds: ReadonlySet<string>;
+  version?: number;
 }) {
-  const [data, setData] = useState<{ iso: string; txs: Transaction[] } | null>(null);
+  const currency = getCachedCurrency();
+  const requestKey = `${iso}|${currency}|${version}`;
+  const [data, setData] = useState<{ key: string; txs: Transaction[] } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [retries, setRetries] = useState(0);
   const seq = useRef(0);
@@ -32,18 +36,15 @@ export function useDayEntries({
     setError(null);
     const timer = setTimeout(async () => {
       try {
-        const txs = await listTransactions({ fromDate: iso, toDate: iso, currency: getCachedCurrency() });
+        const txs = await listTransactions({ fromDate: iso, toDate: iso, currency });
         if (mine !== seq.current) return;
-        setData({
-          iso,
-          txs: hideAmounts ? txs.filter((tx) => !isSavingsEntry(tx, catById, savingsIds)) : txs,
-        });
+        setData({ key: requestKey, txs });
       } catch (e) {
         if (mine === seq.current) setError(errorMessage(e));
       }
     }, SETTLE_MS);
     return () => clearTimeout(timer);
-  }, [iso, hideAmounts, catById, savingsIds, retries]);
+  }, [iso, currency, requestKey, retries]);
   useEffect(
     () => () => {
       ++seq.current;
@@ -51,9 +52,15 @@ export function useDayEntries({
     []
   );
   const retry = useCallback(() => setRetries((n) => n + 1), []);
+  const entries = data?.key === requestKey ? data.txs : null;
+  const txs = useMemo(
+    () =>
+      entries && hideAmounts ? entries.filter((tx) => !isSavingsEntry(tx, catById, savingsIds)) : entries,
+    [entries, hideAmounts, catById, savingsIds]
+  );
   return {
     /** The day's entries, or null while they are read (and for any other day than `iso`). */
-    txs: data?.iso === iso ? data.txs : null,
+    txs,
     error,
     retry,
   };

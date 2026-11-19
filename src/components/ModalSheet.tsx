@@ -598,7 +598,7 @@ const styles = themedStyles(() =>
     ledgerPad: { paddingTop: 12 },
     ledgerFooter: { backgroundColor: theme.colors.home.background, borderColor: theme.colors.home.edge },
     ledgerClose: { backgroundColor: theme.colors.home.control, borderColor: theme.colors.home.edge },
-    title: { fontFamily: theme.font.roundedBold, fontSize: 22, color: theme.colors.textPrimary },
+    title: { fontFamily: theme.font.bodyBold, fontSize: 19, color: theme.colors.textPrimary },
     subtitle: {
       fontFamily: theme.font.body,
       fontSize: 12,
@@ -614,8 +614,8 @@ const styles = themedStyles(() =>
     framedSheet: {
       backgroundColor: theme.colors.surface,
       overflow: 'hidden',
-      borderTopLeftRadius: 32,
-      borderTopRightRadius: 32,
+      borderTopLeftRadius: 24,
+      borderTopRightRadius: 24,
       flexShrink: 1,
       ...SHEET_SHADOW,
     },
@@ -665,8 +665,8 @@ const styles = themedStyles(() =>
     sheet: {
       backgroundColor: theme.colors.surface,
       overflow: 'hidden',
-      borderTopLeftRadius: 32,
-      borderTopRightRadius: 32,
+      borderTopLeftRadius: 24,
+      borderTopRightRadius: 24,
       paddingHorizontal: 20,
       paddingTop: 20,
       ...SHEET_SHADOW,

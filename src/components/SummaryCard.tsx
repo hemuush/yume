@@ -1,6 +1,6 @@
 import { View, StyleSheet, useWindowDimensions, StyleProp, ViewStyle } from 'react-native';
 import { Text } from '@/components/Text';
-import { SCREEN, screenStyles } from '@/components/screenStyles';
+import { SCREEN } from '@/components/screenStyles';
 import { theme } from '@/constants/theme';
 import { themedStyles, themedValue } from '@/theme/themedStyles';
 
@@ -24,7 +24,7 @@ const TONE = themedValue<Record<FactTone, string>>(() => ({
   warn: theme.colors.warnInk,
 }));
 
-/** The summary section a screen leads with: figures on the paper between two hairlines, under the header. */
+/** The summary surface a screen leads with. */
 export function SummaryCard({
   children,
   style,
@@ -32,12 +32,12 @@ export function SummaryCard({
   children: React.ReactNode;
   style?: StyleProp<ViewStyle>;
 }) {
-  return <View style={[screenStyles.card, styles.card, style]}>{children}</View>;
+  return <View style={[styles.frame, styles.card, style]}>{children}</View>;
 }
 
-/** A flat card holding a list of rows, on the screen gutter; the rows divide themselves. */
+/** A single surface holding related rows, separated by their own dividers. */
 export function ListCard({ children, style }: { children: React.ReactNode; style?: StyleProp<ViewStyle> }) {
-  return <View style={[styles.list, style]}>{children}</View>;
+  return <View style={[styles.frame, style]}>{children}</View>;
 }
 
 /** The label over the figure on the left, and a short note on the right (see SummarySide). */
@@ -128,19 +128,19 @@ export const summaryNote = themedValue(() => ({
 
 const styles = themedStyles(() =>
   StyleSheet.create({
+    frame: {
+      marginHorizontal: SCREEN.gutter,
+      borderRadius: theme.radius.xl,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.borderSoft,
+      backgroundColor: theme.colors.surface,
+    },
     card: {
       marginTop: theme.layout.screenTopGap,
       paddingVertical: 14,
-      // The figures inside have 2dp of their own, so 12 here and the 2dp margin put them on the 16dp gutter.
       paddingHorizontal: SCREEN.rowInset,
-      gap: 12,
+      gap: 10,
       overflow: 'visible',
-    },
-    list: {
-      marginHorizontal: SCREEN.gutter - SCREEN.rowInset,
-      borderTopWidth: StyleSheet.hairlineWidth,
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.colors.borderSoft,
     },
     top: {
       flexDirection: 'row',

@@ -18,6 +18,7 @@ import { HeaderUserButton } from '@/components/AppHeader';
 import { theme } from '@/constants/theme';
 import { withPressed } from '@/lib/pressed';
 import { useReduceMotion } from '@/lib/useReduceMotion';
+import { useFontScale } from '@/lib/useFontScale';
 import type { CollapsingHeader } from '@/lib/useCollapsingHeader';
 import { SkyBackdrop } from './SkyBackdrop';
 import { GLASS } from '@/components/Glass';
@@ -28,8 +29,8 @@ import { themedStyles } from '@/theme/themedStyles';
 /** The title row's height; the band keeps just this row (plus BAR_PAD) once collapsed. */
 const ROW = HEADER.actionSize;
 const BAR_PAD = 6;
-/** The large title: 34 on a tab's own screen, 28 on a screen opened from another. */
-const TITLE_SIZE = { root: 34, pushed: 28 } as const;
+/** Match the compact Plan and Activity headers and the pushed form headers. */
+const TITLE_SIZE = { root: 26, pushed: 24 } as const;
 /** Where the title ends up when the header collapses, whatever size it started at. */
 const COLLAPSED_TITLE_SIZE = 18;
 
@@ -69,6 +70,7 @@ export function SkyHeader({
 }) {
   const insets = useSafeAreaInsets();
   const reduce = useReduceMotion();
+  const reflowTitle = useFontScale() > theme.accessibility.reflowFontScale;
   const top = insets.top + HEADER.topGap;
   const titleSize = expandedTitleSize ?? (showBack ? TITLE_SIZE.pushed : TITLE_SIZE.root);
   const titleScale = COLLAPSED_TITLE_SIZE / titleSize;
@@ -182,7 +184,7 @@ export function SkyHeader({
                 titleStyle,
               ]}
               accessibilityRole="header"
-              numberOfLines={1}
+              numberOfLines={reflowTitle ? 2 : 1}
               onLayout={(e) => {
                 titleWidth.value = e.nativeEvent.layout.width;
               }}

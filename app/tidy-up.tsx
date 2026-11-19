@@ -270,7 +270,7 @@ export default function TidyUpScreen() {
               </SummaryCard>
 
               {report.repeats.length > 0 && (
-                <Section title="Same entry twice?">
+                <Section compact title="Same entry twice?">
                   <ListCard>
                     {report.repeats.map((g, i) => (
                       <View key={g.key} style={[styles.item, i > 0 && h.divider]}>
@@ -315,7 +315,7 @@ export default function TidyUpScreen() {
               )}
 
               {report.startingBalances.length > 0 && (
-                <Section title="Old balances logged as income">
+                <Section compact title="Old balances logged as income">
                   <ListCard>
                     {report.startingBalances.map((g, i) => {
                       const one = g.ids.length === 1;
@@ -372,7 +372,7 @@ export default function TidyUpScreen() {
               )}
 
               {report.fractionalCount > 0 && (
-                <Section title="Amounts with paise">
+                <Section compact title="Amounts with paise">
                   <ListCard>
                     <View style={styles.item}>
                       <View style={styles.itemTop}>
@@ -456,7 +456,7 @@ const styles = themedStyles(() =>
     afterBold: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
     item: { paddingHorizontal: 14, paddingVertical: 12, gap: 10 },
     itemTop: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
-    actions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 8 },
+    actions: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-end', gap: 8 },
     action: { flexShrink: 1 },
     errorBanner: {
       marginHorizontal: SCREEN.gutter,

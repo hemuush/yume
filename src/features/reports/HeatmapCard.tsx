@@ -37,6 +37,7 @@ export function HeatmapCard({
   onScope,
   hue,
   children,
+  hideTitle = false,
 }: {
   model: HeatModel;
   selectedIso: string | null;
@@ -49,6 +50,7 @@ export function HeatmapCard({
   /** The colour the grid is tinted in: the theme's, or the chosen category's. */
   hue: string;
   children?: React.ReactNode;
+  hideTitle?: boolean;
 }) {
   const scale = spendHeatScale(hue);
   const [open, setOpen] = useState(false);
@@ -57,7 +59,7 @@ export function HeatmapCard({
   return (
     <View style={styles.card}>
       <View style={styles.head}>
-        <Text style={styles.title}>Spending by day</Text>
+        {!hideTitle && <Text style={styles.title}>Spending by day</Text>}
         {scopes.length > 1 && (
           <Pressable
             onPress={() => setOpen(true)}
@@ -115,22 +117,32 @@ export function HeatmapCard({
 
 const styles = themedStyles(() =>
   StyleSheet.create({
-    card: { ...h.card, marginHorizontal: 0, paddingTop: 8, paddingBottom: 12, marginBottom: 10 },
+    card: {
+      ...h.card,
+      marginHorizontal: 0,
+      backgroundColor: theme.colors.surface,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderRadius: theme.radius.xl,
+      paddingTop: 4,
+      paddingBottom: 10,
+      marginBottom: 12,
+    },
     head: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
+      flexWrap: 'wrap',
       gap: 8,
       paddingHorizontal: 14,
     },
     title: {
       flexShrink: 1,
-      fontFamily: theme.font.roundedBold,
+      fontFamily: theme.font.bodyBold,
       fontSize: theme.typeSize.section,
       color: theme.colors.textPrimary,
     },
     scope: {
-      minHeight: 32,
+      minHeight: 44,
       maxWidth: '55%',
       flexShrink: 1,
       paddingHorizontal: 11,
@@ -148,7 +160,14 @@ const styles = themedStyles(() =>
     },
     chipDot: { width: 8, height: 8, borderRadius: 4 },
     grid: { paddingHorizontal: theme.space.xs, paddingTop: 4 },
-    legend: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 18, paddingTop: 8 },
+    legend: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      alignItems: 'center',
+      gap: 8,
+      paddingHorizontal: 18,
+      paddingTop: 8,
+    },
     legendBar: { width: 72, flexDirection: 'row', height: 8, borderRadius: 4, overflow: 'hidden' },
     legendStep: { flex: 1 },
     legendText: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted },

@@ -135,14 +135,16 @@ it('snoozes a row away, and brings it back if the snooze cannot be saved', async
   expect(mockShowAlert).toHaveBeenCalledWith('Couldn’t snooze', expect.stringContaining('locked'));
 });
 
-it('counts what needs you by urgency at the top', async () => {
+it('shows the total once and groups updates by urgency', async () => {
   mockData.loadNeedsYou.mockResolvedValue({
     shown: [item('a', { tone: 'urgent' }), item('b'), item('c'), item('d', { tone: 'info' })],
     dismissed: [],
   });
   const tree = await render();
   const shown = tree.root.findAllByType(Text).map((t) => [].concat(t.props.children).join(''));
-  expect(shown).toEqual(expect.arrayContaining(['4', 'things', '1 urgent', '2 soon', '1 when you can']));
+  expect(shown).toEqual(
+    expect.arrayContaining(['4 items to review', 'Do first', 'Coming up', 'When you can'])
+  );
 });
 
 it('when nothing needs you, says so and links to what Yume mentions', async () => {
@@ -166,6 +168,14 @@ it('groups what needs you by urgency, most pressing first', async () => {
   expect(keys(tree)).toEqual(['u', 'w', 'i']);
   const shown = tree.root.findAllByType(Text).map((t) => [].concat(t.props.children).join(''));
   expect(shown).toEqual(expect.arrayContaining(['Do first', 'Coming up', 'When you can']));
+});
+
+it('shows a retry instead of an empty-state reassurance when alert sources are unavailable', async () => {
+  mockData.loadNeedsYou.mockResolvedValue({ shown: [], dismissed: [], incomplete: true });
+  const tree = await render();
+  const shown = tree.root.findAllByType(Text).map((t) => [].concat(t.props.children).join(''));
+  expect(shown).toContain('Some updates couldn’t load');
+  expect(shown).not.toContain('All caught up');
 });
 
 describe('Suu’s check-in about spending', () => {

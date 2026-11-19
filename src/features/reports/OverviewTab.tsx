@@ -1,5 +1,9 @@
-import { memo, useMemo } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { memo, useCallback, useMemo, useState } from 'react';
+import { ActivityIndicator, View, Pressable } from 'react-native';
+import Feather from '@expo/vector-icons/Feather';
+import { Amount } from '@/components/Amount';
+import { Text } from '@/components/Text';
+import { withPressed } from '@/lib/pressed';
 import { EmptyState } from '@/components/EmptyState';
 import { ModalSheet } from '@/components/ModalSheet';
 import { PrimaryButton } from '@/components/PrimaryButton';
@@ -10,6 +14,7 @@ import { parseLocalIsoDate } from '@/lib/date';
 import { roundedMinor } from '@/lib/round';
 import { isCustomWindow, previousPeriodLabel, type ReportWindow } from '@/lib/period';
 import type { Category, DateRange, Transaction } from '@/types';
+import { CategoryBar } from './CategoryBar';
 import { BiggestSpends } from './BiggestSpends';
 import { DayCard } from './DayCard';
 import { DayInspector } from './DayInspector';
@@ -128,19 +133,33 @@ export const OverviewTab = memo(function OverviewTab({
   onViewTab: (tab: ReportTab) => void;
 }) {
   const dispExpense = roundedMinor(current.expenseMinor);
-  const hasSpend = current.expenseMinor > 0;
+  const hasSpend = current.expenseMinor !== 0;
   // A period with money in but nothing spent still has an Income breakdown and Trends to show.
   const hasData = hasSpend || current.incomeMinor > 0;
   const inProgress = range.end >= today;
 
   const filterId = catFilter;
+  const calendarKey = `${cursorKey}|${filterId ?? ''}`;
+  const [calendar, setCalendar] = useState<{ key: string; open: boolean } | null>(null);
+  const calendarOpen = calendar?.key === calendarKey ? calendar.open : filterId != null;
+  const selectScope = useCallback(
+    (id: string | null) => {
+      setCalendar({ key: `${cursorKey}|${id ?? ''}`, open: true });
+      onScope(id);
+    },
+    [cursorKey, onScope]
+  );
+  const leadingCategories = useMemo(() => current.categoryBreakdown.slice(0, 3), [current.categoryBreakdown]);
   const filterCat = filterId ? catById.get(filterId) : undefined;
   const filterLoading = filterId != null && filtered?.id !== filterId;
   const heatDaily = useMemo(
     () => (filterId ? (filtered?.id === filterId ? filtered.daily : NO_DAYS) : daily),
     [filterId, filtered, daily]
   );
-  const heat = useMemo(() => buildHeat({ range, daily: heatDaily, today }), [range, heatDaily, today]);
+  const heat = useMemo(
+    () => (calendarOpen ? buildHeat({ range, daily: heatDaily, today }) : null),
+    [calendarOpen, range, heatDaily, today]
+  );
   const usualMinor = useMemo(
     () =>
       facts.countedDays > 0
@@ -166,6 +185,7 @@ export const OverviewTab = memo(function OverviewTab({
     return scopes;
   }, [accent, current.categoryBreakdown, filterId, filterCat]);
   const inspected = useMemo(() => {
+    if (!heat) return null;
     const days = heat.kind === 'calendar' ? heat.days : heat.rows.flatMap((r) => r.days);
     return days.find((d) => d?.iso === inspectIso) ?? null;
   }, [heat, inspectIso]);
@@ -233,55 +253,111 @@ export const OverviewTab = memo(function OverviewTab({
     [filterId, heatDaily, today, dispExpense, facts.laterMinor]
   );
 
+  const summary = (
+    <Hero
+      animKey={cursorKey}
+      periodName={periodName}
+      inProgress={inProgress}
+      spentMinor={dispExpense}
+      perDayMinor={facts.countedDays > 0 ? facts.perDayMinor : null}
+      budget={budget}
+      incomeMinor={current.incomeMinor}
+      previousIncomeMinor={previous.incomeMinor}
+      comparedTo={isCustomWindow(cursor) ? 'the period before' : previousPeriodLabel(cursor)}
+    />
+  );
+
   if (!hasSpend) {
     return (
-      <EmptyState
-        title="Nothing spent in this period"
-        subtitle={
-          hasData
-            ? 'Money in is under Breakdown, and Trends shows the bigger picture.'
-            : 'Use the arrows to look back, or open Trends for recorded history.'
-        }
-      >
-        <PrimaryButton
-          title={hasData ? 'View breakdown' : 'View trends'}
-          variant="secondary"
-          onPress={() => onViewTab(hasData ? 'cats' : 'trends')}
-        />
-      </EmptyState>
+      <>
+        {hasData && summary}
+        <EmptyState
+          title="Nothing spent in this period"
+          subtitle={hasData ? undefined : 'Use the arrows to look back, or open Trends for recorded history.'}
+        >
+          <PrimaryButton
+            title={hasData ? 'View breakdown' : 'View trends'}
+            variant="secondary"
+            onPress={() => onViewTab(hasData ? 'cats' : 'trends')}
+          />
+        </EmptyState>
+      </>
     );
   }
   return (
     <>
-      <Hero
-        animKey={cursorKey}
-        periodName={periodName}
-        inProgress={inProgress}
-        spentMinor={dispExpense}
-        perDayMinor={facts.countedDays > 0 ? facts.perDayMinor : null}
-        budget={budget}
-        incomeMinor={current.incomeMinor}
-        previousIncomeMinor={previous.incomeMinor}
-        comparedTo={isCustomWindow(cursor) ? 'the period before' : previousPeriodLabel(cursor)}
-      />
-      <View style={filterLoading ? styles.dimmed : undefined}>
-        <Heatmap
-          model={heat}
-          selectedIso={inspectIso}
-          onSelect={onInspectDay}
-          onOpenMonth={custom && !byMonth ? undefined : onOpenMonth}
-          usualMinor={usualMinor}
-          scopes={heatScopes}
-          scopeId={filterId}
-          onScope={onScope}
-          hue={filterCat?.color ?? accent}
-        >
-          {inspector}
-        </Heatmap>
-      </View>
+      {summary}
+      {leadingCategories.length > 0 && (
+        <View style={styles.overviewPanel}>
+          <View style={styles.overviewHeading}>
+            <Text accessibilityRole="header" style={styles.blockTitle}>
+              Top categories
+            </Text>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => onStoryAction({ type: 'categories' })}
+              style={withPressed(styles.overviewAction)}
+            >
+              <Text style={styles.overviewLink}>See breakdown</Text>
+              <Feather name="arrow-right" size={14} color={theme.colors.link} />
+            </Pressable>
+          </View>
+          <CategoryBar breakdown={current.categoryBreakdown} selectedId={null} />
+          {leadingCategories.map((category) => (
+            <Pressable
+              key={category.categoryId}
+              accessibilityRole="button"
+              onPress={() => onStoryAction({ type: 'category', id: category.categoryId })}
+              style={withPressed(styles.overviewRow)}
+            >
+              <View style={[styles.overviewDot, { backgroundColor: category.color }]} />
+              <Text style={styles.overviewName}>{category.name}</Text>
+              <Amount
+                minor={roundedMinor(category.totalMinor)}
+                sensitive={category.isSensitive}
+                style={styles.overviewAmount}
+              />
+              <Feather name="chevron-right" size={14} color={theme.colors.textMuted} />
+            </Pressable>
+          ))}
+        </View>
+      )}
+      <Pressable
+        accessibilityRole="button"
+        accessibilityState={{ expanded: calendarOpen }}
+        onPress={() => setCalendar({ key: calendarKey, open: !calendarOpen })}
+        style={withPressed(styles.overviewCalendar)}
+      >
+        <Feather name="calendar" size={17} color={theme.colors.link} />
+        <Text style={styles.overviewName}>Spending by day</Text>
+        <Feather
+          name={calendarOpen ? 'chevron-up' : 'chevron-down'}
+          size={16}
+          color={theme.colors.textMuted}
+        />
+      </Pressable>
+      {heat && (
+        <View style={filterLoading ? styles.dimmed : undefined}>
+          <Heatmap
+            model={heat}
+            selectedIso={inspectIso}
+            onSelect={onInspectDay}
+            onOpenMonth={custom && !byMonth ? undefined : onOpenMonth}
+            usualMinor={usualMinor}
+            scopes={heatScopes}
+            scopeId={filterId}
+            onScope={selectScope}
+            hideTitle
+            hue={filterCat?.color ?? accent}
+          >
+            {inspector}
+          </Heatmap>
+        </View>
+      )}
       {sheetOpen && (
         <ModalSheet
           visible
+          ledgerStyle
           onClose={onCloseSheet}
           title={parseLocalIsoDate(inspectIso).toLocaleDateString(undefined, {
             weekday: 'short',

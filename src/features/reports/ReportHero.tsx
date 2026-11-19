@@ -2,7 +2,6 @@ import { View, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
 import { Amount } from '@/components/Amount';
 import { CountUpAmount } from '@/components/CountUpAmount';
-import { screenStyles as h } from '@/components/screenStyles';
 import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
 import { roundedMinor } from '@/lib/round';
@@ -66,8 +65,8 @@ export function ReportHero({
   }`;
   return (
     <View style={styles.card}>
-      <View style={[styles.kpis, stacked && styles.kpisStacked]}>
-        <View style={[styles.kpi, share(1.1)]} accessible accessibilityLabel={spentSpoken}>
+      <View style={styles.lead}>
+        <View style={styles.kpi} accessible accessibilityLabel={spentSpoken}>
           <Text style={styles.kpiLabel}>{`Spent${inProgress ? ' so far' : ''}`}</Text>
           <CountUpAmount
             minor={roundedMinor(spentMinor)}
@@ -79,6 +78,8 @@ export function ReportHero({
             <Text style={styles.kpiSub}>{`${money(perDayMinor)} a day`}</Text>
           )}
         </View>
+      </View>
+      <View style={[styles.kpis, stacked && styles.kpisStacked]}>
         <View style={[styles.kpi, share(1.25)]}>
           <Text style={styles.kpiLabel}>Income</Text>
           <Amount
@@ -114,7 +115,10 @@ export function ReportHero({
           <View style={[styles.track, { backgroundColor: hexToRgba(ink, 0.1) }]}>
             <View
               key={animKey}
-              style={[styles.fill, { width: `${Math.min(100, used * 100)}%`, backgroundColor: barColor }]}
+              style={[
+                styles.fill,
+                { width: `${Math.max(0, Math.min(100, used * 100))}%`, backgroundColor: barColor },
+              ]}
             />
           </View>
           <Text style={[styles.budgetText, over && styles.bad]}>
@@ -132,12 +136,21 @@ const budgetSpoken = (b: BudgetCover) =>
 
 const styles = themedStyles(() =>
   StyleSheet.create({
-    card: { ...h.card, marginHorizontal: 0, marginBottom: 10, paddingHorizontal: 0, paddingVertical: 12 },
+    card: {
+      backgroundColor: theme.colors.surface,
+      borderRadius: theme.radius.xl,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.borderSoft,
+      marginBottom: 12,
+      paddingHorizontal: 14,
+      paddingVertical: 12,
+    },
+    lead: { marginBottom: 10 },
     // Compact: Spent leads at 20, Income and Kept beside it at 14, each with one small line under it.
     figure: {
-      fontFamily: theme.font.bodyMedium,
-      fontSize: 22,
-      lineHeight: 26,
+      fontFamily: theme.font.bodyBold,
+      fontSize: 28,
+      lineHeight: 33,
       letterSpacing: -0.2,
       color: theme.colors.textPrimary,
       fontVariant: ['tabular-nums'],
@@ -146,7 +159,14 @@ const styles = themedStyles(() =>
     track: { height: 6, borderRadius: 3, overflow: 'hidden' },
     fill: { height: 6, borderRadius: 3 },
     budgetText: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
-    kpis: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
+    kpis: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: 12,
+      paddingTop: 8,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: theme.colors.borderSoft,
+    },
     kpisStacked: { flexDirection: 'column', alignItems: 'stretch', gap: 8 },
     // Income gets the most room (1.25): it carries the long line ("↑ 8% so far vs the month before"), which needs that
     // width to stay on two lines at 360 dp; Spent leads (1.1). See `share`.

@@ -1,4 +1,4 @@
-import { uiScaleFor } from './uiScale';
+import { tabDockMetrics, uiScaleFor } from './uiScale';
 
 describe('uiScaleFor', () => {
   it('leaves the default size alone', () => expect(uiScaleFor(1)).toBe(1));
@@ -8,5 +8,12 @@ describe('uiScaleFor', () => {
     expect(uiScaleFor(2)).toBeCloseTo(1.5);
     expect(uiScaleFor(3)).toBeCloseTo(1.5);
     expect(uiScaleFor(0.5)).toBeCloseTo(0.9);
+  });
+});
+
+describe('tab dock clearance', () => {
+  it('keeps the normal dock and the large-text dock clear of floating controls', () => {
+    expect(tabDockMetrics(390, 1)).toMatchObject({ stacked: false, clearance: 70 });
+    expect(tabDockMetrics(320, 2)).toMatchObject({ stacked: true, height: 60, clearance: 108 });
   });
 });
