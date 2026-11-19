@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { Fragment, memo } from 'react';
 import { MovingRow } from '@/components/MovingRow';
 import type { BudgetProgress } from '@/db/budgets';
 import { BudgetRow } from './BudgetRow';
@@ -9,21 +9,25 @@ export const BudgetListRow = memo(function BudgetListRow({
   divider,
   onOpen,
   onMore,
+  compact,
 }: {
   progress: BudgetProgress;
   divider: boolean;
   onOpen: (id: string) => void;
   onMore: (progress: BudgetProgress) => void;
+  compact?: boolean;
 }) {
+  const RowContainer = compact ? Fragment : MovingRow;
   return (
-    <MovingRow>
+    <RowContainer>
       <BudgetRow
+        compact={compact}
         progress={progress}
         divider={divider}
         showPerDay
         onPress={() => onOpen(progress.budget.id)}
         onMore={() => onMore(progress)}
       />
-    </MovingRow>
+    </RowContainer>
   );
 });

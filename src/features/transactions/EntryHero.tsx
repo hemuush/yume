@@ -8,6 +8,7 @@ import { shade } from '@/lib/color';
 import { withPressedTint } from '@/lib/pressed';
 import { useAccent } from '@/theme/AccentContext';
 import { themedStyles } from '@/theme/themedStyles';
+import { softTint } from '@/components/softTint';
 
 /**
  * The top card of Entry details: the category's icon, name and kind on the left, the amount on the right, and the
@@ -41,7 +42,7 @@ export function EntryHero({
   const { accent } = useAccent();
   const identity = (
     <>
-      <View style={[styles.icon, { backgroundColor: theme.colors.glass }]}>
+      <View style={styles.icon}>
         <CategoryGlyph name={icon} size={19} color={shade(hue, 30, 10)} />
       </View>
       <View style={styles.names}>
@@ -59,7 +60,7 @@ export function EntryHero({
     <View style={styles.card}>
       <LinearGradient
         pointerEvents="none"
-        colors={[shade(hue, 89), shade(hue, 96)]}
+        colors={[softTint(hue, 0.19), softTint(hue, 0)]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={StyleSheet.absoluteFill}
@@ -92,8 +93,8 @@ const styles = themedStyles(() =>
       paddingVertical: 12,
       overflow: 'hidden',
       borderWidth: 1,
-      borderColor: theme.colors.glass,
-      backgroundColor: theme.colors.surface,
+      borderColor: theme.colors.home.edge,
+      backgroundColor: theme.colors.home.surface,
       marginBottom: 10,
     },
     // Wraps under the name when the amount is wide or the text is enlarged.
@@ -114,15 +115,27 @@ const styles = themedStyles(() =>
       minHeight: theme.accessibility.minTouchTarget,
       borderRadius: 14,
     },
-    icon: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center' },
+    icon: {
+      width: 34,
+      height: 34,
+      borderRadius: 12,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: theme.colors.home.control,
+    },
     names: { flex: 1, minWidth: 0 },
     titleRow: { flexDirection: 'row', alignItems: 'center', gap: 2 },
-    title: { flexShrink: 1, fontFamily: theme.font.bodyBold, fontSize: 15, color: theme.colors.textPrimary },
+    title: {
+      flexShrink: 1,
+      fontFamily: theme.font.bodyMedium,
+      fontSize: 13,
+      color: theme.colors.textPrimary,
+    },
     kicker: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textSecondary },
     amount: {
-      fontFamily: theme.font.body,
-      fontSize: 22,
-      lineHeight: 26,
+      fontFamily: theme.font.bodyMedium,
+      fontSize: 20,
+      lineHeight: 24,
       fontVariant: ['tabular-nums'],
     },
     meta: {

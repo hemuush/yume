@@ -43,6 +43,25 @@ it('steps to another day for a screen reader and says when nothing is scheduled'
   act(() => tree.unmount());
 });
 
+it('opens the selected payment date and keeps empty days read-only', () => {
+  const onViewDay = jest.fn();
+  const runway = buildRunway(10000, [rent], '2026-10-22', 5);
+  let tree!: ReturnType<typeof create>;
+  act(() => {
+    tree = create(<RunwayRibbon runway={runway} onViewDay={onViewDay} />);
+  });
+  const paymentLink = () =>
+    tree.root.findAll(
+      (node) => node.props.accessibilityLabel?.startsWith('View payments for ') && node.props.onPress
+    );
+  act(() => paymentLink()[0].props.onPress());
+  expect(onViewDay).toHaveBeenCalledWith(rent.dueDate);
+  const surface = tree.root.find((node) => node.props.accessibilityRole === 'adjustable');
+  act(() => surface.props.onAccessibilityAction({ nativeEvent: { actionName: 'decrement' } }));
+  expect(paymentLink()).toHaveLength(0);
+  act(() => tree.unmount());
+});
+
 it('draws nothing for an empty runway', () => {
   const runway = buildRunway(10000, [], '2026-10-22', 0);
   let tree!: ReturnType<typeof create>;

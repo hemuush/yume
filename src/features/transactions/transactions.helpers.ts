@@ -339,8 +339,20 @@ export function chartTransactionsFor(
   return transactions.filter((t) => {
     if (accountsById.get(t.accountId)?.currency !== currency) return false;
     const category = t.categoryId ? categoriesById.get(t.categoryId) : undefined;
-    return !category || !hiddenGroups?.has(category.parentId ?? category.id);
+    if (!hiddenGroups || !t.categoryId) return true;
+    if (!category || (category.parentId && !categoriesById.has(category.parentId))) return false;
+    return !hiddenGroups.has(category.parentId ?? category.id);
   });
+}
+
+export function netActivitySpend(transactions: readonly Transaction[]): number {
+  return Math.max(
+    0,
+    transactions.reduce((sum, entry) => {
+      if (entry.isRefund) return sum - entry.amountMinor;
+      return entry.type === 'expense' ? sum + entry.amountMinor : sum;
+    }, 0)
+  );
 }
 
 /** Things to try in the search box, from the period's own entries: a category or two, an amount, a day. */

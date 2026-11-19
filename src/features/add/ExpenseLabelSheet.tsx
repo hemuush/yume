@@ -22,7 +22,7 @@ export function ExpenseLabelSheet({
   onPick: (value: string) => void;
 }) {
   const [draft, setDraft] = useState(value);
-  const [labels, setLabels] = useState<string[]>([]);
+  const [snapshot, setLabels] = useState<{ hideAmounts: boolean; labels: string[] } | null>(null);
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);
   const [retry, setRetry] = useState(0);
@@ -37,13 +37,13 @@ export function ExpenseLabelSheet({
   useEffect(() => {
     if (!visible) return;
     let active = true;
-    setLabels([]);
+    setLabels(null);
     setError(false);
     setLoading(true);
     void listExpenseLabels('', hideAmounts).then(
       (rows) => {
         if (active) {
-          setLabels(rows);
+          setLabels({ hideAmounts, labels: rows });
           setLoading(false);
         }
       },
@@ -58,7 +58,9 @@ export function ExpenseLabelSheet({
       active = false;
     };
   }, [visible, hideAmounts, retry]);
-  const matching = labels.filter((label) => label.toLowerCase().includes(draft.trim().toLowerCase()));
+  const matching = (snapshot?.hideAmounts === hideAmounts ? snapshot.labels : []).filter((label) =>
+    label.toLowerCase().includes(draft.trim().toLowerCase())
+  );
   const close = () => {
     Keyboard.dismiss();
     onClose();
@@ -69,6 +71,7 @@ export function ExpenseLabelSheet({
   };
   return (
     <ModalSheet
+      ledgerStyle
       visible={visible}
       onClose={close}
       title="Expense label"
@@ -127,7 +130,13 @@ export function ExpenseLabelSheet({
       )}
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
         {matching.slice(0, expanded ? 50 : 8).map((label) => (
-          <Chip key={label} label={label} active={draft.trim() === label} onPress={() => pick(label)} />
+          <Chip
+            ledgerStyle
+            key={label}
+            label={label}
+            active={draft.trim() === label}
+            onPress={() => pick(label)}
+          />
         ))}
       </View>
       {!expanded && matching.length > 8 && (

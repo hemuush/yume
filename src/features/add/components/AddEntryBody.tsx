@@ -1,3 +1,5 @@
+import { View } from 'react-native';
+import { styles } from '@/features/add/add.styles';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { StagedList } from '@/features/add/AddSections';
 import { AddEntryAmount, AMOUNT_KEYS } from '@/features/add/components/AddEntryAmount';
@@ -16,26 +18,41 @@ const Fields = memoByModelKeys(AddEntryFields, FIELDS_KEYS);
 
 type Props = { model: AddEntryModel };
 export function AddEntryBody({ model }: Props): ReactElement {
-  const { formBusy, footerHeight, rows, accounts, listFade, removeRow } = model;
+  const { formBusy, footerHeight, rows, accounts, categories, listFade, removeRow } = model;
 
   return (
-    <KeyboardAwareScrollView
-      pointerEvents={formBusy ? 'none' : 'auto'}
-      accessibilityElementsHidden={formBusy}
-      importantForAccessibility={formBusy ? 'no-hide-descendants' : 'auto'}
-      contentContainerStyle={{ padding: 16, paddingTop: 4, paddingBottom: 28 }}
-      keyboardShouldPersistTaps="handled"
-      // Clears the sticky footer that rides on the keyboard, not just the keyboard: a focused field (the
-      // category search) would otherwise sit right behind Save.
-      bottomOffset={footerHeight + 12}
-    >
-      <LoadNotice model={model} />
-      <Amount model={model} />
-      <DraftNotices model={model} />
-      <Fields model={model} />
-      {rows.length > 0 && (
-        <StagedList rows={rows} accounts={accounts} fadeStyle={listFade} onRemove={removeRow} />
-      )}
-    </KeyboardAwareScrollView>
+    <View style={styles.entryBody}>
+      <View
+        style={styles.pinnedAmount}
+        pointerEvents={formBusy ? 'none' : 'auto'}
+        accessibilityElementsHidden={formBusy}
+        importantForAccessibility={formBusy ? 'no-hide-descendants' : 'auto'}
+      >
+        <Amount model={model} />
+      </View>
+      <KeyboardAwareScrollView
+        pointerEvents={formBusy ? 'none' : 'auto'}
+        accessibilityElementsHidden={formBusy}
+        importantForAccessibility={formBusy ? 'no-hide-descendants' : 'auto'}
+        contentContainerStyle={{ padding: 16, paddingTop: 4, paddingBottom: 28 }}
+        keyboardShouldPersistTaps="handled"
+        // Clears the sticky footer that rides on the keyboard, not just the keyboard: a focused field (the
+        // category search) would otherwise sit right behind Save.
+        bottomOffset={footerHeight + 12}
+      >
+        <LoadNotice model={model} />
+        <DraftNotices model={model} />
+        <Fields model={model} />
+        {rows.length > 0 && (
+          <StagedList
+            rows={rows}
+            accounts={accounts}
+            categories={categories}
+            fadeStyle={listFade}
+            onRemove={removeRow}
+          />
+        )}
+      </KeyboardAwareScrollView>
+    </View>
   );
 }

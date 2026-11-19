@@ -69,9 +69,7 @@ export function TransactionsHeadline({
   // Narrowed to a category (a chip under the chart): the figure is what the bars hold for it, and the
   // comparison and cash flow, which are about the whole period, step aside.
   const narrowed = !!narrowedTo;
-  const shownMinor = narrowed
-    ? displayed.bars.reduce((sum, bar) => (bar.state ? sum : sum + bar.totalMinor), 0)
-    : displayed.expenseMinor;
+  const shownMinor = displayed.expenseMinor;
   // What a day cost so far: the days that have happened, empty ones too (an empty day is a cheap one).
   const elapsed = displayed.bars.filter((bar) => !bar.state);
   const averageMinor =
@@ -80,7 +78,7 @@ export function TransactionsHeadline({
       : null;
   const compareTo = displayed.compareLabel ?? `last ${displayed.viewScope}`;
   const kicker = narrowed
-    ? `Spent on ${narrowedTo}${current ? ` this ${viewScope}` : ''}`
+    ? `${narrowedTo === 'matching entries' ? 'Spent in' : 'Spent on'} ${narrowedTo}${current ? ` this ${viewScope}` : ''}`
     : current
       ? `Spent this ${viewScope}`
       : 'Spent';

@@ -53,7 +53,7 @@ export const HoldingRow = memo(function HoldingRow({
       divider={divider}
       right={
         <View style={styles.rowRight}>
-          <Text style={styles.rowValue} numberOfLines={1}>
+          <Text style={styles.rowValue}>
             {formatMaskableMoney(holding.valueMinor, { currency: cur, masked })}
           </Text>
           {holding.gainMinor != null && (
@@ -73,6 +73,12 @@ export const HoldingRow = memo(function HoldingRow({
 const styles = themedStyles(() =>
   StyleSheet.create({
     rowRight: { alignItems: 'flex-end', gap: 3, flexShrink: 1 },
-    rowValue: { fontFamily: theme.font.bodyBold, fontSize: 15, color: theme.colors.textPrimary },
+    rowValue: {
+      fontFamily: theme.font.bodyBold,
+      fontSize: 15,
+      color: theme.colors.textPrimary,
+      textAlign: 'right',
+      fontVariant: ['tabular-nums'],
+    },
   })
 );

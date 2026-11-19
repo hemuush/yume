@@ -105,7 +105,7 @@ import { resetSettingsCache, setDefaultCurrency, setHasOnboarded, setUserName } 
 import { createTransaction } from '@/db/transactions';
 import { toLocalIsoDate } from '@/lib/date';
 import { BudgetRow } from '@/features/budgets/BudgetRow';
-import BudgetsScreen from '../../app/budgets';
+import BudgetsScreen from '@/features/budgets/BudgetsWorkspace';
 
 const today = toLocalIsoDate(new Date());
 let mounted: ReactTestRenderer | null = null;

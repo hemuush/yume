@@ -1,12 +1,11 @@
-import { themeInk } from '@/theme/interactionColors';
 import { useRef } from 'react';
 import {
   View,
   Pressable,
   ScrollView,
-  ScrollViewInstance,
   ActivityIndicator,
   useWindowDimensions,
+  type ScrollViewInstance,
 } from 'react-native';
 import { HeaderIconButton } from '@/components/AppHeader';
 import { Text } from '@/components/Text';
@@ -16,7 +15,6 @@ import type { ActivityType } from './activityFilter';
 import { EmptyState } from '@/components/EmptyState';
 import { styles } from './transactions.styles';
 import { withPressed, withPressedTint } from '@/lib/pressed';
-import { shade } from '@/lib/color';
 import { useAccent } from '@/theme/AccentContext';
 import { useStacked } from '@/lib/useStacked';
 
@@ -71,13 +69,10 @@ export function ActivityFilterChips({
   const picked =
     categoryIds.length + accountIds.length + (expenseLabel ? 1 : 0) + (filterType === 'all' ? 0 : 1);
   const { accent } = useAccent();
-  const chipBg = shade(accent, 95);
-  const ink = themeInk(accent);
-  const { width } = useWindowDimensions();
   const wrapTabs = useStacked();
-  // When what is picked is cleared the row can shrink to fit the screen: take it back to its start, so it is never
-  // left scrolled past its own content (a blank strip with the edge of one chip).
+  const { width } = useWindowDimensions();
   const scroller = useRef<ScrollViewInstance>(null);
+  const viewportWidth = useRef(0);
   // Investments are picked in the sheet, so their chip shows only while that is the type in use: otherwise
   // the row would show no choice at all (not even All) on a filtered list.
   const chips =
@@ -90,7 +85,11 @@ export function ActivityFilterChips({
         onPress={() => onFilterType(c.value)}
         // Drawn 40 tall; the touch area stays 48.
         hitSlop={CHIP_SLOP}
-        style={withPressedTint(accent, [styles.typeBtn, on && { backgroundColor: ink, borderColor: ink }])}
+        style={({ pressed }) => [
+          styles.typeBtn,
+          on && styles.filterSelected,
+          pressed && styles.filterPressed,
+        ]}
         accessibilityRole="radio"
         accessibilityState={{ selected: on }}
         accessibilityLabel={`Show ${c.label.toLowerCase()}`}
@@ -111,7 +110,7 @@ export function ActivityFilterChips({
           key={id}
           onPress={() => onRemoveCategory(id)}
           hitSlop={CHIP_SLOP}
-          style={withPressedTint(accent, [styles.chip, { backgroundColor: chipBg }])}
+          style={withPressedTint(accent, styles.chip)}
           accessibilityRole="button"
           accessibilityLabel={`Remove the ${categoryName(id)} filter`}
         >
@@ -124,7 +123,7 @@ export function ActivityFilterChips({
           key={id}
           onPress={() => onRemoveAccount(id)}
           hitSlop={CHIP_SLOP}
-          style={withPressedTint(accent, [styles.chip, { backgroundColor: chipBg }])}
+          style={withPressedTint(accent, styles.chip)}
           accessibilityRole="button"
           accessibilityLabel={`Remove the ${accountName(id)} filter`}
         >
@@ -137,7 +136,7 @@ export function ActivityFilterChips({
         <Pressable
           onPress={onRemoveLabel}
           hitSlop={CHIP_SLOP}
-          style={withPressedTint(accent, [styles.chip, { backgroundColor: chipBg }])}
+          style={withPressedTint(accent, styles.chip)}
           accessibilityRole="button"
           accessibilityLabel="Remove expense label filter"
         >
@@ -170,31 +169,38 @@ export function ActivityFilterChips({
   );
   return (
     <>
-      {wrapTabs ? (
-        <View style={[styles.typeBar, styles.typeFilterRowWrap]}>
-          {filterButton}
-          {pills}
+      <View style={styles.typeFilterRow}>
+        {filterButton}
+        {wrapTabs ? (
+          <View style={[styles.pillGroup, styles.pillWrap]} accessibilityRole="radiogroup">
+            {pills}
+          </View>
+        ) : (
+          <ScrollView
+            ref={scroller}
+            horizontal
+            onLayout={(event) => {
+              viewportWidth.current = event.nativeEvent.layout.width;
+            }}
+            onContentSizeChange={(contentWidth) => {
+              if (contentWidth <= (viewportWidth.current || width))
+                scroller.current?.scrollTo({ x: 0, animated: false });
+            }}
+            contentContainerStyle={styles.typeScrollContent}
+            showsHorizontalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
+            <View style={styles.pillGroup} accessibilityRole="radiogroup">
+              {pills}
+            </View>
+          </ScrollView>
+        )}
+      </View>
+      {picked > 0 && (
+        <View style={styles.appliedFilters}>
           {pickedChips}
           {clearAll}
         </View>
-      ) : (
-        <ScrollView
-          ref={scroller}
-          onContentSizeChange={(contentWidth) => {
-            if (contentWidth <= width) scroller.current?.scrollTo({ x: 0, animated: false });
-          }}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-          contentContainerStyle={[styles.typeBar, styles.typeFilterRow]}
-        >
-          {filterButton}
-          <View style={styles.pillGroup} accessibilityRole="radiogroup">
-            {pills}
-          </View>
-          {pickedChips}
-          {clearAll}
-        </ScrollView>
       )}
       <View style={styles.filterGap} />
     </>

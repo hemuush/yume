@@ -19,6 +19,7 @@ import { flatSection } from '@/components/screenStyles';
 import { DUE_SOON_DAYS } from '@/lib/dueDate';
 import { daysUntilIsoDate, toLocalIsoDate } from '@/lib/date';
 
+import { withPressed } from '@/lib/pressed';
 import { useAccent } from '@/theme/AccentContext';
 import { themeInk } from '@/theme/interactionColors';
 import { themedStyles } from '@/theme/themedStyles';
@@ -34,6 +35,9 @@ export function LoanCard({
   fadeStyle,
   onPress,
   onPay,
+  compact = false,
+  divider = false,
+  nextPayment = false,
 }: {
   loan: Loan;
   /** The loan's identity colour (loanHues). */
@@ -44,6 +48,9 @@ export function LoanCard({
   onPress: () => void;
   /** Opens this loan's pay sheet for its next EMI. */
   onPay: () => void;
+  compact?: boolean;
+  divider?: boolean;
+  nextPayment?: boolean;
 }) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.98);
   const { accent } = useAccent();
@@ -67,6 +74,105 @@ export function LoanCard({
   const repaidLine = progress
     ? `${progress.paidCount} of ${progress.totalCount} ${progress.totalCount === 1 ? 'EMI' : 'EMIs'}`
     : null;
+
+  const payment = !isClosed && nextDueDate && (
+    <View
+      style={[
+        styles.footer,
+        compact && styles.compactFooter,
+        compact && nextPayment && styles.priorityFooter,
+        !compact && dueSoon && styles.footerDue,
+      ]}
+    >
+      {compact ? (
+        <>
+          <View style={styles.compactDue}>
+            {nextPayment && <Text style={[styles.nextLabel, styles.priorityLabel]}>Next payment</Text>}
+            <Text style={[styles.compactDate, lateDays > 0 && styles.late]}>
+              {nextPayment ? nextWhen : `EMI · ${nextWhen}`}
+            </Text>
+          </View>
+          <Text style={[styles.compactEmi, nextPayment && styles.priorityAmount]}>
+            {formatMoney(nextEmiMinor)}
+          </Text>
+        </>
+      ) : (
+        <View style={styles.footerText}>
+          <Text style={styles.nextLine}>
+            <Text style={[styles.nextLabel, dueSoon && styles.nextLabelDue]}>Next EMI · </Text>
+            {nextWhen} · <Text style={styles.nextAmount}>{formatMoney(nextEmiMinor)}</Text>
+          </Text>
+        </View>
+      )}
+      <Pressable
+        onPress={(event) => {
+          event?.stopPropagation();
+          onPay();
+        }}
+        accessibilityRole="button"
+        accessibilityLabel={`${isBorrowed ? 'Pay' : 'Mark received'} next EMI for ${loan.counterparty}`}
+        accessibilityHint={compact ? `${formatMoney(nextEmiMinor)}, ${nextWhen}` : undefined}
+        hitSlop={8}
+        style={({ pressed }) => [
+          styles.pill,
+          compact ? styles.compactPay : { backgroundColor: ink },
+          pressed && styles.pillPressed,
+        ]}
+      >
+        <Text
+          style={[
+            styles.pillText,
+            compact && styles.compactPayText,
+            compact && nextPayment && styles.priorityPay,
+          ]}
+        >
+          {isBorrowed ? 'Pay' : 'Received'}
+        </Text>
+      </Pressable>
+    </View>
+  );
+
+  if (compact) {
+    return (
+      <View style={[styles.compactCard, divider && styles.compactDivider]}>
+        <Pressable
+          onPress={onPress}
+          accessibilityRole="button"
+          accessibilityLabel={
+            isClosed
+              ? `${loan.counterparty}, paid off`
+              : `${loan.counterparty}, ${formatMoney(roundedMinor(loan.outstandingPrincipalMinor))} ${isBorrowed ? 'remaining' : 'still to receive'}`
+          }
+          accessibilityHint="Opens loan details"
+          style={withPressed(styles.compactDetails)}
+        >
+          <View style={[styles.icon, { backgroundColor: loanTint(hue) }]}>
+            <MaterialCommunityIcons name={loanIcon(loan) as McIconName} size={16} color={loanGlyph(hue)} />
+          </View>
+          <View style={[styles.headText, styles.compactCopy]}>
+            <Text style={styles.name}>{loan.counterparty}</Text>
+            <Text style={styles.sub}>
+              {isClosed
+                ? 'Paid off'
+                : repaidLine
+                  ? `${repaidLine} paid`
+                  : isBorrowed
+                    ? 'Principal remaining'
+                    : 'Still to receive'}
+              {!isClosed && lastDueDate ? ` · ${payoffMonthShort(lastDueDate)}` : ''}
+            </Text>
+          </View>
+          {!isClosed && (
+            <CountUpAmount
+              minor={roundedMinor(loan.outstandingPrincipalMinor)}
+              style={styles.compactAmount}
+            />
+          )}
+        </Pressable>
+        {payment}
+      </View>
+    );
+  }
 
   return (
     <Animated.View style={fadeStyle}>
@@ -135,32 +241,7 @@ export function LoanCard({
             ) : null}
           </View>
 
-          {!isClosed && nextDueDate && (
-            <View style={[styles.footer, dueSoon && styles.footerDue]}>
-              <View style={styles.footerText}>
-                <Text style={styles.nextLine}>
-                  <Text style={[styles.nextLabel, dueSoon && styles.nextLabelDue]}>Next EMI · </Text>
-                  {nextWhen} · <Text style={styles.nextAmount}>{formatMoney(nextEmiMinor)}</Text>
-                </Text>
-              </View>
-              <Pressable
-                onPress={(event) => {
-                  event?.stopPropagation();
-                  onPay();
-                }}
-                accessibilityRole="button"
-                accessibilityLabel={`${isBorrowed ? 'Pay' : 'Mark received'} next EMI for ${loan.counterparty}`}
-                hitSlop={8}
-                style={({ pressed }) => [
-                  styles.pill,
-                  { backgroundColor: ink },
-                  pressed && styles.pillPressed,
-                ]}
-              >
-                <Text style={styles.pillText}>{isBorrowed ? 'Pay' : 'Received'}</Text>
-              </Pressable>
-            </View>
-          )}
+          {payment}
         </Pressable>
       </Animated.View>
     </Animated.View>
@@ -171,6 +252,53 @@ const styles = themedStyles(() =>
   StyleSheet.create({
     // Flat supporting surface; identity colour is confined to the icon and progress.
     card: { ...flatSection(), marginHorizontal: 2, marginBottom: 12, padding: 14 },
+    compactCard: {
+      paddingHorizontal: 12,
+      paddingTop: 8,
+      paddingBottom: 4,
+    },
+    compactDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.borderSoft },
+    compactFooter: { marginTop: 0, paddingTop: 0, borderTopWidth: 0, gap: 6 },
+    priorityFooter: {
+      marginTop: 4,
+      marginBottom: 4,
+      paddingStart: 10,
+      paddingEnd: 4,
+      paddingVertical: 4,
+      borderRadius: 12,
+      backgroundColor: theme.colors.home.control,
+    },
+    compactDue: { flex: 1, minWidth: 88, gap: 2 },
+    compactDate: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
+    priorityLabel: { fontFamily: theme.font.bodyMedium, color: theme.colors.link },
+    compactEmi: {
+      flexShrink: 1,
+      fontFamily: theme.font.bodyMedium,
+      fontSize: 13,
+      fontVariant: ['tabular-nums'],
+      color: theme.colors.textPrimary,
+      textAlign: 'right',
+    },
+    late: { color: theme.colors.expenseText },
+    priorityAmount: { fontFamily: theme.font.bodyBold, fontSize: 15 },
+    compactPay: { backgroundColor: 'transparent', minWidth: 44, alignItems: 'center', paddingHorizontal: 6 },
+    compactPayText: {
+      color: theme.colors.link,
+      backgroundColor: theme.colors.home.control,
+      borderRadius: 12,
+      paddingVertical: 5,
+      paddingHorizontal: 9,
+    },
+    priorityPay: { backgroundColor: theme.colors.home.selected },
+    compactDetails: { minHeight: 44, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
+    compactCopy: { flexBasis: 110 },
+    compactAmount: {
+      fontFamily: theme.font.bodyBold,
+      fontSize: 15,
+      lineHeight: 20,
+      color: theme.colors.textPrimary,
+      fontVariant: ['tabular-nums'],
+    },
     head: { flexDirection: 'row', alignItems: 'center', gap: 12 },
     icon: {
       width: 34,

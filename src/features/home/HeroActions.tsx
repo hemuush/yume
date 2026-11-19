@@ -4,8 +4,6 @@ import { Text } from '@/components/Text';
 import { pushOnce } from '@/lib/pushOnce';
 import { theme } from '@/constants/theme';
 import { usePressScale } from '@/lib/usePressScale';
-import { useAccent } from '@/theme/AccentContext';
-import { themeInk } from '@/theme/interactionColors';
 import { haptics } from '@/lib/haptics';
 import { themedStyles } from '@/theme/themedStyles';
 
@@ -20,13 +18,11 @@ const ACTIONS: {
 ];
 
 /**
- * Add shortcuts beneath the month card, each opening Add with its kind picked. Expense is the one filled
- * button (deep ink); Income and Transfer are bright glass.
+ * Quick entry shortcuts. Each opens Add with its entry type selected.
  */
-function Action({ type, label, icon, ink }: (typeof ACTIONS)[number] & { ink: string }) {
+function Action({ type, label, icon }: (typeof ACTIONS)[number]) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.96);
   const { fontScale } = useWindowDimensions();
-  const primary = type === 'expense';
   return (
     <Pressable
       onPress={() => {
@@ -35,30 +31,32 @@ function Action({ type, label, icon, ink }: (typeof ACTIONS)[number] & { ink: st
       }}
       onPressIn={onPressIn}
       onPressOut={onPressOut}
-      style={[
+      style={({ pressed }) => [
         styles.wrap,
-        { flexBasis: (primary ? 104 : 80) * Math.max(1, fontScale), flexGrow: primary ? 1.45 : 1 },
+        { flexBasis: 90 * Math.max(1, fontScale) },
+        type === 'expense' && styles.primary,
+        pressed && styles.pressed,
       ]}
       accessibilityRole="button"
       accessibilityLabel={type === 'expense' ? 'Add expense' : `Add ${label.toLowerCase()}`}
     >
-      <Animated.View
-        style={[styles.action, primary && { backgroundColor: ink, borderColor: ink }, animatedStyle]}
-      >
-        <Feather name={icon} size={16} color={primary ? theme.colors.onInk : theme.colors.ink} />
-        <Text style={[styles.label, primary && styles.labelPrimary]}>{label}</Text>
+      <Animated.View style={[styles.action, animatedStyle]}>
+        <Feather
+          name={icon}
+          size={16}
+          color={type === 'income' ? theme.colors.incomeText : theme.colors.link}
+        />
+        <Text style={styles.label}>{label}</Text>
       </Animated.View>
     </Pressable>
   );
 }
 
 export function HeroActions() {
-  const { accent } = useAccent();
-  const ink = themeInk(accent);
   return (
     <View style={styles.row}>
       {ACTIONS.map((a) => (
-        <Action key={a.type} {...a} ink={ink} />
+        <Action key={a.type} {...a} />
       ))}
     </View>
   );
@@ -66,25 +64,18 @@ export function HeroActions() {
 
 const styles = themedStyles(() =>
   StyleSheet.create({
-    row: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-    wrap: { flexGrow: 1, flexBasis: 88 },
+    row: { marginHorizontal: 16, marginTop: 6, flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+    wrap: { flexGrow: 1, borderRadius: theme.radius.lg, backgroundColor: theme.colors.home.control },
+    primary: { backgroundColor: theme.colors.home.selected },
+    pressed: { backgroundColor: theme.colors.home.pressed },
     action: {
-      minHeight: 46,
-      paddingHorizontal: 8,
-      paddingVertical: 8,
-      borderRadius: theme.radius.pill,
+      minHeight: 44,
+      paddingHorizontal: 4,
+      paddingVertical: 5,
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
       gap: 6,
-      backgroundColor: theme.colors.surface,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.colors.borderSoft,
-      shadowColor: theme.colors.ink,
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.04,
-      shadowRadius: 4,
-      elevation: 1,
     },
     label: {
       fontFamily: theme.font.bodyMedium,
@@ -92,6 +83,5 @@ const styles = themedStyles(() =>
       fontSize: 12,
       color: theme.colors.textPrimary,
     },
-    labelPrimary: { color: theme.colors.onInk },
   })
 );

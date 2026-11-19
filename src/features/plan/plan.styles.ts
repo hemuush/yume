@@ -10,6 +10,24 @@ const GAP = 10;
 /** The one inset inside every Plan card: card text, day headings and row content start on the same line. */
 const INSET = 14;
 
+export const planWorkspaceCard = themedValue(() => ({
+  marginHorizontal: 16,
+  borderWidth: StyleSheet.hairlineWidth,
+  borderColor: theme.colors.home.edge,
+  borderRadius: 16,
+  backgroundColor: theme.colors.home.surface,
+}));
+
+// Each Money plan collection shares the same restrained list surface.
+export const planMoneyList = themedValue(() => ({
+  marginHorizontal: SCREEN.gutter,
+  borderWidth: StyleSheet.hairlineWidth,
+  borderColor: theme.colors.home.edge,
+  borderRadius: 16,
+  overflow: 'hidden' as const,
+  backgroundColor: theme.colors.home.surface,
+}));
+
 const figure = themedValue(() => ({
   fontFamily: theme.font.bodyMedium,
   fontSize: theme.typeSize.title,

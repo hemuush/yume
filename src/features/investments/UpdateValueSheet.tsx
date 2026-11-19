@@ -33,6 +33,7 @@ export function UpdateValueSheet({
   visible,
   onClose,
   backLabel,
+  ledgerStyle,
   onSaved,
   onDeleted,
 }: {
@@ -42,6 +43,7 @@ export function UpdateValueSheet({
   visible: boolean;
   onClose: () => void;
   backLabel?: string;
+  ledgerStyle?: boolean;
   onSaved: () => void;
   /** After a delete, once the undo toast is up — the caller closes whatever sits behind this sheet. */
   onDeleted: () => void;
@@ -152,6 +154,7 @@ export function UpdateValueSheet({
 
   return (
     <ModalSheet
+      ledgerStyle={ledgerStyle}
       backLabel={backLabel}
       dismissible={!saving}
       title="Update value"
@@ -177,6 +180,7 @@ export function UpdateValueSheet({
       }
     >
       <DraftCard
+        ledgerStyle={ledgerStyle}
         hue={accountHue(account.type, accent)}
         icon={accountIcon(account.type, true)}
         title={account.name}

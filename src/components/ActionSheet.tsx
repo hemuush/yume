@@ -29,32 +29,57 @@ export function ActionSheet({
   title,
   subtitle,
   items,
+  ledgerStyle = false,
 }: {
   visible: boolean;
   onClose: () => void;
   title?: string;
   subtitle?: string;
   items: ActionSheetItem[];
+  ledgerStyle?: boolean;
 }) {
   return (
-    <ModalSheet size="compact" visible={visible} onClose={onClose} title={title} subtitle={subtitle}>
-      <ActionList items={items} onClose={onClose} />
+    <ModalSheet
+      ledgerStyle={ledgerStyle}
+      size="compact"
+      visible={visible}
+      onClose={onClose}
+      title={title}
+      subtitle={subtitle}
+    >
+      <ActionList items={items} onClose={onClose} ledgerStyle={ledgerStyle} />
     </ModalSheet>
   );
 }
 
 /** Also used inside a detail sheet, avoiding a second modal for a short menu. */
-export function ActionList({ items, onClose }: { items: ActionSheetItem[]; onClose: () => void }) {
+export function ActionList({
+  items,
+  onClose,
+  ledgerStyle = false,
+}: {
+  items: ActionSheetItem[];
+  onClose: () => void;
+  ledgerStyle?: boolean;
+}) {
   return (
     <View style={styles.list}>
       {items.map((item) => (
-        <ActionSheetRow key={item.key} item={item} onClose={onClose} />
+        <ActionSheetRow key={item.key} item={item} onClose={onClose} ledgerStyle={ledgerStyle} />
       ))}
     </View>
   );
 }
 
-function ActionSheetRow({ item, onClose }: { item: ActionSheetItem; onClose: () => void }) {
+function ActionSheetRow({
+  item,
+  onClose,
+  ledgerStyle,
+}: {
+  item: ActionSheetItem;
+  onClose: () => void;
+  ledgerStyle: boolean;
+}) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.98);
   const { accent } = useAccent();
   const colors = interactionColors(accent);
@@ -66,12 +91,22 @@ function ActionSheetRow({ item, onClose }: { item: ActionSheetItem; onClose: () 
       }}
       onPressIn={onPressIn}
       onPressOut={onPressOut}
-      style={[styles.row, item.destructive && styles.destructiveRow, animatedStyle]}
+      style={[
+        styles.row,
+        ledgerStyle && styles.ledgerRow,
+        item.destructive && styles.destructiveRow,
+        animatedStyle,
+      ]}
       accessibilityRole="button"
     >
       {item.icon && (
         <View
-          style={[styles.icon, { backgroundColor: colors.tint }, item.destructive && styles.iconDestructive]}
+          style={[
+            styles.icon,
+            { backgroundColor: colors.tint },
+            ledgerStyle && styles.ledgerIcon,
+            item.destructive && styles.iconDestructive,
+          ]}
         >
           <Feather
             name={item.icon}
@@ -80,7 +115,15 @@ function ActionSheetRow({ item, onClose }: { item: ActionSheetItem; onClose: () 
           />
         </View>
       )}
-      <Text style={[styles.rowLabel, item.destructive && styles.rowLabelDestructive]}>{item.label}</Text>
+      <Text
+        style={[
+          styles.rowLabel,
+          ledgerStyle && styles.ledgerLabel,
+          item.destructive && styles.rowLabelDestructive,
+        ]}
+      >
+        {item.label}
+      </Text>
       {!item.destructive && <Feather name="chevron-right" size={18} color={theme.colors.textMuted} />}
     </AnimatedPressable>
   );
@@ -104,6 +147,13 @@ const styles = themedStyles(() =>
       borderColor: theme.colors.borderSoft,
     },
     destructiveRow: { backgroundColor: theme.colors.expenseTint, borderColor: theme.colors.expenseTint },
+    ledgerRow: {
+      minHeight: 48,
+      paddingVertical: 6,
+      borderRadius: theme.radius.lg,
+      backgroundColor: theme.colors.home.surface,
+      borderColor: theme.colors.home.edge,
+    },
     icon: {
       width: 40,
       height: 40,
@@ -113,6 +163,8 @@ const styles = themedStyles(() =>
       justifyContent: 'center',
     },
     iconDestructive: { backgroundColor: theme.colors.expenseTint },
+    ledgerIcon: { width: 32, height: 32, borderRadius: 10, backgroundColor: theme.colors.home.control },
+    ledgerLabel: { fontSize: 13 },
     rowLabel: { flex: 1, fontFamily: theme.font.bodyMedium, fontSize: 15, color: theme.colors.textPrimary },
     rowLabelDestructive: { color: theme.colors.expenseText },
   })

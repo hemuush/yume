@@ -98,13 +98,22 @@ afterEach(() => {
   jest.clearAllMocks();
 });
 
-it('lists a budget over its limit ahead of a bill due in two days, then the goal', () => {
+it('lists a bill due in two days before a budget over its limit and the goal', () => {
   const r = render();
   const rows = texts(r);
   expect(rows.indexOf('Cat b1 budget')).toBeGreaterThanOrEqual(0);
-  expect(rows.indexOf('Cat b1 budget')).toBeLessThan(rows.indexOf('Rent'));
-  expect(rows.indexOf('Rent')).toBeLessThan(rows.indexOf('Goal g1'));
+  expect(rows.indexOf('Rent')).toBeLessThan(rows.indexOf('Cat b1 budget'));
+  expect(rows.indexOf('Cat b1 budget')).toBeLessThan(rows.indexOf('Goal g1'));
   expect(rows).toContain('₹3,000 over its limit');
+  act(() => r.unmount());
+});
+
+it('offers retry while retaining the last available rows', () => {
+  const onRetry = jest.fn();
+  const r = render({ loadFailed: true, onRetry });
+  expect(texts(r)).toContain('Rent');
+  press(r, 'Retry loading upcoming items');
+  expect(onRetry).toHaveBeenCalledTimes(1);
   act(() => r.unmount());
 });
 

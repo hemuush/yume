@@ -1,5 +1,5 @@
 import { budgetPace } from '@/lib/pace';
-import { daysUntilIsoDate } from '@/lib/date';
+import { daysUntilIsoDate, parseLocalIsoDate } from '@/lib/date';
 import { goalProgress } from '@/lib/savingsGoalProgress';
 import type { BudgetProgress } from '@/db/budgets';
 import type { SavingsGoal } from '@/types';
@@ -31,10 +31,10 @@ const COMING_UP_ROWS = 5;
 /** Outgoing payments further away than this stay out of Home; Plan lists them all. */
 const PAYMENT_WINDOW_DAYS = 31;
 
-/** Lower comes first. Overdue and due-today payments, then budgets over their limit, then bills due soon. */
+/** Lower comes first. Overdue and upcoming payments lead when action is time-sensitive. */
 function paymentRank(days: number): number {
   if (days <= 0) return 0;
-  return days <= DUE_SOON_DAYS ? 20 + days : 60 + days;
+  return days <= DUE_SOON_DAYS ? days : 60 + days;
 }
 
 export function budgetState(progress: BudgetProgress, today: string): BudgetState {
@@ -52,12 +52,13 @@ export function buildComingUp(input: {
   today: string;
 }): ComingUpItem[] {
   const items: ComingUpItem[] = [];
+  const reference = parseLocalIsoDate(input.today);
   for (const item of input.upcoming.all ?? [
     ...input.upcoming.items,
     ...(input.upcoming.next ? [input.upcoming.next] : []),
   ]) {
     if (item.sign !== '-' || item.amountMinor <= 0) continue;
-    const days = daysUntilIsoDate(item.sortDate);
+    const days = daysUntilIsoDate(item.sortDate, reference);
     if (days > PAYMENT_WINDOW_DAYS) continue;
     items.push({ kind: 'payment', key: item.key, rank: paymentRank(days), item });
   }

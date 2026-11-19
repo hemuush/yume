@@ -67,6 +67,7 @@ it('keeps a stored overdue installment next in line and blocks paying a later in
   expect((await getNextDueInstallment())?.dueDate).toBe(first.dueDate);
   expect((await listLoansDue())[0].dueDate).toBe(first.dueDate);
   expect(await getStillToPayThisMonth('2026-10-05')).toBe(10000);
+  expect(await getStillToPayThisMonth('2026-11-05')).toBe(20000);
   await expect(
     payInstallment(second.id, { accountId: account.id, categoryId: category.id, paidDate: '2026-10-05' })
   ).rejects.toThrow('earlier');

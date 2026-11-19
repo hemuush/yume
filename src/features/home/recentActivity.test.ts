@@ -35,8 +35,11 @@ describe('viewAllTarget', () => {
     expect(viewAllTarget({ granularity: 'month', offset: -11 }, ref).params).toEqual({ month: '2025-12' });
   });
 
-  it('leaves Activity as it is for the current month and for a year, which Activity cannot show', () => {
-    expect(viewAllTarget({ granularity: 'month', offset: 0 }, ref)).toEqual({ pathname: '/transactions' });
+  it('opens the current month and leaves years to Activity’s default range', () => {
+    expect(viewAllTarget({ granularity: 'month', offset: 0 }, ref)).toEqual({
+      pathname: '/transactions',
+      params: { month: '2026-11' },
+    });
     expect(viewAllTarget({ granularity: 'year', offset: -1 }, ref)).toEqual({ pathname: '/transactions' });
   });
 });

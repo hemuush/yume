@@ -132,7 +132,7 @@ describe('Activity when the totals query fails', () => {
     mockComparison.fail = true;
     const shown = texts(await render());
     expect(shown).not.toContain('SKELETON');
-    expect(shown).toContain('Couldn’t load this period’s totals');
+    expect(shown).toContain('Couldn’t refresh the period comparison');
     expect(shown).toContain('Nothing logged this week');
   });
 
@@ -140,7 +140,7 @@ describe('Activity when the totals query fails', () => {
     mockComparison.fail = false;
     const shown = texts(await render());
     expect(shown).not.toContain('SKELETON');
-    expect(shown).not.toContain('Couldn’t load this period’s totals');
+    expect(shown).not.toContain('Couldn’t refresh the period comparison');
   });
 });
 
@@ -168,9 +168,9 @@ describe('Activity period controls', () => {
     expect(weightOf('Month')).toBe(week);
   });
 
-  it('fills the picked word with the theme’s ink only, and moves the fill when the other word is picked', async () => {
+  it('moves the selected fill when the other period scope is picked', async () => {
     const { StyleSheet } = require('react-native');
-    const { themeInk } = require('@/theme/interactionColors');
+    const { theme } = require('@/constants/theme');
     mockComparison.fail = false;
     const tree = await render();
     const radio = (word: string) =>
@@ -184,7 +184,7 @@ describe('Activity period controls', () => {
       ['Week', 'Month'].filter((word) => {
         const raw = radio(word).props.style;
         const style = StyleSheet.flatten(typeof raw === 'function' ? raw({ pressed: false }) : raw);
-        return style?.backgroundColor === themeInk('#9EC5FC');
+        return style?.backgroundColor === theme.colors.home.selected;
       });
     expect(filled()).toEqual(['Week']);
     await act(async () => radio('Month').props.onPress());
@@ -240,7 +240,7 @@ describe('Activity period controls', () => {
   });
 });
 
-it('keeps the committed week caption while month data is still loading', async () => {
+it('shows the month entries before its comparison finishes', async () => {
   mockComparison.fail = false;
   const tree = await render();
   let resolve!: () => void;
@@ -255,10 +255,9 @@ it('keeps the committed week caption while month data is still loading', async (
   );
   try {
     await act(async () => month.props.onPress());
-    expect(texts(tree)).toContain('This week');
-    expect(texts(tree)).toContain('Updating…');
-    expect(texts(tree)).toContain('Nothing logged this week');
-    expect(texts(tree)).not.toContain('Nothing logged this month');
+    expect(texts(tree)).toContain('Nothing logged this month');
+    expect(texts(tree)).not.toContain('Nothing logged this week');
+    expect(texts(tree)).not.toContain('Updating…');
     await act(async () => {
       resolve();
       await mockComparison.wait;

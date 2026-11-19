@@ -14,6 +14,7 @@ import { usePrivacy } from '@/theme/PrivacyContext';
 import { TileGrid } from './PlanGrid';
 import { styles } from './plan.styles';
 import type { Portfolio } from '@/lib/portfolio';
+import { PlanListAdd, PlanSummaryRow, summaryListStyle } from './PlanSummaryRow';
 
 /**
  * Plan's investments as one tile, built like the budget and goal tiles beside it: an icon, the name, the big
@@ -24,17 +25,27 @@ export function InvestmentsCard({
   portfolio,
   onOpen,
   extraTile,
+  compact = false,
 }: {
   portfolio: Portfolio;
   onOpen: () => void;
   /** Another tile in the same row (Plan puts its what-if idea beside the investments). */
   extraTile?: React.ReactNode;
+  compact?: boolean;
 }) {
   const { hideAmounts } = usePrivacy();
   const none = portfolio.holdings.length === 0 && portfolio.otherCurrency.length === 0;
   if (none) {
+    if (compact) {
+      return (
+        <View style={summaryListStyle}>
+          <PlanListAdd label="Track an investment" onPress={onOpen} />
+        </View>
+      );
+    }
     return (
       <TileGrid
+        maxColumns={extraTile ? 2 : undefined}
         tiles={extraTile ? [extraTile] : []}
         label="Add"
         accessibilityLabel="Track an investment"
@@ -61,8 +72,35 @@ export function InvestmentsCard({
     currency: portfolio.currency,
     masked: hideAmounts,
   });
+  if (compact) {
+    const foreignOnly = portfolio.holdings.length === 0;
+    const subtitle = foreignOnly
+      ? 'Values in other currencies'
+      : due > 0
+        ? `${due} ${due === 1 ? 'value' : 'values'} due`
+        : line;
+    const amount = foreignOnly
+      ? `${portfolio.otherCurrency.length} ${portfolio.otherCurrency.length === 1 ? 'holding' : 'holdings'}`
+      : worth;
+    return (
+      <View style={summaryListStyle}>
+        <PlanSummaryRow
+          icon="chart-line"
+          name="Portfolio"
+          subtitle={subtitle}
+          amount={amount}
+          color={theme.colors.textPrimary}
+          subtitleColor={tone}
+          animKey="plan:investment-total"
+          accessibilityLabel={`Investments, ${amount}. ${subtitle}. Open investments`}
+          onPress={onOpen}
+        />
+      </View>
+    );
+  }
   return (
     <TileGrid
+      maxColumns={extraTile ? 2 : undefined}
       showAdd={false}
       tiles={[
         <Pressable

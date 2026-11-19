@@ -24,12 +24,14 @@ export function GoalOverviewModal({
   goal,
   accounts,
   onClose,
+  ledgerStyle,
   onChanged,
   onMoveMoney,
 }: {
   goal: SavingsGoal;
   accounts: Account[];
   onClose: () => void;
+  ledgerStyle?: boolean;
   onChanged: () => void | Promise<void>;
   onMoveMoney: (accountId: string) => void;
 }) {
@@ -48,6 +50,7 @@ export function GoalOverviewModal({
   return (
     <SheetFlow>
       <ModalSheet
+        ledgerStyle={ledgerStyle}
         flowPage
         visible={page === 'overview'}
         title="Goal overview"

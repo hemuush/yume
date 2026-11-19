@@ -30,6 +30,7 @@ const NEW_ROWS = [
   ['new-loan', 'Add loan', 'Track borrowing or lending', 'plus'],
   ['new-budget', 'Add budget', 'Set a category spending limit', 'pie-chart'],
   ['new-goal', 'Add goal', 'Save for something important', 'flag'],
+  ['new-investment', 'Add investment', 'Track a holding and its value', 'trending-up'],
 ] as const satisfies readonly (readonly [PlanDetailKind, string, string, string])[];
 
 /**
@@ -80,6 +81,7 @@ export function PlanSheets({
     <>
       {data && (
         <LoanComparison
+          ledgerStyle
           refreshToken={data}
           visible={comparisonOpen}
           hidden={hideAmounts}
@@ -93,12 +95,7 @@ export function PlanSheets({
         />
       )}
       {creationMenu && data && (
-        <ModalSheet
-          visible
-          title="Add to your plan"
-          subtitle="Give your next commitment a place."
-          onClose={sheets.closeMenu}
-        >
+        <ModalSheet ledgerStyle visible title="Add to your plan" onClose={sheets.closeMenu}>
           {NEW_ROWS.map(([kind, label, description, icon]) => (
             <Pressable
               key={kind}
@@ -117,9 +114,10 @@ export function PlanSheets({
           ))}
         </ModalSheet>
       )}
-      {detail?.kind === 'new-account' && data && (
+      {(detail?.kind === 'new-account' || detail?.kind === 'new-investment') && data && (
         <AddAccountModal
           visible
+          initialChoice={detail.kind === 'new-investment' ? 'investment' : undefined}
           onClose={sheets.closeDetail}
           onCreated={() => {
             sheets.closeDetail();
@@ -129,6 +127,7 @@ export function PlanSheets({
       )}
       {detail?.kind === 'new-loan' && data && (
         <AddLoanModal
+          ledgerStyle
           visible
           onClose={sheets.closeDetail}
           onCreated={() => {
@@ -139,6 +138,7 @@ export function PlanSheets({
       )}
       {selectedLoan && data && (
         <LoanDetailModal
+          ledgerStyle
           key={selectedLoan.id}
           loan={selectedLoan}
           hue={hues[selectedLoan.id]}
@@ -148,6 +148,7 @@ export function PlanSheets({
       )}
       {selectedBudget && data && (
         <BudgetDetailModal
+          ledgerStyle
           key={selectedBudget.budget.id}
           progress={selectedBudget}
           accounts={data.accounts}
@@ -159,6 +160,7 @@ export function PlanSheets({
       )}
       {selectedPerson && (
         <PersonDetailModal
+          ledgerStyle
           key={selectedPerson.id}
           person={selectedPerson}
           initialTab="history"
@@ -168,6 +170,7 @@ export function PlanSheets({
       )}
       {selectedGoal && data && (
         <GoalOverviewModal
+          ledgerStyle
           key={selectedGoal.id}
           goal={selectedGoal}
           accounts={data.accounts}
@@ -184,6 +187,7 @@ export function PlanSheets({
       )}
       {detail?.kind === 'new-goal' && data && (
         <AddGoalModal
+          ledgerStyle
           visible
           accounts={data.accounts}
           onClose={sheets.closeDetail}
@@ -195,6 +199,7 @@ export function PlanSheets({
       )}
       {detail?.kind === 'new-budget' && data && (
         <AddBudgetModal
+          ledgerStyle
           visible
           editing={null}
           categories={budgetCategories(data.categories, hideAmounts)}
@@ -208,6 +213,7 @@ export function PlanSheets({
       )}
       {(selectedRule || detail?.kind === 'new-rule') && data && (
         <RuleModal
+          ledgerStyle
           key={selectedRule?.id ?? 'new-rule'}
           visible
           editing={selectedRule ?? null}
@@ -243,6 +249,7 @@ export function PlanSheets({
       )}
       {paying && (
         <PayInstallmentSheet
+          ledgerStyle
           installment={paying.installment}
           direction={paying.direction}
           account={paying.account}

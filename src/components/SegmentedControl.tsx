@@ -23,6 +23,7 @@ interface Props<T extends string> {
   onChange: (value: T) => void;
   /** On a coloured band (Add's sky header): a see-through track and an ink pill. */
   onBand?: boolean;
+  ledgerStyle?: boolean;
   disabled?: boolean;
   /** A smaller switch inside a card's heading row: 32 tall, with the touch area kept at 44. */
   compact?: boolean;
@@ -48,6 +49,7 @@ function PillSwitch<T extends string>({
   value,
   onChange,
   onBand,
+  ledgerStyle = false,
   disabled = false,
   compact = false,
 }: Props<T>) {
@@ -56,6 +58,7 @@ function PillSwitch<T extends string>({
   // a switch whose options change (Add in edit mode) still sizes its pill right.
   const [innerWidth, setInnerWidth] = useState(0);
   const segWidth = options.length > 0 ? innerWidth / options.length : 0;
+  const pillColor = ledgerStyle ? theme.colors.entry.selected : theme.colors.surface;
   const [x] = useState(() => new Animated.Value(0));
   const placed = useRef(false);
   const index = Math.max(
@@ -92,6 +95,7 @@ function PillSwitch<T extends string>({
         styles.wrap,
         onBand && styles.wrapBand,
         compact && styles.wrapCompact,
+        ledgerStyle && styles.ledgerTrack,
         disabled && styles.disabled,
       ]}
       onLayout={onLayout}
@@ -102,7 +106,7 @@ function PillSwitch<T extends string>({
           pointerEvents="none"
           style={[
             styles.pill,
-            { backgroundColor: theme.colors.surface },
+            { backgroundColor: pillColor },
             { width: segWidth, transform: [{ translateX: x }] },
           ]}
         />
@@ -111,7 +115,7 @@ function PillSwitch<T extends string>({
         <Segment
           key={opt.value}
           active={opt.value === value}
-          fallbackInk={segWidth <= 0 ? theme.colors.surface : undefined}
+          fallbackInk={segWidth <= 0 ? pillColor : undefined}
           label={opt.label}
           disabled={disabled}
           compact={compact}
@@ -123,10 +127,19 @@ function PillSwitch<T extends string>({
 }
 
 /** Every choice stays on screen: two to a row, each tab as wide as half the track. */
-function StackedSwitch<T extends string>({ options, value, onChange, disabled = false }: Props<T>) {
+function StackedSwitch<T extends string>({
+  options,
+  value,
+  onChange,
+  disabled = false,
+  ledgerStyle,
+}: Props<T>) {
   const { accent } = useAccent();
   return (
-    <View style={[styles.stackTrack, disabled && styles.disabled]} accessibilityRole="tablist">
+    <View
+      style={[styles.stackTrack, ledgerStyle && styles.ledgerTrack, disabled && styles.disabled]}
+      accessibilityRole="tablist"
+    >
       {Array.from({ length: Math.ceil(options.length / 2) }, (_, i) => options.slice(i * 2, i * 2 + 2)).map(
         (row, index) => (
           <View key={index} style={styles.stackRow}>
@@ -145,7 +158,9 @@ function StackedSwitch<T extends string>({ options, value, onChange, disabled = 
                   }}
                   style={withPressedTint(accent, [
                     styles.stackTab,
-                    active && { backgroundColor: theme.colors.surface },
+                    active && {
+                      backgroundColor: ledgerStyle ? theme.colors.entry.selected : theme.colors.surface,
+                    },
                   ])}
                 >
                   <Text style={[styles.stackLabel, active && styles.segmentTextActive]}>{opt.label}</Text>
@@ -245,6 +260,7 @@ const styles = themedStyles(() =>
     wrapBand: {
       marginBottom: 0,
     },
+    ledgerTrack: { backgroundColor: theme.colors.entry.surface },
     stackTrack: {
       padding: 4,
       gap: 4,

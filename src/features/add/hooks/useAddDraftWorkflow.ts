@@ -52,6 +52,7 @@ export function useAddDraftWorkflow(input: Input) {
     editBaseline,
     saveDone,
     saving,
+    addingRow,
   } = input.state;
   const { editingId } = input.environment;
 
@@ -133,7 +134,8 @@ export function useAddDraftWorkflow(input: Input) {
       (editingId
         ? editChanged
         : expr !== initialExpr || note.trim() !== '' || rows.length > 0 || splitParts !== null),
-    !editingId ? { onDiscard: recovery.discardCurrent, onKeepDraft: recovery.keep } : undefined
+    !editingId ? { onDiscard: recovery.discardCurrent, onKeepDraft: recovery.keep } : undefined,
+    !saveDone && (saving || addingRow)
   );
   return { amountValue, untouchedEdit, amountMinor, recovery, resumeDraft, leave };
 }

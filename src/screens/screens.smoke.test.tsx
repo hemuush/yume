@@ -99,17 +99,17 @@ const SCREENS: [string, () => { default: React.ComponentType }][] = [
   ['reports', () => require('../../app/(tabs)/reports')],
   ['profile', () => require('../../app/profile')],
   ['backup', () => require('../../app/backup')],
-  ['budgets', () => require('../../app/budgets')],
+  ['budgets', () => require('@/features/budgets/BudgetsWorkspace')],
   ['categories', () => require('../../app/categories')],
   ['category detail', () => require('../../app/category/[id]')],
   ['garden', () => require('../../app/garden')],
-  ['loans', () => require('../../app/loans')],
+  ['loans', () => require('@/features/loans/LoansWorkspace')],
   ['notification settings', () => require('../../app/notification-settings')],
   ['notifications', () => require('../../app/notifications')],
   ['people', () => require('../../app/people')],
   ['recently deleted', () => require('../../app/recently-deleted')],
-  ['recurring', () => require('../../app/recurring')],
-  ['savings goals', () => require('../../app/savings-goals')],
+  ['recurring', () => require('@/features/recurring/RecurringWorkspace')],
+  ['savings goals', () => require('@/features/goals/GoalsWorkspace')],
   ['split', () => require('../../app/split')],
   ['tidy up', () => require('../../app/tidy-up')],
   ['what if', () => require('../../app/whatif')],
@@ -522,14 +522,8 @@ describe('re-audit recurring privacy and currency regressions', () => {
       try {
         expectHealthy(name, tree);
         if (name === 'recurring') {
-          const { RecurringHero } = require('@/features/recurring/RecurringHero');
-          expect(tree.root.findByType(RecurringHero).props.totals).toEqual({
-            monthlyMinor: 10000,
-            yearlyMinor: 120000,
-            count: 1,
-          });
+          expect(textOf(tree)).toContain('₹100');
           expect(textOf(tree)).toContain('$100');
-          expect(textOf(tree)).toContain('Summary and timeline in INR');
         } else if (name === 'home') {
           const { HomeComingUp } = require('@/features/home/HomeComingUp');
           expect(
@@ -936,8 +930,8 @@ describe('Plan links open the selected existing flow', () => {
   it('opens the selected savings goal and can close it without changing the ledger', async () => {
     const { listSavingsGoals } = require('@/db/savingsGoals');
     const goal = (await listSavingsGoals())[0];
-    mockParams = { goal: goal.id };
-    const tree = await open(() => require('../../app/savings-goals'));
+    mockParams = { tab: 'money', collection: 'goals', goal: goal.id };
+    const tree = await open(() => require('../../app/(tabs)/plan'));
     const { GoalOverviewModal } = require('@/features/goals/GoalOverviewModal');
     const { GoalDetailModal } = require('@/features/goals/GoalDetailModal');
     const { PrimaryButton } = require('@/components/PrimaryButton');
@@ -962,10 +956,10 @@ describe('Plan links open the selected existing flow', () => {
   });
 
   it('opens goal creation directly without creating a goal', async () => {
-    mockParams = { add: '1' };
+    mockParams = { tab: 'money', collection: 'goals', goalAdd: '1' };
     const { listSavingsGoals } = require('@/db/savingsGoals');
     const before = await listSavingsGoals();
-    const tree = await open(() => require('../../app/savings-goals'));
+    const tree = await open(() => require('../../app/(tabs)/plan'));
     const { AddGoalModal } = require('@/features/goals/AddGoalModal');
     expect(tree.root.findByType(AddGoalModal).props.visible).toBe(true);
     expect(await listSavingsGoals()).toEqual(before);
@@ -975,8 +969,8 @@ describe('Plan links open the selected existing flow', () => {
   it('opens the selected budget overview before its existing edit sheet', async () => {
     const { listBudgetsForMonth } = require('@/db/budgets');
     const budget = (await listBudgetsForMonth())[0];
-    mockParams = { budget: budget.budget.id };
-    const tree = await open(() => require('../../app/budgets'));
+    mockParams = { tab: 'money', collection: 'budgets', budget: budget.budget.id };
+    const tree = await open(() => require('../../app/(tabs)/plan'));
     const { AddBudgetModal } = require('@/features/budgets/AddBudgetModal');
     const { BudgetDetailModal } = require('@/features/budgets/BudgetDetailModal');
     const { PrimaryButton } = require('@/components/PrimaryButton');
@@ -995,8 +989,8 @@ describe('Plan links open the selected existing flow', () => {
   });
 
   it('opens budget creation directly', async () => {
-    mockParams = { add: '1' };
-    const tree = await open(() => require('../../app/budgets'));
+    mockParams = { tab: 'money', collection: 'budgets', budgetAdd: '1' };
+    const tree = await open(() => require('../../app/(tabs)/plan'));
     const { AddBudgetModal } = require('@/features/budgets/AddBudgetModal');
     expect(tree.root.findByType(AddBudgetModal).props.visible).toBe(true);
     expect(tree.root.findByType(AddBudgetModal).props.editing).toBeNull();
@@ -1006,8 +1000,8 @@ describe('Plan links open the selected existing flow', () => {
   it('opens a loan overview without starting its payment flow', async () => {
     const { listLoans } = require('@/db/loans');
     const loan = (await listLoans())[0];
-    mockParams = { loan: loan.id };
-    const tree = await open(() => require('../../app/loans'));
+    mockParams = { tab: 'debt', loan: loan.id };
+    const tree = await open(() => require('../../app/(tabs)/plan'));
     const { LoanDetailModal } = require('@/features/loans/LoanDetailModal');
     expect(tree.root.findByType(LoanDetailModal).props.loan.id).toBe(loan.id);
     expect(tree.root.findByType(LoanDetailModal).props.startWithPay).toBe(false);
@@ -1216,26 +1210,26 @@ it('opens goal setup from the empty state without creating a goal on cancel', as
   }
 });
 
-it('opens recurring setup from the first-use call to action', async () => {
+it('opens recurring setup from the Plan header', async () => {
   const { AppState } = require('react-native');
   const subscription = jest.spyOn(AppState, 'addEventListener').mockReturnValue({ remove: jest.fn() });
   await freshDb();
   mockHide = false;
-  mockParams = {};
+  mockParams = { tab: 'upcoming', upcoming: 'recurring' };
   await createAccount({ name: 'Bank', type: 'bank', currency: 'INR', openingBalanceMinor: 0 });
-  const tree = await open(SCREENS.find(([name]) => name === 'recurring')![1]);
+  const tree = await open(SCREENS.find(([name]) => name === 'plan')![1]);
   try {
-    const { PrimaryButton } = require('@/components/PrimaryButton');
     const { RuleModal } = require('@/features/recurring/RuleModal');
-    act(() =>
-      tree.root
-        .findAllByType(PrimaryButton)
-        .find((n) => n.props.title === 'Add a recurring entry')!
-        .props.onPress()
-    );
-    expect(tree.root.findByType(RuleModal).props.visible).toBe(true);
+    const press = (label: string) =>
+      act(() =>
+        tree.root.findAll((n) => n.props.accessibilityLabel === label && n.props.onPress)[0].props.onPress()
+      );
+    press('Add to your plan');
+    press('Add recurring');
+    expect(tree.root.findAllByType(RuleModal).some((node) => node.props.visible)).toBe(true);
   } finally {
     act(() => tree.unmount());
+    mockParams = {};
     subscription.mockRestore();
   }
 });

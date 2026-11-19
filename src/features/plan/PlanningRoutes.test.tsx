@@ -25,10 +25,13 @@ jest.mock('@/lib/useScreenLoad', () => ({
   },
 }));
 let mockHide = false;
+let mockRouteParams: Record<string, string> = {};
 jest.mock('@/theme/PrivacyContext', () => ({ usePrivacy: () => ({ hideAmounts: mockHide }) }));
 jest.mock('expo-router', () => ({
   router: { push: jest.fn(), setParams: jest.fn() },
-  useLocalSearchParams: () => ({}),
+  useLocalSearchParams: () => mockRouteParams,
+  Redirect: ({ href }: { href: object }) =>
+    require('react').createElement(require('react-native').View, { testID: 'plan-redirect', href }),
 }));
 jest.mock('@/db/ledger', () => ({
   listAccounts: jest.fn(async () => [
@@ -84,12 +87,38 @@ jest.mock('@/components/ModalSheet', () => ({
     ) : null,
 }));
 
-import BudgetsScreen from '../../../app/budgets';
-import SavingsGoalsScreen from '../../../app/savings-goals';
+import BudgetsScreen from '@/features/budgets/BudgetsWorkspace';
+import SavingsGoalsScreen from '@/features/goals/GoalsWorkspace';
 import { listSavingsGoals, markGoalLetterRevealed } from '@/db/savingsGoals';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { router } from 'expo-router';
 import type { SavingsGoal } from '@/types';
+import RecurringRedirect from '../../../app/recurring';
+import LoanRedirect from '../../../app/loans';
+import BudgetRedirect from '../../../app/budgets';
+import GoalsRedirect from '../../../app/savings-goals';
+
+it.each([
+  [RecurringRedirect, {}, { tab: 'upcoming', upcoming: 'recurring' }],
+  [LoanRedirect, { pay: 'l1' }, { tab: 'debt', pay: 'l1' }],
+  [BudgetRedirect, { budget: 'b1' }, { tab: 'money', collection: 'budgets', budget: 'b1' }],
+  [GoalsRedirect, { add: '1' }, { tab: 'money', collection: 'goals', goalAdd: '1' }],
+] as const)('forwards legacy links into Plan with their original action', (Route, params, forwarded) => {
+  mockRouteParams = params;
+  let tree!: ReactTestRenderer;
+  try {
+    act(() => {
+      tree = create(<Route />);
+    });
+    expect(tree.root.findByProps({ testID: 'plan-redirect' }).props.href).toEqual({
+      pathname: '/(tabs)/plan',
+      params: expect.objectContaining(forwarded),
+    });
+  } finally {
+    mockRouteParams = {};
+    act(() => tree?.unmount());
+  }
+});
 
 const goal: SavingsGoal = {
   id: 'g1',

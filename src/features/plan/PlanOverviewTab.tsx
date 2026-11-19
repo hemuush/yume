@@ -1,5 +1,15 @@
-import { memo, useCallback } from 'react';
-import { View } from 'react-native';
+import { memo, useCallback, useMemo } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
+import Feather from '@expo/vector-icons/Feather';
+import { CategoryGlyph } from '@/components/CategoryGlyph';
+import { Text } from '@/components/Text';
+import { withPressed } from '@/lib/pressed';
+import { useStacked } from '@/lib/useStacked';
+import { themedStyles } from '@/theme/themedStyles';
+import { formatMaskableMoney, formatMoney } from '@/lib/money';
+import { weekdayDayMonth } from '@/lib/dateLabels';
+import { theme } from '@/constants/theme';
+import { planWorkspaceCard } from './plan.styles';
 import { Section } from '@/components/Section';
 import { PendingRefunds } from '@/features/transactions/PendingRefunds';
 import type { PlanActions } from './planActions';
@@ -7,14 +17,10 @@ import type { PlanData } from './planData';
 import { PLAN_DAYS } from './planOverview';
 import { PlanOverviewPanels } from './PlanOverviewPanels';
 import { PlanPeopleHabit } from './PlanPeopleHabit';
+import { ComingUpSection } from './ComingUpSection';
 import { RunwayCard } from './RunwayCard';
 
-/**
- * Plan's "Overview": the runway, the panels (budgets, what is due, debt, goals, investments, people), the pending
- * refunds and the daily-goal habit. It compares its props by identity, so it is drawn again only when what it shows, or
- * the reload that refreshes the pending refunds (`refreshToken`), changes.
- */
-// The sections compare their props by identity; the tab hands them values that keep theirs until what is in them changes.
+/** Overview brings the next cash decisions and collection summaries together. */
 const Runway = memo(RunwayCard);
 const Panels = memo(PlanOverviewPanels);
 const PeopleHabit = memo(PlanPeopleHabit);
@@ -22,28 +28,105 @@ const PeopleHabit = memo(PlanPeopleHabit);
 export const PlanOverviewTab = memo(function PlanOverviewTab({
   data,
   refreshToken,
-  hideAmounts,
   actions,
 }: {
   data: PlanData;
   /** Changes with each load of the page: the pending refunds read their own data again. */
   refreshToken: object;
-  hideAmounts: boolean;
   actions: PlanActions;
 }) {
-  const { open, openDetail, selectTab, openRefund } = actions;
-  const viewPayments = useCallback(() => selectTab('upcoming'), [selectTab]);
+  const stacked = useStacked('late');
+  const { open, openDetail, selectTab, openRefund, payEmi } = actions;
+  const viewPayments = useCallback(() => selectTab('upcoming', 'all'), [selectTab]);
+  const viewDay = useCallback((date: string) => selectTab('upcoming', date), [selectTab]);
   const addAccount = useCallback(() => openDetail('new-account', ''), [openDetail]);
-  const openInvestments = useCallback(() => open('/investments'), [open]);
   const openBudget = useCallback((id: string) => openDetail('budget', id), [openDetail]);
   const openPeople = useCallback(() => open('/people'), [open]);
   const openPerson = useCallback((id: string) => openDetail('person', id), [openDetail]);
   const openGarden = useCallback(() => open('/garden'), [open]);
+  const openLoan = useCallback((id: string) => openDetail('loan', id), [openDetail]);
+  const openRule = useCallback((id: string) => openDetail('rule', id), [openDetail]);
+  const next = useMemo(
+    () =>
+      data.schedule.days
+        .filter((day) => day.outMinor > 0)
+        .map((day) => {
+          const items = day.items.filter(
+            (item) =>
+              item.dueDate >= data.today &&
+              (item.kind === 'bill' || item.kind === 'emi' || item.transfer?.flow === 'out')
+          );
+          return { date: day.date, items, outMinor: items.reduce((sum, item) => sum + item.amountMinor, 0) };
+        })
+        .find((day) => day.items.length > 0),
+    [data.schedule.days, data.today]
+  );
+  const activeGoals = data.goals.filter((goal) => !goal.archived);
+  const openGoals = activeGoals.filter((goal) => goal.currentAmountMinor < goal.targetAmountMinor);
+  const budgetLeft = data.budgets.budgetedMinor - data.budgets.usedMinor;
+  const holdings = data.investments.holdings.length + data.investments.otherCurrency.length;
+  const money = (minor: number) => formatMoney(minor, data.currency);
+  const snapshot = [
+    {
+      name: 'Budgets',
+      icon: 'chart-donut',
+      id: 'budgets' as const,
+      subtitle: data.budgets.rows.length
+        ? budgetLeft < 0
+          ? 'Over planned limits'
+          : 'Remaining this month'
+        : 'No budgets this month',
+      amount: data.budgets.rows.length ? money(Math.abs(budgetLeft)) : '',
+    },
+    {
+      name: 'Goals',
+      icon: 'flag-outline',
+      id: 'goals' as const,
+      subtitle: !activeGoals.length
+        ? 'No active goals'
+        : data.hideAmounts
+          ? 'Savings hidden'
+          : 'Goals in progress',
+      amount: !activeGoals.length || data.hideAmounts ? '' : String(openGoals.length),
+    },
+    {
+      name: 'Investments',
+      icon: 'chart-line',
+      id: 'investments' as const,
+      subtitle: !holdings
+        ? 'No holdings'
+        : data.hideAmounts
+          ? 'Values hidden'
+          : data.investments.otherCurrency.length
+            ? 'Holdings across currencies'
+            : 'Portfolio value',
+      amount:
+        !holdings || data.hideAmounts
+          ? ''
+          : data.investments.otherCurrency.length
+            ? String(holdings)
+            : formatMaskableMoney(data.investments.valueMinor, { currency: data.investments.currency }),
+    },
+    {
+      name: 'Debt',
+      icon: 'credit-card-outline',
+      id: 'debt' as const,
+      subtitle: data.loans.borrowedCount
+        ? 'Principal remaining'
+        : data.loans.rows.length
+          ? 'Money lent'
+          : 'No open loans',
+      amount: data.loans.rows.length
+        ? money(data.loans.borrowedCount ? data.loans.debtLeftMinor : data.loans.lentLeftMinor)
+        : '',
+    },
+  ];
   return (
     <>
       <Runway
         compact
         onViewPayments={viewPayments}
+        onViewDay={viewDay}
         dueSoon={data.dueSoon}
         runway={data.runway}
         hasAccounts={data.hasAccounts}
@@ -53,19 +136,60 @@ export const PlanOverviewTab = memo(function PlanOverviewTab({
       <Panels
         budgets={data.budgets}
         groups={data.dueGroups}
-        loans={data.loans}
-        goals={data.goals}
         today={data.today}
-        hideAmounts={hideAmounts}
-        runway={data.hasAccounts ? data.runway : undefined}
-        investments={data.investments}
-        onInvestments={openInvestments}
         onTab={selectTab}
         onBudget={openBudget}
       />
+      {next && (
+        <Section
+          compact
+          title="Next payments"
+          subtitle={`${weekdayDayMonth(next.date)} · ${next.items.length} ${next.items.length === 1 ? 'payment' : 'payments'} · ${money(next.outMinor)} due`}
+          actionLabel="View day"
+          onSeeAll={() => viewDay(next.date)}
+        >
+          <ComingUpSection
+            preview
+            limit={2}
+            groups={[next]}
+            today={data.today}
+            onOpen={open}
+            onLoan={openLoan}
+            onRule={openRule}
+            onPay={payEmi}
+          />
+        </Section>
+      )}
       <View style={{ marginHorizontal: 16 }}>
         <PendingRefunds summaryOnly refreshToken={refreshToken} onOpen={openRefund} />
       </View>
+      <Section compact title="Plan at a glance">
+        <View style={[planWorkspaceCard, styles.snapshot]}>
+          {(stacked ? snapshot.map((tile) => [tile]) : [snapshot.slice(0, 2), snapshot.slice(2)]).map(
+            (row, index) => (
+              <View key={row[0].id} style={[styles.snapshotRow, index > 0 && styles.snapshotDivider]}>
+                {row.map(({ id, name, icon, subtitle, amount }, column) => (
+                  <Pressable
+                    key={id}
+                    accessibilityRole="button"
+                    accessibilityLabel={[name, subtitle, amount].filter(Boolean).join('. ')}
+                    onPress={() => (id === 'debt' ? selectTab('debt') : selectTab('money', undefined, id))}
+                    style={withPressed([styles.metric, column > 0 && styles.metricDivider])}
+                  >
+                    <View style={styles.metricTitle}>
+                      <CategoryGlyph name={icon} size={14} color={theme.colors.link} />
+                      <Text style={styles.metricName}>{name}</Text>
+                      <Feather name="chevron-right" size={12} color={theme.colors.textMuted} />
+                    </View>
+                    {amount ? <Text style={styles.metricValue}>{amount}</Text> : null}
+                    <Text style={styles.metricSubtitle}>{subtitle}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            )
+          )}
+        </View>
+      </Section>
       <Section compact title="People & habit">
         <PeopleHabit
           people={data.people}
@@ -80,3 +204,28 @@ export const PlanOverviewTab = memo(function PlanOverviewTab({
     </>
   );
 });
+
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    snapshot: { overflow: 'hidden' },
+    snapshotRow: { flexDirection: 'row' },
+    snapshotDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.home.edge },
+    metric: { flex: 1, minWidth: 0, paddingHorizontal: 12, paddingVertical: 9, gap: 3, minHeight: 62 },
+    metricDivider: { borderStartWidth: StyleSheet.hairlineWidth, borderStartColor: theme.colors.home.edge },
+    metricTitle: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+    metricName: {
+      flex: 1,
+      minWidth: 0,
+      fontSize: 13,
+      fontFamily: theme.font.bodyMedium,
+      color: theme.colors.textPrimary,
+    },
+    metricValue: {
+      fontSize: 17,
+      fontFamily: theme.font.bodyBold,
+      color: theme.colors.textPrimary,
+      fontVariant: ['tabular-nums'],
+    },
+    metricSubtitle: { fontSize: 12, fontFamily: theme.font.body, color: theme.colors.home.secondaryText },
+  })
+);

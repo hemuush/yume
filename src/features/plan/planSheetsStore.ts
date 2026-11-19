@@ -12,6 +12,7 @@ export type PlanDetailKind =
   | 'new-goal'
   | 'new-budget'
   | 'new-account'
+  | 'new-investment'
   | 'new-rule'
   | 'new-loan'
   | 'rule';

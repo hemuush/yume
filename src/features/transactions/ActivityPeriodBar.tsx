@@ -4,7 +4,6 @@ import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
-import { themeInk } from '@/theme/interactionColors';
 import { usePressScale } from '@/lib/usePressScale';
 import { useStacked } from '@/lib/useStacked';
 import type { useSwipeDrag } from '@/lib/useSwipeDrag';
@@ -49,7 +48,6 @@ export function ActivityPeriodBar({
   onScope: (scope: ViewScope) => void;
 }) {
   const { accent } = useAccent();
-  const ink = themeInk(accent);
   const stackPeriod = useStacked('early');
   const stepBackPress = usePressScale();
   const stepForwardPress = usePressScale();
@@ -120,7 +118,7 @@ export function ActivityPeriodBar({
               style={withPressedTint(accent, [
                 styles.scopeBtn,
                 stackPeriod && styles.scopeBtnStacked,
-                on && { backgroundColor: ink },
+                on && styles.filterSelected,
               ])}
               accessibilityRole="radio"
               accessibilityState={{ selected: on }}

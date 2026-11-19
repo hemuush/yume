@@ -97,7 +97,7 @@ import { clearReadCache } from '@/db/readCache';
 import { resetSettingsCache, setDefaultCurrency, setHasOnboarded, setUserName } from '@/db/settings';
 import { AddButton } from '@/components/AddButton';
 import { GoalCard } from '@/features/goals/GoalCard';
-import SavingsGoalsScreen from '../../app/savings-goals';
+import SavingsGoalsScreen from '@/features/goals/GoalsWorkspace';
 
 let mounted: ReactTestRenderer | null = null;
 const ids: Record<string, string> = {};

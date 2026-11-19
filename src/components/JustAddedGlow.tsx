@@ -5,6 +5,7 @@ import { theme } from '@/constants/theme';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 import { JustAddedSurface, justAddedVersion, subscribeJustAdded, takeJustAdded } from '@/lib/justAdded';
 import { themedStyles } from '@/theme/themedStyles';
+import { softTint } from '@/components/softTint';
 
 /** How long the gold holds before it starts to fade. */
 const HOLD_MS = 450;
@@ -51,7 +52,12 @@ export function JustAddedGlow({ ids, surface }: { ids: string[]; surface: JustAd
   }, [idsKey, surface, version]);
 
   if (!on) return null;
-  return <Animated.View pointerEvents="none" style={[styles.glow, { opacity: glow }]} />;
+  return (
+    <Animated.View
+      pointerEvents="none"
+      style={[styles.glow, surface === 'homeBalance' && styles.balance, { opacity: glow }]}
+    />
+  );
 }
 
 const styles = themedStyles(() =>
@@ -64,5 +70,6 @@ const styles = themedStyles(() =>
       bottom: 0,
       backgroundColor: theme.colors.idGold,
     },
+    balance: { backgroundColor: softTint(theme.colors.primary, 0.16), borderRadius: theme.radius.md },
   })
 );

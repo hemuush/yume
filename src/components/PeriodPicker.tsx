@@ -1,4 +1,3 @@
-import { selectedFill } from '@/theme/interactionColors';
 import { useEffect, useState } from 'react';
 import { View, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
@@ -10,7 +9,6 @@ import { longMonth, shortMonth } from '@/lib/dateLabels';
 import { haptics } from '@/lib/haptics';
 import { withPressed } from '@/lib/pressed';
 import { usePrivacy } from '@/theme/PrivacyContext';
-import { useAccent } from '@/theme/AccentContext';
 import { themedStyles } from '@/theme/themedStyles';
 
 interface PickedPeriod {
@@ -62,14 +60,16 @@ export function PeriodPicker({
   };
 }) {
   const { hideAmounts } = usePrivacy();
-  const { accent } = useAccent();
   const [mode, setMode] = useState<'month' | 'year'>(selected.kind);
   const [year, setYear] = useState(selected.year);
   const [loadFailed, setLoadFailed] = useState(false);
   const [retry, setRetry] = useState(0);
-  const [spend, setSpend] = useState<{ byMonth: Map<string, number>; firstMonth: string | null } | null>(
-    null
-  );
+  const [snapshot, setSpend] = useState<{
+    byMonth: Map<string, number>;
+    firstMonth: string | null;
+    hideAmounts: boolean;
+  } | null>(null);
+  const spend = snapshot?.hideAmounts === hideAmounts ? snapshot : null;
 
   useEffect(() => {
     if (!visible) return;
@@ -83,7 +83,7 @@ export function PeriodPicker({
     setLoadFailed(false);
     let alive = true;
     getSpendByMonth(hideAmounts)
-      .then((s) => alive && setSpend(s))
+      .then((s) => alive && setSpend({ ...s, hideAmounts }))
       .catch(() => alive && setLoadFailed(true));
     return () => {
       alive = false;
@@ -109,6 +109,7 @@ export function PeriodPicker({
 
   return (
     <ModalSheet
+      ledgerStyle
       size="compact"
       visible={visible}
       onClose={onClose}
@@ -136,7 +137,7 @@ export function PeriodPicker({
               <Pressable
                 key={m}
                 onPress={() => setMode(m)}
-                style={[styles.segBtn, mode === m && { backgroundColor: selectedFill(accent) }]}
+                style={withPressed([styles.segBtn, mode === m && styles.selected])}
                 accessibilityRole="radio"
                 accessibilityState={{ selected: mode === m }}
               >
@@ -161,10 +162,7 @@ export function PeriodPicker({
                   <Pressable
                     key={y}
                     onPress={() => setYear(y)}
-                    style={withPressed([
-                      styles.yearChip,
-                      on && { backgroundColor: selectedFill(accent), borderColor: selectedFill(accent) },
-                    ])}
+                    style={withPressed([styles.yearChip, on && styles.selected])}
                     accessibilityRole="button"
                     accessibilityState={{ selected: on }}
                     accessibilityLabel={`${y}`}
@@ -189,14 +187,7 @@ export function PeriodPicker({
                     key={m}
                     onPress={() => pick(() => onPickMonth(year, m))}
                     disabled={off}
-                    style={withPressed([
-                      styles.cell,
-                      isSelected && {
-                        backgroundColor: selectedFill(accent),
-                        borderColor: selectedFill(accent),
-                      },
-                      off && styles.off,
-                    ])}
+                    style={withPressed([styles.cell, isSelected && styles.selected, off && styles.off])}
                     accessibilityRole="button"
                     accessibilityLabel={`${longMonth(iso(year, m))} ${year}${now ? ', this month' : ''}`}
                     accessibilityState={{ selected: isSelected, disabled: off }}
@@ -227,11 +218,7 @@ export function PeriodPicker({
                         key={r.start}
                         onPress={() => pick(() => weeks.onPick(r.start))}
                         disabled={future}
-                        style={withPressed([
-                          styles.weekChip,
-                          on && { backgroundColor: selectedFill(accent), borderColor: selectedFill(accent) },
-                          future && styles.off,
-                        ])}
+                        style={withPressed([styles.weekChip, on && styles.selected, future && styles.off])}
                         accessibilityRole="button"
                         accessibilityLabel={`Week ${i + 1} of ${weeks.ranges.length}, ${label}${now ? ', this week' : ''}`}
                         accessibilityState={{ selected: on, disabled: future }}
@@ -254,10 +241,7 @@ export function PeriodPicker({
                 <Pressable
                   key={y}
                   onPress={() => pick(() => onPickYear?.(y))}
-                  style={withPressed([
-                    styles.yearCell,
-                    on && { backgroundColor: selectedFill(accent), borderColor: selectedFill(accent) },
-                  ])}
+                  style={withPressed([styles.yearCell, on && styles.selected])}
                   accessibilityRole="button"
                   accessibilityLabel={`${y}${y === thisYear ? ', this year' : ''}`}
                   accessibilityState={{ selected: on }}
@@ -287,12 +271,13 @@ export function PeriodPicker({
 const styles = themedStyles(() =>
   StyleSheet.create({
     body: { gap: 14, paddingBottom: 4 },
+    selected: { backgroundColor: theme.colors.home.selected, borderColor: theme.colors.home.selected },
     seg: {
       flexDirection: 'row',
       gap: 2,
       padding: 3,
       borderRadius: 18,
-      backgroundColor: theme.colors.surfaceAlt,
+      backgroundColor: theme.colors.home.control,
     },
     segBtn: {
       flex: 1,
@@ -313,9 +298,9 @@ const styles = themedStyles(() =>
       paddingHorizontal: 16,
       borderRadius: theme.radius.pill,
       justifyContent: 'center',
-      backgroundColor: theme.colors.surface,
+      backgroundColor: theme.colors.home.surface,
       borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.colors.borderSoft,
+      borderColor: theme.colors.home.edge,
     },
     yearText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textSecondary },
     grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
@@ -323,16 +308,21 @@ const styles = themedStyles(() =>
       width: '23%',
       flexGrow: 1,
       minHeight: 50,
-      borderRadius: 16,
+      borderRadius: 12,
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: theme.colors.surface,
+      backgroundColor: theme.colors.home.surface,
       borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.colors.borderSoft,
+      borderColor: theme.colors.home.edge,
     },
     off: { opacity: theme.opacity.limit },
     cellText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textPrimary },
-    cellSub: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted, marginTop: 1 },
+    cellSub: {
+      fontFamily: theme.font.body,
+      fontSize: 11,
+      color: theme.colors.home.secondaryText,
+      marginTop: 1,
+    },
     nowDot: {
       position: 'absolute',
       bottom: 5,
@@ -346,14 +336,14 @@ const styles = themedStyles(() =>
       width: '31%',
       flexGrow: 1,
       minHeight: 58,
-      borderRadius: 16,
+      borderRadius: 12,
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: theme.colors.surface,
+      backgroundColor: theme.colors.home.surface,
       borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.colors.borderSoft,
+      borderColor: theme.colors.home.edge,
     },
-    yearCellText: { fontFamily: theme.font.bodyBold, fontSize: 15, color: theme.colors.textPrimary },
+    yearCellText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
     weeks: { gap: 8 },
     weeksLabel: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
     weekRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
@@ -363,9 +353,9 @@ const styles = themedStyles(() =>
       borderRadius: theme.radius.pill,
       justifyContent: 'center',
       alignItems: 'center',
-      backgroundColor: theme.colors.surface,
+      backgroundColor: theme.colors.home.surface,
       borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.colors.borderSoft,
+      borderColor: theme.colors.home.edge,
     },
     weekText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textPrimary },
     weekDot: { bottom: 3 },
@@ -374,9 +364,9 @@ const styles = themedStyles(() =>
       borderRadius: theme.radius.pill,
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: theme.colors.surface,
+      backgroundColor: theme.colors.home.control,
       borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.colors.borderSoft,
+      borderColor: theme.colors.home.edge,
     },
     currentText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textPrimary },
   })

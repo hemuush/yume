@@ -36,6 +36,8 @@ interface Props {
   /** Bottom-anchored sheet or centred dialog, both with a stationary dimmed backdrop. */
   variant?: 'sheet' | 'center';
   size?: 'compact' | 'standard' | 'expanded';
+  /** Compact styling shared by Home and Activity's linked sheets. */
+  ledgerStyle?: boolean;
   dismissible?: boolean;
   backLabel?: string;
   /** A root page in a SheetFlow; child tasks with backLabel join the flow automatically. */
@@ -149,16 +151,18 @@ function ModalCloseButton({
   disabled,
   label = 'Close',
   back = false,
+  ledgerStyle = false,
 }: {
   onClose: () => void;
   disabled: boolean;
   label?: string;
   back?: boolean;
+  ledgerStyle?: boolean;
 }) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale();
   return (
     <AnimatedPressable
-      style={[styles.closeBtn, animatedStyle, disabled && styles.disabled]}
+      style={[styles.closeBtn, ledgerStyle && styles.ledgerClose, animatedStyle, disabled && styles.disabled]}
       disabled={disabled}
       accessibilityState={{ disabled }}
       onPress={onClose}
@@ -168,7 +172,11 @@ function ModalCloseButton({
       accessibilityRole="button"
       accessibilityLabel={label}
     >
-      <Feather name={back ? 'arrow-left' : 'x'} size={20} color={theme.colors.textPrimary} />
+      <Feather
+        name={back ? 'arrow-left' : 'x'}
+        size={ledgerStyle ? 17 : 20}
+        color={theme.colors.textPrimary}
+      />
     </AnimatedPressable>
   );
 }
@@ -274,6 +282,7 @@ function ModalSheetBody({
   footer,
   strip,
   size = 'standard',
+  ledgerStyle = false,
   dismissible = true,
   backLabel,
   flowPage,
@@ -324,13 +333,29 @@ function ModalSheetBody({
   // sheet that opens on its own card instead of a title.
   const header =
     title || subtitle || showClose || backLabel ? (
-      <View style={styles.header}>
-        {backLabel && <ModalCloseButton onClose={onClose} disabled={!dismissible} label={backLabel} back />}
+      <View style={[styles.header, ledgerStyle && styles.ledgerHeader]}>
+        {backLabel && (
+          <ModalCloseButton
+            onClose={onClose}
+            disabled={!dismissible}
+            label={backLabel}
+            back
+            ledgerStyle={ledgerStyle}
+          />
+        )}
         <View style={styles.headerText}>
-          {title ? <Text style={styles.title}>{title}</Text> : null}
-          {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+          {title ? (
+            <Text accessibilityRole="header" style={[styles.title, ledgerStyle && styles.ledgerTitle]}>
+              {title}
+            </Text>
+          ) : null}
+          {subtitle ? (
+            <Text style={[styles.subtitle, ledgerStyle && styles.ledgerSubtitle]}>{subtitle}</Text>
+          ) : null}
         </View>
-        {showClose && !backLabel && <ModalCloseButton onClose={onClose} disabled={!dismissible} />}
+        {showClose && !backLabel && (
+          <ModalCloseButton onClose={onClose} disabled={!dismissible} ledgerStyle={ledgerStyle} />
+        )}
       </View>
     ) : null;
 
@@ -364,7 +389,13 @@ function ModalSheetBody({
           >
             <View
               testID="sheet-surface"
-              style={[styles.dialog, styles.dialogFramed, dialogWidth, { maxHeight }]}
+              style={[
+                styles.dialog,
+                styles.dialogFramed,
+                dialogWidth,
+                { maxHeight },
+                ledgerStyle && styles.ledgerSurface,
+              ]}
             >
               <SheetWash />
               {stripView}
@@ -412,11 +443,17 @@ function ModalSheetBody({
               onLayout={
                 sharesHeight && visible ? (event) => flow.measure(event.nativeEvent.layout.height) : undefined
               }
-              style={[styles.framedSheet, sheetWidth, { maxHeight }, flowFrame]}
+              style={[
+                styles.framedSheet,
+                sheetWidth,
+                { maxHeight },
+                flowFrame,
+                ledgerStyle && styles.ledgerSurface,
+              ]}
             >
               <SheetWash />
               <View
-                style={styles.framedPad}
+                style={[styles.framedPad, ledgerStyle && styles.ledgerPad]}
                 onLayout={
                   sharesHeight ? (event) => setBand('header', event.nativeEvent.layout.height) : undefined
                 }
@@ -443,6 +480,7 @@ function ModalSheetBody({
                   }
                   style={[
                     styles.framedSheetFooter,
+                    ledgerStyle && styles.ledgerFooter,
                     { paddingBottom: pad ? 10 : 12 + (keyboardUp ? 0 : insets.bottom) },
                   ]}
                 >
@@ -451,7 +489,17 @@ function ModalSheetBody({
               ) : pad ? null : (
                 <View style={{ height: keyboardUp ? 0 : insets.bottom }} />
               )}
-              {pad && <View style={[styles.sheetDock, { paddingBottom: 12 + insets.bottom }]}>{pad}</View>}
+              {pad && (
+                <View
+                  style={[
+                    styles.sheetDock,
+                    ledgerStyle && styles.ledgerSurface,
+                    { paddingBottom: 12 + insets.bottom },
+                  ]}
+                >
+                  {pad}
+                </View>
+              )}
             </View>
           </KeyboardAvoidingView>
         </View>
@@ -463,6 +511,8 @@ function ModalSheetBody({
     <View
       style={[
         isSheet ? [styles.sheet, sheetWidth] : [styles.dialog, dialogWidth],
+        ledgerStyle && styles.ledgerSurface,
+        ledgerStyle && isSheet && styles.ledgerPad,
         stripView && styles.dialogStriped,
         { paddingBottom: isSheet ? 24 + insets.bottom : 20 },
       ]}
@@ -541,6 +591,13 @@ const styles = themedStyles(() =>
       minHeight: 48,
     },
     headerText: { flex: 1, minWidth: 0 },
+    ledgerHeader: { gap: 8, marginBottom: 8, minHeight: 44 },
+    ledgerTitle: { fontFamily: theme.font.bodyBold, fontSize: 19 },
+    ledgerSubtitle: { color: theme.colors.home.secondaryText, marginTop: 2 },
+    ledgerSurface: { backgroundColor: theme.colors.home.background },
+    ledgerPad: { paddingTop: 12 },
+    ledgerFooter: { backgroundColor: theme.colors.home.background, borderColor: theme.colors.home.edge },
+    ledgerClose: { backgroundColor: theme.colors.home.control, borderColor: theme.colors.home.edge },
     title: { fontFamily: theme.font.roundedBold, fontSize: 22, color: theme.colors.textPrimary },
     subtitle: {
       fontFamily: theme.font.body,

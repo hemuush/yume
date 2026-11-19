@@ -51,7 +51,8 @@ export function FilterModal({
 }) {
   const { accent } = useAccent();
   const { hideAmounts } = usePrivacy();
-  const [labels, setLabels] = useState<string[]>([]);
+  const [labelSnapshot, setLabels] = useState<{ hideAmounts: boolean; labels: string[] } | null>(null);
+  const labels = labelSnapshot?.hideAmounts === hideAmounts ? labelSnapshot.labels : [];
   const { type, categoryIds, accountIds } = filter;
   const [draftLabel, setDraftLabel] = useState(filter.expenseLabel ?? '');
   const [draftType, setDraftType] = useState(type);
@@ -60,10 +61,10 @@ export function FilterModal({
   useEffect(() => {
     if (!visible || draftType === 'income' || categoryless(draftType)) return;
     let live = true;
-    setLabels([]);
+    setLabels(null);
     void listExpenseLabels('', hideAmounts).then(
       (data) => {
-        if (live) setLabels(data);
+        if (live) setLabels({ hideAmounts, labels: data });
       },
       () => {}
     );
@@ -154,6 +155,7 @@ export function FilterModal({
 
   return (
     <ModalSheet
+      ledgerStyle
       size="expanded"
       visible={visible}
       onClose={() => {
@@ -161,7 +163,6 @@ export function FilterModal({
         onClose();
       }}
       title="Filter activity"
-      subtitle="Refine the entries in your selected period"
       footer={
         <View style={styles.filterFoot}>
           <PrimaryButton
@@ -180,14 +181,15 @@ export function FilterModal({
       }
     >
       <Text style={styles.fieldLabel}>Type</Text>
-      <SheetTabs options={FILTER_TYPES} value={draftType} onChange={onTypeChange} />
+      <SheetTabs ledgerStyle options={FILTER_TYPES} value={draftType} onChange={onTypeChange} />
 
       {accounts.length > 1 && (
         <>
-          <Text style={styles.fieldLabel}>Accounts · choose any</Text>
+          <Text style={styles.fieldLabel}>Accounts</Text>
           <View style={styles.chipRow}>
             {accounts.map((acc) => (
               <Chip
+                ledgerStyle
                 key={acc.id}
                 label={acc.name}
                 icon={accountIcon(acc.type, !!acc.investment)}
@@ -206,10 +208,11 @@ export function FilterModal({
 
       {!categoryless(draftType) && (
         <>
-          <Text style={styles.fieldLabel}>Categories · choose any</Text>
+          <Text style={styles.fieldLabel}>Categories</Text>
           <View style={styles.chipRow}>
             {topLevelCategories.map((cat) => (
               <Chip
+                ledgerStyle
                 key={cat.id}
                 label={
                   sharedNames.has(cat.name)
@@ -230,6 +233,7 @@ export function FilterModal({
               <View style={styles.chipRow}>
                 {expandedChildren.map((cat) => (
                   <Chip
+                    ledgerStyle
                     key={cat.id}
                     label={cat.name}
                     active={draftCategoryIds.includes(cat.id)}
@@ -260,7 +264,7 @@ export function FilterModal({
               padding: 12,
               marginBottom: 12,
               borderRadius: 14,
-              backgroundColor: theme.colors.surfaceAlt,
+              backgroundColor: theme.colors.home.control,
               color: theme.colors.textPrimary,
             }}
           />
@@ -272,6 +276,7 @@ export function FilterModal({
           <View style={styles.chipRow}>
             {matchingLabels.slice(0, 10).map((label) => (
               <Chip
+                ledgerStyle
                 key={label}
                 label={label}
                 active={draftLabel === label}

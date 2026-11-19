@@ -23,11 +23,21 @@ interface Props {
   iconColor?: string;
   /** A "›" after the label: tapping opens more (a category's subcategories). */
   more?: boolean;
+  ledgerStyle?: boolean;
 }
 
 // The selectable pill used for account/category/type pickers across every
 // "Add ___" modal — one accent-aware component instead of four copy-pastes.
-export function Chip({ label, active, onPress, activeBorderColor, icon, iconColor, more }: Props) {
+export function Chip({
+  label,
+  active,
+  onPress,
+  activeBorderColor,
+  icon,
+  iconColor,
+  more,
+  ledgerStyle = false,
+}: Props) {
   const tinted = active && activeBorderColor;
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.94);
   const { accent } = useAccent();
@@ -37,8 +47,13 @@ export function Chip({ label, active, onPress, activeBorderColor, icon, iconColo
         styles.chip,
         icon && styles.chipWithIcon,
         // Chosen: filled with ink, like the picked filter chips on Activity.
-        active && !tinted && { backgroundColor: theme.colors.ink, borderColor: theme.colors.ink },
-        tinted && { backgroundColor: softTint(activeBorderColor, 0.1), borderColor: activeBorderColor },
+        ledgerStyle && styles.ledgerChip,
+        ledgerStyle && active && styles.ledgerSelected,
+        !ledgerStyle &&
+          active &&
+          !tinted && { backgroundColor: theme.colors.ink, borderColor: theme.colors.ink },
+        !ledgerStyle &&
+          tinted && { backgroundColor: softTint(activeBorderColor, 0.1), borderColor: activeBorderColor },
         animatedStyle,
       ]}
       onPress={onPress}
@@ -59,7 +74,14 @@ export function Chip({ label, active, onPress, activeBorderColor, icon, iconColo
           <CategoryGlyph name={icon} size={13} color={theme.colors.ink} />
         </View>
       )}
-      <Text style={[styles.text, active && styles.textActive, active && !tinted && styles.textOnInk]}>
+      <Text
+        style={[
+          styles.text,
+          ledgerStyle && styles.ledgerText,
+          active && styles.textActive,
+          active && !tinted && !ledgerStyle && styles.textOnInk,
+        ]}
+      >
         {label}
         {more ? ' ›' : ''}
       </Text>
@@ -82,6 +104,13 @@ const styles = themedStyles(() =>
       backgroundColor: theme.colors.surface,
     },
     chipWithIcon: { paddingLeft: 4, paddingVertical: 4 },
+    ledgerChip: {
+      minHeight: 36,
+      backgroundColor: theme.colors.home.surface,
+      borderColor: theme.colors.home.edge,
+    },
+    ledgerSelected: { backgroundColor: theme.colors.home.selected, borderColor: theme.colors.home.selected },
+    ledgerText: { color: theme.colors.home.secondaryText },
     iconDisc: { width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
     text: {
       fontSize: 12,

@@ -9,7 +9,6 @@ export type SliceKey = 'spent' | 'saved' | 'due' | 'free';
 /** The ring's width and height; the same on every phone, so the card stays small. */
 const RING_SIZE = 176;
 const STROKE = 10;
-const R = (RING_SIZE - STROKE) / 2;
 const GAP = 2.5;
 /** The shortest a flat bar for a very small slice is drawn, so it can still be seen. */
 const MIN_BAR = 2;
@@ -25,11 +24,13 @@ export function MonthRing({
   slices,
   hideSavings,
   focus = null,
+  size = RING_SIZE,
   children,
 }: {
   slices: HeroSlices;
   hideSavings: boolean;
   focus?: SliceKey | null;
+  size?: number;
   children?: React.ReactNode;
 }) {
   const parts: { key: SliceKey; share: number; color: string }[] = [
@@ -38,8 +39,11 @@ export function MonthRing({
     { key: 'due' as const, share: slices.due ?? 0, color: theme.colors.slice.due },
     { key: 'free' as const, share: slices.free, color: theme.colors.slice.free },
   ].filter((part) => part.share > 0);
-  const c = RING_SIZE / 2;
-  const circumference = 2 * Math.PI * R;
+  const ringSize = size;
+  const stroke = ringSize === RING_SIZE ? STROKE : Math.max(6, Math.round((ringSize / RING_SIZE) * STROKE));
+  const rRadius = (ringSize - stroke) / 2;
+  const c = ringSize / 2;
+  const circumference = 2 * Math.PI * rRadius;
   let used = 0;
   // A single slice is the whole ring, with no gap to leave.
   const whole = parts.length === 1;
@@ -47,18 +51,25 @@ export function MonthRing({
     hideSavings ? '' : `, saved ${heroPct(slices.saved)}`
   }${slices.due ? `, bills ${heroPct(slices.due)}` : ''}, free ${heroPct(slices.free)}`;
   return (
-    <View style={{ width: RING_SIZE, height: RING_SIZE, alignItems: 'center', justifyContent: 'center' }}>
+    <View style={{ width: ringSize, height: ringSize, alignItems: 'center', justifyContent: 'center' }}>
       <View
         pointerEvents="none"
-        style={{ position: 'absolute', width: RING_SIZE, height: RING_SIZE }}
+        style={{ position: 'absolute', width: ringSize, height: ringSize }}
         accessible={slices.hasIncome}
         accessibilityElementsHidden={!slices.hasIncome}
         importantForAccessibility={slices.hasIncome ? 'yes' : 'no-hide-descendants'}
         accessibilityRole="image"
         accessibilityLabel={label}
       >
-        <Svg width={RING_SIZE} height={RING_SIZE} style={{ position: 'absolute' }}>
-          <Circle cx={c} cy={c} r={R} stroke={theme.colors.trayTrack} strokeWidth={STROKE} fill="none" />
+        <Svg width={ringSize} height={ringSize} style={{ position: 'absolute' }}>
+          <Circle
+            cx={c}
+            cy={c}
+            r={rRadius}
+            stroke={theme.colors.trayTrack}
+            strokeWidth={stroke}
+            fill="none"
+          />
         </Svg>
         {parts.map((part) => {
           const start = used;
@@ -68,22 +79,22 @@ export function MonthRing({
           // stroke comes off along with the gap). A slice too small for that, like Free or Bills left late in
           // the month, draws a thin flat bar centred in its own slot at least 2 dp long, so it stays visible
           // and never overlaps its neighbours as a dot would.
-          const roomy = slot - GAP >= STROKE + 1;
-          const length = roomy ? slot - GAP - STROKE : Math.max(MIN_BAR, slot - GAP);
-          const lead = roomy ? (STROKE + GAP) / 2 : (slot - length) / 2;
+          const roomy = slot - GAP >= stroke + 1;
+          const length = roomy ? slot - GAP - stroke : Math.max(MIN_BAR, slot - GAP);
+          const lead = roomy ? (stroke + GAP) / 2 : (slot - length) / 2;
           return (
             <View
               key={part.key}
               pointerEvents="none"
               style={[StyleSheet.absoluteFill, { opacity: focus != null && focus !== part.key ? DIM : 1 }]}
             >
-              <Svg width={RING_SIZE} height={RING_SIZE}>
+              <Svg width={ringSize} height={ringSize}>
                 <Circle
                   cx={c}
                   cy={c}
-                  r={R}
+                  r={rRadius}
                   stroke={part.color}
-                  strokeWidth={STROKE}
+                  strokeWidth={stroke}
                   strokeLinecap={whole || !roomy ? 'butt' : 'round'}
                   fill="none"
                   strokeDasharray={whole ? undefined : `${length} ${circumference}`}
@@ -95,7 +106,9 @@ export function MonthRing({
           );
         })}
       </View>
-      <View style={{ width: R * 2 - STROKE - 6, alignItems: 'center' }}>{children}</View>
+      <View style={{ width: rRadius * 2 - stroke - 6, alignItems: 'center', justifyContent: 'center' }}>
+        {children}
+      </View>
     </View>
   );
 }

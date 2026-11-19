@@ -1,4 +1,5 @@
 import { withPressedTint } from '@/lib/pressed';
+import { haptics } from '@/lib/haptics';
 import { investLines, type InvestRole } from '@/lib/investment';
 import { View, Pressable, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
@@ -78,14 +79,21 @@ export function RecentTransactionRow({
           showDay && (!omitToday || tx.date !== toLocalIsoDate(new Date())) && dayLabel(tx.date),
         ]);
 
-  const Container = onPress ? Pressable : View;
+  const handlePress = onPress
+    ? () => {
+        haptics.tap();
+        onPress();
+      }
+    : undefined;
+
+  const Container = handlePress ? Pressable : View;
   return (
     <Container
-      onPress={onPress}
-      accessibilityRole={onPress ? 'button' : undefined}
-      accessibilityHint={onPress ? 'Opens transaction details' : undefined}
+      onPress={handlePress}
+      accessibilityRole={handlePress ? 'button' : undefined}
+      accessibilityHint={handlePress ? 'Opens transaction details' : undefined}
       style={
-        onPress
+        handlePress
           ? withPressedTint(accent, [
               styles.row,
               dense && styles.denseRow,
@@ -138,21 +146,45 @@ const DENSE_MARK = 32;
 
 const styles = themedStyles(() =>
   StyleSheet.create({
-    row: { ...h.row, gap: 12 },
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      paddingVertical: 10,
+      paddingHorizontal: 14,
+      minHeight: SCREEN.rowMinHeight,
+    },
     denseRow: { minHeight: 48, paddingVertical: 7, paddingHorizontal: 12, gap: 10 },
     denseLead: { width: DENSE_MARK },
     denseTitle: { fontFamily: theme.font.bodyMedium, fontSize: 15 },
     denseSub: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, marginTop: 1 },
-    denseAmount: { fontFamily: theme.font.bodyMedium, fontSize: 15 },
+    denseAmount: { fontFamily: theme.font.bodyBold, fontSize: 15 },
     lead: { width: SCREEN.lead, alignItems: 'center', justifyContent: 'center' },
     stackedRow: { flexWrap: 'wrap', rowGap: 6 },
     stackedMid: { flexGrow: 1, flexBasis: '70%' },
     divider: h.divider,
     mid: h.mid,
-    title: h.title,
-    sub: h.sub,
-    amount: h.amount,
-    income: h.income,
+    title: {
+      fontFamily: theme.font.bodyMedium,
+      fontSize: 15,
+      lineHeight: 20,
+      color: theme.colors.textPrimary,
+    },
+    sub: {
+      fontFamily: theme.font.body,
+      fontSize: 13,
+      lineHeight: 18,
+      color: theme.colors.textMuted,
+      marginTop: 2,
+    },
+    amount: {
+      fontVariant: ['tabular-nums'],
+      fontFamily: theme.font.bodyBold,
+      fontSize: 15,
+      lineHeight: 20,
+      color: theme.colors.textPrimary,
+    },
+    income: { color: theme.colors.incomeText },
     refund: { fontFamily: theme.font.bodyBold, color: theme.colors.incomeText },
   })
 );

@@ -10,11 +10,12 @@ interface Props {
   square?: number;
   /** A circle instead of a rounded square — Home's rows (the Home A sign-off). */
   round?: boolean;
+  ledgerStyle?: boolean;
 }
 
 // A category's icon in a quiet neutral disc: the colour belongs to the category in the charts and bars, not to every
 // row of a list. `color` is kept so callers need not change; it no longer tints the disc.
-export function CategoryIcon({ name, size = 16, square = 34, round = false }: Props) {
+export function CategoryIcon({ name, size = 16, square = 34, round = false, ledgerStyle }: Props) {
   return (
     <View
       style={[
@@ -23,7 +24,7 @@ export function CategoryIcon({ name, size = 16, square = 34, round = false }: Pr
           width: square,
           height: square,
           borderRadius: round ? square / 2 : square * 0.32,
-          backgroundColor: theme.colors.surfaceAlt,
+          backgroundColor: ledgerStyle ? theme.colors.entry.control : theme.colors.surfaceAlt,
         },
       ]}
     >

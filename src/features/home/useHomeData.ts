@@ -8,19 +8,19 @@ import { listCardCycles } from '@/db/cardCycles';
 import { listExpectedRefunds, type ExpectedRefund } from '@/db/refundTracking';
 import { listRecurringRules } from '@/db/recurring';
 import {
-  getRangeComparison,
+  getPeriodSummary,
   getTodaySpend,
   getMonthPaceInputs,
   getStillToPayThisMonth,
   getCarryInMinor,
   getDailyExpenseTotals,
-  type PeriodComparison,
+  type PeriodSummary,
 } from '@/db/reports';
 import { getUserName, getDailySpendingGoal, getDefaultCurrency } from '@/db/settings';
 import { savingsAccountIdsOf } from '@/lib/account';
-import { privateComparison, isSavingsEntry } from '@/lib/privateSummary';
+import { privateSummary, isSavingsEntry } from '@/lib/privateSummary';
 import type { Account, Category, Transaction, Loan, RecurringRule, SavingsGoal } from '@/types';
-import { CURRENT_PERIOD, periodRange, previousPeriodRange, type PeriodCursor } from '@/lib/period';
+import { CURRENT_PERIOD, periodRange, type PeriodCursor } from '@/lib/period';
 import { toLocalIsoDate } from '@/lib/date';
 import { onTransactionsChanged } from '@/lib/dataEvents';
 import { useFreshness } from '@/lib/useFreshness';
@@ -55,12 +55,12 @@ export function useHomeData(cursor: PeriodCursor) {
   const [budgets, setBudgets] = useState<BudgetProgress[]>([]);
   const [goals, setGoals] = useState<SavingsGoal[]>([]);
   const [recurringRules, setRecurringRules] = useState<RecurringRule[]>([]);
-  const [rawComparison, setComparison] = useState<PeriodComparison | null>(null);
+  const [rawSummary, setSummary] = useState<PeriodSummary | null>(null);
   // What earlier months left over (or, when negative, ran short by) — added to the period's own free-to-use.
   const [carryInMinor, setCarryInMinor] = useState(0);
-  const comparison = useMemo(
-    () => privateComparison(rawComparison, hideAmounts),
-    [rawComparison, hideAmounts]
+  const summary = useMemo(
+    () => rawSummary && privateSummary(rawSummary, hideAmounts),
+    [rawSummary, hideAmounts]
   );
   const [loanProgress, setLoanProgress] = useState<Awaited<ReturnType<typeof getLoanProgress>>>([]);
   const [cardBills, setCardBills] = useState<Awaited<ReturnType<typeof listCardCycles>>>([]);
@@ -89,6 +89,11 @@ export function useHomeData(cursor: PeriodCursor) {
   // The period the on-screen figures belong to: `cursor` moves at once, this catches up once that month's data loads.
   const [loadedCursor, setLoadedCursor] = useState<PeriodCursor>(CURRENT_PERIOD);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [comingUpError, setComingUpError] = useState(false);
+  const [loadedPrivacy, setLoadedPrivacy] = useState<boolean | null>(null);
+  const [periodPrivacy, setPeriodPrivacy] = useState<boolean | null>(null);
+  const [comingUpPrivacy, setComingUpPrivacy] = useState<boolean | null>(null);
+  const lastComingUpPrivacy = useRef<boolean | null>(null);
   // Defaults ([], 0, null) look like a genuinely empty period, so the skeleton gates on this flag: set once
   // after the first `load()` (success or failure), never reset; later fetches update in place.
   const [loaded, setLoaded] = useState(false);
@@ -125,7 +130,7 @@ export function useHomeData(cursor: PeriodCursor) {
           : Promise.resolve([]);
       return Promise.all([
         listTransactions({ fromDate: range.start, toDate: range.end, limit: RECENT_ROWS }),
-        getRangeComparison(range, previousPeriodRange(c, reference), c.granularity),
+        getPeriodSummary(range),
         getCarryInMinor(range.start, hideAmounts),
         daily,
         c.offset !== 0
@@ -140,15 +145,16 @@ export function useHomeData(cursor: PeriodCursor) {
 
   // The period's own figures, as one update.
   const landPeriod = useCallback(
-    (c: PeriodCursor, [tx, cmp, carry, daily, todaySpend]: Awaited<ReturnType<typeof fetchPeriod>>) => {
+    (c: PeriodCursor, [tx, period, carry, daily, todaySpend]: Awaited<ReturnType<typeof fetchPeriod>>) => {
       setDailySpend((prev) => keepIfEqual(prev, daily));
       setTodaySpendMinor(todaySpend);
       setRecent((prev) => reuseUnchanged(prev, tx));
-      setComparison((prev) => keepIfEqual(prev, cmp));
+      setSummary((prev) => keepIfEqual(prev, period));
       setCarryInMinor(carry);
       setLoadedCursor((prev) => keepIfEqual(prev, c));
+      setPeriodPrivacy(hideAmounts);
     },
-    []
+    [hideAmounts]
   );
 
   // Accounts, loans and settings stay in place while the selected period reloads.
@@ -184,16 +190,12 @@ export function useHomeData(cursor: PeriodCursor) {
           ln,
           rules,
           progress,
-          cycles,
           name,
           dailyGoal,
           paceIn,
           stillToPay,
           wraps,
           defaultCurrency,
-          budgetRows,
-          goalRows,
-          refundResult,
         ] = await Promise.all([
           fetchPeriod(c),
           listAccounts(true),
@@ -201,19 +203,12 @@ export function useHomeData(cursor: PeriodCursor) {
           listLoans(),
           listRecurringRules(),
           getLoanProgress(),
-          listCardCycles().catch(() => []),
           getUserName(),
           getDailySpendingGoal(),
           getMonthPaceInputs(undefined, hideAmounts),
           getStillToPayThisMonth(undefined, hideAmounts),
           loadReadyWraps(),
           getDefaultCurrency(),
-          // Budgets and goals are extras here: a failed read leaves them out instead of blanking Home.
-          listBudgetsForMonth(undefined, hideAmounts).catch(() => [] as BudgetProgress[]),
-          listSavingsGoals().catch(() => [] as SavingsGoal[]),
-          listExpectedRefunds()
-            .then((rows) => ({ rows, failed: false }))
-            .catch(() => ({ rows: [] as ExpectedRefund[], failed: true })),
         ]);
         if (pSeq === periodSeq.current) {
           landPeriod(c, period);
@@ -249,15 +244,37 @@ export function useHomeData(cursor: PeriodCursor) {
           setRecurringRules((prev) => keepIfEqual(prev, rules));
         }
         setLoanProgress((prev) => keepIfEqual(prev, progress));
-        setCardBills((prev) => keepIfEqual(prev, cycles));
-        setBudgets((prev) => keepIfEqual(prev, budgetRows));
-        setGoals((prev) => keepIfEqual(prev, goalRows));
         setUserNameState(name);
-        setRefunds((prev) => keepIfEqual(prev, refundResult.rows));
-        setRefundError(refundResult.failed);
         setDailyGoalMinor(dailyGoal);
         setPaceInputs((prev) => keepIfEqual(prev, paceIn));
         setStillToPayMinor(stillToPay);
+        setReadyWraps((prev) => keepIfEqual(prev, wraps));
+        setCurrency(defaultCurrency);
+        setLoadedPrivacy(hideAmounts);
+        if (periodWritten) setLoaded(true);
+        setLoadError(null);
+
+        // Give the balance and recent activity a chance to render before queueing optional reads.
+        const [cycles, budgetRows, goalRows, refundRows] = await Promise.all([
+          listCardCycles().catch(() => null),
+          listBudgetsForMonth(undefined, hideAmounts).catch(() => null),
+          listSavingsGoals().catch(() => null),
+          listExpectedRefunds().catch(() => null),
+        ]);
+        if (fSeq !== fullSeq.current) return false;
+        const samePrivacy = lastComingUpPrivacy.current === hideAmounts;
+        lastComingUpPrivacy.current = hideAmounts;
+        setCardBills((prev) => (cycles === null ? (samePrivacy ? prev : []) : keepIfEqual(prev, cycles)));
+        setBudgets((prev) =>
+          budgetRows === null ? (samePrivacy ? prev : []) : keepIfEqual(prev, budgetRows)
+        );
+        setGoals((prev) => (goalRows === null ? (samePrivacy ? prev : []) : keepIfEqual(prev, goalRows)));
+        setComingUpError(cycles === null || budgetRows === null || goalRows === null);
+        setRefunds((prev) =>
+          refundRows === null ? (samePrivacy ? prev : []) : keepIfEqual(prev, refundRows)
+        );
+        setRefundError(refundRows === null);
+        setComingUpPrivacy(hideAmounts);
         // Housekeeping scans do not gate the first useful financial content or the tab transition.
         runWhenIdle(() => {
           if (fSeq !== fullSeq.current) return;
@@ -267,9 +284,6 @@ export function useHomeData(cursor: PeriodCursor) {
             })
             .catch((error) => console.warn('Needs you refresh failed:', error));
         });
-        setReadyWraps((prev) => keepIfEqual(prev, wraps));
-        setCurrency(defaultCurrency);
-        setLoadError(null);
       } catch (e) {
         if (fSeq !== fullSeq.current) return false;
         // Guard the throw so a transient DB error shows a banner instead of
@@ -336,7 +350,7 @@ export function useHomeData(cursor: PeriodCursor) {
     budgets,
     goals,
     recurringRules,
-    comparison,
+    summary,
     carryInMinor,
     loanProgress,
     cardBills,
@@ -353,7 +367,10 @@ export function useHomeData(cursor: PeriodCursor) {
     userName,
     loadedCursor,
     loadError,
-    loaded,
+    loaded: loaded && loadedPrivacy === hideAmounts && periodPrivacy === hideAmounts,
+    comingUpError,
+    comingUpReady: comingUpPrivacy === hideAmounts,
+    hideAmounts,
     load,
     reload,
   };

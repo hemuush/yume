@@ -2,20 +2,19 @@ import { useEffect, useRef, useState } from 'react';
 import { View, Pressable, StyleSheet, useWindowDimensions } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
-import { InsightDisclosure } from '@/components/InsightCard';
 import { ModalSheet } from '@/components/ModalSheet';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { AmountField } from '@/components/AmountField';
 import { monthlyCommitments, type MonthlyPlanInput } from './monthlyCommitments';
 import { getMonthlyPlanIncome, setMonthlyPlanIncome } from '@/db/monthlyPlan';
-import { useAccent } from '@/theme/AccentContext';
-import { themeInk } from '@/theme/interactionColors';
 import { formatMoney, toMinor } from '@/lib/money';
 import { errorMessage } from '@/lib/errorMessage';
 import { theme } from '@/constants/theme';
-import { SCREEN, flatSection } from '@/components/screenStyles';
+import { SCREEN } from '@/components/screenStyles';
 import { useSaveOnce } from '@/lib/useSaveOnce';
 import { themedStyles } from '@/theme/themedStyles';
+import { longMonth } from '@/lib/dateLabels';
+import { withPressed } from '@/lib/pressed';
 
 export function MonthlyPlanCheck({
   input,
@@ -28,8 +27,8 @@ export function MonthlyPlanCheck({
   hidden: boolean;
   refreshToken?: object;
 }) {
-  const { accent } = useAccent();
-  const { fontScale } = useWindowDimensions();
+  const { width, fontScale } = useWindowDimensions();
+  const compactHeadline = width >= 360 && fontScale <= 1.2;
   const [override, setOverride] = useState<{
     currency: string;
     value: number | null;
@@ -38,6 +37,7 @@ export function MonthlyPlanCheck({
   const [loadError, setLoadError] = useState(false);
   const [retry, setRetry] = useState(0);
   const [open, setOpen] = useState(false);
+  const [showCalculation, setShowCalculation] = useState(false);
   const [amount, setAmount] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -46,6 +46,7 @@ export function MonthlyPlanCheck({
     scope.current = hidden ? null : { currency, refreshToken };
     if (hidden) {
       setOpen(false);
+      setShowCalculation(false);
       return;
     }
     let live = true;
@@ -102,11 +103,15 @@ export function MonthlyPlanCheck({
   const income = ready ? (override.value ?? plan.incomeMinor) : 0;
   const remaining = income - plan.totalMinor;
   const knownIncome = ready && (override.value != null || income > 0);
+  const allocation =
+    knownIncome && income > 0 && remaining >= 0
+      ? [
+          { label: 'Spending', amount: plan.spendingMinor, color: theme.colors.link },
+          { label: 'Savings', amount: plan.savingsMinor, color: theme.colors.incomeText },
+          { label: 'Left to plan', amount: remaining, color: theme.colors.inkHairline },
+        ].filter((item) => item.amount > 0)
+      : [];
   const money = (value: number) => formatMoney(value, currency);
-  const spendShare = knownIncome ? Math.min(100, (plan.spendingMinor / Math.max(1, income)) * 100) : 0;
-  const saveShare = knownIncome
-    ? Math.min(100 - spendShare, (plan.savingsMinor / Math.max(1, income)) * 100)
-    : 0;
   const factBasis = Math.round(84 * Math.min(2, Math.max(1, fontScale)));
   const openEditor = () => {
     setAmount(String(income / 100));
@@ -114,7 +119,7 @@ export function MonthlyPlanCheck({
     setOpen(true);
   };
   return (
-    <View style={s.card}>
+    <View style={[s.card, ready && !loadError ? s.summary : s.pending]}>
       {loadError ? (
         <PrimaryButton
           compact
@@ -126,67 +131,96 @@ export function MonthlyPlanCheck({
         <Text style={s.hint}>Loading plan…</Text>
       ) : (
         <>
-          <View style={s.top}>
-            <View style={s.topMain}>
+          <View style={s.headline}>
+            <View style={s.headlineCopy}>
+              <View style={s.period}>
+                <Feather name="calendar" size={12} color={theme.colors.home.secondaryText} />
+                <Text style={s.month}>{longMonth(input.today)}</Text>
+              </View>
               <Text style={s.label}>
                 {!knownIncome
-                  ? 'Monthly plan'
+                  ? 'Planned commitments'
                   : remaining < 0
                     ? 'Over expected income'
                     : 'Left to plan this month'}
               </Text>
-              <Text
-                style={[s.figure, knownIncome && remaining < 0 && { color: theme.colors.expenseText }]}
-                numberOfLines={1}
-                adjustsFontSizeToFit
-              >
-                {knownIncome ? money(Math.abs(remaining)) : 'Set expected income'}
-              </Text>
+              {!compactHeadline && (
+                <Text style={[s.figure, knownIncome && remaining < 0 && s.over]}>
+                  {money(knownIncome ? Math.abs(remaining) : plan.totalMinor)}
+                </Text>
+              )}
             </View>
+            {compactHeadline && (
+              <Text style={[s.figure, s.trailingFigure, knownIncome && remaining < 0 && s.over]}>
+                {money(knownIncome ? Math.abs(remaining) : plan.totalMinor)}
+              </Text>
+            )}
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="Edit expected income"
-              onPress={openEditor}
-              style={s.income}
+              accessibilityLabel="How this is calculated"
+              onPress={() => setShowCalculation(true)}
+              style={withPressed(s.info)}
             >
-              <Text style={[s.incomeText, { color: themeInk(accent) }]}>
-                {knownIncome ? `Income ${money(income)}` : 'Set income'}
-              </Text>
-              <Feather name="edit-2" size={13} color={themeInk(accent)} />
+              <Feather name="info" size={17} color={theme.colors.textPrimary} />
             </Pressable>
           </View>
-          {knownIncome && (
-            <View style={s.track}>
+          <View style={s.breakdown}>
+            {allocation.length > 0 && (
               <View
-                style={[s.segment, { flexGrow: spendShare, backgroundColor: theme.colors.slice.spent }]}
-              />
-              <View style={[s.segment, { flexGrow: saveShare, backgroundColor: theme.colors.slice.saved }]} />
-              <View style={{ flexGrow: Math.max(0, 100 - spendShare - saveShare), flexBasis: 0 }} />
-            </View>
-          )}
-          <View style={s.facts}>
-            {[
-              { label: 'Spending', value: money(plan.spendingMinor), dot: theme.colors.slice.spent },
-              { label: 'Savings', value: money(plan.savingsMinor), dot: theme.colors.slice.saved },
-            ].map((fact) => (
-              <View key={fact.label} style={[s.fact, { flexBasis: factBasis }]}>
-                <View style={s.factLabelRow}>
-                  <View style={[s.dot, { backgroundColor: fact.dot }]} />
-                  <Text style={s.hint}>{fact.label}</Text>
-                </View>
-                <Text style={s.value}>{fact.value}</Text>
+                style={s.allocation}
+                accessibilityElementsHidden
+                importantForAccessibility="no-hide-descendants"
+              >
+                {allocation.map((item) => (
+                  <View
+                    key={item.label}
+                    style={{ flex: item.amount / income, backgroundColor: item.color }}
+                  />
+                ))}
               </View>
-            ))}
+            )}
+            <View style={s.facts}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Edit expected income"
+                accessibilityHint={knownIncome ? money(income) : undefined}
+                onPress={openEditor}
+                style={withPressed([s.fact, s.income, { flexBasis: factBasis }])}
+              >
+                <View style={s.factLabelRow}>
+                  <Text style={s.factLabel}>Expected income</Text>
+                  <Feather name="edit-2" size={12} color={theme.colors.link} />
+                </View>
+                <Text style={[s.value, s.incomeValue]}>{knownIncome ? money(income) : 'Set income'}</Text>
+              </Pressable>
+              {[
+                { label: 'Spending', value: money(plan.spendingMinor), color: theme.colors.link },
+                { label: 'Savings', value: money(plan.savingsMinor), color: theme.colors.incomeText },
+              ].map((fact) => (
+                <View key={fact.label} style={[s.fact, { flexBasis: factBasis }]}>
+                  <View style={s.factLabelRow}>
+                    {allocation.length > 0 && <View style={[s.dot, { backgroundColor: fact.color }]} />}
+                    <Text style={s.factLabel}>{fact.label}</Text>
+                  </View>
+                  <Text style={s.value}>{fact.value}</Text>
+                </View>
+              ))}
+            </View>
           </View>
-          <View style={s.disclosure}>
-            <InsightDisclosure title="How this is calculated">
+          {showCalculation && (
+            <ModalSheet
+              ledgerStyle
+              visible
+              title="How this is calculated"
+              onClose={() => setShowCalculation(false)}
+            >
               <Text style={s.hint}>
                 Monthly estimate using {override.value != null ? 'your income estimate' : 'recurring income'}.
                 Budget limits cover matching bills; savings transfers cover matching goal funding. Card
                 repayments are not added again. Unbudgeted daily spending may be missing.
               </Text>
-            </InsightDisclosure>
-          </View>
+            </ModalSheet>
+          )}
           {plan.incompleteLoans > 0 && (
             <Text style={s.note}>
               {plan.incompleteLoans} borrowed {plan.incompleteLoans === 1 ? 'loan has' : 'loans have'} no
@@ -202,6 +236,7 @@ export function MonthlyPlanCheck({
         </>
       )}
       <ModalSheet
+        ledgerStyle
         visible={open && !hidden}
         onClose={() => setOpen(false)}
         dismissible={!busy}
@@ -234,44 +269,55 @@ export function MonthlyPlanCheck({
 }
 const s = themedStyles(() =>
   StyleSheet.create({
-    // The flat summary card the other screens lead with.
     card: {
-      ...flatSection(),
-      marginHorizontal: SCREEN.gutter - SCREEN.rowInset,
-      marginTop: 12,
+      marginHorizontal: SCREEN.gutter,
+      backgroundColor: theme.colors.home.surface,
+      borderColor: theme.colors.home.edge,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderRadius: 22,
       paddingHorizontal: 14,
-      paddingTop: 12,
-      paddingBottom: 4,
-      gap: 8,
+      paddingVertical: 12,
+      gap: 3,
+      overflow: 'hidden',
     },
-    title: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.textPrimary },
-    top: {
+    summary: { padding: 12 },
+    pending: { minHeight: 130, justifyContent: 'center' },
+    info: { width: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' },
+    period: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 },
+    month: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.home.secondaryText },
+    title: { fontFamily: theme.font.bodyBold, fontSize: 15, color: theme.colors.textPrimary },
+    headline: {
       flexDirection: 'row',
       flexWrap: 'wrap',
-      alignItems: 'flex-end',
-      justifyContent: 'space-between',
-      columnGap: 12,
+      alignItems: 'center',
+      columnGap: 4,
       rowGap: 2,
+      paddingHorizontal: 2,
+      paddingBottom: 4,
     },
-    topMain: { flexShrink: 1, minWidth: 0 },
-    label: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
+    headlineCopy: { flexGrow: 1, flexShrink: 1, flexBasis: 110, minWidth: 0, gap: 2 },
+    trailingFigure: { textAlign: 'right', fontSize: 27, lineHeight: 33 },
+    label: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.home.secondaryText },
     figure: {
-      fontFamily: theme.font.bodyMedium,
-      fontSize: 22,
-      lineHeight: 26,
-      letterSpacing: -0.2,
+      fontFamily: theme.font.bodyBold,
+      fontSize: 30,
+      lineHeight: 37,
+      flexShrink: 1,
+      letterSpacing: -0.6,
       fontVariant: ['tabular-nums'],
       color: theme.colors.textPrimary,
     },
-    income: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 4 },
-    incomeText: { fontFamily: theme.font.bodyBold, fontSize: 12 },
+    over: { color: theme.colors.expenseText },
+    income: { borderRadius: 8 },
+    incomeValue: { color: theme.colors.link },
+    factLabel: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.home.secondaryText },
     hint: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 18, color: theme.colors.textSecondary },
     note: {
       fontFamily: theme.font.body,
       fontSize: 12,
       lineHeight: 17,
-      color: theme.colors.textSecondary,
-      paddingBottom: 8,
+      color: theme.colors.home.secondaryText,
+      paddingTop: 4,
     },
     value: {
       fontFamily: theme.font.bodyMedium,
@@ -279,21 +325,24 @@ const s = themedStyles(() =>
       fontVariant: ['tabular-nums'],
       color: theme.colors.textPrimary,
     },
-    track: {
+    allocation: {
       flexDirection: 'row',
-      gap: 2,
-      height: 8,
-      marginTop: -6,
-      borderRadius: 4,
+      height: 6,
+      borderRadius: 3,
       overflow: 'hidden',
-      backgroundColor: theme.colors.trayTrack,
+      gap: 2,
     },
-    segment: { flexBasis: 0, height: 8 },
-    facts: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 12, rowGap: 8, paddingHorizontal: 0 },
-    fact: { flexGrow: 1, minWidth: 0 },
-    factLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-    dot: { width: 8, height: 8, borderRadius: 4 },
-    disclosure: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.divider },
+    dot: { width: 6, height: 6, borderRadius: 3 },
+    breakdown: {
+      gap: 5,
+      paddingHorizontal: 10,
+      paddingVertical: 8,
+      borderRadius: 12,
+      backgroundColor: theme.colors.home.control,
+    },
+    facts: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 8, rowGap: 4 },
+    fact: { flexGrow: 1, flexShrink: 1, minWidth: 0, minHeight: 44, justifyContent: 'center' },
+    factLabelRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: 4 },
     error: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.expenseText },
   })
 );

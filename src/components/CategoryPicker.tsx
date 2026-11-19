@@ -1,4 +1,4 @@
-import { useEffect, useEffectEvent, useState } from 'react';
+import { Fragment, useEffect, useEffectEvent, useState } from 'react';
 import {
   View,
   Pressable,
@@ -13,6 +13,8 @@ import { Text, TextInput, MAX_FONT_SCALE } from '@/components/Text';
 import { Category } from '@/types';
 import { theme } from '@/constants/theme';
 import { CategoryIcon } from './CategoryIcon';
+import Reanimated from 'react-native-reanimated';
+import { CONTENT_ENTER } from '@/lib/animation';
 import { Chip } from './Chip';
 import { topLevelOnly, childrenOf, searchCategories } from '@/lib/categoryTree';
 import { usePressScale } from '@/lib/usePressScale';
@@ -73,11 +75,15 @@ export function CategoryPicker({
   const reflow = textScale > theme.accessibility.reflowFontScale;
   const cols =
     gridWidth > 0
-      ? Math.max(reflow ? 2 : 3, Math.floor(gridWidth / (minColumnWidth * (reflow ? textScale : 1))))
+      ? Math.min(
+          compact ? 4 : Infinity,
+          Math.max(reflow ? 2 : 3, Math.floor(gridWidth / (minColumnWidth * (reflow ? textScale : 1))))
+        )
       : 0;
   const tileWidth = cols > 0 ? Math.floor(gridWidth / cols) : undefined;
   const onGridLayout = (e: LayoutChangeEvent) => {
-    const w = Math.round(e.nativeEvent.layout.width);
+    // Rounding up a fractional width can force the last tile in every row to wrap.
+    const w = Math.floor(e.nativeEvent.layout.width);
     if (w !== gridWidth) setGridWidth(w);
   };
   const dimmed = (id: string) => !!dimmedIds?.includes(id);
@@ -222,46 +228,68 @@ export function CategoryPicker({
     );
   }
 
+  const parentIndex = topLevel.findIndex((cat) => cat.id === expandedParentId);
+  const columns = cols || 3;
+  const subcategoryRowEnd = Math.min(
+    topLevel.length - 1,
+    (Math.floor(parentIndex / columns) + 1) * columns - 1
+  );
+  const SubcategoryGroup = compact ? Reanimated.View : View;
+  const subcategories = expandedChildren.length > 0 && (
+    <SubcategoryGroup
+      entering={compact ? CONTENT_ENTER : undefined}
+      style={[styles.subGroup, compact && styles.inlineSubGroup]}
+    >
+      <Text style={styles.subGroupLabel}>{expandedParent?.name}</Text>
+      <View style={compact ? styles.inlineSubChips : styles.medalGrid}>
+        {expandedChildren.map((cat) =>
+          compact ? (
+            <Chip
+              key={cat.id}
+              ledgerStyle
+              label={cat.name}
+              active={selectedId === cat.id}
+              onPress={() => select(cat.id)}
+            />
+          ) : (
+            <MedalTile
+              key={cat.id}
+              compact={compact}
+              width={tileWidth}
+              dimmed={dimmed(cat.id)}
+              active={selectedId === cat.id}
+              name={cat.name}
+              icon={cat.icon}
+              color={cat.color}
+              onPress={() => select(cat.id)}
+              sub
+            />
+          )
+        )}
+      </View>
+    </SubcategoryGroup>
+  );
   return (
     <View>
       {search}
       <View style={[styles.medalGrid, compact && styles.medalGridCompact]} onLayout={onGridLayout}>
-        {topLevel.map((cat) => (
-          <MedalTile
-            key={cat.id}
-            compact={compact}
-            width={tileWidth}
-            dimmed={dimmed(cat.id)}
-            active={selectedId === cat.id}
-            name={cat.name}
-            icon={cat.icon}
-            color={cat.color}
-            onPress={() => onPressTopLevel(cat)}
-          />
+        {topLevel.map((cat, index) => (
+          <Fragment key={cat.id}>
+            <MedalTile
+              compact={compact}
+              width={tileWidth}
+              dimmed={dimmed(cat.id)}
+              active={selectedId === cat.id}
+              name={cat.name}
+              icon={cat.icon}
+              color={cat.color}
+              onPress={() => onPressTopLevel(cat)}
+            />
+            {compact && parentIndex >= 0 && index === subcategoryRowEnd && subcategories}
+          </Fragment>
         ))}
       </View>
-      {expandedChildren.length > 0 && (
-        <View style={styles.subGroup}>
-          <Text style={styles.subGroupLabel}>{expandedParent?.name} —</Text>
-          <View style={[styles.medalGrid, compact && styles.medalGridCompact]}>
-            {expandedChildren.map((cat) => (
-              <View key={cat.id} style={tileWidth ? { width: tileWidth } : undefined}>
-                <MedalTile
-                  compact={compact}
-                  width={tileWidth}
-                  dimmed={dimmed(cat.id)}
-                  active={selectedId === cat.id}
-                  name={cat.name}
-                  icon={cat.icon}
-                  color={cat.color}
-                  onPress={() => select(cat.id)}
-                  sub
-                />
-              </View>
-            ))}
-          </View>
-        </View>
-      )}
+      {(!compact || parentIndex < 0) && subcategories}
     </View>
   );
 }
@@ -308,18 +336,24 @@ function MedalTile({
       <View
         style={[
           styles.medalBody,
-          active && [styles.medalBodyActive, { backgroundColor: softTint(accent, 0.22) }],
+          active && [
+            styles.medalBodyActive,
+            { backgroundColor: compact ? theme.colors.entry.selected : softTint(accent, 0.22) },
+          ],
           compact && styles.medalBodyCompact,
           dimmed && styles.medalDimmed,
         ]}
       >
-        <View style={[styles.medalRing, sub && styles.medalRingSub, active && styles.medalRingActive]}>
+        <View
+          style={[styles.medalRing, sub && styles.medalRingSub, active && !compact && styles.medalRingActive]}
+        >
           <CategoryIcon
             name={icon}
             color={color}
-            size={sub ? 16 : compact ? 18 : 20}
-            square={sub ? 38 : compact ? 40 : 48}
-            round
+            size={sub ? 15 : compact ? 17 : 20}
+            square={compact ? 34 : sub ? 38 : 48}
+            round={!compact}
+            ledgerStyle={compact}
           />
         </View>
         {/* A single long word shrinks a little rather than splitting mid-word (larger text sizes, narrow phones). */}
@@ -392,7 +426,13 @@ const styles = themedStyles(() =>
       fontSize: 13,
       color: theme.colors.textPrimary,
     },
-    searchCompact: { marginBottom: 8 },
+    searchCompact: {
+      marginBottom: 8,
+      minHeight: 44,
+      backgroundColor: theme.colors.entry.surface,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.entry.edge,
+    },
     noMatch: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, paddingVertical: 8 },
     subGroup: {
       marginTop: 10,
@@ -406,5 +446,13 @@ const styles = themedStyles(() =>
       color: theme.colors.textMuted,
       marginBottom: 8,
     },
+    inlineSubGroup: {
+      width: '100%',
+      marginTop: 0,
+      paddingTop: 8,
+      paddingBottom: 6,
+      borderTopColor: theme.colors.entry.edge,
+    },
+    inlineSubChips: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 8, rowGap: 14, paddingBottom: 4 },
   })
 );

@@ -1,11 +1,11 @@
 import { getCachedCurrency } from '@/db/settings';
 import { stagedTotals } from '@/features/add/saveEntry';
-import type { Account } from '@/types';
+import type { Account, Category } from '@/types';
 import { Animated, Pressable, View } from 'react-native';
 import { Text } from '@/components/Text';
 import Feather from '@expo/vector-icons/Feather';
 import { theme } from '@/constants/theme';
-import { formatMoney } from '@/lib/money';
+import { formatMaskableMoney } from '@/lib/money';
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { MovingRow } from '@/components/MovingRow';
 import { styles } from '@/features/add/add.styles';
@@ -13,20 +13,33 @@ import { Staged, dateChipLabel } from '@/features/add/addEntry';
 import { withPressedTint } from '@/lib/pressed';
 import { inParent } from '@/lib/categoryLabel';
 import { useAccent } from '@/theme/AccentContext';
+import { usePrivacy } from '@/theme/PrivacyContext';
+import { isSavingsEntry } from '@/lib/privateSummary';
+import { savingsAccountIdsOf } from '@/lib/account';
 
 /** Entries added with "Add to list", waiting for Save, each removable. */
 export function StagedList({
   rows,
   accounts,
+  categories,
   fadeStyle,
   onRemove,
 }: {
   rows: Staged[];
   accounts: Account[];
+  categories: Category[];
   fadeStyle: React.ComponentProps<typeof Animated.View>['style'];
   onRemove: (id: string) => void;
 }) {
   const { accent, secondary } = useAccent();
+  const { hideAmounts } = usePrivacy();
+  const byCategory = new Map(categories.map((category) => [category.id, category]));
+  const savingsIds = savingsAccountIdsOf(accounts);
+  const masked = (row: Staged) =>
+    hideAmounts &&
+    (row.kind === 'transaction'
+      ? isSavingsEntry(row, byCategory, savingsIds)
+      : !!row.accountId && savingsIds.has(row.accountId));
   const accountCurrencies = new Map(accounts.map((account) => [account.id, account.currency]));
   const currencyOf = (row: Staged) =>
     (row.accountId && accountCurrencies.get(row.accountId)) || getCachedCurrency();
@@ -40,15 +53,16 @@ export function StagedList({
   return (
     <Animated.View style={[styles.staged, fadeStyle]}>
       <View style={styles.stagedHeadRow}>
-        <Text style={styles.stagedHead}>{rows.length} staged</Text>
+        <Text style={styles.stagedHead}>{rows.length} ready to save</Text>
         <View style={{ alignItems: 'flex-end', gap: 2 }}>
           {Array.from(groups, ([currency, group]) => {
             const { income, expense } = stagedTotals(group);
             const netMinor = income - expense;
+            const privateTotal = group.some(masked);
             return (
               <Text key={currency} style={styles.stagedHeadTotal}>
-                {netMinor >= 0 ? '+' : '−'}
-                {formatMoney(Math.abs(netMinor), currency)}
+                {!privateTotal && (netMinor >= 0 ? '+' : '−')}
+                {formatMaskableMoney(Math.abs(netMinor), { currency, masked: privateTotal })}
               </Text>
             );
           })}
@@ -80,7 +94,7 @@ export function StagedList({
             </View>
             <Text style={[styles.stagedValue, incomeLike && styles.income, expenseLike && styles.expense]}>
               {incomeLike ? '+' : expenseLike ? '−' : ''}
-              {formatMoney(r.amountMinor, currencyOf(r))}
+              {formatMaskableMoney(r.amountMinor, { currency: currencyOf(r), masked: masked(r) })}
             </Text>
             <Pressable
               onPress={() => onRemove(r.id)}

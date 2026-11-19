@@ -1,12 +1,13 @@
 import { View, Pressable, StyleSheet } from 'react-native';
 import ReanimatedAnimated from 'react-native-reanimated';
 import Feather from '@expo/vector-icons/Feather';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Text } from '@/components/Text';
 import { CountUpAmount } from '@/components/CountUpAmount';
 import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
 import { withPressed } from '@/lib/pressed';
-import { screenStyles } from '@/components/screenStyles';
+import { softTint } from '@/components/softTint';
 import { useStacked } from '@/lib/useStacked';
 import type { SpendBar } from './spendChart';
 import { usePeriodSlide } from './usePeriodSlide';
@@ -57,7 +58,7 @@ export function ActivitySummaryStrip({
   const counted = bars.filter((bar) => !bar.state);
   const peak = Math.max(1, ...counted.map((bar) => bar.totalMinor));
   const kicker = narrowedTo
-    ? `Spent on ${narrowedTo}${current ? ` this ${viewScope}` : ''}`
+    ? `${narrowedTo === 'matching entries' ? 'Spent in' : 'Spent on'} ${narrowedTo}${current ? ` this ${viewScope}` : ''}`
     : current
       ? `Spent this ${viewScope}`
       : 'Spent';
@@ -70,10 +71,17 @@ export function ActivitySummaryStrip({
   return (
     <Pressable
       onPress={onPress}
-      style={withPressed([screenStyles.card, styles.strip])}
+      style={withPressed(styles.strip)}
       accessibilityRole="button"
       accessibilityLabel={`${kicker}, ${formatMoney(spentMinor)}${changeWords ? `, ${changeWords}` : ''}. Open insights`}
     >
+      <LinearGradient
+        pointerEvents="none"
+        style={StyleSheet.absoluteFill}
+        colors={[softTint(theme.colors.primary, 0.19), softTint(theme.colors.primary, 0)]}
+        start={{ x: 1, y: 0 }}
+        end={{ x: 0.25, y: 1 }}
+      />
       <ReanimatedAnimated.View style={[styles.glide, slideStyle]}>
         <View style={styles.lead}>
           <Text style={styles.kicker}>{kicker}</Text>
@@ -81,8 +89,9 @@ export function ActivitySummaryStrip({
             key={`${periodKey}:${narrowedTo ?? ''}`}
             minor={spentMinor}
             style={styles.figure}
-            numberOfLines={1}
-            adjustsFontSizeToFit
+            numberOfLines={showPreview ? 1 : undefined}
+            adjustsFontSizeToFit={showPreview}
+            minimumFontScale={0.75}
           />
           {changeWords && change != null && (
             <View style={styles.changeRow}>
@@ -136,7 +145,7 @@ export function ActivitySummaryStrip({
           </View>
         )}
       </ReanimatedAnimated.View>
-      <Feather name="chevron-right" size={18} color={theme.colors.textMuted} />
+      <Feather name="chevron-right" size={18} color={theme.colors.link} />
     </Pressable>
   );
 }
@@ -161,15 +170,20 @@ function barHeight(bar: SpendBar, future: boolean, monthly: boolean, peak: numbe
 }
 
 function barColor(bar: SpendBar) {
-  if (bar.isCurrent) return theme.colors.ink;
-  return bar.state || bar.totalMinor === 0 ? theme.colors.trayTrack : theme.colors.slice.free;
+  if (bar.isCurrent) return theme.colors.link;
+  return bar.state || bar.totalMinor === 0 ? theme.colors.home.edge : theme.colors.primary;
 }
 
 const styles = themedStyles(() =>
   StyleSheet.create({
     strip: {
-      marginHorizontal: 0,
+      marginHorizontal: 16,
       marginTop: 8,
+      backgroundColor: theme.colors.home.surface,
+      borderColor: theme.colors.home.edge,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderRadius: theme.radius.xl2,
+      overflow: 'hidden',
       // The same side padding as Home's month card and as this card's loading placeholder.
       paddingHorizontal: 16,
       paddingVertical: 12,
@@ -180,12 +194,17 @@ const styles = themedStyles(() =>
     // The figure, its comparison and the bars glide together; the chevron stays put.
     glide: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 12 },
     lead: { flex: 1, minWidth: 0, gap: 2 },
-    kicker: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 16, color: theme.colors.textSecondary },
+    kicker: {
+      fontFamily: theme.font.bodyMedium,
+      fontSize: 13,
+      lineHeight: 18,
+      color: theme.colors.home.secondaryText,
+    },
     figure: {
       fontFamily: theme.font.bodyBold,
-      fontSize: 22,
-      lineHeight: 30,
-      letterSpacing: -0.3,
+      fontSize: 25,
+      lineHeight: 31,
+      letterSpacing: -0.45,
       fontVariant: ['tabular-nums'],
       color: theme.colors.textPrimary,
     },
@@ -233,7 +252,7 @@ const styles = themedStyles(() =>
       fontFamily: theme.font.bodyMedium,
       fontSize: 11,
       lineHeight: 14,
-      color: theme.colors.textMuted,
+      color: theme.colors.home.secondaryText,
     },
     labelNow: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
   })

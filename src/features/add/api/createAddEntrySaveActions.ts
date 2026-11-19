@@ -49,7 +49,7 @@ export function createAddEntrySaveActions(input: Input) {
   const { currency, effectiveAccountId, today } = input.derived;
   const { editingId } = input.environment;
   const { goBackAfterSave } = input.completion;
-  const { formToStaged, warnIfRepeat, rememberDefaults, clearForm } = input.staging;
+  const { formToStaged, warnIfRepeat, rememberDefaults } = input.staging;
 
   const onSaveSplit = async () => {
     if (!splitParts) return;
@@ -164,10 +164,12 @@ export function createAddEntrySaveActions(input: Input) {
         setSaving(false);
         return;
       }
-      if (saved > 0) emitTransactionsChanged();
-      // Keep only what didn't make it in, so a retry doesn't double up.
-      setRows(pending.slice(saved));
-      clearForm();
+      if (saved > 0) {
+        markJustAdded(savedIds);
+        emitTransactionsChanged();
+      }
+      // Only queued entries can have committed before a failed write. Keep the active fields editable.
+      setRows(rows.slice(saved));
       setSaving(false);
       showAlert(
         saved > 0 ? 'Only some entries saved' : 'No entries saved',

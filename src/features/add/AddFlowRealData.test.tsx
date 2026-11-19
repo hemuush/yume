@@ -631,9 +631,10 @@ describe('several entries at once', () => {
     const [title, body] = mockAlert.mock.calls.at(-1)!;
     expect(title).toBe('Only some entries saved');
     expect(body).toContain('1 of 3 saved');
-    // What is left is what did not save, and saving it now adds exactly that, once each.
+    // The active entry can still be edited, and the previously committed row is not posted again.
+    await typeAmount(tree, '0');
     await save(tree);
-    expect((await saved()).map((r) => r.amount_minor).sort()).toEqual([10_000, 25_000, 37_500]);
+    expect((await saved()).map((r) => r.amount_minor).sort()).toEqual([10_000, 25_000, 375_000]);
     act(() => tree.unmount());
   });
 });

@@ -86,10 +86,10 @@ describe('getStillToPayThisMonth', () => {
     expect(await getStillToPayThisMonth('2026-09-30')).toBe(90000);
   });
 
-  it('only looks at the month it is given, counting the runs that fall in it', async () => {
-    // October: EMI #3 (29 Oct), and the monthly ₹299 rule's run on 30 Oct (its 30 Sep run is past). The ₹111
+  it('reserves overdue EMIs and counts recurring runs only in the remaining month', async () => {
+    // October: unpaid EMI #2 from September, EMI #3 (29 Oct), and the monthly ₹299 rule's run on 30 Oct. The ₹111
     // rule's 1 Oct run is before today and its next is in November.
-    expect(await getStillToPayThisMonth('2026-10-05')).toBe(90000 + 29900);
+    expect(await getStillToPayThisMonth('2026-10-05')).toBe(2 * 90000 + 29900);
   });
 });
 

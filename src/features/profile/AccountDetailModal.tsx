@@ -291,6 +291,7 @@ export function AccountDetailModal({
   // Archive/delete is a quiet link at the end, not a second button beside Save.
   return (
     <ModalSheet
+      ledgerStyle
       dismissible={!saving && !busy}
       title="Edit account"
       visible
@@ -308,6 +309,7 @@ export function AccountDetailModal({
       }
     >
       <DraftCard
+        ledgerStyle
         hue={accountHue(type, accent)}
         icon={accountIcon(type, tracked)}
         title={name.trim() || account.name}

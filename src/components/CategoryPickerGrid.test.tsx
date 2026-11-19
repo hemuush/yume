@@ -75,8 +75,13 @@ describe('category grid', () => {
         />
       );
     });
+    const grid = tree.root.find((n) => n.type === View && typeof n.props.onLayout === 'function');
+    act(() => grid.props.onLayout({ nativeEvent: { layout: { width: 415, height: 0, x: 0, y: 0 } } }));
+    expect(flat(tileOf(tree, 'Food').props.style).width).toBe(103);
     act(() => tileOf(tree, 'Food').props.onPress());
-    expect(tree.root.findAllByType(Text).some((n) => n.props.children === 'Coffee')).toBe(true);
+    const names = tree.root.findAllByType(Text).map((n) => [n.props.children].flat().join(''));
+    expect(names.indexOf('Coffee')).toBeGreaterThan(names.indexOf('Shopping'));
+    expect(names.indexOf('Coffee')).toBeLessThan(names.indexOf('Health'));
     act(() => tree.root.findByType(TextInput).props.onChangeText('Coffee'));
     act(() => tileOf(tree, 'Coffee').props.onPress());
     expect(onSelect.mock.calls.map(([id]) => id)).toEqual(['c0', 'coffee']);
@@ -96,6 +101,17 @@ describe('category grid', () => {
     // 371 / 80 → 4 columns of 92 px.
     expect(flat(tileOf(r, 'Food').props.style).width).toBe(92);
     expect(flat(tileOf(r, 'Rent').props.style).width).toBe(92);
+  });
+
+  it('fits all columns within the measured width on fractional-density screens', () => {
+    const r = render();
+    const grid = r.root.find((n) => n.type === View && typeof n.props.onLayout === 'function');
+    const width = 404.8;
+    act(() => grid.props.onLayout({ nativeEvent: { layout: { width, height: 0, x: 0, y: 0 } } }));
+    const tileWidth = flat(tileOf(r, 'Food').props.style).width;
+    expect(tileWidth).toBe(80);
+    expect(tileWidth * 5).toBeLessThanOrEqual(width);
+    act(() => r.unmount());
   });
 
   it.each([

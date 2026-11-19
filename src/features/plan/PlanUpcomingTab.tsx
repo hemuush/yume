@@ -1,25 +1,30 @@
-import { memo, useCallback } from 'react';
+import { memo, useCallback, useMemo, type RefObject } from 'react';
 import { Section } from '@/components/Section';
+import RecurringWorkspace from '@/features/recurring/RecurringWorkspace';
 import { ComingUpSection } from './ComingUpSection';
 import type { PlanActions } from './planActions';
 import type { PlanData } from './planData';
 import { PLAN_DAYS } from './planOverview';
-import { UpcomingDates } from './UpcomingDates';
+import { UpcomingDates, type UpcomingSelection } from './UpcomingDates';
 
-/**
- * Plan's "Upcoming": the payments of the next 30 days by date, outgoing or incoming. It compares its props by identity,
- * so it is drawn again only when the schedule changes.
- */
+/** Shows dated cash movements and opens rule management within the same Plan tab. */
 export const PlanUpcomingTab = memo(function PlanUpcomingTab({
   data,
   actions,
+  reload,
+  recurringRefreshRef,
+  selection,
+  onSelectionChange,
 }: {
   data: PlanData;
   actions: PlanActions;
+  reload: () => Promise<void>;
+  recurringRefreshRef: RefObject<(() => Promise<void>) | null>;
+  selection: UpcomingSelection;
+  onSelectionChange: (selection: UpcomingSelection) => void;
 }) {
   const { open, openDetail, payEmi } = actions;
   const { schedule, today } = data;
-  const openRecurring = useCallback(() => open('/recurring'), [open]);
   const renderDays = useCallback<NonNullable<Parameters<typeof UpcomingDates>[0]['renderDays']>>(
     (days, mode) => (
       <ComingUpSection
@@ -42,17 +47,29 @@ export const PlanUpcomingTab = memo(function PlanUpcomingTab({
     ),
     [today, open, payEmi, openDetail]
   );
+  const scheduledRuleIds = useMemo(
+    () =>
+      new Set(
+        schedule.days.flatMap((day) => day.items.flatMap((item) => (item.ruleId ? [item.ruleId] : [])))
+      ),
+    [schedule.days]
+  );
   return (
-    <Section
-      compact
-      first
-      title="Upcoming payments"
-      // One short line: beside "Manage recurring" it has about 190 dp on a 360 dp phone, and the rows say what each is.
-      subtitle={`Next ${PLAN_DAYS} days`}
-      actionLabel="Manage recurring"
-      onSeeAll={openRecurring}
-    >
-      <UpcomingDates runway={schedule} today={today} renderDays={renderDays} />
-    </Section>
+    <>
+      <Section compact first title="Upcoming payments" subtitle={`Next ${PLAN_DAYS} days`}>
+        <UpcomingDates
+          runway={schedule}
+          today={today}
+          renderDays={renderDays}
+          selection={selection}
+          onSelectionChange={onSelectionChange}
+        />
+      </Section>
+      <RecurringWorkspace
+        scheduledRuleIds={scheduledRuleIds}
+        onChanged={reload}
+        refreshRef={recurringRefreshRef}
+      />
+    </>
   );
 });

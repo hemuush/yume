@@ -37,13 +37,21 @@ Notifications.setNotificationHandler({
 
 export async function ensureAndroidChannel(): Promise<void> {
   if (Platform.OS !== 'android') return;
-  await Notifications.setNotificationChannelAsync(NOTIFICATION_CHANNEL_ID, {
-    name: 'Yume reminders',
-    importance: Notifications.AndroidImportance.DEFAULT,
-    lightColor: theme.colors.primary,
-    // Amounts and names stay off the phone's lock screen until it's unlocked.
-    lockscreenVisibility: Notifications.AndroidNotificationVisibility.PRIVATE,
-  });
+  try {
+    await Notifications.setNotificationChannelAsync(NOTIFICATION_CHANNEL_ID, {
+      name: 'Yume reminders',
+      importance: Notifications.AndroidImportance.DEFAULT,
+      lightColor: theme.colors.primary,
+      // Amounts and names stay off the phone's lock screen until it's unlocked.
+      lockscreenVisibility: Notifications.AndroidNotificationVisibility.PRIVATE,
+    });
+  } catch (err: any) {
+    const msg = String(err?.message ?? err ?? '');
+    if (msg.includes('NullPointerException') || msg.includes('ExpoNotificationChannelManager')) {
+      return;
+    }
+    throw err;
+  }
 }
 
 let permissionRequest: Promise<boolean> | null = null;
@@ -104,7 +112,7 @@ export async function getNotificationDeliveryStatus(): Promise<NotificationDeliv
     Notifications.getPermissionsAsync(),
     Notifications.getAllScheduledNotificationsAsync(),
     Platform.OS === 'android'
-      ? Notifications.getNotificationChannelAsync(NOTIFICATION_CHANNEL_ID)
+      ? Notifications.getNotificationChannelAsync(NOTIFICATION_CHANNEL_ID).catch(() => null)
       : Promise.resolve(null),
   ]);
   return {
@@ -236,8 +244,14 @@ async function doRebuild(): Promise<boolean> {
       permitted = !!permission?.granted;
       if (permitted) await ensureAndroidChannel();
       if (permitted && Platform.OS === 'android') {
-        const channel = await Notifications.getNotificationChannelAsync(NOTIFICATION_CHANNEL_ID);
-        permitted = channel?.importance !== Notifications.AndroidImportance.NONE;
+        try {
+          const channel = await Notifications.getNotificationChannelAsync(NOTIFICATION_CHANNEL_ID);
+          if (channel) {
+            permitted = channel.importance !== Notifications.AndroidImportance.NONE;
+          }
+        } catch {
+          // Expo Go or unsupported Android environments: safely continue without throwing.
+        }
       }
     }
     let allScheduled = permitted;

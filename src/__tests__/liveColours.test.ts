@@ -11,8 +11,30 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as ts from 'typescript';
+import { contrastRatio } from '@/lib/color';
+import { PALETTES } from '@/theme/palette';
 
 const ROOT = path.resolve(__dirname, '../..');
+
+it.each(['light', 'dark'] as const)('keeps Home text legible on the %s surfaces and controls', (scheme) => {
+  const { home, textPrimary, textMuted, link, incomeText } = PALETTES[scheme];
+  for (const surface of [home.background, home.surface, home.control, home.selected, home.pressed]) {
+    expect(contrastRatio(textPrimary, surface)).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(home.secondaryText, surface)).toBeGreaterThanOrEqual(4.5);
+  }
+  expect(contrastRatio(textMuted, home.surface)).toBeGreaterThanOrEqual(4.5);
+  expect(contrastRatio(link, home.surface)).toBeGreaterThanOrEqual(4.5);
+  expect(contrastRatio(link, home.pressed)).toBeGreaterThanOrEqual(3);
+  expect(contrastRatio(incomeText, home.pressed)).toBeGreaterThanOrEqual(3);
+});
+
+it.each(['light', 'dark'] as const)('keeps Add Transaction readable in %s mode', (scheme) => {
+  const { entry, textPrimary } = PALETTES[scheme];
+  for (const surface of [entry.background, entry.surface, entry.control, entry.selected, entry.keySurface]) {
+    expect(contrastRatio(textPrimary, surface)).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(entry.secondaryText, surface)).toBeGreaterThanOrEqual(4.5);
+  }
+});
 
 function sourceFiles(dir: string, out: string[] = []): string[] {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {

@@ -11,17 +11,20 @@ export const LoansSheets = memo(function LoansSheets({
   sheets,
   hues,
   reload,
+  ledgerStyle,
 }: {
   sheets: LoansSheetsStore;
   /** Each loan's identity colour. */
   hues: Record<string, string>;
   /** Reloads the page in place after something was saved. */
   reload: () => Promise<void>;
+  ledgerStyle?: boolean;
 }) {
   const { adding, loan, payOnOpen } = useLoansSheets(sheets);
   return (
     <>
       <AddLoanModal
+        ledgerStyle={ledgerStyle}
         visible={adding}
         onClose={sheets.closeAdd}
         onCreated={async () => {
@@ -31,6 +34,7 @@ export const LoansSheets = memo(function LoansSheets({
       />
       {loan && (
         <LoanDetailModal
+          ledgerStyle={ledgerStyle}
           loan={loan}
           hue={hues[loan.id]}
           startWithPay={payOnOpen}

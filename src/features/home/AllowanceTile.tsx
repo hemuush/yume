@@ -2,20 +2,17 @@ import { View, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
-import { shade } from '@/lib/color';
-import { useAccent } from '@/theme/AccentContext';
 import { themedStyles } from '@/theme/themedStyles';
 
 /**
- * What can be spent a day from here on, as a soft theme-tinted pill under the main figure. It is an estimate,
+ * What can be spent a day from here on, under the main figure. It is an estimate,
  * separate from the user's daily spending goal. Current month only.
  */
 export function AllowanceTile({ perDayMinor, daysLeft }: { perDayMinor: number; daysLeft: number }) {
-  const { accent } = useAccent();
   const days = `${daysLeft} ${daysLeft === 1 ? 'day' : 'days'}`;
   return (
     <View
-      style={[styles.tile, { backgroundColor: shade(accent, 93) }]}
+      style={styles.tile}
       accessible
       accessibilityLabel={`${days} left, about ${formatMoney(perDayMinor)} a day`}
     >
@@ -29,20 +26,19 @@ export function AllowanceTile({ perDayMinor, daysLeft }: { perDayMinor: number; 
 const styles = themedStyles(() =>
   StyleSheet.create({
     tile: {
-      alignSelf: 'center',
+      alignSelf: 'flex-start',
       flexShrink: 1,
-      minHeight: 26,
-      justifyContent: 'center',
-      paddingHorizontal: 10,
-      paddingVertical: 3,
-      marginTop: 6,
-      marginBottom: 2,
-      borderRadius: theme.radius.pill,
+      paddingBottom: 2,
     },
-    text: { flexShrink: 1, fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textSecondary },
+    text: {
+      flexShrink: 1,
+      fontFamily: theme.font.body,
+      fontSize: 12,
+      color: theme.colors.home.secondaryText,
+    },
     amount: {
       fontFamily: theme.font.bodyBold,
-      fontSize: 11,
+      fontSize: 12,
       color: theme.colors.textPrimary,
       fontVariant: ['tabular-nums'],
     },

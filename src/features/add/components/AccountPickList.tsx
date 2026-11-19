@@ -1,4 +1,3 @@
-import { selectedFill } from '@/theme/interactionColors';
 import { Pressable, View } from 'react-native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import type { McIconName } from '@/components/iconName';
@@ -35,10 +34,7 @@ export function AccountPickList({
               haptics.tap();
               onPick(a.id);
             }}
-            style={withPressedTint(accent, [
-              styles.pickRow,
-              on && { backgroundColor: selectedFill(accent), borderColor: selectedFill(accent) },
-            ])}
+            style={withPressedTint(accent, [styles.pickRow, on && styles.selectedControl])}
             accessibilityRole="button"
             accessibilityState={{ selected: on }}
             accessibilityLabel={a.name}

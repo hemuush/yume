@@ -50,6 +50,7 @@ const PAYOFF_LINE_HEIGHT = 40;
 type LoanDetailProps = {
   loan: Loan;
   onClose: () => void;
+  ledgerStyle?: boolean;
   /** May be async: the sheet waits for it before it finishes. */
   onChanged: () => void | Promise<void>;
   startWithPay?: boolean;
@@ -65,7 +66,14 @@ export function LoanDetailModal(props: LoanDetailProps) {
   );
 }
 
-function LoanDetailContent({ loan, onClose, onChanged, startWithPay = false, hue }: LoanDetailProps) {
+function LoanDetailContent({
+  loan,
+  onClose,
+  onChanged,
+  startWithPay = false,
+  hue,
+  ledgerStyle,
+}: LoanDetailProps) {
   const { show: showUndo } = useUndoToast();
   const runAction = useSaveOnce(async (action: () => Promise<void>) => {
     await action();
@@ -266,6 +274,7 @@ function LoanDetailContent({ loan, onClose, onChanged, startWithPay = false, hue
   return (
     <>
       <ModalSheet
+        ledgerStyle={ledgerStyle}
         flowPage
         // The schedule is a long list and the action list a short one: neither should set the height that the
         // pay, prepay and edit pages open at (they would open mostly empty).

@@ -41,11 +41,13 @@ import { useStacked } from '@/lib/useStacked';
 export function PersonDetailModal({
   person,
   onClose,
+  ledgerStyle,
   onChanged,
   initialTab = 'settle',
 }: {
   person: PersonWithBalance;
   onClose: () => void;
+  ledgerStyle?: boolean;
   /** May be async: the sheet waits for it before it finishes. */
   onChanged: () => void | Promise<void>;
   initialTab?: 'settle' | 'history';
@@ -255,6 +257,7 @@ export function PersonDetailModal({
 
   return (
     <ModalSheet
+      ledgerStyle={ledgerStyle}
       dismissible={!saving}
       visible
       title="Friends & family"

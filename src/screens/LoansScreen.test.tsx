@@ -85,7 +85,7 @@ import { clearReadCache } from '@/db/readCache';
 import { resetSettingsCache, setDefaultCurrency, setHasOnboarded, setUserName } from '@/db/settings';
 import { toLocalIsoDate } from '@/lib/date';
 import { LoanCard } from '@/features/loans/LoanCard';
-import LoansScreen from '../../app/loans';
+import LoansScreen from '@/features/loans/LoansWorkspace';
 
 const today = toLocalIsoDate(new Date());
 let mounted: ReactTestRenderer | null = null;

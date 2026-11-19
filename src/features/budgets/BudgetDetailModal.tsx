@@ -30,6 +30,7 @@ export function BudgetDetailModal({
   accounts,
   currency,
   onClose,
+  ledgerStyle,
   onChanged,
 }: {
   progress: BudgetProgress;
@@ -37,6 +38,7 @@ export function BudgetDetailModal({
   accounts: Account[];
   currency: string;
   onClose: () => void;
+  ledgerStyle?: boolean;
   onChanged: () => void | Promise<void>;
 }) {
   const { hideAmounts } = usePrivacy();
@@ -102,6 +104,7 @@ export function BudgetDetailModal({
   return (
     <SheetFlow>
       <ModalSheet
+        ledgerStyle={ledgerStyle}
         flowPage
         visible={!editing}
         title="Budget overview"
@@ -167,6 +170,7 @@ export function BudgetDetailModal({
       </ModalSheet>
       {editing && (
         <AddBudgetModal
+          ledgerStyle={ledgerStyle}
           visible
           editing={progress}
           categories={categories}

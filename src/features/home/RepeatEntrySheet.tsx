@@ -114,6 +114,7 @@ export function RepeatEntrySheet({
 
   return (
     <ActionSheet
+      ledgerStyle
       visible={visible}
       onClose={onClose}
       title="Log again"

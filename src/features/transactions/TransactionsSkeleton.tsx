@@ -2,6 +2,8 @@ import { View, StyleSheet } from 'react-native';
 import { Skeleton } from '@/components/Skeleton';
 import { screenStyles, SCREEN } from '@/components/screenStyles';
 import { themedStyles } from '@/theme/themedStyles';
+import { theme } from '@/constants/theme';
+import { styles as timeline } from './TimelineDay.styles';
 
 const BAR_HEIGHTS = [12, 22, 8, 40, 16, 26, 14];
 /** How many entries each placeholder day holds. */
@@ -15,10 +17,10 @@ const DAYS = [3, 2];
 export function TransactionsSkeleton() {
   return (
     <View>
-      <View style={[screenStyles.card, styles.strip]}>
+      <View style={styles.strip}>
         <View style={styles.lead}>
           <Skeleton width={96} height={11} radius={4} />
-          <Skeleton width={120} height={24} radius={6} style={{ marginTop: 5 }} />
+          <Skeleton width={104} height={25} radius={6} style={{ marginTop: 5 }} />
           <Skeleton width={132} height={22} radius={11} style={{ marginTop: 7 }} />
         </View>
         <View style={styles.preview}>
@@ -40,7 +42,7 @@ export function TransactionsSkeleton() {
 
       {DAYS.map((rows, d) => (
         <View key={d} style={[styles.day, d === 0 && styles.firstDay]}>
-          <View style={styles.lane}>
+          <View style={timeline.lane}>
             <View style={styles.head}>
               <Skeleton width={56} height={11} radius={4} />
               <Skeleton width={52} height={11} radius={4} />
@@ -71,8 +73,12 @@ const styles = themedStyles(() =>
     // The real card: 16 dp of side padding and 12 above and below, the figure and its chip on the left and the lettered
     // bars on the right.
     strip: {
-      marginHorizontal: 0,
+      marginHorizontal: 16,
       marginTop: 8,
+      borderRadius: theme.radius.xl2,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.home.edge,
+      backgroundColor: theme.colors.home.surface,
       minHeight: 98,
       paddingHorizontal: 16,
       paddingVertical: 12,
@@ -96,7 +102,6 @@ const styles = themedStyles(() =>
     day: { marginTop: 12 },
     // The filter row's own 10 dp gap sits above the first day.
     firstDay: { marginTop: 22 },
-    lane: { ...screenStyles.card },
     // Home's day heading: 12 dp above and 2 below a line of small capitals.
     head: {
       flexDirection: 'row',

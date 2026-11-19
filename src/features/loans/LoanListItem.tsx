@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { Fragment, memo } from 'react';
 import { MovingRow } from '@/components/MovingRow';
 import type { LoanProgress } from '@/db/loans';
 import type { Loan } from '@/types';
@@ -11,22 +11,32 @@ export const LoanListItem = memo(function LoanListItem({
   progress,
   onOpen,
   onPay,
+  compact,
+  divider,
+  nextPayment,
 }: {
   loan: Loan;
   hue: string;
   progress: LoanProgress | undefined;
   onOpen: (loan: Loan) => void;
   onPay: (loan: Loan) => void;
+  compact?: boolean;
+  divider?: boolean;
+  nextPayment?: boolean;
 }) {
+  const RowContainer = compact ? Fragment : MovingRow;
   return (
-    <MovingRow>
+    <RowContainer>
       <LoanCard
+        compact={compact}
+        divider={divider}
+        nextPayment={nextPayment}
         loan={loan}
         hue={hue}
         progress={progress}
         onPress={() => onOpen(loan)}
         onPay={() => onPay(loan)}
       />
-    </MovingRow>
+    </RowContainer>
   );
 });

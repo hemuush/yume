@@ -1,16 +1,14 @@
 import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
 import { EYEBROW } from '@/constants/textStyles';
-import { GLASS } from '@/components/Glass';
 import { themedStyles } from '@/theme/themedStyles';
-import { flatSection } from '@/components/screenStyles';
 
 // Shared by the Transactions screen and its modals/rows (FilterModal, TransactionRow,
 // TransactionDetailModal).
 /** A 44dp target, 2dp padding per side and the control's border. */
 export const styles = themedStyles(() =>
   StyleSheet.create({
-    container: { flex: 1, backgroundColor: theme.colors.background },
+    container: { flex: 1, backgroundColor: theme.colors.home.background },
     errorBanner: {
       marginHorizontal: 16,
       marginBottom: 12,
@@ -136,8 +134,8 @@ export const styles = themedStyles(() =>
     sumKicker: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
     headlineAmt: {
       fontFamily: theme.font.bodyMedium,
-      fontSize: 22,
-      lineHeight: 26,
+      fontSize: 20,
+      lineHeight: 24,
       letterSpacing: -0.2,
       fontVariant: ['tabular-nums'],
       color: theme.colors.textPrimary,
@@ -170,9 +168,9 @@ export const styles = themedStyles(() =>
       alignItems: 'center',
       padding: 3,
       borderRadius: theme.radius.pill,
-      backgroundColor: GLASS.fill,
+      backgroundColor: theme.colors.home.control,
       borderWidth: 1,
-      borderColor: GLASS.edge,
+      borderColor: theme.colors.home.edge,
     },
     scopeSwitchStacked: { alignSelf: 'stretch' },
     scopeBtn: {
@@ -185,8 +183,8 @@ export const styles = themedStyles(() =>
     scopeBtnStacked: { flex: 1 },
     // One weight picked or not: the fill and the light text show the pick, so switching never changes the width of
     // either word.
-    scopeText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
-    scopeTextOn: { color: theme.colors.onInk },
+    scopeText: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textPrimary },
+    scopeTextOn: { color: theme.colors.textPrimary },
 
     // ‹ This week 9–15 Nov ▾ › in one pill, Week | Month at its right end.
     periodBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
@@ -197,9 +195,9 @@ export const styles = themedStyles(() =>
       justifyContent: 'center',
       overflow: 'hidden',
       borderRadius: theme.radius.pill,
-      backgroundColor: GLASS.fillStrong,
+      backgroundColor: theme.colors.home.surface,
       borderWidth: 1,
-      borderColor: GLASS.edge,
+      borderColor: theme.colors.home.edge,
     },
     periodPillStacked: { alignSelf: 'stretch' },
     periodInner: { flexShrink: 1, flexDirection: 'row', alignItems: 'center' },
@@ -220,7 +218,7 @@ export const styles = themedStyles(() =>
     periodTitleCol: { flexShrink: 1, minWidth: 0 },
     periodTitle: {
       fontFamily: theme.font.bodyBold,
-      fontSize: 15,
+      fontSize: 13,
       lineHeight: 18,
       color: theme.colors.textPrimary,
     },
@@ -253,39 +251,42 @@ export const styles = themedStyles(() =>
       paddingHorizontal: 12,
       borderRadius: theme.radius.pill,
       justifyContent: 'center',
-      backgroundColor: GLASS.fillStrong,
+      backgroundColor: theme.colors.home.control,
       borderWidth: 1,
-      borderColor: GLASS.edge,
+      borderColor: theme.colors.home.edge,
     },
     periodChipText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textPrimary },
 
     // The one row of filters: it scrolls sideways, or wraps at large text.
-    typeFilterRow: { marginTop: 8, paddingLeft: 16, paddingRight: 16, gap: 6 },
+    typeFilterRow: { flexDirection: 'row', alignItems: 'center', marginTop: 8, marginHorizontal: 16, gap: 6 },
     pillGroup: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-    typeFilterRowWrap: { marginTop: 8, marginHorizontal: 16, flexWrap: 'wrap', paddingRight: 0 },
+    typeScrollContent: { minHeight: 44, alignItems: 'center' },
+    pillWrap: { flex: 1, flexWrap: 'wrap' },
     // 44 tall whatever it holds: the 40 dp pills and chips are drawn inside it with a touch area that reaches the edges, and
     // a row that grew when a chip arrived moved the pills and the whole list under them.
-    typeBar: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingRight: 8, minHeight: 44 },
+    appliedFilters: { marginTop: 6, marginHorizontal: 16, flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
     typeBtn: {
       alignItems: 'center',
       justifyContent: 'center',
-      minHeight: 40,
-      paddingHorizontal: 14,
+      minHeight: 36,
+      paddingHorizontal: 10,
       // A pill, like the Week | Month switch above and the picked-filter chips beside it.
       borderRadius: theme.radius.pill,
-      backgroundColor: theme.colors.surface,
+      backgroundColor: theme.colors.home.control,
       borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.colors.borderSoft,
+      borderColor: theme.colors.home.edge,
     },
     // The same weight picked or not, so picking a type never changes the width of the pills beside it.
     typeText: {
       textAlign: 'center',
       fontFamily: theme.font.bodyMedium,
-      fontSize: 13,
+      fontSize: 12,
       color: theme.colors.textSecondary,
     },
-    typeTextOn: { color: theme.colors.onInk },
-    filterGap: { height: 10 },
+    typeTextOn: { color: theme.colors.textPrimary },
+    filterSelected: { backgroundColor: theme.colors.home.selected, borderColor: theme.colors.home.selected },
+    filterPressed: { backgroundColor: theme.colors.home.pressed },
+    filterGap: { height: 4 },
     chip: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -314,10 +315,10 @@ export const styles = themedStyles(() =>
       justifyContent: 'center',
       gap: 8,
       paddingHorizontal: 10,
-      borderRadius: 22,
-      backgroundColor: theme.colors.surface,
+      borderRadius: theme.radius.lg,
+      backgroundColor: theme.colors.home.surface,
       borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.colors.borderSoft,
+      borderColor: theme.colors.home.edge,
     },
     quickBtnWide: { flexBasis: '100%' },
     quickIcon: {
@@ -326,7 +327,7 @@ export const styles = themedStyles(() =>
       borderRadius: 14,
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: theme.colors.primaryTint,
+      backgroundColor: theme.colors.home.control,
     },
     quickText: {
       flexShrink: 1,
@@ -355,7 +356,16 @@ export const styles = themedStyles(() =>
     deleteBtnAsk: { backgroundColor: theme.colors.expenseText, borderColor: theme.colors.expenseText },
     deleteAskText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.onInk },
     // A split part's detail: the whole payment, this part in bold.
-    splitCard: { ...flatSection(), marginBottom: 10, paddingHorizontal: 14, paddingVertical: 12, gap: 8 },
+    splitCard: {
+      marginBottom: 10,
+      paddingHorizontal: 14,
+      paddingVertical: 10,
+      gap: 8,
+      backgroundColor: theme.colors.home.surface,
+      borderColor: theme.colors.home.edge,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderRadius: theme.radius.lg,
+    },
     splitCardTitle: { ...EYEBROW },
     splitPart: {
       flexDirection: 'row',
@@ -387,12 +397,12 @@ export const styles = themedStyles(() =>
     },
     fieldLabel: {
       fontSize: 12,
-      fontFamily: theme.font.roundedMedium,
-      color: theme.colors.textMuted,
-      marginBottom: 8,
-      marginTop: 12,
+      fontFamily: theme.font.bodyMedium,
+      color: theme.colors.home.secondaryText,
+      marginBottom: 6,
+      marginTop: 10,
     },
-    chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 14 },
+    chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 10 },
     // The filter sheet's Clear sits small beside its wide Show button.
     filterClear: { flexGrow: 1, flexBasis: 140, paddingHorizontal: 18 },
     filterFoot: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },

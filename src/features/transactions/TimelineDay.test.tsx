@@ -538,25 +538,25 @@ describe('days as a heading above a card', () => {
       act(() => tree.unmount());
     }));
 
-  it('draws the day as Home’s list section, with the day’s heading inside it', () =>
+  it('draws the date and its entries in one card that leaves room for a lifted row', () =>
     withWidth(() => {
       const tree = day();
       const lane = tree.root.find(
         (n) =>
           typeof n.type === 'string' &&
-          StyleSheet.flatten(n.props.style)?.borderTopWidth === StyleSheet.hairlineWidth &&
-          StyleSheet.flatten(n.props.style)?.borderBottomWidth === StyleSheet.hairlineWidth
+          StyleSheet.flatten(n.props.style)?.marginHorizontal === 16 &&
+          StyleSheet.flatten(n.props.style)?.borderWidth === StyleSheet.hairlineWidth
       );
       // The same section and the same 2 dp margin as Home's Recent activity (the rows keep their own 14 dp inset, so
       // their content sits on the 16 dp gutter): the paper itself between two hairlines, no fill and no rounded box.
       // It does not clip, so a lifted line's shadow is not cut off.
       expect(StyleSheet.flatten(lane.props.style)).toMatchObject({
-        marginHorizontal: 2,
-        backgroundColor: 'transparent',
-        borderColor: theme.colors.borderSoft,
+        marginHorizontal: 16,
+        backgroundColor: theme.colors.home.surface,
+        borderColor: theme.colors.home.edge,
         overflow: 'visible',
       });
-      expect(StyleSheet.flatten(lane.props.style).borderRadius).toBeUndefined();
+      expect(StyleSheet.flatten(lane.props.style).borderRadius).toBe(theme.radius.lg);
       expect(lane.findAll((n) => n.props.accessibilityRole === 'header').length).toBeGreaterThan(0);
       act(() => tree.unmount());
     }));
@@ -691,7 +691,7 @@ describe('days as a heading above a card', () => {
       act(() => tree.unmount());
     }));
 
-  it('separates rows with Home’s hairline, across the whole row', () =>
+  it('insets a hairline to the text column between entries', () =>
     withWidth(() => {
       const tree = day();
       const separators = tree.root.findAll((n) => {
@@ -699,8 +699,8 @@ describe('days as a heading above a card', () => {
         return (
           !!flat &&
           flat.height === StyleSheet.hairlineWidth &&
-          flat.backgroundColor === theme.colors.borderSoft &&
-          flat.marginLeft === undefined
+          flat.backgroundColor === theme.colors.home.edge &&
+          flat.marginLeft > 44
         );
       });
       expect(separators.length).toBeGreaterThan(0);

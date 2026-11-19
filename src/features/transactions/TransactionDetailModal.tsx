@@ -27,7 +27,6 @@ import { theme } from '@/constants/theme';
 import { screenStyles as h } from '@/components/screenStyles';
 import { savingsAccountIdsOf } from '@/lib/account';
 import { isSavingsEntry } from '@/lib/privateSummary';
-import { shade } from '@/lib/color';
 import { categorySentence, parentNameOf } from '@/lib/categoryLabel';
 import { entryDateLabel } from './transactions.helpers';
 import { useUndoToast } from '@/components/UndoToast';
@@ -65,7 +64,7 @@ export function TransactionDetailModal({
   const returnOrPush = useReturnOrPush();
   const { hideAmounts } = usePrivacy();
   const { show: showUndo } = useUndoToast();
-  const { accent, secondary } = useAccent();
+  const { secondary } = useAccent();
   const runAction = useSaveOnce(async (action: () => Promise<void>) => {
     await action();
   });
@@ -363,6 +362,7 @@ export function TransactionDetailModal({
   return (
     <SheetFlow key={tx.id}>
       <ModalSheet
+        ledgerStyle
         flowPage
         visible={!ruleOpen}
         title="Entry details"
@@ -518,7 +518,7 @@ export function TransactionDetailModal({
                 accessibilityLabel={a.label}
                 accessibilityHint={a.sub}
               >
-                <View style={[styles.quickIcon, { backgroundColor: shade(accent, 93) }]}>
+                <View style={styles.quickIcon}>
                   <Feather name={a.icon} size={15} color={theme.colors.ink} />
                 </View>
                 <Text style={styles.quickText}>{a.short}</Text>
@@ -607,6 +607,7 @@ export function TransactionDetailModal({
         </>
       </ModalSheet>
       <RuleModal
+        ledgerStyle
         backLabel="Back to entry"
         visible={ruleOpen}
         editing={null}

@@ -29,6 +29,7 @@ export function BudgetJars({
   compact = false,
   showAdd = false,
   hideAdd = false,
+  showProgress = true,
 }: {
   summary: BudgetsSummary;
   onOpen: () => void;
@@ -40,6 +41,7 @@ export function BudgetJars({
   compact?: boolean;
   showAdd?: boolean;
   hideAdd?: boolean;
+  showProgress?: boolean;
 }) {
   if (summary.rows.length === 0) {
     return (
@@ -62,7 +64,7 @@ export function BudgetJars({
     );
     return (
       <View style={summaryListStyle}>
-        {sorted.slice(0, limit ?? sorted.length).map((b) => {
+        {sorted.slice(0, limit ?? sorted.length).map((b, index) => {
           const amount = b.overBudget
             ? `${formatMoney(Math.max(0, -b.remainingMinor))} over`
             : `${formatMoney(b.remainingMinor)} left`;
@@ -74,9 +76,17 @@ export function BudgetJars({
               subtitle={`${Math.round(b.percentUsed)}% used`}
               amount={amount}
               icon={b.categoryIcon ?? 'tag'}
-              progress={b.percentUsed}
+              progress={showProgress ? b.percentUsed : undefined}
+              divider={index > 0}
               animKey={`plan:budget-row:${b.id}`}
               color={color}
+              progressColor={
+                b.overBudget
+                  ? theme.colors.expense
+                  : b.percentUsed >= NEAR
+                    ? theme.colors.warnInk
+                    : theme.colors.link
+              }
               accessibilityLabel={`${b.categoryName}, ${Math.round(b.percentUsed)}% used, ${amount}. Open budgets`}
               onPress={() => (onBudget ? onBudget(b.id) : onOpen())}
             />

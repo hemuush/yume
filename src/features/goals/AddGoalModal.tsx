@@ -28,10 +28,11 @@ interface AddGoalProps {
   visible: boolean;
   accounts: Account[];
   onClose: () => void;
+  ledgerStyle?: boolean;
   onCreated: () => void | Promise<void>;
 }
 
-function AddGoalForm({ visible, accounts, onClose, onCreated }: AddGoalProps) {
+function AddGoalForm({ visible, accounts, onClose, onCreated, ledgerStyle }: AddGoalProps) {
   const today = toLocalIsoDate(new Date());
   const [name, setName] = useState('');
   const [target, setTarget] = useState('');
@@ -99,6 +100,7 @@ function AddGoalForm({ visible, accounts, onClose, onCreated }: AddGoalProps) {
 
   return (
     <ModalSheet
+      ledgerStyle={ledgerStyle}
       dismissible={!saving}
       title="Savings goal"
       visible={visible}

@@ -6,6 +6,7 @@ import { getRecentSearches, setRecentSearches, RECENT_SEARCHES_KEPT } from '@/db
 import type { Transaction } from '@/types';
 import { SEARCH_MIN_CHARS, SEARCH_RESULT_LIMIT } from './searchLimits';
 
+const NO_RESULTS: Transaction[] = [];
 // Fires the actual DB query this long after the last keystroke — typing
 // "zomato" shouldn't run five separate queries for "z", "zo", "zom" ...
 const SEARCH_DEBOUNCE_MS = 300;
@@ -14,44 +15,52 @@ const SEARCH_DEBOUNCE_MS = 300;
  * Filter (which only apply to the loaded range) step aside while it is active. The query runs a moment after the last
  * keystroke; only the newest query may write results, so one still in flight can never land under newer text.
  */
-export function useActivitySearch() {
+export function useActivitySearch(hideAmounts = false) {
   const [active, setActive] = useState(false);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [resultScope, setResultScope] = useState<{ query: string; hideAmounts: boolean } | null>(null);
   // More matched than the list shows (it holds the newest SEARCH_RESULT_LIMIT), so the list says so.
   const [capped, setCapped] = useState(false);
   // Shared by the typing effect and edits/deletes made from a search result, so the list never shows a
   // stale or deleted row. Closing/clearing the box bumps it too.
   const seq = useRef(0);
-  const run = useCallback(async (trimmed: string) => {
-    const mine = ++seq.current;
-    setFailed(false);
-    if (trimmed.length < SEARCH_MIN_CHARS) {
-      setResults([]);
-      setCapped(false);
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
-    try {
-      // One more than the list holds: getting it back is how we know the list is not everything.
-      const found = await searchTransactions(trimmed, SEARCH_RESULT_LIMIT + 1);
-      if (mine === seq.current) {
-        setResults(found.slice(0, SEARCH_RESULT_LIMIT));
-        setCapped(found.length > SEARCH_RESULT_LIMIT);
-      }
-    } catch {
-      if (mine === seq.current) {
+  const run = useCallback(
+    async (trimmed: string) => {
+      const mine = ++seq.current;
+      setFailed(false);
+      if (trimmed.length < SEARCH_MIN_CHARS) {
         setResults([]);
         setCapped(false);
-        setFailed(true);
+        setLoading(false);
+        return;
       }
-    } finally {
-      if (mine === seq.current) setLoading(false);
-    }
-  }, []);
+      setLoading(true);
+      try {
+        // One more than the list holds: getting it back is how we know the list is not everything.
+        const found = hideAmounts
+          ? await searchTransactions(trimmed, SEARCH_RESULT_LIMIT + 1, undefined, true)
+          : await searchTransactions(trimmed, SEARCH_RESULT_LIMIT + 1);
+        if (mine === seq.current) {
+          setResults(found.slice(0, SEARCH_RESULT_LIMIT));
+          setCapped(found.length > SEARCH_RESULT_LIMIT);
+          setResultScope({ query: trimmed, hideAmounts });
+        }
+      } catch {
+        if (mine === seq.current) {
+          setResults([]);
+          setCapped(false);
+          setFailed(true);
+          setResultScope({ query: trimmed, hideAmounts });
+        }
+      } finally {
+        if (mine === seq.current) setLoading(false);
+      }
+    },
+    [hideAmounts]
+  );
 
   // Read through a ref by `refresh`: returning from the full add-transaction screen, or a save that doesn't leave
   // Activity, re-runs the query without re-running on every keystroke (that is the debounced effect below).
@@ -120,6 +129,7 @@ export function useActivitySearch() {
     setResults([]);
     setCapped(false);
     setLoading(false);
+    setResultScope(null);
   }, []);
   // The phone's back button (or gesture) leaves search, as Cancel does, instead of leaving the tab with it open.
   useFocusEffect(
@@ -133,16 +143,18 @@ export function useActivitySearch() {
     }, [active, close])
   );
 
+  const trimmed = query.trim();
+  const matching = resultScope?.query === trimmed && resultScope.hideAmounts === hideAmounts;
   return {
     active,
     query,
     /** The text to search for, without the spaces around it. */
-    trimmed: query.trim(),
+    trimmed,
     setQuery,
-    results,
-    loading,
-    failed,
-    capped,
+    results: matching ? results : NO_RESULTS,
+    loading: loading || (active && trimmed.length >= SEARCH_MIN_CHARS && !matching),
+    failed: matching && failed,
+    capped: matching && capped,
     recent,
     open,
     close,

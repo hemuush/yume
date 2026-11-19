@@ -80,7 +80,7 @@ jest.mock('@/db/recurring', () => ({ listRecurringRules: () => mockRules() }));
 const mockHistory = jest.fn();
 jest.mock('@/db/investmentHistory', () => ({ listInvestmentHistory: () => mockHistory() }));
 
-import InvestmentsScreen from '../../../app/investments';
+import InvestmentsScreen from '@/features/investments/InvestmentsWorkspace';
 import type { Account, RecurringRule } from '@/types';
 import { formatMoney } from '@/lib/money';
 

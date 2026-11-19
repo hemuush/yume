@@ -1,13 +1,14 @@
 jest.mock('./ExpenseLabelSheet', () => ({ ExpenseLabelSheet: () => null }));
 /** The bar above Add's pad: which chips show for each entry type, what they say, and the note field. */
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
-import { Text, TextInput } from 'react-native';
+import { StyleSheet, Text, TextInput, View } from 'react-native';
 
 jest.setTimeout(120000);
 
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
 
 import { AddDetailRow } from './AddDetailRow';
+import { DetailBar } from './AddFields';
 import type { EntryType } from './addEntry';
 
 const mounted: ReactTestRenderer[] = [];
@@ -61,6 +62,34 @@ const texts = (t: ReactTestRenderer) =>
 afterEach(() => act(() => mounted.splice(0).forEach((t) => t.unmount())));
 
 describe('AddDetailRow', () => {
+  it.each([
+    [1, 1],
+    [1.5, 2],
+  ])('keeps the same footer row count with long values at font scale %s', (fontScale, rowCount) => {
+    const viewport = jest.spyOn(require('react-native'), 'useWindowDimensions').mockReturnValue({
+      width: 390,
+      height: 844,
+      scale: 2,
+      fontScale,
+    });
+    try {
+      for (const props of [
+        { accountName: 'SBI' },
+        { accountName: 'Google Play', note: 'An extended label' },
+      ]) {
+        const { tree } = render(props);
+        const rows = tree.root
+          .findByType(DetailBar)
+          .findAllByType(View)
+          .filter((node) => StyleSheet.flatten(node.props.style)?.flexDirection === 'row');
+        expect(rows).toHaveLength(rowCount);
+        expect(chip(tree, 'Split this payment')).toBeDefined();
+      }
+    } finally {
+      viewport.mockRestore();
+    }
+  });
+
   it('offers account, date, note, Money back and Split for a purchase', () => {
     const { tree } = render();
     expect(labels(tree)).toEqual([

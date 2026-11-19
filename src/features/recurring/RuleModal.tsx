@@ -77,6 +77,7 @@ export function RuleModal({
   onDeleted,
   prefill,
   backLabel,
+  ledgerStyle,
 }: {
   visible: boolean;
   editing: RecurringRule | null;
@@ -86,6 +87,7 @@ export function RuleModal({
   onSaved: () => void;
   onDeleted: () => void;
   backLabel?: string;
+  ledgerStyle?: boolean;
   /** A new rule's starting values — "Make it recurring" on an entry fills the form from it. */
   prefill?: {
     type: TransactionType;
@@ -357,6 +359,7 @@ export function RuleModal({
   return (
     <SheetFlow visible={visible}>
       <ModalSheet
+        ledgerStyle={ledgerStyle}
         flowPage
         backLabel={backLabel}
         dismissible={!saving}

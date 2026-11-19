@@ -202,6 +202,7 @@ export function AddAccountModal({
   // by the type you pick, with its opening balance.
   return (
     <ModalSheet
+      ledgerStyle
       dismissible={!saving}
       title="Account setup"
       visible={visible}
@@ -219,6 +220,7 @@ export function AddAccountModal({
       }
     >
       <DraftCard
+        ledgerStyle
         hue={accountHue(type, accent)}
         icon={accountIcon(type, tracked)}
         title={name.trim() || 'New account'}

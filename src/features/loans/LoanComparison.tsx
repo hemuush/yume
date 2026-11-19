@@ -31,6 +31,7 @@ export function LoanComparison({
   currency,
   hidden,
   onClose,
+  ledgerStyle,
   onOpenLoan,
   refreshToken,
 }: {
@@ -39,6 +40,7 @@ export function LoanComparison({
   currency: string;
   hidden: boolean;
   onClose: () => void;
+  ledgerStyle?: boolean;
   onOpenLoan: (id: string) => void;
   refreshToken?: object;
 }) {
@@ -93,6 +95,7 @@ export function LoanComparison({
   const max = Math.max(1, ...(rows ?? []).map((row) => row.summary?.interestSavedMinor ?? 0));
   return (
     <ModalSheet
+      ledgerStyle={ledgerStyle}
       visible={visible}
       onClose={onClose}
       title="Compare an extra payment"
