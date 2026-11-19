@@ -13,6 +13,7 @@ import { hasLoggedOn, listLoansDue, listReminderAttention } from '@/db/notificat
 import { resolveQueuedSpendAlerts } from '@/db/queuedSpendAlerts';
 import { theme } from '@/constants/theme';
 import { toLocalIsoDate } from './date';
+import { errorMessage } from './errorMessage';
 import { NOTIFICATION_ROUTES, NotificationRoute, planNotifications } from './notificationPlan';
 
 export { NOTIFICATION_ROUTES };
@@ -45,8 +46,8 @@ export async function ensureAndroidChannel(): Promise<void> {
       // Amounts and names stay off the phone's lock screen until it's unlocked.
       lockscreenVisibility: Notifications.AndroidNotificationVisibility.PRIVATE,
     });
-  } catch (err: any) {
-    const msg = String(err?.message ?? err ?? '');
+  } catch (err) {
+    const msg = errorMessage(err ?? '');
     if (msg.includes('NullPointerException') || msg.includes('ExpoNotificationChannelManager')) {
       return;
     }
