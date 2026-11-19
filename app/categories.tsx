@@ -138,6 +138,7 @@ export default function CategoriesScreen() {
                 value={query}
                 onChangeText={setQuery}
                 returnKeyType="search"
+                autoCapitalize="none"
                 autoCorrect={false}
                 style={styles.categorySearchInput}
               />
