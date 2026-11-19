@@ -563,6 +563,7 @@ Restore anyway? Your current data would be replaced with no way back.`,
 
         <View style={[h.card, cardSurface.neutral, styles.fileActions]}>
           <SettingsRow
+            compact
             icon="download-outline"
             iconBg={theme.colors.secondaryTint}
             label="Save backup file"
@@ -572,6 +573,7 @@ Restore anyway? Your current data would be replaced with no way back.`,
             dimmed={!!busy && busy !== 'export-json'}
           />
           <SettingsRow
+            compact
             icon="file-restore-outline"
             iconBg={theme.colors.goldTint}
             label="Restore from file"

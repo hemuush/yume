@@ -1,3 +1,4 @@
+import { useTabScrollPad } from '@/lib/uiScale';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { AccessibilityInfo, Animated, Pressable, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/Text';
@@ -120,6 +121,7 @@ function ToastView({
 }) {
   useSchemeVersion();
   const insets = useSafeAreaInsets();
+  const tabScrollPad = useTabScrollPad();
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.94);
   const { accent } = useAccent();
   const ink = themeInk(accent);
@@ -138,7 +140,7 @@ function ToastView({
         .reduceMotion(ReduceMotion.System)}
       exiting={FadeOutDown.duration(DURATIONS.rowExit).easing(MOTION.exit).reduceMotion(ReduceMotion.System)}
       // Always clear of the tab bar, which most deletes happen above.
-      style={[styles.wrap, { bottom: insets.bottom + theme.layout.tabBar.height + 12 }]}
+      style={[styles.wrap, { bottom: insets.bottom + tabScrollPad - 12 }]}
       pointerEvents="box-none"
     >
       <View style={[styles.pill, { backgroundColor: ink }]}>

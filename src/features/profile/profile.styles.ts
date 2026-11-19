@@ -86,8 +86,8 @@ export const styles = themedStyles(() =>
 
     // ---- Settings: rows ----
     settingsCard: { overflow: 'hidden' },
-    modeRow: { paddingHorizontal: 14, paddingTop: 12, paddingBottom: 6, gap: 8 },
-    appearanceTitle: { fontFamily: theme.font.bodyMedium, fontSize: 15, color: theme.colors.textPrimary },
+    modeRow: { paddingHorizontal: 14, paddingVertical: 10, gap: 6 },
+    appearanceTitle: { fontFamily: theme.font.bodyMedium, fontSize: 14, color: theme.colors.textPrimary },
     // Opens in place under the row that opened it, inside the same card.
     accordionBody: {
       paddingHorizontal: 14,
@@ -147,7 +147,7 @@ export const styles = themedStyles(() =>
     // ---- account modals ----
     fieldLabel: {
       fontSize: 12,
-      fontFamily: theme.font.roundedMedium,
+      fontFamily: theme.font.bodyMedium,
       color: theme.colors.textMuted,
       marginBottom: 6,
     },
@@ -164,7 +164,7 @@ export const styles = themedStyles(() =>
       fontFamily: theme.font.body,
       fontSize: 12,
       color: theme.colors.textMuted,
-      marginBottom: 14,
+      marginBottom: 10,
       lineHeight: 17,
     },
     errorText: {

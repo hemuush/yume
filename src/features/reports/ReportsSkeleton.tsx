@@ -4,7 +4,7 @@ import { useContentWidth } from '@/components/ColumnFrame';
 import { themedStyles } from '@/theme/themedStyles';
 
 const SUMMARY_H = 124;
-const CALENDAR_H = 440;
+const CATEGORIES_H = 186;
 
 /** A few chart-sized placeholders avoid an animation per calendar cell. */
 export function ReportsSkeleton() {
@@ -12,10 +12,9 @@ export function ReportsSkeleton() {
   const width = Math.max(0, useContentWidth() - 32);
   return (
     <View style={styles.wrap} accessibilityLabel="Loading report">
-      {/* Two cards at about the heights of the loaded Overview: the summary (three figures and a budget line), then
-          the calendar with its legend and the day under it. A few chart-sized blocks, not a placeholder per cell. */}
+      {/* Match the summary and category preview on the loaded Overview. */}
       <Skeleton width={width} height={SUMMARY_H} radius={20} />
-      <Skeleton width={width} height={CALENDAR_H} radius={20} />
+      <Skeleton width={width} height={CATEGORIES_H} radius={20} />
     </View>
   );
 }

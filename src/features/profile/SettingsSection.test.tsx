@@ -129,46 +129,39 @@ describe('Profile · Settings section', () => {
     expect(shown).toContain('Last backup yesterday');
   });
 
-  it('says so in the safety check when the last backup failed, and opens Backup from it', async () => {
+  it('shows a failed backup on the Backup & restore row', async () => {
     mockBackupResult.mockResolvedValue({ at: daysAgo(0), ok: false, error: 'folder gone' });
     const tree = await render();
-    expect(texts(tree)).toEqual(
-      expect.arrayContaining([
-        'Your last backup didn’t finish',
-        'Failed · tap to check',
-        'Last backup failed — tap to check',
-      ])
-    );
-    await press(tree, 'Backup: Failed · tap to check. Open Backup & restore');
+    expect(texts(tree)).toContain('Last backup failed — tap to check');
+    await press(tree, 'Backup & restore');
     expect(router.push).toHaveBeenCalledWith('/backup');
   });
 
-  it('counts a missing backup as a thing to look at when there has never been one', async () => {
+  it('shows when there has never been a backup', async () => {
     mockBackupResult.mockResolvedValue(null);
     const tree = await render();
-    expect(texts(tree)).toEqual(expect.arrayContaining(['1 thing to look at', 'Never backed up']));
-    await press(tree, 'Backup: Never backed up. Open Backup & restore');
+    expect(texts(tree)).toContain('Never backed up');
+    await press(tree, 'Backup & restore');
     expect(router.push).toHaveBeenCalledWith('/backup');
   });
 
-  it('reads all clear when backed up with unlock on', async () => {
-    const shown = texts(await render());
-    expect(shown).toEqual(
-      expect.arrayContaining(['Your data is looked after', 'Yesterday', 'Needed to open'])
-    );
-  });
-
-  it('turns unlock on from the safety check, through the same screen-lock check as its row', async () => {
+  it('turns unlock on from its row when the device is secured', async () => {
     mockLock.lockEnabled = false;
     mockDeviceSecured.mockResolvedValue(true);
     const tree = await render();
-    await press(tree, 'Require unlock, off. Tap to turn it on');
+    const { ToggleSwitch } = require('@/components/ToggleSwitch');
+    const toggle = tree.root
+      .findAllByType(ToggleSwitch)
+      .find((node) => node.props.accessibilityLabel === 'Require unlock')!;
+    await act(async () => {
+      await toggle.props.onChange(true);
+    });
     expect(mockLock.setLockEnabled).toHaveBeenCalledWith(true);
   });
 
   it('leads with appearance, then groups money, privacy and data', async () => {
     const shown = texts(await render());
-    const order = ['Appearance', 'Money', 'Privacy & alerts', 'Your data', 'Yume · v1.4.0'].map((g) =>
+    const order = ['Appearance', 'Money', 'Privacy & notifications', 'Your data', 'Yume · v1.4.0'].map((g) =>
       shown.indexOf(g)
     );
     expect(order.every((i) => i >= 0)).toBe(true);
@@ -239,13 +232,21 @@ describe('Profile · Settings section', () => {
     expect(mockSetPreference).toHaveBeenCalledWith('dark');
   });
 
-  it('opens Backup and Export from separate settings rows', async () => {
+  it('opens each linked tool from its own settings row', async () => {
     const tree = await render();
-    await press(tree, 'Backup & restore');
-    expect(router.push).toHaveBeenCalledWith('/backup');
-    await press(tree, 'Export');
-    expect(router.push).toHaveBeenCalledWith('/export');
-    expect(texts(tree)).toContain('PDF reports and Excel spreadsheets');
+    const links = [
+      ['Categories', '/categories'],
+      ['Notifications', '/notification-settings'],
+      ['Backup & restore', '/backup'],
+      ['Export', '/export'],
+      ['Recently deleted', '/recently-deleted'],
+      ['Tidy up', '/tidy-up'],
+    ];
+    for (const [label, route] of links) {
+      expect(texts(tree).filter((text) => text === label)).toHaveLength(1);
+      await press(tree, label);
+      expect(router.push).toHaveBeenLastCalledWith(route);
+    }
   });
 
   it('keeps setting values and descriptions readable in enlarged layouts', async () => {

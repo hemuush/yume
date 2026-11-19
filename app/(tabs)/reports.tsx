@@ -9,7 +9,6 @@ import { Text } from '@/components/Text';
 import { CONTENT_ENTER } from '@/lib/animation';
 import { isIsoDate, toLocalIsoDate } from '@/lib/date';
 import { CURRENT_PERIOD, isCustomWindow, windowRange, type ReportWindow } from '@/lib/period';
-import { useReduceMotion } from '@/lib/useReduceMotion';
 import { useTabScrollPad } from '@/lib/uiScale';
 import { useTabScrollToTop } from '@/lib/useTabScrollToTop';
 import { useAccent } from '@/theme/AccentContext';
@@ -34,7 +33,6 @@ const CATEGORIES_COLLAPSED = 5;
 const Header = memo(ReportsHeader);
 
 export default function ReportsScreen() {
-  const reduceMotion = useReduceMotion();
   const { accent, secondary } = useAccent();
   const insets = useSafeAreaInsets();
   const tabScrollPad = useTabScrollPad();
@@ -119,7 +117,7 @@ export default function ReportsScreen() {
     : `${cursor.granularity}:${cursor.offset}`;
   // The day under the heatmap's inspector: the one touched last, else today (or the period's last day).
   const inspectIso = selectedDay ?? (range.end < today ? range.end : today);
-  const dayEntries = useDayEntries({ iso: inspectIso, hideAmounts, catById, savingsIds });
+  const dayEntries = useDayEntries({ iso: inspectIso, hideAmounts, catById, savingsIds, version });
   const details = useReportDetails({
     cursor,
     cursorKey,
@@ -156,18 +154,10 @@ export default function ReportsScreen() {
   const inspectDay = useCallback((iso: string) => setSelectedDay(iso), []);
   const openSheet = useCallback(() => setSheetOpen(true), []);
   const closeDay = useCallback(() => setSheetOpen(false), []);
-  const scrollToTop = useCallback(
-    () => scrollRef.current?.scrollTo({ y: 0, animated: !reduceMotion }),
-    [reduceMotion]
-  );
-  const showBiggestDay = useCallback(
-    (iso: string) => {
-      setSelectedDay(iso);
-      setSheetOpen(true);
-      scrollToTop();
-    },
-    [scrollToTop]
-  );
+  const showBiggestDay = useCallback((iso: string) => {
+    setSelectedDay(iso);
+    setSheetOpen(true);
+  }, []);
   const pickCategory = useCallback((id: string) => {
     setSelectedCat(id);
     if ((breakdownRef.current ?? []).findIndex((c) => c.categoryId === id) >= CATEGORIES_COLLAPSED) {
@@ -180,7 +170,6 @@ export default function ReportsScreen() {
         setCatFilter(null);
         setSelectedDay(a.iso);
         setSheetOpen(true);
-        scrollToTop();
         return;
       }
       setTab('cats');
@@ -189,7 +178,7 @@ export default function ReportsScreen() {
       if (a.type === 'category') pickCategory(a.id);
       else setSelectedCat(null);
     },
-    [scrollToTop, pickCategory, setTab]
+    [pickCategory, setTab]
   );
   const onScope = useCallback(
     (id: string | null) => {
@@ -286,7 +275,7 @@ export default function ReportsScreen() {
   if (!ready || !comparison || !model) {
     return (
       <View style={styles.container}>
-        <HomeWallpaper accent={accent} secondary={secondary} />
+        <HomeWallpaper accent={accent} secondary={secondary} plain />
         {header}
         <ReportTabs value={tab} onChange={setTab} />
         {/* The loading header is in normal flow and already reserves its height. */}
@@ -299,7 +288,7 @@ export default function ReportsScreen() {
   const { current, previous } = comparison;
   return (
     <View style={styles.container}>
-      <HomeWallpaper accent={accent} secondary={secondary} />
+      <HomeWallpaper accent={accent} secondary={secondary} plain />
       {header}
       <ReportTabs value={tab} onChange={setTab} />
       <ScrollView

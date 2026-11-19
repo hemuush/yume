@@ -78,7 +78,11 @@ export function PrimaryButton({
   const unavailable = !!disabled || loading || !!done;
   const secondary = variant === 'secondary';
   const variantStyle = styles[variant];
-  const textStyle = secondary ? styles.textSecondary : styles.textPrimary;
+  const foreground = secondary
+    ? theme.colors.textPrimary
+    : variant === 'danger'
+      ? theme.colors.surface
+      : theme.colors.onInk;
   return (
     <AnimatedPressable
       disabled={unavailable}
@@ -116,21 +120,13 @@ export function PrimaryButton({
       {...rest}
     >
       {/* Only success feedback fades in. Ordinary labels and busy states stay static. */}
-      {loading && !done && (
-        <ActivityIndicator size="small" color={secondary ? theme.colors.textPrimary : theme.colors.surface} />
-      )}
-      {icon && !done && !loading && (
-        <Feather
-          name={icon}
-          size={compact ? 14 : 17}
-          color={secondary ? theme.colors.textPrimary : theme.colors.onInk}
-        />
-      )}
+      {loading && !done && <ActivityIndicator size="small" color={foreground} />}
+      {icon && !done && !loading && <Feather name={icon} size={compact ? 14 : 17} color={foreground} />}
       <ReanimatedAnimated.Text
         maxFontSizeMultiplier={MAX_FONT_SCALE}
         key={done ? 'done' : 'label'}
         entering={done && !reduceMotion ? FadeIn.duration(DURATIONS.quick).easing(MOTION.ease) : undefined}
-        style={[styles.text, compact && styles.textCompact, textStyle]}
+        style={[styles.text, compact && styles.textCompact, { color: foreground }]}
       >
         {done ? `✓ ${doneLabel}` : title}
       </ReanimatedAnimated.Text>
@@ -141,7 +137,7 @@ export function PrimaryButton({
 const styles = themedStyles(() =>
   StyleSheet.create({
     base: {
-      borderRadius: theme.radius.pill,
+      borderRadius: theme.radius.lg,
       paddingVertical: 12,
       paddingHorizontal: 18,
       alignItems: 'center',
@@ -158,9 +154,7 @@ const styles = themedStyles(() =>
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: theme.colors.borderSoft,
     },
-    text: { fontFamily: theme.font.bodyMedium, fontSize: 15, textAlign: 'center', flexShrink: 1 },
-    textPrimary: { color: theme.colors.surface },
-    textSecondary: { color: theme.colors.textPrimary },
+    text: { fontFamily: theme.font.bodyMedium, fontSize: 14, textAlign: 'center', flexShrink: 1 },
     disabled: { opacity: theme.opacity.disabled },
   })
 );

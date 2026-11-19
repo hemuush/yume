@@ -75,8 +75,9 @@ it('does not read the day again when the lists it filters by are rebuilt with th
 
 it('leaves savings and investments out while amounts are hidden', async () => {
   mockList.mockResolvedValue([tx('shop'), tx('shares', 'stocks')]);
-  hook.rerender(props({ hideAmounts: true }));
   await wait(200);
+  expect(hook.result.current.txs?.map((t) => t.id)).toEqual(['shop', 'shares']);
+  hook.rerender(props({ hideAmounts: true }));
   expect(hook.result.current.txs?.map((t) => t.id)).toEqual(['shop']);
 });
 
@@ -89,4 +90,14 @@ it('reports a failed read, and reads again on retry', async () => {
   await wait(200);
   expect(hook.result.current.error).toBeNull();
   expect(hook.result.current.txs?.map((t) => t.id)).toEqual(['a']);
+});
+
+it('refreshes the selected day with the report after a ledger edit', async () => {
+  await wait(200);
+  expect(hook.result.current.txs?.map((t) => t.id)).toEqual(['a']);
+  mockList.mockResolvedValue([tx('edited')]);
+  hook.rerender(props({ version: 1 }));
+  expect(hook.result.current.txs).toBeNull();
+  await wait(200);
+  expect(hook.result.current.txs?.map((t) => t.id)).toEqual(['edited']);
 });

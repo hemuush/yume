@@ -107,7 +107,7 @@ describe.each(['light', 'dark'] as const)('%s palette text contrast', (mode) => 
 
   it('reads the text on an ink fill (a picked chip) and on the coral Add button', () => {
     expect(contrast(p.onInk, p.ink)).toBeGreaterThanOrEqual(4.5);
-    expect(contrast(p.ink === '#16170F' ? p.ink : '#12130F', p.coral)).toBeGreaterThanOrEqual(4.5);
+    expect(contrast(p.onCoral, p.coral)).toBeGreaterThanOrEqual(4.5);
   });
 
   it('tells the lines apart from the page without being loud', () => {

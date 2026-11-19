@@ -1,19 +1,6 @@
 import { useEffect, useState } from 'react';
-import {
-  View,
-  Pressable,
-  StyleSheet,
-  Keyboard,
-  Animated as RNAnimated,
-  useWindowDimensions,
-} from 'react-native';
-import Animated, {
-  FadeIn,
-  LinearTransition,
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-} from 'react-native-reanimated';
+import { View, Pressable, StyleSheet, Keyboard, Animated as RNAnimated } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { MOTION, timing } from '@/lib/animation';
 import { LinearGradient } from 'expo-linear-gradient';
 import { hexToRgba } from '@/lib/color';
@@ -23,7 +10,7 @@ import { Text } from '@/components/Text';
 import { HomeIcon, ActivityIcon, PlanIcon, ReportsIcon } from '@/components/icons/TabIcons';
 import { theme } from '@/constants/theme';
 import { haptics } from '@/lib/haptics';
-import { useUiScale } from '@/lib/uiScale';
+import { useTabDockMetrics } from '@/lib/uiScale';
 import { usePressScale } from '@/lib/usePressScale';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 import { useAccent } from '@/theme/AccentContext';
@@ -39,9 +26,6 @@ const ICONS: Record<string, typeof HomeIcon> = {
   plan: PlanIcon,
   reports: ReportsIcon,
 };
-
-/** The pill's height at the default font size, and its gap above the phone's bottom edge. */
-const PILL_BAR = { height: 60, bottomGap: 10, maxInlineScale: 1.15, narrowWidth: 360 } as const;
 
 function Tab({
   label,
@@ -76,6 +60,7 @@ function Tab({
   const fillStyle = useAnimatedStyle(() => ({ opacity: chosen.get() }));
   return (
     <Pressable
+      style={styles.tabSlot}
       onPress={onPress}
       onLongPress={onLongPress}
       onPressIn={onPressIn}
@@ -85,30 +70,18 @@ function Tab({
       accessibilityLabel={label}
       accessibilityHint={logAgain && focused ? 'Long-press to log a recent entry again' : undefined}
     >
-      {/* The press is core Animated (usePressScale) on its own view; the resize is Reanimated on the one
-          inside. Never both on one view. */}
       <RNAnimated.View style={animatedStyle}>
-        <Animated.View
-          layout={reduce ? undefined : LinearTransition.duration(MOTION.standard).easing(MOTION.ease)}
-          style={[
-            styles.tab,
-            { height: size, minWidth: size, borderRadius: size / 2 },
-            focused && { paddingHorizontal: showLabel ? 12 : 0 },
-          ]}
-        >
+        <Animated.View style={[styles.tab, { height: size, borderRadius: size / 2 }]}>
           <Animated.View
             pointerEvents="none"
             testID={`tab-fill-${label}`}
             style={[StyleSheet.absoluteFill, { borderRadius: size / 2, backgroundColor: fill }, fillStyle]}
           />
           <Icon color={focused ? theme.colors.ink : theme.colors.inkSoft} size={20} />
-          {/* No exit animation on purpose: a label that lingers while another opens would widen the row. */}
-          {focused && showLabel && (
-            <Animated.View entering={reduce ? undefined : FadeIn.duration(MOTION.quick).easing(MOTION.ease)}>
-              <Text style={styles.label} numberOfLines={1}>
-                {label}
-              </Text>
-            </Animated.View>
+          {showLabel && (
+            <Text style={[styles.label, focused && styles.labelSelected]} numberOfLines={1}>
+              {label}
+            </Text>
           )}
         </Animated.View>
       </RNAnimated.View>
@@ -117,8 +90,7 @@ function Tab({
 }
 
 /**
- * The floating tab bar: a pill holding the four tabs (only the active one shows its name, on a deep
- * pill of the theme colour) and, beside it, the round coral Add button. Long-press Add for "Log again". It steps
+ * The floating tab bar: a pill holding the four tabs (with fixed positions and a tinted active state) and, beside it, the round coral Add button. Long-press Add for "Log again". It steps
  * aside while the keyboard is up.
  */
 export function PillTabBar({
@@ -132,11 +104,8 @@ export function PillTabBar({
 }: TabBarProps & { onAdd: () => void; onAddLongPress: () => void }) {
   useSchemeVersion();
   const { accent } = useAccent();
-  const scale = useUiScale();
-  const { width, fontScale } = useWindowDimensions();
-  const stackedLabel = fontScale > PILL_BAR.maxInlineScale || width < PILL_BAR.narrowWidth;
-  const height = Math.round(PILL_BAR.height * scale);
-  const inner = stackedLabel ? theme.accessibility.minTouchTarget : height - 12;
+  const { stacked: stackedLabel, height, bottomGap, side, clearance } = useTabDockMetrics();
+  const inner = stackedLabel ? theme.accessibility.minTouchTarget : Math.max(44, height - 12);
   const active = state.routes[state.index];
   const activeLabel = active ? (descriptors[active.key].options.title ?? active.name) : '';
   const isHome = state.routes[state.index]?.name === 'index';
@@ -153,14 +122,22 @@ export function PillTabBar({
   if (keyboard) return null;
 
   return (
-    <View pointerEvents="box-none" style={[styles.dock, { bottom: insets.bottom + PILL_BAR.bottomGap }]}>
+    <View
+      pointerEvents="box-none"
+      style={[styles.dock, { bottom: insets.bottom + bottomGap, left: side, right: side }]}
+    >
       <LinearGradient
         pointerEvents="none"
         colors={[hexToRgba(theme.colors.background, 0), hexToRgba(theme.colors.background, 0.94)]}
         locations={[0, 0.65]}
         style={[
           styles.fade,
-          { height: height + insets.bottom + 38, bottom: -insets.bottom - PILL_BAR.bottomGap },
+          {
+            height: clearance + insets.bottom + 28,
+            bottom: -insets.bottom - bottomGap,
+            left: -side,
+            right: -side,
+          },
         ]}
       />
       <View
@@ -230,7 +207,7 @@ export function PillTabBar({
             add.animatedStyle,
           ]}
         >
-          <Feather name="plus" size={24} color={theme.colors.ink} />
+          <Feather name="plus" size={24} color={theme.colors.onCoral} />
         </RNAnimated.View>
       </Pressable>
     </View>
@@ -239,8 +216,8 @@ export function PillTabBar({
 
 const styles = themedStyles(() =>
   StyleSheet.create({
-    dock: { position: 'absolute', left: 16, right: 16, flexDirection: 'row', alignItems: 'center', gap: 10 },
-    fade: { position: 'absolute', left: -16, right: -16 },
+    dock: { position: 'absolute', flexDirection: 'row', alignItems: 'center', gap: 10 },
+    fade: { position: 'absolute' },
     pill: {
       flex: 1,
       flexDirection: 'column',
@@ -257,11 +234,14 @@ const styles = themedStyles(() =>
     activeLabel: {
       fontFamily: theme.font.bodyBold,
       fontSize: 13,
+      lineHeight: 16,
       color: theme.colors.ink,
       textAlign: 'center',
     },
-    tab: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7 },
-    label: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.ink },
+    tabSlot: { flex: 1, minWidth: theme.accessibility.minTouchTarget },
+    tab: { alignItems: 'center', justifyContent: 'center', gap: 2 },
+    label: { fontFamily: theme.font.bodyMedium, fontSize: 11, color: theme.colors.inkSoft, lineHeight: 14 },
+    labelSelected: { color: theme.colors.ink },
     add: {
       alignItems: 'center',
       justifyContent: 'center',

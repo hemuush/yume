@@ -1,5 +1,5 @@
 import { memo, ReactNode, useState } from 'react';
-import { View, Pressable, Animated, useWindowDimensions } from 'react-native';
+import { View, Pressable, Animated } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { theme } from '@/constants/theme';
 import { withPressedTint } from '@/lib/pressed';
@@ -11,21 +11,20 @@ import { CategoryIcon } from '@/components/CategoryIcon';
 import { useAccent } from '@/theme/AccentContext';
 import { usePressScale } from '@/lib/usePressScale';
 import { useStableCallback } from '@/lib/useStableCallback';
-import { softTint } from '@/components/softTint';
-import { styles, TILE_COLUMNS, NARROW_TILES } from './categories.styles';
+import { styles } from './categories.styles';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export function CategoryTile({
   category,
-  isSubcategory,
+  context,
   count,
   selected,
   onPress,
   onLongPress,
 }: {
   category: Category;
-  isSubcategory?: boolean;
+  context?: string;
   /** A parent's subcategory count, shown below its name. */
   count?: number;
   /** The parent whose pills are open below. */
@@ -35,117 +34,91 @@ export function CategoryTile({
   onLongPress: (cat: Category) => void;
 }) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale();
+  const { accent } = useAccent();
   return (
-    <AnimatedPressable
-      style={[
-        styles.tile,
-        selected && [styles.tileSelected, { backgroundColor: softTint(category.color, 0.16) }],
-        animatedStyle,
-      ]}
-      onPressIn={onPressIn}
-      onPressOut={onPressOut}
-      onPress={() => onPress(category)}
-      onLongPress={() => onLongPress(category)}
-      accessibilityRole="button"
-      accessibilityLabel={
-        count ? `${category.name}, ${count} subcategor${count === 1 ? 'y' : 'ies'}` : category.name
-      }
-      accessibilityState={count ? { expanded: !!selected } : undefined}
-      accessibilityHint={
-        count
-          ? 'Show subcategories. Press and hold for more options.'
-          : 'Edit category. Press and hold for more options.'
-      }
-    >
-      <View style={styles.tileTop}>
-        <CategoryIcon
-          name={category.icon}
-          color={category.color}
-          square={isSubcategory ? 40 : 44}
-          size={isSubcategory ? 18 : 20}
+    <View style={[styles.categoryRowShell, selected && styles.tileSelected]}>
+      <AnimatedPressable
+        style={[styles.tile, animatedStyle]}
+        onPressIn={onPressIn}
+        onPressOut={onPressOut}
+        onPress={() => onPress(category)}
+        onLongPress={() => onLongPress(category)}
+        accessibilityRole="button"
+        accessibilityLabel={
+          count
+            ? `${category.name}, ${count} subcategor${count === 1 ? 'y' : 'ies'}`
+            : context
+              ? `${category.name}, in ${context}`
+              : category.name
+        }
+        accessibilityState={count ? { expanded: !!selected } : undefined}
+        accessibilityHint={
+          category.archived
+            ? 'Manage archived category.'
+            : count
+              ? selected
+                ? 'Hide subcategories.'
+                : 'Show subcategories.'
+              : 'Edit category.'
+        }
+      >
+        <CategoryIcon name={category.icon} color={category.color} square={34} size={16} />
+        <View style={styles.tileText}>
+          <Text style={styles.tileName}>{category.name}</Text>
+          {context && <Text style={styles.tileCount}>{context}</Text>}
+          {!!count && (
+            <Text style={styles.tileCount}>
+              {count} subcategor{count === 1 ? 'y' : 'ies'}
+            </Text>
+          )}
+        </View>
+        <Feather
+          name={
+            count
+              ? selected
+                ? 'chevron-up'
+                : 'chevron-down'
+              : category.archived
+                ? 'chevron-right'
+                : 'edit-2'
+          }
+          size={16}
+          color={theme.colors.textSecondary}
         />
-        {!!count && (
-          <Feather
-            name={selected ? 'chevron-up' : 'chevron-down'}
-            size={14}
-            color={theme.colors.textSecondary}
-          />
-        )}
-      </View>
-      <Text style={styles.tileName}>{isSubcategory ? `↳ ${category.name}` : category.name}</Text>
-      {!!count && (
-        <Text style={styles.tileCount}>
-          {count} subcategor{count === 1 ? 'y' : 'ies'}
-        </Text>
+      </AnimatedPressable>
+      {!category.archived && (
+        <Pressable
+          onPress={() => onLongPress(category)}
+          accessibilityRole="button"
+          accessibilityLabel={`More options for ${category.name}`}
+          style={withPressedTint(accent, styles.categoryMore)}
+        >
+          <Feather name="more-horizontal" size={18} color={theme.colors.textSecondary} />
+        </Pressable>
       )}
-    </AnimatedPressable>
+    </View>
   );
 }
 
 /** The tile that is drawn again only when what it shows changes. */
 export const MemoCategoryTile = memo(CategoryTile);
 
-function SubcategoryPill({
-  category,
-  onPress,
-  onLongPress,
-}: {
-  category: Category;
-  onPress: () => void;
-  onLongPress: () => void;
-}) {
-  const { animatedStyle, onPressIn, onPressOut } = usePressScale();
-  return (
-    <AnimatedPressable
-      style={[styles.pill, animatedStyle]}
-      onPressIn={onPressIn}
-      onPressOut={onPressOut}
-      onPress={onPress}
-      onLongPress={onLongPress}
-      accessibilityRole="button"
-      accessibilityLabel={`${category.name}, subcategory`}
-      accessibilityHint="Press and hold for more options"
-    >
-      <View style={[styles.pillDot, { backgroundColor: category.color }]} />
-      <Text style={styles.pillText}>{category.name}</Text>
-    </AnimatedPressable>
-  );
-}
-
-/**
- * Tiles in three columns, two on narrow screens, or one with enlarged text. `panelAfter` can return a panel to open under a row (given that row's items
- * and the column to point at), which is why the rows are built here rather than left to a wrapping flex.
- */
-export function TileRows<T extends { id: string }>({
+/** A single list keeps an expanded group attached to its own parent. */
+export function CategoryRows<T extends { id: string }>({
   items,
-  renderTile,
+  renderRow,
   panelAfter,
 }: {
   items: T[];
-  renderTile: (item: T) => ReactNode;
-  panelAfter?: (rowItems: T[], columns: number) => ReactNode;
+  renderRow: (item: T) => ReactNode;
+  panelAfter?: (item: T) => ReactNode;
 }) {
-  const { width, fontScale } = useWindowDimensions();
-  // Under 370 dp a third of the row is too narrow for "Entertainment" or "Subscriptions", which broke mid-word.
-  const columns = fontScale > 1.5 ? 1 : width < NARROW_TILES || fontScale > 1.2 ? 2 : TILE_COLUMNS;
-  const cellStyle = { width: `${100 / columns}%` as `${number}%` };
-  const rows: T[][] = [];
-  for (let i = 0; i < items.length; i += columns) rows.push(items.slice(i, i + columns));
   return (
-    <View style={styles.grid}>
-      {rows.map((row) => (
-        <MovingRow key={row[0].id}>
-          <View style={styles.gridRow}>
-            {row.map((item) => (
-              <View key={item.id} style={[styles.cell, cellStyle]}>
-                {renderTile(item)}
-              </View>
-            ))}
-            {Array.from({ length: columns - row.length }, (_, i) => (
-              <View key={`pad-${i}`} style={[styles.cell, cellStyle]} />
-            ))}
-          </View>
-          {panelAfter?.(row, columns)}
+    <View style={styles.categoryList}>
+      {items.map((item, index) => (
+        <MovingRow key={item.id} style={index > 0 ? styles.categoryDivider : undefined}>
+          {renderRow(item)}
+          {panelAfter?.(item)}
         </MovingRow>
       ))}
     </View>
@@ -153,8 +126,7 @@ export function TileRows<T extends { id: string }>({
 }
 
 /**
- * Every top-level category as a tile, A to Z, in adaptive rows. A parent shows its subcategory count; tapping it
- * opens its pills in a panel under that row (and the panel's header edits the parent), a childless one edits.
+ * Parent rows open their subcategories directly beneath them. A childless row opens its editor.
  */
 export function CategorySection({
   cats,
@@ -175,9 +147,9 @@ export function CategorySection({
   });
 
   return (
-    <TileRows
+    <CategoryRows
       items={topLevel}
-      renderTile={(cat) => {
+      renderRow={(cat) => {
         const kids = childrenOf(cats, cat.id);
         return (
           <MemoCategoryTile
@@ -189,30 +161,18 @@ export function CategorySection({
           />
         );
       }}
-      panelAfter={(row) => {
-        const index = row.findIndex((c) => c.id === openId);
-        if (index < 0) return null;
-        const parent = row[index];
+      panelAfter={(parent) => {
+        if (parent.id !== openId) return null;
         const kids = childrenOf(cats, parent.id);
         return (
           <View style={styles.panelWrap}>
-            <View style={[styles.panel, { borderColor: softTint(parent.color, 0.6) }]}>
-              <PanelHeader
-                parent={parent}
-                count={kids.length}
-                onPress={() => onEdit(parent)}
-                onLongPress={() => onManage(parent)}
-              />
-              <View style={styles.pillRow}>
-                {kids.map((child) => (
-                  <SubcategoryPill
-                    key={child.id}
-                    category={child}
-                    onPress={() => onEdit(child)}
-                    onLongPress={() => onManage(child)}
-                  />
-                ))}
-              </View>
+            <View style={styles.panel}>
+              <PanelHeader parent={parent} onPress={() => onEdit(parent)} />
+              {kids.map((child) => (
+                <View key={child.id} style={styles.categoryDivider}>
+                  <MemoCategoryTile category={child} onPress={onEdit} onLongPress={onManage} />
+                </View>
+              ))}
             </View>
           </View>
         );
@@ -221,25 +181,12 @@ export function CategorySection({
   );
 }
 
-function PanelHeader({
-  parent,
-  count,
-  onPress,
-  onLongPress,
-}: {
-  parent: Category;
-  count: number;
-  onPress: () => void;
-  onLongPress: () => void;
-}) {
+function PanelHeader({ parent, onPress }: { parent: Category; onPress: () => void }) {
   const { accent } = useAccent();
   return (
     <View style={styles.panelHeader}>
       <View style={styles.panelHeading}>
-        <Text style={styles.panelTitle}>{parent.name}</Text>
-        <Text style={styles.panelCount}>
-          {count} subcategor{count === 1 ? 'y' : 'ies'}
-        </Text>
+        <Text style={styles.panelTitle}>Subcategories</Text>
       </View>
       <Pressable
         onPress={onPress}
@@ -249,14 +196,6 @@ function PanelHeader({
       >
         <Feather name="edit-2" size={15} color={theme.colors.ink} />
         <Text style={styles.parentEditText}>Edit</Text>
-      </Pressable>
-      <Pressable
-        onPress={onLongPress}
-        style={withPressedTint(accent, styles.parentMore)}
-        accessibilityRole="button"
-        accessibilityLabel={`More options for ${parent.name}`}
-      >
-        <Feather name="more-horizontal" size={19} color={theme.colors.ink} />
       </Pressable>
     </View>
   );

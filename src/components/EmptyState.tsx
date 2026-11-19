@@ -15,7 +15,7 @@ interface Props {
 // Defaults to Suu (sleepy pose) rather than requiring every screen to pick
 // its own bespoke icon — one consistent mascot across every empty state.
 export function EmptyState({
-  illustration = <SuuIllustration pose="sleepy" />,
+  illustration = <SuuIllustration size={56} pose="sleepy" animate={false} />,
   title,
   subtitle,
   children,
@@ -34,12 +34,12 @@ export function EmptyState({
 
 const styles = themedStyles(() =>
   StyleSheet.create({
-    wrap: { alignItems: 'center', paddingVertical: 24, paddingHorizontal: 20 },
+    wrap: { alignItems: 'center', paddingVertical: 20, paddingHorizontal: 20 },
     title: {
-      fontFamily: theme.font.roundedMedium,
-      fontSize: theme.typeSize.title,
+      fontFamily: theme.font.bodyBold,
+      fontSize: 16,
       color: theme.colors.textPrimary,
-      marginTop: 14,
+      marginTop: 10,
       textAlign: 'center',
       maxWidth: 360,
       lineHeight: 24,
@@ -53,6 +53,6 @@ const styles = themedStyles(() =>
       lineHeight: 20,
       maxWidth: 360,
     },
-    action: { alignSelf: 'center', width: '100%', maxWidth: 360, marginTop: 20 },
+    action: { alignSelf: 'center', width: '100%', maxWidth: 320, marginTop: 14 },
   })
 );

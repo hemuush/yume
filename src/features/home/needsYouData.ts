@@ -30,7 +30,7 @@ const BACKUP_SNOOZE_DAYS = 30;
  */
 export async function loadNeedsYou(
   now: Date = new Date()
-): Promise<{ shown: NeedsYouItem[]; dismissed: NeedsYouItem[] }> {
+): Promise<{ shown: NeedsYouItem[]; dismissed: NeedsYouItem[]; incomplete: boolean }> {
   // Each source is read on its own: one that fails drops only its own entries from the list instead of
   // blanking Needs you, and (below) stops stale dismissals being pruned on an incomplete picture.
   let incomplete = false;
@@ -40,41 +40,39 @@ export async function loadNeedsYou(
       return fallback;
     });
   const hideSensitive = getCachedHideSensitiveAmounts();
-  const [
-    nextDue,
-    budgets,
-    folderUri,
-    lastResult,
-    snoozedUntil,
-    transactionCount,
-    comparison,
-    tidy,
-    dismissedKeys,
-    patterns,
-    hiddenSuggestions,
-    cardCycles,
-  ] = await Promise.all([
-    isolate(getNextDueInstallment(), null),
-    isolate(listBudgetsForMonth(periodMonthOf(now), hideSensitive), []),
-    isolate(getLocalBackupFolderUri(), null),
-    isolate(getLastLocalBackupResult(), null),
-    isolate(getBackupNudgeSnoozedUntil(), null),
-    isolate(countTransactions(), 0),
-    isolate(
-      getPeriodComparison('month', now).then((c) => privateComparison(c, hideSensitive)),
-      null
-    ),
-    isolate(getTidyUpReport(), null),
-    isolate(getNeedsYouDismissed(), [] as string[]),
-    isolate(findMonthlyPatterns(toLocalIsoDate(now)), []),
-    isolate(getHiddenSubscriptionSuggestions(), [] as string[]),
-    isolate(listCardCycles(toLocalIsoDate(now)), []),
-  ]);
+  const [nextDue, budgets, backup, comparison, tidy, dismissedKeys, patterns, hiddenSuggestions, cardCycles] =
+    await Promise.all([
+      isolate(getNextDueInstallment(), null),
+      isolate(listBudgetsForMonth(periodMonthOf(now), hideSensitive), []),
+      isolate(
+        Promise.all([
+          getLocalBackupFolderUri(),
+          getLastLocalBackupResult(),
+          getBackupNudgeSnoozedUntil(),
+          countTransactions(),
+        ]).then(([folderUri, lastResult, snoozedUntil, transactionCount]) => ({
+          folderUri,
+          lastResult,
+          snoozedUntil,
+          transactionCount,
+        })),
+        null
+      ),
+      isolate(
+        getPeriodComparison('month', now).then((c) => privateComparison(c, hideSensitive)),
+        null
+      ),
+      isolate(getTidyUpReport(), null),
+      isolate(getNeedsYouDismissed(), [] as string[]),
+      isolate(findMonthlyPatterns(toLocalIsoDate(now)), []),
+      isolate(getHiddenSubscriptionSuggestions(), [] as string[]),
+      isolate(listCardCycles(toLocalIsoDate(now)), []),
+    ]);
   const items = buildNeedsYouItems({
     nextDue,
     budgets,
-    backup: { folderUri, lastResult, snoozedUntil },
-    transactionCount,
+    backup: backup ?? { folderUri: null, lastResult: null, snoozedUntil: null },
+    transactionCount: backup?.transactionCount ?? 0,
     growing: comparison
       ? findTopGrowingCategory(comparison.current.categoryBreakdown, comparison.previous.categoryBreakdown)
       : null,
@@ -98,7 +96,7 @@ export async function loadNeedsYou(
   const hiddenPatternKeys = patterns
     .filter((p) => hiddenSuggestions.includes(p.key) || hiddenSuggestions.includes(`sub-${p.categoryId}`))
     .map((p) => lookMonthlyKey(p.key));
-  return splitDismissed(items, [...dismissedKeys, ...hiddenPatternKeys]);
+  return { ...splitDismissed(items, [...dismissedKeys, ...hiddenPatternKeys]), incomplete };
 }
 
 const LOOKS_MONTHLY = 'looks-monthly-';

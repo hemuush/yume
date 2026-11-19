@@ -14,6 +14,60 @@ const BLOCK_GAP = SCREEN.sectionGap;
 // Shared by the Reports screen and its pieces (PeriodRow, HeatmapCard, DayCard, ReportInsights, CategoryBar, CategoryList, TrendChart, DayTotal).
 export const styles = themedStyles(() =>
   StyleSheet.create({
+    overviewPanel: {
+      paddingHorizontal: 14,
+      paddingTop: 4,
+      marginBottom: 10,
+      borderRadius: theme.radius.xl,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.borderSoft,
+      backgroundColor: theme.colors.surface,
+    },
+    overviewHeading: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 8,
+    },
+    overviewAction: { minHeight: 44, alignItems: 'center', flexDirection: 'row', gap: 4 },
+    overviewLink: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.link },
+    overviewRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      flexWrap: 'wrap',
+      gap: 8,
+      minHeight: 44,
+      paddingVertical: 6,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: theme.colors.borderSoft,
+    },
+    overviewDot: { width: 8, height: 8, borderRadius: 4 },
+    overviewName: {
+      flex: 1,
+      minWidth: 60,
+      fontFamily: theme.font.bodyMedium,
+      fontSize: 14,
+      color: theme.colors.textPrimary,
+    },
+    overviewAmount: {
+      flexShrink: 1,
+      fontFamily: theme.font.bodyBold,
+      fontSize: 14,
+      fontVariant: ['tabular-nums'],
+      color: theme.colors.textPrimary,
+    },
+    overviewCalendar: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+      minHeight: 48,
+      paddingVertical: 8,
+      paddingHorizontal: 14,
+      marginBottom: 10,
+      borderRadius: theme.radius.md,
+      backgroundColor: theme.colors.home.control,
+    },
     container: { flex: 1, backgroundColor: theme.colors.background },
     dimmed: { opacity: theme.opacity.disabled },
     center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
@@ -156,7 +210,11 @@ export const styles = themedStyles(() =>
     // Trends: one line chart with a Spending / Net worth switch.
     trendCard: {
       ...CARD,
-      paddingVertical: 16,
+      backgroundColor: theme.colors.surface,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderRadius: theme.radius.xl,
+      paddingHorizontal: 12,
+      paddingVertical: 12,
       gap: 8,
     },
     trendHead: {
@@ -291,7 +349,15 @@ export const styles = themedStyles(() =>
       boxShadow: `inset 0px 0px 0px 1px ${theme.colors.inkHairline}`,
     },
     // The card over "Where it went": its title and group menu, the total and the split as one bar.
-    sumCard: { ...CARD, paddingHorizontal: 0, paddingTop: 10, paddingBottom: 4, marginBottom: 10 },
+    sumCard: {
+      ...CARD,
+      backgroundColor: theme.colors.surface,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderRadius: theme.radius.xl,
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      marginBottom: 10,
+    },
     sumKicker: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary, marginTop: 8 },
     sumHead: {
       flexDirection: 'row',

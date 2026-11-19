@@ -9,11 +9,6 @@ import { themedStyles } from '@/theme/themedStyles';
 export const GRID_COLUMNS = 6;
 export const GRID_GAP = 8;
 
-/** Tiles per row on the Categories grid (a cell is one column wide). */
-export const TILE_COLUMNS = 3;
-/** Below this width (dp) the tiles go two to a row: three would break the longer names mid-word. */
-export const NARROW_TILES = 370;
-
 // Shared by the Categories screen, its list section (CategorySection /
 // CategoryTile / SubcategoryPill) and AddCategoryModal.
 export const styles = themedStyles(() =>
@@ -25,31 +20,26 @@ export const styles = themedStyles(() =>
       marginTop: SECTION_GAP.top,
       marginBottom: SECTION_GAP.bottom,
     },
-    screenIntro: { marginHorizontal: SCREEN.gutter, marginTop: theme.layout.screenTopGap },
-    introText: {
+    screenIntro: { marginHorizontal: SCREEN.gutter, marginTop: theme.layout.screenTopGap, marginBottom: 10 },
+    archiveTitle: { ...SECTION_TITLE, marginBottom: 10 },
+    categorySearch: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      paddingHorizontal: 10,
+      borderRadius: theme.radius.md,
+      backgroundColor: theme.colors.home.control,
+    },
+    categorySearchInput: {
+      flex: 1,
+      minHeight: 44,
+      paddingVertical: 8,
       fontFamily: theme.font.body,
       fontSize: 13,
-      lineHeight: 19,
-      color: theme.colors.textSecondary,
-      marginBottom: 18,
+      color: theme.colors.textPrimary,
     },
-    sectionHeading: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      gap: 6,
-      marginTop: 6,
-      marginBottom: 12,
-    },
-    collectionTitle: { ...SECTION_TITLE, fontFamily: theme.font.roundedBold, fontSize: 17 },
-    collectionCount: {
-      flexShrink: 1,
-      fontFamily: theme.font.body,
-      fontSize: 11,
-      color: theme.colors.textMuted,
-    },
-    emptyCard: { ...flatSection(), marginHorizontal: -4, padding: 20, gap: 12 },
+    categorySearchClear: { width: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' },
+    emptyCard: { ...flatSection(), marginHorizontal: SCREEN.gutter, padding: 14, gap: 12 },
     emptyTitle: { fontFamily: theme.font.roundedBold, fontSize: 17, color: theme.colors.textPrimary },
     emptyText: {
       fontFamily: theme.font.body,
@@ -57,17 +47,23 @@ export const styles = themedStyles(() =>
       lineHeight: 19,
       color: theme.colors.textSecondary,
     },
-    grid: {
+    categoryList: {
       marginHorizontal: SCREEN.gutter,
-      gap: 10,
-      marginBottom: 4,
+      borderRadius: theme.radius.xl,
+      backgroundColor: theme.colors.surface,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.borderSoft,
+      overflow: 'hidden',
     },
-    gridRow: { flexDirection: 'row', marginHorizontal: -4 },
-    cell: { width: `${100 / TILE_COLUMNS}%`, paddingHorizontal: 4 },
-    panelWrap: { marginTop: 10 },
-    panel: { ...flatSection(), padding: 14 },
+    categoryDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.divider },
+    panelWrap: { paddingHorizontal: 10, paddingBottom: 10 },
+    panel: {
+      backgroundColor: theme.colors.home.control,
+      borderRadius: theme.radius.md,
+      paddingHorizontal: 6,
+    },
     panelHeader: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 10 },
-    panelHeading: { flexGrow: 1, flexBasis: 140, minWidth: 0, gap: 4 },
+    panelHeading: { flexGrow: 1, flexBasis: 130, minWidth: 0, paddingLeft: 12 },
     parentEdit: {
       minHeight: 44,
       paddingHorizontal: 12,
@@ -81,47 +77,7 @@ export const styles = themedStyles(() =>
       justifyContent: 'center',
     },
     parentEditText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.ink },
-    parentMore: {
-      width: 44,
-      height: 44,
-      borderRadius: 12,
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: theme.colors.surfaceAlt,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.colors.borderSoft,
-    },
     panelTitle: { ...SECTION_TITLE, fontFamily: theme.font.roundedBold, fontSize: 15 },
-    panelCount: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
-    pillRow: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      gap: 8,
-      marginTop: 14,
-      paddingTop: 14,
-      borderTopWidth: StyleSheet.hairlineWidth,
-      borderTopColor: theme.colors.borderSoft,
-    },
-    pill: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 6,
-      minHeight: 44,
-      maxWidth: '100%',
-      paddingHorizontal: 11,
-      paddingVertical: 7,
-      borderRadius: 12,
-      backgroundColor: theme.colors.tray,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.colors.borderSoft,
-    },
-    pillDot: { width: 8, height: 8, borderRadius: 4, boxShadow: `0 0 0 1px ${theme.colors.inkLine}` },
-    pillText: {
-      flexShrink: 1,
-      fontSize: 12,
-      fontFamily: theme.font.bodyMedium,
-      color: theme.colors.textPrimary,
-    },
     hintText: {
       fontFamily: theme.font.body,
       fontSize: 12,
@@ -130,9 +86,28 @@ export const styles = themedStyles(() =>
       marginTop: 14,
       lineHeight: 17,
     },
-    tile: { ...flatSection(), flex: 1, minHeight: 126, paddingHorizontal: 10, paddingVertical: 12 },
-    tileSelected: { borderWidth: 1, borderColor: theme.colors.textSecondary },
-    tileTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 4 },
+    categoryRowShell: { flexDirection: 'row', alignItems: 'center', paddingRight: 4 },
+    categoryMore: { width: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' },
+    collectionAction: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 7,
+      minHeight: 44,
+      alignSelf: 'flex-start',
+    },
+    collectionActionText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.link },
+    tile: {
+      flex: 1,
+      minWidth: 0,
+      flexDirection: 'row',
+      alignItems: 'center',
+      minHeight: 54,
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      gap: 10,
+    },
+    tileSelected: { backgroundColor: theme.colors.home.control },
+    tileText: { flex: 1, minWidth: 0 },
     tileCount: {
       fontFamily: theme.font.body,
       fontSize: 11,
@@ -145,7 +120,6 @@ export const styles = themedStyles(() =>
       lineHeight: 18,
       color: theme.colors.textPrimary,
       fontFamily: theme.font.bodyMedium,
-      marginTop: 10,
     },
     appearance: {
       padding: 12,

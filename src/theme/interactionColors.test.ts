@@ -1,4 +1,4 @@
-import { interactionColors, themeInk } from './interactionColors';
+import { interactionColors, selectedFill, themeInk } from './interactionColors';
 import { PALETTES } from './palette';
 import { applyScheme } from './scheme';
 import { theme } from '@/constants/theme';
@@ -20,6 +20,14 @@ function contrast(a: string, b: string) {
 }
 
 afterEach(() => applyScheme('light'));
+
+it('gives the dark selected fill a visible lift and readable label', () => {
+  applyScheme('dark');
+  const fill = selectedFill(theme.colors.primary);
+  expect(fill).toBe(theme.colors.home.selected);
+  expect(contrast(fill, theme.colors.surface)).toBeGreaterThanOrEqual(1.7);
+  expect(contrast(theme.colors.ink, fill)).toBeGreaterThanOrEqual(4.5);
+});
 
 describe.each(['light', 'dark'] as const)('in %s', (mode) => {
   beforeEach(() => applyScheme(mode));

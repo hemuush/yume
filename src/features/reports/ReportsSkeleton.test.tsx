@@ -8,7 +8,7 @@ jest.mock('expo-linear-gradient', () => ({ LinearGradient: () => null }));
 
 import { ReportsSkeleton } from './ReportsSkeleton';
 
-it('draws a short summary card then a tall calendar card, as wide as the loaded cards and below the same gap', () => {
+it('draws a short summary card then a category preview, as wide as the loaded cards and below the same gap', () => {
   const dimensions = jest
     .spyOn(require('react-native'), 'useWindowDimensions')
     .mockReturnValue({ width: 400, height: 800, fontScale: 1, scale: 1 });
@@ -23,7 +23,7 @@ it('draws a short summary card then a tall calendar card, as wide as the loaded 
   // 400 wide less a 16 dp gutter each side.
   expect(blocks.map((b) => [b.width, b.height])).toEqual([
     [368, 124],
-    [368, 440],
+    [368, 186],
   ]);
   const wrap = tree.root.findByProps({ accessibilityLabel: 'Loading report' });
   expect(StyleSheet.flatten(wrap.props.style)).toMatchObject({ paddingHorizontal: 16, paddingTop: 12 });

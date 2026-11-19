@@ -1,7 +1,5 @@
 import { useMemo } from 'react';
-import { CONTENT_ENTER } from '@/lib/animation';
 import { View, Pressable, StyleSheet } from 'react-native';
-import Animated from 'react-native-reanimated';
 import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
@@ -74,22 +72,24 @@ export function DayInspector({
   const ratio = usualMinor > 0 ? spentMinor / usualMinor : 0;
   const sub = future
     ? 'Hasn’t happened yet'
-    : spentMinor <= 0
-      ? 'A quiet day'
-      : usualMinor > 0
-        ? ratio < 0.05
-          ? `A light day against your usual ${scopeName ? `${scopeName.toLowerCase()} ` : ''}day`
-          : `${ratio.toFixed(1)}× your usual ${scopeName ? `${scopeName.toLowerCase()} ` : ''}day`
-        : '';
+    : spentMinor < 0
+      ? 'Net refunds'
+      : spentMinor === 0
+        ? 'A quiet day'
+        : usualMinor > 0
+          ? ratio < 0.05
+            ? `A light day against your usual ${scopeName ? `${scopeName.toLowerCase()} ` : ''}day`
+            : `${ratio.toFixed(1)}× your usual ${scopeName ? `${scopeName.toLowerCase()} ` : ''}day`
+          : '';
   const date = weekdayDayMonth(iso);
   return (
-    <Animated.View key={iso} entering={CONTENT_ENTER} style={styles.box}>
+    <View style={styles.box}>
       <View style={styles.top}>
         <View style={styles.main}>
           <Text style={styles.date}>{noBreak(date)}</Text>
           <View style={styles.figure}>
             <Text style={styles.amount}>
-              {future ? '—' : spentMinor > 0 ? formatMoney(roundedMinor(spentMinor)) : 'No spending'}
+              {future ? '—' : spentMinor !== 0 ? formatMoney(roundedMinor(spentMinor)) : 'No spending'}
             </Text>
             {!!sub && <Text style={styles.sub}>{sub}</Text>}
           </View>
@@ -130,7 +130,7 @@ export function DayInspector({
           </View>
         </>
       )}
-    </Animated.View>
+    </View>
   );
 }
 
@@ -141,10 +141,10 @@ const styles = themedStyles(() =>
       marginTop: 10,
       paddingHorizontal: 12,
       paddingVertical: 10,
-      borderTopWidth: StyleSheet.hairlineWidth,
-      borderTopColor: theme.colors.borderSoft,
+      backgroundColor: theme.colors.home.control,
+      borderRadius: theme.radius.md,
     },
-    top: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+    top: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 12 },
     main: { flex: 1, minWidth: 0 },
     date: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textSecondary },
     amount: {
@@ -157,7 +157,7 @@ const styles = themedStyles(() =>
     figure: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline', columnGap: 6 },
     sub: { flexShrink: 1, fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
     open: {
-      minHeight: 32,
+      minHeight: 44,
       paddingHorizontal: 12,
       borderRadius: theme.radius.pill,
       flexDirection: 'row',

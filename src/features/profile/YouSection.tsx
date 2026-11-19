@@ -29,8 +29,7 @@ const goLoans = () => router.push('/loans');
 const goFriends = () => router.push('/people');
 
 /**
- * "You": accounts first, tracked balance as one line opening to its sum, tiles for Entries, Loans and Friends,
- * accounts grouped by type. Budgets, goals, recurring, What-if and Garden live on Plan (one row points there).
+ * Account balances and management, followed by the tracked balance and shortcuts.
  */
 export function YouSection() {
   const { accent } = useAccent();
@@ -82,7 +81,7 @@ export function YouSection() {
   const showPeople = peopleCount > 0 || sum.peopleMinor !== 0;
 
   const showTracked = showLoans || showPeople;
-  const trackedCard = (embedded: boolean) => (
+  const trackedCard = (
     <TrackedCard
       totalMinor={sum.totalMinor}
       accountsMinor={sum.accountsMinor}
@@ -95,7 +94,6 @@ export function YouSection() {
       hasLoans={hasLoans}
       masked={masked}
       currency={defaultCurrency}
-      embedded={embedded}
     />
   );
 
@@ -122,51 +120,30 @@ export function YouSection() {
         </Appear>
       )}
 
-      {accounts.length > 0 ? (
+      {accounts.length > 0 && (
         <CashHero
           minor={sum.accountsMinor}
           label={hasOtherCurrency ? `In your accounts (${defaultCurrency} only)` : 'In your accounts'}
           sub={heroSub}
           masked={masked}
-        >
-          {showTracked && trackedCard(true)}
-          <LinkTiles
-            embedded
-            entries={txCount}
-            loans={activeLoanCount}
-            friends={peopleCount}
-            onEntries={goEntries}
-            onLoans={goLoans}
-            onFriends={goFriends}
-          />
-        </CashHero>
-      ) : (
-        <>
-          {showTracked && trackedCard(false)}
-          <LinkTiles
-            entries={txCount}
-            loans={activeLoanCount}
-            friends={peopleCount}
-            onEntries={goEntries}
-            onLoans={goLoans}
-            onFriends={goFriends}
-          />
-        </>
+        />
       )}
 
       <Section
         compact
         title="Accounts"
         right={
-          <Pressable
-            onPress={sheets.openAdd}
-            accessibilityRole="button"
-            accessibilityLabel="Add an account"
-            style={withPressedTint(accent, styles.addLink)}
-          >
-            <Feather name="plus" size={14} color={theme.colors.link} />
-            <Text style={styles.addLinkText}>Add</Text>
-          </Pressable>
+          accounts.length > 0 ? (
+            <Pressable
+              onPress={sheets.openAdd}
+              accessibilityRole="button"
+              accessibilityLabel="Add an account"
+              style={withPressedTint(accent, styles.addLink)}
+            >
+              <Feather name="plus" size={14} color={theme.colors.link} />
+              <Text style={styles.addLinkText}>Add</Text>
+            </Pressable>
+          ) : null
         }
       >
         {accounts.length === 0 ? (
@@ -183,9 +160,19 @@ export function YouSection() {
         <ArchivedAccounts accounts={archivedAccounts} onOpen={sheets.openAccount} />
       </Section>
 
-      {/* Budgets, goals, recurring, What-if and Suu’s Garden live on Plan,
-          each in a fuller screen, so Profile stays about you. This one row
-          points there for anyone used to finding them on Profile. */}
+      {showTracked && trackedCard}
+
+      <Section compact title="Shortcuts">
+        <LinkTiles
+          entries={txCount}
+          loans={activeLoanCount}
+          friends={peopleCount}
+          onEntries={goEntries}
+          onLoans={goLoans}
+          onFriends={goFriends}
+        />
+      </Section>
+
       <Pressable
         onPress={() => router.navigate('/plan')}
         style={withPressedTint(accent, styles.planLink)}

@@ -113,7 +113,7 @@ export async function getNotificationDeliveryStatus(): Promise<NotificationDeliv
     Notifications.getPermissionsAsync(),
     Notifications.getAllScheduledNotificationsAsync(),
     Platform.OS === 'android'
-      ? Notifications.getNotificationChannelAsync(NOTIFICATION_CHANNEL_ID).catch(() => null)
+      ? Notifications.getNotificationChannelAsync(NOTIFICATION_CHANNEL_ID)
       : Promise.resolve(null),
   ]);
   return {

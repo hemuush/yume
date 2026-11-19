@@ -39,7 +39,7 @@ export const ArchivedAccounts = memo(function ArchivedAccounts({
         <MaterialCommunityIcons name="archive-outline" size={15} color={theme.colors.textMuted} />
         <Text style={styles.archivedLabel}>Archived accounts</Text>
         <Text style={styles.archivedSub}>
-          {accounts.length} account{accounts.length === 1 ? '' : 's'} · {open ? 'tap to hide' : 'tap to show'}
+          {accounts.length} account{accounts.length === 1 ? '' : 's'}
         </Text>
         <Feather name={open ? 'chevron-up' : 'chevron-down'} size={16} color={theme.colors.textMuted} />
       </Pressable>

@@ -6,9 +6,7 @@ import { withPressed } from '@/lib/pressed';
 import { themedStyles } from '@/theme/themedStyles';
 
 /**
- * Plain text tabs on one hairline: the picked one in ink with an ink underline, the others in the muted tone. This is
- * how Plan, Reports and Profile switch between their parts. The row scrolls sideways if large text does not leave room
- * for every label, so no tab is ever cut or squeezed.
+ * A compact tab tray that can scroll when enlarged labels need more room.
  */
 export function UnderlineTabs<T extends string>({
   options,
@@ -32,16 +30,17 @@ export function UnderlineTabs<T extends string>({
           return (
             <Pressable
               key={option.value}
-              onPress={() => onChange(option.value)}
+              onPress={() => {
+                if (!on) onChange(option.value);
+              }}
               accessibilityRole="tab"
               accessibilityState={{ selected: on }}
               accessibilityLabel={option.label}
-              style={withPressed(styles.tab)}
+              style={withPressed([styles.tab, on && styles.tabOn])}
             >
               <Text style={[styles.label, on && styles.labelOn]} numberOfLines={1}>
                 {option.label}
               </Text>
-              {on && <View style={styles.underline} />}
             </Pressable>
           );
         })}
@@ -55,21 +54,20 @@ const styles = themedStyles(() =>
     bar: {
       marginHorizontal: SCREEN.gutter,
       marginTop: 2,
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: theme.colors.borderSoft,
+      borderRadius: theme.radius.lg,
+      backgroundColor: theme.colors.home.control,
     },
-    row: { gap: 22, alignItems: 'stretch' },
-    tab: { minHeight: 44, justifyContent: 'center' },
-    // One weight picked or not: the underline and the darker ink show the pick, and the word does not change width.
-    label: { fontFamily: theme.font.bodyMedium, fontSize: 15, color: theme.colors.textMuted },
+    row: { flexGrow: 1, gap: 4, padding: 3, alignItems: 'stretch' },
+    tab: {
+      flexGrow: 1,
+      minHeight: 44,
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderRadius: theme.radius.md,
+      paddingHorizontal: 12,
+    },
+    tabOn: { backgroundColor: theme.colors.home.selected },
+    label: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textSecondary },
     labelOn: { color: theme.colors.textPrimary },
-    underline: {
-      position: 'absolute',
-      left: 0,
-      right: 0,
-      bottom: -1,
-      height: 2,
-      backgroundColor: theme.colors.ink,
-    },
   })
 );

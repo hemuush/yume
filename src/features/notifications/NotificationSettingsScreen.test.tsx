@@ -116,7 +116,7 @@ describe('Notification settings', () => {
     const tree = await render();
     expect(texts(tree)).toContain('Notifications are off for Yume');
     const turnOn = tree.root.find(
-      (n) => n.props.title === 'Turn on' && typeof n.props.onPress === 'function'
+      (n) => n.props.title === 'Phone settings' && typeof n.props.onPress === 'function'
     );
     act(() => turnOn.props.onPress());
     expect(open).toHaveBeenCalled();

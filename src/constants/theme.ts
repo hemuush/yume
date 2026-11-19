@@ -43,8 +43,6 @@ export const theme = {
   // Metrics shared with screens that scroll clear of the tab bar: a pushed screen needs `screenScrollPad`
   // bottom padding (callers add `insets.bottom`); a tab screen clears the bar by its height (see uiScale).
   layout: {
-    // The floating pill tab bar (PillTabBar): its 60 height plus the 10 gap under it.
-    tabBar: { height: 70 },
     screenScrollPad: 40,
     // Between a screen's header (which already leaves 12 below its title) and
     // the screen's first block — the same 20 in total on every screen.

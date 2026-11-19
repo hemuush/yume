@@ -226,7 +226,6 @@ export function AddAccountModal({
         title={name.trim() || 'New account'}
         kicker={ACCOUNT_CHOICES.find((t) => t.value === choice)?.label ?? ''}
       />
-      <FormInput label="Name" value={name} onChangeText={setName} placeholder="e.g. HDFC Savings" />
       <Text style={styles.fieldLabel}>Type</Text>
       <View style={styles.chipRow}>
         {ACCOUNT_CHOICES.map((t) => (
@@ -241,6 +240,7 @@ export function AddAccountModal({
           />
         ))}
       </View>
+      <FormInput label="Name" value={name} onChangeText={setName} placeholder="e.g. HDFC Savings" />
       {choice === 'savings' && (
         <Text style={styles.hintText}>
           Move money in with a transfer; a withdrawal is a transfer back out.

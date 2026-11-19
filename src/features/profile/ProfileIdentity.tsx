@@ -50,26 +50,15 @@ export function ProfileIdentity({
             {(name?.trim().charAt(0) || 'Y').toUpperCase()}
           </Text>
         </View>
-        <Pressable
-          style={withPressed(local.text)}
-          accessibilityRole="button"
-          accessibilityLabel={name ? `${name}, your name` : 'Add your name'}
-          accessibilityHint="Edit your name"
-          onPress={onStartEdit}
-          disabled={editing}
-        >
-          <Text style={local.name} numberOfLines={1}>
-            {name || 'Add your name'}
-          </Text>
-          <Text style={local.sub}>
-            Member since {memberSince ?? new Date().getFullYear()} · On this phone
-          </Text>
-        </Pressable>
+        <View style={local.text}>
+          <Text style={local.name}>{name || 'Add your name'}</Text>
+          <Text style={local.sub}>{memberSince ? `Member since ${memberSince}` : 'On this device'}</Text>
+        </View>
         {!editing && (
           <Pressable
             onPress={onStartEdit}
             accessibilityRole="button"
-            accessibilityLabel="Edit profile name"
+            accessibilityLabel={name ? 'Edit profile name' : 'Add your name'}
             style={withPressed(local.editButton)}
           >
             <Feather name="edit-2" size={16} color={theme.colors.link} />
@@ -119,7 +108,7 @@ export function ProfileIdentity({
 const local = themedStyles(() =>
   StyleSheet.create({
     // One slim line with no card: the avatar, the name with a line under it, and an edit button.
-    card: { marginHorizontal: SCREEN.gutter, marginTop: 8 },
+    card: { marginHorizontal: SCREEN.gutter, marginTop: 6, marginBottom: 6 },
     row: { flexDirection: 'row', alignItems: 'center', gap: 12 },
     avatar: {
       width: 36,
@@ -132,7 +121,7 @@ const local = themedStyles(() =>
     },
     avatarInitial: { fontFamily: theme.font.roundedBold, fontSize: 17 },
     text: { flex: 1, minWidth: 0, minHeight: 44, justifyContent: 'center' },
-    name: { fontFamily: theme.font.roundedBold, fontSize: 17, color: theme.colors.textPrimary },
+    name: { fontFamily: theme.font.bodyBold, fontSize: 16, color: theme.colors.textPrimary },
     sub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
     editButton: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
     editForm: { marginTop: 4, gap: 8 },

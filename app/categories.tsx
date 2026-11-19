@@ -2,29 +2,28 @@ import { Appear } from '@/components/Appear';
 import { CONTENT_ENTER } from '@/lib/animation';
 import { ScreenLoadError } from '@/components/ScreenLoadError';
 import { PrimaryButton } from '@/components/PrimaryButton';
-import { memo, useState } from 'react';
-import { View } from 'react-native';
-import { Text } from '@/components/Text';
+import { memo, useMemo, useState } from 'react';
+import { Keyboard, Pressable, View } from 'react-native';
+import Feather from '@expo/vector-icons/Feather';
+import { Text, TextInput } from '@/components/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CategoryKind } from '@/types';
 import { theme } from '@/constants/theme';
-import { HeaderIconButton } from '@/components/AppHeader';
 import { SkyHeader, HeaderSummary } from '@/features/home/SkyHeader';
 import ReanimatedAnimated from 'react-native-reanimated';
 import { useCollapsingHeader } from '@/lib/useCollapsingHeader';
 import { AddButton } from '@/components/AddButton';
 import { styles } from '@/features/categories/categories.styles';
-import { CategorySection, MemoCategoryTile, TileRows } from '@/features/categories/CategorySection';
+import { CategorySection, MemoCategoryTile, CategoryRows } from '@/features/categories/CategorySection';
 import { CategoriesSheets } from '@/features/categories/CategoriesSheets';
 import { createCategoriesSheets } from '@/features/categories/categoriesSheetsStore';
 import { useCategoriesData } from '@/features/categories/useCategoriesData';
 import { useCategoryActions } from '@/features/categories/useCategoryActions';
-import { Skeleton } from '@/components/Skeleton';
+import { CardRowsSkeleton } from '@/components/ListSkeleton';
 import { HomeWallpaper } from '@/features/home/HomeWallpaper';
 import { useAccent } from '@/theme/AccentContext';
-import { SCREEN } from '@/components/screenStyles';
 import { SheetTabs } from '@/components/SheetTabs';
-import { topLevelOnly } from '@/lib/categoryTree';
+import { searchCategories, topLevelOnly } from '@/lib/categoryTree';
 
 // The tiles are drawn again only when their categories change, not for a sheet opening or a tab's panel.
 const Section = memo(CategorySection);
@@ -37,6 +36,7 @@ export default function CategoriesScreen() {
   // Which sheet is open lives outside React state: opening or closing one does not redraw the tiles behind it.
   const [sheets] = useState(createCategoriesSheets);
   const [showArchived, setShowArchived] = useState(false);
+  const [query, setQuery] = useState('');
   const [kind, setKind] = useState<CategoryKind>('expense');
   const {
     allCategories,
@@ -57,7 +57,22 @@ export default function CategoriesScreen() {
 
   const visibleCategories = kind === 'expense' ? expenseCats : incomeCats;
   const parentCount = topLevelOnly(visibleCategories).length;
-  const subcategoryCount = visibleCategories.length - parentCount;
+  const searching = query.trim().length > 0;
+  const visible = showArchived ? archivedCategories : visibleCategories;
+  const matches = useMemo(
+    () => (searching ? searchCategories(visible, query) : visible),
+    [visible, query, searching]
+  );
+  const byId = useMemo(
+    () => new Map(allCategories.map((category) => [category.id, category])),
+    [allCategories]
+  );
+  const switchCollection = () => {
+    Keyboard.dismiss();
+    setQuery('');
+    setShowArchived((value) => !value);
+    scrollRef.current?.scrollTo?.({ y: 0, animated: false });
+  };
 
   if (!hasData && loadError)
     return <ScreenLoadError title="Categories" message={loadError} onRetry={() => void load()} />;
@@ -68,24 +83,7 @@ export default function CategoriesScreen() {
         <HomeWallpaper accent={accent} secondary={secondary} plain />
         <SkyHeader title="Categories" showBack hideUser wallpaper />
         <View style={{ paddingTop: 20 }}>
-          <Skeleton
-            width={100}
-            height={13}
-            radius={4}
-            style={{ marginHorizontal: SCREEN.gutter, marginBottom: 14 }}
-          />
-          <View style={styles.grid}>
-            {[0, 1].map((row) => (
-              <View key={row} style={styles.gridRow}>
-                {Array.from({ length: 3 }, (_, i) => (
-                  <View key={i} style={[styles.cell, styles.tile]}>
-                    <Skeleton width={50} height={50} circle radius={16} />
-                    <Skeleton width={48} height={9} radius={4} style={{ marginTop: 6 }} />
-                  </View>
-                ))}
-              </View>
-            ))}
-          </View>
+          <CardRowsSkeleton rows={6} />
         </View>
       </View>
     );
@@ -100,6 +98,8 @@ export default function CategoriesScreen() {
         ref={scrollRef}
         onScroll={scrollHandler}
         scrollEventThrottle={16}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
         contentContainerStyle={{
           paddingTop: headerHeight,
           paddingBottom: theme.layout.screenScrollPad + insets.bottom,
@@ -113,70 +113,95 @@ export default function CategoriesScreen() {
           </Appear>
         )}
         <View style={styles.screenIntro}>
-          <Text style={styles.introText}>Organize your money, your way.</Text>
-          <SheetTabs
-            options={[
-              { label: `Expense · ${topLevelOnly(expenseCats).length}`, value: 'expense' },
-              { label: `Income · ${topLevelOnly(incomeCats).length}`, value: 'income' },
-            ]}
-            value={kind}
-            onChange={setKind}
-          />
-          <View style={styles.sectionHeading}>
-            <Text style={styles.collectionTitle}>{kind === 'expense' ? 'Expenses' : 'Income'}</Text>
-            <Text style={styles.collectionCount}>
-              {parentCount} categor{parentCount === 1 ? 'y' : 'ies'}
-              {subcategoryCount > 0
-                ? ` · ${subcategoryCount} subcategor${subcategoryCount === 1 ? 'y' : 'ies'}`
-                : ''}
+          {showArchived ? (
+            <Text accessibilityRole="header" style={styles.archiveTitle}>
+              Archived
             </Text>
-          </View>
+          ) : (
+            <SheetTabs
+              ledgerStyle
+              options={[
+                { label: `Expense · ${topLevelOnly(expenseCats).length}`, value: 'expense' },
+                { label: `Income · ${topLevelOnly(incomeCats).length}`, value: 'income' },
+              ]}
+              value={kind}
+              onChange={setKind}
+            />
+          )}
+          {(visible.length > 0 || searching) && (
+            <View style={styles.categorySearch}>
+              <Feather name="search" size={16} color={theme.colors.textMuted} />
+              <TextInput
+                accessibilityLabel="Find a category"
+                placeholder={showArchived ? 'Search archive' : 'Find a category'}
+                placeholderTextColor={theme.colors.textMuted}
+                value={query}
+                onChangeText={setQuery}
+                returnKeyType="search"
+                autoCorrect={false}
+                style={styles.categorySearchInput}
+              />
+              {query.length > 0 && (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Clear search"
+                  onPress={() => setQuery('')}
+                  style={styles.categorySearchClear}
+                >
+                  <Feather name="x" size={16} color={theme.colors.textSecondary} />
+                </Pressable>
+              )}
+            </View>
+          )}
+          {(showArchived || archivedCategories.length > 0) && (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={showArchived ? 'Show active categories' : 'Show archived categories'}
+              onPress={switchCollection}
+              style={styles.collectionAction}
+            >
+              <Feather name={showArchived ? 'arrow-left' : 'archive'} size={15} color={theme.colors.link} />
+              <Text style={styles.collectionActionText}>
+                {showArchived ? 'Active categories' : `Archived · ${archivedCategories.length}`}
+              </Text>
+            </Pressable>
+          )}
         </View>
-        {parentCount > 0 ? (
+        {searching || showArchived ? (
+          matches.length > 0 ? (
+            <CategoryRows
+              items={matches}
+              renderRow={(cat) => (
+                <MemoCategoryTile
+                  category={cat}
+                  context={cat.parentId ? byId.get(cat.parentId)?.name : undefined}
+                  onPress={(category) => {
+                    Keyboard.dismiss();
+                    if (showArchived) onManageArchived(category);
+                    else sheets.edit(category);
+                  }}
+                  onLongPress={showArchived ? onManageArchived : onManage}
+                />
+              )}
+            />
+          ) : (
+            <Text style={styles.hintText}>
+              {searching ? 'No matching categories.' : 'No archived categories.'}
+            </Text>
+          )
+        ) : parentCount > 0 ? (
           <Section key={kind} cats={visibleCategories} onEdit={sheets.edit} onManage={onManage} />
         ) : (
           <View style={styles.emptyCard}>
-            <Text style={styles.emptyTitle}>
-              A place for your {kind === 'expense' ? 'spending' : 'income'}
-            </Text>
-            <Text style={styles.emptyText}>Create a category to start organizing your transactions.</Text>
+            <Text style={styles.emptyTitle}>No {kind} categories yet</Text>
             <PrimaryButton title="Add category" compact onPress={sheets.openAdd} />
           </View>
         )}
-
-        {showArchived && (
-          <>
-            <Text style={styles.sectionTitle}>Archived</Text>
-            {archivedCategories.length === 0 ? (
-              <Text style={styles.hintText}>No archived categories.</Text>
-            ) : (
-              <TileRows
-                items={archivedCategories}
-                // Flat, not grouped by parent: a subcategory can be archived while its parent stays
-                // active, so there isn't always an archived parent tile to nest it under.
-                renderTile={(cat) => (
-                  <MemoCategoryTile
-                    category={cat}
-                    isSubcategory={!!cat.parentId}
-                    onPress={onManageArchived}
-                    onLongPress={onManageArchived}
-                  />
-                )}
-              />
-            )}
-            <Text style={styles.hintText}>
-              Archived categories are hidden from pickers everywhere else, but their past transactions stay
-              intact. Tap one to restore it or delete it for good.
-            </Text>
-          </>
-        )}
-
-        <Text style={styles.hintText}>Tap to edit or see subcategories. Hold for more options.</Text>
       </ReanimatedAnimated.ScrollView>
       <SkyHeader
         collapse={collapse}
         summary={
-          categories.length > 0 ? (
+          !showArchived && categories.length > 0 ? (
             <HeaderSummary
               figure={String(expenseCats.length + incomeCats.length)}
               rest="in use"
@@ -189,17 +214,7 @@ export default function CategoriesScreen() {
         hideUser
         wallpaper
         actions={
-          <>
-            <HeaderIconButton
-              icon={showArchived ? 'eye-off' : 'archive'}
-              glass
-              size={36}
-              onPress={() => setShowArchived((v) => !v)}
-              label={showArchived ? 'Hide archived categories' : 'Show archived categories'}
-              badge={!showArchived && archivedCategories.length > 0}
-            />
-            <AddButton onPress={sheets.openAdd} label="+ Add" />
-          </>
+          !showArchived && parentCount > 0 ? <AddButton onPress={sheets.openAdd} label="+ Add" /> : undefined
         }
       />
 

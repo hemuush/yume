@@ -364,17 +364,25 @@ describe('Reports screen', () => {
     expect(tree.root.findByType(ReportTabs).props.value).toBe('trends');
   });
   it('opens directly on Days with the period total, not Home’s full summary', async () => {
-    const shown = texts(await render());
+    const tree = await render();
+    const shown = texts(tree);
     expect(shown).toEqual(expect.arrayContaining(['Overview', 'Breakdown', 'Trends', 'Spending by day']));
     // One compact card with the period's total (Reports can look at any period, unlike Home).
     expect(shown.some((t) => t.startsWith('Spent'))).toBe(true);
     expect(shown).not.toContain('Usual month');
     // The period in a few short reads, as rows.
     expect(shown).toContain('Worth a look');
+    expect(shown).toContain('Top categories');
     expect(shown).not.toContain('Where it went');
+    const { HeatmapCard } = require('./HeatmapCard');
+    expect(tree.root.findAllByType(HeatmapCard)).toHaveLength(0);
+    await pressText(tree, 'See breakdown');
+    expect(texts(tree)).toContain('Where it went');
   });
   it('shows a failed day read and retries instead of presenting an empty day', async () => {
     const tree = await render();
+    await pressText(tree, 'Spending by day');
+    await settle();
     mockListTransactions.mockRejectedValueOnce(new Error('Read interrupted'));
     await pressText(tree, '5');
     await settle();
@@ -411,6 +419,8 @@ describe('Reports screen', () => {
   });
   it('does not reopen a day after its pending request finishes', async () => {
     const tree = await render();
+    await pressText(tree, 'Spending by day');
+    await settle();
     let finish!: (items: Awaited<ReturnType<typeof mockListTransactions>>) => void;
     mockListTransactions.mockImplementationOnce(
       () =>
@@ -507,6 +517,7 @@ describe('Reports screen', () => {
   });
   it('opens a heatmap day in a sheet with a fixed header, and closes it', async () => {
     const tree = await render();
+    await pressText(tree, 'Spending by day');
     await pressText(tree, '5');
     await settle();
     expect(mockListTransactions).toHaveBeenCalledWith({
@@ -528,6 +539,7 @@ describe('Reports screen', () => {
   });
   it('inspects a tapped day under the grid: its amount, usual-day comparison and what it was made of', async () => {
     const tree = await render();
+    await pressText(tree, 'Spending by day');
     await pressText(tree, '5');
     await settle();
     const shown = texts(tree);
@@ -622,6 +634,7 @@ describe('Reports screen', () => {
       byLabel(tree, 'Previous period').props.onPress();
       await new Promise((resolve) => setTimeout(resolve, 0));
     });
+    await pressText(tree, 'Spending by day');
     expect(scopeLabel(tree)).toContain('All spending');
   });
   it('switches to where the money came from, and points starting balances at Tidy up', async () => {
@@ -848,6 +861,7 @@ describe('what Reports reads and redraws', () => {
   it('does not draw the heatmap again when the picked day’s entries arrive', async () => {
     const { HeatmapCard } = require('./HeatmapCard');
     const tree = await render();
+    await pressText(tree, 'Spending by day');
     await settle();
     await settle();
     await act(async () => {

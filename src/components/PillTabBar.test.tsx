@@ -1,8 +1,8 @@
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 import { act, create, ReactTestRenderer } from 'react-test-renderer';
 import { PillTabBar } from './PillTabBar';
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
-jest.mock('@/lib/uiScale', () => ({ useUiScale: () => 1 }));
+jest.mock('@/lib/uiScale', () => ({ ...jest.requireActual('@/lib/uiScale'), useUiScale: () => 1 }));
 jest.mock('@/theme/AccentContext', () => ({ useAccent: () => ({ accent: '#8FCBFF' }) }));
 jest.mock('@/lib/useReduceMotion', () => ({ useReduceMotion: () => true }));
 jest.mock('@expo/vector-icons/Feather', () => () => null);
@@ -102,4 +102,24 @@ it('shows the chosen tab’s fill and hides the others', () => {
   expect(opacityOf('Plan')).toBe(0);
   expect(opacityOf('Reports')).toBe(0);
   act(() => tree.unmount());
+});
+
+it('shows every destination label at normal text size on each tab', () => {
+  const dimensions = jest
+    .spyOn(require('react-native'), 'useWindowDimensions')
+    .mockReturnValue({ width: 390, height: 800, scale: 1, fontScale: 1 });
+  try {
+    for (const index of [0, 1, 3, 4]) {
+      const { tree } = render(index);
+      expect(tree.root.findAllByType(Text).map((node) => node.props.children)).toEqual([
+        'Home',
+        'Activity',
+        'Plan',
+        'Reports',
+      ]);
+      act(() => tree.unmount());
+    }
+  } finally {
+    dimensions.mockRestore();
+  }
 });

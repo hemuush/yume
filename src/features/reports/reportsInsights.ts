@@ -141,7 +141,13 @@ export function buildHeat(input: {
 /** What a screen reader says for a heatmap day: its date and what was spent. */
 export function heatDayLabel(d: HeatDay): string {
   if (d.future) return `${dayMonth(d.iso)}, hasn’t happened yet`;
-  return `${dayMonth(d.iso)}, ${d.minor > 0 ? `spent ${formatMoney(d.minor)}` : 'nothing spent'}`;
+  const summary =
+    d.minor < 0
+      ? `net refunds ${formatMoney(Math.abs(d.minor))}`
+      : d.minor > 0
+        ? `spent ${formatMoney(d.minor)}`
+        : 'nothing spent';
+  return `${dayMonth(d.iso)}, ${summary}`;
 }
 
 /** Rolling average of the prior months in a monthly trend (excludes the last / current point). */

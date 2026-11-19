@@ -9,7 +9,7 @@ import { act, fireEvent, renderRouter, screen } from 'expo-router/testing-librar
 import { useDiscardGuard } from '@/features/add/useDiscardGuard';
 import { showAlert } from '@/components/AppDialog';
 
-jest.mock('@/lib/uiScale', () => ({ useUiScale: () => 1 }));
+jest.mock('@/lib/uiScale', () => ({ ...jest.requireActual('@/lib/uiScale'), useUiScale: () => 1 }));
 jest.mock('@/theme/AccentContext', () => ({ useAccent: () => ({ accent: '#8FCBFF' }) }));
 jest.mock('@/lib/useReduceMotion', () => ({ useReduceMotion: () => true }));
 jest.mock('@expo/vector-icons/Feather', () => () => null);

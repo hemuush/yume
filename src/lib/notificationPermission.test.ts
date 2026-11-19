@@ -4,7 +4,7 @@
  */
 import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
-import { askNotificationPermissionOnce } from './notifications';
+import { askNotificationPermissionOnce, getNotificationDeliveryStatus } from './notifications';
 import {
   getNotificationPermissionAsked,
   getNotificationPrefs,
@@ -57,6 +57,12 @@ beforeEach(() => {
   N.getAllScheduledNotificationsAsync.mockResolvedValue([]);
   N.getNotificationChannelAsync.mockResolvedValue({ importance: 3 } as never);
   N.setNotificationChannelAsync.mockResolvedValue(null as never);
+});
+
+it('reports an unreadable Android channel instead of treating it as enabled', async () => {
+  N.getPermissionsAsync.mockResolvedValue(permission({ granted: true }) as never);
+  N.getNotificationChannelAsync.mockRejectedValueOnce(new Error('Channel unavailable'));
+  await expect(getNotificationDeliveryStatus()).rejects.toThrow('Channel unavailable');
 });
 
 it('asks once on a phone that has not been asked, remembers it, and schedules once allowed', async () => {

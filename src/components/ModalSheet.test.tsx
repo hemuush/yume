@@ -276,7 +276,7 @@ describe('related tasks in one native sheet', () => {
     expect(window.props.visible).toBe(true);
     const childSurface = tree.root.findAllByProps({ testID: 'sheet-surface' }).at(-1)!;
     expect(StyleSheet.flatten(childSurface.props.style).minHeight).toBe(480);
-    expect(StyleSheet.flatten(childSurface.props.style).borderTopLeftRadius).toBe(32);
+    expect(StyleSheet.flatten(childSurface.props.style).borderTopLeftRadius).toBe(24);
     const childBody = childSurface.findByType(KeyboardAwareScrollView);
     expect(StyleSheet.flatten(childBody.props.style).flexGrow).toBe(1);
     const hidden = tree.root.findAllByProps({ importantForAccessibility: 'no-hide-descendants' });

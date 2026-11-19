@@ -231,11 +231,13 @@ export default function NotificationSettingsScreen() {
               : delivery.scheduledCount === 0
                 ? 'Nothing scheduled'
                 : 'Ready to notify';
-  const deliverySub = !delivery
-    ? 'Tap for details'
-    : delivery.permitted && !delivery.channelBlocked
-      ? `${delivery.scheduledCount} ${delivery.scheduledCount === 1 ? 'reminder' : 'reminders'} scheduled`
-      : 'Tap to see how to fix it';
+  const deliverySub = deliveryError
+    ? 'Try checking again'
+    : !delivery
+      ? 'Tap for details'
+      : delivery.permitted && !delivery.channelBlocked
+        ? `${delivery.scheduledCount} ${delivery.scheduledCount === 1 ? 'reminder' : 'reminders'} scheduled`
+        : 'Tap to see how to fix it';
   const noTimes = !prefs.morningEnabled && !prefs.eveningEnabled;
   const onCount = MENTION_KEYS.filter((k) => prefs[k] === true).length;
 
@@ -255,14 +257,16 @@ export default function NotificationSettingsScreen() {
           morning={{ on: prefs.morningEnabled, minutes: morningMinutes }}
           evening={{ on: prefs.eveningEnabled, minutes: eveningMinutes }}
         />
-        {delivery && !delivery.permitted && (
+        {delivery && (!delivery.permitted || delivery.channelBlocked) && (
           <View style={styles.permissionBanner}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.permissionTitle}>Notifications are off for Yume</Text>
-              <Text style={styles.permissionSub}>Nothing below will reach you.</Text>
+              <Text style={styles.permissionTitle}>
+                {delivery.permitted ? 'Yume reminders category is off' : 'Notifications are off for Yume'}
+              </Text>
+              <Text style={styles.permissionSub}>Turn on reminders in your phone settings.</Text>
             </View>
             <PrimaryButton
-              title="Turn on"
+              title="Phone settings"
               compact
               onPress={() => {
                 void Linking.openSettings().catch((e) => showAlert('Phone settings', errorMessage(e)));
@@ -291,7 +295,8 @@ export default function NotificationSettingsScreen() {
         {noTimes && <Text style={styles.warn}>Switch on a time to get notifications.</Text>}
 
         <Section
-          title="Yume can mention"
+          compact
+          title="Reminder topics"
           right={
             <Text style={styles.count}>
               {onCount} of {MENTION_KEYS.length} on
@@ -331,13 +336,13 @@ export default function NotificationSettingsScreen() {
           </ListCard>
         </Section>
 
-        <Section title="In the app">
+        <Section compact title="In the app">
           <ListCard>
             <AlertRow rowKey="suuCheckins" value={prefs.suuCheckins} onToggle={onAlert} />
           </ListCard>
         </Section>
 
-        <Section title="Delivery">
+        <Section compact title="Delivery">
           <ListCard>
             <Pressable
               onPress={() => setTroubleOpen((v) => !v)}
@@ -378,6 +383,14 @@ export default function NotificationSettingsScreen() {
                     </Text>
                   )}
                 <View style={styles.deliveryActions}>
+                  {deliveryError && (
+                    <PrimaryButton
+                      compact
+                      variant="secondary"
+                      title="Check again"
+                      onPress={() => void refreshDelivery()}
+                    />
+                  )}
                   <PrimaryButton
                     compact
                     variant="secondary"

@@ -87,34 +87,24 @@ describe('Categories · tile grid', () => {
     expect(texts(tree)).not.toContain('Swiggy');
   });
 
-  it('edits the parent from the panel’s header and a subcategory from its pill', async () => {
+  it('edits the parent from the panel header and a subcategory from its row', async () => {
     const { tree, onEdit } = await render();
     act(() => pressable(tree, 'Food & Dining, 2 subcategories').props.onPress());
 
     act(() => pressable(tree, 'Edit Food & Dining').props.onPress());
     expect(onEdit).toHaveBeenLastCalledWith(expect.objectContaining({ id: 'food' }));
 
-    const pill = tree.root.find(
-      (n) =>
-        typeof n.props.onLongPress === 'function' &&
-        n.findAllByType(Text).some((t) => t.props.children === 'Cafes')
-    );
-    act(() => pill.props.onPress());
+    act(() => pressable(tree, 'Cafes').props.onPress());
     expect(onEdit).toHaveBeenLastCalledWith(expect.objectContaining({ id: 'cafes' }));
   });
 
-  it('long press on a tile or a pill goes to the manage menu', async () => {
+  it('keeps long press as a shortcut to manage a category or subcategory', async () => {
     const { tree, onManage } = await render();
     act(() => pressable(tree, 'Rent').props.onLongPress());
     expect(onManage).toHaveBeenLastCalledWith(expect.objectContaining({ id: 'rent' }));
 
     act(() => pressable(tree, 'Food & Dining, 2 subcategories').props.onPress());
-    const pill = tree.root.find(
-      (n) =>
-        typeof n.props.onLongPress === 'function' &&
-        n.findAllByType(Text).some((t) => t.props.children === 'Swiggy')
-    );
-    act(() => pill.props.onLongPress());
+    act(() => pressable(tree, 'Swiggy').props.onLongPress());
     expect(onManage).toHaveBeenLastCalledWith(expect.objectContaining({ id: 'swiggy' }));
   });
 });
@@ -128,34 +118,20 @@ it('offers a visible parent options button without holding the tile', async () =
   expect(texts(tree)).toContain('Edit');
 });
 
-describe('Categories · columns', () => {
-  const cellWidth = (width: number, fontScale = 1) => {
-    const { StyleSheet } = require('react-native');
-    jest
-      .spyOn(require('react-native'), 'useWindowDimensions')
-      .mockReturnValue({ width, height: 800, scale: 3, fontScale });
-    let tree!: ReactTestRenderer;
-    act(() => {
-      tree = create(
-        <CategorySection cats={cats.filter((c) => !c.parentId)} onEdit={jest.fn()} onManage={jest.fn()} />
-      );
-    });
-    const widths = tree.root
-      .findAll((n) => typeof n.type === 'string')
-      .map((n) => StyleSheet.flatten(n.props.style)?.width)
-      .filter((w: unknown) => typeof w === 'string' && (w as string).endsWith('%'));
-    act(() => tree.unmount());
-    return widths[0] as string;
-  };
-  afterEach(() => jest.restoreAllMocks());
+it('offers separate edit and manage targets on a subcategory', async () => {
+  const { tree, onEdit, onManage } = await render();
+  act(() => pressable(tree, 'Food & Dining, 2 subcategories').props.onPress());
+  act(() => pressable(tree, 'More options for Swiggy').props.onPress());
+  expect(onManage).toHaveBeenCalledWith(expect.objectContaining({ id: 'swiggy' }));
+  expect(onEdit).not.toHaveBeenCalled();
+  act(() => tree.unmount());
+});
 
-  it('goes two to a row on a 360 dp phone, where a third of the row broke "Entertainment" mid-word', () => {
-    expect(cellWidth(360)).toBe('50%');
-  });
-
-  it('keeps three to a row from 375 dp up, and one with very large text', () => {
-    expect(cellWidth(375)).toBe(`${100 / 3}%`);
-    expect(cellWidth(412)).toBe(`${100 / 3}%`);
-    expect(cellWidth(390, 1.6)).toBe('100%');
-  });
+it('renders children under their parent before the next category', async () => {
+  const { tree } = await render();
+  act(() => pressable(tree, 'Food & Dining, 2 subcategories').props.onPress());
+  const shown = texts(tree);
+  expect(shown.indexOf('Swiggy')).toBeLessThan(shown.indexOf('Rent'));
+  expect(shown.indexOf('Cafes')).toBeLessThan(shown.indexOf('Rent'));
+  act(() => tree.unmount());
 });

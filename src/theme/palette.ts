@@ -46,6 +46,7 @@ const LIGHT = {
 
   // The logo's dot: the Add button and the "free to spend" arc, the only warm accent.
   coral: '#FC7B5E',
+  onCoral: '#16170F',
 
   income: '#1B7A4F',
   incomeTint: '#DDF2E5',
@@ -132,61 +133,62 @@ const LIGHT = {
 export type Palette = typeof LIGHT;
 
 /**
- * The dark mode: the same tokens on the warm near-black paper of the approved design. Text and the lead colours are
+ * The dark mode: graphite canvas, slate surfaces and blue selected controls. Text and the lead colours are
  * lifted (the sky and the coral stay the logo's; green, red and amber are the lighter shades that read on dark),
- * tints become deep washes, and lines are barely lighter than the page. Pastel fills used for category and account
+ * tints become deep washes, and edges separate adjacent layers. Pastel fills used for category and account
  * marks stay pastel, with dark ink on them.
  */
 const DARK: Palette = {
-  background: '#12130F',
-  surface: '#1A1B16',
-  surfaceAlt: '#24251E',
+  background: '#181F29',
+  surface: '#222C39',
+  surfaceAlt: '#293647',
   entry: {
-    background: '#22262F',
-    surface: '#2B313C',
-    control: '#3A4557',
-    selected: '#3B5678',
-    edge: '#525D70',
-    secondaryText: '#D2DBE9',
-    keySurface: '#232933',
+    background: '#181F29',
+    surface: '#222C39',
+    control: '#2D3C50',
+    selected: '#36587D',
+    edge: '#435773',
+    secondaryText: '#CCD8E8',
+    keySurface: '#293647',
   },
   home: {
-    background: '#202733',
-    surface: '#282E39',
-    control: '#303B4C',
-    selected: '#344D6C',
-    pressed: '#3B5474',
-    edge: '#465368',
-    secondaryText: '#D0D8E4',
+    background: '#181F29',
+    surface: '#222C39',
+    control: '#2C3B50',
+    selected: '#36587D',
+    pressed: '#3B5676',
+    edge: '#435571',
+    secondaryText: '#CCD8E8',
   },
 
-  ink: '#F6F2E6',
+  ink: '#F2F6FC',
   onInk: '#12130F',
-  inkSoft: '#B9B7AB',
+  inkSoft: '#C4D0E0',
 
   primary: '#9EC5FC',
-  primaryTint: '#1F2B40',
+  primaryTint: '#263A55',
   secondary: '#8FE8C8',
-  secondaryTint: '#1D2F29',
+  secondaryTint: '#223D3A',
   secondaryDeep: '#4FD0A0',
   accent: '#C9B8FF',
-  accentTint: '#2A2540',
+  accentTint: '#34304D',
   gold: '#F0E1A8',
-  goldTint: '#332E1C',
+  goldTint: '#3B3224',
 
   coral: '#FC7B5E',
+  onCoral: '#16170F',
 
   income: '#6FD6A5',
-  incomeTint: '#1D2E26',
+  incomeTint: '#233A34',
   expense: '#FF8F8A',
-  expenseTint: '#3B2A24',
+  expenseTint: '#442D35',
   incomeText: '#6FD6A5',
   expenseText: '#FF8F8A',
   warnInk: '#E8B84A',
 
-  textPrimary: '#F6F2E6',
-  textSecondary: '#B9B7AB',
-  textMuted: '#97958A',
+  textPrimary: '#F2F6FC',
+  textSecondary: '#C4D0E0',
+  textMuted: '#AABAD0',
 
   white: '#FFFFFF',
   flatLime: '#E0F0A8',
@@ -204,28 +206,28 @@ const DARK: Palette = {
   idGoldDeep: '#E0AC3F',
   splitPalette: ['#9EC5FC', '#F0E1A8', '#8FE8C8', '#E2A6D8', '#F6BFD3', '#BEC8D4'],
 
-  borderSoft: '#2E2F27',
-  divider: '#26271F',
+  borderSoft: '#39485D',
+  divider: '#303E51',
 
   slice: {
-    spent: '#6E6D62',
+    spent: '#8A9AB0',
     saved: '#7AA2F0',
     due: '#9EC5FC',
     free: '#FC7B5E',
     debt: '#BBA9F7',
   },
-  dueTint: '#24251E',
-  dueRow: '#1F201A',
+  dueTint: '#3A3021',
+  dueRow: '#302A23',
   dueInk: '#E8B84A',
-  tray: '#1F201A',
-  trayTrack: '#2E2F27',
-  otherSlice: '#4A4A40',
+  tray: '#2A3749',
+  trayTrack: '#42526A',
+  otherSlice: '#687B94',
   link: '#9EC5FC',
 
-  inkWash: 'rgba(246,242,230,0.06)',
-  inkHairline: 'rgba(246,242,230,0.12)',
-  inkLine: 'rgba(246,242,230,0.18)',
-  inkOff: 'rgba(246,242,230,0.3)',
+  inkWash: 'rgba(233,241,255,0.06)',
+  inkHairline: 'rgba(233,241,255,0.12)',
+  inkLine: 'rgba(233,241,255,0.18)',
+  inkOff: 'rgba(233,241,255,0.3)',
   glass: 'rgba(255,255,255,0.08)',
   scrim: 'rgba(0,0,0,0.55)',
 };

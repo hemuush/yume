@@ -89,7 +89,7 @@ describe('the income comparison', () => {
   });
 });
 
-it('gives Income the most room of the three columns: it carries the long line, so it stays on two lines at 360 dp', () => {
+it('gives the income comparison more room in the supporting row at 360 dp', () => {
   jest.spyOn(require('react-native'), 'useWindowDimensions').mockReturnValue({
     width: 360,
     height: 800,
@@ -123,7 +123,6 @@ it('gives Income the most room of the three columns: it carries the long line, s
       )!;
   const grow = (label: string) => StyleSheet.flatten(columnOf(label).props.style).flexGrow as number;
   expect(grow('Income')).toBeGreaterThan(grow('Kept'));
-  expect(grow('Income')).toBeGreaterThan(grow('Spent so far'));
   act(() => tree.unmount());
 });
 
