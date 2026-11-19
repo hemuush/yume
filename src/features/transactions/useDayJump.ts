@@ -41,6 +41,8 @@ export function useDayJump({
 
   const scrollToDay = useCallback(
     (key: string): boolean => {
+      if (retryTimer.current) clearTimeout(retryTimer.current);
+      retryTimer.current = null;
       retryAttempted.current = false;
       // Week scope: the bar key is already the group's date. Month scope: the key is a week bucket's start,
       // so jump to the first day in that week (up to 6 days on) that has a group.

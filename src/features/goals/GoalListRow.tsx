@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { Fragment, memo } from 'react';
 import { MovingRow } from '@/components/MovingRow';
 import type { Account, SavingsGoal } from '@/types';
 import { GoalCard } from './GoalCard';
@@ -14,6 +14,7 @@ export const GoalListRow = memo(function GoalListRow({
   account,
   onOpen,
   onContribute,
+  compact,
 }: {
   goal: SavingsGoal;
   divider: boolean;
@@ -21,10 +22,13 @@ export const GoalListRow = memo(function GoalListRow({
   account?: Account;
   onOpen: (goal: SavingsGoal) => void;
   onContribute: (goal: SavingsGoal) => void;
+  compact?: boolean;
 }) {
+  const RowContainer = compact ? Fragment : MovingRow;
   return (
-    <MovingRow>
+    <RowContainer>
       <GoalCard
+        compact={compact}
         goal={goal}
         divider={divider}
         accountName={account?.name}
@@ -32,6 +36,6 @@ export const GoalListRow = memo(function GoalListRow({
         onPress={() => onOpen(goal)}
         onContribute={() => onContribute(goal)}
       />
-    </MovingRow>
+    </RowContainer>
   );
 });

@@ -1,4 +1,3 @@
-import { selectedFill } from '@/theme/interactionColors';
 import { Pressable, ScrollView, useWindowDimensions } from 'react-native';
 import { Text } from '@/components/Text';
 import { formatMaskableMoney } from '@/lib/money';
@@ -56,7 +55,7 @@ export function UsualChips({
               style={withPressedTint(accent, [
                 styles.recentChip,
                 { maxWidth: Math.min(300, 220 * Math.max(1, fontScale)) },
-                active && { backgroundColor: selectedFill(accent), borderColor: selectedFill(accent) },
+                active && styles.selectedControl,
               ])}
               accessibilityRole="button"
               accessibilityState={{ selected: active }}

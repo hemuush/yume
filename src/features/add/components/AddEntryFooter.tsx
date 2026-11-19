@@ -1,6 +1,7 @@
 import { memo, useCallback } from 'react';
 import { Pressable, View } from 'react-native';
-import { Appear } from '@/components/Appear';
+import Animated from 'react-native-reanimated';
+import { CONTENT_ENTER } from '@/lib/animation';
 import { Text } from '@/components/Text';
 import { KeyboardStickyView } from 'react-native-keyboard-controller';
 import Feather from '@expo/vector-icons/Feather';
@@ -56,7 +57,6 @@ export const FOOTER_KEYS = [
   'setError',
   'openSplit',
   'padVisible',
-  'setPadOpen',
   'onPadKey',
   'clearAmount',
 ] as const satisfies readonly (keyof AddEntryModel)[];
@@ -102,7 +102,6 @@ export function AddEntryFooter({ model }: Props): ReactElement {
     setError,
     openSplit,
     padVisible,
-    setPadOpen,
     onPadKey,
     clearAmount,
   } = model;
@@ -113,7 +112,6 @@ export function AddEntryFooter({ model }: Props): ReactElement {
     setRefund((r) => !r);
     setError(null);
   }, [setRefund, setError]);
-  const onHidePad = useCallback(() => setPadOpen(false), [setPadOpen]);
 
   const saveButton = (
     <PrimaryButton
@@ -145,9 +143,7 @@ export function AddEntryFooter({ model }: Props): ReactElement {
     </Pressable>
   );
   const actions = (
-    <View
-      style={[styles.actionRow, padVisible && styles.padActions, stackActions && styles.actionRowStacked]}
-    >
+    <View style={[styles.actionRow, stackActions && styles.actionRowStacked]}>
       {addToListButton}
       {saveButton}
     </View>
@@ -158,18 +154,19 @@ export function AddEntryFooter({ model }: Props): ReactElement {
       offset={{ opened: insets.bottom }}
       style={[styles.footer, { paddingBottom: insets.bottom + 12 }]}
     >
-      {(statusHint || rows.length > 0) && (
-        // One line when it fits: what is missing on the left, how many are waiting on the right.
-        <Appear style={styles.footerStatus}>
-          {statusHint ? <Text style={styles.formHint}>{statusHint}</Text> : null}
-          {rows.length > 0 && <Text style={styles.queueHint}>{rows.length} on your list</Text>}
-        </Appear>
-      )}
-      {error && (
-        <Appear>
-          <Text style={styles.error}>{error}</Text>
-        </Appear>
-      )}
+      <View style={styles.footerStatus}>
+        {statusHint ? (
+          <Text style={styles.formHint} accessibilityLiveRegion="polite">
+            {statusHint}
+          </Text>
+        ) : null}
+        {rows.length > 0 && <Text style={styles.queueHint}>{rows.length} on your list</Text>}
+        {!!error && (
+          <Text style={styles.error} accessibilityRole="alert">
+            {error}
+          </Text>
+        )}
+      </View>
       <View
         pointerEvents={formBusy || !formReady ? 'none' : 'auto'}
         accessibilityElementsHidden={formBusy || !formReady}
@@ -193,16 +190,14 @@ export function AddEntryFooter({ model }: Props): ReactElement {
           onPickDate={onPickDate}
           onToggleRefund={onToggleRefund}
           onSplit={openSplit}
-          onHidePad={padVisible ? onHidePad : undefined}
         />
       </View>
-      {padVisible ? (
-        <AmountPad onKey={onPadKey} onClear={clearAmount}>
-          {actions}
-        </AmountPad>
-      ) : (
-        actions
+      {padVisible && (
+        <Animated.View entering={CONTENT_ENTER} style={styles.keypadSpacing}>
+          <AmountPad onKey={onPadKey} onClear={clearAmount} />
+        </Animated.View>
       )}
+      {actions}
     </KeyboardStickyView>
   );
 }

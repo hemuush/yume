@@ -5,11 +5,12 @@ import { showAlert } from '@/components/AppDialog';
 
 /**
  * Leaving a new entry that has something typed asks first. `leave(go)` lifts the guard for one render and then
- * runs `go` — Discard and "Log again" use it. A save lifts the guard by making `shouldAsk` false.
+ * runs `go` — Discard and "Log again" use it. While a write is in progress, wait before leaving.
  */
 export function useDiscardGuard(
   shouldAsk: boolean,
-  draft?: { onDiscard: () => Promise<void>; onKeepDraft: () => Promise<void> }
+  draft?: { onDiscard: () => Promise<void>; onKeepDraft: () => Promise<void> },
+  busy = false
 ) {
   const navigation = useNavigation();
   const [leaving, setLeaving] = useState(false);
@@ -18,7 +19,8 @@ export function useDiscardGuard(
     leaveWith.current = go;
     setLeaving(true);
   };
-  usePreventRemove(shouldAsk && !leaving, ({ data }) => {
+  usePreventRemove((busy || shouldAsk) && !leaving, ({ data }) => {
+    if (busy) return;
     showAlert(draft ? 'Leave this entry?' : 'Discard this entry?', 'What you’ve entered hasn’t been saved.', [
       { text: 'Keep editing', style: 'cancel' },
       ...(draft

@@ -5,6 +5,7 @@ import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { shade } from '@/lib/color';
 import { themedStyles } from '@/theme/themedStyles';
+import { softTint } from '@/components/softTint';
 
 /**
  * The thing being set up (a loan, a goal), as a slim card: its name and a line of detail on the left, one worked-out
@@ -20,6 +21,7 @@ export function DraftCard({
   figureColor,
   per,
   meta,
+  ledgerStyle = false,
 }: {
   hue: string;
   icon: string;
@@ -34,12 +36,13 @@ export function DraftCard({
   per?: string;
   /** The line under the card; omit when there is nothing to say yet. */
   meta?: string;
+  ledgerStyle?: boolean;
 }) {
   return (
-    <View style={styles.card}>
+    <View style={[styles.card, ledgerStyle && styles.ledgerCard]}>
       <LinearGradient
         pointerEvents="none"
-        colors={[shade(hue, 89), shade(hue, 96)]}
+        colors={ledgerStyle ? [softTint(hue, 0.19), softTint(hue, 0)] : [shade(hue, 89), shade(hue, 96)]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={StyleSheet.absoluteFill}
@@ -51,13 +54,21 @@ export function DraftCard({
             <CategoryGlyph name={icon} size={19} color={shade(hue, 30, 10)} />
           </View>
           <View style={styles.names}>
-            <Text style={styles.title}>{title}</Text>
+            <Text style={[styles.title, ledgerStyle && styles.ledgerTitle]}>{title}</Text>
             <Text style={styles.kicker}>{kicker || ' '}</Text>
           </View>
         </View>
         {per !== undefined && (
           <View style={styles.emi}>
-            <Text style={[styles.amount, figureColor ? { color: figureColor } : null]}>{figure ?? '–'}</Text>
+            <Text
+              style={[
+                styles.amount,
+                ledgerStyle && styles.ledgerAmount,
+                figureColor ? { color: figureColor } : null,
+              ]}
+            >
+              {figure ?? '–'}
+            </Text>
             <Text style={styles.per}>{per}</Text>
           </View>
         )}
@@ -86,6 +97,9 @@ const styles = themedStyles(() =>
       justifyContent: 'space-between',
       gap: 8,
     },
+    ledgerCard: { backgroundColor: theme.colors.home.surface, borderColor: theme.colors.home.edge },
+    ledgerTitle: { fontSize: 13 },
+    ledgerAmount: { fontSize: 20, lineHeight: 24, fontFamily: theme.font.bodyMedium },
     identity: {
       flexGrow: 1,
       flexShrink: 1,

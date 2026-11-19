@@ -1,4 +1,4 @@
-import { selectedFill } from '@/theme/interactionColors';
+import { Children } from 'react';
 import { View, Pressable, ScrollView } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { theme } from '@/constants/theme';
@@ -11,7 +11,7 @@ import { haptics } from '@/lib/haptics';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { styles } from './add.styles';
 import { withPressedTint } from '@/lib/pressed';
-import { shade } from '@/lib/color';
+import { useStacked } from '@/lib/useStacked';
 import { formatMoney } from '@/lib/money';
 import { hueFor } from '@/lib/hueFor';
 
@@ -23,10 +23,7 @@ function Chip({ label, active, onPress }: { label: string; active: boolean; onPr
         haptics.tap();
         onPress();
       }}
-      style={withPressedTint(accent, [
-        styles.chip,
-        active && { borderColor: selectedFill(accent), backgroundColor: selectedFill(accent) },
-      ])}
+      style={withPressedTint(accent, [styles.chip, active && styles.selectedControl])}
       accessibilityRole="button"
       accessibilityState={{ selected: active }}
     >
@@ -35,21 +32,15 @@ function Chip({ label, active, onPress }: { label: string; active: boolean; onPr
   );
 }
 
-/**
- * The bar atop Add's number pad: account, date, note, and for a purchase Money back and Split, in one row
- * that scrolls sideways; riding on the pad keeps it in view however far the category grid is scrolled.
- */
-export function DetailBar({ children, flush }: { children: React.ReactNode; flush?: boolean }) {
+/** The number of controls per row depends on the viewport and text size. */
+export function DetailBar({ children }: { children: React.ReactNode }) {
+  const stacked = useStacked('normal');
+  const controls = Children.toArray(children);
   return (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      keyboardShouldPersistTaps="handled"
-      style={[styles.detailBar, flush && styles.detailBarFlush]}
-      contentContainerStyle={styles.detailBarContent}
-    >
-      {children}
-    </ScrollView>
+    <View style={styles.detailBar}>
+      <View style={styles.detailControls}>{stacked ? controls.slice(0, 3) : controls}</View>
+      {stacked && controls.length > 3 && <View style={styles.detailControls}>{controls.slice(3)}</View>}
+    </View>
   );
 }
 
@@ -69,7 +60,7 @@ export function DetailChip({
   icon: React.ComponentProps<typeof Feather>['name'];
   label: string;
   muted?: boolean;
-  /** A chip that's a switch: on, it's filled in with a tick instead of a dropdown arrow. */
+  /** A chip that's a switch: on, it's filled and announced as checked. */
   active?: boolean;
   /** Can't be used with what's already chosen (Split alongside Money back): dimmed, in the same place. */
   disabled?: boolean;
@@ -86,7 +77,7 @@ export function DetailChip({
       disabled={disabled}
       style={withPressedTint(accent, [
         styles.detailChip,
-        active && [{ backgroundColor: selectedFill(accent), borderColor: selectedFill(accent) }],
+        active && styles.selectedControl,
         disabled && styles.detailChipDisabled,
       ])}
       accessibilityRole={active === undefined ? 'button' : 'switch'}
@@ -98,17 +89,11 @@ export function DetailChip({
       <Feather
         name={icon}
         size={13}
-        color={active ? theme.colors.textPrimary : muted ? theme.colors.textMuted : shade(accent, 40, 8)}
+        color={active ? theme.colors.textPrimary : theme.colors.entry.secondaryText}
       />
       <Text style={[styles.detailChipText, muted && styles.detailChipTextMuted]} numberOfLines={1}>
         {label}
       </Text>
-      {active ? (
-        <Feather name="check" size={12} color={theme.colors.textPrimary} />
-      ) : (
-        !muted &&
-        active === undefined && <Feather name="chevron-down" size={12} color={theme.colors.textMuted} />
-      )}
     </Pressable>
   );
 }

@@ -1,9 +1,7 @@
 import { View, Pressable, StyleSheet } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
-import { Glass } from '@/components/Glass';
-import { cardSurface } from '@/components/CardSurface';
-import { SCREEN, screenStyles } from '@/components/screenStyles';
+import { SCREEN } from '@/components/screenStyles';
 import { formatMoney } from '@/lib/money';
 import { formatRatioPct } from '@/lib/format';
 import { withPressed, withPressedTint } from '@/lib/pressed';
@@ -45,7 +43,7 @@ export function DebtPath({
   const borrowed = loans.rows.filter((r) => r.direction === 'borrowed');
   if (borrowed.length === 0) {
     return (
-      <Glass style={[styles.card, cardSurface.neutral]}>
+      <View style={[local.card, local.emptyCard]}>
         <Pressable
           onPress={onOpen}
           style={withPressed()}
@@ -68,7 +66,7 @@ export function DebtPath({
           </View>
         </Pressable>
         {onAdd && <PlanListAdd label="Add loan" onPress={onAdd} />}
-      </Glass>
+      </View>
     );
   }
 
@@ -82,7 +80,7 @@ export function DebtPath({
   const ink = themeInk(accent);
 
   return (
-    <View style={[screenStyles.card, local.card]}>
+    <View style={local.card}>
       <Pressable
         onPress={onOpen}
         style={withPressed(local.top)}
@@ -91,17 +89,16 @@ export function DebtPath({
       >
         <View style={local.head}>
           <View style={local.headMain}>
-            <Text style={local.label}>Debt-free</Text>
-            <Text style={local.figure} numberOfLines={1} adjustsFontSizeToFit>
-              {knownEnd ? shortMonthYear(knownEnd) : 'Date unknown'}
-            </Text>
-          </View>
-          <View style={local.side}>
-            <Text style={local.sideMain}>{formatMoney(loans.debtLeftMinor)} left</Text>
+            <Text style={local.label}>Principal remaining</Text>
+            <Text style={local.figure}>{formatMoney(loans.debtLeftMinor)} left</Text>
             <Text style={local.sideNote}>
               {formatRatioPct(loans.paidFraction)} repaid · {borrowed.length} loan
               {borrowed.length === 1 ? '' : 's'}
             </Text>
+          </View>
+          <View style={local.side}>
+            <Text style={local.label}>Debt-free</Text>
+            <Text style={local.sideMain}>{knownEnd ? shortMonthYear(knownEnd) : 'Date unknown'}</Text>
           </View>
         </View>
         {shares.length > 0 && (
@@ -153,10 +150,13 @@ const local = themedStyles(() =>
   StyleSheet.create({
     summary: { gap: 8, minHeight: 44 },
     card: {
-      marginTop: 0,
-      overflow: 'visible',
-      marginHorizontal: SCREEN.gutter - SCREEN.rowInset,
+      marginHorizontal: SCREEN.gutter,
+      backgroundColor: theme.colors.home.surface,
+      borderColor: theme.colors.home.edge,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderRadius: 20,
     },
+    emptyCard: { padding: SCREEN.cardPad },
     top: { paddingHorizontal: 14, paddingTop: 12, paddingBottom: 12, gap: 8 },
     head: {
       flexDirection: 'row',
@@ -169,9 +169,9 @@ const local = themedStyles(() =>
     headMain: { flexShrink: 1, minWidth: 0 },
     label: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
     figure: {
-      fontFamily: theme.font.bodyMedium,
-      fontSize: 22,
-      lineHeight: 26,
+      fontFamily: theme.font.bodyBold,
+      fontSize: 24,
+      lineHeight: 30,
       letterSpacing: -0.2,
       color: theme.colors.textPrimary,
     },

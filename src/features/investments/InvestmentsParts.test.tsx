@@ -27,7 +27,6 @@ jest.mock('./UpdateValueSheet', () => ({
 }));
 
 import { InvestmentsCard } from '@/features/plan/InvestmentsCard';
-import { PlanOverviewPanels } from '@/features/plan/PlanOverviewPanels';
 import { PortfolioChart } from './PortfolioChart';
 import { UpdateValuesSheet } from './UpdateValuesSheet';
 import { InvestmentPanel } from './InvestmentPanel';
@@ -129,37 +128,6 @@ describe('InvestmentsCard', () => {
     expect(shown).not.toContain('4.4L');
     expect(shown).not.toContain('return');
     expect(shown).toContain('Amounts hidden');
-  });
-});
-
-describe('Plan Overview Investments row', () => {
-  const panel = (portfolio: ReturnType<typeof buildPortfolio>, onInvestments = jest.fn()) =>
-    render(
-      <PlanOverviewPanels
-        budgets={{ rows: [] } as never}
-        groups={[]}
-        loans={{ rows: [] } as never}
-        goals={[]}
-        today={TODAY}
-        hideAmounts={mockHide}
-        investments={portfolio}
-        onInvestments={onInvestments}
-        onTab={jest.fn()}
-        onBudget={jest.fn()}
-      />
-    );
-  it('invites tracking when there are none, and opens the page', () => {
-    const open = jest.fn();
-    const tree = panel(buildPortfolio([], 'INR', TODAY), open);
-    expect(texts(tree)).toContain('Track what you’ve invested');
-    act(() => tree.root.find((n) => n.props.accessibilityLabel?.startsWith('Investments.')).props.onPress());
-    expect(open).toHaveBeenCalled();
-  });
-  it('shows the worth and gain, and masks them while savings are hidden', () => {
-    const shown = texts(panel(buildPortfolio([fund], 'INR', TODAY))).join(' ');
-    expect(shown).toContain(inr(438_000_00));
-    mockHide = true;
-    expect(texts(panel(buildPortfolio([fund], 'INR', TODAY))).join(' ')).not.toContain(inr(438_000_00));
   });
 });
 

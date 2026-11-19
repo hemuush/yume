@@ -16,6 +16,7 @@ export function SkyBackdrop({
   distance,
   collapsedHeight,
   barColor = theme.colors.background,
+  fadeEdge = true,
 }: {
   scrollY: SharedValue<number>;
   /** How far the header can collapse; 0 for a header that doesn't. */
@@ -23,6 +24,7 @@ export function SkyBackdrop({
   collapsedHeight: number;
   /** The collapsed bar's colour. */
   barColor?: string;
+  fadeEdge?: boolean;
 }) {
   const shift = useDerivedValue(() => Math.min(Math.max(0, distance.value), Math.max(0, scrollY.value)));
   const progress = useDerivedValue(() => (distance.value > 0 ? shift.value / distance.value : 0));
@@ -40,7 +42,7 @@ export function SkyBackdrop({
           pointerEvents="none"
           style={[styles.bar, { height: collapsedHeight, backgroundColor: barColor }, barStyle]}
         >
-          <LinearGradient colors={[barColor, hexToRgba(barColor, 0)]} style={styles.edge} />
+          {fadeEdge && <LinearGradient colors={[barColor, hexToRgba(barColor, 0)]} style={styles.edge} />}
         </ReanimatedAnimated.View>
       )}
     </>

@@ -2,10 +2,8 @@
  * Home's month card: the free-to-use headline with income and carry-over under it, chips for the spent
  * share, today and bills still to pay, the Add buttons, and stepping the period. All figures are made up.
  */
-import { Text, StyleSheet } from 'react-native';
+import { Text, StyleSheet, View } from 'react-native';
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
-import { Circle } from 'react-native-svg';
-import { theme } from '@/constants/theme';
 // The allowance and the day tick read the date: fix it (22 October, 9 days left) so the figures are steady.
 beforeAll(() => {
   jest.useFakeTimers({
@@ -64,6 +62,8 @@ const byLabel = (r: ReactTestRenderer, start: string) =>
       n.props.accessibilityLabel.startsWith(start) &&
       typeof n.props.onPress === 'function'
   );
+const headline = (r: ReactTestRenderer) =>
+  r.root.find((n) => typeof n.props.onAccessibilityAction === 'function').props.accessibilityLabel;
 
 function hero(over: Partial<React.ComponentProps<typeof ThisMonthHero>> = {}) {
   const today = 'today' in over ? over.today : { spentMinor: 204_500, goalMinor: 500_000 };
@@ -117,26 +117,18 @@ describe('month card', () => {
   it('leads with what is free to use, what it is out of, and what is left today as a chip', () => {
     const r = render();
     const all = texts(r);
-    expect(all).toEqual(
-      expect.arrayContaining([
-        'Free to use',
-        '₹794',
-        'after spending and savings',
-        'Add expense',
-        'Income',
-        'Transfer',
-      ])
-    );
+    expect(all).toEqual(expect.arrayContaining(['Free to use', '₹794', 'Add expense', 'Income', 'Transfer']));
     // The money-bar legend stays scoped to this month.
-    expect(all).toEqual(expect.arrayContaining(['Spent', 'Saved', 'Free', '₹95,762', '₹99,500']));
+    expect(all).toEqual(expect.arrayContaining(['Spent', 'Saved', '₹95,762', '₹99,500']));
+    expect(all).not.toContain('Free');
     expect(
       r.root.findAll((n) => n.props.accessibilityLabel === 'Spent, ₹95,762, 49%').length
     ).toBeGreaterThan(0);
     expect(
       r.root.findAll((n) => n.props.accessibilityLabel === 'Saved, ₹99,500, 51%').length
     ).toBeGreaterThan(0);
-    // Each slice shows its share beside its amount, as a quiet figure on the right of its row.
-    expect(all).toContain('49%');
+    expect(headline(r)).toContain('after spending and savings');
+    expect(all).not.toContain('49%');
     expect(all).not.toContain('Bills left');
     expect(all).toContain('₹2,955 left');
     expect(byLabel(r, 'How this adds up')).toBeDefined();
@@ -145,16 +137,6 @@ describe('month card', () => {
     // The shares are in the bar and the tray, not a chip; the pace waits under Details.
     expect(all.some((t) => t.endsWith('% spent'))).toBe(false);
     expect(all.some((t) => t.startsWith('On pace'))).toBe(false);
-  });
-
-  it('draws the ring from the month’s money only, with no second ring for how far through the month it is', () => {
-    // 22 October is in the current month: the ring once drew a black arc for 22 of 31 days, which nothing explained.
-    const strokes = render()
-      .root.findAllByType(Circle)
-      .map((c) => c.props.stroke);
-    expect(strokes.length).toBeGreaterThan(0);
-    expect(strokes).not.toContain(theme.colors.ink);
-    expect(strokes).not.toContain(theme.colors.divider);
   });
 
   it('puts the pace, a spending forecast, under Details', () => {
@@ -202,17 +184,11 @@ describe('month card with bills still to pay', () => {
   };
 
   it('takes bills off the headline and shows them in the legend', () => {
-    const all = texts(render(base));
-    expect(all).toEqual(
-      expect.arrayContaining([
-        'Free after bills',
-        '₹40,000',
-        'after spending, savings and bills',
-        'Bills left',
-        '₹20,000',
-      ])
-    );
+    const r = render(base);
+    const all = texts(r);
+    expect(all).toEqual(expect.arrayContaining(['Free after bills', '₹40,000', 'Bills left', '₹20,000']));
     expect(all).not.toContain('Free to use');
+    expect(headline(r)).toContain('after spending, savings and bills');
   });
 
   it('opens the sum from Bills left, and closes it again', () => {
@@ -235,36 +211,34 @@ describe('month card with bills still to pay', () => {
     expect(texts(r)).not.toContain('After bills');
   });
 
-  it('puts a picked slice in the headline, and puts free back when it is picked again', () => {
+  it('keeps the balance in place as spending and savings details open and close', () => {
     const { haptics } = require('@/lib/haptics');
     haptics.tap.mockClear();
     const r = render({ dueMinor: 2_000_000 });
     expect(texts(r)).toContain('Short after bills');
     // From the legend: spent, then the same slice again.
     act(() => byLabel(r, 'Spent, ₹').props.onPress());
-    expect(texts(r)).toEqual(expect.arrayContaining(['Spent this month', '₹95,762']));
+    expect(texts(r)).toContain('₹95,762');
     expect(texts(r).some((t) => t.endsWith('of what you had to spend'))).toBe(true);
-    expect(texts(r)).not.toContain('Short after bills');
+    expect(texts(r)).toContain('Short after bills');
     act(() => byLabel(r, 'Spent, ₹').props.onPress());
     expect(texts(r)).toContain('Short after bills');
     // Another slice, from the legend.
     act(() => byLabel(r, 'Saved, ₹').props.onPress());
-    expect(texts(r)).toEqual(expect.arrayContaining(['Saved this month', '₹99,500']));
+    expect(texts(r)).toContain('₹99,500');
+    expect(texts(r).some((t) => t.startsWith('Saved this month'))).toBe(true);
     expect(haptics.tap).toHaveBeenCalledTimes(3);
-    expect(r.root.find((n) => n.props.accessibilityRole === 'image').props.accessibilityLabel).toMatch(
-      /^Where the month went/
-    );
+    expect(byLabel(r, 'Saved, ₹99,500').props.accessibilityState.selected).toBe(true);
     act(() => r.unmount());
   });
 
   it('shows what bills are still to pay when that slice is picked, and clears a pick when the month turns', () => {
     const r = render({ dueMinor: 2_000_000 });
     act(() => byLabel(r, 'Bills left, ₹').props.onPress());
-    expect(texts(r)).toEqual(
-      expect.arrayContaining(['Bills still to pay', '₹20,000', 'before the month ends'])
-    );
+    expect(texts(r)).toContain('₹20,000');
+    expect(texts(r).some((t) => t.startsWith('Bills still to pay'))).toBe(true);
     act(() => r.update(hero({ dueMinor: 2_000_000, periodKey: 'month:-1' })));
-    expect(texts(r)).not.toContain('Bills still to pay');
+    expect(texts(r).some((t) => t.startsWith('Bills still to pay'))).toBe(false);
     act(() => r.unmount());
   });
 
@@ -285,8 +259,10 @@ describe('month card with bills still to pay', () => {
   });
 
   it('is the plain Free to use card when nothing is due', () => {
-    const all = texts(render({ ...base, dueMinor: 0 }));
-    expect(all).toEqual(expect.arrayContaining(['Free to use', '₹60,000', 'after spending and savings']));
+    const r = render({ ...base, dueMinor: 0 });
+    const all = texts(r);
+    expect(all).toEqual(expect.arrayContaining(['Free to use', '₹60,000']));
+    expect(headline(r)).toContain('after spending and savings');
     expect(all.some((t) => t.includes('still to pay'))).toBe(false);
   });
 
@@ -347,14 +323,9 @@ describe('month card with savings hidden', () => {
 });
 
 describe('month card with no income', () => {
-  it('keeps its footer as tall as the populated card’s, so the caption does not sit on the card’s edge', () => {
+  it('keeps the weekly view reachable even before any income is recorded', () => {
     const r = render({ incomeMinor: 0, spentMinor: 0, savingsMinor: 0, surplusMinor: 0 });
-    const caption = r.root.findAll(
-      (n) => n.type === Text && [n.props.children].flat().join('') === 'Add income to see what is free'
-    )[0];
-    let footer = caption.parent;
-    while (footer && !StyleSheet.flatten(footer.props.style)?.borderTopWidth) footer = footer.parent;
-    expect(StyleSheet.flatten(footer!.props.style).minHeight).toBeGreaterThanOrEqual(44);
+    expect(byLabel(r, 'Last 7 days')).toBeTruthy();
   });
 
   it('asks for income instead of showing a figure', () => {
@@ -374,8 +345,9 @@ describe('month card with money carried over from earlier months', () => {
   };
 
   it('says what the figure is out of, income and what carried over together, without double counting it', () => {
-    const all = texts(render(base));
-    expect(all).toEqual(expect.arrayContaining(['Free to use', '₹80,000', 'after spending and savings']));
+    const r = render(base);
+    expect(texts(r)).toEqual(expect.arrayContaining(['Free to use', '₹80,000']));
+    expect(headline(r)).toContain('after spending and savings');
   });
 
   it('shows the carried amount as its own line in the sum', () => {
@@ -389,7 +361,7 @@ describe('month card with money carried over from earlier months', () => {
   it('carries a shortfall as a minus in the sum, and leaves the amount out of the caption', () => {
     const r = render({ ...base, carryMinor: -1_000_000, surplusMinor: 5_000_000 });
     // A carried shortfall only lowers the headline: it is not part of what the figure is "out of".
-    expect(texts(r)).toContain('after spending and savings');
+    expect(headline(r)).toContain('after spending and savings');
     act(() => byLabel(r, 'How this adds up').props.onPress());
     expect(texts(r)).toEqual(expect.arrayContaining(['Carried over', '−₹10,000']));
   });
@@ -437,8 +409,10 @@ describe('month card with savings withdrawals and carried shortfalls', () => {
   it('keeps a savings-funded balance usable when savings are hidden', () => {
     mockHideAmounts = true;
     try {
-      const all = texts(render(withdrawn));
-      expect(all).toEqual(expect.arrayContaining(['Free to use', '₹500', 'after deductions']));
+      const r = render(withdrawn);
+      const all = texts(r);
+      expect(all).toEqual(expect.arrayContaining(['Free to use', '₹500']));
+      expect(headline(r)).toContain('after deductions');
       expect(all).not.toContain('Over by');
       expect(all.join(' ')).not.toMatch(/savings/i);
     } finally {
@@ -629,18 +603,23 @@ it('keeps the week card and insights attached to the displayed period', () => {
   const r = render({ spendingTrend: { daily: [], today: '2026-10-20' }, onSeeInsights });
   const { SpendBars } = require('./SpendBars');
   expect(r.root.findAllByType(SpendBars)).toHaveLength(1);
-  act(() => byLabel(r, 'Insights — This week').props.onPress());
+  act(() => byLabel(r, 'Last 7 days').props.onPress());
+  act(() => byLabel(r, 'Insights — Last 7 days').props.onPress());
   expect(onSeeInsights).toHaveBeenLastCalledWith('month:0');
-  act(() => r.update(hero({ periodKey: 'month:-1', spendingTrend: null, onSeeInsights })));
+  act(() => r.update(hero({ periodKey: 'year:0', spendingTrend: null, onSeeInsights })));
   expect(r.root.findAllByType(SpendBars)).toHaveLength(0);
-  act(() => byLabel(r, 'See spending insights').props.onPress());
-  expect(onSeeInsights).toHaveBeenLastCalledWith('month:-1');
+  const insights = byLabel(r, 'See spending insights');
+  for (let parent = insights.parent; parent; parent = parent.parent) {
+    expect(parent.props.accessibilityElementsHidden).not.toBe(true);
+    expect(StyleSheet.flatten(parent.props.style)?.display).not.toBe('none');
+  }
+  act(() => insights.props.onPress());
+  expect(onSeeInsights).toHaveBeenLastCalledWith('year:0');
   act(() => r.unmount());
 });
 
-describe('the ring in the middle of the card', () => {
+describe('the allocation breakdown', () => {
   const { HeroLegend } = require('./HeroLegend');
-  const { MonthRing } = require('./MonthRing');
   const withScreen = (size: { width: number; fontScale: number }, fn: () => void) => {
     const spy = jest
       .spyOn(require('react-native'), 'useWindowDimensions')
@@ -652,18 +631,17 @@ describe('the ring in the middle of the card', () => {
     }
   };
 
-  it('draws the legend once, as rows under the ring', () =>
-    withScreen({ width: 412, fontScale: 1 }, () => {
+  it('lays out the three metrics in one row on a standard phone', () =>
+    withScreen({ width: 392, fontScale: 1 }, () => {
       const r = render({ dueMinor: 10_000 });
       const legends = r.root.findAllByType(HeroLegend);
       expect(legends).toHaveLength(1);
-      // Four slices (spent, saved, bills left, free), after the ring in the same column.
-      expect((legends[0].props.items as unknown[]).length).toBe(4);
-      const column = r.root.findByType(MonthRing).parent!;
-      const order = column.children
-        .filter((c) => typeof c !== 'string')
-        .map((c) => (typeof c !== 'string' && c.type === MonthRing ? 'ring' : 'legend'));
-      expect(order).toEqual(['ring', 'legend']);
+      expect((legends[0].props.items as unknown[]).length).toBe(3);
+      expect(StyleSheet.flatten(legends[0].findAllByType(View)[0].props.style)?.flexDirection).toBe('row');
+      const labels = legends[0]
+        .findAllByType(Text)
+        .filter((node) => ['Spent', 'Saved', 'Bills left'].includes(node.props.children));
+      expect(labels).toHaveLength(3);
       act(() => r.unmount());
     }));
 
@@ -676,17 +654,18 @@ describe('the ring in the middle of the card', () => {
       act(() => r.unmount());
     }));
 
-  it('centres the ring on its own line and drops the legend under it on a narrow phone or at large text', () => {
+  it('stacks the metrics on a narrow phone or at large text', () => {
     for (const size of [
-      { width: 360, fontScale: 1 },
+      { width: 359, fontScale: 1 },
       { width: 412, fontScale: 1.3 },
     ]) {
       withScreen(size, () => {
         const r = render({ dueMinor: 10_000 });
         const legends = r.root.findAllByType(HeroLegend);
         expect(legends).toHaveLength(1);
-        expect(legends[0].props.side).toBeUndefined();
-        expect((legends[0].props.items as unknown[]).length).toBe(4);
+        expect(StyleSheet.flatten(legends[0].findAllByType(View)[0].props.style)?.flexDirection).toBe(
+          'column'
+        );
         act(() => r.unmount());
       });
     }
@@ -706,11 +685,10 @@ describe('the ring in the middle of the card', () => {
       scale.mockRestore();
     }));
 
-  it('shows no legend at all, and keeps the ring centred, before there is any income', () =>
+  it('shows no allocation breakdown before there is any income', () =>
     withScreen({ width: 412, fontScale: 1 }, () => {
       const r = render({ incomeMinor: 0 });
       expect(r.root.findAllByType(HeroLegend)).toHaveLength(0);
-      expect(r.root.findAllByType(MonthRing)).toHaveLength(1);
       act(() => r.unmount());
     }));
 });
@@ -720,8 +698,6 @@ describe('month card: nothing jumps under the finger', () => {
   const indexOf = (r: ReactTestRenderer, test: (n: ReturnType<typeof order>[number]) => boolean) =>
     order(r).findIndex(test);
   const link = (n: { props: Record<string, unknown> }) => n.props.accessibilityLabel === 'How this adds up';
-  const flatStyle = (n: { props: Record<string, unknown> }) =>
-    StyleSheet.flatten(n.props.style as never) as Record<string, unknown> | undefined;
 
   it('opens the sum under the link that opens it, so the link stays where the finger is', () => {
     const r = render();
@@ -732,19 +708,17 @@ describe('month card: nothing jumps under the finger', () => {
     expect(sumAt).toBeGreaterThan(linkAt);
   });
 
-  it('keeps both links on one line in a year, the caption under them, never a link alone on a line', () => {
+  it('offers calculation details and insights in a year', () => {
     const r = render({ spendingTrend: null, onSeeInsights: jest.fn() });
     const how = indexOf(r, link);
     const insights = indexOf(r, (n) => n.props.accessibilityLabel === 'See spending insights');
-    const caption = indexOf(r, (n) => n.type === Text && flatStyle(n)?.flexBasis === '100%');
     expect(how).toBeGreaterThan(-1);
     expect(insights).toBeGreaterThan(how);
-    expect(caption).toBeGreaterThan(insights);
   });
 
-  it('leaves the caption beside the link when there is only the one link', () => {
+  it('opens weekly spending from the overview', () => {
     const r = render();
-    expect(r.root.findAll((n) => n.type === Text && flatStyle(n)?.flexBasis === '100%')).toHaveLength(0);
+    expect(byLabel(r, 'Last 7 days')).toBeTruthy();
     expect(r.root.findAll((n) => n.props.accessibilityLabel === 'See spending insights')).toHaveLength(0);
   });
 });

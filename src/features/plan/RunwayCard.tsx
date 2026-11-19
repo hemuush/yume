@@ -1,20 +1,20 @@
 import { useState } from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import Feather from '@expo/vector-icons/Feather';
+import { RunwayRibbon } from './RunwayRibbon';
 import { ForecastDetails } from './ForecastDetails';
 import { withPressed } from '@/lib/pressed';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { Text } from '@/components/Text';
 import { Glass } from '@/components/Glass';
-import { screenStyles } from '@/components/screenStyles';
-import { RunwayRibbon } from './RunwayRibbon';
+import { softTint } from '@/components/softTint';
 import { cardSurface } from '@/components/CardSurface';
 import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
 import { dayMonth, weekdayDayMonth } from '@/lib/dateLabels';
 import { DueSoon } from './planOverview';
 import { Runway } from './runway';
-import { useStacked } from '@/lib/useStacked';
 import { Kicker } from './PlanTiles';
 import { styles } from './plan.styles';
 import { noBreak } from '@/lib/keepTogether';
@@ -32,6 +32,7 @@ export function RunwayCard({
   onAddAccount,
   compact = false,
   onViewPayments,
+  onViewDay,
 }: {
   dueSoon: DueSoon;
   runway: Runway;
@@ -42,6 +43,7 @@ export function RunwayCard({
   onAddAccount?: () => void;
   compact?: boolean;
   onViewPayments?: () => void;
+  onViewDay?: (date: string) => void;
 }) {
   const [details, setDetails] = useState(false);
   const days0 = runway.days[0]?.date;
@@ -58,68 +60,95 @@ export function RunwayCard({
     note = none
       ? 'Add a bank, cash or wallet account to see your balance.'
       : `going out · ${payments}. Add a bank, cash or wallet account to see your balance.`;
-  } else if (none) {
-    figure = formatMoney(runway.startMinor);
-    note = `No payments in the next ${days} days${comingIn}`;
   } else if (runway.short) {
     figure = formatMoney(runway.startMinor);
     note = `${formatMoney(outgoingMinor)} going out · short ${formatMoney(runway.short.minor)} on ${weekdayDayMonth(runway.short.date)}${comingIn}`;
+  } else if (none) {
+    figure = formatMoney(runway.startMinor);
+    note = `No payments in the next ${days} days${comingIn}`;
   } else {
     figure = formatMoney(runway.startMinor);
-    note = `${formatMoney(outgoingMinor)} going out · ${payments}. Ends at ${formatMoney(runway.endMinor)}, lowest ${formatMoney(runway.lowMinor)} on ${dayMonth(runway.lowDate)}${comingIn}`;
+    note = `${formatMoney(outgoingMinor)} going out. Ends at ${formatMoney(runway.endMinor)}, lowest ${formatMoney(runway.lowMinor)} on ${dayMonth(runway.lowDate)}${comingIn}`;
   }
 
   if (compact) {
-    const endDate = runway.days.at(-1)?.date;
-    const verdict = none
-      ? 'Nothing due'
-      : runway.short
-        ? `${formatMoney(runway.short.minor)} more needed`
+    const short = runway.short;
+    const repeatsShortfall = short != null && short.date === days0 && runway.startMinor === -short.minor;
+    const recovery = repeatsShortfall ? runway.days.find((day) => day.afterMinor >= 0) : undefined;
+    const verdict = runway.short
+      ? `${formatMoney(runway.short.minor)} more needed`
+      : none
+        ? 'Nothing due'
         : 'Covered';
-    // One line under the verdict: when it bites, or how low it gets.
-    const verdictSub = none
-      ? `No payments in the next ${days} days`
-      : `Lowest ${formatMoney(runway.lowMinor)} ${noBreak(`on ${runway.lowDate === days0 ? 'today' : weekdayDayMonth(runway.lowDate)}`)}`;
+    const lowestIsCurrent = runway.lowDate === days0 && runway.lowMinor === runway.startMinor;
+    const verdictSub = runway.short
+      ? `First shortfall ${noBreak(runway.short.date === days0 ? 'today' : `on ${weekdayDayMonth(runway.short.date)}`)}`
+      : none
+        ? `No payments in the next ${days} days`
+        : lowestIsCurrent
+          ? null
+          : `Lowest ${formatMoney(runway.lowMinor)} ${noBreak(runway.lowDate === days0 ? 'today' : `on ${weekdayDayMonth(runway.lowDate)}`)}`;
     return (
       <>
-        <View style={[screenStyles.card, local.card]}>
+        <View style={local.card}>
+          <LinearGradient
+            pointerEvents="none"
+            style={StyleSheet.absoluteFill}
+            colors={[softTint(theme.colors.primary, 0.12), softTint(theme.colors.primary, 0)]}
+            start={{ x: 1, y: 0 }}
+            end={{ x: 0.25, y: 0.8 }}
+          />
           {hasAccounts ? (
             <>
               <View style={local.head}>
-                <View style={[local.mark, runway.short ? local.chipBad : local.chipOk]}>
-                  <Feather
-                    name={runway.short ? 'alert-circle' : 'check'}
-                    size={15}
-                    color={runway.short ? theme.colors.expenseText : theme.colors.incomeText}
-                  />
-                </View>
-                <View style={local.headCopy}>
-                  <Text style={styles.forecastFact}>{`Runway · next ${days} days`}</Text>
-                  <Text style={[local.verdict, runway.short && { color: theme.colors.expenseText }]}>
-                    {verdict}
-                  </Text>
-                  <Text style={styles.forecastFact}>{verdictSub}</Text>
-                </View>
+                <Text style={[styles.forecastFact, local.headCopy]}>{`Runway · next ${days} days`}</Text>
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel={`Forecast details. ${note}`}
                   onPress={() => setDetails(true)}
-                  hitSlop={6}
                   style={withPressed(local.info)}
                 >
-                  <Feather name="info" size={17} color={theme.colors.link} />
+                  <Text style={local.linkText}>Details</Text>
+                  <Feather name="chevron-right" size={13} color={theme.colors.link} />
                 </Pressable>
               </View>
-              {!none && runway.days.length > 1 && <RunwayRibbon runway={runway} />}
-              <View style={local.sum}>
-                <Fact label="Now" value={formatMoney(runway.startMinor)} />
-                <Fact label="Going out" value={`${none ? '' : '−'}${formatMoney(outgoingMinor)}`} />
-                <Fact label="Coming in" value={`+${formatMoney(runway.inMinor)}`} good={runway.inMinor > 0} />
-                <Fact
-                  label={endDate ? `On ${dayMonth(endDate)}` : 'Ends at'}
-                  value={formatMoney(runway.endMinor)}
-                  bad={runway.endMinor < 0}
+              <View style={local.status}>
+                <Feather
+                  name={runway.short ? 'alert-circle' : 'check'}
+                  size={15}
+                  color={runway.short ? theme.colors.expenseText : theme.colors.incomeText}
                 />
+                <View style={local.headCopy}>
+                  <Text style={[local.statusText, runway.short && { color: theme.colors.expenseText }]}>
+                    {verdict}
+                  </Text>
+                  {verdictSub && <Text style={styles.forecastFact}>{verdictSub}</Text>}
+                </View>
+              </View>
+              <RunwayRibbon runway={runway} onViewDay={onViewDay} />
+              <View style={local.balanceColumns}>
+                <View style={local.balanceColumn}>
+                  <Text style={styles.forecastFact}>
+                    {recovery
+                      ? 'Projected recovery'
+                      : repeatsShortfall
+                        ? 'Lowest projected balance'
+                        : 'Current balance'}
+                  </Text>
+                  <Text style={local.factValue}>
+                    {recovery
+                      ? dayMonth(recovery.date)
+                      : formatMoney(repeatsShortfall ? runway.lowMinor : runway.startMinor)}
+                  </Text>
+                </View>
+                <View style={[local.balanceColumn, local.projectedBalance]}>
+                  <Text style={styles.forecastFact}>
+                    Projected {dayMonth(runway.days.at(-1)?.date ?? runway.lowDate)}
+                  </Text>
+                  <Text style={[local.factValue, runway.endMinor < 0 && local.negative]}>
+                    {formatMoney(runway.endMinor)}
+                  </Text>
+                </View>
               </View>
             </>
           ) : (
@@ -217,47 +246,56 @@ export function RunwayCard({
   );
 }
 
-function Fact({ label, value, bad, good }: { label: string; value: string; bad?: boolean; good?: boolean }) {
-  // Four across leave a label such as "Coming in" a quarter of the row; on a narrow phone or at large text the
-  // four go two to a row instead of breaking inside a word.
-  const stacked = useStacked();
-  return (
-    <View style={[local.fact, stacked && local.factHalf]}>
-      <Text style={styles.forecastFact}>{label}</Text>
-      <Text
-        style={[
-          local.factValue,
-          good && { color: theme.colors.incomeText },
-          bad && { color: theme.colors.expenseText },
-        ]}
-        numberOfLines={1}
-        adjustsFontSizeToFit
-      >
-        {value}
-      </Text>
-    </View>
-  );
-}
-
 const local = themedStyles(() =>
   StyleSheet.create({
-    card: { paddingHorizontal: 14, paddingTop: 12, paddingBottom: 2, marginTop: 4, gap: 10 },
-    head: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
+    card: {
+      marginHorizontal: 16,
+      paddingHorizontal: 14,
+      paddingTop: 4,
+      paddingBottom: 2,
+      gap: 4,
+      borderRadius: 20,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.home.edge,
+      backgroundColor: theme.colors.home.surface,
+      overflow: 'hidden',
+    },
+    head: { flexDirection: 'row', alignItems: 'center', gap: 8 },
     headCopy: { flex: 1, minWidth: 0 },
-    mark: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-    // The answer in words: Fredoka at section-title size, never a hero figure.
+    status: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 7,
+      paddingBottom: 2,
+    },
+    statusText: { fontFamily: theme.font.bodyBold, fontSize: 24, color: theme.colors.incomeText },
     verdict: {
-      fontFamily: theme.font.roundedBold,
-      fontSize: theme.typeSize.section,
-      lineHeight: 21,
+      fontFamily: theme.font.bodyBold,
+      fontSize: 20,
+      lineHeight: 25,
       color: theme.colors.textPrimary,
       fontVariant: ['tabular-nums'],
     },
-    info: { width: 32, minHeight: 32, alignItems: 'center', justifyContent: 'center' },
-    // Now − out + in = the closing balance, read left to right.
-    sum: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 4, rowGap: 6 },
-    fact: { flexGrow: 1, flexBasis: 64, minWidth: 0 },
-    factHalf: { flexBasis: '45%' },
+    info: {
+      minWidth: 44,
+      minHeight: 44,
+      paddingHorizontal: 4,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 3,
+    },
+    balanceColumns: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 10,
+      paddingVertical: 7,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: theme.colors.home.edge,
+    },
+    balanceColumn: { flexGrow: 1, flexBasis: 110, minWidth: 0, gap: 2 },
+    projectedBalance: { alignItems: 'flex-end' },
+    negative: { color: theme.colors.expenseText },
     factValue: {
       fontFamily: theme.font.bodyMedium,
       fontSize: 15,
@@ -270,11 +308,7 @@ const local = themedStyles(() =>
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      borderTopWidth: StyleSheet.hairlineWidth,
-      borderTopColor: theme.colors.divider,
     },
     linkText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.link },
-    chipOk: { backgroundColor: theme.colors.incomeTint },
-    chipBad: { backgroundColor: theme.colors.expenseTint },
   })
 );

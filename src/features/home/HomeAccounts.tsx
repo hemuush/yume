@@ -3,14 +3,14 @@ import { View, Pressable, ScrollView, StyleSheet, useWindowDimensions } from 're
 import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
 import { Amount } from '@/components/Amount';
+import { CategoryGlyph } from '@/components/CategoryGlyph';
 import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
-import { accountTypeLabel } from '@/lib/account';
+import { accountTypeLabel, accountIcon, accountHue } from '@/lib/account';
 import { withPressed, withPressedTint } from '@/lib/pressed';
 import { haptics } from '@/lib/haptics';
 import { useAccent } from '@/theme/AccentContext';
 import { Section } from '@/components/Section';
-import { screenStyles as h } from '@/components/screenStyles';
 import type { Account } from '@/types';
 import { themedStyles } from '@/theme/themedStyles';
 
@@ -53,8 +53,15 @@ export function HomeAccounts({
       >
         <View style={styles.fresh}>
           <View style={styles.freshHead}>
-            <Text style={styles.freshTitle}>Your accounts</Text>
-            <Feather name="plus" size={17} color={theme.colors.textSecondary} />
+            <View style={styles.freshHeadLeft}>
+              <View style={styles.freshIconChip}>
+                <Feather name="credit-card" size={14} color={accent} />
+              </View>
+              <Text style={styles.freshTitle}>Your accounts</Text>
+            </View>
+            <View style={styles.freshAddPill}>
+              <Feather name="plus" size={14} color={theme.colors.textSecondary} />
+            </View>
           </View>
           <Text style={styles.freshBig}>A fresh start</Text>
           <Text style={styles.freshSub}>Add a bank account, cash or wallet to get started.</Text>
@@ -112,7 +119,9 @@ export function HomeAccounts({
           accessibilityLabel="Add an account"
           style={withPressed([styles.tile, styles.addTile, { width: Math.round(width * 0.72) }])}
         >
-          <Feather name="plus" size={18} color={theme.colors.textMuted} />
+          <View style={styles.addIconCircle}>
+            <Feather name="plus" size={15} color={theme.colors.textPrimary} />
+          </View>
           <Text style={styles.addText}>Add</Text>
         </Pressable>
       </ScrollView>
@@ -132,6 +141,10 @@ const AccountTile = memo(function AccountTile({
   accent: string;
   onOpen: (account: Account) => void;
 }) {
+  const icon = accountIcon(a.type, !!a.investment);
+  const hue = accountHue(a.type, accent);
+  const isOwed = a.currentBalanceMinor < 0;
+
   return (
     <Pressable
       onPress={() => {
@@ -142,14 +155,19 @@ const AccountTile = memo(function AccountTile({
       accessibilityLabel={`${a.name}, ${accountTypeLabel(a)}. Open summary`}
       style={withPressedTint(accent, [styles.tile, { width }])}
     >
-      <Text style={styles.name} numberOfLines={1}>
-        {a.name}
-      </Text>
+      <View style={styles.tileHead}>
+        <View style={styles.iconChip}>
+          <CategoryGlyph name={icon} size={13} color={hue} />
+        </View>
+        <Text style={styles.name} numberOfLines={1}>
+          {a.name}
+        </Text>
+      </View>
       <Amount
         minor={a.currentBalanceMinor}
         currency={a.currency}
         sensitive={a.type === 'savings'}
-        style={[styles.balance, a.currentBalanceMinor < 0 && styles.balanceOwed]}
+        style={[styles.balance, isOwed && styles.balanceOwed]}
         numberOfLines={1}
         adjustsFontSizeToFit
       />
@@ -159,35 +177,47 @@ const AccountTile = memo(function AccountTile({
 
 const styles = themedStyles(() =>
   StyleSheet.create({
-    // A horizontally-scrolling strip of raised tiles with gentle gaps between them.
+    // A horizontally-scrolling strip of modern cards with gentle gaps between them.
     strip: { overflow: 'visible' },
     row: { paddingHorizontal: 16, gap: 10 },
     tile: {
-      minHeight: 72,
-      paddingVertical: 10,
-      paddingHorizontal: 14,
+      minHeight: 68,
+      paddingVertical: 8,
+      paddingHorizontal: 12,
       justifyContent: 'center',
-      backgroundColor: theme.colors.surface,
+      gap: 4,
+      backgroundColor: theme.colors.home.surface,
       borderRadius: theme.radius.xl,
       borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.colors.borderSoft,
-      shadowColor: theme.colors.ink,
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.04,
-      shadowRadius: 4,
-      elevation: 1,
+      borderColor: theme.colors.home.edge,
+    },
+    tileHead: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+    },
+    iconChip: {
+      width: 22,
+      height: 22,
+      borderRadius: 7,
+      backgroundColor: theme.colors.home.control,
+      alignItems: 'center',
+      justifyContent: 'center',
     },
     name: {
+      flex: 1,
+      minWidth: 0,
       fontFamily: theme.font.bodyMedium,
-      fontSize: 11,
-      letterSpacing: 0.2,
-      color: theme.colors.textMuted,
+      fontSize: 12,
+      lineHeight: 16,
+      letterSpacing: 0.1,
+      color: theme.colors.textSecondary,
     },
     balance: {
-      marginTop: 4,
       fontFamily: theme.font.bodyBold,
-      fontSize: 16,
-      lineHeight: 21,
+      fontSize: 17,
+      lineHeight: 22,
+      letterSpacing: -0.3,
       fontVariant: ['tabular-nums'],
       color: theme.colors.textPrimary,
     },
@@ -195,22 +225,84 @@ const styles = themedStyles(() =>
     addTile: {
       alignItems: 'center',
       justifyContent: 'center',
-      gap: 6,
-      backgroundColor: theme.colors.surfaceAlt,
+      gap: 7,
+      backgroundColor: theme.colors.home.control,
       borderStyle: 'dashed',
+      borderColor: theme.colors.home.edge,
     },
-    addText: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textMuted },
+    addIconCircle: {
+      width: 28,
+      height: 28,
+      borderRadius: 14,
+      backgroundColor: theme.colors.surface,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.borderSoft,
+    },
+    addText: {
+      fontFamily: theme.font.bodyMedium,
+      fontSize: 12,
+      color: theme.colors.textSecondary,
+    },
     wrap: { marginHorizontal: 16 },
-    fresh: { ...h.card, marginHorizontal: 0, padding: 16, gap: 4 },
-    freshHead: { minHeight: 40, flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 },
-    freshTitle: { flex: 1, fontFamily: theme.font.bodyBold, fontSize: 15, color: theme.colors.textPrimary },
-    freshBig: {
-      fontFamily: theme.font.body,
-      fontSize: theme.typeSize.title,
-      lineHeight: 26,
-      letterSpacing: -0.5,
+    fresh: {
+      backgroundColor: theme.colors.home.surface,
+      borderRadius: theme.radius.xl,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.home.edge,
+      padding: 16,
+      gap: 6,
+      shadowColor: theme.colors.ink,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.04,
+      shadowRadius: 6,
+      elevation: 1,
+    },
+    freshHead: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: 6,
+    },
+    freshHeadLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+    },
+    freshIconChip: {
+      width: 26,
+      height: 26,
+      borderRadius: 8,
+      backgroundColor: theme.colors.surfaceAlt,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    freshTitle: {
+      fontFamily: theme.font.bodyBold,
+      fontSize: 15,
       color: theme.colors.textPrimary,
     },
-    freshSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
+    freshAddPill: {
+      width: 26,
+      height: 26,
+      borderRadius: 13,
+      backgroundColor: theme.colors.surfaceAlt,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    freshBig: {
+      fontFamily: theme.font.roundedBold,
+      fontSize: 19,
+      lineHeight: 24,
+      letterSpacing: -0.3,
+      color: theme.colors.textPrimary,
+    },
+    freshSub: {
+      fontFamily: theme.font.body,
+      fontSize: 13,
+      lineHeight: 18,
+      color: theme.colors.textMuted,
+    },
   })
 );

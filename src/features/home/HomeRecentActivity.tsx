@@ -4,7 +4,6 @@ import Animated from 'react-native-reanimated';
 import { Text } from '@/components/Text';
 import { EmptyState } from '@/components/EmptyState';
 import { Section } from '@/components/Section';
-import { screenStyles as h } from '@/components/screenStyles';
 import { theme } from '@/constants/theme';
 import { dayLabel } from '@/lib/date';
 import { investRole } from '@/lib/investment';
@@ -60,19 +59,26 @@ export const HomeRecentActivity = memo(function HomeRecentActivity({
     tx.type === 'transfer' &&
     (savingsIds.has(tx.accountId) || (!!tx.toAccountId && savingsIds.has(tx.toAccountId)));
   return (
-    <Section compact title="Recent activity" onSeeAll={onSeeAll} actionLabel="View all">
+    <Section
+      compact
+      title="Recent activity"
+      onSeeAll={onSeeAll}
+      actionLabel={cursor.granularity === 'year' ? 'Open Activity' : 'View all'}
+    >
       {recent.length === 0 ? (
         <EmptyState {...emptyRecentCopy(cursor)} />
       ) : (
-        <View style={styles.recent}>
+        <Animated.View layout={ROW_LAYOUT} style={styles.recent}>
           {recent.slice(0, 5).map((tx, i, rows) => (
             <Animated.View key={tx.id} entering={rowEntering(i)} layout={ROW_LAYOUT} exiting={ROW_EXIT}>
               {/* Each day is named once, above its rows; today also carries what went out. */}
               {(i === 0 || rows[i - 1].date !== tx.date) && (
-                <View style={[h.dayHead, i > 0 && h.dayHeadDivider]}>
-                  <Text style={h.dayHeadText}>{dayLabel(tx.date)}</Text>
+                <View style={[styles.dayHead, i > 0 && styles.dayHeadDivider]}>
+                  <View style={styles.dayHeadLeft}>
+                    <Text style={styles.dayHeadText}>{dayLabel(tx.date)}</Text>
+                  </View>
                   {tx.date === today && cursor.offset === 0 && todaySpendMinor > 0 && (
-                    <Text style={h.dayHeadText}>−{formatMoney(roundedMinor(todaySpendMinor))}</Text>
+                    <Text style={styles.daySpendText}>−{formatMoney(roundedMinor(todaySpendMinor))}</Text>
                   )}
                 </View>
               )}
@@ -91,7 +97,7 @@ export const HomeRecentActivity = memo(function HomeRecentActivity({
               />
             </Animated.View>
           ))}
-        </View>
+        </Animated.View>
       )}
     </Section>
   );
@@ -102,16 +108,49 @@ const styles = themedStyles(() =>
     // A raised card to match the other home sections.
     recent: {
       marginHorizontal: 16,
-      backgroundColor: theme.colors.surface,
+      backgroundColor: theme.colors.home.surface,
       borderRadius: theme.radius.xl2,
       borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.colors.borderSoft,
+      borderColor: theme.colors.home.edge,
+      paddingBottom: 4,
       overflow: 'hidden',
       shadowColor: theme.colors.ink,
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.04,
       shadowRadius: 8,
       elevation: 2,
+    },
+    dayHead: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: 14,
+      paddingTop: 12,
+      paddingBottom: 4,
+    },
+    dayHeadLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+    },
+    dayHeadDivider: {
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: theme.colors.home.edge,
+      marginTop: 4,
+    },
+    dayHeadText: {
+      fontFamily: theme.font.bodyBold,
+      fontSize: 11,
+      letterSpacing: 0.7,
+      textTransform: 'uppercase',
+      color: theme.colors.home.secondaryText,
+    },
+    daySpendText: {
+      fontFamily: theme.font.bodyBold,
+      fontSize: 11,
+      fontVariant: ['tabular-nums'],
+      letterSpacing: 0.2,
+      color: theme.colors.home.secondaryText,
     },
   })
 );

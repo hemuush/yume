@@ -120,7 +120,7 @@ const styles = themedStyles(() =>
     mid: h.mid,
     title: h.title,
     meter: { marginTop: 5, marginBottom: 3 },
-    sub: { ...h.sub, marginTop: 2, lineHeight: 18 },
+    sub: { ...h.sub, color: theme.colors.home.secondaryText, marginTop: 2, lineHeight: 18 },
     end: { flexShrink: 0, alignItems: 'flex-end', gap: 4, maxWidth: '45%' },
     value: h.amount,
     action: {

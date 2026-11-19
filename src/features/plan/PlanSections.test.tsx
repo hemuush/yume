@@ -21,6 +21,7 @@ import { BudgetJars } from './BudgetJars';
 import { DebtPath } from './DebtPath';
 import { GoalsStrip } from './PlanGoals';
 import { RunwayCard } from './RunwayCard';
+import { ForecastDetails } from './ForecastDetails';
 import { ComingUpSection } from './ComingUpSection';
 import { buildBudgetsSummary, buildLoansSummary } from './planOverview';
 import { buildRunway } from './runway';
@@ -412,46 +413,19 @@ describe('Runway card', () => {
     expect(tree.root.findAllByType(ForecastDetails)).toHaveLength(0);
   });
 
-  it.each([
-    [390, 1, 64],
-    [320, 1, '45%'],
-    [390, 2, '45%'],
-  ])(
-    'sets Now, Going out, Coming in and the end figure four across or two to a row (width %i, text %s)',
-    (width, fontScale, basis) => {
-      const spy = jest
-        .spyOn(require('react-native'), 'useWindowDimensions')
-        .mockReturnValue({ width, height: 800, fontScale, scale: 1 });
-      const runway = buildRunway(
-        10000,
-        [
-          {
-            key: 'rent',
-            title: 'Rent',
-            kind: 'bill',
-            dueDate: '2026-10-10',
-            amountMinor: 2500,
-            route: '/recurring',
-          },
-        ],
-        '2026-10-09',
-        30
-      );
-      const tree = render(<RunwayCard dueSoon={dueSoon} runway={runway} hasAccounts days={30} compact />);
-      // The figures under the line are the views that share the row (grow, no minimum width).
-      const bases = tree.root
-        .findAll((n) => typeof n.type === 'string' && n.props.style != null)
-        .map((n) => StyleSheet.flatten(n.props.style))
-        .filter(
-          (st) => st.flexGrow === 1 && st.minWidth === 0 && (st.flexBasis === 64 || st.flexBasis === '45%')
-        )
-        .map((st) => st.flexBasis);
-      expect(bases).toHaveLength(4);
-      expect(new Set(bases)).toEqual(new Set([basis]));
-      act(() => tree.unmount());
-      spy.mockRestore();
-    }
-  );
+  it('keeps the forecast verdict and balance visible and puts the cash-flow figures in details', () => {
+    const runway = buildRunway(10000, [], '2026-10-09', 30);
+    const tree = render(<RunwayCard dueSoon={dueSoon} runway={runway} hasAccounts days={30} compact />);
+    const before = tree.root.findAllByType(Text).map((text) => text.props.children);
+    expect(before).toEqual(expect.arrayContaining(['Nothing due', 'Current balance', '₹100']));
+    expect(before).not.toContain('Going out');
+    const details = tree.root.findAll(
+      (node) => node.props.accessibilityLabel?.startsWith('Forecast details.') && node.props.onPress
+    )[0];
+    act(() => details.props.onPress());
+    expect(tree.root.findByType(ForecastDetails).props.runway).toBe(runway);
+    act(() => tree.unmount());
+  });
 
   it('shows only outgoing dates in a scrollable row and preserves the selected date on refresh', () => {
     const items = [
@@ -602,10 +576,32 @@ describe('Runway card', () => {
       '2026-10-09',
       1
     );
-    const tree = render(<UpcomingDates runway={runway} />);
+    const tree = render(<UpcomingDates runway={runway} today="2026-10-09" />);
     expect(texts(tree).some((t) => t.includes('₹100'))).toBe(true);
     expect(texts(tree)).toContain('Rent');
     expect(texts(tree)).not.toContain('Salary');
+    act(() => tree.root.findByProps({ testID: 'outgoing-day-2026-10-09' }).props.onPress());
+    const income = tree.root.findAll(
+      (node) =>
+        node.props.accessibilityRole === 'radio' &&
+        typeof node.props.onPress === 'function' &&
+        node.findAllByType(Text).some((label) => label.props.children === 'Money in')
+    )[0];
+    act(() => income.props.onPress());
+    expect(tree.root.findByProps({ testID: 'income-day-2026-10-09' }).props.accessibilityLabel).not.toContain(
+      'due now or late'
+    );
+    expect(texts(tree)).toContain('Expected income');
+    const outgoing = tree.root.findAll(
+      (node) =>
+        node.props.accessibilityRole === 'radio' &&
+        typeof node.props.onPress === 'function' &&
+        node.findAllByType(Text).some((label) => label.props.children === 'Money out')
+    )[0];
+    act(() => outgoing.props.onPress());
+    expect(
+      tree.root.findByProps({ testID: 'outgoing-day-2026-10-09' }).props.accessibilityState.selected
+    ).toBe(true);
     act(() => tree.unmount());
   });
 
@@ -649,6 +645,21 @@ describe('Runway card', () => {
     // The old extras are gone: the list under the card is the detail.
     expect(tree.root.findAll((n) => n.props.accessibilityLabel === 'Forecast details')).toHaveLength(0);
     expect(tree.root.findAll((n) => n.props.accessibilityLabel === 'Open Coming up')).toHaveLength(0);
+  });
+
+  it('shows a negative spending balance even when no payments are scheduled', () => {
+    const tree = render(
+      <RunwayCard
+        compact
+        dueSoon={dueSoon}
+        runway={buildRunway(-12500, [], '2026-10-09', 14)}
+        hasAccounts
+        days={14}
+      />
+    );
+    expect(texts(tree)).toContain('₹125 more needed');
+    expect(texts(tree)).not.toContain('Nothing due');
+    act(() => tree.unmount());
   });
 
   it('keeps income in the forecast summary without claiming payment coverage', () => {

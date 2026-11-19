@@ -39,16 +39,24 @@ jest.mock('@/lib/notifications', () => ({ rebuildNotifications: async () => true
 import { seedLedger } from './seedLedger';
 import { trackDataVersion } from '@/db/dataVersion';
 import { clearReadCache } from '@/db/readCache';
-import { setDefaultCurrency, resetSettingsCache } from '@/db/settings';
+import {
+  getDailySpendingGoal,
+  getDefaultCurrency,
+  getUserName,
+  setDefaultCurrency,
+  resetSettingsCache,
+} from '@/db/settings';
 import { listAccounts, listCategories, listTransactions, searchTransactions } from '@/db/ledger';
 import { listLoans, getLoanProgress, getNextDueInstallment } from '@/db/loans';
 import { listRecurringRules } from '@/db/recurring';
 import { listCardCycles } from '@/db/cardCycles';
 import { listBudgetsForMonth } from '@/db/budgets';
 import { listSavingsGoals } from '@/db/savingsGoals';
+import { listExpectedRefunds } from '@/db/refundTracking';
 import { listPeople } from '@/db/people';
 import {
   getRangeComparison,
+  getPeriodSummary,
   getCarryInMinor,
   getTodaySpend,
   getMonthPaceInputs,
@@ -66,6 +74,8 @@ import { loadNeedsYou } from '@/features/home/needsYouData';
 import { loadReadyWraps } from '@/features/wrap/wrapWindow';
 import { buildBackupSnapshot } from '@/lib/backup';
 import { periodRange, previousPeriodRange, CURRENT_PERIOD } from '@/lib/period';
+import { toLocalIsoDate } from '@/lib/date';
+import { spendBarsStart } from '@/features/home/spendBarData';
 
 const run = process.env.PERF === '1' ? describe : describe.skip;
 
@@ -83,25 +93,38 @@ async function measure(name: string, load: () => Promise<unknown>) {
 const results: { name: string; ms: number; calls: number }[] = [];
 
 const range = periodRange(CURRENT_PERIOD);
-const homeLoad = () =>
+const homePrimaryLoad = () =>
   Promise.all([
-    listTransactions({ fromDate: range.start, toDate: range.end, limit: 6 }),
-    getRangeComparison(range, previousPeriodRange(CURRENT_PERIOD), 'month'),
+    listTransactions({ fromDate: range.start, toDate: range.end, limit: 5 }),
+    getPeriodSummary(range),
     getCarryInMinor(range.start, false),
-    listAccounts(),
-    listCategories(),
+    getDailyExpenseTotals(
+      { start: spendBarsStart(toLocalIsoDate(new Date())), end: toLocalIsoDate(new Date()) },
+      false,
+      undefined,
+      'outgoing'
+    ),
+    listAccounts(true),
+    listCategories(true),
     listLoans(),
     listRecurringRules(),
     getLoanProgress(),
+    getUserName(),
+    getDailySpendingGoal(),
+    getMonthPaceInputs(),
+    getStillToPayThisMonth(),
+    loadReadyWraps(),
+    getDefaultCurrency(),
+  ]);
+const homeLoad = async () => {
+  await homePrimaryLoad();
+  await Promise.all([
     listCardCycles(),
     listBudgetsForMonth(undefined, false),
     listSavingsGoals(),
-    getTodaySpend(undefined, false),
-    getMonthPaceInputs(),
-    getStillToPayThisMonth(),
-    loadNeedsYou(),
-    loadReadyWraps(),
+    listExpectedRefunds(),
   ]);
+};
 const activityLoad = () =>
   Promise.all([
     listTransactions({ fromDate: range.start, toDate: range.end }),
@@ -136,7 +159,8 @@ run('load performance', () => {
     // Warm once (statement compilation), then measure.
     await homeLoad();
     mockSlow.clear();
-    await measure('Home', homeLoad);
+    await measure('Home primary data', homePrimaryLoad);
+    await measure('Home with Coming up', homeLoad);
     await measure('Activity (month)', activityLoad);
     await measure('Reports (month)', reportsLoad);
     await measure('Plan', planLoad);

@@ -108,7 +108,7 @@ function RootGate() {
           void runAppMaintenance().catch((err) => console.error('App maintenance failed:', err));
         });
         // Channel setup can reject after a permission change; contain that failure on cold start.
-        void ensureAndroidChannel().catch((err) => console.error('ensureAndroidChannel failed:', err));
+        void ensureAndroidChannel().catch(() => {});
         // Drops notifications still scheduled under the pre-rename `flynse-*` ids, then rebuilds them all from
         // settings and data (about two weeks ahead, so a reinstall heals). Runs once the first screen has
         // settled: it reads plenty and its bridge calls shouldn't hold up Home's first paint.

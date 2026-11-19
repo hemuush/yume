@@ -127,7 +127,8 @@ it('leads with what is left to plan and the income link, and says when it is ove
     tree = create(<MonthlyPlanCheck input={input} currency="INR" hidden={false} />);
   });
   expect(text()).toContain('Left to plan this month');
-  expect(text()).toContain(`Income ${formatMoney(10000, 'INR')}`);
+  expect(text()).toContain('Expected income');
+  expect(text()).toContain(formatMoney(10000, 'INR'));
   expect(text()).toContain('Spending');
   expect(text()).toContain('Savings');
   await act(async () => {
@@ -147,7 +148,11 @@ it('leads with what is left to plan and the income link, and says when it is ove
 });
 
 describe('goals left out of the estimate', () => {
-  const note = () => text().match(/\d+ unfinished or overdue [^.]*\./)?.[0];
+  const note = () =>
+    tree.root
+      .findAllByType(Text)
+      .map((node) => [node.props.children].flat(Infinity).join(''))
+      .find((value) => /^\d+ unfinished or overdue /.test(value));
   const goal = (id: string) => ({
     id,
     name: id,

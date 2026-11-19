@@ -33,7 +33,6 @@ import { InvestmentPanel, NextSip } from '@/features/investments/InvestmentPanel
 import { UpdateValueSheet } from '@/features/investments/UpdateValueSheet';
 import { toLocalIsoDate } from '@/lib/date';
 import { themedStyles } from '@/theme/themedStyles';
-import { flatSection } from '@/components/screenStyles';
 
 /**
  * Read-only peek at one account: balance, in/out bars (real vs own-account transfers), net, bill, entries.
@@ -84,13 +83,21 @@ export function AccountSummarySheet({
   const { accent } = useAccent();
   const tracked = !!account?.investment;
   const [tab, setTab] = useState<'value' | 'flow' | 'latest'>(tracked ? 'value' : 'flow');
-  const [valuations, setValuations] = useState<Valuation[] | null>(null);
-  const [nextSip, setNextSip] = useState<NextSip | null>(null);
+  const [valueData, setValueData] = useState<{
+    key: string;
+    valuations: Valuation[];
+    nextSip: NextSip | null;
+  } | null>(null);
   const [valueSheet, setValueSheet] = useState<{ valuation: Valuation | null } | null>(null);
-  const [flow, setFlow] = useState<AccountFlow | null>(null);
-  const [latest, setLatest] = useState<Transaction[] | null>(null);
+  const [entryData, setEntryData] = useState<{
+    key: string;
+    flow: AccountFlow;
+    latest: Transaction[];
+  } | null>(null);
   // A credit card's bill, when it has a statement day and a due day set.
-  const [cycle, setCycle] = useState<AccountCardCycle | null>(null);
+  const [cycleData, setCycleData] = useState<{ account: Account; cycle: AccountCardCycle | null } | null>(
+    null
+  );
   // The figures (flow / latest / bill) couldn't be read — said as such rather than shown as an empty month.
   const [loadError, setLoadError] = useState(false);
   const [cycleError, setCycleError] = useState(false);
@@ -100,6 +107,13 @@ export function AccountSummarySheet({
   const accountId = account?.id;
   const valueKey = account?.investment ? `${account.investment.valuedAt}|${account.currentBalanceMinor}` : '';
   const { start, end } = periodRange(cursor);
+  const entryKey = JSON.stringify([accountId, start, end]);
+  const investmentKey = JSON.stringify([accountId, valueKey]);
+  const flow = entryData?.key === entryKey ? entryData.flow : null;
+  const latest = entryData?.key === entryKey ? entryData.latest : null;
+  const valuations = valueData?.key === investmentKey ? valueData.valuations : null;
+  const nextSip = valueData?.key === investmentKey ? valueData.nextSip : null;
+  const cycle = cycleData?.account === account ? (cycleData?.cycle ?? null) : null;
 
   // A different account starts on its own first tab; stepping the period keeps the tab you're on.
   const [tabFor, setTabFor] = useState(accountId);
@@ -107,25 +121,22 @@ export function AccountSummarySheet({
   if (tabFor !== accountId) {
     setTabFor(accountId);
     setTab(tracked ? 'value' : 'flow');
-    setCycle(null);
   }
 
   useEffect(() => {
     if (!accountId) return;
     const seq = ++loadSeq.current;
-    setFlow(null);
-    setLatest(null);
+    setEntryData(null);
     setLoadError(false);
     Promise.all([getAccountFlow(accountId, { start, end }), listTransactions({ accountId, limit: 3 })])
       .then(([fl, tx]) => {
         if (seq !== loadSeq.current) return;
-        setFlow(fl);
-        setLatest(tx);
+        setEntryData({ key: entryKey, flow: fl, latest: tx });
       })
       .catch(() => {
         if (seq === loadSeq.current) setLoadError(true);
       });
-  }, [accountId, start, end]);
+  }, [accountId, start, end, entryKey]);
 
   // The bill depends on the card's own statement and due days (and what was spent or paid since), not on the
   // period being browsed — so it reloads when those change, e.g. after the days are edited.
@@ -135,11 +146,11 @@ export function AccountSummarySheet({
     setCycleError(false);
     getCardCycle(account)
       .then((cy) => {
-        if (seq === cycleSeq.current) setCycle(cy);
+        if (seq === cycleSeq.current) setCycleData({ account, cycle: cy });
       })
       .catch(() => {
         if (seq !== cycleSeq.current) return;
-        setCycle(null);
+        setCycleData(null);
         setCycleError(true);
       });
   }, [account]);
@@ -148,8 +159,7 @@ export function AccountSummarySheet({
   const accountName = useEffectEvent((id: string) => accounts.find((a) => a.id === id)?.name);
   useEffect(() => {
     if (!accountId || !valueKey) {
-      setValuations(null);
-      setNextSip(null);
+      setValueData(null);
       return;
     }
     let cancelled = false;
@@ -157,7 +167,6 @@ export function AccountSummarySheet({
     Promise.all([listValuations(accountId), listRecurringRules()])
       .then(([vals, rules]) => {
         if (cancelled) return;
-        setValuations(vals);
         const next = rules
           .filter(
             (r) =>
@@ -167,23 +176,25 @@ export function AccountSummarySheet({
               !(r.endDate && r.endDate < today)
           )
           .sort((a, b) => a.nextRunDate.localeCompare(b.nextRunDate))[0];
-        setNextSip(
-          next
+        setValueData({
+          key: investmentKey,
+          valuations: vals,
+          nextSip: next
             ? {
                 amountMinor: next.amountMinor,
                 date: next.nextRunDate,
                 fromName: accountName(next.accountId),
               }
-            : null
-        );
+            : null,
+        });
       })
       .catch(() => {
-        if (!cancelled) setValuations([]);
+        if (!cancelled) setValueData({ key: investmentKey, valuations: [], nextSip: null });
       });
     return () => {
       cancelled = true;
     };
-  }, [accountId, valueKey]);
+  }, [accountId, valueKey, investmentKey]);
 
   if (!account) return null;
   const inv = account.investment;
@@ -221,6 +232,7 @@ export function AccountSummarySheet({
   return (
     <SheetFlow key={account.id}>
       <ModalSheet
+        ledgerStyle
         flowPage
         size="expanded"
         title="Account details"
@@ -243,6 +255,7 @@ export function AccountSummarySheet({
         }
       >
         <DraftCard
+          ledgerStyle
           hue={accountHue(account.type, accent)}
           icon={accountIcon(account.type, !!account.investment)}
           title={account.name}
@@ -264,6 +277,7 @@ export function AccountSummarySheet({
         <CardUsageBar account={account} money={money} />
         <AccountReservations account={account} onNavigate={onClose} />
         <SheetTabs
+          ledgerStyle
           options={[
             ...(inv ? [{ label: 'Value', value: 'value' as const }] : []),
             { label: periodLabel(cursor), value: 'flow' as const },
@@ -392,6 +406,7 @@ export function AccountSummarySheet({
       </ModalSheet>
       {valueSheet && inv && (
         <UpdateValueSheet
+          ledgerStyle
           backLabel="Back to account"
           visible
           account={account}
@@ -471,7 +486,7 @@ const styles = themedStyles(() =>
   StyleSheet.create({
     footerRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
     footerBtn: { flexGrow: 1, flexBasis: 140 },
-    label: EYEBROW,
+    label: { ...EYEBROW, color: theme.colors.home.secondaryText },
     sectionGap: { marginTop: 18 },
     flows: { gap: 8, marginTop: 8 },
     flowRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
@@ -485,7 +500,7 @@ const styles = themedStyles(() =>
       flex: 1,
       height: 8,
       borderRadius: theme.radius.pill,
-      backgroundColor: theme.colors.inkWash,
+      backgroundColor: theme.colors.home.control,
       overflow: 'hidden',
     },
     fill: {
@@ -540,7 +555,14 @@ const styles = themedStyles(() =>
       minWidth: 92,
       textAlign: 'right',
     },
-    latest: { ...flatSection(), marginTop: 8, marginHorizontal: -4, overflow: 'hidden' },
+    latest: {
+      marginTop: 8,
+      overflow: 'hidden',
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.home.edge,
+      borderRadius: theme.radius.lg,
+      backgroundColor: theme.colors.home.surface,
+    },
     empty: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textMuted, marginTop: 8 },
     seeAll: {
       minHeight: 48,

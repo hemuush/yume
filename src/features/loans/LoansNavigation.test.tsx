@@ -54,7 +54,7 @@ jest.mock('@/components/MovingRow', () => ({
   MovingRow: ({ children }: { children: React.ReactNode }) => children,
 }));
 
-import LoansScreen from '../../../app/loans';
+import LoansScreen from '@/features/loans/LoansWorkspace';
 import { LoanDetailModal } from './LoanDetailModal';
 import { LoansHero } from './LoansHero';
 

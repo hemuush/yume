@@ -41,7 +41,6 @@ import { TransactionsHeadline } from '@/features/transactions/TransactionsHeadli
 import { ActivitySummaryStrip } from '@/features/transactions/ActivitySummaryStrip';
 import { ModalSheet } from '@/components/ModalSheet';
 import { TransactionsSkeleton } from '@/features/transactions/TransactionsSkeleton';
-import { HomeWallpaper } from '@/features/home/HomeWallpaper';
 import { buildWeekSpendBars, buildWeeklySpendBars } from '@/features/transactions/spendChart';
 import {
   weekContaining,
@@ -51,6 +50,7 @@ import {
   periodHeading,
   filterActivity,
   chartTransactionsFor,
+  netActivitySpend,
   groupWithNotes,
   emptyPeriodTitle,
   searchDayLabel,
@@ -80,7 +80,7 @@ export default function TransactionsScreen() {
   const { height, fontScale } = useWindowDimensions();
   const tabScrollPad = useTabScrollPad();
   const { hideAmounts } = usePrivacy();
-  const { accent, secondary } = useAccent();
+  const { accent } = useAccent();
   const ink = themeInk(accent);
   const {
     transactions,
@@ -88,6 +88,7 @@ export default function TransactionsScreen() {
     categories,
     comparison,
     comparisonFailed,
+    comparisonPending,
     loadError,
     loadedPeriod,
     isArriving,
@@ -106,7 +107,7 @@ export default function TransactionsScreen() {
   const [filterCategoryIds, setFilterCategoryIds] = useState<string[]>([]);
   const [filterLabel, setFilterLabel] = useState<string | undefined>();
   const [filterAccountIds, setFilterAccountIds] = useState<string[]>([]);
-  const search = useActivitySearch();
+  const search = useActivitySearch(hideAmounts);
   const searching = search.active;
   // Stable, so effects and callbacks can list them without listing the whole `search` object.
   const { close: closeSearch, refresh: refreshSearch, remember: rememberSearch } = search;
@@ -150,7 +151,7 @@ export default function TransactionsScreen() {
     const now = new Date();
     const validMonth =
       m >= 1 && m <= 12 && (y < now.getFullYear() || (y === now.getFullYear() && m <= now.getMonth() + 1));
-    // A month on its own (Home's "View all" on a past month) opens that month; a bad one is dropped and the view
+    // A month on its own (Home's "View all") opens that month; a bad one is dropped and the view
     // stays as it is.
     if (!category && !account) {
       if (!month) return;
@@ -241,27 +242,36 @@ export default function TransactionsScreen() {
   const investmentIds = useStableSet(useMemo(() => investmentIdsOf(accounts), [accounts]));
   const openInvestments = useCallback(() => router.push('/investments'), []);
   // Under the Invest chip, value updates of the holdings in view are listed beside the money moved.
-  const [valueNotes, setValueNotes] = useState<ValueNote[]>(NO_NOTES);
+  const [valueNotes, setValueNotes] = useState<{ from: string; to: string; rows: ValueNote[] } | null>(null);
+  const [notesFailure, setNotesFailure] = useState<string | null>(null);
+  const [notesRetry, setNotesRetry] = useState(0);
   const wantsNotes = filterType === 'invest' && !searching;
   const notesFrom = viewScope === 'month' ? monthRange.fromDate : week.start;
   const notesTo = viewScope === 'month' ? monthRange.toDate : week.end;
   useEffect(() => {
     if (!wantsNotes) {
-      setValueNotes(NO_NOTES);
+      setValueNotes(null);
+      setNotesFailure(null);
       return;
     }
     let live = true;
     listValuationEvents(notesFrom, notesTo)
       .then((events) => {
-        if (live) setValueNotes(events.length === 0 ? NO_NOTES : events);
+        if (live) {
+          setValueNotes({ from: notesFrom, to: notesTo, rows: events });
+          setNotesFailure(null);
+        }
       })
       .catch(() => {
-        if (live) setValueNotes(NO_NOTES);
+        if (live) {
+          setValueNotes((prev) => (prev?.from === notesFrom && prev.to === notesTo ? prev : null));
+          setNotesFailure(`${notesFrom}:${notesTo}`);
+        }
       });
     return () => {
       live = false;
     };
-  }, [wantsNotes, notesFrom, notesTo, transactions]);
+  }, [wantsNotes, notesFrom, notesTo, notesRetry, transactions]);
   const filteredTransactions = useMemo(
     () =>
       filterActivity(
@@ -290,10 +300,12 @@ export default function TransactionsScreen() {
   const requestedHeading = periodHeading({ scope: viewScope, week, anchor, today: todayDate });
   const shownNotes = useMemo(
     () =>
-      wantsNotes
-        ? valueNotes.filter((n) => filterAccountIds.length === 0 || filterAccountIds.includes(n.accountId))
+      wantsNotes && valueNotes?.from === loadedPeriod.fromDate && valueNotes.to === loadedPeriod.toDate
+        ? valueNotes.rows.filter(
+            (n) => filterAccountIds.length === 0 || filterAccountIds.includes(n.accountId)
+          )
         : NO_NOTES,
-    [wantsNotes, valueNotes, filterAccountIds]
+    [wantsNotes, valueNotes, filterAccountIds, loadedPeriod]
   );
   const groupedDays = useMemo<{ date: string; items: Transaction[]; notes?: ValueNote[] }[]>(() => {
     const days = groupByDate(filteredTransactions);
@@ -316,17 +328,30 @@ export default function TransactionsScreen() {
   // A new period opens at its top: the list keeps its offset when its data is replaced, so picking a month from the
   // shrunk header would otherwise land mid-way down it with the Spent strip out of view.
   useScrollToTopOnChange(scrollRef, `${loadedPeriod.scope}-${loadedPeriod.fromDate}`);
-  // The chips under the chart are a filter: with categories picked, the bars and the figure show only what
-  // went on them (a subcategory counts for its parent), while the chips keep the whole period's split.
+  // Type chips organize the timeline. Account, category and label filters also scope the spending preview.
+  const hasSpendFilters = !!(filterCategoryIds.length || filterAccountIds.length || filterLabel);
   const narrowedTransactions = useMemo(() => {
-    if (filterCategoryIds.length === 0) return chartTransactions;
-    const picked = new Set(filterCategoryIds);
-    return chartTransactions.filter((t) => {
-      if (!t.categoryId) return false;
-      const parent = categoriesById.get(t.categoryId)?.parentId;
-      return picked.has(t.categoryId) || (!!parent && picked.has(parent));
-    });
-  }, [chartTransactions, filterCategoryIds, categoriesById]);
+    if (!hasSpendFilters) return chartTransactions;
+    return filterActivity(
+      chartTransactions,
+      {
+        type: 'all',
+        categoryIds: filterCategoryIds,
+        accountIds: filterAccountIds,
+        expenseLabel: filterLabel,
+      },
+      categories,
+      investmentIds
+    );
+  }, [
+    hasSpendFilters,
+    chartTransactions,
+    filterCategoryIds,
+    filterAccountIds,
+    filterLabel,
+    categories,
+    investmentIds,
+  ]);
   const allBars = useMemo(
     () =>
       loadedPeriod.scope === 'week'
@@ -432,7 +457,7 @@ export default function TransactionsScreen() {
   // part of a day, and its order would be saved over the whole day.
   const noFilter =
     !filterLabel && filterType === 'all' && filterCategoryIds.length === 0 && filterAccountIds.length === 0;
-  const canReorder = !searching && noFilter;
+  const canReorder = !searching && !periodPending && noFilter;
   const [dragging, setDragging] = useState(false);
   // Reads the period at the time of the call, so this stays the same function as the period changes: a new one
   // would make every day of the list redraw.
@@ -461,12 +486,10 @@ export default function TransactionsScreen() {
 
   const onPressBar = (key: string) => {
     haptics.tap();
-    if (selectedBar === key) {
-      setSelectedBar(null);
-      return;
-    }
     // A bar counts every entry, but the list may be filtered: only pick a bar whose day is in the list.
-    if (scrollToDay(key)) setSelectedBar(key);
+    if (!scrollToDay(key)) return false;
+    setSelectedBar(key);
+    return true;
   };
 
   const { scrollToDay, onScrollToIndexFailed } = useDayJump({
@@ -518,7 +541,7 @@ export default function TransactionsScreen() {
   // Before the first successful load only (`loadError` set falls through to the inline error banner), the
   // list area shows the skeleton so "Nothing logged this month" doesn't flash before the data arrives. The
   // header stays the same one throughout, so nothing jumps when the data lands.
-  const firstLoad = !comparison && !loadError && !comparisonFailed;
+  const firstLoad = !loadedPeriod.fromDate && !loadError;
 
   const retryLoad = () => void load({ fromDate: rangeFromDate, toDate: rangeToDate }, viewScope);
 
@@ -533,11 +556,22 @@ export default function TransactionsScreen() {
         </Appear>
       )}
 
-      {comparisonFailed && !loadError && (
+      {comparisonFailed && !loadError && !comparisonPending && (
         <Appear style={styles.errorBanner}>
-          <Text style={styles.errorTitle}>Couldn’t load this period’s totals</Text>
-          <Text style={styles.errorDetail}>Your entries are below.</Text>
+          <Text style={styles.errorTitle}>Couldn’t refresh the period comparison</Text>
+          <Text style={styles.errorDetail}>Spending and entries are still available.</Text>
           <PrimaryButton title="Try again" compact variant="secondary" onPress={retryLoad} />
+        </Appear>
+      )}
+      {wantsNotes && notesFailure === `${loadedPeriod.fromDate}:${loadedPeriod.toDate}` && (
+        <Appear style={styles.errorBanner}>
+          <Text style={styles.errorTitle}>Couldn’t load investment value updates</Text>
+          <PrimaryButton
+            title="Try again"
+            compact
+            variant="secondary"
+            onPress={() => setNotesRetry((n) => n + 1)}
+          />
         </Appear>
       )}
     </>
@@ -545,9 +579,10 @@ export default function TransactionsScreen() {
 
   // What the Spent strip and the Insights sheet both say about the period shown.
   const periodIsCurrent = today >= loadedPeriod.fromDate && today <= loadedPeriod.toDate;
-  const narrowedTo =
-    filterCategoryIds.length === 0
-      ? null
+  const narrowedTo = !hasSpendFilters
+    ? null
+    : filterAccountIds.length > 0 || filterLabel
+      ? 'matching entries'
       : filterCategoryIds.length === 1
         ? categoryName(filterCategoryIds[0])
         : `${filterCategoryIds.length} categories`;
@@ -555,9 +590,13 @@ export default function TransactionsScreen() {
     loadedPeriod.scope === 'week' && loadedPeriod.fromDate
       ? weekCompareLabel(weekContaining(parseLocalIsoDate(loadedPeriod.fromDate)), today)
       : `last ${loadedPeriod.scope}`;
+  const scopedSpend = useMemo(() => netActivitySpend(narrowedTransactions), [narrowedTransactions]);
+  const spentMinor =
+    narrowedTo || !headline || comparisonPending || comparisonFailed
+      ? scopedSpend
+      : headline.current.expenseMinor;
   return (
     <View style={styles.container}>
-      <HomeWallpaper accent={accent} secondary={secondary} plain />
       <PeriodPicker
         visible={monthPickerVisible}
         onClose={() => setMonthPickerVisible(false)}
@@ -641,7 +680,6 @@ export default function TransactionsScreen() {
             ListHeaderComponent={
               searching ? (
                 <>
-                  {banners}
                   <SearchStatus
                     query={search.trimmed}
                     minChars={SEARCH_MIN_CHARS}
@@ -660,30 +698,33 @@ export default function TransactionsScreen() {
               ) : (
                 <>
                   {banners}
-                  <ReanimatedAnimated.View style={periodSwipe.dragStyle} {...periodSwipe.panHandlers}>
-                    <ActivitySummaryStrip
-                      periodKey={`${loadedPeriod.scope}-${loadedPeriod.fromDate}`}
-                      direction={direction}
-                      spentMinor={
-                        narrowedTo
-                          ? bars.reduce((sum, bar) => (bar.state ? sum : sum + bar.totalMinor), 0)
-                          : (headline?.current.expenseMinor ?? 0)
-                      }
-                      expenseChangeMinor={expenseChangeMinor}
-                      compareLabel={compareLabel}
-                      viewScope={loadedPeriod.scope}
-                      bars={bars}
-                      current={periodIsCurrent}
-                      narrowedTo={narrowedTo}
-                      onPress={() => setInsightsVisible(true)}
-                    />
-                  </ReanimatedAnimated.View>
+                  {!!loadedPeriod.fromDate && (
+                    <ReanimatedAnimated.View style={periodSwipe.dragStyle} {...periodSwipe.panHandlers}>
+                      <ActivitySummaryStrip
+                        periodKey={`${loadedPeriod.scope}-${loadedPeriod.fromDate}`}
+                        direction={direction}
+                        spentMinor={spentMinor}
+                        expenseChangeMinor={comparisonPending || comparisonFailed ? null : expenseChangeMinor}
+                        compareLabel={compareLabel}
+                        viewScope={loadedPeriod.scope}
+                        bars={bars}
+                        current={periodIsCurrent}
+                        narrowedTo={narrowedTo}
+                        onPress={() => {
+                          haptics.tap();
+                          setInsightsVisible(true);
+                        }}
+                      />
+                    </ReanimatedAnimated.View>
+                  )}
 
                   <ActivityFilterChips
                     onOpenFilters={() => setFilterVisible(true)}
                     filterCount={filterCount}
                     filterType={filterType}
                     onFilterType={(value) => {
+                      if (value === filterType) return;
+                      haptics.tap();
                       setFilterType(value);
                       if (value === 'income' || value === 'transfer') setFilterLabel(undefined);
                       if (value === 'transfer') setFilterCategoryIds([]);
@@ -716,18 +757,21 @@ export default function TransactionsScreen() {
                       <PrimaryButton title="Clear filters" variant="secondary" onPress={clearFilters} />
                     </EmptyState>
                   )}
-                  {accounts.length > 0 && transactions.length === 0 && (
-                    <EmptyState
-                      title={emptyPeriodTitle({
-                        scope: loadedPeriod.scope,
-                        current: periodIsCurrent,
-                        title: heading.title,
-                        from: loadedPeriod.fromDate,
-                        today: todayDate,
-                      })}
-                      subtitle="Tap + to add an entry, or look at another period."
-                    />
-                  )}
+                  {!loadError &&
+                    accounts.length > 0 &&
+                    groupedDays.length === 0 &&
+                    transactions.length === 0 && (
+                      <EmptyState
+                        title={emptyPeriodTitle({
+                          scope: loadedPeriod.scope,
+                          current: periodIsCurrent,
+                          title: heading.title,
+                          from: loadedPeriod.fromDate,
+                          today: todayDate,
+                        })}
+                        subtitle="Tap + to add an entry, or look at another period."
+                      />
+                    )}
                 </>
               )
             }
@@ -766,7 +810,13 @@ export default function TransactionsScreen() {
                 stacks={stacks}
                 onReorder={canReorder ? reorderDay : undefined}
                 onDragActive={setDragging}
-                selected={!searching && loadedPeriod.scope === 'week' && selectedBar === group.date}
+                selected={
+                  !searching &&
+                  selectedBar != null &&
+                  (loadedPeriod.scope === 'week'
+                    ? selectedBar === group.date
+                    : group.date >= selectedBar && group.date <= addDaysToIsoDate(selectedBar, 6))
+                }
               />
             )}
           />
@@ -776,8 +826,10 @@ export default function TransactionsScreen() {
       {/* Over the list, which it shrinks with as it scrolls. */}
       <SkyHeader
         title="Activity"
+        expandedTitleSize={26}
         collapse={collapse}
         wallpaper
+        backdropColor={theme.colors.home.background}
         collapsedAccessory={
           searching ? undefined : (
             <Pressable
@@ -872,6 +924,7 @@ export default function TransactionsScreen() {
       )}
 
       <ModalSheet
+        ledgerStyle
         visible={insightsVisible}
         onClose={() => setInsightsVisible(false)}
         title="Insights"
@@ -884,16 +937,15 @@ export default function TransactionsScreen() {
           bare
           periodKey={`${loadedPeriod.scope}-${loadedPeriod.fromDate}`}
           direction={direction}
-          expenseMinor={headline?.current.expenseMinor ?? 0}
-          incomeMinor={headline?.current.incomeMinor ?? 0}
-          expenseChangeMinor={expenseChangeMinor}
+          expenseMinor={spentMinor}
+          incomeMinor={comparisonPending || comparisonFailed ? 0 : (headline?.current.incomeMinor ?? 0)}
+          expenseChangeMinor={comparisonPending || comparisonFailed ? null : expenseChangeMinor}
           viewScope={loadedPeriod.scope}
           compareLabel={compareLabel}
           bars={bars}
           // Picking a day answers in the list: the sheet steps aside first so the day is in view.
           onPressDay={(key) => {
-            setInsightsVisible(false);
-            onPressBar(key);
+            if (onPressBar(key)) setInsightsVisible(false);
           }}
           selectedKey={selectedBar}
           current={periodIsCurrent}

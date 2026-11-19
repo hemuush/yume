@@ -24,7 +24,6 @@ import { AmountPad } from '@/components/AmountPad';
 import { applyPadKey, PadKey } from '@/lib/padMath';
 import { SplitDonut } from './SplitDonut';
 import { ListCard, SummaryCard } from '@/components/SummaryCard';
-import { HomeWallpaper } from '@/features/home/HomeWallpaper';
 import { getSplitSession, finishSplitSession, cancelSplitSession } from './splitSession';
 import {
   DraftPart,
@@ -49,7 +48,7 @@ export function SplitScreen() {
   // The header sits over the page and shrinks as it scrolls.
   const { collapse, headerHeight, scrollHandler, scrollRef } = useCollapsingHeader();
   const { height: screenHeight } = useWindowDimensions();
-  const { accent, secondary } = useAccent();
+  const { secondary } = useAccent();
   const [session] = useState(getSplitSession);
   const [parts, setParts] = useState<DraftPart[]>(() => session?.parts ?? []);
   // The part the pad types into; never the first, which holds the rest.
@@ -177,7 +176,6 @@ export function SplitScreen() {
 
   return (
     <View style={styles.container}>
-      <HomeWallpaper accent={accent} secondary={secondary} plain />
       <ReanimatedAnimated.ScrollView
         ref={scrollRef}
         onScroll={scrollHandler}
@@ -327,6 +325,8 @@ export function SplitScreen() {
         collapse={collapse}
         summary={<HeaderSummary figure={money(totalMinor)} rest="to split" dot={theme.colors.slice.spent} />}
         title="Split payment"
+        expandedTitleSize={24}
+        backdropColor={theme.colors.home.background}
         showBack
         closeIcon
         hideUser
@@ -351,6 +351,7 @@ export function SplitScreen() {
       {/* The sheet hugs its grid and sits on the bottom edge; the grid scrolls in
           place only when a long category list needs it. */}
       <ModalSheet
+        ledgerStyle
         visible={picking !== null}
         onClose={() => setPicking(null)}
         title={picking?.mode === 'add' ? 'Add a category' : 'Change category'}
@@ -381,7 +382,7 @@ export function SplitScreen() {
 
 const styles = themedStyles(() =>
   StyleSheet.create({
-    container: { flex: 1, backgroundColor: theme.colors.background },
+    container: { flex: 1, backgroundColor: theme.colors.home.background },
     content: { paddingTop: theme.layout.screenTopGap },
     summary: { marginTop: 0, padding: 16 },
     toSplit: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },

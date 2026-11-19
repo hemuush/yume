@@ -30,6 +30,7 @@ export function AddSheets({
   return (
     <>
       <ModalSheet
+        ledgerStyle
         size="compact"
         visible={accountSheet.open}
         onClose={accountSheet.onClose}
@@ -44,9 +45,10 @@ export function AddSheets({
 
       <AddAccountModal {...addAccount} />
 
-      <AddPersonModal {...addPerson} />
+      <AddPersonModal {...addPerson} ledgerStyle />
 
       <CalendarSheet
+        ledgerStyle
         visible={calendar.visible}
         value={calendar.value}
         quickPicks

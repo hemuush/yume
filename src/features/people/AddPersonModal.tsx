@@ -14,10 +14,12 @@ export function AddPersonModal({
   visible,
   onClose,
   onCreated,
+  ledgerStyle,
 }: {
   visible: boolean;
   onClose: () => void;
   onCreated: () => void;
+  ledgerStyle?: boolean;
 }) {
   const [name, setName] = useState('');
   const [saving, setSaving] = useState(false);
@@ -44,6 +46,7 @@ export function AddPersonModal({
 
   return (
     <ModalSheet
+      ledgerStyle={ledgerStyle}
       dismissible={!saving}
       visible={visible}
       onClose={onClose}

@@ -210,8 +210,7 @@ describe('Activity filter bar', () => {
     dimensions.mockRestore();
   });
 
-  it('draws the picked type as a dark pill, like the picked Week | Month beside it', () => {
-    const { themeInk } = require('@/theme/interactionColors');
+  it('gives the picked type the same sky fill as the period control', () => {
     const { theme } = require('@/constants/theme');
     const dimensions = jest
       .spyOn(require('react-native'), 'useWindowDimensions')
@@ -225,7 +224,7 @@ describe('Activity filter bar', () => {
     };
     expect(style('Show all')).toMatchObject({
       borderRadius: theme.radius.pill,
-      backgroundColor: themeInk('#9EC5FC'),
+      backgroundColor: theme.colors.home.selected,
     });
     expect(style('Show spent').backgroundColor).not.toBe(style('Show all').backgroundColor);
     act(() => tree.unmount());

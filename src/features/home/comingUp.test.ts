@@ -61,15 +61,15 @@ const goal = (id: string, current: number, over: Partial<SavingsGoal> = {}): Sav
 const keys = (items: { key: string }[]) => items.map((i) => i.key);
 
 describe('buildComingUp ordering', () => {
-  it('puts due-today payments, then a budget over its limit, then bills due soon, then the rest', () => {
+  it('puts payments due today or soon before a budget over its limit', () => {
     const items = buildComingUp({
       upcoming: upcoming([payment('later', 20), payment('soon', 2), payment('today', 0)]),
       budgets: [budget('over', 130), budget('fine', 10)],
       goals: [goal('slow', 20000, { targetDate: inDays(40) })],
       today,
     });
-    expect(keys(items).slice(0, 4)).toEqual(['today', 'budget-over', 'soon', 'goal-slow']);
-    expect(items.map((i) => i.kind)).toEqual(['payment', 'budget', 'payment', 'goal', 'budget', 'payment']);
+    expect(keys(items).slice(0, 4)).toEqual(['today', 'soon', 'budget-over', 'goal-slow']);
+    expect(items.map((i) => i.kind)).toEqual(['payment', 'payment', 'budget', 'goal', 'budget', 'payment']);
   });
 
   it('keeps a source’s own order within the same rank', () => {

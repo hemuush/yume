@@ -1,4 +1,5 @@
 import { getDb } from './client';
+import type { AppDb } from './dbTypes';
 import {
   toLocalIsoDate,
   addDaysToIsoDate,
@@ -121,7 +122,13 @@ export interface PeriodSummary {
 export async function getPeriodSummary(range: DateRange): Promise<PeriodSummary> {
   const db = await getDb();
   const currency = await getDefaultCurrency();
+  // The amounts and the category breakdown used for privacy must describe the same ledger state.
+  return db.exclusiveAsync((connection) => readPeriodSummary(connection, range, currency), {
+    readOnly: true,
+  });
+}
 
+async function readPeriodSummary(db: AppDb, range: DateRange, currency: string): Promise<PeriodSummary> {
   const income = await db.getFirstAsync<{ total: number | null }>(
     `SELECT SUM(t.amount_minor) as total FROM transactions t
      JOIN accounts a ON a.id = t.account_id
@@ -647,23 +654,22 @@ async function recurringExpensesDue(
 }
 
 /**
- * Still owed this month, not yet spent: unpaid EMIs on non-closed borrowed loans due by month end (overdue and
- * due today count) and active recurring expenses after `today` (earlier ones already posted). Default currency.
+ * Still owed through this month: unpaid EMIs through month end, including older arrears, and active recurring
+ * expenses after `today`. Earlier recurring occurrences have already posted. Default currency.
  */
 export async function getStillToPayThisMonth(
   today: string = toIso(new Date()),
   excludeSensitive = false
 ): Promise<number> {
   const db = await getDb();
-  const monthStart = `${today.slice(0, 7)}-01`;
   const [y, m] = today.split('-').map(Number);
   const monthEnd = `${today.slice(0, 7)}-${String(new Date(y, m, 0).getDate()).padStart(2, '0')}`;
   const emis = await db.getFirstAsync<{ total: number | null }>(
     `SELECT SUM(p.emi_amount_minor) AS total FROM loan_payments p
      JOIN loans l ON l.id = p.loan_id
      WHERE p.status IN ('pending', 'overdue') AND l.status != 'closed' AND l.direction = 'borrowed'
-       AND p.due_date >= ? AND p.due_date <= ?`,
-    [monthStart, monthEnd]
+       AND p.due_date <= ?`,
+    [monthEnd]
   );
   return (emis?.total ?? 0) + (await recurringExpensesDue(today, monthEnd, excludeSensitive));
 }

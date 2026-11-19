@@ -146,4 +146,25 @@ describe('searchTransactions', () => {
     expect(await searchTransactions('zomato 150', 50, '2026-09-26')).toEqual([]);
     expect(await searchTransactions('zomato 5 jul', 50, '2026-09-26')).toEqual([]);
   });
+
+  it('keeps private entries searchable by text without matching their hidden amounts', async () => {
+    const parent = await createCategory({ name: 'Private spending', kind: 'expense', isSensitive: true });
+    const child = await createCategory({ name: 'Private child', kind: 'expense', parentId: parent.id });
+    const tx = await createTransaction({
+      type: 'expense',
+      accountId: bankId,
+      categoryId: child.id,
+      amountMinor: 73100,
+      date: '2026-09-10',
+      note: 'Private receipt',
+    });
+    expect((await searchTransactions('731')).map((row) => row.id)).toContain(tx.id);
+    expect(await searchTransactions('731', 50, '2026-09-26', true)).toEqual([]);
+    expect(
+      (await searchTransactions('Private receipt', 50, '2026-09-26', true)).map((row) => row.id)
+    ).toContain(tx.id);
+    expect((await searchTransactions('420', 50, '2026-09-26', true)).map((row) => row.amountMinor)).toContain(
+      42000
+    );
+  });
 });

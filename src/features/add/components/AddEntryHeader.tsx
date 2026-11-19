@@ -50,6 +50,7 @@ export function AddEntryHeader({ model }: Props): ReactElement {
   return (
     <SkyHeader
       title={title}
+      expandedTitleSize={24}
       showBack
       hideUser
       wallpaper
@@ -91,6 +92,7 @@ export function AddEntryHeader({ model }: Props): ReactElement {
         onChange={onTypeChange}
         disabled={!formReady || formBusy}
         onBand
+        ledgerStyle
       />
     </SkyHeader>
   );

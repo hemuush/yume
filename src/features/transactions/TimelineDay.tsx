@@ -16,7 +16,6 @@ import { formatMaskableMoney, formatMoney } from '@/lib/money';
 import { getCachedCurrency } from '@/db/settings';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import { useAccent } from '@/theme/AccentContext';
-import { softTint } from '@/components/softTint';
 import { haptics } from '@/lib/haptics';
 import { theme } from '@/constants/theme';
 import { buildDayLane, LaneLine, laneKey, type ValueNote } from './transactions.helpers';
@@ -367,17 +366,13 @@ function TimelineDayView({
       <ReanimatedAnimated.View entering={entering} style={styles.day}>
         <View style={styles.lane}>
           <View
-            style={[
-              h.dayHead,
-              selected && styles.headOn,
-              selected && { backgroundColor: softTint(accent, 0.35) },
-            ]}
+            style={[h.dayHead, selected && styles.headOn]}
             accessible
             accessibilityRole="header"
             accessibilityLabel={`${label}, ${dateLabel}${showTotal ? `, ${totalSpoken}` : ''}`}
           >
-            <Text style={h.dayHeadText}>{dateInHeading ? `${label} · ${dateLabel}` : label}</Text>
-            {showTotal && <Text style={h.dayHeadText}>{totalText}</Text>}
+            <Text style={styles.dayLabel}>{dateInHeading ? `${label} · ${dateLabel}` : label}</Text>
+            {showTotal && <Text style={styles.dayLabel}>{totalText}</Text>}
           </View>
           {shown.map((line, i) => (
             <DraggableLine

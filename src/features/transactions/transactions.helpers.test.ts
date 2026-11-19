@@ -8,6 +8,7 @@ import {
   periodHeading,
   filterActivity,
   chartTransactionsFor,
+  netActivitySpend,
   emptyPeriodTitle,
   searchDayLabel,
   entryDateLabel,
@@ -201,6 +202,16 @@ describe('chartTransactionsFor', () => {
       'uncategorised',
     ]);
   });
+});
+
+it('nets refunds across different chart buckets without counting ordinary income or transfers', () => {
+  const rows = [
+    { type: 'expense', amountMinor: 7500, date: '2026-11-03' },
+    { type: 'income', isRefund: true, amountMinor: 4500, date: '2026-11-12' },
+    { type: 'income', amountMinor: 40_000, date: '2026-11-12' },
+    { type: 'transfer', amountMinor: 10_000, date: '2026-11-12' },
+  ] as Transaction[];
+  expect(netActivitySpend(rows)).toBe(3000);
 });
 
 it('filters expenses and their refunds by the single label, excluding income notes', () => {

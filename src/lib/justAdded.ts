@@ -7,7 +7,7 @@
 export const JUST_ADDED_WINDOW_MS = 60_000;
 
 /** A place that shows rows: each glows a given entry at most once. */
-export type JustAddedSurface = 'home' | 'activity';
+export type JustAddedSurface = 'home' | 'activity' | 'homeBalance';
 
 const entries = new Map<string, { at: number; played: Set<JustAddedSurface> }>();
 let version = 0;

@@ -5,7 +5,6 @@ import Feather from '@expo/vector-icons/Feather';
 import { theme } from '@/constants/theme';
 import { usePressScale } from '@/lib/usePressScale';
 import { PeriodPicker } from '@/components/PeriodPicker';
-import { GLASS } from '@/components/Glass';
 import { PeriodCursor, periodLabel, periodRange, periodShortLabel } from '@/lib/period';
 import { themedStyles } from '@/theme/themedStyles';
 
@@ -44,11 +43,11 @@ export function MonthPill({
         accessibilityLabel={`Change period, currently ${periodLabel(cursor)}`}
         style={[styles.pill, compact && styles.pillCompact, animatedStyle]}
       >
-        {!compact && <Feather name="calendar" size={14} color={theme.colors.ink} />}
+        {!compact && <Feather name="calendar" size={14} color={theme.colors.link} />}
         <Text style={[styles.pillText, compact && styles.pillTextCompact]} numberOfLines={1}>
           {compact ? periodShortLabel(cursor) : periodLabel(cursor)}
         </Text>
-        <Feather name="chevron-down" size={14} color={theme.colors.ink} />
+        <Feather name="chevron-down" size={14} color={theme.colors.link} />
       </AnimatedPressable>
 
       <PeriodPicker
@@ -81,9 +80,9 @@ const styles = themedStyles(() =>
       minHeight: 32,
       paddingHorizontal: 12,
       borderRadius: theme.radius.pill,
-      backgroundColor: GLASS.fillStrong,
+      backgroundColor: theme.colors.home.control,
       borderWidth: 1,
-      borderColor: GLASS.edge,
+      borderColor: theme.colors.home.edge,
       maxWidth: 168,
     },
     pillText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.ink, flexShrink: 1 },

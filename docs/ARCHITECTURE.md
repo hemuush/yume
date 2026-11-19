@@ -4,6 +4,16 @@ Maintained module and behavior map, updated through the [25 October repository r
 
 ## Ownership and data flow
 
+The period picker, Activity filters and insights, entry details, account summary and account forms, and Home's Log again menu use the compact sheet treatment shared by Home and Activity. Their controls use the same light and dark surfaces and selected fills. The account summary keys flow, transactions, valuations and card-cycle data to the account being shown. The period picker only displays spending totals that match the active privacy setting.
+
+Activity uses the same warm paper and blue-slate surfaces as Home, with a sky-tinted spending summary, a fixed Filters button, a separate row for applied choices, and inset day cards. The expanded heading is 26 dp, the spending total is 25 dp, and the timeline uses 13 dp names and amounts. Text follows the device setting, and larger text can reflow without reducing touch targets. Activity shows entries as soon as the period and its account/category metadata load. While the comparison is pending or unavailable, the summary uses scoped net spending without a comparison badge. Category, account and expense-label filters narrow the spending preview. Type chips organize the timeline. Refunds reduce the figure across the selected period even when the refund and purchase fall in different chart buckets. Picking an insight bar jumps to the matching rows when they exist. Search clears results from a previous query immediately and prevents amount-only matches from exposing masked entries.
+
+Home keeps the available balance and daily estimate in place while a selected metric opens an explanation below the totals. A new expense can briefly highlight the balance and its recent entry. The current spending view covers the last seven days, and Recent activity passes the selected month to Activity. Coming up leads with imminent payments and opens the selected budget or goal directly. The balance's bill total includes older unpaid loan installments through the current month end. Home fetches only its selected period's summary, whose aggregates and category breakdown share one read-only queue slot, and gates financial content on matching privacy settings for both the period and the overall refresh. The balance and recent activity can render before optional Coming up reads finish. Those reads retain the last successful rows for the same privacy setting and offer a retry when any source fails.
+
+Home uses a warm paper surface in light mode and lighter blue-slate surfaces in dark mode. The Home palette owns the canvas, card edges, control fills and secondary text alongside the shared semantic colours. Entry shortcuts, spending breakdown and Coming up filters use distinct pressed fills, and the breakdown and filters also show persistent selection.
+
+Home leads with the available balance and period picker on a surface softly tinted by Yume's sky accent at the upper corner. Spending, savings and bills appear below as tappable metrics and stack on narrow screens or with enlarged text. Selecting a metric brings its details into focus. A text action opens the spending view for a month, and a year selection always shows the overview. Quick-entry shortcuts sit directly below the summary. Coming up keeps filters above a single list with inset separators, neutral payment dates and distinct urgency treatments. The smaller greeting collapses into a solid header, and account tiles place the icon beside the name.
+
 The [25 October app audit](FULL_APP_AUDIT_2026_10_25.md) adds a shared first-run mutation lock; atomic investment value/unit/result reads; request-scoped category snapshots; recoverable launcher-icon preference reads; and linked-part validation before split deletion. Unpaid-loan queries and schedule replacement include stored `overdue` installments, and outstanding-bill/purchase/reminder queries include defaulted loans until closed. This aligns restored status values with the loan sheet's existing payment semantics.
 
 Backup-folder adoption is post-restore metadata: failure shows a warning in Restore complete and does not prevent preference/reminder resync or turn a committed restore into a failed write. Onboarding automatically retries without a safety copy only when current entries, accounts and loans are all empty.
@@ -51,6 +61,12 @@ Onboarding keeps its bottom safe area in a margin because the keyboard controlle
 The launcher aliases kept for the reset also have matching native splash themes. The icon module persists the Android 12+ splash choice before changing aliases; MainActivity chooses the enabled alias's theme before Expo installs its compatibility splash. Stable per-icon style names and direct R.style references retain the generated assets. The base launch theme contains no fixed original icon. These changes need a new native binary; see [startup corrections](STARTUP_FIXES_2026_10_25.md) for implementation evidence and open phone checks.
 
 ## Add transaction flow
+
+Add uses the Home and Activity palette for its amount card, calculator and linked sheets. The 30dp base amount scales with the system font setting, and keypad buttons retain at least 44dp touch targets. The staged list masks sensitive amounts and hides any currency subtotal that includes them when privacy mode is on. After a partial batch save, committed rows leave the queue and the active entry stays open for editing before a retry.
+
+Add pins the amount and keypad toggle above the scrolling category list. The category grid uses up to four columns, with subcategories shown as wrapping pills directly below their parent's row. Search matches both levels. The inline group's entrance respects reduced motion. Transaction details use equal-width slots with a fixed row count for the viewport and text scale, so names and dates cannot move Split to another row. Accessibility labels retain the full values.
+
+The amount and its label share a left-aligned column, with the keypad toggle beside it. Expense and income categories sit directly on the page canvas. Category selection preserves the current keypad state and Save stays mounted when the keypad opens or closes. The keypad and subcategories use a short entrance fade. Add uses a slate canvas, a distinct calculator surface and brighter operator, selection and secondary-text colors in dark mode.
 
 The [Add-flow review](ADD_TRANSACTION_FLOW_REVIEW_2026_10_21.md) covers expenses, income, transfers, friend entries, refunds, staged saves, splits and editing. [Add](../app/add-transaction.tsx) waits for complete initial reference/link/split loading before enabling Save or Add more. Failed initial loads offer Retry; superseded or unfocused loads cannot publish late results. Split editing publishes the whole payment only after its parts have loaded successfully.
 
@@ -229,6 +245,16 @@ Tests live beside their modules, including [backup tests](../src/lib/backup.test
 Source review and desktop timing do not establish smooth scrolling, native permission behavior or accessibility on every phone. Record actual failures and validation limits rather than claiming a perfect app.
 
 ## Planning insights
+
+Plan Overview shows today’s and projected balances together, with money out and in on a secondary row. A shortfall appears with its first date. Details opens the interactive forecast chart and day details. Debt, Budgets, Goals and Investments share a summary panel with a two-column layout that stacks at larger text sizes or on narrow screens.
+
+Next payments previews one or two outgoing entries from Upcoming's privacy-scoped 30-day schedule, depending on viewport height and text scale. Needs attention appears first when there are exceptions. Its overdue total opens today’s outgoing schedule, which contains the carried-over payments. Preview rows open the same detail or payment actions as Upcoming, and View all opens the full schedule.
+
+Upcoming groups the direction switch, selected-period total and date filters in one panel, with the total as the main figure. Each direction remembers its selected date while Upcoming is open. The schedule gives each day its own group and total, and date headings and accessibility labels include the year when it differs from the current schedule year. Payment rows reflow for narrow screens or enlarged text.
+
+Money plan leads with a compact monthly balance and three supporting figures for expected income, spending and savings. The income figure opens its editor, and the info button opens the calculation sheet. Full budgets, active goals and investment holdings are visible directly on Money plan. Budget rows retain edit, delete and continuation actions, and goals retain archive, contribution and milestone flows. The portfolio row opens history, allocation and monthly SIPs. Its adjacent menu opens investment creation, valuation updates, investing and SIP setup. Savings amounts retain their privacy masking.
+
+Plan keeps its compact title and four text tabs above the scrolling content. Pull-to-refresh reloads Plan and the visible collections. Debt shows principal and the next payment in compact rows, with separate tap targets for details and payment. Monthly EMIs, remaining interest, the payoff timeline, comparison, receipt actions and closed loans stay available in Debt. Former Loans, Budgets, Savings goals and Investments routes redirect into Plan. Existing item, pay and add parameters are preserved.
 
 Settings exposes Backup & restore and Export as separate destinations. Backup is one page with direct full-backup sharing and file restore, an expandable schedule and a short saved-backup history; report export is no longer nested inside it. Export uses period controls and two labelled PDF/Excel choices, with its Create action pinned above the bottom safe area. Currency and daily-goal values in Settings move below their labels on narrow screens or with enlarged text. Restore previews, recovery copies, app-lock checks, temporary-file cleanup and report-generation rules retain their existing ownership and behavior.
 
@@ -462,3 +488,37 @@ Activity's 9 November presentation refinement retains its summary, chart and day
 The financial-typography follow-up uses [Groww's published Holdings screenshots](https://groww.in/updates/portfolios-on-groww) as a reference for value/label hierarchy. Yume retains its existing layout, surfaces, palette, icons and navigation. Existing Archivo supplies functional labels, section headings, controls and tabular financial values; Fredoka remains on the brand, greeting and screen headers. Shared row text is 14dp, shared money heroes are 32dp and the amount-entry role is 36dp. Plan, Reports and goal figures retain their smaller sizes with semibold weights and gentler letter spacing. Currency prefixes receive the figure's own typography instead of a separate miniature symbol. Number formatting, accessible settled amounts, savings masking and the existing 200% text/reflow policy remain unchanged.
 
 Plan and Reports retain their current cards, screen headers and flows while using Archivo for functional tabs, date controls, list titles and financial insights. Plan preview rows use tighter copy spacing with 14dp amounts and 16dp forecast supporting figures. Reports uses a slimmer budget track and compact insight rows; its Income/Kept summary stacks below 360dp or above 1.2 font scale, keeping negative kept values and comparison semantics unchanged. This local presentation refinement does not establish device acceptance.
+
+Plan keeps the Upcoming direction and the separate date selection for each direction in the parent tab screen. An explicit jump to a due date selects outgoing payments. Money plan uses row skeletons while its embedded budget and goal lists load. The embedded investment list shows portfolio value and gain or loss together, using the existing privacy mask.
+
+Plan creation starts from the header Add menu, including investment tracking through the account form. Money plan uses compact budget and goal captions. Debt groups active loans by direction in shared list surfaces and keeps payment actions on each loan.
+
+Money plan uses a theme-aware blue-tinted monthly summary and thin budget and goal progress bars. Goal progress bars are hidden in privacy mode. The Plan Debt summary uses the share of principal repaid for its progress bar.
+
+Money plan keeps the monthly summary as the main card and renders budgets, goals and investments as inset lists with shared dividers. Debt groups the payoff comparison with the timeline below the active loan lists.
+
+When expected income is positive and covers planned commitments, Money plan shows its allocation across spending, savings and the remainder. Savings ideas opens the simulator directly with the suggested category and cut.
+
+Plan Overview leads with the 30-day forecast verdict and current balance. Forecast details holds the cash-flow breakdown and chart. Overview lists overdue payments and over-budget exceptions, alongside refunds and the people and habit shortcuts. Upcoming holds the payment agenda, Money plan holds budgets, goals and investments, and Debt holds the loans and payoff tools.
+
+The Plan header keeps four fixed tabs on a shared tray, with a filled selected state and a two-row layout at larger text sizes or narrow widths.
+
+Plan Overview gives the runway a compact chart and previews up to two payments from the next scheduled day. Upcoming groups dates inside one agenda. Money plan uses consistent collection surfaces and omits a duplicate total for single-holding portfolios.
+
+Plan shows current and projected cash balances below the overview chart. Upcoming uses aligned amounts and text labels for payment types. Money plan labels remaining budget values and goal targets explicitly, and Debt keeps each EMI date, amount and action in separate fields.
+
+Plan Overview totals all outgoing items on the next scheduled day and links to that day in Upcoming. It also shows a four-row snapshot with links to Budgets, Goals, Investments and Debt. The forecast chart marks only negative balances red.
+
+The Overview forecast chart supports touch scrubbing and screen-reader day stepping. Its selected-day readout shows the projected balance and scheduled movement. A day with outgoing payments links directly to that date in Upcoming.
+
+Plan Overview groups its four collection summaries in a two-column grid that stacks for narrow screens or larger text. When the chart initially selects an empty day, its detailed readout appears after interaction.
+
+Plan › Upcoming has Money out and Money in schedule filters. Scheduled rules open for editing directly from their dated rows. Paused rules, rules outside the current schedule and suggestions appear beneath the agenda only when present. The old recurring route redirects into Upcoming for notifications, widgets and settings links. Running rules, paused rules, suggestions and occurrence actions use the same stores and sheets. A rule change refreshes both its list and the Plan forecast, and new rules use the Plan header Add menu.
+
+Money plan aligns goal status and target in compact rows and puts the monthly amount beside its label at standard text sizes. The monthly headline reflows on narrow screens and with larger text. A single holding leads its investment section, with portfolio controls below it.
+
+Money plan groups the allocation strip and supporting figures on a tinted inset beneath the monthly estimate. Budget and goal headings summarize limit status and reached targets. The reached count is concealed when savings amounts are hidden.
+
+Plan Debt ranks open loans within each direction by their next installment date and puts payoff tools after the active lists. The summary distinguishes principal remaining from monthly EMIs and outstanding interest.
+
+In Plan Debt, the first scheduled borrowed installment is highlighted inside its existing loan row. Its date, amount and Pay action stay together. Other installment rows use a quieter one-line date treatment.

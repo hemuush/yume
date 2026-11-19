@@ -39,8 +39,9 @@ jest.mock('react-native-safe-area-context', () => {
     SafeAreaProvider: ({ children }: { children: unknown }) => children,
   };
 });
+let mockHideAmounts = false;
 jest.mock('@/theme/PrivacyContext', () => ({
-  usePrivacy: () => ({ hideAmounts: false, toggleHideAmounts: jest.fn() }),
+  usePrivacy: () => ({ hideAmounts: mockHideAmounts, toggleHideAmounts: jest.fn() }),
   PrivacyProvider: ({ children }: { children: unknown }) => children,
 }));
 
@@ -171,6 +172,7 @@ const press = (tree: ReactTestRenderer, label: string) =>
   );
 
 beforeEach(async () => {
+  mockHideAmounts = false;
   Object.assign(mockDrawn, { accounts: 0, comingUp: 0, hero: 0, header: 0 });
   Object.assign(mockSeen, { alertCount: null, summary: null, entry: null, step: null });
   await seed();
@@ -187,6 +189,35 @@ it('shows the month card, the accounts and the latest entries', async () => {
   expect(shown.join(' ')).toContain('Tea');
   expect(mockDrawn.hero).toBeGreaterThan(0);
   expect(mockDrawn.accounts).toBeGreaterThan(0);
+});
+
+it('withholds the previous financial snapshot when privacy changes', async () => {
+  const tree = await openHome();
+  expect(texts(tree)).toContain('Recent activity');
+  let release!: () => void;
+  const pending = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const read = mockDb.getFirstAsync;
+  mockDb.getFirstAsync = async <T,>(sql: string, params?: Parameters<AsyncDb['getFirstAsync']>[1]) => {
+    await pending;
+    return read<T>(sql, params);
+  };
+  mockHideAmounts = true;
+  try {
+    act(() => {
+      tree.update(
+        <UndoToastProvider>
+          <HomeScreen />
+        </UndoToastProvider>
+      );
+    });
+    expect(texts(tree)).not.toContain('Recent activity');
+  } finally {
+    await act(async () => release());
+    mockDb.getFirstAsync = read;
+  }
+  expect(texts(tree)).toContain('Recent activity');
 });
 
 it('opens an entry from Recent activity, and closes it', async () => {

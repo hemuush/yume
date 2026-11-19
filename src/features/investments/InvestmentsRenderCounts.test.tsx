@@ -92,7 +92,8 @@ jest.mock('@/db/recurring', () => ({ listRecurringRules: () => mockRules() }));
 const mockHistory = jest.fn();
 jest.mock('@/db/investmentHistory', () => ({ listInvestmentHistory: () => mockHistory() }));
 
-import InvestmentsScreen from '../../../app/investments';
+import InvestmentsScreen from '@/features/investments/InvestmentsWorkspace';
+jest.mock('@/components/ModalSheet', () => ({ ModalSheet: () => null }));
 import { SegmentedControl } from '@/components/SegmentedControl';
 import type { Account } from '@/types';
 

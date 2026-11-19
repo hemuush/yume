@@ -8,17 +8,18 @@ import { formatMoney, formatMaskableMoney } from '@/lib/money';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import type { GoalsTotals } from './goalPlan';
 import { themedStyles } from '@/theme/themedStyles';
+import { planWorkspaceCard } from '@/features/plan/plan.styles';
 
 /**
  * First card on Savings goals, the same flat summary card as Home, Activity, Reports and Loans: total saved
  * across active goals, the share of their targets, and the monthly amount that keeps them on pace. With
  * savings amounts hidden, the figure is masked and the share, bar and pace are withheld, as on each goal row.
  */
-export function GoalsHero({ totals }: { totals: GoalsTotals }) {
+export function GoalsHero({ totals, ledgerStyle }: { totals: GoalsTotals; ledgerStyle?: boolean }) {
   const { hideAmounts } = usePrivacy();
   const goals = `${totals.goalCount} ${totals.goalCount === 1 ? 'goal' : 'goals'}`;
   return (
-    <View style={[screenStyles.card, styles.hero]}>
+    <View style={[screenStyles.card, styles.hero, ledgerStyle && planWorkspaceCard]}>
       <View style={styles.top}>
         <View style={styles.topMain}>
           <Text style={styles.label}>Saved toward goals</Text>

@@ -375,7 +375,8 @@ export async function findRecentRepeat(
 export async function searchTransactions(
   query: string,
   limit = 50,
-  today: string = toLocalIsoDate(new Date())
+  today: string = toLocalIsoDate(new Date()),
+  maskPrivateAmounts = false
 ): Promise<Transaction[]> {
   const { date, words } = parseSearchQuery(query, today);
   if (!date && words.length === 0) return [];
@@ -392,7 +393,14 @@ export async function searchTransactions(
     const like = `%${word.text.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
     const text = `t.note LIKE ? ESCAPE '\\' OR c.name LIKE ? ESCAPE '\\' OR pc.name LIKE ? ESCAPE '\\' OR a.name LIKE ? ESCAPE '\\' OR ta.name LIKE ? ESCAPE '\\'`;
     if (word.amountMinor) {
-      clauses.push(`(${text} OR t.amount_minor BETWEEN ? AND ?)`);
+      const publicAmount = maskPrivateAmounts
+        ? ` AND CASE WHEN t.type = 'transfer'
+            THEN COALESCE(a.type, 'savings') != 'savings' AND COALESCE(ta.type, 'savings') != 'savings'
+            ELSE t.category_id IS NULL OR (c.id IS NOT NULL AND COALESCE(c.is_sensitive, 0) = 0
+              AND (c.parent_id IS NULL OR (pc.id IS NOT NULL AND COALESCE(pc.is_sensitive, 0) = 0)))
+          END`
+        : '';
+      clauses.push(`(${text} OR (t.amount_minor BETWEEN ? AND ?${publicAmount}))`);
       params.push(like, like, like, like, like, word.amountMinor.min, word.amountMinor.max);
     } else {
       clauses.push(`(${text})`);

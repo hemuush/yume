@@ -44,6 +44,7 @@ interface AddBudgetProps {
   categories: Category[];
   budgetedCategoryIds?: ReadonlySet<string>;
   onClose: () => void;
+  ledgerStyle?: boolean;
   onSaved: () => void | Promise<void>;
   backLabel?: string;
 }
@@ -54,6 +55,7 @@ function BudgetForm({
   categories,
   budgetedCategoryIds,
   onClose,
+  ledgerStyle,
   onSaved,
   backLabel,
 }: AddBudgetProps) {
@@ -89,6 +91,7 @@ function BudgetForm({
   const cat = categories.find((c) => c.id === categoryId);
   return (
     <ModalSheet
+      ledgerStyle={ledgerStyle}
       dismissible={!saving}
       visible={visible}
       backLabel={backLabel}

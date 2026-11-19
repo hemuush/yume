@@ -72,8 +72,8 @@ export function monthsBetweenIsoDates(from: string, to: string): number {
  * Whole days from local midnight today to a YYYY-MM-DD date: negative if past, 0 if today.
  * Shared by every EMI/bill countdown so they all round the same way.
  */
-export function daysUntilIsoDate(isoDate: string): number {
-  const today = new Date();
+export function daysUntilIsoDate(isoDate: string, reference = new Date()): number {
+  const today = new Date(reference.getTime());
   today.setHours(0, 0, 0, 0);
   const target = parseLocalIsoDate(isoDate);
   return Math.round((target.getTime() - today.getTime()) / 86400000);

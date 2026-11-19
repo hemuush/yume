@@ -8,7 +8,6 @@ import { useAccent } from '@/theme/AccentContext';
 import { useStacked } from '@/lib/useStacked';
 import { GrowFill } from '@/components/GrowFill';
 import { themedStyles, themedValue } from '@/theme/themedStyles';
-import { flatSection } from '@/components/screenStyles';
 
 /** Compact budget/goal row; large text moves its amount below the name instead of truncating it. */
 export function PlanSummaryRow({
@@ -19,6 +18,9 @@ export function PlanSummaryRow({
   progress,
   animKey,
   color,
+  progressColor = color,
+  divider,
+  subtitleColor,
   accessibilityLabel,
   onPress,
 }: {
@@ -30,6 +32,9 @@ export function PlanSummaryRow({
   /** Which bar this is (`plan:budget-row:<id>`): it keeps what it last showed and glides to a new value. */
   animKey: string;
   color: string;
+  progressColor?: string;
+  divider?: boolean;
+  subtitleColor?: string;
   accessibilityLabel: string;
   onPress: () => void;
 }) {
@@ -40,7 +45,7 @@ export function PlanSummaryRow({
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
       onPress={onPress}
-      style={withPressedTint(accent, s.row)}
+      style={withPressedTint(accent, [s.row, divider && s.divider])}
     >
       <View style={s.icon}>
         <CategoryGlyph name={icon} size={18} color={color} />
@@ -49,13 +54,13 @@ export function PlanSummaryRow({
         <View style={[s.line, stacked && s.stacked]}>
           <View style={s.copy}>
             <Text style={s.name}>{name}</Text>
-            <Text style={s.subtitle}>{subtitle}</Text>
+            <Text style={[s.subtitle, subtitleColor && { color: subtitleColor }]}>{subtitle}</Text>
           </View>
           <Text style={[s.amount, { color }]}>{amount}</Text>
         </View>
         {progress !== undefined && (
           <View style={s.track} accessible={false}>
-            <GrowFill animKey={animKey} pct={progress} style={[s.fill, { backgroundColor: color }]} />
+            <GrowFill animKey={animKey} pct={progress} style={[s.fill, { backgroundColor: progressColor }]} />
           </View>
         )}
       </View>
@@ -81,9 +86,12 @@ export function PlanListAdd({ label, onPress }: { label: string; onPress: () => 
 }
 
 export const summaryListStyle = themedValue(() => ({
-  ...flatSection(),
-  marginHorizontal: 2,
-  paddingHorizontal: 14,
+  backgroundColor: theme.colors.home.surface,
+  borderColor: theme.colors.home.edge,
+  borderWidth: StyleSheet.hairlineWidth,
+  borderRadius: 18,
+  marginHorizontal: 16,
+  paddingHorizontal: 12,
 }));
 const s = themedStyles(() =>
   StyleSheet.create({
@@ -99,6 +107,7 @@ const s = themedStyles(() =>
     },
     addText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.link },
     row: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8, minHeight: 52 },
+    divider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.home.edge },
     icon: {
       width: 32,
       height: 32,
@@ -113,24 +122,24 @@ const s = themedStyles(() =>
     copy: { flex: 1, minWidth: 0, gap: 2 },
     name: {
       fontFamily: theme.font.bodyMedium,
-      fontSize: 15,
-      lineHeight: 20,
+      fontSize: 14,
+      lineHeight: 19,
       color: theme.colors.textPrimary,
     },
     subtitle: {
       fontFamily: theme.font.body,
       fontSize: 12,
       lineHeight: 17,
-      color: theme.colors.textSecondary,
+      color: theme.colors.home.secondaryText,
     },
     amount: {
       fontFamily: theme.font.bodyMedium,
-      fontSize: 15,
-      lineHeight: 20,
+      fontSize: 14,
+      lineHeight: 19,
       flexShrink: 1,
       fontVariant: ['tabular-nums'],
     },
-    track: { height: 4, borderRadius: 2, backgroundColor: theme.colors.surfaceAlt, overflow: 'hidden' },
+    track: { height: 4, borderRadius: 2, backgroundColor: theme.colors.home.control, overflow: 'hidden' },
     fill: { height: 4, borderRadius: 2 },
   })
 );

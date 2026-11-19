@@ -15,6 +15,7 @@ import { loanBarTone } from './loanIdentity';
 import type { DebtShare, LoanTotals } from './loanTotals';
 import type { Timeline } from './timelineLayout';
 import { themedStyles } from '@/theme/themedStyles';
+import { planWorkspaceCard } from '@/features/plan/plan.styles';
 
 interface Fact {
   label: string;
@@ -34,6 +35,7 @@ export function LoansHero({
   hues,
   timeline,
   loading,
+  ledgerStyle,
 }: {
   totals: LoanTotals;
   shares: DebtShare[];
@@ -41,11 +43,20 @@ export function LoansHero({
   /** Borrowed loans laid out from today to the last EMI; null when none has an end date. */
   timeline?: Timeline | null;
   loading?: boolean;
+  ledgerStyle?: boolean;
 }) {
   const { fontScale } = useWindowDimensions();
   if (loading) {
     return (
-      <View key="loading" style={[screenStyles.card, styles.hero]}>
+      <View
+        key="loading"
+        style={[
+          screenStyles.card,
+          styles.hero,
+          ledgerStyle && planWorkspaceCard,
+          ledgerStyle && styles.planHero,
+        ]}
+      >
         <Skeleton width={70} height={10} radius={4} />
         <Skeleton width={160} height={22} radius={6} />
         <Skeleton width={200} height={14} radius={5} />
@@ -57,10 +68,6 @@ export function LoansHero({
   const onlyLent = !owes && totals.owedToYouMinor > 0;
   const allClear = !owes && !onlyLent;
   const tone = (id: string) => loanBarTone(hues[id] ?? theme.colors.idGold);
-  // The timeline only when it covers every loan you owe on; a loan with no end date left (say, only overdue
-  // EMIs) would drop out of it, so it is left out and the split bar, which shows them all, carries the card.
-  const showLanes =
-    !!timeline && timeline.rows.length > 0 && shares.every((s) => timeline.rows.some((r) => r.id === s.id));
   const facts: Fact[] = owes
     ? [
         { label: 'EMIs a month', value: formatMoney(totals.emiPerMonthMinor) },
@@ -83,7 +90,15 @@ export function LoansHero({
   const factBasis = Math.round(84 * Math.min(2, Math.max(1, fontScale)));
 
   return (
-    <View key="hero" style={[screenStyles.card, styles.hero]}>
+    <View
+      key="hero"
+      style={[
+        screenStyles.card,
+        styles.hero,
+        ledgerStyle && planWorkspaceCard,
+        ledgerStyle && styles.planHero,
+      ]}
+    >
       {allClear ? (
         <View style={styles.clear}>
           <Kicker icon="check">Debt-free</Kicker>
@@ -96,10 +111,16 @@ export function LoansHero({
         <>
           <View style={styles.top}>
             <View style={styles.topMain}>
-              <Text style={styles.label}>{onlyLent ? 'Owed to you' : 'You owe'}</Text>
+              <Text style={styles.label}>
+                {onlyLent ? 'Owed to you' : ledgerStyle ? 'Principal remaining' : 'You owe'}
+              </Text>
               <CountUpAmount
                 minor={onlyLent ? totals.owedToYouMinor : totals.youOweMinor}
-                style={[styles.figure, onlyLent && { color: theme.colors.incomeText }]}
+                style={[
+                  styles.figure,
+                  ledgerStyle && styles.planFigure,
+                  onlyLent && { color: theme.colors.incomeText },
+                ]}
                 numberOfLines={1}
                 adjustsFontSizeToFit
               />
@@ -116,7 +137,21 @@ export function LoansHero({
             )}
           </View>
 
-          {owes && shares.length > 0 && (
+          {owes && ledgerStyle && (
+            <View
+              style={styles.repaidTrack}
+              accessibilityElementsHidden
+              importantForAccessibility="no-hide-descendants"
+            >
+              <View
+                style={[
+                  styles.repaidFill,
+                  { width: `${Math.max(0, Math.min(1, totals.repaidFraction)) * 100}%` },
+                ]}
+              />
+            </View>
+          )}
+          {owes && !ledgerStyle && shares.length > 0 && (
             <View
               style={styles.share}
               accessibilityElementsHidden
@@ -132,7 +167,7 @@ export function LoansHero({
           )}
 
           {facts.length > 0 && (
-            <View style={styles.facts}>
+            <View style={[styles.facts, ledgerStyle && styles.planFacts]}>
               {facts.map((fact) => (
                 <View key={fact.label} style={[styles.fact, { flexBasis: factBasis }]}>
                   <Text style={styles.factLabel}>{fact.label}</Text>
@@ -145,40 +180,63 @@ export function LoansHero({
             <Text style={styles.note}>A complete payoff schedule is not available for every loan.</Text>
           )}
 
-          {owes && showLanes && (
-            <View style={styles.timeline}>
-              <InsightDisclosure title="Payoff timeline">
-                <View style={styles.lanes}>
-                  {timeline!.rows.map((row) => (
-                    <View key={row.id} style={styles.lane}>
-                      <View style={styles.laneHead}>
-                        <Text style={styles.laneName}>{row.name}</Text>
-                        <Text style={styles.laneDate}>{payoffMonthShort(row.endDate)}</Text>
-                      </View>
-                      <View style={styles.laneTrack}>
-                        <GrowFill
-                          animKey={`loan-timeline:${row.id}`}
-                          pct={row.fraction * 100}
-                          style={[styles.laneFill, { backgroundColor: theme.colors.ink }]}
-                        />
-                      </View>
-                    </View>
-                  ))}
-                  <View
-                    style={styles.axis}
-                    accessibilityElementsHidden
-                    importantForAccessibility="no-hide-descendants"
-                  >
-                    <Text style={styles.axisText}>Now</Text>
-                    {timeline!.midYear !== null && <Text style={styles.axisText}>{timeline!.midYear}</Text>}
-                    <Text style={[styles.axisText, styles.axisEnd]}>Debt-free {timeline!.endYear}</Text>
-                  </View>
-                </View>
-              </InsightDisclosure>
-            </View>
-          )}
+          {owes && !ledgerStyle && <LoanPayoffTools timeline={timeline} shares={shares} />}
         </>
       )}
+    </View>
+  );
+}
+
+/** Payoff projections are useful only when every borrowed balance is represented. */
+export function LoanPayoffTools({
+  timeline,
+  shares,
+  action,
+  embedded = false,
+}: {
+  timeline?: Timeline | null;
+  shares: DebtShare[];
+  action?: React.ReactNode;
+  embedded?: boolean;
+}) {
+  const complete =
+    timeline &&
+    timeline.rows.length > 0 &&
+    shares.every((share) => timeline.rows.some((row) => row.id === share.id));
+  if (!complete && !action) return null;
+  return (
+    <View style={embedded ? [planWorkspaceCard, styles.planTools] : styles.timeline}>
+      {complete && timeline && (
+        <InsightDisclosure title="Payoff timeline">
+          <View style={styles.lanes}>
+            {timeline.rows.map((row) => (
+              <View key={row.id} style={styles.lane}>
+                <View style={styles.laneHead}>
+                  <Text style={styles.laneName}>{row.name}</Text>
+                  <Text style={styles.laneDate}>{payoffMonthShort(row.endDate)}</Text>
+                </View>
+                <View style={styles.laneTrack}>
+                  <GrowFill
+                    animKey={`loan-timeline:${row.id}`}
+                    pct={row.fraction * 100}
+                    style={[styles.laneFill, { backgroundColor: theme.colors.ink }]}
+                  />
+                </View>
+              </View>
+            ))}
+            <View
+              style={styles.axis}
+              accessibilityElementsHidden
+              importantForAccessibility="no-hide-descendants"
+            >
+              <Text style={styles.axisText}>Now</Text>
+              {timeline.midYear !== null && <Text style={styles.axisText}>{timeline.midYear}</Text>}
+              <Text style={[styles.axisText, styles.axisEnd]}>Debt-free {timeline.endYear}</Text>
+            </View>
+          </View>
+        </InsightDisclosure>
+      )}
+      {action && <View style={complete && styles.timeline}>{action}</View>}
     </View>
   );
 }
@@ -195,6 +253,22 @@ const styles = themedStyles(() =>
       gap: 12,
       overflow: 'visible',
     },
+    planHero: { marginTop: 0, paddingBottom: 12, gap: 8 },
+    planFacts: {
+      backgroundColor: theme.colors.home.control,
+      borderRadius: 12,
+      paddingHorizontal: 10,
+      paddingVertical: 8,
+    },
+    planTools: { marginTop: 12, paddingHorizontal: 12 },
+    planFigure: { fontFamily: theme.font.bodyBold, fontSize: 27, lineHeight: 33 },
+    repaidTrack: {
+      height: 4,
+      borderRadius: 2,
+      backgroundColor: theme.colors.inkHairline,
+      overflow: 'hidden',
+    },
+    repaidFill: { height: '100%', borderRadius: 2, backgroundColor: theme.colors.link },
     top: {
       flexDirection: 'row',
       flexWrap: 'wrap',

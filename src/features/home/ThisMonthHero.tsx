@@ -1,14 +1,17 @@
 import { useState } from 'react';
-import { View, Pressable } from 'react-native';
+import { View, Pressable, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
 import Feather from '@expo/vector-icons/Feather';
+import { LinearGradient } from 'expo-linear-gradient';
 import ReanimatedAnimated from 'react-native-reanimated';
 import { theme } from '@/constants/theme';
 import { formatMoney, formatMaskableMoney } from '@/lib/money';
 import { haptics } from '@/lib/haptics';
 import { ROW_LAYOUT, ROW_EXIT, PANEL_ENTER } from '@/lib/animation';
 import { CountUpAmount } from '@/components/CountUpAmount';
+import { JustAddedGlow } from '@/components/JustAddedGlow';
 import { usePrivacy } from '@/theme/PrivacyContext';
+import { useStacked } from '@/lib/useStacked';
 import { heroSlices, withoutSavings, heroPct } from './heroSlices';
 import { daysLeftInMonth, dailyAllowance } from './allowance';
 import { HeroLegend, type LegendItem } from './HeroLegend';
@@ -17,11 +20,13 @@ import { styles } from './hero.styles';
 import { useHeroTurn, type HeroContent } from './useHeroTurn';
 import { WorkingRow } from './WorkingRow';
 import { SpendBars } from './SpendBars';
-import { MonthRing, type SliceKey } from './MonthRing';
 import { HeroActions } from './HeroActions';
-import { Section } from '@/components/Section';
 import { weekBars, monthBars } from './spendBarData';
 import { withPressed } from '@/lib/pressed';
+import { softTint } from '@/components/softTint';
+import { useAccent } from '@/theme/AccentContext';
+
+type SliceKey = 'spent' | 'saved' | 'due';
 
 /**
  * Home's compact month card: available money, an inline period footer and calculation disclosure,
@@ -48,8 +53,10 @@ export function ThisMonthHero({
   recaps = [],
   spendingTrend = null,
   onSeeInsights,
+  savedExpenseIds,
 }: Omit<HeroContent, 'dueMinor' | 'carryMinor'> & {
   onSeeInsights?: (periodKey: string) => void;
+  savedExpenseIds?: string[];
   dueMinor?: number | null;
   carryMinor?: number;
   periodKey: string;
@@ -68,6 +75,8 @@ export function ThisMonthHero({
   pace?: { projectedMinor: number; byLabel: string } | null;
 }) {
   const { hideAmounts } = usePrivacy();
+  const { accent } = useAccent();
+  const stacked = useStacked();
   const { displayed, slideStyle, rhythmSlideStyle, panHandlers } = useHeroTurn({
     periodKey,
     direction,
@@ -86,6 +95,13 @@ export function ThisMonthHero({
   });
   // The sum behind "Free after bills", opened from the "still to pay" chip.
   const [showWorking, setShowWorking] = useState(false);
+  // The active view inside the unified card: This Month overview vs This Week rhythm.
+  const [showSpending, setShowSpending] = useState(false);
+  const showingWeek = showSpending && displayed.spendingTrend != null;
+  const toggleSpending = () => {
+    haptics.tap();
+    setShowSpending((visible) => !visible);
+  };
   // The slice of the month picked on the line or in the legend, tied to the period it was picked in.
   const [picked, setPicked] = useState<{ period: string; key: SliceKey } | null>(null);
   // Carry-over joins the pool like income; a carried shortfall only lowers the headline. With "hide savings"
@@ -99,33 +115,31 @@ export function ThisMonthHero({
   // balance, which also includes signed carry and money withdrawn from savings.
   const over = slices.overMinor > 0 && displayed.surplusMinor < 0;
   // With bills still to come this month, what is free is counted after them.
-  const hasDue = slices.hasIncome && !over && billsMinor > 0;
+  const hasDue = slices.hasIncome && billsMinor > 0;
   const freeMinor = displayed.surplusMinor - (hasDue ? billsMinor : 0);
-  const headLabel = over
-    ? 'Over by'
-    : hasDue
-      ? freeMinor < 0
-        ? 'Short after bills'
-        : 'Free after bills'
+  const headLabel = hasDue
+    ? freeMinor < 0
+      ? 'Short after bills'
+      : 'Free after bills'
+    : over
+      ? 'Over by'
       : 'Free to use';
-  const headMinor = over ? -displayed.surplusMinor : freeMinor;
+  const headMinor = over && !hasDue ? -displayed.surplusMinor : freeMinor;
   const headNeg = over || freeMinor < 0;
   // Keep the caption about deductions; the disclosure retains the full income/carryover sum.
   const headCaption = !slices.hasIncome
     ? 'Add income to see what is free'
-    : over
+    : over && !hasDue
       ? 'more went out than came in'
       : displayed.surplusMinor < 0 && !hasDue
         ? 'below zero'
         : `after ${hasDue ? (hideAmounts ? 'deductions and bills' : 'spending, savings and bills') : hideAmounts ? 'deductions' : 'spending and savings'}`;
 
-  // A picked slice takes over the headline (label, figure and caption) until it is picked again, or the period
-  // turns. A slice that is not on the line right now (savings while hidden, bills once paid) cannot be picked.
+  // A selected metric explains its figure without replacing the available balance.
   const sliceShown: Record<SliceKey, boolean> = {
     spent: slices.hasIncome,
     saved: slices.hasIncome && !hideAmounts && slices.saved > 0,
     due: slices.hasIncome && billsMinor > 0,
-    free: slices.hasIncome && !over && freeMinor > 0,
   };
   const focus: SliceKey | null =
     picked && picked.period === displayed.periodKey && sliceShown[picked.key] ? picked.key : null;
@@ -134,17 +148,15 @@ export function ThisMonthHero({
     focus === 'spent'
       ? {
           label: current ? 'Spent this month' : 'Spent',
-          minor: displayed.spentMinor,
           caption: `${heroPct(slices.spent)} of what you had to spend`,
         }
       : focus === 'saved'
         ? {
             label: current ? 'Saved this month' : 'Saved',
-            minor: displayed.savingsMinor,
             caption: `${heroPct(slices.saved)} of what you had to spend`,
           }
         : focus === 'due'
-          ? { label: 'Bills still to pay', minor: billsMinor, caption: 'before the month ends' }
+          ? { label: 'Bills still to pay', caption: 'through month end, including arrears' }
           : null;
   const pick = (key: SliceKey) => {
     haptics.tap();
@@ -154,10 +166,6 @@ export function ThisMonthHero({
         : { period: displayed.periodKey, key }
     );
   };
-  const shownLabel = focused?.label ?? headLabel;
-  const shownMinor = focused?.minor ?? headMinor;
-  const shownNeg = !focused && headNeg;
-  const shownCaption = focused?.caption ?? headCaption;
 
   const shownToday = displayed.today;
   const shownPace = displayed.pace;
@@ -186,7 +194,7 @@ export function ThisMonthHero({
           share: heroPct(slices.spent),
           onPress: () => pick('spent'),
           selected: focus === 'spent',
-          hint: 'Shows spending in the headline',
+          hint: 'Shows the spending share',
         },
         ...(!hideAmounts && slices.saved > 0
           ? [
@@ -198,7 +206,7 @@ export function ThisMonthHero({
                 share: heroPct(slices.saved),
                 onPress: () => pick('saved'),
                 selected: focus === 'saved',
-                hint: 'Shows savings in the headline',
+                hint: 'Shows the savings share',
               },
             ]
           : []),
@@ -213,7 +221,7 @@ export function ThisMonthHero({
                 onPress: () => {
                   // Bills left also opens the sum behind the figure; picking it again closes both.
                   pick('due');
-                  setShowWorking((v) => !v);
+                  setShowWorking((visible) => !visible);
                 },
                 expanded: showWorking,
                 selected: focus === 'due',
@@ -221,41 +229,42 @@ export function ThisMonthHero({
               },
             ]
           : []),
-        ...(!over && freeMinor > 0
-          ? [
-              {
-                key: 'free',
-                label: 'Free',
-                color: theme.colors.slice.free,
-                minor: freeMinor,
-                share: heroPct(slices.free),
-                onPress: () => pick('free'),
-                selected: focus === 'free',
-                hint: 'Shows what is free in the headline',
-              },
-            ]
-          : []),
       ];
 
-  // The ring is centred with the legend under it as rows (name, amount, share): the quiet look has no figures
-  // floating in the corners of the card.
   return (
-    <>
-      <ReanimatedAnimated.View layout={ROW_LAYOUT} style={styles.card}>
+    <ReanimatedAnimated.View layout={ROW_LAYOUT}>
+      <ReanimatedAnimated.View style={styles.card} layout={ROW_LAYOUT}>
+        <LinearGradient
+          pointerEvents="none"
+          style={StyleSheet.absoluteFill}
+          colors={[softTint(accent, 0.2), softTint(accent, 0.04), softTint(accent, 0)]}
+          locations={[0, 0.48, 0.82]}
+          start={{ x: 1, y: 0 }}
+          end={{ x: 0.28, y: 0.86 }}
+        />
         <View style={styles.bar}>
-          <Text style={styles.headLabel}>{shownLabel}</Text>
+          <Text
+            style={styles.headLabel}
+            accessibilityElementsHidden={!showingWeek}
+            importantForAccessibility={showingWeek ? 'auto' : 'no'}
+          >
+            {showingWeek ? (weekMode ? 'Last 7 days' : 'Spending by week') : headLabel}
+          </Text>
           {renderPeriod ? renderPeriod(displayed.periodKey) : period}
         </View>
 
-        <ReanimatedAnimated.View style={[styles.body, slideStyle]} {...panHandlers}>
-          <View style={styles.heroRow}>
-            <MonthRing slices={slices} hideSavings={hideAmounts} focus={focus}>
+        <View
+          style={showingWeek && styles.hidden}
+          accessibilityElementsHidden={showingWeek}
+          importantForAccessibility={showingWeek ? 'no-hide-descendants' : 'auto'}
+        >
+          <ReanimatedAnimated.View style={[styles.body, slideStyle]} {...panHandlers}>
+            <View style={styles.figure}>
+              {savedExpenseIds && <JustAddedGlow ids={savedExpenseIds} surface="homeBalance" />}
               <View
                 accessible
                 accessibilityLabel={
-                  slices.hasIncome
-                    ? `${shownLabel}, ${formatMoney(shownMinor)}, ${shownCaption}`
-                    : shownCaption
+                  slices.hasIncome ? `${headLabel}, ${formatMoney(headMinor)}, ${headCaption}` : headCaption
                 }
                 // The swipe, for a screen reader: swipe up or down on the figure to step the period.
                 accessibilityActions={[
@@ -266,143 +275,173 @@ export function ThisMonthHero({
                   if (e.nativeEvent.actionName === 'decrement') onStep(-1);
                   else if (e.nativeEvent.actionName === 'increment' && canStepForward) onStep(1);
                 }}
-                style={styles.figure}
               >
                 {slices.hasIncome ? (
                   <CountUpAmount
                     key={displayed.periodKey}
-                    minor={shownMinor}
-                    style={[styles.headValue, shownNeg && styles.headValueNeg]}
-                    numberOfLines={1}
-                    adjustsFontSizeToFit
+                    minor={headMinor}
+                    style={[styles.headValue, headNeg && styles.headValueNeg]}
+                    numberOfLines={stacked ? undefined : 1}
+                    adjustsFontSizeToFit={!stacked}
+                    minimumFontScale={0.75}
                   />
                 ) : (
                   <Text style={styles.headValue}>—</Text>
                 )}
               </View>
-            </MonthRing>
+              {perDayMinor != null ? (
+                <AllowanceTile perDayMinor={perDayMinor} daysLeft={daysLeft} />
+              ) : (
+                <Text style={styles.headCaption} accessibilityElementsHidden importantForAccessibility="no">
+                  {headCaption}
+                </Text>
+              )}
+            </View>
             {legend.length > 0 && <HeroLegend items={legend} />}
-          </View>
-
-          {perDayMinor != null && <AllowanceTile perDayMinor={perDayMinor} daysLeft={daysLeft} />}
-
-          <View style={styles.footer}>
-            {slices.hasIncome && (
-              <Pressable
-                onPress={() => {
-                  haptics.tap();
-                  setShowWorking((v) => !v);
-                }}
-                style={withPressed(styles.howLink)}
-                accessibilityRole="button"
-                accessibilityState={{ expanded: showWorking }}
-                accessibilityLabel="How this adds up"
-              >
-                <Text style={styles.howLinkText}>How it adds up</Text>
-                <Feather
-                  name={showWorking ? 'chevron-up' : 'chevron-down'}
-                  size={14}
-                  color={theme.colors.link}
-                />
-              </Pressable>
+            {focused && (
+              <ReanimatedAnimated.View key={focus} entering={PANEL_ENTER}>
+                <Text style={styles.headCaption}>
+                  {focused.label} · {focused.caption}
+                </Text>
+              </ReanimatedAnimated.View>
             )}
-            {onSeeInsights && !displayed.spendingTrend && (
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="See spending insights"
-                onPress={() => onSeeInsights(displayed.periodKey)}
-                style={withPressed(styles.insightsLink)}
-              >
-                <Text style={styles.insightsText}>See insights</Text>
-                <Feather name="arrow-up-right" size={14} color={theme.colors.link} />
-              </Pressable>
-            )}
-            {/* Beside the link when it is alone, on its own line under the two links when there are both, so the
-                second link is never left by itself on a line of its own. */}
-            <Text
-              style={[
-                styles.headCaption,
-                onSeeInsights && !displayed.spendingTrend && styles.headCaptionFull,
-              ]}
-              accessibilityElementsHidden
-              importantForAccessibility="no-hide-descendants"
-            >
-              {shownCaption}
-            </Text>
-          </View>
 
-          {/* Under the link that opens it, so the link stays where the finger is. */}
-          {slices.hasIncome && showWorking && (
-            <ReanimatedAnimated.View entering={PANEL_ENTER} exiting={ROW_EXIT} style={styles.working}>
-              <WorkingRow label="Income" value={formatMoney(displayed.incomeMinor)} />
-              {displayed.carryMinor !== 0 && (
-                <WorkingRow
-                  label="Carried over"
-                  value={`${displayed.carryMinor < 0 ? '−' : '+'}${formatMoney(Math.abs(displayed.carryMinor))}`}
-                />
-              )}
-              <WorkingRow label="Spent" value={`−${formatMoney(displayed.spentMinor)}`} />
-              <WorkingRow
-                label="Set aside"
-                value={
-                  hideAmounts
-                    ? `−${formatMaskableMoney(0, { masked: true })}`
-                    : `${displayed.savingsMinor < 0 ? '+' : '−'}${formatMoney(Math.abs(displayed.savingsMinor))}`
-                }
-              />
-              <WorkingRow label="Free to use" value={formatMoney(displayed.surplusMinor)} total />
-              {hasDue && (
-                <>
-                  <WorkingRow label="Still to pay" value={`−${formatMoney(billsMinor)}`} due />
-                  <WorkingRow label="After bills" value={formatMoney(freeMinor)} total />
-                </>
-              )}
-              {shownPace && (
-                <WorkingRow
-                  label={`On pace by ${shownPace.byLabel}`}
-                  value={`about ${formatMoney(Math.round(shownPace.projectedMinor / 10000) * 10000)}`}
-                />
-              )}
-              {recaps.map((recap) => (
+            <View style={styles.footer}>
+              {slices.hasIncome && (
                 <Pressable
-                  key={recap.key}
-                  onPress={recap.onPress}
+                  onPress={() => {
+                    haptics.tap();
+                    setShowWorking((v) => !v);
+                  }}
+                  style={withPressed(styles.howLink)}
                   accessibilityRole="button"
-                  accessibilityLabel={`View ${recap.label} recap`}
-                  style={withPressed(styles.link)}
+                  accessibilityState={{ expanded: showWorking }}
+                  accessibilityLabel="How this adds up"
                 >
-                  <Text style={styles.linkText}>View {recap.label} recap →</Text>
+                  <Text style={styles.howLinkText}>How it adds up</Text>
+                  <Feather
+                    name={showWorking ? 'chevron-up' : 'chevron-down'}
+                    size={14}
+                    color={theme.colors.link}
+                  />
                 </Pressable>
-              ))}
-            </ReanimatedAnimated.View>
-          )}
-        </ReanimatedAnimated.View>
-      </ReanimatedAnimated.View>
-      <View style={styles.actions}>
-        <HeroActions />
-      </View>
-      {/* The week’s spending has its own card, so the figure above keeps the summary card to itself. */}
-      {displayed.spendingTrend && (
-        <Section
-          compact
-          title={weekMode ? 'This week' : 'Spending by week'}
-          // A past month names no total here: the bars count money out before refunds, so it could
-          // disagree with the card's net Spent figure above.
-          subtitle={weekMode ? `${formatMoney(trendTotalMinor)} spent in 7 days` : undefined}
-          onSeeAll={onSeeInsights ? () => onSeeInsights(displayed.periodKey) : undefined}
-          actionLabel="Insights"
-        >
-          <ReanimatedAnimated.View style={[styles.rhythm, rhythmSlideStyle]}>
-            <SpendBars
-              daily={displayed.spendingTrend.daily}
-              today={displayed.spendingTrend.today}
-              periodMode={displayed.spendingTrend.mode}
-              goalMinor={shownToday?.goalMinor ?? null}
-              todaySpentMinor={shownToday?.spentMinor ?? null}
-            />
+              )}
+              {displayed.spendingTrend && (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={weekMode ? 'Last 7 days' : 'By week'}
+                  onPress={toggleSpending}
+                  style={withPressed(styles.insightsLink)}
+                >
+                  <Feather name="bar-chart-2" size={14} color={theme.colors.link} />
+                  <Text style={styles.insightsText}>{weekMode ? 'Last 7 days' : 'By week'}</Text>
+                </Pressable>
+              )}
+              {onSeeInsights && !displayed.spendingTrend && (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="See spending insights"
+                  onPress={() => onSeeInsights(displayed.periodKey)}
+                  style={withPressed(styles.insightsLink)}
+                >
+                  <Text style={styles.insightsText}>See insights</Text>
+                  <Feather name="arrow-up-right" size={14} color={theme.colors.link} />
+                </Pressable>
+              )}
+            </View>
+
+            {/* Under the link that opens it, so the link stays where the finger is. */}
+            {slices.hasIncome && showWorking && (
+              <ReanimatedAnimated.View entering={PANEL_ENTER} exiting={ROW_EXIT} style={styles.working}>
+                <WorkingRow label="Income" value={formatMoney(displayed.incomeMinor)} />
+                {displayed.carryMinor !== 0 && (
+                  <WorkingRow
+                    label="Carried over"
+                    value={`${displayed.carryMinor < 0 ? '−' : '+'}${formatMoney(Math.abs(displayed.carryMinor))}`}
+                  />
+                )}
+                <WorkingRow label="Spent" value={`−${formatMoney(displayed.spentMinor)}`} />
+                <WorkingRow
+                  label="Set aside"
+                  value={
+                    hideAmounts
+                      ? `−${formatMaskableMoney(0, { masked: true })}`
+                      : `${displayed.savingsMinor < 0 ? '+' : '−'}${formatMoney(Math.abs(displayed.savingsMinor))}`
+                  }
+                />
+                <WorkingRow label="Free to use" value={formatMoney(displayed.surplusMinor)} total />
+                {hasDue && (
+                  <>
+                    <WorkingRow label="Still to pay" value={`−${formatMoney(billsMinor)}`} due />
+                    <WorkingRow label="After bills" value={formatMoney(freeMinor)} total />
+                  </>
+                )}
+                {shownPace && (
+                  <WorkingRow
+                    label={`On pace by ${shownPace.byLabel}`}
+                    value={`about ${formatMoney(Math.round(shownPace.projectedMinor / 10000) * 10000)}`}
+                  />
+                )}
+                {recaps.map((recap) => (
+                  <Pressable
+                    key={recap.key}
+                    onPress={recap.onPress}
+                    accessibilityRole="button"
+                    accessibilityLabel={`View ${recap.label} recap`}
+                    style={withPressed(styles.link)}
+                  >
+                    <Text style={styles.linkText}>View {recap.label} recap →</Text>
+                  </Pressable>
+                ))}
+              </ReanimatedAnimated.View>
+            )}
           </ReanimatedAnimated.View>
-        </Section>
-      )}
-    </>
+        </View>
+
+        {/* WEEK VIEW CONTENT */}
+        {displayed.spendingTrend && (
+          <View
+            style={!showingWeek && styles.hidden}
+            accessibilityElementsHidden={!showingWeek}
+            importantForAccessibility={showingWeek ? 'auto' : 'no-hide-descendants'}
+          >
+            <ReanimatedAnimated.View style={rhythmSlideStyle} {...panHandlers}>
+              {weekMode && (
+                <Text style={styles.weekTitle}>{formatMoney(trendTotalMinor)} spent in 7 days</Text>
+              )}
+              <SpendBars
+                daily={displayed.spendingTrend.daily}
+                today={displayed.spendingTrend.today}
+                periodMode={displayed.spendingTrend.mode}
+                goalMinor={shownToday?.goalMinor ?? null}
+                todaySpentMinor={shownToday?.spentMinor ?? null}
+              />
+            </ReanimatedAnimated.View>
+            <View style={styles.footer}>
+              <Pressable
+                accessibilityRole="button"
+                onPress={toggleSpending}
+                style={withPressed(styles.howLink)}
+              >
+                <Feather name="arrow-left" size={14} color={theme.colors.link} />
+                <Text style={styles.howLinkText}>Overview</Text>
+              </Pressable>
+              {onSeeInsights && (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={weekMode ? 'Insights — Last 7 days' : 'Insights — Spending by week'}
+                  onPress={() => onSeeInsights(displayed.periodKey)}
+                  style={withPressed(styles.insightsLink)}
+                >
+                  <Text style={styles.insightsText}>Insights</Text>
+                  <Feather name="arrow-up-right" size={14} color={theme.colors.link} />
+                </Pressable>
+              )}
+            </View>
+          </View>
+        )}
+      </ReanimatedAnimated.View>
+      <HeroActions />
+    </ReanimatedAnimated.View>
   );
 }

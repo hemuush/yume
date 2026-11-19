@@ -23,7 +23,6 @@ import { MonthPill } from './MonthPill';
 import { WrapButton } from './WrapButton';
 import type { ReadyWrap } from '@/features/wrap/wrapWindow';
 import { MOTION } from '@/lib/animation';
-import { wallpaperTop } from './HomeWallpaper';
 import { headerIsCollapsed } from './headerMotion';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 import { withPressed } from '@/lib/pressed';
@@ -134,7 +133,8 @@ export function HomeHeader({
         scrollY={scrollY}
         distance={distance}
         collapsedHeight={bandHeight > 0 && rowBottom > 0 ? rowBottom + COLLAPSED_BOTTOM_PAD : 0}
-        barColor={wallpaperTop()}
+        barColor={theme.colors.home.background}
+        fadeEdge={false}
       />
       <View
         style={[styles.band, { paddingTop: contentTop }]}
@@ -221,9 +221,9 @@ const styles = themedStyles(() =>
   StyleSheet.create({
     root: { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10 },
     // A little more room between the greeting and the card beneath it.
-    fading: { gap: 6, paddingTop: 2 },
+    fading: { gap: 2 },
     miniSlot: { flex: 1, minWidth: 0, alignItems: 'flex-end' },
-    band: { paddingHorizontal: HEADER.gutter, paddingBottom: 14, gap: 8, overflow: 'hidden' },
+    band: { paddingHorizontal: HEADER.gutter, paddingBottom: 10, gap: 4, overflow: 'hidden' },
     row: {
       minHeight: HEADER.actionSize,
       flexDirection: 'row',
@@ -240,18 +240,16 @@ const styles = themedStyles(() =>
       lineHeight: 15,
       letterSpacing: 0.8,
       textTransform: 'uppercase',
-      color: theme.colors.textMuted,
-      marginBottom: 3,
+      color: theme.colors.home.secondaryText,
+      marginBottom: 1,
     },
-    // The greeting: clean, large, confident. Fredoka keeps the character.
     greet: {
-      fontFamily: theme.font.roundedBold,
-      fontSize: 26,
-      lineHeight: 32,
-      letterSpacing: -0.4,
+      fontFamily: theme.font.bodyMedium,
+      fontSize: 17,
+      lineHeight: 22,
       color: theme.colors.ink,
     },
-    greetName: { fontFamily: theme.font.roundedBold },
+    greetName: { fontFamily: theme.font.bodyBold },
     insight: {
       fontFamily: theme.font.body,
       fontSize: 12,

@@ -36,6 +36,7 @@ export function GoalsStrip({
   onAdd,
   limit,
   compact = false,
+  showProgress = true,
   showAdd = false,
   hideAdd = false,
 }: {
@@ -49,6 +50,7 @@ export function GoalsStrip({
   limit?: number;
   /** Flat goal rows; privacy hides both progress and saved amount. */
   compact?: boolean;
+  showProgress?: boolean;
   showAdd?: boolean;
   hideAdd?: boolean;
 }) {
@@ -70,7 +72,7 @@ export function GoalsStrip({
                   .slice(0, 2)
                   .map(
                     (a) =>
-                      `${a.name} (${formatMaskableMoney(a.currentBalanceMinor, { masked: hideAmounts })})`
+                      `${a.name} (${formatMaskableMoney(a.currentBalanceMinor, { currency: a.currency, masked: hideAmounts })})`
                   )
                   .join(' or ')}, or add money yourself`
               : 'A trip, a fund, a gadget. Track it here.'}
@@ -80,9 +82,17 @@ export function GoalsStrip({
     );
   }
   if (compact) {
+    const ordered =
+      limit != null && !hideAmounts
+        ? [...active].sort(
+            (a, b) =>
+              Number(goalProgress(a.currentAmountMinor, a.targetAmountMinor).done) -
+              Number(goalProgress(b.currentAmountMinor, b.targetAmountMinor).done)
+          )
+        : active;
     return (
       <View style={summaryListStyle}>
-        {active.slice(0, limit ?? active.length).map((goal) => {
+        {ordered.slice(0, limit ?? ordered.length).map((goal, index) => {
           const { percent, done } = goalProgress(goal.currentAmountMinor, goal.targetAmountMinor);
           const pct = Math.round(Math.min(100, percent));
           return (
@@ -97,7 +107,8 @@ export function GoalsStrip({
               amount={hideAmounts ? 'Saved amount hidden' : done ? 'Completed' : `${pct}%`}
               icon={goal.linkedAccountId ? 'bank-outline' : 'flag-variant-outline'}
               animKey={`plan:goal-row:${goal.id}`}
-              progress={hideAmounts ? undefined : pct}
+              progress={hideAmounts || !showProgress ? undefined : pct}
+              divider={index > 0}
               color={theme.colors.incomeText}
               accessibilityLabel={
                 hideAmounts

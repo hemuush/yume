@@ -45,6 +45,8 @@ export function SkyHeader({
   summary,
   collapsedAccessory,
   wallpaper = false,
+  backdropColor,
+  expandedTitleSize,
   closeIcon = false,
 }: {
   title: string;
@@ -60,13 +62,15 @@ export function SkyHeader({
   collapsedAccessory?: React.ReactNode;
   /** The screen has Home's wallpaper behind it: no wash, and the collapsed bar takes the wallpaper's top. */
   wallpaper?: boolean;
+  backdropColor?: string;
+  expandedTitleSize?: number;
   /** The back button as a × in a frosted disc: a screen you close rather than step back from (Add). */
   closeIcon?: boolean;
 }) {
   const insets = useSafeAreaInsets();
   const reduce = useReduceMotion();
   const top = insets.top + HEADER.topGap;
-  const titleSize = showBack ? TITLE_SIZE.pushed : TITLE_SIZE.root;
+  const titleSize = expandedTitleSize ?? (showBack ? TITLE_SIZE.pushed : TITLE_SIZE.root);
   const titleScale = COLLAPSED_TITLE_SIZE / titleSize;
 
   // Measured, not hardcoded, so a larger system font still collapses to exactly the title row.
@@ -145,7 +149,8 @@ export function SkyHeader({
           scrollY={scrollY}
           distance={distance}
           collapsedHeight={top + rowHeight + BAR_PAD}
-          barColor={wallpaperTop()}
+          barColor={backdropColor ?? wallpaperTop()}
+          fadeEdge={!backdropColor}
         />
       )}
       <View style={[styles.band, { paddingTop: top }]}>

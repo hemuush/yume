@@ -3,6 +3,7 @@ import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
 import { themedStyles } from '@/theme/themedStyles';
+import { useStacked } from '@/lib/useStacked';
 
 export interface LegendItem {
   key: string;
@@ -15,18 +16,16 @@ export interface LegendItem {
   expanded?: boolean;
   /** What tapping it does, read after its name. */
   hint?: string;
-  /** The slice picked on the line above: its figure turns bold. */
+  /** The selected row also supplies the headline figure. */
   selected?: boolean;
 }
 
-/**
- * One row per slice of the month (spent, saved, bills still to pay, free) under the ring: its colour dot and name on
- * the left, the amount and its share on the right, a hairline between rows. Bills opens the sum.
- */
+/** Compact metrics under the balance, with a stacked list at larger text sizes. */
 export function HeroLegend({ items }: { items: LegendItem[] }) {
+  const stacked = useStacked();
   return (
-    <View style={styles.list}>
-      {items.map((it, index) => {
+    <View style={[styles.list, stacked && styles.listStacked]}>
+      {items.map((it) => {
         const Container = it.onPress ? Pressable : View;
         const amount = formatMoney(it.minor);
         return (
@@ -38,23 +37,28 @@ export function HeroLegend({ items }: { items: LegendItem[] }) {
             accessibilityHint={it.onPress ? it.hint : undefined}
             accessible
             accessibilityLabel={`${it.label}, ${amount}, ${it.share}`}
-            style={[styles.row, index > 0 && styles.rowDivider]}
+            style={
+              it.onPress
+                ? ({ pressed }) => [
+                    styles.metric,
+                    stacked && styles.metricStacked,
+                    it.selected && styles.selected,
+                    pressed && styles.pressed,
+                  ]
+                : [styles.metric, stacked && styles.metricStacked]
+            }
           >
-            <View style={[styles.dot, { backgroundColor: it.color }, it.selected && styles.dotSelected]} />
-            <Text style={[styles.label, it.selected && styles.labelSelected]} numberOfLines={1}>
-              {it.label}
-            </Text>
+            <View style={[styles.labelRow, stacked && styles.labelRowStacked]}>
+              <View style={[styles.dot, { backgroundColor: it.color }]} />
+              <Text style={[styles.label, it.selected && styles.labelSelected]}>{it.label}</Text>
+            </View>
             <Text
-              style={[styles.amount, it.selected && styles.amountOn]}
-              numberOfLines={1}
-              // A big figure shrinks to fit instead of being cut to "₹1,23,45…".
-              adjustsFontSizeToFit
+              style={[styles.amount, stacked && styles.amountStacked, it.selected && styles.amountOn]}
+              numberOfLines={stacked ? undefined : 1}
+              adjustsFontSizeToFit={!stacked}
               minimumFontScale={0.75}
             >
               {amount}
-            </Text>
-            <Text style={[styles.share, it.selected && styles.shareSelected]} numberOfLines={1}>
-              {it.share}
             </Text>
           </Container>
         );
@@ -65,36 +69,47 @@ export function HeroLegend({ items }: { items: LegendItem[] }) {
 
 const styles = themedStyles(() =>
   StyleSheet.create({
-    list: { alignSelf: 'stretch', marginTop: 8 },
-    row: { minHeight: 34, paddingVertical: 5, flexDirection: 'row', alignItems: 'center', gap: 8 },
-    rowDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.borderSoft },
-    dot: { width: 7, height: 7, borderRadius: 3.5 },
-    dotSelected: { transform: [{ scale: 1.25 }] },
-    label: {
+    list: {
+      flexDirection: 'row',
+      gap: 12,
+      marginTop: 6,
+    },
+    listStacked: { flexDirection: 'column', gap: 0 },
+    metric: {
       flex: 1,
       minWidth: 0,
-      fontFamily: theme.font.bodyMedium,
-      fontSize: 13,
-      color: theme.colors.textPrimary,
+      minHeight: 44,
+      justifyContent: 'center',
+      gap: 3,
+      paddingHorizontal: 6,
+      borderRadius: theme.radius.md,
     },
-    labelSelected: { fontFamily: theme.font.bodyBold },
-    amount: {
+    selected: { backgroundColor: theme.colors.home.selected },
+    pressed: { backgroundColor: theme.colors.home.pressed },
+    metricStacked: {
+      flex: 0,
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    labelRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+    labelRowStacked: { flexShrink: 1 },
+    dot: { width: 6, height: 6, borderRadius: 3 },
+    label: {
       flexShrink: 1,
       fontFamily: theme.font.bodyMedium,
-      fontSize: 13,
+      fontSize: 12,
+      color: theme.colors.home.secondaryText,
+    },
+    labelSelected: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
+    amount: {
+      fontFamily: theme.font.bodyMedium,
+      fontSize: 16,
       color: theme.colors.textPrimary,
       fontVariant: ['tabular-nums'],
-      textAlign: 'right',
     },
+    amountStacked: { flexShrink: 1, textAlign: 'right' },
     amountOn: { fontFamily: theme.font.bodyBold },
-    share: {
-      minWidth: 32,
-      textAlign: 'right',
-      fontFamily: theme.font.body,
-      fontSize: 11,
-      color: theme.colors.textMuted,
-      fontVariant: ['tabular-nums'],
-    },
-    shareSelected: { color: theme.colors.textPrimary, fontFamily: theme.font.bodyMedium },
   })
 );

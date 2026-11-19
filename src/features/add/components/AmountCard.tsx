@@ -1,6 +1,5 @@
-import { selectedFill } from '@/theme/interactionColors';
-import { Appear } from '@/components/Appear';
-import { Pressable, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Text } from '@/components/Text';
 import Feather from '@expo/vector-icons/Feather';
 import { theme } from '@/constants/theme';
@@ -62,55 +61,58 @@ export function AmountCard({
         padVisible && { borderColor: softTint(wash.accent, 0.35) },
       ]}
     >
+      <LinearGradient
+        pointerEvents="none"
+        style={StyleSheet.absoluteFill}
+        colors={[softTint(wash.accent, 0.08), softTint(wash.accent, 0)]}
+        start={{ x: 1, y: 0 }}
+        end={{ x: 0.2, y: 1 }}
+      />
       <View style={[styles.amountHeader, stacked && styles.amountHeaderStacked]}>
-        <View style={styles.heroLabelRow}>
-          <View style={[styles.heroDot, { backgroundColor: wash.accent }]} />
-          <Text style={[styles.heroLabel, { color: wash.accent }]}>{refund ? 'Money back' : 'Amount'}</Text>
-          {onTogglePad && !isLinked && !padVisible && (
-            <Pressable
-              onPress={onTogglePad}
-              style={withPressedTint(accent, styles.padToggle)}
-              accessibilityRole="button"
-              accessibilityLabel={padVisible ? 'Hide number pad' : 'Show number pad'}
-            >
-              <Text style={styles.padToggleText}>{padVisible ? 'Hide pad' : 'Show pad'}</Text>
-              <Feather
-                name={padVisible ? 'chevron-down' : 'chevron-up'}
-                size={13}
-                color={theme.colors.textMuted}
-              />
-            </Pressable>
-          )}
-        </View>
-        <Pressable
-          onPress={onOpenPad}
-          disabled={isLinked}
-          style={withPressedTint(accent, [styles.amountRow, stacked && styles.amountRowStacked])}
-          accessibilityRole="button"
-          accessibilityLabel={`Amount, ${expr === '' ? 'empty' : shownAmount}`}
-          accessibilityHint={padVisible ? undefined : 'Opens the number pad'}
-        >
-          <Text
-            style={[styles.amountText, expr === '' && styles.amountPlaceholder]}
-            numberOfLines={1}
-            adjustsFontSizeToFit
+        <View style={styles.amountMain}>
+          <View style={styles.heroLabelRow}>
+            <View style={[styles.heroDot, { backgroundColor: wash.accent }]} />
+            <Text style={styles.heroLabel}>{refund ? 'Money back' : 'Amount'}</Text>
+          </View>
+          <Pressable
+            onPress={onOpenPad}
+            disabled={isLinked}
+            style={withPressedTint(accent, styles.amountRow)}
+            accessibilityRole="button"
+            accessibilityLabel={`Amount, ${expr === '' ? 'empty' : shownAmount}`}
+            accessibilityHint={padVisible ? undefined : 'Opens the number pad'}
           >
-            {getCurrencySymbol(currency)}
-            {shownAmount}
-          </Text>
-          {padVisible && <View style={[styles.caret, { backgroundColor: wash.accent }]} />}
-        </Pressable>
+            <Text
+              style={[styles.amountText, expr === '' && styles.amountPlaceholder]}
+              numberOfLines={stacked ? undefined : 1}
+              adjustsFontSizeToFit={!stacked}
+            >
+              {getCurrencySymbol(currency)}
+              {shownAmount}
+            </Text>
+            {padVisible && <View style={[styles.caret, { backgroundColor: wash.accent }]} />}
+          </Pressable>
+        </View>
+        {onTogglePad && !isLinked && (
+          <Pressable
+            onPress={onTogglePad}
+            style={withPressedTint(accent, styles.padToggle)}
+            accessibilityRole="button"
+            accessibilityLabel={padVisible ? 'Hide pad' : 'Show number pad'}
+          >
+            {!padVisible && <Text style={styles.padToggleText}>Show pad</Text>}
+            <Feather name={padVisible ? 'chevron-down' : 'grid'} size={15} color={theme.colors.textPrimary} />
+          </Pressable>
+        )}
       </View>
       {isSum && <Text style={styles.expression}>{expr.replace(/([+−×÷])/g, ' $1 ')}</Text>}
       {amountIssue && (
-        <Appear>
-          <Text
-            style={[styles.hint, amountIssue.startsWith('Enter') && styles.amountError]}
-            accessibilityLiveRegion="polite"
-          >
-            {amountIssue}
-          </Text>
-        </Appear>
+        <Text
+          style={[styles.hint, amountIssue.startsWith('Enter') && styles.amountError]}
+          accessibilityLiveRegion="polite"
+        >
+          {amountIssue}
+        </Text>
       )}
 
       {frequentAmounts.length > 0 && (
@@ -124,10 +126,7 @@ export function AmountCard({
                   haptics.tap();
                   onPickAmount(minor);
                 }}
-                style={withPressedTint(accent, [
-                  styles.frequentChip,
-                  active && [{ backgroundColor: selectedFill(accent), borderColor: selectedFill(accent) }],
-                ])}
+                style={withPressedTint(accent, [styles.frequentChip, active && styles.selectedControl])}
                 accessibilityRole="button"
                 accessibilityState={{ selected: active }}
               >

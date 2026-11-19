@@ -32,7 +32,6 @@ import { HomeHeader } from '@/features/home/HomeHeader';
 import { ThisMonthHero } from '@/features/home/ThisMonthHero';
 import { ThisMonthHeroSkeleton, AccountTilesSkeleton, CardRowsSkeleton } from '@/features/home/HomeSkeleton';
 import { MonthPill } from '@/features/home/MonthPill';
-import { HomeWallpaper } from '@/features/home/HomeWallpaper';
 import { HomeAccounts } from '@/features/home/HomeAccounts';
 import { HomeComingUp } from '@/features/home/HomeComingUp';
 import { HomeRecentActivity } from '@/features/home/HomeRecentActivity';
@@ -107,7 +106,7 @@ export default function DashboardScreen() {
     budgets,
     goals,
     recurringRules,
-    comparison,
+    summary,
     carryInMinor,
     loanProgress,
     cardBills,
@@ -124,6 +123,9 @@ export default function DashboardScreen() {
     userName,
     loadedCursor,
     loadError,
+    comingUpError,
+    comingUpReady,
+    hideAmounts,
     loaded,
     reload,
   } = data;
@@ -234,21 +236,35 @@ export default function DashboardScreen() {
   const savingsIds = useStableSet(useMemo(() => savingsAccountIdsOf(historyAccounts), [historyAccounts]));
   const investIds = useStableSet(useMemo(() => investmentIdsOf(historyAccounts), [historyAccounts]));
 
-  const dispIncome = roundedMinor(comparison?.current.incomeMinor ?? 0);
-  const dispExpense = roundedMinor(comparison?.current.expenseMinor ?? 0);
+  const dispIncome = roundedMinor(summary?.incomeMinor ?? 0);
+  const savedExpenseIds = useMemo(
+    () =>
+      recent
+        .filter(
+          (entry) =>
+            entry.type === 'expense' &&
+            !entry.isRefund &&
+            accountsById.get(entry.accountId)?.currency === currency &&
+            (!hideAmounts ||
+              (entry.categoryId && categoriesById.get(entry.categoryId)?.isSensitive === false))
+        )
+        .map((entry) => entry.id),
+    [recent, accountsById, currency, hideAmounts, categoriesById]
+  );
+  const dispExpense = roundedMinor(summary?.expenseMinor ?? 0);
   // Where this month is heading — the current month only, and only once
   // there's enough of it to go on (monthPace returns null before the 5th).
   const todayIso = toLocalIsoDate(new Date());
   const isThisMonth = loadedCursor.granularity === 'month' && loadedCursor.offset === 0;
   const paceMinor =
-    paceInputs && comparison && isThisMonth
-      ? monthPace({ spentMinor: comparison.current.expenseMinor, ...paceInputs, today: todayIso })
+    paceInputs && summary && isThisMonth
+      ? monthPace({ spentMinor: summary.expenseMinor, ...paceInputs, today: todayIso })
       : null;
   const monthEndLabel = (() => {
     const [y, m] = todayIso.split('-').map(Number);
     return new Date(y, m, 0).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
   })();
-  const savingsInPeriod = roundedMinor(comparison?.current.savingsContributionMinor ?? 0);
+  const savingsInPeriod = roundedMinor(summary?.savingsContributionMinor ?? 0);
   // Income − expense − whatever was already moved into savings this period.
   const carryIn = roundedMinor(carryInMinor);
   // What's free to use: what earlier months left over, plus this period's own surplus.
@@ -326,7 +342,7 @@ export default function DashboardScreen() {
 
   const retryLoad = useCallback(() => void reload(), [reload]);
   const openRecentInActivity = useCallback(
-    // The list is the browsed period's, so "View all" opens that month in Activity (a past month only).
+    // Carry Home's month through to the Activity list.
     () => router.push(viewAllTarget(loadedCursor)),
     [loadedCursor]
   );
@@ -334,7 +350,6 @@ export default function DashboardScreen() {
 
   return (
     <View style={styles.container}>
-      <HomeWallpaper accent={accent} secondary={secondary} plain />
       {/* Balance and daily allowance, grouped accounts, largest upcoming outgoings and recent activity. */}
       <Animated.ScrollView
         ref={scrollRef}
@@ -394,6 +409,7 @@ export default function DashboardScreen() {
                 // Today is always about today — only alongside the current period.
                 today={todayGoal}
                 pace={pace}
+                savedExpenseIds={isThisMonth ? savedExpenseIds : undefined}
               />
             </Animated.View>
           ) : (
@@ -428,7 +444,12 @@ export default function DashboardScreen() {
         )}
 
         {/* Next payments and pending refunds stay visible without tabs. */}
-        {loaded && historyAccounts.length > 0 && (
+        {loaded && historyAccounts.length > 0 && !comingUpReady && (
+          <Section title="Coming up">
+            <CardRowsSkeleton rows={3} subtitle />
+          </Section>
+        )}
+        {loaded && historyAccounts.length > 0 && comingUpReady && (
           <Animated.View entering={sectionEntering(2)} layout={ROW_LAYOUT}>
             <ComingUp
               upcoming={upcoming}
@@ -443,6 +464,8 @@ export default function DashboardScreen() {
               rowEntering={rowEntering}
               onSeeAll={openComingUp}
               stillToPayMinor={roundedMinor(stillToPayMinor)}
+              loadFailed={comingUpError}
+              onRetry={retryLoad}
             />
           </Animated.View>
         )}
@@ -491,9 +514,9 @@ export default function DashboardScreen() {
 
 const styles = themedStyles(() =>
   StyleSheet.create({
-    container: { flex: 1, backgroundColor: theme.colors.background },
+    container: { flex: 1, backgroundColor: theme.colors.home.background },
     scroll: { flex: 1 },
-    heroGap: { marginTop: 8 },
+    heroGap: { marginTop: 4 },
     errorBanner: {
       marginHorizontal: SCREEN.gutter,
       marginTop: 16,

@@ -60,10 +60,12 @@ function tenureLabel(months: number): string {
 export function AddLoanModal({
   visible,
   onClose,
+  ledgerStyle,
   onCreated,
 }: {
   visible: boolean;
   onClose: () => void;
+  ledgerStyle?: boolean;
   onCreated: () => void;
 }) {
   const { accent } = useAccent();
@@ -362,6 +364,7 @@ export function AddLoanModal({
 
   return (
     <ModalSheet
+      ledgerStyle={ledgerStyle}
       dismissible={!saving}
       title="Loan setup"
       visible={visible}

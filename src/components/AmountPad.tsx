@@ -37,18 +37,25 @@ export function AmountPad({
 }: {
   onKey: (key: PadKey) => void;
   onClear: () => void;
-  children: React.ReactNode;
+  children?: React.ReactNode;
 }) {
   return (
     <View style={styles.pad}>
-      {ROWS.map((row, r) => (
-        <View key={r} style={styles.row}>
-          {row.map((key) => (
-            <KeyButton key={key} padKey={key} onKey={onKey} onClear={key === 'back' ? onClear : undefined} />
-          ))}
-        </View>
-      ))}
-      <View style={styles.row}>{children}</View>
+      <View style={styles.keypadSurface}>
+        {ROWS.map((row, r) => (
+          <View key={r} style={styles.row}>
+            {row.map((key) => (
+              <KeyButton
+                key={key}
+                padKey={key}
+                onKey={onKey}
+                onClear={key === 'back' ? onClear : undefined}
+              />
+            ))}
+          </View>
+        ))}
+      </View>
+      {children && <View style={styles.row}>{children}</View>}
     </View>
   );
 }
@@ -67,7 +74,7 @@ const KeyButton = memo(function KeyButton({
   onClear: (() => void) | undefined;
 }) {
   const onPress = useCallback(() => onKey(padKey), [onKey, padKey]);
-  return <PadButton padKey={padKey} onPress={onPress} onLongPress={onClear} />;
+  return <PadButton ledgerStyle padKey={padKey} onPress={onPress} onLongPress={onClear} />;
 });
 
 export function PadButton({
@@ -75,12 +82,14 @@ export function PadButton({
   onPress,
   onLongPress,
   compact,
+  ledgerStyle = false,
 }: {
   padKey: PadKey;
   onPress: () => void;
   onLongPress?: () => void;
   /** A shorter key, for the pad docked under a sheet. */
   compact?: boolean;
+  ledgerStyle?: boolean;
 }) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.97);
   const uiScale = useUiScale();
@@ -90,7 +99,14 @@ export function PadButton({
       style={[
         styles.key,
         compact && styles.keyCompact,
-        { minHeight: Math.max(theme.accessibility.minTouchTarget, Math.ceil((compact ? 42 : 46) * uiScale)) },
+        {
+          minHeight: Math.max(
+            theme.accessibility.minTouchTarget,
+            Math.ceil((compact ? 42 : ledgerStyle ? 44 : 46) * uiScale)
+          ),
+        },
+        ledgerStyle && styles.ledgerKey,
+        ledgerStyle && operator && styles.ledgerOperator,
         animatedStyle,
       ]}
       onPress={() => {
@@ -113,7 +129,9 @@ export function PadButton({
       {padKey === 'back' ? (
         <Feather name="delete" size={19} color={theme.colors.ink} />
       ) : (
-        <Text style={[styles.keyText, operator && styles.keyOperatorText]}>{padKey}</Text>
+        <Text style={[styles.keyText, operator && styles.keyOperatorText, ledgerStyle && styles.ledgerText]}>
+          {padKey}
+        </Text>
       )}
     </AnimatedPressable>
   );
@@ -122,7 +140,13 @@ export function PadButton({
 const styles = themedStyles(() =>
   StyleSheet.create({
     pad: { gap: 8 },
-    row: { flexDirection: 'row', gap: 8 },
+    row: { flexDirection: 'row', gap: 6 },
+    keypadSurface: {
+      borderRadius: theme.radius.lg,
+      backgroundColor: theme.colors.entry.keySurface,
+      gap: 2,
+      padding: 4,
+    },
     // Plain digits on the page: no key boxes. The sum keys are the same, in the quieter ink.
     key: {
       flex: 1,
@@ -131,6 +155,9 @@ const styles = themedStyles(() =>
       justifyContent: 'center',
     },
     keyCompact: { minHeight: 44 },
+    ledgerKey: { borderRadius: theme.radius.md },
+    ledgerOperator: { flex: 0.78, backgroundColor: theme.colors.entry.control },
+    ledgerText: { fontSize: 19 },
     keyText: { fontFamily: theme.font.bodyMedium, fontSize: 22, color: theme.colors.textPrimary },
     keyOperatorText: { fontFamily: theme.font.body, fontSize: 22, color: theme.colors.textSecondary },
   })

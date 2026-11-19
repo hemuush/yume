@@ -23,14 +23,12 @@ export function emptyRecentCopy(
 }
 
 /**
- * Where "View all" goes: Activity, on the month Home is showing when that is a past month (Home's list is that
- * month's; Activity opens on this week otherwise). The current month and any year open Activity as it is, since
- * Activity has no year view and its default is the recent week.
+ * Where "View all" goes: the same month in Activity. Years open Activity at its default range.
  */
 export function viewAllTarget(
   cursor: PeriodCursor,
   reference: Date = new Date()
 ): { pathname: '/transactions'; params?: { month: string } } {
-  if (cursor.granularity !== 'month' || cursor.offset >= 0) return { pathname: '/transactions' };
+  if (cursor.granularity !== 'month') return { pathname: '/transactions' };
   return { pathname: '/transactions', params: { month: periodRange(cursor, reference).start.slice(0, 7) } };
 }

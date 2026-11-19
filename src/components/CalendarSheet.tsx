@@ -48,6 +48,7 @@ export function CalendarSheet({
   title = 'Pick a date',
   onClose,
   onPick,
+  ledgerStyle = false,
 }: {
   visible: boolean;
   value: string;
@@ -57,10 +58,11 @@ export function CalendarSheet({
   title?: string;
   onClose: () => void;
   onPick: (isoDate: string) => void;
+  ledgerStyle?: boolean;
 }) {
   const { accent } = useAccent();
-  const ink = themeInk(accent);
-  const onAccent = theme.colors.surface;
+  const ink = ledgerStyle ? theme.colors.home.selected : themeInk(accent);
+  const onAccent = ledgerStyle ? theme.colors.textPrimary : theme.colors.surface;
   const prevBtn = usePressScale();
   const nextBtn = usePressScale();
   // The month currently on screen — starts on the selected date's month.
@@ -109,7 +111,7 @@ export function CalendarSheet({
   const stepMonth = (by: number) => setViewMonth(addMonthsToIsoDate(`${viewMonth}-01`, by).slice(0, 7));
 
   return (
-    <ModalSheet visible={visible} onClose={onClose} variant="center" title={title}>
+    <ModalSheet visible={visible} onClose={onClose} variant="center" title={title} ledgerStyle={ledgerStyle}>
       <View style={styles.calendar}>
         {quickPicks && (
           <View style={styles.quickRow}>

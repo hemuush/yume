@@ -30,6 +30,7 @@ export function useActivityLedger() {
   const [comparison, setComparison] = useState<PeriodComparison | null>(null);
   // The totals query failed: the list still loaded, so show it (with a note) rather than the skeleton forever.
   const [comparisonFailed, setComparisonFailed] = useState(false);
+  const [comparisonPending, setComparisonPending] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   // The period the rows and totals on screen belong to: the pill moves at once, this catches up when the
   // period's data lands, and the Spent card and its bars follow it (never the pill).
@@ -39,6 +40,7 @@ export function useActivityLedger() {
     scope: 'week',
   }));
   const loadSeq = useRef(0);
+  const lastPeriod = useRef('');
 
   // True for a moment after a period's entries land: the days mounted then fade in with the Spent strip's glide,
   // instead of snapping in under it (and instead of replacing the loading placeholder in one frame). Days that
@@ -75,8 +77,26 @@ export function useActivityLedger() {
       // A transient DB failure otherwise left stale/empty data with no hint anything went wrong (as on
       // other tabs).
       setLoadError(errorMessage(e));
+      setComparisonPending(false);
       return false;
     }
+    const key = `${scope}:${range.fromDate}:${range.toDate}`;
+    const changed = lastPeriod.current !== key;
+    lastPeriod.current = key;
+    if (changed) {
+      arriving.current = true;
+      if (arriveTimer.current) clearTimeout(arriveTimer.current);
+      arriveTimer.current = setTimeout(() => {
+        arriving.current = false;
+      }, ARRIVAL_MS);
+      setComparison(null);
+      setComparisonFailed(false);
+    }
+    setAccounts((prev) => keepIfEqual(prev, loadedAccounts));
+    setCategories((prev) => keepIfEqual(prev, loadedCategories));
+    setTransactions((prev) => reuseUnchanged(prev, tx));
+    setLoadedPeriod((prev) => keepIfEqual(prev, { ...range, scope }));
+    setComparisonPending(true);
     // Caught separately: the totals only feed the Spent figure and its change, so their failure must not
     // blank the list.
     let cmp: PeriodComparison | null = null;
@@ -91,19 +111,9 @@ export function useActivityLedger() {
       cmp = null;
     }
     if (seq !== loadSeq.current) return false;
-    // Set before the state below lands, which is when the new days mount and read it.
-    arriving.current = true;
-    if (arriveTimer.current) clearTimeout(arriveTimer.current);
-    arriveTimer.current = setTimeout(() => {
-      arriving.current = false;
-    }, ARRIVAL_MS);
-    // A reload that found nothing new changes nothing held here, so no day of the list redraws for it.
-    setAccounts((prev) => keepIfEqual(prev, loadedAccounts));
-    setCategories((prev) => keepIfEqual(prev, loadedCategories));
-    setTransactions((prev) => reuseUnchanged(prev, tx));
-    setComparison(cmp);
+    setComparison((prev) => (cmp == null ? prev : keepIfEqual(prev, cmp)));
     setComparisonFailed(cmp == null);
-    setLoadedPeriod({ fromDate: range.fromDate, toDate: range.toDate, scope });
+    setComparisonPending(false);
     return cmp != null;
   }, []);
 
@@ -113,6 +123,7 @@ export function useActivityLedger() {
     categories,
     comparison,
     comparisonFailed,
+    comparisonPending,
     loadError,
     loadedPeriod,
     isArriving,

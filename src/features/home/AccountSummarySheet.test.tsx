@@ -133,6 +133,24 @@ afterEach(() => {
 });
 
 describe('AccountSummarySheet', () => {
+  it('does not show the previous account’s amounts while another account loads', async () => {
+    const first = account({ id: 'first', type: 'savings' });
+    const second = account({ id: 'second' });
+    mockHide = true;
+    const tree = await render({ account: first, accounts: [first, second] });
+    let resolve!: (data: typeof flow) => void;
+    mockFlow.mockImplementationOnce(
+      () =>
+        new Promise((done) => {
+          resolve = done;
+        })
+    );
+    await act(async () => tree.update(element({ account: second, accounts: [first, second] })));
+    expect(texts(tree)).not.toContain(`+${formatMoney(flow.inMinor)}`);
+    await act(async () => resolve({ ...flow, inMinor: 520_000 }));
+    expect(texts(tree)).toContain(`+${formatMoney(520_000)}`);
+  });
+
   it('renders nothing without an account', async () => {
     const tree = await render({ account: null });
     expect(tree.toJSON()).toBeNull();

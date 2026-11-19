@@ -1,4 +1,4 @@
-import { memo, useCallback } from 'react';
+import { memo } from 'react';
 import { View } from 'react-native';
 import { Text } from '@/components/Text';
 import { PrimaryButton } from '@/components/PrimaryButton';
@@ -43,8 +43,6 @@ export const FIELDS_KEYS = [
   'categoryId',
   'setCategoryId',
   'setExpr',
-  'hasAmount',
-  'setPadOpen',
   'setSearchFocused',
 ] as const satisfies readonly (keyof AddEntryModel)[];
 
@@ -84,19 +82,8 @@ export function AddEntryFields({ model }: Props): ReactElement {
     categoryId,
     setCategoryId,
     setExpr,
-    hasAmount,
-    setPadOpen,
     setSearchFocused,
   } = model;
-  const onPickCategory = useCallback(
-    (id: string) => {
-      setCategoryId(id);
-      // Amount typed: the pad folds away so the grid and Save have the room.
-      if (hasAmount) setPadOpen(false);
-    },
-    [setCategoryId, setPadOpen, hasAmount]
-  );
-
   return (
     <>
       {type === 'friend' ? (
@@ -177,11 +164,11 @@ export function AddEntryFields({ model }: Props): ReactElement {
                   }}
                 />
               )}
-              <View style={styles.fieldCard}>
+              <View style={styles.categorySection}>
                 <Picker
                   categories={filteredCategories}
                   selectedId={categoryId}
-                  onSelect={onPickCategory}
+                  onSelect={setCategoryId}
                   variant="medal"
                   compact
                   searchable

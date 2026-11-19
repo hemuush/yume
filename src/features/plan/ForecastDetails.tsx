@@ -23,7 +23,7 @@ export function ForecastDetails({ runway, onClose }: { runway: Runway; onClose: 
     [end ? `Ends ${dayMonth(end)}` : 'Ending balance', formatMoney(runway.endMinor)]
   );
   return (
-    <ModalSheet visible title="Forecast calculation" onClose={onClose}>
+    <ModalSheet ledgerStyle visible title="Forecast calculation" onClose={onClose}>
       <Text style={styles.note}>
         Active bank, cash and wallet accounts in your default currency. Savings, investments and credit limits
         are excluded from the starting balance.

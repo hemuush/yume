@@ -18,11 +18,13 @@ export function SheetTabs<T extends string>({
   value,
   onChange,
   variant = 'pill',
+  ledgerStyle = false,
 }: {
   options: { label: string; value: T }[];
   value: T;
   onChange: (value: T) => void;
   variant?: 'underline' | 'pill';
+  ledgerStyle?: boolean;
 }) {
   const { accent } = useAccent();
   const colors = interactionColors(accent);
@@ -30,7 +32,12 @@ export function SheetTabs<T extends string>({
   const wrap = tooTight(options, width, fontScale);
   return (
     <View
-      style={[styles.row, variant === 'pill' && styles.pillRow, wrap && styles.rowWrap]}
+      style={[
+        styles.row,
+        variant === 'pill' && styles.pillRow,
+        ledgerStyle && styles.ledgerRow,
+        wrap && styles.rowWrap,
+      ]}
       accessibilityRole="tablist"
     >
       {options.map((option) => (
@@ -47,15 +54,17 @@ export function SheetTabs<T extends string>({
             styles.tab,
             wrap && styles.tabWrap,
             variant === 'pill' && styles.pillTab,
+            ledgerStyle && styles.ledgerTab,
             option.value === value &&
               (variant === 'pill'
-                ? [styles.pillPicked]
+                ? [ledgerStyle ? styles.ledgerPicked : styles.pillPicked]
                 : [styles.selected, { borderBottomColor: colors.ink }]),
           ])}
         >
           <Text
             style={[
               styles.label,
+              ledgerStyle && styles.ledgerLabel,
               option.value === value && styles.active,
               variant === 'pill' && option.value === value && styles.pillActive,
             ]}
@@ -113,5 +122,9 @@ const styles = themedStyles(() =>
       textAlign: 'center',
     },
     active: { fontFamily: theme.font.bodyMedium, color: theme.colors.textPrimary },
+    ledgerRow: { backgroundColor: theme.colors.home.control, borderRadius: 18, marginBottom: 8 },
+    ledgerTab: { minHeight: 44, paddingVertical: 6, borderRadius: 15 },
+    ledgerPicked: { backgroundColor: theme.colors.home.selected },
+    ledgerLabel: { fontSize: 12, color: theme.colors.home.secondaryText },
   })
 );

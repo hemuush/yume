@@ -60,6 +60,7 @@ export const RecurringSheets = memo(function RecurringSheets({
   return (
     <>
       <RuleModal
+        ledgerStyle
         visible={adding || !!rule || !!suggestion}
         editing={rule}
         accounts={accounts}

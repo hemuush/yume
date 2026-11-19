@@ -506,13 +506,20 @@ describe('Add screen', () => {
   it('hides and reopens the number pad without losing the amount', async () => {
     const tree = await render();
     await typeAmount(tree, '120');
+    const categoryScroll = tree.root.findAll((n) => typeof n.props.bottomOffset === 'number')[0];
+    expect(categoryScroll.findAll((n) => n.props.placeholder === 'Find a category').length).toBeGreaterThan(
+      0
+    );
+    expect(
+      categoryScroll.findAll((n) => String(n.props.accessibilityLabel).startsWith('Amount,'))
+    ).toHaveLength(0);
     await pressLabelled(tree, 'Hide pad');
     expect(tree.root.findAll((n) => n.props.accessibilityLabel === 'delete')).toHaveLength(0);
     await press(tree, 'Show pad');
     expect(texts(tree)).toContain('₹120');
   });
 
-  it('folds the pad away when a category is picked after an amount, and Save names the amount', async () => {
+  it('keeps the pad open when a category is picked after an amount, and Save names the amount', async () => {
     const tree = await render();
     await typeAmount(tree, '250');
     expect(tree.root.findAll((n) => n.props.accessibilityLabel === 'delete').length).toBeGreaterThan(0);
@@ -520,9 +527,8 @@ describe('Add screen', () => {
     expect(texts(tree)).toContain('Amount');
     expect(texts(tree).some((t) => t.includes('Choose a category ·'))).toBe(false);
     await press(tree, 'Food');
-    expect(tree.root.findAll((n) => n.props.accessibilityLabel === 'delete')).toHaveLength(0);
+    expect(tree.root.findAll((n) => n.props.accessibilityLabel === 'delete').length).toBeGreaterThan(0);
     expect(tree.root.find((n) => n.props.title === 'Save ₹250')).toBeTruthy();
-    await press(tree, 'Show pad');
     expect(texts(tree).some((t) => t.includes('Food ·'))).toBe(false);
   });
 
@@ -830,7 +836,7 @@ describe('Add screen', () => {
     await typeAmount(tree, '80');
     await press(tree, 'Add more');
     expect(texts(tree)).toContain('₹80 · Food is already on your list below. Tap again to add it anyway.');
-    expect(texts(tree)).toContain('1 staged');
+    expect(texts(tree)).toContain('1 ready to save');
   });
 
   it('uses the account the category was last used with, until you pick one yourself', async () => {

@@ -26,7 +26,7 @@ const texts = (tree: ReactTestRenderer) =>
 
 afterEach(() => jest.restoreAllMocks());
 
-it('keeps all four destinations reachable as plain tabs', () => {
+it('keeps all four destinations reachable in the fixed tab control', () => {
   const onChange = jest.fn();
   const tree = render(<PlanNavigation value="money" onChange={onChange} />);
   expect(PLAN_TABS).toHaveLength(4);

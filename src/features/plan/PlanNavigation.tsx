@@ -1,4 +1,10 @@
-import { UnderlineTabs } from '@/components/UnderlineTabs';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { Text } from '@/components/Text';
+import { theme } from '@/constants/theme';
+import { haptics } from '@/lib/haptics';
+import { withPressed } from '@/lib/pressed';
+import { useStacked } from '@/lib/useStacked';
+import { themedStyles } from '@/theme/themedStyles';
 
 export type PlanTab = 'overview' | 'upcoming' | 'money' | 'debt';
 export const PLAN_TABS: { label: string; value: PlanTab }[] = [
@@ -8,7 +14,65 @@ export const PLAN_TABS: { label: string; value: PlanTab }[] = [
   { label: 'Debt', value: 'debt' },
 ];
 
-/** Plan's four parts as plain text tabs; every destination stays reachable (the row scrolls under large text). */
+/** Plan's four parts in a stable row that stacks at larger text sizes. */
 export function PlanNavigation({ value, onChange }: { value: PlanTab; onChange: (value: PlanTab) => void }) {
-  return <UnderlineTabs options={PLAN_TABS} value={value} onChange={onChange} />;
+  const stacked = useStacked();
+  const rows = stacked ? [PLAN_TABS.slice(0, 2), PLAN_TABS.slice(2)] : [PLAN_TABS];
+  return (
+    <View accessibilityRole="tablist" style={styles.track}>
+      {rows.map((row) => (
+        <View key={row[0].value} style={styles.row}>
+          {row.map((tab) => {
+            const selected = value === tab.value;
+            return (
+              <Pressable
+                key={tab.value}
+                accessibilityRole="tab"
+                accessibilityLabel={tab.label}
+                accessibilityState={{ selected }}
+                onPress={() => {
+                  if (selected) return;
+                  haptics.tap();
+                  onChange(tab.value);
+                }}
+                style={withPressed([styles.tab, selected && styles.activeTab])}
+              >
+                <Text style={[styles.label, selected && styles.selected]}>{tab.label}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      ))}
+    </View>
+  );
 }
+
+const styles = themedStyles(() =>
+  StyleSheet.create({
+    track: {
+      padding: 3,
+      gap: 3,
+      borderRadius: 19,
+      backgroundColor: theme.colors.home.control,
+    },
+    row: { flexDirection: 'row', gap: 3 },
+    activeTab: { backgroundColor: theme.colors.home.selected },
+    tab: {
+      borderRadius: 15,
+      flex: 1,
+      minWidth: 0,
+      minHeight: 44,
+      paddingHorizontal: 3,
+      paddingVertical: 7,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    label: {
+      fontFamily: theme.font.bodyMedium,
+      fontSize: 13,
+      textAlign: 'center',
+      color: theme.colors.home.secondaryText,
+    },
+    selected: { color: theme.colors.link },
+  })
+);

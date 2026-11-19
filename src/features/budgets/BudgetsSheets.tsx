@@ -22,6 +22,7 @@ export const BudgetsSheets = memo(function BudgetsSheets({
   ready,
   reload,
   onDelete,
+  ledgerStyle,
 }: {
   sheets: BudgetsSheetsStore;
   budgets: BudgetProgress[];
@@ -33,6 +34,7 @@ export const BudgetsSheets = memo(function BudgetsSheets({
   /** Reloads the page in place after something was saved or deleted in a sheet. */
   reload: () => Promise<void>;
   onDelete: (progress: BudgetProgress) => void;
+  ledgerStyle?: boolean;
 }) {
   const { detailId, form, manage } = useBudgetsSheets(sheets);
   // Every expense category, parents and subcategories alike, for AddBudgetModal's picker; see that component's comment
@@ -72,6 +74,7 @@ export const BudgetsSheets = memo(function BudgetsSheets({
   return (
     <>
       <AddBudgetModal
+        ledgerStyle={ledgerStyle}
         visible={form !== null}
         editing={form?.editing ?? null}
         categories={expenseCategories}
@@ -84,6 +87,7 @@ export const BudgetsSheets = memo(function BudgetsSheets({
       />
       {detail && (
         <BudgetDetailModal
+          ledgerStyle={ledgerStyle}
           key={detail.budget.id}
           progress={detail}
           categories={categories}
@@ -94,6 +98,7 @@ export const BudgetsSheets = memo(function BudgetsSheets({
         />
       )}
       <ActionSheet
+        ledgerStyle={ledgerStyle}
         visible={!!manage}
         onClose={sheets.closeManage}
         title={manage ? categorySentence(manage.categoryName, manage.parentName) : undefined}

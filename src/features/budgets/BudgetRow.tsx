@@ -14,6 +14,7 @@ import { withPressedTint } from '@/lib/pressed';
 import { useAccent } from '@/theme/AccentContext';
 import { categorySentence, inParent } from '@/lib/categoryLabel';
 import { useToday } from './useToday';
+import { useStacked } from '@/lib/useStacked';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -27,14 +28,17 @@ export function BudgetRow({
   onPress,
   onMore,
   showPerDay,
+  compact = false,
 }: {
   progress: BudgetProgress;
   divider: boolean;
   onPress: () => void;
   onMore?: () => void;
   showPerDay?: boolean;
+  compact?: boolean;
 }) {
   const { accent } = useAccent();
+  const stacked = useStacked();
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.98);
   const barPct = Math.min(100, progress.percentUsed);
   // Pace only means something for the month still running.
@@ -80,25 +84,36 @@ export function BudgetRow({
   // What matters sits beside the name; the caption carries the rest once: spent of limit, a day, pace.
   const head = (
     <Text
-      style={[styles.rowHead, progress.overBudget && styles.rowHeadOver]}
-      numberOfLines={1}
+      style={[styles.rowHead, compact && styles.compactValue, progress.overBudget && styles.rowHeadOver]}
+      numberOfLines={compact ? undefined : 1}
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
     >
-      {progress.overBudget
-        ? `${formatMoney(Math.abs(progress.remainingMinor))} over`
-        : `${formatMoney(progress.remainingMinor)} left`}
+      {formatMoney(progress.overBudget ? Math.abs(progress.remainingMinor) : progress.remainingMinor)}
+      {!compact && (progress.overBudget ? ' over' : ' left')}
     </Text>
+  );
+  const compactMetric = (
+    <View
+      style={[styles.compactMetric, stacked && styles.compactMetricStacked]}
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+    >
+      {head}
+      <Text style={[styles.rowParent, progress.overBudget && styles.rowHeadOver]}>
+        {progress.overBudget ? 'Over budget' : 'Remaining'}
+      </Text>
+    </View>
   );
   const caption = (
     <Text
-      style={styles.rowCaption}
+      style={[styles.rowCaption, compact && styles.compactCaption]}
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
     >
       {`${formatMoney(progress.spentMinor)} of ${formatMoney(progress.effectiveLimitMinor)}`}
-      {perDayMinor != null ? ` · ${formatMoney(perDayMinor)} a day` : ''}
-      {pace && !progress.overBudget && (
+      {!compact && perDayMinor != null ? ` · ${formatMoney(perDayMinor)} a day` : ''}
+      {!compact && pace && !progress.overBudget && (
         <Text style={pace.state === 'ahead' ? styles.rowPaceAhead : styles.rowPace}>
           {` · ${BUDGET_PACE_LABEL[pace.state]}`}
         </Text>
@@ -108,7 +123,7 @@ export function BudgetRow({
 
   return (
     <AnimatedPressable
-      style={[styles.row, divider && styles.rowDivider, animatedStyle]}
+      style={[styles.row, compact && styles.compactRow, divider && styles.rowDivider, animatedStyle]}
       onPress={onPress}
       onPressIn={onPressIn}
       onPressOut={onPressOut}
@@ -119,18 +134,48 @@ export function BudgetRow({
     >
       <>
         <View style={styles.rowTop}>
-          <CategoryIcon name={progress.categoryIcon} color={progress.categoryColor} square={38} size={17} />
-          {name}
-          {head}
+          <CategoryIcon
+            name={progress.categoryIcon}
+            color={progress.categoryColor}
+            square={compact ? 32 : 38}
+            size={compact ? 15 : 17}
+          />
+          {compact ? (
+            <View style={styles.rowNameBlock}>
+              {name}
+              {caption}
+              <View
+                style={styles.compactTrack}
+                accessibilityElementsHidden
+                importantForAccessibility="no-hide-descendants"
+              >
+                <View
+                  style={[
+                    styles.compactFill,
+                    {
+                      width: `${Math.max(0, barPct)}%`,
+                      backgroundColor: progress.overBudget ? theme.colors.expenseText : theme.colors.link,
+                    },
+                  ]}
+                />
+              </View>
+              {stacked && compactMetric}
+            </View>
+          ) : (
+            name
+          )}
+          {compact ? !stacked && compactMetric : head}
           {more}
         </View>
-        <LimitMeter
-          pct={barPct}
-          tone={tone}
-          marker={pace ? pace.expectedFraction * 100 : undefined}
-          animKey={`budget:${progress.budget.id}`}
-        />
-        {caption}
+        {!compact && (
+          <LimitMeter
+            pct={barPct}
+            tone={tone}
+            marker={pace ? pace.expectedFraction * 100 : undefined}
+            animKey={`budget:${progress.budget.id}`}
+          />
+        )}
+        {!compact && caption}
       </>
     </AnimatedPressable>
   );

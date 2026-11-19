@@ -51,7 +51,7 @@ jest.mock('react-native-safe-area-context', () => {
   };
 });
 
-const mockDrawn: { rows: string[]; hero: number } = { rows: [], hero: 0 };
+const mockDrawn: { rows: string[] } = { rows: [] };
 const mockForm: { visible: boolean; editing: string | null; close: (() => void) | null } = {
   visible: false,
   editing: null,
@@ -63,15 +63,6 @@ jest.mock('@/features/recurring/RuleRow', () => {
     RuleRow: (props: { rule: { id: string } }) => {
       mockDrawn.rows.push(props.rule.id);
       return actual.RuleRow(props);
-    },
-  };
-});
-jest.mock('@/features/recurring/RecurringHero', () => {
-  const actual = jest.requireActual('@/features/recurring/RecurringHero');
-  return {
-    RecurringHero: (props: unknown) => {
-      mockDrawn.hero++;
-      return actual.RecurringHero(props);
     },
   };
 });
@@ -92,9 +83,8 @@ import { clearReadCache } from '@/db/readCache';
 import { createRecurringRule } from '@/db/recurring';
 import { resetSettingsCache, setDefaultCurrency, setHasOnboarded, setUserName } from '@/db/settings';
 import { addDaysToIsoDate, toLocalIsoDate } from '@/lib/date';
-import { AddButton } from '@/components/AddButton';
 import { RuleRow } from '@/features/recurring/RuleRow';
-import RecurringScreen from '../../app/recurring';
+import RecurringWorkspace from '@/features/recurring/RecurringWorkspace';
 
 const today = toLocalIsoDate(new Date());
 let mounted: ReactTestRenderer | null = null;
@@ -136,9 +126,9 @@ const settle = (ms = 0) =>
   act(async () => {
     await new Promise((resolve) => setTimeout(resolve, ms));
   });
-async function openRecurring() {
+async function openRecurring(scheduledRuleIds?: ReadonlySet<string>) {
   await act(async () => {
-    mounted = create(<RecurringScreen />);
+    mounted = create(<RecurringWorkspace scheduledRuleIds={scheduledRuleIds} />);
   });
   await settle(50);
   await settle(50);
@@ -154,11 +144,10 @@ const showAgain = () =>
       if (typeof undo === 'function') mockUndo.push(undo);
     });
   });
-const addButton = (tree: ReactTestRenderer) => tree.root.findByType(AddButton);
 
 beforeEach(async () => {
   mockFocus.clear();
-  Object.assign(mockDrawn, { rows: [], hero: 0 });
+  Object.assign(mockDrawn, { rows: [] });
   Object.assign(mockForm, { visible: false, editing: null, close: null });
   await seed();
 });
@@ -171,9 +160,8 @@ afterEach(() => {
 
 it('lists the running rules, the biggest first', async () => {
   const tree = await openRecurring();
-  expect(texts(tree)).toContain('Running');
+  expect(texts(tree)).toContain('Outside this schedule');
   expect(rows(tree).map((r) => r.props.rule.id)).toEqual([ids.Rent, ids.Gym, ids.Netflix]);
-  expect(mockDrawn.hero).toBeGreaterThan(0);
 });
 
 it('opens a rule’s form from its row, and closes it', async () => {
@@ -184,48 +172,32 @@ it('opens a rule’s form from its row, and closes it', async () => {
   expect(mockForm).toMatchObject({ visible: false, editing: null });
 });
 
-it('opens a blank rule form from the header', async () => {
-  const tree = await openRecurring();
-  act(() => addButton(tree).props.onPress());
-  expect(mockForm).toMatchObject({ visible: true, editing: null });
+it('omits rules already shown in the payment schedule', async () => {
+  const tree = await openRecurring(new Set([ids.Rent, ids.Netflix]));
+  expect(rows(tree).map((row) => row.props.rule.id)).toEqual([ids.Gym]);
 });
 
-it('lists a day’s entries from the 30-day strip, and a rule picked there opens its form', async () => {
-  const tree = await openRecurring();
-  const hero = tree.root.findByType(jest.requireMock('@/features/recurring/RecurringHero').RecurringHero);
-  act(() => hero.props.onDatePress(addDaysToIsoDate(today, 3)));
-  const rowsInSheet = rows(tree).filter((r) => r.props.rule.id === ids.Rent);
-  // The running list and the day's list each show the rule.
-  expect(rowsInSheet.length).toBe(2);
-  act(() => rowsInSheet[1].props.onPress());
-  expect(mockForm).toMatchObject({ visible: true, editing: ids.Rent });
-});
-
-it('does not redraw the rules or the hero when a sheet opens or closes', async () => {
+it('does not redraw the rules when a sheet opens or closes', async () => {
   const tree = await openRecurring();
   await settle(200);
-  const drawn = { rows: mockDrawn.rows.length, hero: mockDrawn.hero };
+  const drawn = mockDrawn.rows.length;
   act(() => rows(tree)[0].props.onPress());
   act(() => mockForm.close!());
-  act(() => addButton(tree).props.onPress());
-  act(() => mockForm.close!());
-  expect(mockDrawn.rows.length).toBe(drawn.rows);
-  expect(mockDrawn.hero).toBe(drawn.hero);
+  expect(mockDrawn.rows.length).toBe(drawn);
 });
 
 it('draws nothing again for a reload that found the same rules', async () => {
   await openRecurring();
   await settle(200);
-  const drawn = { rows: mockDrawn.rows.length, hero: mockDrawn.hero };
+  const drawn = mockDrawn.rows.length;
   clearReadCache();
   await showAgain();
   await settle(100);
   await settle(100);
-  expect(mockDrawn.rows.length).toBe(drawn.rows);
-  expect(mockDrawn.hero).toBe(drawn.hero);
+  expect(mockDrawn.rows.length).toBe(drawn);
 });
 
-it('moves a paused rule under "Paused", writes it, and leaves the other rules’ rows alone', async () => {
+it('moves a paused rule under "Paused rules", writes it, and leaves the other rules’ rows alone', async () => {
   const tree = await openRecurring();
   await settle(200);
   const drawn = mockDrawn.rows.length;
@@ -233,7 +205,7 @@ it('moves a paused rule under "Paused", writes it, and leaves the other rules’
   await act(async () => netflix.props.onTogglePause());
   await settle(100);
   await settle(100);
-  expect(texts(tree)).toContain('Paused');
+  expect(texts(tree)).toContain('Paused rules');
   const saved = await mockDb.getFirstAsync<{ active: number }>(
     'SELECT active FROM recurring_rules WHERE id = ?',
     [ids.Netflix]

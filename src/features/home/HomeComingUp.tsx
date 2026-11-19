@@ -1,5 +1,4 @@
 import { LimitMeter } from '@/components/LimitMeter';
-import { selectedFill } from '@/theme/interactionColors';
 import { useState } from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -11,13 +10,12 @@ import { CategoryIcon } from '@/components/CategoryIcon';
 import { ProgressRing } from '@/components/ProgressRing';
 import { theme } from '@/constants/theme';
 import { haptics } from '@/lib/haptics';
-import { ROW_LAYOUT } from '@/lib/animation';
+import { ROW_LAYOUT, ROW_EXIT } from '@/lib/animation';
 import { SCREEN } from '@/components/screenStyles';
 import { categorySentence } from '@/lib/categoryLabel';
 import { formatMoney, formatMaskableMoney } from '@/lib/money';
-import { withPressed, withPressedTint } from '@/lib/pressed';
+import { withPressed } from '@/lib/pressed';
 import { usePrivacy } from '@/theme/PrivacyContext';
-import { useAccent } from '@/theme/AccentContext';
 import { GOAL_PACE_LABEL } from '@/features/goals/goalPlan';
 import type { BudgetProgress } from '@/db/budgets';
 import type { ExpectedRefund } from '@/db/refundTracking';
@@ -47,7 +45,6 @@ function FilterChip({
   attention: boolean;
   onPress: () => void;
 }) {
-  const { accent } = useAccent();
   return (
     <Pressable
       onPress={onPress}
@@ -56,7 +53,7 @@ function FilterChip({
       accessibilityRole="button"
       accessibilityState={{ selected: active }}
       accessibilityLabel={attention ? `${label}, needs a look` : label}
-      style={withPressedTint(accent, [styles.chip, active && { backgroundColor: selectedFill(accent) }])}
+      style={({ pressed }) => [styles.chip, active && styles.chipActive, pressed && styles.chipPressed]}
     >
       <Text style={[styles.chipText, active && styles.chipTextOn]}>{label}</Text>
       {/* A corner badge, not a part of the row: it comes and goes without changing the width of the chip, so
@@ -66,13 +63,7 @@ function FilterChip({
   );
 }
 
-function BudgetRow({
-  entry,
-  divider,
-}: {
-  entry: Extract<ComingUpItem, { kind: 'budget' }>;
-  divider: boolean;
-}) {
+function BudgetRow({ entry }: { entry: Extract<ComingUpItem, { kind: 'budget' }> }) {
   const { progress, state } = entry;
   const money = (minor: number) => formatMoney(minor);
   const name = categorySentence(progress.categoryName, progress.parentName);
@@ -99,27 +90,19 @@ function BudgetRow({
           pct={progress.percentUsed}
           tone={state === 'over' ? 'over' : state === 'ahead' ? 'near' : 'ok'}
           trackColor={theme.colors.trayTrack}
-          height={6}
+          height={3}
         />
       }
       subtitle={subtitle}
       subtitleTone={state === 'over' ? 'urgent' : state === 'ahead' ? 'soon' : undefined}
       value={percent}
-      chip={
-        state === 'over'
-          ? { label: 'Over', tone: 'warning' }
-          : state === 'ahead'
-            ? { label: 'Ahead', tone: 'due' }
-            : undefined
-      }
-      onPress={() => router.push('/budgets')}
-      divider={divider}
+      onPress={() => router.push({ pathname: '/budgets', params: { budget: progress.budget.id } })}
       accessibilityLabel={`${name} budget, ${percent} used, ${left} ${state === 'over' ? 'over' : 'left'}`}
     />
   );
 }
 
-function GoalRow({ entry, divider }: { entry: Extract<ComingUpItem, { kind: 'goal' }>; divider: boolean }) {
+function GoalRow({ entry }: { entry: Extract<ComingUpItem, { kind: 'goal' }> }) {
   const { hideAmounts } = usePrivacy();
   const { goal, percent, toGoMinor, perMonthMinor, pace } = entry;
   const behind = pace === 'behind';
@@ -153,32 +136,24 @@ function GoalRow({ entry, divider }: { entry: Extract<ComingUpItem, { kind: 'goa
       chip={
         !hideAmounts && pace ? { label: GOAL_PACE_LABEL[pace], tone: behind ? 'due' : 'complete' } : undefined
       }
-      onPress={() => router.push('/savings-goals')}
-      divider={divider}
+      onPress={() => router.push({ pathname: '/savings-goals', params: { goal: goal.id } })}
       accessibilityLabel={`${goal.name}, ${hideAmounts ? 'amounts hidden' : `${pct} saved, ${toGo} to go${pace ? `, ${GOAL_PACE_LABEL[pace]}` : ''}`}`}
     />
   );
 }
 
-function PaymentRow({
-  entry,
-  divider,
-}: {
-  entry: Extract<ComingUpItem, { kind: 'payment' }>;
-  divider: boolean;
-}) {
+function PaymentRow({ entry }: { entry: Extract<ComingUpItem, { kind: 'payment' }> }) {
   const { item } = entry;
   return (
     <UpcomingRow
       icon={item.icon}
-      iconBg={item.iconBg}
+      iconBg={theme.colors.home.control}
       iconColor={item.iconColor}
       title={item.title}
       subtitle={item.subtitle}
       amountMinor={item.amountMinor}
       sign={item.sign}
       onPress={() => router.push(item.route)}
-      divider={divider}
       urgent={item.urgent}
       soon={item.pinned && !item.urgent}
       date={item.sortDate}
@@ -207,6 +182,8 @@ export function HomeComingUp({
   onOpenRefund,
   onRetryRefunds,
   stillToPayMinor = 0,
+  loadFailed = false,
+  onRetry,
 }: {
   upcoming: Upcoming;
   budgets: BudgetProgress[];
@@ -221,6 +198,8 @@ export function HomeComingUp({
   onRetryRefunds?: () => void;
   /** Unpaid EMIs and bills left this month: the heading's summary line (0 = nothing said). */
   stillToPayMinor?: number;
+  loadFailed?: boolean;
+  onRetry?: () => void;
 }) {
   const [picked, setPicked] = useState<ComingUpFilter>('all');
   const items = buildComingUp({ upcoming, budgets, goals, today });
@@ -238,7 +217,17 @@ export function HomeComingUp({
       onSeeAll={() => onSeeAll(filter)}
       actionLabel={filter === 'budget' ? 'All budgets' : filter === 'goal' ? 'All goals' : 'View plan'}
     >
-      <Animated.View layout={ROW_LAYOUT} style={styles.card}>
+      <View style={styles.sectionContent}>
+        {loadFailed && (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Retry loading upcoming items"
+            onPress={onRetry}
+            style={withPressed(styles.retry)}
+          >
+            <Text style={styles.retryText}>Some upcoming items couldn’t load. Try again</Text>
+          </Pressable>
+        )}
         {kindsPresent > 1 && (
           <View style={styles.chips} accessibilityRole="toolbar" accessibilityLabel="Filter coming up">
             {FILTERS.filter((f) => f.key === 'all' || counts[f.key] > 0).map((f) => (
@@ -255,74 +244,78 @@ export function HomeComingUp({
             ))}
           </View>
         )}
-        {visible.length > 0 ? (
-          visible.map((entry, i) => (
-            <Animated.View key={`${filter}:${entry.key}`} entering={rowEntering(i)}>
-              {entry.kind === 'payment' ? (
-                <PaymentRow entry={entry} divider={i > 0} />
-              ) : entry.kind === 'budget' ? (
-                <BudgetRow entry={entry} divider={i > 0} />
-              ) : (
-                <GoalRow entry={entry} divider={i > 0} />
-              )}
-            </Animated.View>
-          ))
-        ) : (
-          <Pressable
-            onPress={() => onSeeAll('all')}
-            accessibilityRole="button"
-            accessibilityLabel="Nothing coming up. Open Plan"
-            style={withPressed(styles.empty)}
-          >
-            <Feather name="check-circle" size={20} color={theme.colors.incomeText} />
-            <View style={styles.copy}>
-              <Text style={styles.emptyTitle}>Nothing coming up</Text>
-              <Text style={styles.emptyHint}>Add bills, budgets and goals in Plan.</Text>
+        <Animated.View layout={ROW_LAYOUT} style={styles.card}>
+          {visible.length > 0 ? (
+            visible.map((entry, i) => (
+              <Animated.View key={entry.key} entering={rowEntering(i)} exiting={ROW_EXIT} layout={ROW_LAYOUT}>
+                {i > 0 && <View style={styles.listDivider} />}
+                {entry.kind === 'payment' ? (
+                  <PaymentRow entry={entry} />
+                ) : entry.kind === 'budget' ? (
+                  <BudgetRow entry={entry} />
+                ) : (
+                  <GoalRow entry={entry} />
+                )}
+              </Animated.View>
+            ))
+          ) : loadFailed ? null : (
+            <Pressable
+              onPress={() => onSeeAll('all')}
+              accessibilityRole="button"
+              accessibilityLabel="Nothing coming up. Open Plan"
+              style={withPressed(styles.empty)}
+            >
+              <View style={styles.emptyIconBadge}>
+                <Feather name="check-circle" size={18} color={theme.colors.incomeText} />
+              </View>
+              <View style={styles.copy}>
+                <Text style={styles.emptyTitle}>Nothing coming up</Text>
+                <Text style={styles.emptyHint}>Add bills, budgets and goals in Plan.</Text>
+              </View>
+              <Feather
+                name="chevron-right"
+                size={15}
+                color={theme.colors.textMuted}
+                style={styles.emptyChevron}
+              />
+            </Pressable>
+          )}
+          {showRefunds && (
+            <View style={styles.refunds}>
+              <HomeRefunds
+                refunds={refunds}
+                failed={refundError}
+                openingId={openingRefund}
+                onOpen={onOpenRefund}
+                onRetry={onRetryRefunds}
+                compact
+              />
             </View>
-            <Feather name="chevron-right" size={16} color={theme.colors.textMuted} />
-          </Pressable>
-        )}
-        {showRefunds && (
-          <View style={styles.refunds}>
-            <HomeRefunds
-              refunds={refunds}
-              failed={refundError}
-              openingId={openingRefund}
-              onOpen={onOpenRefund}
-              onRetry={onRetryRefunds}
-              compact
-            />
-          </View>
-        )}
-      </Animated.View>
+          )}
+        </Animated.View>
+      </View>
     </Section>
   );
 }
 
 const styles = themedStyles(() =>
   StyleSheet.create({
-    // A raised card to match the hero and rhythm cards above.
+    sectionContent: { marginHorizontal: SCREEN.gutter, gap: 4 },
+    retry: { minHeight: 44, justifyContent: 'center', paddingHorizontal: 8 },
+    retryText: { color: theme.colors.link, fontFamily: theme.font.bodyMedium, fontSize: 13 },
     card: {
-      marginHorizontal: 16,
-      backgroundColor: theme.colors.surface,
+      backgroundColor: theme.colors.home.surface,
       borderRadius: theme.radius.xl2,
       borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.colors.borderSoft,
-      paddingBottom: 6,
+      borderColor: theme.colors.home.edge,
       overflow: 'hidden',
-      shadowColor: theme.colors.ink,
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.04,
-      shadowRadius: 8,
-      elevation: 2,
     },
     chips: {
       flexDirection: 'row',
       flexWrap: 'wrap',
-      gap: 6,
-      paddingTop: 10,
-      paddingBottom: 6,
-      paddingHorizontal: 14,
+      alignItems: 'center',
+      gap: 4,
+      paddingVertical: 4,
     },
     // Sized so All, Payments, Budgets and Goals share one line on a 360 dp phone; the same weight selected or not,
     // so picking one never changes its width either.
@@ -332,9 +325,25 @@ const styles = themedStyles(() =>
       borderRadius: theme.radius.pill,
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: theme.colors.surfaceAlt,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: 'transparent',
     },
-    chipText: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
+    chipActive: {
+      backgroundColor: theme.colors.home.selected,
+    },
+    chipPressed: { backgroundColor: theme.colors.home.pressed },
+    listDivider: {
+      marginLeft: SCREEN.rowInset + SCREEN.lead + 12,
+      marginRight: SCREEN.rowInset,
+      height: StyleSheet.hairlineWidth,
+      backgroundColor: theme.colors.home.edge,
+    },
+    chipText: {
+      fontFamily: theme.font.bodyMedium,
+      fontSize: 12,
+      letterSpacing: 0.1,
+      color: theme.colors.home.secondaryText,
+    },
     chipTextOn: { color: theme.colors.textPrimary },
     chipDot: {
       position: 'absolute',
@@ -346,14 +355,44 @@ const styles = themedStyles(() =>
       backgroundColor: theme.colors.slice.due,
     },
     ringText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textPrimary },
-    refunds: { marginTop: 4, marginHorizontal: -12, borderRadius: 20, backgroundColor: theme.colors.surface },
-    empty: { minHeight: 80, flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16 },
-    copy: { flex: 1, minWidth: 0, gap: 5 },
-    emptyTitle: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
+    refunds: {
+      marginTop: 4,
+      marginHorizontal: -12,
+      borderRadius: 20,
+      backgroundColor: theme.colors.home.surface,
+    },
+    empty: {
+      minHeight: 84,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 14,
+      paddingHorizontal: 16,
+      paddingVertical: 16,
+    },
+    emptyIconBadge: {
+      width: 36,
+      height: 36,
+      borderRadius: 12,
+      backgroundColor: theme.colors.home.control,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.home.edge,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    emptyChevron: {
+      opacity: 0.45,
+    },
+    copy: { flex: 1, minWidth: 0, gap: 3 },
+    emptyTitle: {
+      fontFamily: theme.font.bodyBold,
+      fontSize: 14,
+      color: theme.colors.textPrimary,
+      letterSpacing: -0.1,
+    },
     emptyHint: {
       fontFamily: theme.font.body,
       fontSize: 12,
-      lineHeight: 18,
+      lineHeight: 17,
       color: theme.colors.textSecondary,
     },
   })

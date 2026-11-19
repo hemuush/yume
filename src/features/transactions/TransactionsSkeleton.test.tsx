@@ -4,6 +4,7 @@
  */
 import { StyleSheet } from 'react-native';
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
+import { theme } from '@/constants/theme';
 
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
 jest.mock('@/lib/useReduceMotion', () => ({ useReduceMotion: () => true }));
@@ -46,9 +47,9 @@ it('has the filter row (the Filters button and four choices) and two days as Hom
   expect(
     styles.filter(
       (s) =>
-        s.marginHorizontal === 2 &&
-        s.borderTopWidth === StyleSheet.hairlineWidth &&
-        s.borderBottomWidth === StyleSheet.hairlineWidth
+        s.marginHorizontal === 16 &&
+        s.borderWidth === StyleSheet.hairlineWidth &&
+        s.borderRadius === theme.radius.lg
     )
   ).toHaveLength(2);
   expect(styles.filter((s) => s.minHeight === 29)).toHaveLength(2);

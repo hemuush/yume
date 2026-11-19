@@ -120,6 +120,7 @@ import { clearReadCache } from '@/db/readCache';
 import { resetSettingsCache, setDefaultCurrency, setUserName, setHasOnboarded } from '@/db/settings';
 import { addDaysToIsoDate, toLocalIsoDate } from '@/lib/date';
 import PlanScreen from '../../app/(tabs)/plan';
+import { UndoToastProvider } from '@/components/UndoToast';
 
 const today = toLocalIsoDate(new Date());
 let mounted: ReactTestRenderer | null = null;
@@ -156,7 +157,11 @@ const settle = (ms = 0) =>
   });
 async function openPlan() {
   await act(async () => {
-    mounted = create(<PlanScreen />);
+    mounted = create(
+      <UndoToastProvider>
+        <PlanScreen />
+      </UndoToastProvider>
+    );
   });
   await settle(50);
   await settle(50);

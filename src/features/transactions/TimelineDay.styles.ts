@@ -16,14 +16,31 @@ export const ROW_H = SCREEN.rowMinHeight;
 export const styles = themedStyles(() =>
   StyleSheet.create({
     // A day is one cell of the list: its card, with the day named inside it.
-    day: { marginTop: 12 },
+    day: { marginTop: 10 },
     // Home's list card. It does not clip (Home's does): a held line is lifted out of the card with a shadow, and a
     // clipped card would cut that off; the rows round their own pressed tint instead.
-    lane: { ...h.card, overflow: 'visible' },
+    lane: {
+      marginHorizontal: 16,
+      borderRadius: theme.radius.lg,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.home.edge,
+      backgroundColor: theme.colors.home.surface,
+      overflow: 'visible',
+    },
     // The chart's picked day: its heading sits on a soft tint, so the list answers the tap.
-    headOn: { borderRadius: 10 },
+    headOn: {
+      borderTopLeftRadius: theme.radius.lg,
+      borderTopRightRadius: theme.radius.lg,
+      backgroundColor: theme.colors.home.selected,
+    },
+    dayLabel: { ...h.dayHeadText, color: theme.colors.home.secondaryText },
     // Between two lines of the day: across the whole row, as Home's hairline.
-    separator: { height: StyleSheet.hairlineWidth, backgroundColor: theme.colors.borderSoft },
+    separator: {
+      marginLeft: SCREEN.rowInset + SCREEN.lead + 12,
+      marginRight: SCREEN.rowInset,
+      height: StyleSheet.hairlineWidth,
+      backgroundColor: theme.colors.home.edge,
+    },
     lead: { width: SCREEN.lead, alignItems: 'center', justifyContent: 'center' },
     line: {
       ...h.row,
@@ -43,16 +60,16 @@ export const styles = themedStyles(() =>
       flexDirection: 'row',
       alignItems: 'center',
       gap: 2,
-      backgroundColor: theme.colors.surfaceAlt,
+      backgroundColor: theme.colors.home.control,
     },
     stackCount: { fontFamily: theme.font.bodyBold, fontSize: 11, color: theme.colors.textSecondary },
     entryHead: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6 },
-    name: h.title,
+    name: { ...h.title, fontSize: 13, lineHeight: 18 },
     stackName: { flexShrink: 1 },
-    sub: h.sub,
+    sub: { ...h.sub, fontSize: 12, lineHeight: 16, marginTop: 2, color: theme.colors.home.secondaryText },
     // Spending reads in ink with its minus; only money in is green. Never shrunk to fit: an amount that shrinks inside
     // a flex column was once drawn a few dp tall on a phone.
-    amount: h.amount,
+    amount: { ...h.amount, fontSize: 13, lineHeight: 18 },
     income: h.income,
     // An open group's entries: the same row, with a dot in the category's colour where the disc is, so their text
     // lines up with the group's own.

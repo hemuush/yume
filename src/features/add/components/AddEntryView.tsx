@@ -1,6 +1,5 @@
 import { View } from 'react-native';
 import { styles } from '@/features/add/add.styles';
-import { HomeWallpaper } from '@/features/home/HomeWallpaper';
 import { AddEntryBody } from '@/features/add/components/AddEntryBody';
 import { AddEntryFooter, FOOTER_KEYS } from '@/features/add/components/AddEntryFooter';
 import { AddEntryHeader, HEADER_KEYS } from '@/features/add/components/AddEntryHeader';
@@ -17,11 +16,8 @@ const Sheets = memoByModelKeys(AddEntrySheets, SHEETS_KEYS);
 
 type Props = { model: AddEntryModel };
 export function AddEntryView({ model }: Props): ReactElement {
-  const { accent, secondary } = model;
-
   return (
     <View style={styles.container}>
-      <HomeWallpaper accent={accent} secondary={secondary} plain />
       <Header model={model} />
       <AddEntryBody model={model} />
       <Footer model={model} />

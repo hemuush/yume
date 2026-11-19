@@ -15,6 +15,7 @@ import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
 import type { BudgetsHeroFigures, BudgetsTone } from './budgetsOverview';
 import { themedStyles, themedValue } from '@/theme/themedStyles';
+import { planWorkspaceCard } from '@/features/plan/plan.styles';
 
 /** The bar's fill takes the month's tone: calm green, amber once ahead of pace, coral once over. */
 const FILL = themedValue<Record<BudgetsTone, string>>(() => ({
@@ -38,7 +39,13 @@ function lookFact(h: BudgetsHeroFigures): SummaryFact {
  * what's over) with the daily allowance and days left beside it, a pace bar with a tick where an even month
  * would be today, and the spent, the limit and what needs a look as small facts.
  */
-export function BudgetsHero({ figures: h }: { figures: BudgetsHeroFigures }) {
+export function BudgetsHero({
+  figures: h,
+  ledgerStyle,
+}: {
+  figures: BudgetsHeroFigures;
+  ledgerStyle?: boolean;
+}) {
   const over = h.spentMinor > h.limitMinor;
   const daysLeft = h.daysLeft === 0 ? 'Last day' : `${h.daysLeft} ${h.daysLeft === 1 ? 'day' : 'days'} left`;
   const evenPaceMinor = Math.round((h.limitMinor * h.expectedPct) / 100);
@@ -46,7 +53,7 @@ export function BudgetsHero({ figures: h }: { figures: BudgetsHeroFigures }) {
   const usedPercent = h.limitMinor > 0 ? Math.round((h.spentMinor / h.limitMinor) * 100) : 0;
 
   return (
-    <SummaryCard>
+    <SummaryCard style={ledgerStyle ? planWorkspaceCard : undefined}>
       <SummaryTop
         label={over ? 'Over this month' : 'Left this month'}
         figure={

@@ -111,7 +111,7 @@ it('draws one small bar per day in proportion, today in ink and days to come as 
   expect(bars).toHaveLength(5);
   expect(bars[2].height).toBe(40);
   expect(bars[0].height).toBeLessThan(bars[2].height as number);
-  expect(bars[3].backgroundColor).toBe(theme.colors.ink);
+  expect(bars[3].backgroundColor).toBe(theme.colors.link);
   // Not here yet: an outline, never a filled tick that could be read as a day with nothing spent.
   expect(bars[4]).toMatchObject({
     height: 4,
@@ -180,7 +180,7 @@ describe('a month’s weeks', () => {
     });
     const bars = barStyles(past.r);
     expect(bars.map((b) => b.borderStyle)).toEqual([undefined, undefined, undefined, undefined, undefined]);
-    expect(bars[3]).toMatchObject({ height: 3, backgroundColor: theme.colors.trayTrack });
+    expect(bars[3]).toMatchObject({ height: 3, backgroundColor: theme.colors.home.edge });
     act(() => past.r.unmount());
   });
 });
