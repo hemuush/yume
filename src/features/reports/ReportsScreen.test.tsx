@@ -372,11 +372,12 @@ describe('Reports screen', () => {
     expect(shown).not.toContain('Usual month');
     // The period in a few short reads, as rows.
     expect(shown).toContain('Worth a look');
-    expect(shown).toContain('Top categories');
+    // Categories live on the Breakdown tab only, not repeated here.
+    expect(shown).not.toContain('Top categories');
     expect(shown).not.toContain('Where it went');
     const { HeatmapCard } = require('./HeatmapCard');
     expect(tree.root.findAllByType(HeatmapCard)).toHaveLength(0);
-    await pressText(tree, 'See breakdown');
+    await pressText(tree, 'Breakdown');
     expect(texts(tree)).toContain('Where it went');
   });
   it('shows a failed day read and retries instead of presenting an empty day', async () => {

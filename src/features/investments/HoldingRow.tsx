@@ -1,7 +1,8 @@
 import { memo } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
-import { SettingsRow } from '@/components/SettingsRow';
+import Feather from '@expo/vector-icons/Feather';
+import { PlanMoneyRow, planRowText } from '@/features/plan/PlanMoneyRow';
 import { theme } from '@/constants/theme';
 import { formatMaskableMoney } from '@/lib/money';
 import { dayMonthYear } from '@/lib/dateLabels';
@@ -43,42 +44,44 @@ export const HoldingRow = memo(function HoldingRow({
     .filter(Boolean)
     .join(' · ');
   return (
-    <SettingsRow
-      icon="trending-up"
-      round
-      label={holding.name}
-      sub={sub}
-      subColor={holding.stale ? theme.colors.warnInk : undefined}
-      onPress={() => onOpen(holding.account)}
-      divider={divider}
-      right={
-        <View style={styles.rowRight}>
-          <Text style={styles.rowValue}>
-            {formatMaskableMoney(holding.valueMinor, { currency: cur, masked })}
-          </Text>
-          {holding.gainMinor != null && (
-            <GainBadge
-              gainMinor={holding.gainMinor}
-              investedMinor={holding.investedMinor}
-              currency={cur}
-              moneyOnly
-            />
-          )}
+    <PlanMoneyRow
+      icon={
+        <View style={styles.disc}>
+          <Feather name="trending-up" size={17} color={theme.colors.onFlat} />
         </View>
       }
+      title={holding.name}
+      subtitle={<Text style={[planRowText.subtitle, holding.stale && planRowText.warn]}>{sub}</Text>}
+      value={
+        <Text style={planRowText.value}>
+          {formatMaskableMoney(holding.valueMinor, { currency: cur, masked })}
+        </Text>
+      }
+      note={
+        holding.gainMinor != null ? (
+          <GainBadge
+            gainMinor={holding.gainMinor}
+            investedMinor={holding.investedMinor}
+            currency={cur}
+            moneyOnly
+          />
+        ) : undefined
+      }
+      onPress={() => onOpen(holding.account)}
+      divider={divider}
     />
   );
 });
 
 const styles = themedStyles(() =>
   StyleSheet.create({
-    rowRight: { alignItems: 'flex-end', gap: 3, flexShrink: 1 },
-    rowValue: {
-      fontFamily: theme.font.bodyBold,
-      fontSize: 15,
-      color: theme.colors.textPrimary,
-      textAlign: 'right',
-      fontVariant: ['tabular-nums'],
+    disc: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: theme.colors.flatBlue,
     },
   })
 );

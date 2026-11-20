@@ -164,12 +164,7 @@ const styles = themedStyles(() =>
     stackedMid: { flexGrow: 1, flexBasis: '70%' },
     divider: h.divider,
     mid: h.mid,
-    title: {
-      fontFamily: theme.font.bodyMedium,
-      fontSize: 15,
-      lineHeight: 20,
-      color: theme.colors.textPrimary,
-    },
+    title: h.title,
     sub: {
       fontFamily: theme.font.body,
       fontSize: 13,
@@ -178,11 +173,8 @@ const styles = themedStyles(() =>
       marginTop: 2,
     },
     amount: {
-      fontVariant: ['tabular-nums'],
+      ...h.amount,
       fontFamily: theme.font.bodyBold,
-      fontSize: 15,
-      lineHeight: 20,
-      color: theme.colors.textPrimary,
     },
     income: { color: theme.colors.incomeText },
     refund: { fontFamily: theme.font.bodyBold, color: theme.colors.incomeText },

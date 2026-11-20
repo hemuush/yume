@@ -105,7 +105,7 @@ const styles = themedStyles(() =>
       width: 18,
       height: 18,
       borderRadius: 9,
-      backgroundColor: theme.colors.ink,
+      backgroundColor: theme.colors.action,
     },
     disabled: { opacity: theme.opacity.disabled },
   })

@@ -293,7 +293,12 @@ const styles = themedStyles(() =>
     },
     bubbleCol: { width: `${100 / 7.4}%`, height: '100%' },
     bubbleWrap: { position: 'absolute', left: -24, right: -24, alignItems: 'center' },
-    bubble: { paddingHorizontal: 7, paddingVertical: 3, borderRadius: 8, backgroundColor: theme.colors.ink },
+    bubble: {
+      paddingHorizontal: 7,
+      paddingVertical: 3,
+      borderRadius: 8,
+      backgroundColor: theme.colors.action,
+    },
     bubbleText: { fontFamily: theme.font.bodyBold, fontSize: 11, color: theme.colors.surface },
     bubbleNub: {
       position: 'absolute',
@@ -302,7 +307,7 @@ const styles = themedStyles(() =>
       width: 6,
       height: 6,
       borderRadius: 1,
-      backgroundColor: theme.colors.ink,
+      backgroundColor: theme.colors.action,
       transform: [{ rotate: '45deg' }],
     },
     average: {

@@ -3,7 +3,6 @@ import { SettingsRow } from '@/components/SettingsRow';
 import { showAlert } from '@/components/AppDialog';
 import { ToggleSwitch } from '@/components/ToggleSwitch';
 import { setHideWidgetValues } from '@/db/settings';
-import { theme } from '@/constants/theme';
 import { errorMessage } from '@/lib/errorMessage';
 import { refreshAllWidgets } from '@/widgets/notifyWidgets';
 
@@ -37,7 +36,6 @@ export const WidgetPrivacyRow = memo(function WidgetPrivacyRow({
     <SettingsRow
       compact
       icon="widgets-outline"
-      iconBg={theme.colors.accentTint}
       label="Hide widget details"
       sub="Hide financial details on your home screen. Quick Add stays available."
       right={

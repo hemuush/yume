@@ -16,7 +16,7 @@ import { AddButton } from '@/components/AddButton';
 import { EmptyState } from '@/components/EmptyState';
 import { Skeleton } from '@/components/Skeleton';
 import { formatMoney } from '@/lib/money';
-import { groupPeople, inRows, showPeopleSummary } from '@/features/people/people.helpers';
+import { groupPeople, showPeopleSummary } from '@/features/people/people.helpers';
 import { PeopleNet } from '@/features/people/PeopleNet';
 import { ListCard } from '@/components/SummaryCard';
 import { HomeWallpaper } from '@/features/home/HomeWallpaper';
@@ -27,7 +27,6 @@ import { PeopleSheets } from '@/features/people/PeopleSheets';
 import { createPeopleSheets } from '@/features/people/peopleSheetsStore';
 import { usePeopleData } from '@/features/people/usePeopleData';
 import { styles } from '@/features/people/people.styles';
-import { useStacked } from '@/lib/useStacked';
 
 // Hashed from the person's own id, not list position, so a rename or a new person never swaps anyone's colour.
 const colorOf = (p: PersonWithBalance) => flatPalette()[stableIndexFromId(p.id, 4)];
@@ -38,7 +37,6 @@ const colorOf = (p: PersonWithBalance) => flatPalette()[stableIndexFromId(p.id, 
  */
 export default function PeopleScreen() {
   const insets = useSafeAreaInsets();
-  const stacked = useStacked();
   const { accent, secondary } = useAccent();
   // The header sits over the page and shrinks as it scrolls.
   const { collapse, headerHeight, scrollHandler, scrollRef } = useCollapsingHeader();
@@ -48,7 +46,6 @@ export default function PeopleScreen() {
   const loading = !loaded && !loadError;
   const { owed, owe, settled, owedToYouMinor, youOweMinor, netMinor } = groupPeople(people);
   const summary = showPeopleSummary(owed.length + owe.length);
-  const columns = summary && !stacked ? 2 : 1;
 
   if (!hasData && loadError)
     return <ScreenLoadError title="Friends & family" message={loadError} onRetry={() => void reload()} />;
@@ -124,14 +121,17 @@ export default function PeopleScreen() {
                         <View style={[styles.groupDot, { backgroundColor: group.dot }]} />
                         <Text style={styles.groupTitle}>{group.title}</Text>
                       </View>
-                      {inRows(group.list, columns).map((row) => (
-                        <View key={row[0].id} style={styles.tileRow}>
-                          {row.map((p) => (
-                            <PersonTile key={p.id} person={p} color={colorOf(p)} onOpen={sheets.openPerson} />
-                          ))}
-                          {row.length < columns && <View style={styles.tileCell} />}
-                        </View>
-                      ))}
+                      <ListCard>
+                        {group.list.map((p, i) => (
+                          <PersonTile
+                            key={p.id}
+                            person={p}
+                            color={colorOf(p)}
+                            divider={i > 0}
+                            onOpen={sheets.openPerson}
+                          />
+                        ))}
+                      </ListCard>
                     </View>
                   )
               )}

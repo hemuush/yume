@@ -1,7 +1,6 @@
 import { memo, useCallback, useMemo, useState } from 'react';
 import { ActivityIndicator, View, Pressable } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
-import { Amount } from '@/components/Amount';
 import { Text } from '@/components/Text';
 import { withPressed } from '@/lib/pressed';
 import { EmptyState } from '@/components/EmptyState';
@@ -14,7 +13,6 @@ import { parseLocalIsoDate } from '@/lib/date';
 import { roundedMinor } from '@/lib/round';
 import { isCustomWindow, previousPeriodLabel, type ReportWindow } from '@/lib/period';
 import type { Category, DateRange, Transaction } from '@/types';
-import { CategoryBar } from './CategoryBar';
 import { BiggestSpends } from './BiggestSpends';
 import { DayCard } from './DayCard';
 import { DayInspector } from './DayInspector';
@@ -27,7 +25,6 @@ import {
   buildStoryCards,
   daySpendFacts,
   patternFacts,
-  quietDays,
   recurringVsDiscretionary,
   type BudgetCover,
   type StoryAction,
@@ -149,7 +146,6 @@ export const OverviewTab = memo(function OverviewTab({
     },
     [cursorKey, onScope]
   );
-  const leadingCategories = useMemo(() => current.categoryBreakdown.slice(0, 3), [current.categoryBreakdown]);
   const filterCat = filterId ? catById.get(filterId) : undefined;
   const filterLoading = filterId != null && filtered?.id !== filterId;
   const heatDaily = useMemo(
@@ -237,7 +233,6 @@ export const OverviewTab = memo(function OverviewTab({
       patterns: byMonth ? [] : patternFacts(daily, daysInPeriod, range, today),
       recurringMinor,
       discretionaryMinor,
-      quiet: quietDays(daily, range, today),
       spendDays: facts.spendDays,
       isCurrentPeriod: isCustomWindow(cursor) ? range.end >= today : cursor.offset === 0,
       unit: custom ? 'period' : isYear ? 'year' : 'month',
@@ -287,41 +282,6 @@ export const OverviewTab = memo(function OverviewTab({
   return (
     <>
       {summary}
-      {leadingCategories.length > 0 && (
-        <View style={styles.overviewPanel}>
-          <View style={styles.overviewHeading}>
-            <Text accessibilityRole="header" style={styles.blockTitle}>
-              Top categories
-            </Text>
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => onStoryAction({ type: 'categories' })}
-              style={withPressed(styles.overviewAction)}
-            >
-              <Text style={styles.overviewLink}>See breakdown</Text>
-              <Feather name="arrow-right" size={14} color={theme.colors.link} />
-            </Pressable>
-          </View>
-          <CategoryBar breakdown={current.categoryBreakdown} selectedId={null} />
-          {leadingCategories.map((category) => (
-            <Pressable
-              key={category.categoryId}
-              accessibilityRole="button"
-              onPress={() => onStoryAction({ type: 'category', id: category.categoryId })}
-              style={withPressed(styles.overviewRow)}
-            >
-              <View style={[styles.overviewDot, { backgroundColor: category.color }]} />
-              <Text style={styles.overviewName}>{category.name}</Text>
-              <Amount
-                minor={roundedMinor(category.totalMinor)}
-                sensitive={category.isSensitive}
-                style={styles.overviewAmount}
-              />
-              <Feather name="chevron-right" size={14} color={theme.colors.textMuted} />
-            </Pressable>
-          ))}
-        </View>
-      )}
       <Pressable
         accessibilityRole="button"
         accessibilityState={{ expanded: calendarOpen }}

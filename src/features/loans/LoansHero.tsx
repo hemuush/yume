@@ -48,15 +48,7 @@ export function LoansHero({
   const { fontScale } = useWindowDimensions();
   if (loading) {
     return (
-      <View
-        key="loading"
-        style={[
-          screenStyles.card,
-          styles.hero,
-          ledgerStyle && planWorkspaceCard,
-          ledgerStyle && styles.planHero,
-        ]}
-      >
+      <View key="loading" style={[screenStyles.card, styles.hero, ledgerStyle && styles.planHero]}>
         <Skeleton width={70} height={10} radius={4} />
         <Skeleton width={160} height={22} radius={6} />
         <Skeleton width={200} height={14} radius={5} />
@@ -90,15 +82,7 @@ export function LoansHero({
   const factBasis = Math.round(84 * Math.min(2, Math.max(1, fontScale)));
 
   return (
-    <View
-      key="hero"
-      style={[
-        screenStyles.card,
-        styles.hero,
-        ledgerStyle && planWorkspaceCard,
-        ledgerStyle && styles.planHero,
-      ]}
-    >
+    <View key="hero" style={[screenStyles.card, styles.hero, ledgerStyle && styles.planHero]}>
       {allClear ? (
         <View style={styles.clear}>
           <Kicker icon="check">Debt-free</Kicker>
@@ -219,7 +203,7 @@ export function LoanPayoffTools({
                   <GrowFill
                     animKey={`loan-timeline:${row.id}`}
                     pct={row.fraction * 100}
-                    style={[styles.laneFill, { backgroundColor: theme.colors.ink }]}
+                    style={[styles.laneFill, { backgroundColor: theme.colors.action }]}
                   />
                 </View>
               </View>
@@ -253,22 +237,25 @@ const styles = themedStyles(() =>
       gap: 12,
       overflow: 'visible',
     },
-    planHero: { marginTop: 0, paddingBottom: 12, gap: 8 },
-    planFacts: {
-      backgroundColor: theme.colors.home.control,
-      borderRadius: 12,
-      paddingHorizontal: 10,
-      paddingVertical: 8,
+    // Inside Plan the summary has no box or rules: the figure, the repaid bar and the facts sit on the page.
+    planHero: {
+      marginTop: 0,
+      paddingTop: 8,
+      paddingBottom: 8,
+      gap: 10,
+      borderTopWidth: 0,
+      borderBottomWidth: 0,
     },
+    planFacts: { paddingTop: 4 },
     planTools: { marginTop: 12, paddingHorizontal: 12 },
-    planFigure: { fontFamily: theme.font.bodyBold, fontSize: 27, lineHeight: 33 },
+    planFigure: { fontFamily: theme.font.bodyBold, fontSize: 28, lineHeight: 34, letterSpacing: -0.6 },
     repaidTrack: {
-      height: 4,
-      borderRadius: 2,
+      height: 8,
+      borderRadius: 4,
       backgroundColor: theme.colors.inkHairline,
       overflow: 'hidden',
     },
-    repaidFill: { height: '100%', borderRadius: 2, backgroundColor: theme.colors.link },
+    repaidFill: { height: '100%', borderRadius: 4, backgroundColor: theme.colors.link },
     top: {
       flexDirection: 'row',
       flexWrap: 'wrap',

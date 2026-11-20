@@ -202,6 +202,18 @@ export function SplitScreen() {
               ) : null}
             </View>
           </View>
+          {parts.length > 1 && (
+            <View style={styles.splitProgress}>
+              <View style={styles.splitMetric}>
+                <Text style={styles.meta}>Allocated to other parts</Text>
+                <Text style={h.amount}>{money(totalMinor - rest)}</Text>
+              </View>
+              <View style={styles.splitMetric}>
+                <Text style={styles.meta}>{rest < 0 ? 'Over the total' : 'Remainder for first part'}</Text>
+                <Text style={[h.amount, rest < 0 && h.expense]}>{money(Math.abs(rest))}</Text>
+              </View>
+            </View>
+          )}
           {legend.length > 1 && (
             <View style={styles.legend}>
               {legend.map((l) => (
@@ -392,6 +404,15 @@ const styles = themedStyles(() =>
     legendItem: { flexDirection: 'row', alignItems: 'center', gap: 5, maxWidth: '100%' },
     legendKey: { width: 9, height: 9, borderRadius: 5 },
     legendText: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
+    splitProgress: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 8,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: theme.colors.borderSoft,
+      paddingTop: 8,
+    },
+    splitMetric: { flexGrow: 1, flexBasis: 120, minWidth: 0, gap: 2 },
     total: { fontFamily: theme.font.bodyBold, fontSize: 22, color: theme.colors.textPrimary },
     meta: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, marginTop: 4 },
     parts: { marginTop: 14 },
@@ -410,7 +431,7 @@ const styles = themedStyles(() =>
     boxLive: { borderColor: theme.colors.textSecondary, backgroundColor: theme.colors.surface },
     boxRow: { flexDirection: 'row', alignItems: 'center' },
     boxText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textPrimary },
-    caret: { width: 1.5, height: 15, backgroundColor: theme.colors.ink, marginLeft: 2 },
+    caret: { width: 1.5, height: 15, backgroundColor: theme.colors.action, marginLeft: 2 },
     restBox: { paddingVertical: 6, backgroundColor: theme.colors.incomeTint },
     restBoxBad: { backgroundColor: theme.colors.expenseTint },
     restLabel: {

@@ -2,7 +2,7 @@ import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
 import { listScreenStyles } from '@/features/shared/listScreenStyles';
 import { SECTION_TITLE, SECTION_GAP } from '@/constants/textStyles';
-import { SCREEN, flatSection } from '@/components/screenStyles';
+import { SCREEN, flatSection, groupedSurface } from '@/components/screenStyles';
 import { themedStyles } from '@/theme/themedStyles';
 
 /** Maximum choices per row; the editor keeps every touch target at least 44dp. */
@@ -26,8 +26,8 @@ export const styles = themedStyles(() =>
       flexDirection: 'row',
       alignItems: 'center',
       gap: 8,
-      paddingHorizontal: 10,
-      borderRadius: theme.radius.md,
+      paddingHorizontal: 14,
+      borderRadius: theme.radius.pill,
       backgroundColor: theme.colors.home.control,
     },
     categorySearchInput: {
@@ -48,36 +48,25 @@ export const styles = themedStyles(() =>
       color: theme.colors.textSecondary,
     },
     categoryList: {
+      ...groupedSurface.frame,
       marginHorizontal: SCREEN.gutter,
-      borderRadius: theme.radius.xl,
-      backgroundColor: theme.colors.surface,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.colors.borderSoft,
       overflow: 'hidden',
     },
     categoryDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.divider },
-    panelWrap: { paddingHorizontal: 10, paddingBottom: 10 },
-    panel: {
-      backgroundColor: theme.colors.home.control,
-      borderRadius: theme.radius.md,
-      paddingHorizontal: 6,
-    },
-    panelHeader: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 10 },
-    panelHeading: { flexGrow: 1, flexBasis: 130, minWidth: 0, paddingLeft: 12 },
+    // An open parent: its subcategories are an indented list on a thin guide line under the parent's own name, in the same
+    // white as the rows around it, so the parent and its children read as one block.
+    panelWrap: { paddingStart: 42, paddingBottom: 6 },
+    panel: { borderLeftWidth: 2, borderLeftColor: theme.colors.divider },
     parentEdit: {
       minHeight: 44,
       paddingHorizontal: 12,
-      borderRadius: 999,
-      backgroundColor: theme.colors.surfaceAlt,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.colors.borderSoft,
+      borderRadius: theme.radius.md,
       flexDirection: 'row',
-      gap: 6,
+      gap: 8,
       alignItems: 'center',
-      justifyContent: 'center',
     },
-    parentEditText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.ink },
-    panelTitle: { ...SECTION_TITLE, fontFamily: theme.font.roundedBold, fontSize: 15 },
+    tileNested: { minHeight: 44 },
+    parentEditText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.link },
     hintText: {
       fontFamily: theme.font.body,
       fontSize: 12,
@@ -106,31 +95,36 @@ export const styles = themedStyles(() =>
       paddingVertical: 8,
       gap: 10,
     },
-    tileSelected: { backgroundColor: theme.colors.home.control },
     tileText: { flex: 1, minWidth: 0 },
     tileCount: {
       fontFamily: theme.font.body,
-      fontSize: 11,
+      fontSize: 12,
       lineHeight: 16,
       color: theme.colors.textMuted,
       marginTop: 3,
     },
     tileName: {
-      fontSize: 13,
-      lineHeight: 18,
+      fontSize: 14,
+      lineHeight: 19,
       color: theme.colors.textPrimary,
       fontFamily: theme.font.bodyMedium,
     },
-    appearance: {
-      padding: 12,
-      borderRadius: 22,
-      backgroundColor: theme.colors.tray,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.colors.borderSoft,
-      marginVertical: 8,
-      marginBottom: 18,
+    identityRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 12 },
+    // FormInput ends in a 12 dp margin of its own and its field is 52 dp tall: the disc takes the same 12 so that the two
+    // share one bottom edge, and is 52 dp so that they share one height.
+    identityDisc: {
+      width: 52,
+      height: 52,
+      borderRadius: 26,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: 12,
     },
-    appearanceTitle: { ...SECTION_TITLE, fontFamily: theme.font.roundedBold, fontSize: 17, marginBottom: 16 },
+    identityName: { flex: 1, minWidth: 0 },
+    appearance: {
+      marginVertical: 8,
+      marginBottom: 12,
+    },
     pickerLabel: {
       fontFamily: theme.font.bodyMedium,
       fontSize: 12,
@@ -156,9 +150,11 @@ export const styles = themedStyles(() =>
       gap: 8,
     },
     moreIconsText: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
-    colorRow: { flexDirection: 'row', flexWrap: 'wrap', gap: GRID_GAP, marginBottom: 18 },
+    colorRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 0, marginBottom: 12 },
     chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 20 },
     colorSwatch: {
+      width: 44,
+      height: 44,
       alignItems: 'center',
       justifyContent: 'center',
       borderRadius: 999,
@@ -166,9 +162,9 @@ export const styles = themedStyles(() =>
       borderColor: 'transparent',
     },
     colorSwatchFill: {
-      width: 30,
-      height: 30,
-      borderRadius: 15,
+      width: 28,
+      height: 28,
+      borderRadius: 14,
       alignItems: 'center',
       justifyContent: 'center',
     },

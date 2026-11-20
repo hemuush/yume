@@ -9,6 +9,7 @@ import { usePressScale } from '@/lib/usePressScale';
 import Feather from '@expo/vector-icons/Feather';
 import { theme } from '@/constants/theme';
 import { styles } from './budgets.styles';
+import { PlanMoneyRow, planRowText } from '@/features/plan/PlanMoneyRow';
 import { monthDayInfo } from './budgetsOverview';
 import { withPressedTint } from '@/lib/pressed';
 import { useAccent } from '@/theme/AccentContext';
@@ -121,6 +122,48 @@ export function BudgetRow({
     </Text>
   );
 
+  if (compact)
+    return (
+      <PlanMoneyRow
+        icon={
+          <CategoryIcon
+            name={progress.categoryIcon}
+            color={progress.categoryColor}
+            square={40}
+            size={18}
+            round
+          />
+        }
+        title={progress.categoryName}
+        subtitle={
+          <Text style={planRowText.subtitle}>
+            {`${formatMoney(progress.spentMinor)} of ${formatMoney(progress.effectiveLimitMinor)}`}
+            {!!progress.parentName && ` · ${inParent(progress.parentName)}`}
+          </Text>
+        }
+        value={
+          <Text style={[planRowText.value, progress.overBudget && planRowText.bad]}>
+            {formatMoney(progress.overBudget ? Math.abs(progress.remainingMinor) : progress.remainingMinor)}
+          </Text>
+        }
+        note={
+          <Text style={[planRowText.note, progress.overBudget && planRowText.bad]}>
+            {progress.overBudget ? 'Over budget' : 'Remaining'}
+          </Text>
+        }
+        progress={{
+          pct: barPct,
+          color: progress.overBudget ? theme.colors.expenseText : theme.colors.link,
+          animKey: `budget:${progress.budget.id}`,
+        }}
+        trailing={more}
+        divider={divider}
+        onPress={onPress}
+        onLongPress={onMore}
+        accessibilityLabel={rowLabel}
+        accessibilityHint={onMore ? 'Press and hold for more options' : undefined}
+      />
+    );
   return (
     <AnimatedPressable
       style={[styles.row, compact && styles.compactRow, divider && styles.rowDivider, animatedStyle]}

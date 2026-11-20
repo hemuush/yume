@@ -10,7 +10,7 @@ export { CardRowsSkeleton } from '@/components/ListSkeleton';
  * Matches the balance and breakdown while the overview loads.
  */
 export function ThisMonthHeroSkeleton() {
-  const innerWidth = Math.max(0, useContentWidth() - 66);
+  const innerWidth = Math.max(0, useContentWidth() - 94);
   const stacked = useStacked();
   return (
     <View style={hero.card}>
@@ -18,7 +18,7 @@ export function ThisMonthHeroSkeleton() {
         <Skeleton width={78} height={14} radius={4} />
         <Skeleton width={96} height={32} radius={16} />
       </View>
-      <View style={styles.figure}>
+      <View style={hero.figure}>
         <Skeleton width={Math.min(130, innerWidth)} height={40} radius={8} />
         <Skeleton width={Math.min(165, innerWidth)} height={20} radius={10} />
       </View>

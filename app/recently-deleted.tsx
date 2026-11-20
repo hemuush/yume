@@ -344,7 +344,7 @@ const styles = themedStyles(() =>
       paddingHorizontal: 12,
       paddingVertical: 6,
       borderRadius: theme.radius.pill,
-      backgroundColor: theme.colors.ink,
+      backgroundColor: theme.colors.action,
     },
     /** The second line under an entry's title sits right under the first. */
     subNext: { marginTop: 0 },

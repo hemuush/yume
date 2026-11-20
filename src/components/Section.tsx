@@ -112,7 +112,7 @@ const styles = themedStyles(() =>
       minHeight: 20,
       paddingHorizontal: 6,
       borderRadius: theme.radius.pill,
-      backgroundColor: theme.colors.expense,
+      backgroundColor: theme.colors.action,
       alignItems: 'center',
       justifyContent: 'center',
     },

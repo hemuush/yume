@@ -371,7 +371,7 @@ const styles = themedStyles(() =>
       justifyContent: 'center',
       paddingHorizontal: 14,
       borderRadius: theme.radius.pill,
-      backgroundColor: theme.colors.ink,
+      backgroundColor: theme.colors.action,
     },
     pillPressed: { opacity: theme.opacity.pressed },
     pillText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.onInk },

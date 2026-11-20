@@ -6,7 +6,7 @@ import { theme } from '@/constants/theme';
 import { formatMoney, getCurrencySymbol } from '@/lib/money';
 import { haptics } from '@/lib/haptics';
 import { styles } from '@/features/add/add.styles';
-import { EntryType, TYPE_WASH, typeWash } from '@/features/add/addEntry';
+import { ADD_TYPES, EntryType, TYPE_WASH, typeWash } from '@/features/add/addEntry';
 import { withPressedTint } from '@/lib/pressed';
 import { softTint } from '@/components/softTint';
 import { useAccent } from '@/theme/AccentContext';
@@ -52,6 +52,8 @@ export function AmountCard({
   const { amounts: frequentAmounts, onPick: onPickAmount } = suggestions;
   const { accent } = useAccent();
   const wash = refund ? TYPE_WASH.income : typeWash(type, accent);
+  const typeLabel = ADD_TYPES.find((option) => option.value === type)?.label;
+  const amountLabel = typeLabel ? `${typeLabel} amount` : 'Amount';
   const stacked = useStacked('early');
   return (
     <View
@@ -72,7 +74,7 @@ export function AmountCard({
         <View style={styles.amountMain}>
           <View style={styles.heroLabelRow}>
             <View style={[styles.heroDot, { backgroundColor: wash.accent }]} />
-            <Text style={styles.heroLabel}>{refund ? 'Money back' : 'Amount'}</Text>
+            <Text style={styles.heroLabel}>{refund ? 'Money back' : amountLabel}</Text>
           </View>
           <Pressable
             onPress={onOpenPad}

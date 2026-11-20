@@ -5,9 +5,7 @@ import { CountUpAmount } from '@/components/CountUpAmount';
 import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
 import { roundedMinor } from '@/lib/round';
-import { hexToRgba, shade } from '@/lib/color';
-import { useAccent } from '@/theme/AccentContext';
-import { themeInk } from '@/theme/interactionColors';
+import { SummaryGradient, summaryInk } from '@/components/SummaryGradient';
 import type { BudgetCover } from './reportsInsights';
 import { useStacked } from '@/lib/useStacked';
 import { themedStyles } from '@/theme/themedStyles';
@@ -44,14 +42,11 @@ export function ReportHero({
   comparedTo: string;
   animKey: string;
 }) {
-  const { accent } = useAccent();
   const stacked = useStacked();
-  const ink = themeInk(accent);
   const used = budget ? budget.spentMinor / budget.limitMinor : 0;
   const over = budget != null && used > 1;
   const near = budget != null && !over && used >= NEAR_BUDGET;
-  // Calm is a deeper shade of the theme colour: the plain pastel barely shows on the track.
-  const barColor = over ? theme.colors.expense : near ? theme.colors.slice.due : shade(accent, 68);
+  const barColor = over ? summaryInk.negative : near ? theme.colors.warnInk : summaryInk.text;
   // Side by side, the three columns share the row; stacked (a narrow phone or large text) they are as tall as
   // their own content. A zero flex basis in a column has no height to share, so the lines drew over each other.
   const share = (grow: number) => (stacked ? null : { flexGrow: grow, flexShrink: 1, flexBasis: 0 });
@@ -65,14 +60,15 @@ export function ReportHero({
   }`;
   return (
     <View style={styles.card}>
+      <SummaryGradient />
       <View style={styles.lead}>
         <View style={styles.kpi} accessible accessibilityLabel={spentSpoken}>
           <Text style={styles.kpiLabel}>{`Spent${inProgress ? ' so far' : ''}`}</Text>
           <CountUpAmount
             minor={roundedMinor(spentMinor)}
             style={styles.figure}
-            numberOfLines={1}
-            adjustsFontSizeToFit
+            numberOfLines={stacked ? undefined : 1}
+            adjustsFontSizeToFit={!stacked}
           />
           {perDayMinor != null && perDayMinor > 0 && (
             <Text style={styles.kpiSub}>{`${money(perDayMinor)} a day`}</Text>
@@ -85,8 +81,8 @@ export function ReportHero({
           <Amount
             minor={roundedMinor(incomeMinor)}
             style={styles.kpiValue}
-            numberOfLines={1}
-            adjustsFontSizeToFit
+            numberOfLines={stacked ? undefined : 1}
+            adjustsFontSizeToFit={!stacked}
           />
           {incomeChange != null && incomeChange !== 0 && (
             <Text style={[styles.kpiSub, incomeChange > 0 && styles.good]}>
@@ -99,8 +95,8 @@ export function ReportHero({
           <Text style={styles.kpiLabel}>Kept</Text>
           <Text
             style={[styles.kpiValue, kept < 0 ? styles.bad : styles.good]}
-            numberOfLines={1}
-            adjustsFontSizeToFit
+            numberOfLines={stacked ? undefined : 1}
+            adjustsFontSizeToFit={!stacked}
           >
             {kept < 0 ? '−' : ''}
             {money(Math.abs(kept))}
@@ -112,7 +108,7 @@ export function ReportHero({
       </View>
       {budget && (
         <View style={styles.budget} accessible accessibilityLabel={budgetSpoken(budget)}>
-          <View style={[styles.track, { backgroundColor: hexToRgba(ink, 0.1) }]}>
+          <View style={styles.track}>
             <View
               key={animKey}
               style={[
@@ -137,50 +133,50 @@ const budgetSpoken = (b: BudgetCover) =>
 const styles = themedStyles(() =>
   StyleSheet.create({
     card: {
-      backgroundColor: theme.colors.surface,
+      backgroundColor: summaryInk.background,
+      overflow: 'hidden',
       borderRadius: theme.radius.xl,
       borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.colors.borderSoft,
+      borderColor: summaryInk.divider,
       marginBottom: 12,
       paddingHorizontal: 14,
       paddingVertical: 12,
     },
     lead: { marginBottom: 10 },
-    // Compact: Spent leads at 20, Income and Kept beside it at 14, each with one small line under it.
     figure: {
       fontFamily: theme.font.bodyBold,
       fontSize: 28,
-      lineHeight: 33,
+      lineHeight: 34,
       letterSpacing: -0.2,
-      color: theme.colors.textPrimary,
+      color: summaryInk.text,
       fontVariant: ['tabular-nums'],
     },
     budget: { marginTop: 10, gap: 5 },
-    track: { height: 6, borderRadius: 3, overflow: 'hidden' },
+    track: { backgroundColor: summaryInk.divider, height: 6, borderRadius: 3, overflow: 'hidden' },
     fill: { height: 6, borderRadius: 3 },
-    budgetText: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
+    budgetText: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: summaryInk.secondary },
     kpis: {
       flexDirection: 'row',
       alignItems: 'flex-start',
       gap: 12,
       paddingTop: 8,
       borderTopWidth: StyleSheet.hairlineWidth,
-      borderTopColor: theme.colors.borderSoft,
+      borderTopColor: summaryInk.divider,
     },
     kpisStacked: { flexDirection: 'column', alignItems: 'stretch', gap: 8 },
     // Income gets the most room (1.25): it carries the long line ("↑ 8% so far vs the month before"), which needs that
     // width to stay on two lines at 360 dp; Spent leads (1.1). See `share`.
     kpi: { minWidth: 0 },
-    kpiLabel: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
+    kpiLabel: { fontFamily: theme.font.body, fontSize: 12, color: summaryInk.secondary },
     kpiValue: {
       fontFamily: theme.font.bodyMedium,
       fontSize: 15,
       lineHeight: 26,
-      color: theme.colors.textPrimary,
+      color: summaryInk.text,
       fontVariant: ['tabular-nums'],
     },
-    kpiSub: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textMuted },
-    good: { color: theme.colors.incomeText },
-    bad: { color: theme.colors.expenseText },
+    kpiSub: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: summaryInk.secondary },
+    good: { color: summaryInk.positive },
+    bad: { color: summaryInk.negative },
   })
 );

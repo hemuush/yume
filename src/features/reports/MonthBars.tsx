@@ -110,7 +110,7 @@ const styles = themedStyles(() =>
       left: 0,
       right: 0,
       height: 1.5,
-      backgroundColor: theme.colors.ink,
+      backgroundColor: theme.colors.action,
       opacity: 0.3,
     },
   })

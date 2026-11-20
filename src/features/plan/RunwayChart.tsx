@@ -242,7 +242,7 @@ const styles = themedStyles(() =>
       position: 'absolute',
       top: 0,
       borderRadius: 14,
-      backgroundColor: theme.colors.ink,
+      backgroundColor: theme.colors.action,
       alignItems: 'center',
       justifyContent: 'center',
     },

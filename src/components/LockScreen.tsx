@@ -11,7 +11,6 @@ import { HeaderHills } from '@/features/home/HeaderHills';
 import { theme } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
 import { useSchemeVersion } from '@/theme/SchemeBoundary';
-import { shade } from '@/lib/color';
 import { authenticate, isDeviceSecured } from '@/lib/appLock';
 import { useAppLock } from '@/lib/AppLockContext';
 import { themedStyles } from '@/theme/themedStyles';
@@ -100,11 +99,6 @@ export function LockScreen({ onUnlocked }: { onUnlocked: () => void }) {
     onUnlocked();
   };
 
-  // The same shade() call HomeHeader makes for its "Dreamlight" wash: one gradient formula for both
-  // screens, retinted by the accent picked in Settings.
-  const gradientTop = shade(accent, 88, 4);
-  const gradientBottom = shade(accent, 96, 2);
-
   return (
     <ScrollView
       style={styles.container}
@@ -114,7 +108,10 @@ export function LockScreen({ onUnlocked }: { onUnlocked: () => void }) {
       ]}
       showsVerticalScrollIndicator={false}
     >
-      <LinearGradient colors={[gradientTop, gradientBottom]} style={StyleSheet.absoluteFill} />
+      <LinearGradient
+        colors={[theme.colors.home.control, theme.colors.background]}
+        style={StyleSheet.absoluteFill}
+      />
       <View pointerEvents="none" style={styles.hills}>
         <HeaderHills sky="transparent" primary={accent} secondary={secondary} />
       </View>

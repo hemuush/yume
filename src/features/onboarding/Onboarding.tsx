@@ -22,7 +22,6 @@ import { AmountField, AmountPadDock } from '@/components/AmountField';
 import { theme } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
 import { LinearGradient } from 'expo-linear-gradient';
-import { shade } from '@/lib/color';
 import { EYEBROW } from '@/constants/textStyles';
 import { YumeLogo } from '@/components/YumeLogo';
 import { KickerDot } from '@/components/StripCard';
@@ -121,8 +120,6 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
   const [restoring, setRestoring] = useState(false);
   const isLast = index === SLIDES.length - 1;
   // The same sky as every screen's header, in the theme's colour.
-  const gradientTop = shade(accent, 90, 4);
-  const gradientBottom = shade(accent, 96, 2);
   const slide = SLIDES[index];
 
   /** Creates the picked starter accounts. False if any failed (the user stays on this step to retry or skip). */
@@ -270,7 +267,10 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
           >
             {/* The sky: the Yume mark and Skip on top, Suu in the middle, Home’s hills along the bottom. */}
             <View style={[styles.sky, { paddingTop: insets.top + 12 }]}>
-              <LinearGradient colors={[gradientTop, gradientBottom]} style={StyleSheet.absoluteFill} />
+              <LinearGradient
+                colors={[theme.colors.home.control, theme.colors.background]}
+                style={StyleSheet.absoluteFill}
+              />
               <View style={styles.skyBar}>
                 <View style={styles.brand}>
                   <YumeLogo size={18} />
@@ -486,7 +486,7 @@ const styles = themedStyles(() =>
       alignItems: 'center',
       justifyContent: 'center',
     },
-    checkOn: { backgroundColor: theme.colors.ink, borderColor: theme.colors.ink },
+    checkOn: { backgroundColor: theme.colors.action, borderColor: theme.colors.ink },
     openingInput: {
       marginTop: 10,
       backgroundColor: theme.colors.surfaceAlt,
@@ -544,7 +544,7 @@ const styles = themedStyles(() =>
     cta: {
       marginTop: 'auto',
       marginBottom: 24,
-      backgroundColor: theme.colors.ink,
+      backgroundColor: theme.colors.action,
       borderRadius: theme.radius.lg,
       paddingVertical: 15,
       alignItems: 'center',

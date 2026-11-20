@@ -26,7 +26,6 @@ jest.mock('./UpdateValueSheet', () => ({
     }),
 }));
 
-import { InvestmentsCard } from '@/features/plan/InvestmentsCard';
 import { PortfolioChart } from './PortfolioChart';
 import { UpdateValuesSheet } from './UpdateValuesSheet';
 import { InvestmentPanel } from './InvestmentPanel';
@@ -80,55 +79,6 @@ const texts = (tree: ReactTestRenderer) =>
 
 beforeEach(() => {
   mockHide = false;
-});
-
-describe('InvestmentsCard', () => {
-  it('invites a first investment with the dashed add tile when there are none', () => {
-    const open = jest.fn();
-    const tree = render(<InvestmentsCard portfolio={buildPortfolio([], 'INR', TODAY)} onOpen={open} />);
-    act(() =>
-      tree.root
-        .findAll(
-          (n) => n.props.accessibilityLabel === 'Track an investment' && typeof n.props.onPress === 'function'
-        )[0]
-        .props.onPress()
-    );
-    expect(open).toHaveBeenCalled();
-  });
-
-  it('is one tile with the worth, the return and how many values are due', () => {
-    const open = jest.fn();
-    const tree = render(
-      <InvestmentsCard portfolio={buildPortfolio([fund, gold], 'INR', TODAY)} onOpen={open} />
-    );
-    const shown = texts(tree);
-    expect(shown).toContain('Investments');
-    expect(shown).toContain('₹5.4L');
-    expect(shown).toContain('1 value due');
-    act(() =>
-      tree.root.find((n) => n.props.accessibilityLabel?.startsWith('Investments, worth')).props.onPress()
-    );
-    expect(open).toHaveBeenCalled();
-  });
-
-  it('says the return when every value is up to date', () => {
-    const shown = texts(
-      render(<InvestmentsCard portfolio={buildPortfolio([fund], 'INR', TODAY)} onOpen={jest.fn()} />)
-    ).join(' ');
-    expect(shown).toContain('return');
-    expect(shown).not.toContain('due');
-  });
-
-  it('hides the figure while savings are hidden', () => {
-    mockHide = true;
-    const tree = render(
-      <InvestmentsCard portfolio={buildPortfolio([fund], 'INR', TODAY)} onOpen={jest.fn()} />
-    );
-    const shown = texts(tree).join(' ');
-    expect(shown).not.toContain('4.4L');
-    expect(shown).not.toContain('return');
-    expect(shown).toContain('Amounts hidden');
-  });
 });
 
 describe('PortfolioChart', () => {

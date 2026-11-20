@@ -3,7 +3,7 @@ import { Skeleton } from '@/components/Skeleton';
 import { useContentWidth } from '@/components/ColumnFrame';
 import { themedStyles } from '@/theme/themedStyles';
 
-const SUMMARY_H = 124;
+const SUMMARY_H = 134;
 const CATEGORIES_H = 186;
 
 /** A few chart-sized placeholders avoid an animation per calendar cell. */

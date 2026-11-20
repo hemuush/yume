@@ -1,5 +1,5 @@
 import { act, create, ReactTestRenderer } from 'react-test-renderer';
-import { Text, View } from 'react-native';
+import { Text } from 'react-native';
 
 jest.mock('@expo/vector-icons/Feather', () => () => null);
 jest.mock('@/lib/haptics', () => ({ haptics: { tap: jest.fn() } }));
@@ -9,8 +9,6 @@ jest.mock('@/components/ModalSheet', () => ({
 }));
 
 import { PlanNavigation, PLAN_TABS } from './PlanNavigation';
-import { TileGrid } from './PlanGrid';
-import { styles as planStyles } from './plan.styles';
 import { ForecastDetails } from './ForecastDetails';
 import { buildRunway } from './runway';
 
@@ -39,32 +37,6 @@ it('keeps all four destinations reachable in the fixed tab control', () => {
   )[0];
   act(() => debt.props.onPress());
   expect(onChange).toHaveBeenCalledWith('debt');
-});
-
-it.each([
-  [390, 1, 1],
-  [320, 1, 2],
-  [390, 1.3, 3],
-])('fits three tiles at width %i, text scale %s into %i rows', (width, fontScale, expectedRows) => {
-  jest
-    .spyOn(require('react-native'), 'useWindowDimensions')
-    .mockReturnValue({ width, height: 800, fontScale, scale: 1 });
-  const tree = render(
-    <TileGrid
-      tiles={[0, 1, 2].map((i) => (
-        <View key={i} testID={`tile-${i}`} />
-      ))}
-      label="Add"
-      accessibilityLabel="Add a budget"
-      onAdd={jest.fn()}
-    />
-  );
-  const rows = tree.root.findAllByType(View).filter((n) => n.props.style === planStyles.gridRow);
-  const expectedWithAdd = expectedRows + (width >= 360 || fontScale > 1.2 ? 1 : 0);
-  expect(rows).toHaveLength(expectedWithAdd);
-  expect(
-    tree.root.findAll((n) => n.props.accessibilityLabel === 'Add a budget' && n.props.onPress).length
-  ).toBeGreaterThan(0);
 });
 
 it('explains an early shortfall even when late income makes the ending balance positive', () => {

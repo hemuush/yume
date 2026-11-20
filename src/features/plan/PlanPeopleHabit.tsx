@@ -67,7 +67,7 @@ export function PlanPeopleHabit({
             accessibilityElementsHidden={!onPerson}
             importantForAccessibility={onPerson ? 'auto' : 'no-hide-descendants'}
           >
-            {faces.map((p) => (
+            {faces.map((p, i) => (
               <Pressable
                 key={p.id}
                 disabled={!onPerson}
@@ -76,7 +76,11 @@ export function PlanPeopleHabit({
                 accessibilityRole="button"
                 accessibilityLabel={`Open ${p.name} details`}
                 accessibilityHint={`${formatMoney(Math.abs(p.balanceMinor))} ${p.balanceMinor > 0 ? 'to collect' : 'to pay back'}`}
-                style={[s.face, { backgroundColor: flatPalette()[stableIndexFromId(p.id, 4)] }]}
+                style={[
+                  s.face,
+                  i > 0 && s.faceOverlap,
+                  { backgroundColor: flatPalette()[stableIndexFromId(p.id, 4)] },
+                ]}
               >
                 <Text style={s.faceText}>{personInitials(p.name)}</Text>
               </Pressable>
@@ -117,10 +121,10 @@ export function PlanPeopleHabit({
             : 'Set a daily goal. Open Suu’s garden'
         }
         onPress={onGarden}
-        style={withPressedTint(accent, [s.row, s.divider])}
+        style={withPressedTint(accent, s.row)}
       >
         <View style={[s.mark, s.markGreen]}>
-          <MaterialCommunityIcons name="sprout" size={16} color={theme.colors.incomeText} />
+          <MaterialCommunityIcons name="sprout" size={16} color={theme.colors.onFlat} />
         </View>
         <View style={s.copy}>
           <Text style={s.title}>Spend streak</Text>
@@ -158,34 +162,41 @@ export function PlanPeopleHabit({
 
 const s = themedStyles(() =>
   StyleSheet.create({
-    card: {
-      marginHorizontal: 16,
+    // Two separate tiles, drawn like the cards of Plan at a glance.
+    card: { marginHorizontal: 16, gap: 10 },
+    row: {
+      minHeight: 60,
       paddingHorizontal: 12,
-      borderRadius: 18,
+      paddingVertical: 8,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+      borderRadius: theme.radius.xl,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: theme.colors.home.edge,
       backgroundColor: theme.colors.home.surface,
     },
-    row: { minHeight: 48, paddingVertical: 5, flexDirection: 'row', alignItems: 'center', gap: 8 },
-    divider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.home.edge },
-    faces: { flexDirection: 'row', gap: 4 },
+    faces: { flexDirection: 'row' },
+    faceOverlap: { marginLeft: -10 },
     face: {
-      width: 30,
-      height: 30,
-      borderRadius: 15,
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      borderWidth: 2,
+      borderColor: theme.colors.home.surface,
       alignItems: 'center',
       justifyContent: 'center',
     },
     faceText: { fontFamily: theme.font.bodyBold, fontSize: 11, color: theme.colors.ink },
     mark: {
-      width: 32,
-      height: 32,
-      borderRadius: 10,
+      width: 36,
+      height: 36,
+      borderRadius: 18,
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: theme.colors.surfaceAlt,
+      backgroundColor: theme.colors.home.control,
     },
-    markGreen: { backgroundColor: theme.colors.incomeTint },
+    markGreen: { backgroundColor: '#8FE8C8' },
     copy: { flex: 1, minWidth: 0 },
     title: {
       fontFamily: theme.font.bodyMedium,
@@ -195,13 +206,7 @@ const s = themedStyles(() =>
     },
     sub: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textSecondary },
     end: { flexShrink: 1, alignItems: 'flex-end', gap: 2 },
-    balance: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      alignItems: 'baseline',
-      justifyContent: 'flex-end',
-      columnGap: 5,
-    },
+    balance: { alignItems: 'flex-end' },
     endLine: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, textAlign: 'right' },
     value: {
       fontFamily: theme.font.bodyMedium,

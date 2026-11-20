@@ -51,23 +51,22 @@ export function UnderlineTabs<T extends string>({
 
 const styles = themedStyles(() =>
   StyleSheet.create({
-    bar: {
-      marginHorizontal: SCREEN.gutter,
-      marginTop: 2,
-      borderRadius: theme.radius.lg,
-      backgroundColor: theme.colors.home.control,
-    },
-    row: { flexGrow: 1, gap: 4, padding: 3, alignItems: 'stretch' },
+    // The same separate pills as Plan's tabs: the picked one solid ink, the rest white with a hairline.
+    bar: { marginHorizontal: SCREEN.gutter, marginTop: 2 },
+    row: { flexGrow: 1, gap: 6, alignItems: 'stretch' },
     tab: {
       flexGrow: 1,
-      minHeight: 44,
+      minHeight: 36,
       justifyContent: 'center',
       alignItems: 'center',
-      borderRadius: theme.radius.md,
-      paddingHorizontal: 12,
+      borderRadius: theme.radius.pill,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.home.edge,
+      backgroundColor: theme.colors.home.surface,
+      paddingHorizontal: 14,
     },
-    tabOn: { backgroundColor: theme.colors.home.selected },
-    label: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textSecondary },
-    labelOn: { color: theme.colors.textPrimary },
+    tabOn: { backgroundColor: theme.colors.action, borderColor: theme.colors.ink },
+    label: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.home.secondaryText },
+    labelOn: { color: theme.colors.onInk },
   })
 );

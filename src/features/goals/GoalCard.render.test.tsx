@@ -15,6 +15,7 @@ afterEach(() => {
   });
   mounted.length = 0;
 });
+jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
 import { GoalCard } from './GoalCard';
 import { SavingsGoal } from '@/types';
 

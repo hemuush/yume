@@ -331,7 +331,7 @@ const styles = themedStyles(() =>
       borderRadius: 3,
       backgroundColor: theme.colors.link,
     },
-    nowDotOn: { backgroundColor: theme.colors.ink },
+    nowDotOn: { backgroundColor: theme.colors.action },
     yearCell: {
       width: '31%',
       flexGrow: 1,

@@ -1,4 +1,12 @@
-import { Easing, FadeIn, FadeOut, LinearTransition, ReduceMotion } from 'react-native-reanimated';
+import {
+  Easing,
+  FadeIn,
+  FadeInDown,
+  FadeOut,
+  FadeOutDown,
+  LinearTransition,
+  ReduceMotion,
+} from 'react-native-reanimated';
 import { DURATIONS } from './motionTimings';
 
 /**
@@ -75,6 +83,14 @@ export const PANEL_ENTER = FadeIn.duration(DURATIONS.standard)
  * Content swapping in place (a Plan/Reports tab, a picked day's detail): one plain fade, so the new view appears
  * without moving.
  */
+/** A panel docked at the bottom (the number pad) rising in and sinking out, so it never just pops. */
+export const DOCK_ENTER = FadeInDown.duration(DURATIONS.standard)
+  .easing(MOTION.ease)
+  .reduceMotion(ReduceMotion.System);
+export const DOCK_EXIT = FadeOutDown.duration(DURATIONS.rowExit)
+  .easing(MOTION.exit)
+  .reduceMotion(ReduceMotion.System);
+
 export const CONTENT_ENTER = FadeIn.duration(DURATIONS.quick)
   .easing(MOTION.ease)
   .reduceMotion(ReduceMotion.System);

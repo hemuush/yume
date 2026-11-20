@@ -77,10 +77,7 @@ export function UpcomingDates({
               accessibilityRole="radio"
               accessibilityState={{ checked: mode === value }}
               onPress={() => update({ ...current, mode: value })}
-              style={withPressedTint(accent, [
-                s.mode,
-                mode === value && { backgroundColor: theme.colors.home.selected },
-              ])}
+              style={withPressedTint(accent, [s.mode, mode === value && s.modeOn])}
             >
               <Text style={[s.modeLabel, mode === value && s.activeText]}>
                 {value === 'outgoing' ? 'Money out' : 'Money in'}
@@ -122,17 +119,8 @@ export function UpcomingDates({
                   style={s.pillHit}
                 >
                   {({ pressed }) => (
-                    <View
-                      style={[
-                        s.pill,
-                        active && {
-                          backgroundColor: theme.colors.home.selected,
-                          borderColor: theme.colors.home.selected,
-                        },
-                        pressed && !active && s.pillPressed,
-                      ]}
-                    >
-                      <Text style={s.pillText}>
+                    <View style={[s.pill, active && s.pillOn, pressed && !active && s.pillPressed]}>
+                      <Text style={[s.pillText, active && s.activeText]}>
                         {day ? (day.date === today ? 'Today' : dayMonth(day.date)) : 'All'}
                       </Text>
                       {tone && (
@@ -199,33 +187,23 @@ export function UpcomingDates({
 const s = themedStyles(() =>
   StyleSheet.create({
     root: { gap: 8 },
-    filters: {
-      marginHorizontal: 16,
-      borderRadius: 18,
-      paddingTop: 7,
-      paddingBottom: 6,
-      backgroundColor: theme.colors.home.surface,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.colors.home.edge,
-      gap: 6,
-      overflow: 'hidden',
-    },
-    modeRow: {
-      marginHorizontal: 10,
-      padding: 2,
-      flexDirection: 'row',
-      borderRadius: 10,
-      backgroundColor: theme.colors.home.background,
-    },
+    // No box around the controls: the total, the two switches and the dates sit on the page, like Plan's own tabs.
+    filters: { gap: 4 },
+    modeRow: { marginHorizontal: 16, flexDirection: 'row', gap: 6 },
     mode: {
       flex: 1,
       minWidth: 0,
-      minHeight: 44,
+      minHeight: 36,
       paddingHorizontal: 4,
       justifyContent: 'center',
       alignItems: 'center',
-      borderRadius: 10,
+      borderRadius: theme.radius.pill,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.home.edge,
+      backgroundColor: theme.colors.home.surface,
     },
+    modeOn: { backgroundColor: theme.colors.action, borderColor: theme.colors.ink },
+    pillOn: { backgroundColor: theme.colors.action, borderColor: theme.colors.ink },
     modeLabel: {
       fontFamily: theme.font.bodyMedium,
       fontSize: 13,
@@ -233,7 +211,7 @@ const s = themedStyles(() =>
       textAlign: 'center',
     },
     totalRow: {
-      marginHorizontal: 12,
+      marginHorizontal: 16,
       paddingVertical: 4,
       minHeight: 44,
       flexDirection: 'row',
@@ -246,11 +224,12 @@ const s = themedStyles(() =>
     total: {
       fontFamily: theme.font.bodyBold,
       fontSize: 24,
+      letterSpacing: -0.5,
       color: theme.colors.textPrimary,
       fontVariant: ['tabular-nums'],
     },
     income: { color: theme.colors.incomeText },
-    dates: { paddingHorizontal: 10, gap: 6 },
+    dates: { paddingHorizontal: 16, gap: 6 },
     // A 44 dp touch area around a 32 dp pill.
     pillHit: { minHeight: 44, justifyContent: 'center' },
     pill: {
@@ -268,7 +247,7 @@ const s = themedStyles(() =>
     // The same weight picked or not, so picking a date never changes the width of the pills beside it.
     pillText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
     dot: { width: 7, height: 7, borderRadius: 4 },
-    activeText: { color: theme.colors.textPrimary },
+    activeText: { color: theme.colors.onInk },
     dateLabel: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
     summary: {
       marginHorizontal: 16,

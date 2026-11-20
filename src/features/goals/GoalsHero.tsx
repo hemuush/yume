@@ -93,7 +93,7 @@ const styles = themedStyles(() =>
     side: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, flexShrink: 1 },
     bold: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
     track: { height: 6, borderRadius: 3, backgroundColor: theme.colors.trayTrack, overflow: 'hidden' },
-    fill: { height: '100%', borderRadius: 3, backgroundColor: theme.colors.ink },
+    fill: { height: '100%', borderRadius: 3, backgroundColor: theme.colors.action },
     note: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textSecondary },
   })
 );

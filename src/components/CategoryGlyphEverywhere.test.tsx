@@ -12,7 +12,6 @@ jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMoc
 import { DraftCard } from './DraftCard';
 import { Chip } from './Chip';
 import { EntryHero } from '@/features/transactions/EntryHero';
-import { PlanSummaryRow } from '@/features/plan/PlanSummaryRow';
 import { BudgetHero } from '@/features/budgets/BudgetHero';
 import { CategoryTile } from '@/features/categories/CategorySection';
 import type { Category } from '@/types';
@@ -40,18 +39,6 @@ const SURFACES: Record<string, (icon: string) => React.ReactElement> = {
   'a filter chip': (icon) => <Chip label="Coffee" active={false} onPress={noop} icon={icon} />,
   'entry details': (icon) => (
     <EntryHero hue="#FFC9A8" icon={icon} title="T" kicker="K" amount="₹1" amountColor="#000" meta="M" />
-  ),
-  'a budget or goal row': (icon) => (
-    <PlanSummaryRow
-      name="N"
-      subtitle="S"
-      amount="₹1"
-      icon={icon}
-      animKey="k"
-      color="#000"
-      accessibilityLabel="L"
-      onPress={noop}
-    />
   ),
   'a budget overview': (icon) => (
     <BudgetHero

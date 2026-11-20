@@ -285,7 +285,9 @@ describe('Investments page', () => {
 
   it('opens a holding’s sheet, Update values and the add-investment form', async () => {
     const tree = await render();
-    const row = tree.root.find((n) => n.props.label === 'Digital gold' && n.props.icon === 'trending-up');
+    const row = tree.root.find(
+      (n) => n.props.title === 'Digital gold' && typeof n.props.onPress === 'function'
+    );
     await act(async () => row.props.onPress());
     expect(texts(tree)).toContain('summary-open');
     await press(tree, 'Update values');

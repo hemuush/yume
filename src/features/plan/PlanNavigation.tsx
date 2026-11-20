@@ -50,18 +50,18 @@ export function PlanNavigation({ value, onChange }: { value: PlanTab; onChange: 
 const styles = themedStyles(() =>
   StyleSheet.create({
     track: {
-      padding: 3,
-      gap: 3,
-      borderRadius: 19,
-      backgroundColor: theme.colors.home.control,
+      gap: 6,
     },
-    row: { flexDirection: 'row', gap: 3 },
-    activeTab: { backgroundColor: theme.colors.home.selected },
+    row: { flexDirection: 'row', gap: 6 },
+    activeTab: { backgroundColor: theme.colors.action, borderColor: theme.colors.ink },
     tab: {
-      borderRadius: 15,
+      borderRadius: theme.radius.pill,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.home.edge,
+      backgroundColor: theme.colors.home.surface,
       flex: 1,
       minWidth: 0,
-      minHeight: 44,
+      minHeight: 40,
       paddingHorizontal: 3,
       paddingVertical: 7,
       alignItems: 'center',
@@ -73,6 +73,6 @@ const styles = themedStyles(() =>
       textAlign: 'center',
       color: theme.colors.home.secondaryText,
     },
-    selected: { color: theme.colors.link },
+    selected: { color: theme.colors.onInk },
   })
 );

@@ -1,13 +1,12 @@
 import { View, Pressable, StyleSheet } from 'react-native';
 import ReanimatedAnimated from 'react-native-reanimated';
 import Feather from '@expo/vector-icons/Feather';
-import { LinearGradient } from 'expo-linear-gradient';
+import { SummaryGradient, summaryInk } from '@/components/SummaryGradient';
 import { Text } from '@/components/Text';
 import { CountUpAmount } from '@/components/CountUpAmount';
 import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
 import { withPressed } from '@/lib/pressed';
-import { softTint } from '@/components/softTint';
 import { useStacked } from '@/lib/useStacked';
 import type { SpendBar } from './spendChart';
 import { usePeriodSlide } from './usePeriodSlide';
@@ -75,13 +74,7 @@ export function ActivitySummaryStrip({
       accessibilityRole="button"
       accessibilityLabel={`${kicker}, ${formatMoney(spentMinor)}${changeWords ? `, ${changeWords}` : ''}. Open insights`}
     >
-      <LinearGradient
-        pointerEvents="none"
-        style={StyleSheet.absoluteFill}
-        colors={[softTint(theme.colors.primary, 0.19), softTint(theme.colors.primary, 0)]}
-        start={{ x: 1, y: 0 }}
-        end={{ x: 0.25, y: 1 }}
-      />
+      <SummaryGradient />
       <ReanimatedAnimated.View style={[styles.glide, slideStyle]}>
         <View style={styles.lead}>
           <Text style={styles.kicker}>{kicker}</Text>
@@ -99,7 +92,7 @@ export function ActivitySummaryStrip({
                 <Feather
                   name={more ? 'arrow-up' : 'arrow-down'}
                   size={12}
-                  color={more ? theme.colors.expenseText : theme.colors.incomeText}
+                  color={more ? summaryInk.negative : summaryInk.positive}
                 />
                 <Text style={[styles.chipText, more ? styles.more : styles.less]} numberOfLines={1}>
                   {formatMoney(Math.abs(change))}
@@ -145,7 +138,7 @@ export function ActivitySummaryStrip({
           </View>
         )}
       </ReanimatedAnimated.View>
-      <Feather name="chevron-right" size={18} color={theme.colors.link} />
+      <Feather name="chevron-right" size={18} color={summaryInk.link} />
     </Pressable>
   );
 }
@@ -170,8 +163,8 @@ function barHeight(bar: SpendBar, future: boolean, monthly: boolean, peak: numbe
 }
 
 function barColor(bar: SpendBar) {
-  if (bar.isCurrent) return theme.colors.link;
-  return bar.state || bar.totalMinor === 0 ? theme.colors.home.edge : theme.colors.primary;
+  if (bar.isCurrent) return summaryInk.text;
+  return bar.state || bar.totalMinor === 0 ? summaryInk.divider : summaryInk.faint;
 }
 
 const styles = themedStyles(() =>
@@ -179,14 +172,12 @@ const styles = themedStyles(() =>
     strip: {
       marginHorizontal: 16,
       marginTop: 8,
-      backgroundColor: theme.colors.home.surface,
-      borderColor: theme.colors.home.edge,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderRadius: theme.radius.xl2,
+      backgroundColor: summaryInk.background,
+      borderRadius: theme.radius.xl,
       overflow: 'hidden',
       // The same side padding as Home's month card and as this card's loading placeholder.
       paddingHorizontal: 16,
-      paddingVertical: 12,
+      paddingVertical: 10,
       flexDirection: 'row',
       alignItems: 'center',
       gap: 12,
@@ -198,15 +189,15 @@ const styles = themedStyles(() =>
       fontFamily: theme.font.bodyMedium,
       fontSize: 13,
       lineHeight: 18,
-      color: theme.colors.home.secondaryText,
+      color: summaryInk.secondary,
     },
     figure: {
       fontFamily: theme.font.bodyBold,
-      fontSize: 25,
-      lineHeight: 31,
-      letterSpacing: -0.45,
+      fontSize: 24,
+      lineHeight: 30,
+      letterSpacing: -0.5,
       fontVariant: ['tabular-nums'],
-      color: theme.colors.textPrimary,
+      color: summaryInk.text,
     },
     changeRow: {
       flexDirection: 'row',
@@ -225,16 +216,16 @@ const styles = themedStyles(() =>
       alignItems: 'center',
       gap: 2,
     },
-    chipLess: { backgroundColor: theme.colors.incomeTint },
-    chipMore: { backgroundColor: theme.colors.expenseTint },
+    chipLess: { backgroundColor: summaryInk.chip },
+    chipMore: { backgroundColor: summaryInk.chip },
     chipText: { fontFamily: theme.font.bodyBold, fontSize: 12, fontVariant: ['tabular-nums'] },
-    more: { color: theme.colors.expenseText },
-    less: { color: theme.colors.incomeText },
+    more: { color: summaryInk.negative },
+    less: { color: summaryInk.positive },
     changeText: {
       flexShrink: 1,
       fontFamily: theme.font.body,
       fontSize: 12,
-      color: theme.colors.textSecondary,
+      color: summaryInk.secondary,
     },
     preview: { width: PREVIEW_W, gap: 3 },
     bars: { flexDirection: 'row', alignItems: 'flex-end', gap: 4, height: BAR_MAX },
@@ -245,15 +236,15 @@ const styles = themedStyles(() =>
       backgroundColor: 'transparent',
       borderWidth: 1,
       borderStyle: 'dashed',
-      borderColor: theme.colors.inkOff,
+      borderColor: summaryInk.faint,
     },
     labels: { flexDirection: 'row', justifyContent: 'space-between' },
     label: {
       fontFamily: theme.font.bodyMedium,
       fontSize: 11,
       lineHeight: 14,
-      color: theme.colors.home.secondaryText,
+      color: summaryInk.secondary,
     },
-    labelNow: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
+    labelNow: { fontFamily: theme.font.bodyBold, color: summaryInk.text },
   })
 );

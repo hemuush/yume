@@ -30,7 +30,7 @@ export function SettingsRow({
   divider,
   expanded,
   dimmed,
-  round,
+  round = true,
   field = false,
   compact = false,
 }: {
@@ -52,7 +52,7 @@ export function SettingsRow({
   expanded?: boolean;
   /** Greyed out while something it depends on is off. */
   dimmed?: boolean;
-  /** A round icon, as in Home's rows and every sheet's rows. */
+  /** A round icon, as in Home's rows and every sheet's rows. On unless turned off. */
   round?: boolean;
   /** Muted field label above a prominent value (sub). */
   field?: boolean;

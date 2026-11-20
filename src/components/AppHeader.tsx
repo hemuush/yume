@@ -179,7 +179,7 @@ const styles = themedStyles(() =>
       minHeight: 17,
       paddingHorizontal: 4,
       borderRadius: 9,
-      backgroundColor: theme.colors.ink,
+      backgroundColor: theme.colors.action,
       alignItems: 'center',
       justifyContent: 'center',
     },

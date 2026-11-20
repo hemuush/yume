@@ -2,6 +2,7 @@ import { View, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
 import { CountUpAmount } from '@/components/CountUpAmount';
 import { SCREEN } from '@/components/screenStyles';
+import { SummaryGradient, summaryInk } from '@/components/SummaryGradient';
 import { theme } from '@/constants/theme';
 import { formatMaskableMoney } from '@/lib/money';
 import { themedStyles } from '@/theme/themedStyles';
@@ -19,6 +20,7 @@ export function CashHero({
 }) {
   return (
     <View style={styles.card}>
+      <SummaryGradient />
       <View style={styles.top}>
         <View style={styles.topMain}>
           <Text style={styles.label}>{label}</Text>
@@ -38,10 +40,10 @@ const styles = themedStyles(() =>
   StyleSheet.create({
     card: {
       marginHorizontal: SCREEN.gutter,
-      backgroundColor: theme.colors.accentTint,
+      // The same sky summary card as Home, Activity, Plan and Reports.
+      backgroundColor: summaryInk.background,
       borderRadius: theme.radius.xl,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.colors.borderSoft,
+      overflow: 'hidden',
       marginTop: 12,
     },
     top: {
@@ -51,15 +53,15 @@ const styles = themedStyles(() =>
       paddingBottom: 10,
     },
     topMain: { flexShrink: 1, minWidth: 0 },
-    label: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
+    label: { fontFamily: theme.font.body, fontSize: 12, color: summaryInk.secondary },
     figure: {
       fontFamily: theme.font.bodyBold,
       fontSize: 27,
       lineHeight: 32,
       letterSpacing: -0.2,
       fontVariant: ['tabular-nums'],
-      color: theme.colors.textPrimary,
+      color: summaryInk.text,
     },
-    sub: { flexShrink: 1, fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
+    sub: { flexShrink: 1, fontFamily: theme.font.body, fontSize: 12, color: summaryInk.secondary },
   })
 );

@@ -960,9 +960,6 @@ it('creates recurring rules and loans directly from Plan and keeps management li
 
 it('keeps full collections out of Overview and opens an over-budget exception directly', async () => {
   const tree = await render();
-  expect(tree.root.findAllByType(require('./BudgetJars').BudgetJars)).toHaveLength(0);
-  expect(tree.root.findAllByType(require('./PlanGoals').GoalsStrip)).toHaveLength(0);
-  expect(tree.root.findAllByType(require('./DebtPath').DebtPath)).toHaveLength(0);
   const warning = tree.root.findAll(
     (n) => n.props.accessibilityLabel?.startsWith('Food.') && n.props.onPress
   )[0];

@@ -442,7 +442,7 @@ const styles = themedStyles(() =>
       marginLeft: 50,
       paddingHorizontal: 10,
       paddingVertical: 8,
-      borderRadius: 14,
+      borderRadius: theme.radius.lg,
       backgroundColor: theme.colors.tray,
       boxShadow: `inset 0 0 0 1px ${theme.colors.inkHairline}`,
     },

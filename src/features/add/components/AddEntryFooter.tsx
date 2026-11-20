@@ -1,7 +1,7 @@
 import { memo, useCallback } from 'react';
 import { Pressable, View } from 'react-native';
 import Animated from 'react-native-reanimated';
-import { CONTENT_ENTER } from '@/lib/animation';
+import { DOCK_ENTER, DOCK_EXIT } from '@/lib/animation';
 import { Text } from '@/components/Text';
 import { KeyboardStickyView } from 'react-native-keyboard-controller';
 import Feather from '@expo/vector-icons/Feather';
@@ -193,7 +193,7 @@ export function AddEntryFooter({ model }: Props): ReactElement {
         />
       </View>
       {padVisible && (
-        <Animated.View entering={CONTENT_ENTER} style={styles.keypadSpacing}>
+        <Animated.View entering={DOCK_ENTER} exiting={DOCK_EXIT} style={styles.keypadSpacing}>
           <AmountPad onKey={onPadKey} onClear={clearAmount} />
         </Animated.View>
       )}

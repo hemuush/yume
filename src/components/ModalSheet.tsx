@@ -1,6 +1,15 @@
-import { useCallback, useContext, useId, useLayoutEffect, useState } from 'react';
+import { useCallback, useContext, useEffect, useId, useLayoutEffect, useState } from 'react';
 import { SheetFlowContext } from './SheetFlow';
-import { Keyboard, View, Modal, Pressable, Animated, StyleSheet, useWindowDimensions } from 'react-native';
+import {
+  Keyboard,
+  View,
+  Modal,
+  Pressable,
+  Animated,
+  Easing,
+  StyleSheet,
+  useWindowDimensions,
+} from 'react-native';
 import { Text } from '@/components/Text';
 import { SheetSurfaceProvider } from './SheetSurface';
 import Feather from '@expo/vector-icons/Feather';
@@ -271,6 +280,32 @@ function RoundFooterButton({
   );
 }
 
+/**
+ * How a sheet arrives: it rises a short way into place while the Modal's own fade brings in the backdrop, so it settles
+ * instead of appearing. A plain transform on the surface (native driver): it moves nothing in the layout, which is what
+ * the Reanimated entering animation that was here once got wrong (see the note by SHEET_SHADOW). With reduce motion on it
+ * is already in place.
+ */
+function useRise(distance: number) {
+  const reduceMotion = useReduceMotion();
+  const [y] = useState(() => new Animated.Value(reduceMotion ? 0 : distance));
+  useEffect(() => {
+    if (reduceMotion) {
+      y.setValue(0);
+      return;
+    }
+    const run = Animated.timing(y, {
+      toValue: 0,
+      duration: 280,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    });
+    run.start();
+    return () => run.stop();
+  }, [reduceMotion, y]);
+  return { transform: [{ translateY: y }] };
+}
+
 function ModalSheetBody({
   onClose,
   title,
@@ -299,6 +334,7 @@ function ModalSheetBody({
   const maxHeight =
     height < 640 || fontScale > 1.2 || size === 'expanded' ? '94%' : size === 'compact' ? '78%' : '90%';
   const isSheet = variant === 'sheet';
+  const rise = useRise(isSheet ? 40 : 16);
   const viewportHeight = flow?.viewportHeight ? Math.min(height, flow.viewportHeight) : height;
   // What this page needs on its own: header, content and footer as laid out. A page shared with a flow is held at
   // most FLOW_STRETCH above it, so a short page after a tall one is not left mostly empty.
@@ -387,7 +423,7 @@ function ModalSheetBody({
             ]}
             pointerEvents="box-none"
           >
-            <View
+            <Animated.View
               testID="sheet-surface"
               style={[
                 styles.dialog,
@@ -395,6 +431,7 @@ function ModalSheetBody({
                 dialogWidth,
                 { maxHeight },
                 ledgerStyle && styles.ledgerSurface,
+                rise,
               ]}
             >
               <SheetWash />
@@ -412,7 +449,7 @@ function ModalSheetBody({
               </KeyboardAwareScrollView>
               <View style={[styles.framedDialogFooter, { paddingBottom: pad ? 10 : 16 }]}>{footer}</View>
               {pad && <View style={styles.dialogDock}>{pad}</View>}
-            </View>
+            </Animated.View>
           </KeyboardAvoidingView>
         </View>
       </AmountPadHostProvider>
@@ -438,7 +475,7 @@ function ModalSheetBody({
             style={[styles.flex, styles.alignBottom, { paddingTop: insets.top + 8 }]}
             pointerEvents="box-none"
           >
-            <View
+            <Animated.View
               testID="sheet-surface"
               onLayout={
                 sharesHeight && visible ? (event) => flow.measure(event.nativeEvent.layout.height) : undefined
@@ -449,6 +486,7 @@ function ModalSheetBody({
                 { maxHeight },
                 flowFrame,
                 ledgerStyle && styles.ledgerSurface,
+                rise,
               ]}
             >
               <SheetWash />
@@ -500,7 +538,7 @@ function ModalSheetBody({
                   {pad}
                 </View>
               )}
-            </View>
+            </Animated.View>
           </KeyboardAvoidingView>
         </View>
       </AmountPadHostProvider>
@@ -508,13 +546,14 @@ function ModalSheetBody({
   }
 
   const body = (
-    <View
+    <Animated.View
       style={[
         isSheet ? [styles.sheet, sheetWidth] : [styles.dialog, dialogWidth],
         ledgerStyle && styles.ledgerSurface,
         ledgerStyle && isSheet && styles.ledgerPad,
         stripView && styles.dialogStriped,
         { paddingBottom: isSheet ? 24 + insets.bottom : 20 },
+        rise,
       ]}
     >
       <SheetWash />
@@ -522,7 +561,7 @@ function ModalSheetBody({
       {header}
       {children}
       {pad && <View style={styles.inlineDock}>{pad}</View>}
-    </View>
+    </Animated.View>
   );
 
   return (
@@ -623,8 +662,7 @@ const styles = themedStyles(() =>
     framedSheetFooter: {
       paddingHorizontal: 20,
       paddingTop: 12,
-      // The sheet's own surface with a hairline above, not a second cream band.
-      backgroundColor: theme.colors.surface,
+      backgroundColor: theme.colors.surfaceAlt,
       borderTopWidth: StyleSheet.hairlineWidth,
       borderColor: theme.colors.divider,
     },

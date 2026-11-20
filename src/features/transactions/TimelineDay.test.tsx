@@ -553,7 +553,7 @@ describe('days as a heading above a card', () => {
       expect(StyleSheet.flatten(lane.props.style)).toMatchObject({
         marginHorizontal: 16,
         backgroundColor: theme.colors.home.surface,
-        borderColor: theme.colors.home.edge,
+        borderColor: theme.colors.borderSoft,
         overflow: 'visible',
       });
       expect(StyleSheet.flatten(lane.props.style).borderRadius).toBe(theme.radius.lg);

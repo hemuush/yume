@@ -25,7 +25,7 @@ export const styles = themedStyles(() =>
     root: { flex: 1, overflow: 'hidden' },
     segs: { flexDirection: 'row', gap: 4, marginHorizontal: 14 },
     seg: { flex: 1, height: 4, borderRadius: 2, backgroundColor: 'rgba(16,32,51,0.12)', overflow: 'hidden' },
-    segFill: { height: '100%', backgroundColor: theme.colors.ink },
+    segFill: { height: '100%', backgroundColor: theme.colors.action },
     topBar: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -49,7 +49,7 @@ export const styles = themedStyles(() =>
       justifyContent: 'center',
       backgroundColor: theme.colors.surface,
     },
-    chapterSelected: { backgroundColor: theme.colors.ink },
+    chapterSelected: { backgroundColor: theme.colors.action },
     chapterText: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
     chapterTextSelected: { color: theme.colors.onInk },
     close: {

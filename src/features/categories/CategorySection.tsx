@@ -20,6 +20,7 @@ export function CategoryTile({
   context,
   count,
   selected,
+  nested,
   onPress,
   onLongPress,
 }: {
@@ -29,6 +30,8 @@ export function CategoryTile({
   count?: number;
   /** The parent whose pills are open below. */
   selected?: boolean;
+  /** A subcategory inside its parent's open panel: a smaller icon and a lower row. */
+  nested?: boolean;
   /** Both are handed the category, so one function can serve every tile and a tile is drawn again only for its own changes. */
   onPress: (cat: Category) => void;
   onLongPress: (cat: Category) => void;
@@ -36,9 +39,9 @@ export function CategoryTile({
   const { animatedStyle, onPressIn, onPressOut } = usePressScale();
   const { accent } = useAccent();
   return (
-    <View style={[styles.categoryRowShell, selected && styles.tileSelected]}>
+    <View style={styles.categoryRowShell}>
       <AnimatedPressable
-        style={[styles.tile, animatedStyle]}
+        style={[styles.tile, nested && styles.tileNested, animatedStyle]}
         onPressIn={onPressIn}
         onPressOut={onPressOut}
         onPress={() => onPress(category)}
@@ -62,7 +65,8 @@ export function CategoryTile({
               : 'Edit category.'
         }
       >
-        <CategoryIcon name={category.icon} color={category.color} square={34} size={16} />
+        {/* A subcategory has no icon of its own to show here: it would only repeat its parent’s. */}
+        {!nested && <CategoryIcon name={category.icon} color={category.color} square={34} size={16} />}
         <View style={styles.tileText}>
           <Text style={styles.tileName}>{category.name}</Text>
           {context && <Text style={styles.tileCount}>{context}</Text>}
@@ -72,19 +76,14 @@ export function CategoryTile({
             </Text>
           )}
         </View>
-        <Feather
-          name={
-            count
-              ? selected
-                ? 'chevron-up'
-                : 'chevron-down'
-              : category.archived
-                ? 'chevron-right'
-                : 'edit-2'
-          }
-          size={16}
-          color={theme.colors.textSecondary}
-        />
+        {/* A row that only edits has no icon: the whole row is the button, and ⋯ carries the rest. */}
+        {(count || category.archived) && (
+          <Feather
+            name={count ? (selected ? 'chevron-up' : 'chevron-down') : 'chevron-right'}
+            size={16}
+            color={theme.colors.textSecondary}
+          />
+        )}
       </AnimatedPressable>
       {!category.archived && (
         <Pressable
@@ -167,12 +166,12 @@ export function CategorySection({
         return (
           <View style={styles.panelWrap}>
             <View style={styles.panel}>
-              <PanelHeader parent={parent} onPress={() => onEdit(parent)} />
-              {kids.map((child) => (
-                <View key={child.id} style={styles.categoryDivider}>
-                  <MemoCategoryTile category={child} onPress={onEdit} onLongPress={onManage} />
+              {kids.map((child, index) => (
+                <View key={child.id} style={index > 0 ? styles.categoryDivider : undefined}>
+                  <MemoCategoryTile nested category={child} onPress={onEdit} onLongPress={onManage} />
                 </View>
               ))}
+              <PanelEdit parent={parent} onPress={() => onEdit(parent)} />
             </View>
           </View>
         );
@@ -181,22 +180,18 @@ export function CategorySection({
   );
 }
 
-function PanelHeader({ parent, onPress }: { parent: Category; onPress: () => void }) {
+/** The parent's own edit, as the last line of its open panel: one quiet link, not a heading and a button. */
+function PanelEdit({ parent, onPress }: { parent: Category; onPress: () => void }) {
   const { accent } = useAccent();
   return (
-    <View style={styles.panelHeader}>
-      <View style={styles.panelHeading}>
-        <Text style={styles.panelTitle}>Subcategories</Text>
-      </View>
-      <Pressable
-        onPress={onPress}
-        style={withPressedTint(accent, styles.parentEdit)}
-        accessibilityRole="button"
-        accessibilityLabel={`Edit ${parent.name}`}
-      >
-        <Feather name="edit-2" size={15} color={theme.colors.ink} />
-        <Text style={styles.parentEditText}>Edit</Text>
-      </Pressable>
-    </View>
+    <Pressable
+      onPress={onPress}
+      style={withPressedTint(accent, styles.parentEdit)}
+      accessibilityRole="button"
+      accessibilityLabel={`Edit ${parent.name}`}
+    >
+      <Feather name="edit-2" size={14} color={theme.colors.link} />
+      <Text style={styles.parentEditText}>{`Edit ${parent.name}`}</Text>
+    </Pressable>
   );
 }

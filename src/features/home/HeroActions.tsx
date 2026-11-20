@@ -33,7 +33,7 @@ function Action({ type, label, icon }: (typeof ACTIONS)[number]) {
       onPressOut={onPressOut}
       style={({ pressed }) => [
         styles.wrap,
-        { flexBasis: 90 * Math.max(1, fontScale) },
+        { flexBasis: 80 * Math.max(1, fontScale) },
         type === 'expense' && styles.primary,
         pressed && styles.pressed,
       ]}
@@ -41,11 +41,19 @@ function Action({ type, label, icon }: (typeof ACTIONS)[number]) {
       accessibilityLabel={type === 'expense' ? 'Add expense' : `Add ${label.toLowerCase()}`}
     >
       <Animated.View style={[styles.action, animatedStyle]}>
-        <Feather
-          name={icon}
-          size={16}
-          color={type === 'income' ? theme.colors.incomeText : theme.colors.link}
-        />
+        <View style={[styles.chip, type === 'expense' && styles.chipCoral]}>
+          <Feather
+            name={icon}
+            size={16}
+            color={
+              type === 'expense'
+                ? theme.colors.onCoral
+                : type === 'income'
+                  ? theme.colors.incomeText
+                  : theme.colors.link
+            }
+          />
+        </View>
         <Text style={styles.label}>{label}</Text>
       </Animated.View>
     </Pressable>
@@ -64,18 +72,32 @@ export function HeroActions() {
 
 const styles = themedStyles(() =>
   StyleSheet.create({
-    row: { marginHorizontal: 16, marginTop: 6, flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-    wrap: { flexGrow: 1, borderRadius: theme.radius.lg, backgroundColor: theme.colors.home.control },
-    primary: { backgroundColor: theme.colors.home.selected },
-    pressed: { backgroundColor: theme.colors.home.pressed },
-    action: {
-      minHeight: 44,
-      paddingHorizontal: 4,
-      paddingVertical: 5,
-      flexDirection: 'row',
+    row: { marginHorizontal: 16, marginTop: 8, flexDirection: 'row', gap: 8 },
+    wrap: {
+      flexGrow: 1,
+      borderRadius: theme.radius.xl,
+      backgroundColor: theme.colors.home.surface,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.home.edge,
+    },
+    primary: {},
+    chipCoral: { backgroundColor: theme.colors.coral },
+    chip: {
+      width: 30,
+      height: 30,
+      borderRadius: 15,
       alignItems: 'center',
       justifyContent: 'center',
-      gap: 6,
+      backgroundColor: theme.colors.home.control,
+    },
+    pressed: { backgroundColor: theme.colors.home.pressed },
+    action: {
+      minHeight: 64,
+      paddingHorizontal: 4,
+      paddingVertical: 8,
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 4,
     },
     label: {
       fontFamily: theme.font.bodyMedium,

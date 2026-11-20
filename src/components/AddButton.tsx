@@ -51,7 +51,7 @@ const styles = themedStyles(() =>
       minHeight: 36,
       justifyContent: 'center',
       borderRadius: theme.radius.pill,
-      backgroundColor: theme.colors.ink,
+      backgroundColor: theme.colors.action,
     },
     text: { fontFamily: theme.font.roundedBold, fontSize: 13, color: theme.colors.surface },
     disabled: { opacity: theme.opacity.disabled },
