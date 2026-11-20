@@ -89,7 +89,7 @@ export function DetailChip({
       <Feather
         name={icon}
         size={13}
-        color={active ? theme.colors.textPrimary : theme.colors.entry.secondaryText}
+        color={active ? theme.colors.textPrimary : theme.colors.home.secondaryText}
       />
       <Text style={[styles.detailChipText, muted && styles.detailChipTextMuted]} numberOfLines={1}>
         {label}

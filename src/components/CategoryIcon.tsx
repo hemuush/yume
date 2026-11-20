@@ -24,7 +24,7 @@ export function CategoryIcon({ name, size = 16, square = 34, round = false, ledg
           width: square,
           height: square,
           borderRadius: round ? square / 2 : square * 0.32,
-          backgroundColor: ledgerStyle ? theme.colors.entry.control : theme.colors.surfaceAlt,
+          backgroundColor: ledgerStyle ? theme.colors.home.control : theme.colors.surfaceAlt,
         },
       ]}
     >

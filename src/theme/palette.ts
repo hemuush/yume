@@ -8,15 +8,6 @@ const LIGHT = {
   background: '#F1F4FB',
   surface: '#FFFFFF',
   surfaceAlt: '#E8EDF8',
-  entry: {
-    background: '#F1F4FB',
-    surface: '#FFFFFF',
-    control: '#E9EEFA',
-    selected: '#D9E4FA',
-    edge: '#DCE3F2',
-    secondaryText: '#46506F',
-    keySurface: '#E8EDF8',
-  },
   home: {
     background: '#F1F4FB',
     surface: '#FFFFFF',
@@ -146,15 +137,6 @@ const DARK: Palette = {
   background: '#0A0E17',
   surface: '#192133',
   surfaceAlt: '#212B3F',
-  entry: {
-    background: '#0A0E17',
-    surface: '#192133',
-    control: '#2A3652',
-    selected: '#2B4770',
-    edge: '#32405F',
-    secondaryText: '#C2CADB',
-    keySurface: '#212B3F',
-  },
   home: {
     background: '#0A0E17',
     surface: '#192133',

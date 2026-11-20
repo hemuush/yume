@@ -159,7 +159,7 @@ function StackedSwitch<T extends string>({
                   style={withPressedTint(accent, [
                     styles.stackTab,
                     active && {
-                      backgroundColor: ledgerStyle ? theme.colors.entry.selected : theme.colors.surface,
+                      backgroundColor: ledgerStyle ? theme.colors.home.selected : theme.colors.surface,
                     },
                   ])}
                 >

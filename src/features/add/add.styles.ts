@@ -8,7 +8,7 @@ import { flatSection } from '@/components/screenStyles';
 // Shared by the Add screen (app/add-transaction.tsx) and its fields (AddFields.tsx).
 export const styles = themedStyles(() =>
   StyleSheet.create({
-    container: { flex: 1, backgroundColor: theme.colors.entry.background },
+    container: { flex: 1, backgroundColor: theme.colors.home.background },
     entryBody: { flex: 1 },
     pinnedAmount: { paddingHorizontal: 16, paddingTop: 4 },
     section: { marginBottom: 12 },
@@ -17,13 +17,13 @@ export const styles = themedStyles(() =>
       padding: 12,
       borderRadius: theme.radius.lg,
       borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.colors.entry.edge,
-      backgroundColor: theme.colors.entry.surface,
+      borderColor: theme.colors.home.edge,
+      backgroundColor: theme.colors.home.surface,
     },
     categorySection: { paddingTop: 4 },
     selectedControl: {
-      backgroundColor: theme.colors.entry.selected,
-      borderColor: theme.colors.entry.selected,
+      backgroundColor: theme.colors.home.selected,
+      borderColor: theme.colors.home.selected,
     },
     // A friend entry's people: round avatars with an ink ring on the picked one.
     people: { gap: 10, paddingRight: 4 },
@@ -79,9 +79,9 @@ export const styles = themedStyles(() =>
       minHeight: 50,
       paddingHorizontal: 12,
       borderRadius: 18,
-      backgroundColor: theme.colors.entry.surface,
+      backgroundColor: theme.colors.home.surface,
       borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.colors.entry.edge,
+      borderColor: theme.colors.home.edge,
     },
     pickSub: {
       fontFamily: theme.font.body,
@@ -108,14 +108,14 @@ export const styles = themedStyles(() =>
       gap: 5,
     },
     heroDot: { width: 6, height: 6, borderRadius: 3 },
-    heroLabel: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.entry.secondaryText },
+    heroLabel: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.home.secondaryText },
     padToggle: {
       minWidth: 44,
       minHeight: 44,
       justifyContent: 'center',
       paddingHorizontal: 8,
       borderRadius: theme.radius.md,
-      backgroundColor: theme.colors.entry.control,
+      backgroundColor: theme.colors.home.control,
       flexDirection: 'row',
       alignItems: 'center',
       gap: 4,
@@ -123,7 +123,7 @@ export const styles = themedStyles(() =>
     padToggleText: {
       fontFamily: theme.font.bodyMedium,
       fontSize: 12,
-      color: theme.colors.entry.secondaryText,
+      color: theme.colors.home.secondaryText,
     },
     // Fits on one row when space permits; long labels and enlarged text wrap naturally.
     footerStatus: {
@@ -140,7 +140,7 @@ export const styles = themedStyles(() =>
     formHint: {
       fontFamily: theme.font.body,
       fontSize: 12,
-      color: theme.colors.entry.secondaryText,
+      color: theme.colors.home.secondaryText,
       maxWidth: '100%',
     },
     amountHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
@@ -165,7 +165,7 @@ export const styles = themedStyles(() =>
       flexShrink: 1,
     },
     amountError: { color: theme.colors.expenseText, fontFamily: theme.font.bodyMedium },
-    amountPlaceholder: { color: theme.colors.entry.secondaryText },
+    amountPlaceholder: { color: theme.colors.home.secondaryText },
     // A blinking-free caret: shows the pad is typing into this amount.
     caret: { width: 2, height: 28, borderRadius: 1, backgroundColor: theme.colors.action, marginLeft: 2 },
     expression: {
@@ -183,8 +183,8 @@ export const styles = themedStyles(() =>
       paddingVertical: 10,
       borderRadius: theme.radius.xl,
       borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.colors.entry.edge,
-      backgroundColor: theme.colors.entry.surface,
+      borderColor: theme.colors.home.edge,
+      backgroundColor: theme.colors.home.surface,
       overflow: 'hidden',
     },
     recentRow: { flexDirection: 'row', gap: 6, paddingRight: 12, paddingBottom: 6 },
@@ -197,9 +197,9 @@ export const styles = themedStyles(() =>
       paddingRight: 12,
       paddingVertical: 4,
       borderRadius: theme.radius.pill,
-      backgroundColor: theme.colors.entry.surface,
+      backgroundColor: theme.colors.home.surface,
       borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.colors.entry.edge,
+      borderColor: theme.colors.home.edge,
       maxWidth: '100%',
     },
     recentChipText: {
@@ -237,14 +237,14 @@ export const styles = themedStyles(() =>
       paddingHorizontal: 11,
       paddingVertical: 7,
       borderRadius: theme.radius.md,
-      backgroundColor: theme.colors.entry.surface,
+      backgroundColor: theme.colors.home.surface,
       borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.colors.entry.edge,
+      borderColor: theme.colors.home.edge,
     },
     frequentChipText: {
       fontFamily: theme.font.bodyMedium,
       fontSize: 12,
-      color: theme.colors.entry.secondaryText,
+      color: theme.colors.home.secondaryText,
     },
 
     noteInput: {
@@ -281,7 +281,7 @@ export const styles = themedStyles(() =>
       paddingHorizontal: 16,
       backgroundColor: 'transparent',
       borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.colors.entry.edge,
+      borderColor: theme.colors.home.edge,
       borderRadius: theme.radius.pill,
       minHeight: 48,
       paddingVertical: 8,
@@ -357,10 +357,10 @@ export const styles = themedStyles(() =>
     // A quiet dock keeps details, the calculator and Save together.
     footer: {
       borderTopWidth: StyleSheet.hairlineWidth,
-      borderTopColor: theme.colors.entry.edge,
+      borderTopColor: theme.colors.home.edge,
       borderTopLeftRadius: theme.radius.xl2,
       borderTopRightRadius: theme.radius.xl2,
-      backgroundColor: theme.colors.entry.surface,
+      backgroundColor: theme.colors.home.surface,
       paddingHorizontal: 16,
       paddingTop: 8,
     },
@@ -376,9 +376,9 @@ export const styles = themedStyles(() =>
       minHeight: 44,
       paddingHorizontal: 14,
       borderRadius: theme.radius.pill,
-      backgroundColor: theme.colors.entry.surface,
+      backgroundColor: theme.colors.home.surface,
       borderWidth: 1,
-      borderColor: theme.colors.entry.edge,
+      borderColor: theme.colors.home.edge,
     },
     repeatBtnText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
     draftCard: { ...flatSection(), marginBottom: 12, padding: 14, gap: 8 },
@@ -428,7 +428,7 @@ export const styles = themedStyles(() =>
       maxWidth: '100%',
     },
     detailChipDisabled: { opacity: theme.opacity.disabled },
-    detailChipTextMuted: { color: theme.colors.entry.secondaryText },
+    detailChipTextMuted: { color: theme.colors.home.secondaryText },
     error: {
       fontFamily: theme.font.bodyBold,
       fontSize: 12,

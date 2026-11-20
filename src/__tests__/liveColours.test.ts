@@ -29,10 +29,10 @@ it.each(['light', 'dark'] as const)('keeps Home text legible on the %s surfaces 
 });
 
 it.each(['light', 'dark'] as const)('keeps Add Transaction readable in %s mode', (scheme) => {
-  const { entry, textPrimary } = PALETTES[scheme];
-  for (const surface of [entry.background, entry.surface, entry.control, entry.selected, entry.keySurface]) {
+  const { home, surfaceAlt, textPrimary } = PALETTES[scheme];
+  for (const surface of [home.background, home.surface, home.control, home.selected, surfaceAlt]) {
     expect(contrastRatio(textPrimary, surface)).toBeGreaterThanOrEqual(4.5);
-    expect(contrastRatio(entry.secondaryText, surface)).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(home.secondaryText, surface)).toBeGreaterThanOrEqual(4.5);
   }
 });
 

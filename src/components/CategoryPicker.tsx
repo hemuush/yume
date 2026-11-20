@@ -338,7 +338,7 @@ function MedalTile({
           styles.medalBody,
           active && [
             styles.medalBodyActive,
-            { backgroundColor: compact ? theme.colors.entry.selected : softTint(accent, 0.22) },
+            { backgroundColor: compact ? theme.colors.home.selected : softTint(accent, 0.22) },
           ],
           compact && styles.medalBodyCompact,
           dimmed && styles.medalDimmed,
@@ -429,9 +429,9 @@ const styles = themedStyles(() =>
     searchCompact: {
       marginBottom: 8,
       minHeight: 44,
-      backgroundColor: theme.colors.entry.surface,
+      backgroundColor: theme.colors.home.surface,
       borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.colors.entry.edge,
+      borderColor: theme.colors.home.edge,
     },
     noMatch: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, paddingVertical: 8 },
     subGroup: {
@@ -451,7 +451,7 @@ const styles = themedStyles(() =>
       marginTop: 0,
       paddingTop: 8,
       paddingBottom: 6,
-      borderTopColor: theme.colors.entry.edge,
+      borderTopColor: theme.colors.home.edge,
     },
     inlineSubChips: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 8, rowGap: 14, paddingBottom: 4 },
   })

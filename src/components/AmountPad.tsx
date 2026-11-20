@@ -143,7 +143,7 @@ const styles = themedStyles(() =>
     row: { flexDirection: 'row', gap: 6 },
     keypadSurface: {
       borderRadius: theme.radius.lg,
-      backgroundColor: theme.colors.entry.keySurface,
+      backgroundColor: theme.colors.surfaceAlt,
       gap: 2,
       padding: 4,
     },
@@ -156,7 +156,7 @@ const styles = themedStyles(() =>
     },
     keyCompact: { minHeight: 44 },
     ledgerKey: { borderRadius: theme.radius.md },
-    ledgerOperator: { flex: 0.78, backgroundColor: theme.colors.entry.control },
+    ledgerOperator: { flex: 0.78, backgroundColor: theme.colors.home.control },
     ledgerText: { fontFamily: theme.font.bodyMedium, fontSize: 19 },
     keyText: { fontFamily: theme.font.bodyMedium, fontSize: 22, color: theme.colors.textPrimary },
     keyOperatorText: { fontFamily: theme.font.body, fontSize: 22, color: theme.colors.textSecondary },

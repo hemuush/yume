@@ -2,22 +2,7 @@ import { interactionColors, selectedFill, themeInk } from './interactionColors';
 import { PALETTES } from './palette';
 import { applyScheme } from './scheme';
 import { theme } from '@/constants/theme';
-
-function luminance(hex: string) {
-  const rgb = hex
-    .slice(1)
-    .match(/../g)!
-    .map((part) => {
-      const value = parseInt(part, 16) / 255;
-      return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
-    });
-  return rgb[0] * 0.2126 + rgb[1] * 0.7152 + rgb[2] * 0.0722;
-}
-
-function contrast(a: string, b: string) {
-  const values = [luminance(a), luminance(b)].sort((x, y) => y - x);
-  return (values[0] + 0.05) / (values[1] + 0.05);
-}
+import { contrastRatio as contrast } from '@/lib/color';
 
 afterEach(() => applyScheme('light'));
 
