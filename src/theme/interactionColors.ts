@@ -4,12 +4,12 @@ import { theme } from '@/constants/theme';
 import { getScheme } from './scheme';
 
 /**
- * The ink of buttons, picked chips, switches and links: the page's own ink (near-black on the paper, cream on the dark),
+ * The ink of buttons, picked chips, switches and links: the action colour (near-black on the paper, the logo’s sky on the dark),
  * not a darkened accent. The parameter stays so callers read as before; there is one accent now and it does not tint
  * the ink.
  */
 export function themeInk(_accent?: string): string {
-  return theme.colors.ink;
+  return theme.colors.action;
 }
 
 export function interactionColors(accent: string) {

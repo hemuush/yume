@@ -25,7 +25,7 @@ export function themedStyles<T extends object>(factory: () => T): T {
   };
   const sheet: Record<PropertyKey, unknown> = {};
   for (const key of Reflect.ownKeys(cache)) {
-    Object.defineProperty(sheet, key, { enumerable: true, get: () => current()[key] });
+    Object.defineProperty(sheet, key, { enumerable: true, configurable: true, get: () => current()[key] });
   }
   return sheet as T;
 }
