@@ -74,8 +74,8 @@ These remain available for decisions and previous evidence. Old source lists and
 
 | Record                                                                                             | Context                               |
 | -------------------------------------------------------------------------------------------------- | ------------------------------------- |
-| [Follow-up logic audit: implementation record](../FOLLOWUP_CODE_AUDIT.md)                          | Dated review or implementation record |
-| [Security and product decisions: implementation record](../SECURITY_PRODUCT_REVIEW.md)             | Dated review or implementation record |
+| [Follow-up logic audit: implementation record](archive/FOLLOWUP_CODE_AUDIT.md)                          | Dated review or implementation record |
+| [Security and product decisions: implementation record](archive/SECURITY_PRODUCT_REVIEW.md)             | Dated review or implementation record |
 | [Activity interaction refinement](ACTIVITY_INTERACTION_REFINEMENT_2026_10_20.md)                   | Dated review or implementation record |
 | [Activity feed first](ACTIVITY_FEED_2026_11_12.md)                                                 | Dated review or implementation record |
 | [Activity redesign](ACTIVITY_REDESIGN_2026_11_15.md) | Dated review or implementation record |
