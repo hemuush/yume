@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { View, Pressable, StyleSheet, Keyboard, Animated as RNAnimated } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
-import { MOTION, timing } from '@/lib/animation';
+import Animated from 'react-native-reanimated';
+import { CONTENT_ENTER } from '@/lib/animation';
 import { LinearGradient } from 'expo-linear-gradient';
 import { hexToRgba } from '@/lib/color';
 import Feather from '@expo/vector-icons/Feather';
@@ -12,7 +12,6 @@ import { theme } from '@/constants/theme';
 import { haptics } from '@/lib/haptics';
 import { useTabDockMetrics } from '@/lib/uiScale';
 import { usePressScale } from '@/lib/usePressScale';
-import { useReduceMotion } from '@/lib/useReduceMotion';
 import { useAccent } from '@/theme/AccentContext';
 import { selectedFill } from '@/theme/interactionColors';
 import { themedStyles } from '@/theme/themedStyles';
@@ -48,16 +47,7 @@ function Tab({
   logAgain?: boolean;
 }) {
   const { size, showLabel } = layout;
-  const reduce = useReduceMotion();
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.92);
-  // 0 → 1 as this tab becomes the chosen one: its pill fades up and the one it leaves fades away, instead of
-  // both popping. Reduced motion jumps straight to the end.
-  const chosen = useSharedValue(focused ? 1 : 0);
-  useEffect(() => {
-    const target = focused ? 1 : 0;
-    chosen.set(reduce ? target : withTiming(target, timing(MOTION.quick)));
-  }, [focused, reduce, chosen]);
-  const fillStyle = useAnimatedStyle(() => ({ opacity: chosen.get() }));
   return (
     <Pressable
       style={styles.tabSlot}
@@ -72,11 +62,16 @@ function Tab({
     >
       <RNAnimated.View style={animatedStyle}>
         <Animated.View style={[styles.tab, { height: size, borderRadius: size / 2 }]}>
-          <Animated.View
-            pointerEvents="none"
-            testID={`tab-fill-${label}`}
-            style={[StyleSheet.absoluteFill, { borderRadius: size / 2, backgroundColor: fill }, fillStyle]}
-          />
+          {/* Only the chosen tab has a pill at all: one that is drawn and then faded away could be left showing
+              (two tabs lit at once) if its fade-out never ran. The arriving pill fades in. */}
+          {focused && (
+            <Animated.View
+              pointerEvents="none"
+              testID={`tab-fill-${label}`}
+              entering={CONTENT_ENTER}
+              style={[StyleSheet.absoluteFill, { borderRadius: size / 2, backgroundColor: fill }]}
+            />
+          )}
           <Icon color={focused ? theme.colors.ink : theme.colors.inkSoft} size={20} />
           {showLabel && (
             <Text style={[styles.label, focused && styles.labelSelected]} numberOfLines={1}>

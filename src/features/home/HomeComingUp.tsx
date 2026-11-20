@@ -1,4 +1,3 @@
-import { LimitMeter } from '@/components/LimitMeter';
 import { useState } from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -23,7 +22,7 @@ import type { SavingsGoal } from '@/types';
 import { buildComingUp, summarizeComingUp, ComingUpFilter, ComingUpItem } from './comingUp';
 import type { Upcoming } from './upcomingItems';
 import { UpcomingRow } from './UpcomingRow';
-import { HomeRow } from './HomeRow';
+import { PlanMoneyRow, planRowText } from '@/features/plan/PlanMoneyRow';
 import { HomeRefunds } from './HomeRefunds';
 import { themedStyles } from '@/theme/themedStyles';
 
@@ -73,29 +72,35 @@ function BudgetRow({ entry }: { entry: Extract<ComingUpItem, { kind: 'budget' }>
       ? `${left} over its limit`
       : `${state === 'ahead' ? 'Ahead of pace' : 'On track'} · ${left} left`;
   const percent = `${Math.round(progress.percentUsed)}%`;
+  // The same row as Plan's budgets and goals (PlanMoneyRow), so a budget looks alike on both screens.
   return (
-    <HomeRow
-      leading={
+    <PlanMoneyRow
+      icon={
         <CategoryIcon
           name={progress.categoryIcon}
           color={progress.categoryColor}
-          square={SCREEN.mark}
+          square={40}
           size={18}
           round
         />
       }
       title={`${name} budget`}
-      meter={
-        <LimitMeter
-          pct={progress.percentUsed}
-          tone={state === 'over' ? 'over' : state === 'ahead' ? 'near' : 'ok'}
-          trackColor={theme.colors.trayTrack}
-          height={3}
-        />
+      subtitle={
+        <Text
+          style={[
+            planRowText.subtitle,
+            state === 'over' ? planRowText.bad : state === 'ahead' ? planRowText.warn : null,
+          ]}
+        >
+          {subtitle}
+        </Text>
       }
-      subtitle={subtitle}
-      subtitleTone={state === 'over' ? 'urgent' : state === 'ahead' ? 'soon' : undefined}
-      value={percent}
+      value={<Text style={[planRowText.value, state === 'over' && planRowText.bad]}>{percent}</Text>}
+      progress={{
+        pct: Math.min(100, progress.percentUsed),
+        color: state === 'over' ? theme.colors.expenseText : theme.colors.link,
+        animKey: `budget:${progress.budget.id}`,
+      }}
       onPress={() => router.push({ pathname: '/budgets', params: { budget: progress.budget.id } })}
       accessibilityLabel={`${name} budget, ${percent} used, ${left} ${state === 'over' ? 'over' : 'left'}`}
     />
@@ -114,8 +119,8 @@ function GoalRow({ entry }: { entry: Extract<ComingUpItem, { kind: 'goal' }> }) 
       ? `${formatMoney(perMonthMinor)} a month`
       : 'No target date';
   return (
-    <HomeRow
-      leading={
+    <PlanMoneyRow
+      icon={
         <ProgressRing
           percent={hideAmounts ? 0 : percent}
           color={behind ? theme.colors.slice.due : theme.colors.slice.saved}
@@ -130,11 +135,16 @@ function GoalRow({ entry }: { entry: Extract<ComingUpItem, { kind: 'goal' }> }) 
         </ProgressRing>
       }
       title={goal.name}
-      subtitle={subtitle}
-      subtitleTone={behind && !hideAmounts ? 'soon' : undefined}
-      value={hideAmounts ? toGo : `${toGo} to go`}
-      chip={
-        !hideAmounts && pace ? { label: GOAL_PACE_LABEL[pace], tone: behind ? 'due' : 'complete' } : undefined
+      subtitle={
+        <Text style={[planRowText.subtitle, behind && !hideAmounts && planRowText.warn]}>{subtitle}</Text>
+      }
+      value={<Text style={planRowText.value}>{hideAmounts ? toGo : `${toGo} to go`}</Text>}
+      note={
+        !hideAmounts && pace ? (
+          <Text style={[planRowText.note, behind ? planRowText.warn : planRowText.good]}>
+            {GOAL_PACE_LABEL[pace]}
+          </Text>
+        ) : undefined
       }
       onPress={() => router.push({ pathname: '/savings-goals', params: { goal: goal.id } })}
       accessibilityLabel={`${goal.name}, ${hideAmounts ? 'amounts hidden' : `${pct} saved, ${toGo} to go${pace ? `, ${GOAL_PACE_LABEL[pace]}` : ''}`}`}
@@ -305,7 +315,7 @@ const styles = themedStyles(() =>
     retryText: { color: theme.colors.link, fontFamily: theme.font.bodyMedium, fontSize: 13 },
     card: {
       backgroundColor: theme.colors.home.surface,
-      borderRadius: theme.radius.xl2,
+      borderRadius: theme.radius.xl,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: theme.colors.home.edge,
       overflow: 'hidden',

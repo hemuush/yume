@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Animated } from 'react-native';
 import { Tabs } from 'expo-router';
 import { theme } from '@/constants/theme';
 import { haptics } from '@/lib/haptics';
@@ -8,6 +9,21 @@ import { pushOnce } from '@/lib/pushOnce';
 import { DURATIONS } from '@/lib/motionTimings';
 import { useReduceMotion } from '@/lib/useReduceMotion';
 import { schemeScreenLayout, useSchemeVersion } from '@/theme/SchemeBoundary';
+
+/**
+ * Switching tabs: the leaving and the arriving screen fade while drifting 12 dp sideways, toward the tab that was
+ * tapped (a lower tab leaves to the left). The built-in shift moves 50 dp, which reads as a slide, not a nudge.
+ */
+function tabSwitch({ current }: { current: { progress: Animated.Value } }) {
+  const at = (inputRange: number[], outputRange: number[]) =>
+    current.progress.interpolate({ inputRange, outputRange });
+  return {
+    sceneStyle: {
+      opacity: at([-1, 0, 1], [0, 1, 0]),
+      transform: [{ translateX: at([-1, 0, 1], [-12, 0, 12]) }],
+    },
+  };
+}
 
 export default function TabsLayout() {
   const [repeatSheetVisible, setRepeatSheetVisible] = useState(false);
@@ -32,14 +48,15 @@ export default function TabsLayout() {
             onAddLongPress={() => setRepeatSheetVisible(true)}
           />
         )}
-        // Switching tabs cross-fades the screens (quickly, so it never feels like waiting); with reduced motion
+        // Switching tabs fades and nudges the screens sideways (see tabSwitch, 220 ms); with reduced motion
         // it is instant.
         screenOptions={{
           headerShown: false,
           // Behind a cross-fade the page colour shows, not the navigator's light default.
           sceneStyle: { backgroundColor: theme.colors.background },
-          animation: reduce ? 'none' : 'fade',
-          transitionSpec: { animation: 'timing', config: { duration: DURATIONS.quick } },
+          animation: reduce ? 'none' : 'shift',
+          sceneStyleInterpolator: tabSwitch,
+          transitionSpec: { animation: 'timing', config: { duration: DURATIONS.slideIn } },
         }}
       >
         <Tabs.Screen name="index" options={{ title: 'Home' }} />

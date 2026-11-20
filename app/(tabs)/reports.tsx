@@ -6,7 +6,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { Text } from '@/components/Text';
-import { CONTENT_ENTER } from '@/lib/animation';
+import { TAB_ENTER } from '@/lib/animation';
 import { isIsoDate, toLocalIsoDate } from '@/lib/date';
 import { CURRENT_PERIOD, isCustomWindow, windowRange, type ReportWindow } from '@/lib/period';
 import { useTabScrollPad } from '@/lib/uiScale';
@@ -314,7 +314,7 @@ export default function ReportsScreen() {
             <PrimaryButton title="Retry details" variant="secondary" onPress={retryDetails} />
           </View>
         )}
-        <Animated.View key={tab} entering={CONTENT_ENTER}>
+        <Animated.View key={tab} entering={TAB_ENTER}>
           {tab === 'days' ? (
             <OverviewTab
               cursor={cursor}

@@ -2,6 +2,7 @@ import {
   Easing,
   FadeIn,
   FadeInDown,
+  FadeInRight,
   FadeOut,
   FadeOutDown,
   LinearTransition,
@@ -79,10 +80,6 @@ export const PANEL_ENTER = FadeIn.duration(DURATIONS.standard)
   .easing(MOTION.ease)
   .reduceMotion(ReduceMotion.System);
 
-/**
- * Content swapping in place (a Plan/Reports tab, a picked day's detail): one plain fade, so the new view appears
- * without moving.
- */
 /** A panel docked at the bottom (the number pad) rising in and sinking out, so it never just pops. */
 export const DOCK_ENTER = FadeInDown.duration(DURATIONS.standard)
   .easing(MOTION.ease)
@@ -91,6 +88,15 @@ export const DOCK_EXIT = FadeOutDown.duration(DURATIONS.rowExit)
   .easing(MOTION.exit)
   .reduceMotion(ReduceMotion.System);
 
+/**
+ * A tab of a screen swapping in place (Plan's and Reports' tabs): the new view fades in while drifting a few dp from
+ * the right, the same motion as the bottom tabs, so every switch feels like one family.
+ */
+export const TAB_ENTER = FadeInRight.duration(DURATIONS.slideIn)
+  .easing(MOTION.ease)
+  .reduceMotion(ReduceMotion.System);
+
+/** Content appearing in place (a loaded list, a picked day's detail): one plain fade, without moving. */
 export const CONTENT_ENTER = FadeIn.duration(DURATIONS.quick)
   .easing(MOTION.ease)
   .reduceMotion(ReduceMotion.System);

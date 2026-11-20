@@ -18,6 +18,13 @@ export interface CollapsingHeader {
 }
 
 /**
+ * The last header measured on any screen. A screen drawn again (the colour mode changed, or it was just opened) starts
+ * from it instead of 0: with 0 the content sits under the title until the header reports, and for a moment the first
+ * rows are drawn over "Profile". A screen whose header is taller or shorter corrects itself on its own measure.
+ */
+const lastMeasure = { height: 0, distance: 0 };
+
+/**
  * The shared scroll wiring for a screen whose SkyHeader shrinks as it scrolls: pass `scrollHandler` and
  * `scrollRef` to the screen's Animated.ScrollView (or FlatList), pad its content by `headerHeight`, and pass
  * `collapse` to SkyHeader. `collapsedHeight` is how much of the page the shrunk header covers, for jumps.
@@ -25,13 +32,15 @@ export interface CollapsingHeader {
  */
 export function useCollapsingHeader<T extends HostInstance | Component = ScrollViewInstance>() {
   const scrollY = useSharedValue(0);
-  const distance = useSharedValue(0);
+  const distance = useSharedValue(lastMeasure.distance);
   // A ScrollView's by default; a FlatList screen names its own list instance type.
   const scrollRef = useAnimatedRef<T>();
-  const [headerHeight, setHeaderHeight] = useState(0);
-  const [collapsedHeight, setCollapsedHeight] = useState(0);
+  const [headerHeight, setHeaderHeight] = useState(lastMeasure.height);
+  const [collapsedHeight, setCollapsedHeight] = useState(lastMeasure.height - lastMeasure.distance);
   const onMeasure = useCallback(
     (h: number, d: number) => {
+      lastMeasure.height = h;
+      lastMeasure.distance = d;
       distance.set(d);
       setHeaderHeight(h);
       setCollapsedHeight(h - d);
