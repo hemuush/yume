@@ -9,9 +9,11 @@ import { themedValue } from '@/theme/themedStyles';
 
 /** A section heading above a card or list: Home's "Recent activity", Categories' groups. */
 export const SECTION_TITLE = themedValue<TextStyle>(() => ({
-  fontFamily: theme.font.bodyMedium,
-  fontSize: theme.typeSize.section,
-  color: theme.colors.textPrimary,
+  fontFamily: theme.font.bodyBold,
+  fontSize: 12,
+  letterSpacing: 0.8,
+  textTransform: 'uppercase',
+  color: theme.colors.textMuted,
 }));
 
 /** The gap above a section heading, and below it before its card. */

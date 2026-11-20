@@ -18,11 +18,11 @@ export const theme = {
   radius: {
     sm: 8,
     md: 12,
-    lg: 14,
-    xl: 18,
+    lg: 16,
+    xl: 22,
     // Generous corner for the softer "calm card" register introduced on the
     // Home screen cards — rounder than the doodle cards' `xl`.
-    xl2: 22,
+    xl2: 28,
     pill: 999,
   },
   // A deliberate, coloured emphasis border (an error banner, an EMI

@@ -352,6 +352,9 @@ function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean;
             screenLayout={stackScreenLayout}
             screenOptions={{
               headerShown: false,
+              // The page colour behind every pushed screen: without it the navigator's own light theme shows through
+              // a slide or a swipe back, a flash that dark mode makes obvious.
+              contentStyle: { backgroundColor: theme.colors.background },
               animation: 'slide_from_right',
               animationDuration: 260,
               // Swipe from anywhere to go back, not just the left edge: a pushed screen should feel as

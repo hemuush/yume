@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Tabs } from 'expo-router';
+import { theme } from '@/constants/theme';
 import { haptics } from '@/lib/haptics';
 import { RepeatEntrySheet } from '@/features/home/RepeatEntrySheet';
 import { PillTabBar } from '@/components/PillTabBar';
@@ -35,6 +36,8 @@ export default function TabsLayout() {
         // it is instant.
         screenOptions={{
           headerShown: false,
+          // Behind a cross-fade the page colour shows, not the navigator's light default.
+          sceneStyle: { backgroundColor: theme.colors.background },
           animation: reduce ? 'none' : 'fade',
           transitionSpec: { animation: 'timing', config: { duration: DURATIONS.quick } },
         }}
