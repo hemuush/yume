@@ -15,6 +15,7 @@ import { toLocalIsoDate } from '@/lib/date';
 import { styles as shared } from './goals.styles';
 import { goalPlan, GOAL_PACE_LABEL } from './goalPlan';
 import { themedStyles } from '@/theme/themedStyles';
+import { PlanMoneyRow, planRowText } from '@/features/plan/PlanMoneyRow';
 
 /**
  * One goal as a row in the goals list: name and saved of target, a thin bar in the goal's colour, the share and
@@ -94,6 +95,81 @@ export function GoalCard({
     </View>
   );
 
+  const action = showButton && (
+    <Pressable
+      disabled={blocked}
+      accessibilityState={{ disabled: blocked }}
+      onPress={(event) => {
+        event?.stopPropagation();
+        if (blocked) return;
+        if (following) router.push(`/add-transaction?type=transfer&toAccountId=${goal.linkedAccountId}`);
+        else onContribute();
+      }}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      style={styles.hit}
+    >
+      {({ pressed }) => (
+        <View
+          style={[
+            styles.circle,
+            { backgroundColor: compact ? theme.colors.home.control : selectedFill(accent) },
+            pressed && styles.circlePressed,
+            blocked && styles.blocked,
+          ]}
+        >
+          <Feather
+            name={following ? 'repeat' : 'plus'}
+            size={compact ? 15 : 18}
+            color={compact ? theme.colors.link : themeInk(accent)}
+          />
+        </View>
+      )}
+    </Pressable>
+  );
+  if (compact)
+    return (
+      <PlanMoneyRow
+        icon={
+          <View style={[styles.disc, { backgroundColor: theme.colors.flatMint }]}>
+            <Feather name={reached ? 'check' : 'flag'} size={17} color={theme.colors.onFlat} />
+          </View>
+        }
+        title={goal.name}
+        subtitle={
+          <>
+            {!!line && <Text style={[planRowText.subtitle, reached && planRowText.good]}>{line}</Text>}
+            {pace && plan.pace === 'behind' && (
+              <Text style={[planRowText.subtitle, planRowText.warn]}>{pace}</Text>
+            )}
+            {blocked && (
+              <Text style={[planRowText.subtitle, planRowText.bad]}>
+                Linked account unavailable. Edit this goal to choose another account.
+              </Text>
+            )}
+          </>
+        }
+        value={
+          hideAmounts ? (
+            <Text style={planRowText.value}>
+              {formatMaskableMoney(goal.currentAmountMinor, { masked: true })}
+            </Text>
+          ) : (
+            <CountUpAmount minor={goal.currentAmountMinor} style={planRowText.value} />
+          )
+        }
+        note={<Text style={planRowText.note}>{`Target ${formatMoney(goal.targetAmountMinor)}`}</Text>}
+        progress={
+          hideAmounts
+            ? undefined
+            : { pct: fillPct, color: theme.colors.incomeText, animKey: `goal:${goal.id}` }
+        }
+        trailing={action}
+        divider={divider}
+        onPress={onPress}
+      />
+    );
+
   return (
     <Pressable
       onPress={onPress}
@@ -151,38 +227,7 @@ export function GoalCard({
           </Text>
         )}
       </View>
-      {showButton && (
-        <Pressable
-          disabled={blocked}
-          accessibilityState={{ disabled: blocked }}
-          onPress={(event) => {
-            event?.stopPropagation();
-            if (blocked) return;
-            if (following) router.push(`/add-transaction?type=transfer&toAccountId=${goal.linkedAccountId}`);
-            else onContribute();
-          }}
-          accessibilityRole="button"
-          accessibilityLabel={label}
-          style={styles.hit}
-        >
-          {({ pressed }) => (
-            <View
-              style={[
-                styles.circle,
-                { backgroundColor: compact ? theme.colors.home.control : selectedFill(accent) },
-                pressed && styles.circlePressed,
-                blocked && styles.blocked,
-              ]}
-            >
-              <Feather
-                name={following ? 'repeat' : 'plus'}
-                size={compact ? 15 : 18}
-                color={compact ? theme.colors.link : themeInk(accent)}
-              />
-            </View>
-          )}
-        </Pressable>
-      )}
+      {action}
     </Pressable>
   );
 }
@@ -197,6 +242,7 @@ const styles = themedStyles(() =>
       paddingLeft: 14,
       paddingRight: 8,
     },
+    disc: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
     compactRow: { paddingVertical: 9, gap: 6 },
     compactFields: {
       flexDirection: 'row',

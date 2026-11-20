@@ -22,11 +22,11 @@ function mockStub(testID: string) {
 jest.mock('@/components/FormInput', () => ({ FormInput: mockStub('name') }));
 jest.mock('@/components/SheetTabs', () => ({ SheetTabs: mockStub('kind') }));
 jest.mock('@/components/ToggleSwitch', () => ({ ToggleSwitch: mockStub('sensitive') }));
-jest.mock('@/components/DraftCard', () => ({ DraftCard: mockStub('card') }));
 jest.mock('@/components/CategoryIcon', () => ({ CategoryIcon: () => null }));
 
 import { AddCategoryModal } from './AddCategoryModal';
 import { PrimaryButton } from '@/components/PrimaryButton';
+import { CategoryGlyph } from '@/components/CategoryGlyph';
 import { SheetLink } from '@/components/ModalSheet';
 import { CATEGORY_COLOR_PALETTE } from '@/constants/theme';
 import { CATEGORY_ICON_CHOICES } from '@/constants/categories';
@@ -103,7 +103,8 @@ const field = (t: ReactTestRenderer, label: string) =>
   t.root.findAllByProps({ testID: 'name' }).find((n) => n.props.label === label)!;
 const type = (t: ReactTestRenderer, name: string) =>
   act(async () => field(t, 'Name').props.onChangeText(name));
-const preview = (t: ReactTestRenderer) => byId(t, 'card').props.icon;
+/** The icon in the disc beside the name: the sheet's one live preview of the picked colour and icon. */
+const preview = (t: ReactTestRenderer) => byId(t, 'preview').findByType(CategoryGlyph).props.name;
 const COFFEE = '\u2615';
 
 afterEach(() => {
@@ -165,11 +166,11 @@ describe('AddCategoryModal — new category', () => {
 
     await type(tree, 'Snacks');
     act(() => pressable(tree, 'Inside Test Food').props.onPress());
-    expect(byId(tree, 'card').props.meta).toBe('Inside Test Food');
+    expect(pressable(tree, 'Inside Test Food').props.accessibilityState).toMatchObject({ selected: true });
 
     act(() => byId(tree, 'kind').props.onChange('income'));
     expect(parentChoices(tree)).toEqual(['No parent category', 'Inside Test Salary']);
-    expect(byId(tree, 'card').props.meta).toBeUndefined();
+    expect(pressable(tree, 'No parent category').props.accessibilityState).toMatchObject({ selected: true });
     await save(tree);
     expect(mockCreate.mock.calls[0][0]).toEqual(expect.objectContaining({ kind: 'income', parentId: null }));
   });

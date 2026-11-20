@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { View, Pressable, StyleSheet } from 'react-native';
+import { View, Pressable } from 'react-native';
 import { Text } from '@/components/Text';
 import Feather from '@expo/vector-icons/Feather';
-import { LinearGradient } from 'expo-linear-gradient';
+import { SummaryGradient } from '@/components/SummaryGradient';
 import ReanimatedAnimated from 'react-native-reanimated';
 import { theme } from '@/constants/theme';
 import { formatMoney, formatMaskableMoney } from '@/lib/money';
@@ -23,8 +23,6 @@ import { SpendBars } from './SpendBars';
 import { HeroActions } from './HeroActions';
 import { weekBars, monthBars } from './spendBarData';
 import { withPressed } from '@/lib/pressed';
-import { softTint } from '@/components/softTint';
-import { useAccent } from '@/theme/AccentContext';
 
 type SliceKey = 'spent' | 'saved' | 'due';
 
@@ -75,7 +73,6 @@ export function ThisMonthHero({
   pace?: { projectedMinor: number; byLabel: string } | null;
 }) {
   const { hideAmounts } = usePrivacy();
-  const { accent } = useAccent();
   const stacked = useStacked();
   const { displayed, slideStyle, rhythmSlideStyle, panHandlers } = useHeroTurn({
     periodKey,
@@ -234,14 +231,6 @@ export function ThisMonthHero({
   return (
     <ReanimatedAnimated.View layout={ROW_LAYOUT}>
       <ReanimatedAnimated.View style={styles.card} layout={ROW_LAYOUT}>
-        <LinearGradient
-          pointerEvents="none"
-          style={StyleSheet.absoluteFill}
-          colors={[softTint(accent, 0.2), softTint(accent, 0.04), softTint(accent, 0)]}
-          locations={[0, 0.48, 0.82]}
-          start={{ x: 1, y: 0 }}
-          end={{ x: 0.28, y: 0.86 }}
-        />
         <View style={styles.bar}>
           <Text
             style={styles.headLabel}
@@ -260,6 +249,7 @@ export function ThisMonthHero({
         >
           <ReanimatedAnimated.View style={[styles.body, slideStyle]} {...panHandlers}>
             <View style={styles.figure}>
+              <SummaryGradient />
               {savedExpenseIds && <JustAddedGlow ids={savedExpenseIds} surface="homeBalance" />}
               <View
                 accessible
@@ -292,7 +282,7 @@ export function ThisMonthHero({
               {perDayMinor != null ? (
                 <AllowanceTile perDayMinor={perDayMinor} daysLeft={daysLeft} />
               ) : (
-                <Text style={styles.headCaption} accessibilityElementsHidden importantForAccessibility="no">
+                <Text style={styles.figureCaption} accessibilityElementsHidden importantForAccessibility="no">
                   {headCaption}
                 </Text>
               )}

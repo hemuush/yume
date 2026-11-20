@@ -36,9 +36,9 @@ afterEach(() => act(() => mounted.splice(0).forEach((t) => t.unmount())));
 
 describe('GoalDraftHero', () => {
   it('shows the saved amount, the percent of the target, what is left and a bar to match', () => {
-    const p = hero();
+    const p = hero({ after: true });
     expect(p.name).toBe('Test goal');
-    expect(p.kicker).toBe(`Savings goal · 25% of ${formatMoney(4_000_000)}`);
+    expect(p.kicker).toBe(`After this · 25% of ${formatMoney(4_000_000)}`);
     expect(p.saved).toBe(formatMaskableMoney(1_000_000, { masked: false }));
     expect(p.fraction).toBeCloseTo(0.25);
     expect(p.toGo).toEqual({ figure: formatMoney(3_000_000) });
@@ -46,12 +46,19 @@ describe('GoalDraftHero', () => {
   });
 
   it('adds the target date', () => {
-    expect(hero({ targetDate: '2030-05-01' }).date).toBe(dayMonthYear('2030-05-01'));
+    expect(hero({ after: true, targetDate: '2030-05-01' }).date).toBe(dayMonthYear('2030-05-01'));
+  });
+
+  it('leaves what is left and the date to the Edit sheet’s own fields', () => {
+    const p = hero({ targetDate: '2030-05-01' });
+    expect(p.kicker).toBe(`Savings goal · 25% of ${formatMoney(4_000_000)}`);
+    expect(p.toGo).toBeUndefined();
+    expect(p.date).toBeUndefined();
   });
 
   it('says Reached, with a flag, once the target is met', () => {
-    const p = hero({ savedMinor: 4_000_000 });
-    expect(p.kicker).toBe('Savings goal · Reached');
+    const p = hero({ savedMinor: 4_000_000, after: true });
+    expect(p.kicker).toBe('After this · Reached');
     expect(p.icon).toBe('flag-checkered');
     expect(p.toGo).toEqual({ reached: true });
   });

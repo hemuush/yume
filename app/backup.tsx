@@ -51,8 +51,7 @@ import {
 import { resyncAfterRestore } from '@/lib/restoreSync';
 import { authenticate, withoutRelock } from '@/lib/appLock';
 import { SkyHeader, HeaderSummary } from '@/features/home/SkyHeader';
-import { SummaryCard } from '@/components/SummaryCard';
-import { cardSurface } from '@/components/CardSurface';
+import { ListCard, SummaryCard } from '@/components/SummaryCard';
 import { HomeWallpaper } from '@/features/home/HomeWallpaper';
 import { BackupShield } from '@/features/backup/BackupShield';
 import { shade } from '@/lib/color';
@@ -561,11 +560,10 @@ Restore anyway? Your current data would be replaced with no way back.`,
           </LoadFade>
         </SummaryCard>
 
-        <View style={[h.card, cardSurface.neutral, styles.fileActions]}>
+        <ListCard style={styles.fileActions}>
           <SettingsRow
             compact
             icon="download-outline"
-            iconBg={theme.colors.secondaryTint}
             label="Save backup file"
             sub={busy === 'export-json' ? 'Saving…' : 'A complete copy for restoring or moving phones'}
             onPress={busy ? undefined : exportJsonLocally}
@@ -575,14 +573,13 @@ Restore anyway? Your current data would be replaced with no way back.`,
           <SettingsRow
             compact
             icon="file-restore-outline"
-            iconBg={theme.colors.goldTint}
             label="Restore from file"
             sub={busy === 'restore-file' ? 'Opening…' : 'Choose a Yume backup to recover your data'}
             onPress={busy ? undefined : restoreFromFile}
             dimmed={!!busy && busy !== 'restore-file'}
             divider
           />
-        </View>
+        </ListCard>
 
         {(hasFolder || safetyInfo) && (
           <View style={styles.titleRow}>
@@ -602,7 +599,7 @@ Restore anyway? Your current data would be replaced with no way back.`,
           </View>
         )}
         {(safetyInfo || shownFiles.length > 0) && (
-          <View style={[h.card, cardSurface.neutral, styles.timeline]}>
+          <ListCard style={styles.timeline}>
             {safetyInfo && (
               <TimelineNode first last={shownFiles.length === 0} copy>
                 <View style={[h.mid, styles.nodeDetails]}>
@@ -659,15 +656,15 @@ Restore anyway? Your current data would be replaced with no way back.`,
                 />
               </TimelineNode>
             ))}
-          </View>
+          </ListCard>
         )}
         {loaded && hasFolder && !folderError && shownFiles.length === 0 && (
-          <View style={[h.card, cardSurface.neutral, styles.emptyCard, safetyInfo && styles.emptyAfter]}>
+          <ListCard style={[styles.emptyCard, safetyInfo && styles.emptyAfter]}>
             <Text style={styles.emptyTitle}>No backups yet</Text>
             <Text style={styles.emptySub}>
               Nothing in this folder yet. Tap Back up now to write the first one.
             </Text>
-          </View>
+          </ListCard>
         )}
       </ReanimatedAnimated.ScrollView>
       <SkyHeader

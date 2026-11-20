@@ -11,13 +11,12 @@ import { FormInput } from '@/components/FormInput';
 import { SheetTabs } from '@/components/SheetTabs';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { ModalSheet, SheetLink } from '@/components/ModalSheet';
-import { DraftCard } from '@/components/DraftCard';
 import { SwitchRow } from '@/components/SwitchRow';
 import { InsightDisclosure } from '@/components/InsightCard';
 import { CATEGORY_COLOR_PALETTE, modalFooterStyles as f, theme } from '@/constants/theme';
 import { CATEGORY_ICON_CHOICES } from '@/constants/categories';
 import { normalizeCategoryIcon } from '@/lib/categoryIcon';
-import { styles, GRID_COLUMNS, GRID_GAP } from './categories.styles';
+import { styles } from './categories.styles';
 import { errorMessage } from '@/lib/errorMessage';
 import { withPressed } from '@/lib/pressed';
 import { useSaveOnce } from '@/lib/useSaveOnce';
@@ -52,10 +51,8 @@ export function AddCategoryModal({
 }) {
   const { accent } = useAccent();
   const [gridWidth, setGridWidth] = useState(0);
-  const columns = Math.max(1, Math.min(GRID_COLUMNS, Math.floor((gridWidth + GRID_GAP) / (44 + GRID_GAP))));
-  const cell =
-    gridWidth > 0 ? Math.max(44, Math.floor((gridWidth - GRID_GAP * (columns - 1)) / columns)) : 44;
-  const cellSize = useMemo(() => ({ width: cell, height: cell }), [cell]);
+  // Fixed, compact cells: the choices fill the row and wrap, instead of stretching to a big tile each.
+  const cellSize = useMemo(() => ({ width: 44, height: 44 }), []);
   const [name, setName] = useState('');
   const [kind, setKind] = useState<CategoryKind>('expense');
   const [parentId, setParentId] = useState<string | null>(null);
@@ -162,23 +159,21 @@ export function AddCategoryModal({
         </View>
       }
     >
-      <DraftCard
-        ledgerStyle
-        hue={color}
-        icon={icon}
-        kicker={kind === 'income' ? 'Income' : 'Expense'}
-        title={name.trim() || (category ? category.name : 'New category')}
-        meta={
-          parentName ? `Inside ${parentName}` : isSensitive ? 'Sensitive · hidden with amounts' : undefined
-        }
-      />
-      <FormInput
-        label="Name"
-        value={name}
-        onChangeText={setName}
-        placeholder="e.g. Pet Care"
-        editable={!isSystem}
-      />
+      {/* The picked colour and icon live here, beside the name, instead of a separate preview card. */}
+      <View style={styles.identityRow}>
+        <View testID="preview" style={[styles.identityDisc, { backgroundColor: softTint(color, 0.45) }]}>
+          <CategoryGlyph name={icon} color={theme.colors.ink} size={24} />
+        </View>
+        <View style={styles.identityName}>
+          <FormInput
+            label="Name"
+            value={name}
+            onChangeText={setName}
+            placeholder="e.g. Pet Care"
+            editable={!isSystem}
+          />
+        </View>
+      </View>
       {isSystem ? (
         <Text style={styles.modalHint}>
           Built-in category — its name, type and parent are fixed because Yume files loan and Friends & Family
@@ -189,10 +184,7 @@ export function AddCategoryModal({
           Type ({kind}) can’t be changed once a category exists — archive and recreate it instead.
         </Text>
       ) : (
-        <>
-          <Text style={styles.fieldLabel}>Type</Text>
-          <SheetTabs options={KINDS} value={kind} onChange={onKindChange} />
-        </>
+        <SheetTabs ledgerStyle options={KINDS} value={kind} onChange={onKindChange} />
       )}
       {showParentPicker && (
         <InsightDisclosure
@@ -242,7 +234,6 @@ export function AddCategoryModal({
         </InsightDisclosure>
       )}
       <View style={styles.appearance}>
-        <Text style={styles.appearanceTitle}>Make it yours</Text>
         <Text style={styles.pickerLabel}>Colour</Text>
         <View style={styles.colorRow} onLayout={(e) => setGridWidth(Math.round(e.nativeEvent.layout.width))}>
           {gridWidth > 0 &&
@@ -253,7 +244,7 @@ export function AddCategoryModal({
                 accessibilityRole="button"
                 accessibilityLabel={`Colour ${i + 1} of ${CATEGORY_COLOR_PALETTE.length}`}
                 accessibilityState={{ selected: color === c }}
-                style={withPressed([styles.colorSwatch, cellSize, color === c && styles.colorSwatchActive])}
+                style={withPressed([styles.colorSwatch, color === c && styles.colorSwatchActive])}
               >
                 <View style={[styles.colorSwatchFill, { backgroundColor: c }]}>
                   {color === c && <Feather name="check" size={17} color={theme.colors.ink} />}

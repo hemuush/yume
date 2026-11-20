@@ -58,7 +58,7 @@ function PillSwitch<T extends string>({
   // a switch whose options change (Add in edit mode) still sizes its pill right.
   const [innerWidth, setInnerWidth] = useState(0);
   const segWidth = options.length > 0 ? innerWidth / options.length : 0;
-  const pillColor = ledgerStyle ? theme.colors.entry.selected : theme.colors.surface;
+  const pillColor = theme.colors.surface;
   const [x] = useState(() => new Animated.Value(0));
   const placed = useRef(false);
   const index = Math.max(
@@ -260,7 +260,8 @@ const styles = themedStyles(() =>
     wrapBand: {
       marginBottom: 0,
     },
-    ledgerTrack: { backgroundColor: theme.colors.entry.surface },
+    // Inside Plan and Reports it is the same tray and white pill as everywhere else.
+    ledgerTrack: { backgroundColor: theme.colors.surfaceAlt },
     stackTrack: {
       padding: 4,
       gap: 4,

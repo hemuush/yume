@@ -51,7 +51,7 @@ export const styles = themedStyles(() =>
       paddingHorizontal: 12,
       paddingVertical: 6,
       borderRadius: 999,
-      backgroundColor: theme.colors.ink,
+      backgroundColor: theme.colors.action,
     },
     continueBtnText: { fontSize: 13, fontFamily: theme.font.roundedBold, color: theme.colors.surface },
 

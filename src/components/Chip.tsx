@@ -51,7 +51,7 @@ export function Chip({
         ledgerStyle && active && styles.ledgerSelected,
         !ledgerStyle &&
           active &&
-          !tinted && { backgroundColor: theme.colors.ink, borderColor: theme.colors.ink },
+          !tinted && { backgroundColor: theme.colors.action, borderColor: theme.colors.ink },
         !ledgerStyle &&
           tinted && { backgroundColor: softTint(activeBorderColor, 0.1), borderColor: activeBorderColor },
         animatedStyle,

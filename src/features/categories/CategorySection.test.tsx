@@ -115,7 +115,7 @@ it('offers a visible parent options button without holding the tile', async () =
   act(() => pressable(tree, 'More options for Food & Dining').props.onPress());
   expect(onManage).toHaveBeenCalledWith(expect.objectContaining({ id: 'food' }));
   expect(onEdit).not.toHaveBeenCalled();
-  expect(texts(tree)).toContain('Edit');
+  expect(texts(tree)).toContain('Edit Food & Dining');
 });
 
 it('offers separate edit and manage targets on a subcategory', async () => {

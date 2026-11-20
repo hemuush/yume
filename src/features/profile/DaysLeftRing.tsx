@@ -18,7 +18,7 @@ const LAST_WEEK = 7;
  */
 export function DaysLeftRing({ daysLeft, children }: { daysLeft: number; children: React.ReactNode }) {
   const f = Math.max(0, Math.min(1, daysLeft / KEPT_DAYS));
-  const color = daysLeft <= LAST_WEEK ? theme.colors.expense : theme.colors.ink;
+  const color = daysLeft <= LAST_WEEK ? theme.colors.expense : theme.colors.primary;
   return (
     <View style={styles.wrap}>
       <Svg

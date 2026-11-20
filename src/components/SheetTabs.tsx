@@ -122,9 +122,13 @@ const styles = themedStyles(() =>
       textAlign: 'center',
     },
     active: { fontFamily: theme.font.bodyMedium, color: theme.colors.textPrimary },
-    ledgerRow: { backgroundColor: theme.colors.home.control, borderRadius: 18, marginBottom: 8 },
-    ledgerTab: { minHeight: 44, paddingVertical: 6, borderRadius: 15 },
-    ledgerPicked: { backgroundColor: theme.colors.home.selected },
+    ledgerRow: {
+      backgroundColor: theme.colors.surfaceAlt,
+      borderRadius: theme.radius.pill,
+      marginBottom: 12,
+    },
+    ledgerTab: { minHeight: 44, paddingVertical: 6, borderRadius: theme.radius.pill },
+    ledgerPicked: { backgroundColor: theme.colors.surface, boxShadow: '0px 1px 2px rgba(60,50,20,0.12)' },
     ledgerLabel: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.home.secondaryText },
   })
 );

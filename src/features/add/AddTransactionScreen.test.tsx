@@ -523,8 +523,8 @@ describe('Add screen', () => {
     const tree = await render();
     await typeAmount(tree, '250');
     expect(tree.root.findAll((n) => n.props.accessibilityLabel === 'delete').length).toBeGreaterThan(0);
-    // The card says "Amount", not the type again, and no line repeats the category and account.
-    expect(texts(tree)).toContain('Amount');
+    // The card names the entry type with the amount, and no line repeats the category and account.
+    expect(texts(tree)).toContain('Expense amount');
     expect(texts(tree).some((t) => t.includes('Choose a category ·'))).toBe(false);
     await press(tree, 'Food');
     expect(tree.root.findAll((n) => n.props.accessibilityLabel === 'delete').length).toBeGreaterThan(0);

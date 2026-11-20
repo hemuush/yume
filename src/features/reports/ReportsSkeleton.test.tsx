@@ -22,7 +22,7 @@ it('draws a short summary card then a category preview, as wide as the loaded ca
     .filter((s) => typeof s.height === 'number' && s.height >= 100);
   // 400 wide less a 16 dp gutter each side.
   expect(blocks.map((b) => [b.width, b.height])).toEqual([
-    [368, 124],
+    [368, 134],
     [368, 186],
   ]);
   const wrap = tree.root.findByProps({ accessibilityLabel: 'Loading report' });

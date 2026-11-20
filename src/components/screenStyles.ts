@@ -36,6 +36,17 @@ export const flatSection = () =>
     borderColor: theme.colors.borderSoft,
   }) as const;
 
+export const groupedSurface = themedStyles(() =>
+  StyleSheet.create({
+    frame: {
+      backgroundColor: theme.colors.surface,
+      borderRadius: theme.radius.lg,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.borderSoft,
+    },
+  })
+);
+
 export const screenStyles = themedStyles(() =>
   StyleSheet.create({
     // The quiet look has no card boxes: a section is rows between two hairlines, on the paper itself. The content

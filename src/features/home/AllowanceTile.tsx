@@ -1,5 +1,6 @@
 import { View, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
+import { summaryInk } from '@/components/SummaryGradient';
 import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
 import { themedStyles } from '@/theme/themedStyles';
@@ -34,12 +35,12 @@ const styles = themedStyles(() =>
       flexShrink: 1,
       fontFamily: theme.font.body,
       fontSize: 12,
-      color: theme.colors.home.secondaryText,
+      color: summaryInk.secondary,
     },
     amount: {
       fontFamily: theme.font.bodyBold,
       fontSize: 12,
-      color: theme.colors.textPrimary,
+      color: summaryInk.text,
       fontVariant: ['tabular-nums'],
     },
   })

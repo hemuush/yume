@@ -230,7 +230,7 @@ const s = themedStyles(() =>
     card: {
       marginHorizontal: 16,
       overflow: 'hidden',
-      borderRadius: 18,
+      borderRadius: theme.radius.xl,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: theme.colors.home.edge,
       backgroundColor: theme.colors.home.surface,

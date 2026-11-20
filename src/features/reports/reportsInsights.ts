@@ -12,7 +12,6 @@ import type {
 } from '@/db/reports';
 import { roundedMinor } from '@/lib/round';
 import { dayMonth } from '@/lib/dateLabels';
-import { noBreak } from '@/lib/keepTogether';
 
 /**
  * The day-detail popup's footer figure: net (income − expense, signed) when the day has income, else the
@@ -328,40 +327,6 @@ export function patternFacts(
   return facts.slice(0, 3);
 }
 
-interface QuietDays {
-  /** Days counted so far: the whole period, or up to today for the one in progress. */
-  countedDays: number;
-  noSpendDays: number;
-  /** The longest unbroken run of no-spend days, if any lasted 2+ days. */
-  longestRun: { days: number; start: string; end: string } | null;
-}
-
-/** How many of the period's days (so far) had no spending at all, and the longest such run. */
-export function quietDays(
-  daily: DailyExpensePoint[],
-  range: { start: string; end: string },
-  today: string
-): QuietDays {
-  const last = today < range.end ? today : range.end;
-  const spentOn = new Set(daily.filter((d) => d.totalMinor > 0).map((d) => d.date));
-  let countedDays = 0;
-  let noSpendDays = 0;
-  let run: { days: number; start: string; end: string } | null = null;
-  let best: { days: number; start: string; end: string } | null = null;
-  for (let d = parseLocalIsoDate(range.start); toLocalIsoDate(d) <= last; d.setDate(d.getDate() + 1)) {
-    const iso = toLocalIsoDate(d);
-    countedDays++;
-    if (spentOn.has(iso)) {
-      run = null;
-      continue;
-    }
-    noSpendDays++;
-    run = run ? { days: run.days + 1, start: run.start, end: iso } : { days: 1, start: iso, end: iso };
-    if (!best || run.days > best.days) best = run;
-  }
-  return { countedDays, noSpendDays, longestRun: best && best.days >= 2 ? best : null };
-}
-
 /** What tapping a story card does on the page: show its day, open its category row, or go to Categories. */
 export type StoryAction =
   { type: 'day'; iso: string } | { type: 'category'; id: string } | { type: 'categories' };
@@ -393,7 +358,6 @@ export interface StoryInput {
   patterns: PatternFact[];
   recurringMinor: number;
   discretionaryMinor: number;
-  quiet: QuietDays;
   /** Days in the period with any spending. */
   spendDays: number;
   /** True when the period is the one in progress (this month / this year). */
@@ -443,7 +407,7 @@ export function buildStoryCards(input: StoryInput): StoryCard[] {
   }
   input.patterns
     .filter((p) => p.key !== 'noSpend')
-    .slice(0, 2)
+    .slice(0, 1)
     .forEach((p, i) => {
       cards.push({
         key: `pattern-${p.key}`,
@@ -471,26 +435,6 @@ export function buildStoryCards(input: StoryInput): StoryCard[] {
     });
   }
 
-  const q = input.quiet;
-  if (q.countedDays > 0) {
-    cards.push({
-      key: 'quiet',
-      kicker: 'Quiet days',
-      big:
-        q.noSpendDays === 0
-          ? 'No quiet days'
-          : `${q.noSpendDays} no-spend ${q.noSpendDays === 1 ? 'day' : 'days'}`,
-      detail:
-        q.noSpendDays === 0
-          ? `Something went out on each of the ${q.countedDays} days${input.isCurrentPeriod ? ' so far' : ''}.`
-          : `Out of ${q.countedDays}${input.isCurrentPeriod ? ' so far' : ''}.${
-              q.longestRun
-                ? ` Your longest run was ${q.longestRun.days} days, ${noBreak(`${dayMonth(q.longestRun.start)} – ${dayMonth(q.longestRun.end)}`)}.`
-                : ''
-            }`,
-      tone: 'mint',
-    });
-  }
   return cards;
 }
 

@@ -29,7 +29,6 @@ import { EntryMonth, listEntryMonths } from '@/db/exportSummary';
 import { openPeriod, previewFor, stepPeriod } from '@/features/export/exportChoice';
 import { withPressed } from '@/lib/pressed';
 import { themedStyles } from '@/theme/themedStyles';
-import { flatSection } from '@/components/screenStyles';
 
 type Format = 'pdf' | 'excel';
 
@@ -235,9 +234,13 @@ const styles = themedStyles(() =>
     container: { flex: 1, backgroundColor: theme.colors.background },
     scroll: { flex: 1 },
     content: { paddingHorizontal: 16, gap: 12 },
+    // A white rounded card like the file types below it, not rules above and below.
     card: {
-      ...flatSection(),
-      paddingVertical: 14,
+      backgroundColor: theme.colors.surface,
+      borderRadius: theme.radius.xl,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.borderSoft,
+      padding: 14,
       gap: 14,
     },
     // A step's heading above its block, in the same type as every other section heading.
@@ -245,8 +248,9 @@ const styles = themedStyles(() =>
     formats: { gap: 6 },
     format: {
       backgroundColor: theme.colors.surface,
-      borderRadius: theme.radius.md,
-      borderWidth: StyleSheet.hairlineWidth,
+      borderRadius: theme.radius.xl,
+      // The same 1 dp edge chosen or not, so picking a type never moves the content: the pick turns it ink.
+      borderWidth: 1,
       borderColor: theme.colors.borderSoft,
       flexDirection: 'row',
       alignItems: 'center',
@@ -254,8 +258,8 @@ const styles = themedStyles(() =>
       gap: 12,
       minHeight: 64,
     },
-    formatSelected: { backgroundColor: theme.colors.accentTint },
-    formatIcon: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+    formatSelected: { borderColor: theme.colors.ink },
+    formatIcon: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
     formatText: { flex: 1, minWidth: 0, gap: 4 },
     formatTitle: { fontFamily: theme.font.bodyBold, fontSize: 15, color: theme.colors.textPrimary },
     radio: {
@@ -267,13 +271,13 @@ const styles = themedStyles(() =>
       alignItems: 'center',
       justifyContent: 'center',
     },
-    radioOn: { backgroundColor: theme.colors.ink, borderColor: theme.colors.ink },
+    radioOn: { backgroundColor: theme.colors.action, borderColor: theme.colors.ink },
     footer: {
       padding: 16,
       paddingTop: 12,
       gap: 8,
       backgroundColor: theme.colors.surface,
-      borderTopWidth: 1,
+      borderTopWidth: StyleSheet.hairlineWidth,
       borderTopColor: theme.colors.borderSoft,
     },
     stepper: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },

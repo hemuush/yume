@@ -2,6 +2,7 @@
 import { Text, StyleSheet } from 'react-native';
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
 import { theme } from '@/constants/theme';
+import { summaryInk } from '@/components/SummaryGradient';
 import { formatMoney } from '@/lib/money';
 
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
@@ -93,14 +94,18 @@ it('says what was spent this week, how it compares in a chip, and opens Insights
 it('draws the chip green when spending is down and red when it is up', () => {
   const chipOf = (r: ReactTestRenderer) =>
     StyleSheet.flatten(
-      r.root.find((n) => typeof n.type === 'string' && StyleSheet.flatten(n.props.style)?.minHeight === 22)
-        .props.style
-    ).backgroundColor;
+      r.root.find(
+        (n) =>
+          typeof n.type === 'string' &&
+          StyleSheet.flatten(n.props.style)?.fontSize === 12 &&
+          StyleSheet.flatten(n.props.style)?.fontVariant
+      ).props.style
+    ).color;
   const down = strip({ expenseChangeMinor: -390_000 });
-  expect(chipOf(down.r)).toBe(theme.colors.incomeTint);
+  expect(chipOf(down.r)).toBe(summaryInk.positive);
   act(() => down.r.unmount());
   const up = strip({ expenseChangeMinor: 120_000 });
-  expect(chipOf(up.r)).toBe(theme.colors.expenseTint);
+  expect(chipOf(up.r)).toBe(summaryInk.negative);
   expect(texts(up.r)).toContain('more than last week');
   act(() => up.r.unmount());
 });
@@ -111,13 +116,13 @@ it('draws one small bar per day in proportion, today in ink and days to come as 
   expect(bars).toHaveLength(5);
   expect(bars[2].height).toBe(40);
   expect(bars[0].height).toBeLessThan(bars[2].height as number);
-  expect(bars[3].backgroundColor).toBe(theme.colors.link);
+  expect(bars[3].backgroundColor).toBe(summaryInk.text);
   // Not here yet: an outline, never a filled tick that could be read as a day with nothing spent.
   expect(bars[4]).toMatchObject({
     height: 4,
     backgroundColor: 'transparent',
     borderStyle: 'dashed',
-    borderColor: theme.colors.inkOff,
+    borderColor: summaryInk.faint,
   });
   act(() => r.unmount());
 });
@@ -180,7 +185,7 @@ describe('a month’s weeks', () => {
     });
     const bars = barStyles(past.r);
     expect(bars.map((b) => b.borderStyle)).toEqual([undefined, undefined, undefined, undefined, undefined]);
-    expect(bars[3]).toMatchObject({ height: 3, backgroundColor: theme.colors.home.edge });
+    expect(bars[3]).toMatchObject({ height: 3, backgroundColor: summaryInk.divider });
     act(() => past.r.unmount());
   });
 });

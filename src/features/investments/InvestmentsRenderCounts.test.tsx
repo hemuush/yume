@@ -191,7 +191,7 @@ it('draws every holding once, and opens the sheets from the buttons and the rows
   await press(tree, (p) => p.accessibilityLabel === 'Add an investment');
   expect(mockSheets.adding).toBe(true);
   act(() => mockSheets.closeAdd!());
-  await press(tree, (p) => typeof p.label === 'string' && p.label === 'Nifty 50');
+  await press(tree, (p) => p.title === 'Nifty 50' || p.label === 'Nifty 50');
   expect(mockSheets.summary).toBe('fund');
   act(() => mockSheets.closeSummary!());
   expect(mockSheets.summary).toBeNull();
@@ -207,7 +207,7 @@ it('does not redraw the totals, the chart or the rows when a sheet opens or clos
   act(() => mockSheets.closeUpdate!());
   await press(tree, (p) => p.accessibilityLabel === 'Add an investment');
   act(() => mockSheets.closeAdd!());
-  await press(tree, (p) => typeof p.label === 'string' && p.label === 'Nifty 50');
+  await press(tree, (p) => p.title === 'Nifty 50' || p.label === 'Nifty 50');
   act(() => mockSheets.closeSummary!());
   expect({ hero: mockDrawn.hero, chart: mockDrawn.chart, rows: mockDrawn.rows.length }).toEqual(drawn);
 });

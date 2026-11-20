@@ -1,6 +1,6 @@
 import { View, StyleSheet, useWindowDimensions, StyleProp, ViewStyle } from 'react-native';
 import { Text } from '@/components/Text';
-import { SCREEN } from '@/components/screenStyles';
+import { groupedSurface, SCREEN } from '@/components/screenStyles';
 import { theme } from '@/constants/theme';
 import { themedStyles, themedValue } from '@/theme/themedStyles';
 
@@ -130,10 +130,8 @@ const styles = themedStyles(() =>
   StyleSheet.create({
     frame: {
       marginHorizontal: SCREEN.gutter,
+      ...groupedSurface.frame,
       borderRadius: theme.radius.xl,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.colors.borderSoft,
-      backgroundColor: theme.colors.surface,
     },
     card: {
       marginTop: theme.layout.screenTopGap,

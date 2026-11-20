@@ -1,6 +1,5 @@
 import { memo, useCallback, useMemo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import Feather from '@expo/vector-icons/Feather';
 import { CategoryGlyph } from '@/components/CategoryGlyph';
 import { Text } from '@/components/Text';
 import { withPressed } from '@/lib/pressed';
@@ -9,7 +8,6 @@ import { themedStyles } from '@/theme/themedStyles';
 import { formatMaskableMoney, formatMoney } from '@/lib/money';
 import { weekdayDayMonth } from '@/lib/dateLabels';
 import { theme } from '@/constants/theme';
-import { planWorkspaceCard } from './plan.styles';
 import { Section } from '@/components/Section';
 import { PendingRefunds } from '@/features/transactions/PendingRefunds';
 import type { PlanActions } from './planActions';
@@ -124,7 +122,6 @@ export const PlanOverviewTab = memo(function PlanOverviewTab({
   return (
     <>
       <Runway
-        compact
         onViewPayments={viewPayments}
         onViewDay={viewDay}
         dueSoon={data.dueSoon}
@@ -160,36 +157,35 @@ export const PlanOverviewTab = memo(function PlanOverviewTab({
           />
         </Section>
       )}
+      <Section compact title="Plan at a glance">
+        <View style={styles.tiles}>
+          {snapshot.map(({ id, name, icon, subtitle, amount }) => (
+            <Pressable
+              key={id}
+              accessibilityRole="button"
+              accessibilityLabel={[name, subtitle, amount].filter(Boolean).join('. ')}
+              onPress={() => (id === 'debt' ? selectTab('debt') : selectTab('money', undefined, id))}
+              style={withPressed([styles.tile, stacked && styles.tileFull])}
+            >
+              <View style={styles.tileHead}>
+                <View style={[styles.disc, { backgroundColor: theme.colors.collection[id] }]}>
+                  <CategoryGlyph name={icon} size={14} color={theme.colors.onFlat} />
+                </View>
+                <Text style={styles.metricName} numberOfLines={1}>
+                  {name}
+                </Text>
+              </View>
+              {amount ? <Text style={styles.metricValue}>{amount}</Text> : null}
+              <Text style={styles.metricSubtitle} numberOfLines={2}>
+                {subtitle}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+      </Section>
       <View style={{ marginHorizontal: 16 }}>
         <PendingRefunds summaryOnly refreshToken={refreshToken} onOpen={openRefund} />
       </View>
-      <Section compact title="Plan at a glance">
-        <View style={[planWorkspaceCard, styles.snapshot]}>
-          {(stacked ? snapshot.map((tile) => [tile]) : [snapshot.slice(0, 2), snapshot.slice(2)]).map(
-            (row, index) => (
-              <View key={row[0].id} style={[styles.snapshotRow, index > 0 && styles.snapshotDivider]}>
-                {row.map(({ id, name, icon, subtitle, amount }, column) => (
-                  <Pressable
-                    key={id}
-                    accessibilityRole="button"
-                    accessibilityLabel={[name, subtitle, amount].filter(Boolean).join('. ')}
-                    onPress={() => (id === 'debt' ? selectTab('debt') : selectTab('money', undefined, id))}
-                    style={withPressed([styles.metric, column > 0 && styles.metricDivider])}
-                  >
-                    <View style={styles.metricTitle}>
-                      <CategoryGlyph name={icon} size={14} color={theme.colors.link} />
-                      <Text style={styles.metricName}>{name}</Text>
-                      <Feather name="chevron-right" size={12} color={theme.colors.textMuted} />
-                    </View>
-                    {amount ? <Text style={styles.metricValue}>{amount}</Text> : null}
-                    <Text style={styles.metricSubtitle}>{subtitle}</Text>
-                  </Pressable>
-                ))}
-              </View>
-            )
-          )}
-        </View>
-      </Section>
       <Section compact title="People & habit">
         <PeopleHabit
           people={data.people}
@@ -207,12 +203,22 @@ export const PlanOverviewTab = memo(function PlanOverviewTab({
 
 const styles = themedStyles(() =>
   StyleSheet.create({
-    snapshot: { overflow: 'hidden' },
-    snapshotRow: { flexDirection: 'row' },
-    snapshotDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.home.edge },
-    metric: { flex: 1, minWidth: 0, paddingHorizontal: 12, paddingVertical: 9, gap: 3, minHeight: 62 },
-    metricDivider: { borderStartWidth: StyleSheet.hairlineWidth, borderStartColor: theme.colors.home.edge },
-    metricTitle: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+    tiles: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginHorizontal: 16 },
+    tile: {
+      flexGrow: 1,
+      flexBasis: '44%',
+      minWidth: 0,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      gap: 4,
+      borderRadius: theme.radius.xl,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.home.edge,
+      backgroundColor: theme.colors.home.surface,
+    },
+    tileFull: { flexBasis: '100%' },
+    tileHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    disc: { width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
     metricName: {
       flex: 1,
       minWidth: 0,

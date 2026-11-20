@@ -94,7 +94,7 @@ export const styles = themedStyles(() =>
       paddingHorizontal: 10,
       paddingVertical: 6,
       borderRadius: 999,
-      backgroundColor: theme.colors.ink,
+      backgroundColor: theme.colors.action,
     },
     makeText: { fontFamily: theme.font.roundedBold, fontSize: 13, color: theme.colors.surface },
     hint: {

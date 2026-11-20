@@ -10,7 +10,6 @@ import { setDailySpendingGoal } from '@/db/settings';
 import { PANEL_ENTER, ROW_EXIT } from '@/lib/animation';
 import { errorMessage } from '@/lib/errorMessage';
 import { formatMoney, getCurrencySymbol, toMajor, toMinor } from '@/lib/money';
-import { theme } from '@/constants/theme';
 import { styles } from './profile.styles';
 
 /**
@@ -84,7 +83,6 @@ export const DailyGoalSetting = memo(function DailyGoalSetting({
         <SettingsRow
           compact
           icon="gauge"
-          iconBg={theme.colors.goldTint}
           label="Daily spending goal"
           sub="Shown on Home each day"
           value={!loaded ? 'Unavailable' : goal != null ? `${formatMoney(goal, currency)}/day` : 'Not set'}

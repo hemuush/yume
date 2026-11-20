@@ -50,11 +50,26 @@ export const styles = themedStyles(() =>
     tileCell: { flex: 1, minWidth: 0 },
     // A white tile (StripCard) whose top strip says which way the money goes: mint they owe you, coral you owe.
     personTile: { ...flatSection(), padding: 14, overflow: 'hidden' },
-    tileWho: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    personRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      paddingHorizontal: 14,
+      paddingVertical: 10,
+      minHeight: 60,
+    },
+    personCopy: { flex: 1, minWidth: 0 },
+    personAmount: {
+      flexShrink: 0,
+      fontVariant: ['tabular-nums'],
+      fontFamily: theme.font.bodyBold,
+      fontSize: 17,
+      letterSpacing: -0.2,
+    },
     tileAvatar: {
-      width: 32,
-      height: 32,
-      borderRadius: 16,
+      width: 40,
+      height: 40,
+      borderRadius: 20,
       // A full pixel: the palest avatars (lime, mint) melt into the card with a half-pixel edge.
       borderWidth: 1,
       borderColor: theme.colors.inkHairline,

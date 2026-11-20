@@ -128,7 +128,7 @@ const styles = themedStyles(() =>
       justifyContent: 'center',
       paddingHorizontal: 16,
       borderRadius: theme.radius.pill,
-      backgroundColor: theme.colors.ink,
+      backgroundColor: theme.colors.action,
     },
     actionText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.onInk },
   })

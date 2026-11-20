@@ -48,7 +48,7 @@ export const styles = themedStyles(() =>
       textDecorationLine: 'underline',
     },
     linkDisabled: { opacity: theme.opacity.disabled },
-    fileActions: { marginTop: 14, borderWidth: 1, paddingVertical: 4 },
+    fileActions: { marginTop: 14, paddingVertical: 4 },
     titleRow: {
       flexDirection: 'row',
       flexWrap: 'wrap',
@@ -68,7 +68,7 @@ export const styles = themedStyles(() =>
     },
     latestText: {
       fontFamily: theme.font.bodyBold,
-      fontSize: 11,
+      fontSize: 12,
       color: theme.colors.textSecondary,
     },
     copySub: { color: theme.colors.textSecondary },

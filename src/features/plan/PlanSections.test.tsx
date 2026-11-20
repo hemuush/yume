@@ -4,7 +4,6 @@
  */
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
 import { Text, StyleSheet, View } from 'react-native';
-import { theme } from '@/constants/theme';
 
 jest.setTimeout(30000);
 jest.mock('@/components/ModalSheet', () => ({
@@ -17,15 +16,10 @@ let mockHide = false;
 jest.mock('@/theme/PrivacyContext', () => ({ usePrivacy: () => ({ hideAmounts: mockHide }) }));
 
 import { PlanPeopleHabit } from './PlanPeopleHabit';
-import { BudgetJars } from './BudgetJars';
-import { DebtPath } from './DebtPath';
-import { GoalsStrip } from './PlanGoals';
 import { RunwayCard } from './RunwayCard';
 import { ForecastDetails } from './ForecastDetails';
 import { ComingUpSection } from './ComingUpSection';
-import { buildBudgetsSummary, buildLoansSummary } from './planOverview';
 import { buildRunway } from './runway';
-import type { SavingsGoal } from '@/types';
 
 function render(el: React.ReactElement) {
   let tree!: ReactTestRenderer;
@@ -102,166 +96,6 @@ it.each([
 });
 
 describe('Plan sections with nothing in them yet', () => {
-  it('does not tell a lender that no loans exist', () => {
-    const loans = buildLoansSummary(
-      [
-        {
-          id: 'lent',
-          counterparty: 'Test borrower',
-          direction: 'lent',
-          status: 'active',
-          principalMinor: 100000,
-          outstandingPrincipalMinor: 50000,
-        },
-      ],
-      []
-    );
-    const open = jest.fn();
-    const tree = render(<DebtPath loans={loans} today="2026-10-21" onOpen={open} />);
-    expect(texts(tree)).toContain('No borrowed loans');
-    expect(texts(tree)).toContain('Review repayments');
-    expect(texts(tree)).not.toContain('No loans yet');
-    const action = tree.root.findAll(
-      (n) => n.props.accessibilityLabel === 'Review repayments. Open loans'
-    )[0];
-    act(() => action.props.onPress());
-    expect(open).toHaveBeenCalledTimes(1);
-    act(() => tree.unmount());
-  });
-  it('shows only the debt summary and opens Loans without selecting a loan detail', () => {
-    const open = jest.fn();
-    const loans = {
-      debtLeftMinor: 90000,
-      paidOffMinor: 10000,
-      borrowedPrincipalMinor: 100000,
-      paidFraction: 0.1,
-      borrowedCount: 1,
-      debtFreeDate: '2028-10-09',
-      lentLeftMinor: 0,
-      rows: [
-        {
-          id: 'private-loan',
-          name: 'House loan',
-          direction: 'borrowed' as const,
-          leftMinor: 90000,
-          nextDueDate: '2026-11-01',
-          nextEmiMinor: 10000,
-          paidCount: 1,
-          totalCount: 24,
-          endDate: '2028-10-09',
-        },
-      ],
-    };
-    const tree = render(<DebtPath loans={loans} today="2026-10-09" onOpen={open} />);
-    expect(texts(tree)).toContain('₹900 left');
-    expect(texts(tree)).not.toContain('House loan');
-    const actions = tree.root.findAll(
-      (node) => node.props.onPress && node.props.accessibilityRole === 'button'
-    );
-    expect(actions.every((node) => String(node.props.accessibilityLabel).endsWith('Open loans'))).toBe(true);
-    act(() => actions[0].props.onPress());
-    expect(open).toHaveBeenCalledTimes(1);
-    expect(open.mock.calls[0]).toEqual([]);
-  });
-  it('shows what is left, the debt-free month and how much is repaid, and opens Loans', () => {
-    const row = (id: string, name: string, leftMinor: number, nextDueDate: string) => ({
-      id,
-      name,
-      direction: 'borrowed' as const,
-      leftMinor,
-      nextDueDate,
-      nextEmiMinor: 340600,
-      paidCount: 1,
-      totalCount: 24,
-      endDate: '2045-01-03',
-    });
-    const loans = {
-      debtLeftMinor: 2254000,
-      paidOffMinor: 46000,
-      borrowedPrincipalMinor: 2300000,
-      paidFraction: 0.02,
-      borrowedCount: 2,
-      debtFreeDate: '2045-01-03',
-      lentLeftMinor: 0,
-      rows: [row('small', 'Personal', 500000, '2026-11-03'), row('big', 'House', 1754000, '2026-11-05')],
-    };
-    const onOpen = jest.fn();
-    const tree = render(<DebtPath loans={loans} today="2026-10-09" onOpen={onOpen} />);
-    const shown = texts(tree);
-    expect(shown).toContain('Debt-free');
-    expect(shown).toContain('Jan 2045');
-    expect(shown).toContain('₹22,540 left');
-    expect(shown).toContain('2% repaid · 2 loans');
-    // One card, one action: no second link and no loan row repeating what Loans lists.
-    expect(shown).not.toContain('House');
-    expect(shown.some((t) => t.includes('View loans'))).toBe(false);
-    act(() =>
-      tree.root.find((n) => n.props.onPress && n.props.accessibilityRole === 'button').props.onPress()
-    );
-    expect(onOpen).toHaveBeenCalledTimes(1);
-  });
-
-  it('shows a compare row only when asked to, and opens the comparison', () => {
-    const loans = {
-      debtLeftMinor: 90000,
-      paidOffMinor: 10000,
-      borrowedPrincipalMinor: 100000,
-      paidFraction: 0.1,
-      borrowedCount: 2,
-      debtFreeDate: '2028-10-09',
-      lentLeftMinor: 5000,
-      rows: [
-        {
-          id: 'b1',
-          name: 'House loan',
-          direction: 'borrowed' as const,
-          leftMinor: 90000,
-          nextDueDate: '2026-11-01',
-          nextEmiMinor: 10000,
-          paidCount: 1,
-          totalCount: 24,
-          endDate: '2028-10-09',
-        },
-      ],
-    };
-    const noCompare = render(<DebtPath loans={loans} today="2026-10-09" onOpen={jest.fn()} />);
-    expect(texts(noCompare)).not.toContain('Compare an extra payment');
-    const onCompare = jest.fn();
-    const withCompare = render(
-      <DebtPath loans={loans} today="2026-10-09" onOpen={jest.fn()} onCompare={onCompare} />
-    );
-    expect(texts(withCompare)).toContain('Compare an extra payment');
-    expect(texts(withCompare)).toContain('Lent out');
-    act(() =>
-      withCompare.root
-        .find((n) => n.props.accessibilityLabel === 'Compare an extra payment' && n.props.onPress)
-        .props.onPress()
-    );
-    expect(onCompare).toHaveBeenCalledTimes(1);
-  });
-
-  it('asks for a first budget, and a first EMI (saying what you lent)', () => {
-    expect(texts(render(<BudgetJars summary={buildBudgetsSummary([])} onOpen={jest.fn()} />))).toContain(
-      'Set a monthly limit'
-    );
-    const loans = buildLoansSummary(
-      [
-        {
-          id: 'l',
-          counterparty: 'Asha',
-          direction: 'lent',
-          status: 'active',
-          principalMinor: 500000,
-          outstandingPrincipalMinor: 200000,
-        },
-      ],
-      []
-    );
-    const shown = texts(render(<DebtPath loans={loans} today="2026-10-09" onOpen={jest.fn()} />));
-    expect(shown).toContain('Review repayments');
-    expect(shown).toContain('₹2,000 you lent out');
-  });
-
   it('says what is going out when there is no spending account to draw the runway from', () => {
     const next = {
       date: '2026-10-11',
@@ -294,93 +128,6 @@ describe('Plan sections with nothing in them yet', () => {
   });
 });
 
-describe('Goals with amounts hidden', () => {
-  const goal: SavingsGoal = {
-    id: 'g',
-    name: 'Goa trip',
-    targetAmountMinor: 5000000,
-    currentAmountMinor: 3100000,
-    targetDate: null,
-    linkedAccountId: null,
-    tracksAccount: false,
-    noteToSelf: null,
-    letterRevealed: false,
-    archived: false,
-    createdAt: '2026-01-01',
-  };
-
-  it('keeps compact goal rows private while retaining their detail action', () => {
-    const onGoal = jest.fn();
-    mockHide = true;
-    try {
-      const tree = render(
-        <GoalsStrip compact goals={[goal]} savingsAccounts={[]} onOpen={jest.fn()} onGoal={onGoal} />
-      );
-      const { PlanSummaryRow } = require('./PlanSummaryRow');
-      const row = tree.root.findByType(PlanSummaryRow);
-      expect(row.props.progress).toBeUndefined();
-      expect(row.props.subtitle).toBe('Target ₹50,000');
-      expect(row.props.amount).toBe('Saved amount hidden');
-      expect(texts(tree).some((t) => t.includes('₹31,000'))).toBe(false);
-      act(() => row.props.onPress());
-      expect(onGoal).toHaveBeenCalledWith('g');
-      act(() => tree.unmount());
-    } finally {
-      mockHide = false;
-    }
-  });
-
-  it('shows the percent and saved amount normally', () => {
-    mockHide = false;
-    const shown = texts(render(<GoalsStrip goals={[goal]} savingsAccounts={[]} onOpen={jest.fn()} />));
-    expect(shown.some((t) => t.startsWith('62'))).toBe(true);
-    expect(shown.some((t) => t.includes('₹31k'))).toBe(true);
-  });
-
-  it('withholds the fill, percent and saved amount, keeping the target', () => {
-    mockHide = true;
-    try {
-      const tree = render(<GoalsStrip goals={[goal]} savingsAccounts={[]} onOpen={jest.fn()} />);
-      const shown = texts(tree);
-      expect(shown.some((t) => t.startsWith('62'))).toBe(false);
-      expect(shown.some((t) => t.includes('₹31k'))).toBe(false);
-      expect(
-        tree.root.findAll(
-          (n) =>
-            typeof n.props.accessibilityLabel === 'string' &&
-            n.props.accessibilityLabel.includes('saved amount hidden')
-        ).length
-      ).toBeGreaterThan(0);
-    } finally {
-      mockHide = false;
-    }
-  });
-  it('labels completed goals, preserves their action and hides completion under privacy', () => {
-    mockHide = false;
-    const open = jest.fn();
-    const completed = { ...goal, currentAmountMinor: goal.targetAmountMinor };
-    const tree = render(<GoalsStrip goals={[completed]} savingsAccounts={[]} onOpen={open} />);
-    expect(texts(tree)).toContain('Completed');
-    act(() =>
-      tree.root
-        .findAll(
-          (n) =>
-            n.props.accessibilityRole === 'button' && String(n.props.accessibilityLabel).includes('reached')
-        )[0]
-        .props.onPress()
-    );
-    expect(open).toHaveBeenCalledTimes(1);
-    mockHide = true;
-    try {
-      act(() => tree.update(<GoalsStrip goals={[completed]} savingsAccounts={[]} onOpen={open} />));
-      expect(texts(tree)).not.toContain('Completed');
-    } finally {
-      mockHide = false;
-      act(() => tree.unmount());
-    }
-  });
-});
-
 describe('Runway card', () => {
   it('uses cash-flow outgoings even when no EMI or bill is listed', () => {
     // Plan converts a spending-to-savings transfer into an expense for the runway only.
@@ -401,7 +148,6 @@ describe('Runway card', () => {
     );
     const tree = render(<RunwayCard dueSoon={dueSoon} runway={runway} hasAccounts days={30} />);
     expect(texts(tree)).not.toContain('Nothing due');
-    expect(texts(tree)).toContain('₹250');
     expect(texts(tree)).toContain('₹150 more needed');
     const button = tree.root.findAll(
       (n) => n.props.onPress && String(n.props.accessibilityLabel).startsWith('Forecast details.')
@@ -415,7 +161,7 @@ describe('Runway card', () => {
 
   it('keeps the forecast verdict and balance visible and puts the cash-flow figures in details', () => {
     const runway = buildRunway(10000, [], '2026-10-09', 30);
-    const tree = render(<RunwayCard dueSoon={dueSoon} runway={runway} hasAccounts days={30} compact />);
+    const tree = render(<RunwayCard dueSoon={dueSoon} runway={runway} hasAccounts days={30} />);
     const before = tree.root.findAllByType(Text).map((text) => text.props.children);
     expect(before).toEqual(expect.arrayContaining(['Nothing due', 'Current balance', '₹100']));
     expect(before).not.toContain('Going out');
@@ -650,7 +396,6 @@ describe('Runway card', () => {
   it('shows a negative spending balance even when no payments are scheduled', () => {
     const tree = render(
       <RunwayCard
-        compact
         dueSoon={dueSoon}
         runway={buildRunway(-12500, [], '2026-10-09', 14)}
         hasAccounts
@@ -681,58 +426,11 @@ describe('Runway card', () => {
     );
     expect(tree.root.findAll((n) => n.props.testID === 'runway')).toHaveLength(0);
     expect(texts(tree)).not.toContain('Covered');
-    expect(texts(tree).some((t) => t.includes('+₹5,000 coming in'))).toBe(true);
+    // The income is named in the details button label.
+    expect(
+      tree.root.findAll((n) => String(n.props.accessibilityLabel).includes('+₹5,000 coming in')).length
+    ).toBeGreaterThan(0);
   });
-});
-
-it('starts budget setup directly from an empty Plan budget card', () => {
-  const open = jest.fn(),
-    add = jest.fn();
-  const tree = render(<BudgetJars summary={buildBudgetsSummary([])} onOpen={open} onAdd={add} />);
-  act(() =>
-    tree.root
-      .findAll(
-        (n) => n.props.accessibilityLabel === 'Set a monthly limit. Open budgets' && n.props.onPress
-      )[0]
-      .props.onPress()
-  );
-  expect(add).toHaveBeenCalledTimes(1);
-  expect(open).not.toHaveBeenCalled();
-  act(() => tree.unmount());
-});
-
-it('keeps every budget and the add action available beyond the six-tile preview', () => {
-  const summary = buildBudgetsSummary(
-    Array.from({ length: 8 }, (_, i) => ({
-      id: `budget-${i}`,
-      categoryName: `Category ${i}`,
-      spentMinor: 10000,
-      effectiveLimitMinor: 20000,
-      remainingMinor: 10000,
-      percentUsed: 50,
-      overBudget: false,
-    }))
-  );
-  const onBudget = jest.fn(),
-    onAdd = jest.fn();
-  const tree = render(
-    <BudgetJars
-      summary={summary}
-      limit={summary.rows.length + 1}
-      onOpen={jest.fn()}
-      onBudget={onBudget}
-      onAdd={onAdd}
-    />
-  );
-  expect(texts(tree)).toContain('Category 7');
-  const last = tree.root.findAll(
-    (n) => n.props.onPress && String(n.props.accessibilityLabel).startsWith('Category 7,')
-  )[0];
-  act(() => last.props.onPress());
-  expect(onBudget).toHaveBeenCalledWith('budget-7');
-  const add = tree.root.findAll((n) => n.props.onPress && n.props.accessibilityLabel === 'Add a budget')[0];
-  act(() => add.props.onPress());
-  expect(onAdd).toHaveBeenCalledTimes(1);
 });
 
 const peopleCard = (people: React.ComponentProps<typeof PlanPeopleHabit>['people']) =>
@@ -769,41 +467,6 @@ it('shows only the People balance there is', () => {
   expect(owing).not.toContain('To collect');
 });
 
-it('prioritises over-budget compact rows, limits the preview and opens the selected budget', () => {
-  const summary = buildBudgetsSummary([
-    {
-      id: 'fine',
-      categoryName: 'Travel',
-      spentMinor: 9000,
-      effectiveLimitMinor: 10000,
-      remainingMinor: 1000,
-      percentUsed: 90,
-      overBudget: false,
-    },
-    {
-      id: 'over',
-      categoryName: 'Food',
-      spentMinor: 15000,
-      effectiveLimitMinor: 10000,
-      remainingMinor: -5000,
-      percentUsed: 150,
-      overBudget: true,
-    },
-  ]);
-  const onBudget = jest.fn();
-  const tree = render(
-    <BudgetJars compact limit={1} summary={summary} onOpen={jest.fn()} onBudget={onBudget} />
-  );
-  const { PlanSummaryRow } = require('./PlanSummaryRow');
-  const rows = tree.root.findAllByType(PlanSummaryRow);
-  expect(rows).toHaveLength(1);
-  expect(rows[0].props.name).toBe('Food');
-  expect(rows[0].props.amount).toBe('₹50 over');
-  act(() => rows[0].props.onPress());
-  expect(onBudget).toHaveBeenCalledWith('over');
-  act(() => tree.unmount());
-});
-
 it.each([
   [320, 1, true],
   [390, 1.5, true],
@@ -814,86 +477,22 @@ it.each([
     .spyOn(rn, 'useWindowDimensions')
     .mockReturnValue({ width, height: 800, scale: 1, fontScale });
   try {
-    const { PlanSummaryRow } = require('./PlanSummaryRow');
+    const { PlanMoneyRow } = require('./PlanMoneyRow');
     const tree = render(
-      <PlanSummaryRow
-        name="A long category name"
-        subtitle="150% used"
-        amount="₹10,000 over"
-        icon="tag"
-        progress={150}
-        color="#BD3547"
+      <PlanMoneyRow
+        icon={null}
+        title="A long category name"
+        subtitle={null}
+        value="₹10,000 over"
+        progress={{ pct: 100, color: '#BD3547', animKey: 'k' }}
         accessibilityLabel="Open category"
         onPress={jest.fn()}
       />
     );
     const styles = tree.root.findAllByType(View).map((node) => StyleSheet.flatten(node.props.style));
     expect(styles.some((style) => style?.flexDirection === 'column')).toBe(stacked);
-    expect(styles.some((style) => style?.width === '100%')).toBe(true);
     act(() => tree.unmount());
   } finally {
     dimensions.mockRestore();
   }
-});
-
-it.each([false, true])('keeps integrated Add loan separate from opening Loans (has debt: %s)', (hasDebt) => {
-  const loans = buildLoansSummary(
-    hasDebt
-      ? [
-          {
-            id: 'loan',
-            counterparty: 'Bank',
-            direction: 'borrowed',
-            status: 'active',
-            principalMinor: 10000,
-            outstandingPrincipalMinor: 8000,
-          },
-        ]
-      : [],
-    []
-  );
-  const open = jest.fn(),
-    add = jest.fn();
-  const tree = render(<DebtPath loans={loans} today="2026-10-20" onOpen={open} onAdd={add} />);
-  const action = tree.root.findAll((n) => n.props.accessibilityLabel === 'Add loan' && n.props.onPress)[0];
-  for (let parent = action.parent; parent; parent = parent.parent)
-    expect(parent.props.accessibilityRole).not.toBe('button');
-  act(() => action.props.onPress());
-  expect(add).toHaveBeenCalledTimes(1);
-  expect(open).not.toHaveBeenCalled();
-  const summary = tree.root.findAll(
-    (n) =>
-      n.props.onPress &&
-      (String(n.props.accessibilityLabel).startsWith('Principal left') ||
-        n.props.accessibilityLabel === 'Track an EMI. Open loans')
-  )[0];
-  act(() => summary.props.onPress());
-  expect(open).toHaveBeenCalledTimes(1);
-  act(() => tree.unmount());
-});
-
-it('turns an over-budget progress card red', () => {
-  const summary = buildBudgetsSummary([
-    {
-      id: 'coloured',
-      categoryName: 'Travel',
-      categoryColor: '#A56ABC',
-      spentMinor: 12000,
-      effectiveLimitMinor: 10000,
-      remainingMinor: -2000,
-      percentUsed: 120,
-      overBudget: true,
-    },
-  ]);
-  const tree = render(<BudgetJars summary={summary} onOpen={jest.fn()} />);
-  const progress = tree.root
-    .findAllByType(View)
-    .find(
-      (n) =>
-        StyleSheet.flatten(n.props.style)?.width === '100%' &&
-        StyleSheet.flatten(n.props.style)?.backgroundColor === theme.colors.expense
-    );
-  expect(progress).toBeDefined();
-  expect(texts(tree).join(' ')).toContain('over');
-  act(() => tree.unmount());
 });

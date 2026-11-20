@@ -114,7 +114,7 @@ const styles = themedStyles(() =>
       alignItems: 'flex-start',
       marginTop: 8,
       padding: 12,
-      borderRadius: 14,
+      borderRadius: theme.radius.lg,
       backgroundColor: theme.colors.secondaryTint,
     },
     noteWarn: { backgroundColor: theme.colors.idGold },

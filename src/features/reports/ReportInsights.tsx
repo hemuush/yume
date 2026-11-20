@@ -67,7 +67,11 @@ export function ReportInsights({
               <View style={s.mid}>
                 <Text style={s.kicker}>{card.kicker}</Text>
                 <Text style={s.big}>{headline}</Text>
-                {!card.compact && <Text style={s.detail}>{card.detail}</Text>}
+                {!card.compact && (
+                  <Text style={s.detail} numberOfLines={2}>
+                    {card.detail}
+                  </Text>
+                )}
                 {!!card.foot && <Text style={s.foot}>{card.foot}</Text>}
               </View>
               {card.action && <Feather name="chevron-right" size={16} color={theme.colors.textMuted} />}
@@ -99,7 +103,7 @@ const s = themedStyles(() =>
   StyleSheet.create({
     block: { marginBottom: 10 },
     card: { ...h.card, marginHorizontal: 0 },
-    row: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 0, paddingVertical: 8 },
+    row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 0, paddingVertical: 10 },
     mark: {
       width: MARK,
       height: MARK,

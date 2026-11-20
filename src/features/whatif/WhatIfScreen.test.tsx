@@ -149,7 +149,9 @@ describe('What-if', () => {
 
   it('shows the month now and with the default 20% cut', async () => {
     const shown = texts(await render());
-    expect(shown).toEqual(expect.arrayContaining(['Now, a month', 'New monthly spend', '₹12,000', '₹9,600']));
+    expect(shown).toEqual(
+      expect.arrayContaining(['Now, a month', 'Simulated monthly spend', '₹12,000', '₹9,600'])
+    );
   });
 
   it('keeps the category and 5% cut selected on Plan', async () => {

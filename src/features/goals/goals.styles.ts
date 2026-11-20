@@ -65,10 +65,14 @@ export const styles = themedStyles(() =>
     },
     noteInput: { minHeight: 56, textAlignVertical: 'top', paddingTop: 12 },
     // The account choices as one card, a row each with a hairline between.
+    // One rounded card for the three choices, 12 below the chips above it like every gap in the sheet; the picked row's
+    // fill is clipped to its corners.
     followGroup: {
-      marginTop: -4,
       marginBottom: 12,
-      ...flatSection(),
+      backgroundColor: theme.colors.surface,
+      borderRadius: theme.radius.xl,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.borderSoft,
       overflow: 'hidden',
     },
     followOpt: {

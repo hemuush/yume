@@ -1,4 +1,5 @@
 import { StyleSheet } from 'react-native';
+import { summaryInk } from '@/components/SummaryGradient';
 import { theme } from '@/constants/theme';
 import { themedStyles } from '@/theme/themedStyles';
 
@@ -12,8 +13,8 @@ export const styles = themedStyles(() =>
       borderColor: theme.colors.home.edge,
       overflow: 'hidden',
       paddingHorizontal: 16,
-      paddingTop: 6,
-      paddingBottom: 2,
+      paddingTop: 4,
+      paddingBottom: 0,
     },
     footer: {
       flexDirection: 'row',
@@ -43,7 +44,14 @@ export const styles = themedStyles(() =>
     body: { gap: 2 },
     figure: {
       minWidth: 0,
-      gap: 2,
+      gap: 4,
+      paddingHorizontal: 16,
+      paddingTop: 12,
+      paddingBottom: 12,
+      marginBottom: 6,
+      borderRadius: theme.radius.xl,
+      overflow: 'hidden',
+      backgroundColor: summaryInk.background,
     },
 
     headLabel: {
@@ -55,13 +63,14 @@ export const styles = themedStyles(() =>
     },
     headValue: {
       fontFamily: theme.font.bodyBold,
-      fontSize: 40,
+      fontSize: 28,
       fontVariant: ['tabular-nums'],
-      lineHeight: 46,
-      letterSpacing: -1.3,
-      color: theme.colors.textPrimary,
+      lineHeight: 34,
+      letterSpacing: -1,
+      color: summaryInk.text,
     },
-    headValueNeg: { color: theme.colors.expenseText },
+    headValueNeg: { color: summaryInk.negative },
+    figureCaption: { fontFamily: theme.font.body, fontSize: 12, color: summaryInk.secondary },
     headCaption: {
       flexShrink: 1,
       fontFamily: theme.font.body,

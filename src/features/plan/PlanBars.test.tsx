@@ -14,19 +14,16 @@ jest.mock('react-native-reanimated', () => ({
 jest.mock('@expo/vector-icons/MaterialCommunityIcons', () => () => null);
 jest.mock('@expo/vector-icons/Feather', () => () => null);
 
-import { PlanSummaryRow } from './PlanSummaryRow';
+import { PlanMoneyRow } from './PlanMoneyRow';
 
 beforeEach(() => mockTiming.mockClear());
 
 const row = (progress: number, animKey: string) => (
-  <PlanSummaryRow
-    name="Food"
-    subtitle={`${progress}% used`}
-    amount="₹100"
-    icon="food"
-    progress={progress}
-    animKey={animKey}
-    color="#123456"
+  <PlanMoneyRow
+    icon={null}
+    title="Food"
+    value="₹100"
+    progress={{ pct: progress, color: '#123456', animKey }}
     accessibilityLabel="Food"
     onPress={jest.fn()}
   />

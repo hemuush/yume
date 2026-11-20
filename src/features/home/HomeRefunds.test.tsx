@@ -9,7 +9,6 @@ jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMoc
 jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
 import { HomeRefunds } from './HomeRefunds';
 import { HomeComingUp } from './HomeComingUp';
-import { toLocalIsoDate } from '@/lib/date';
 const refund = (id: string, dueDate: string | null = null): ExpectedRefund => ({
   id,
   transactionId: `tx-${id}`,
@@ -139,7 +138,7 @@ it('lists payments in Coming up and keeps the full schedule reachable', () => {
     subtitle: 'Due today',
     amountMinor: 10000,
     sign: '-' as const,
-    sortDate: toLocalIsoDate(new Date()),
+    sortDate: comingUpProps.today,
     route: '/recurring' as const,
     urgent: true,
     payable: false,

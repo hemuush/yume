@@ -180,7 +180,7 @@ const frost = themedStyles(() =>
       width: 2,
       marginLeft: -1,
       borderRadius: 1,
-      backgroundColor: theme.colors.ink,
+      backgroundColor: theme.colors.action,
     },
   })
 );

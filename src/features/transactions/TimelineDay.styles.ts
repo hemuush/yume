@@ -1,6 +1,6 @@
 import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
-import { screenStyles as h, SCREEN } from '@/components/screenStyles';
+import { groupedSurface, screenStyles as h, SCREEN } from '@/components/screenStyles';
 import { themedStyles } from '@/theme/themedStyles';
 
 /**
@@ -21,10 +21,7 @@ export const styles = themedStyles(() =>
     // clipped card would cut that off; the rows round their own pressed tint instead.
     lane: {
       marginHorizontal: 16,
-      borderRadius: theme.radius.lg,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.colors.home.edge,
-      backgroundColor: theme.colors.home.surface,
+      ...groupedSurface.frame,
       overflow: 'visible',
     },
     // The chart's picked day: its heading sits on a soft tint, so the list answers the tap.
@@ -64,7 +61,7 @@ export const styles = themedStyles(() =>
     },
     stackCount: { fontFamily: theme.font.bodyBold, fontSize: 11, color: theme.colors.textSecondary },
     entryHead: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6 },
-    name: { ...h.title, fontFamily: theme.font.bodyMedium, fontSize: 13, lineHeight: 18 },
+    name: h.title,
     stackName: { flexShrink: 1 },
     sub: {
       ...h.sub,
@@ -76,7 +73,7 @@ export const styles = themedStyles(() =>
     },
     // Spending reads in ink with its minus; only money in is green. Never shrunk to fit: an amount that shrinks inside
     // a flex column was once drawn a few dp tall on a phone.
-    amount: { ...h.amount, fontFamily: theme.font.bodyMedium, fontSize: 13, lineHeight: 18 },
+    amount: h.amount,
     income: h.income,
     // An open group's entries: the same row, with a dot in the category's colour where the disc is, so their text
     // lines up with the group's own.

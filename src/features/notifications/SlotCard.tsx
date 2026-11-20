@@ -2,7 +2,7 @@ import { View, Pressable, StyleSheet } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
 import { ToggleSwitch } from '@/components/ToggleSwitch';
-import { screenStyles as h, flatSection } from '@/components/screenStyles';
+import { screenStyles as h } from '@/components/screenStyles';
 import { theme } from '@/constants/theme';
 import { withPressedTint } from '@/lib/pressed';
 import { useAccent } from '@/theme/AccentContext';
@@ -82,7 +82,16 @@ export function SlotCard({
 
 const styles = themedStyles(() =>
   StyleSheet.create({
-    card: { ...flatSection(), flexGrow: 1, flexBasis: 200, padding: 14, gap: 6 },
+    card: {
+      flexGrow: 1,
+      flexBasis: 200,
+      padding: 14,
+      gap: 8,
+      backgroundColor: theme.colors.surface,
+      borderRadius: theme.radius.xl,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.borderSoft,
+    },
     head: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
     name: { fontFamily: theme.font.bodyBold, fontSize: theme.typeSize.row, color: theme.colors.textPrimary },
     sub: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textSecondary },

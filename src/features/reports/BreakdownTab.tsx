@@ -8,6 +8,7 @@ import type { AccountBreakdownItem, CategoryBreakdownItem, PeriodComparison } fr
 import { isCustomWindow, previousPeriodLabel, previousWindowRange, type ReportWindow } from '@/lib/period';
 import { withPressed } from '@/lib/pressed';
 import { roundedMinor } from '@/lib/round';
+import { formatMoney } from '@/lib/money';
 import type { Category, DateRange } from '@/types';
 import { CategoryBar } from './CategoryBar';
 import { CategoryList } from './CategoryList';
@@ -120,6 +121,9 @@ export const BreakdownTab = memo(function BreakdownTab({
   // By account: the same bar and rows, one per account; an opened account lists its top categories.
   const accountItems = accounts?.key === accountsKey ? accounts.items : null;
   const byAccount = group === 'account';
+  // The rows do not add up to the period's spending when a refund outweighs a category: say so, so this total and the
+  // Overview figure can be read together.
+  const refundedMinor = income || byAccount ? 0 : shownTotal - roundedMinor(current.expenseMinor);
   const accountBreakdown = useMemo(() => (accountItems ? accountRows(accountItems) : []), [accountItems]);
   const accountTotal = useMemo(
     () => roundedMinor(accountBreakdown.reduce((sum, a) => sum + a.totalMinor, 0)),
@@ -155,11 +159,13 @@ export const BreakdownTab = memo(function BreakdownTab({
         {(byAccount ? accountItems !== null : shownBreakdown.length > 0) && (
           <View style={styles.breakdownContext}>
             <Amount minor={byAccount ? accountTotal : shownTotal} style={styles.breakdownAmount} />
-            <Text style={styles.stripSub}>
-              {income ? 'received' : 'spent'} · {periodName}
-              {inProgress ? ' so far' : ''}
-            </Text>
+            <Text style={styles.stripSub}>{income ? 'received' : 'spent'}</Text>
           </View>
+        )}
+        {refundedMinor > 0 && shownBreakdown.length > 0 && (
+          <Text style={styles.stripSub}>
+            {`Net ${formatMoney(roundedMinor(current.expenseMinor))} after ${formatMoney(refundedMinor)} refunded`}
+          </Text>
         )}
         {byAccount
           ? accountItems !== null &&

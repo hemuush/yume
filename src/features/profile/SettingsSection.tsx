@@ -240,7 +240,6 @@ export function SettingsSection() {
             <SettingsRow
               compact
               icon="tag-outline"
-              iconBg={theme.colors.goldTint}
               label="Categories"
               sub="Add, rename, or archive"
               onPress={() => router.push('/categories')}
@@ -255,7 +254,6 @@ export function SettingsSection() {
           <SettingsRow
             compact
             icon="fingerprint"
-            iconBg={theme.colors.accentTint}
             label="Require unlock"
             sub="Fingerprint, face, or your phone’s PIN"
             right={
@@ -265,7 +263,6 @@ export function SettingsSection() {
           <SettingsRow
             compact
             icon="eye-off-outline"
-            iconBg={theme.colors.accentTint}
             label="Hide savings & investment amounts"
             sub="Mask balances and totals that include them"
             right={
@@ -281,7 +278,6 @@ export function SettingsSection() {
           <SettingsRow
             compact
             icon="bell-outline"
-            iconBg={theme.colors.accentTint}
             label="Notifications"
             sub={
               alertsOn == null
@@ -299,7 +295,6 @@ export function SettingsSection() {
           <SettingsRow
             compact
             icon="folder-outline"
-            iconBg={theme.colors.secondaryTint}
             label="Backup & restore"
             sub={backupSub}
             subColor={!backupLoaded || backupOk ? undefined : theme.colors.expenseText}
@@ -308,7 +303,6 @@ export function SettingsSection() {
           <SettingsRow
             compact
             icon="file-export-outline"
-            iconBg={theme.colors.secondaryTint}
             label="Export"
             sub="PDF reports and Excel spreadsheets"
             onPress={() => router.push('/export')}
@@ -317,7 +311,6 @@ export function SettingsSection() {
           <SettingsRow
             compact
             icon="delete-restore"
-            iconBg={theme.colors.secondaryTint}
             label="Recently deleted"
             sub={
               deletedCount == null || deletedCount === 0
@@ -330,7 +323,6 @@ export function SettingsSection() {
           <SettingsRow
             compact
             icon="broom"
-            iconBg={theme.colors.secondaryTint}
             label="Tidy up"
             sub={
               tidyCount == null

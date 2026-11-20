@@ -5,7 +5,6 @@ import {
   categoryDeltas,
   buildStoryCards,
   patternFacts,
-  quietDays,
   StoryInput,
   summariseDayTotal,
   buildHeat,
@@ -174,7 +173,6 @@ describe('the "what moved" card names the period it is about', () => {
     patterns: [],
     recurringMinor: 0,
     discretionaryMinor: 0,
-    quiet: { countedDays: 0, noSpendDays: 0, longestRun: null },
     spendDays: 10,
     isCurrentPeriod: true,
     unit: 'month',
@@ -308,31 +306,6 @@ describe('patternFacts', () => {
   });
 });
 
-describe('quietDays', () => {
-  const range = { start: '2026-09-01', end: '2026-09-30' };
-  const spent = (days: number[]) =>
-    days.map((d) => ({ date: `2026-09-${String(d).padStart(2, '0')}`, totalMinor: 100 }));
-
-  it('counts no-spend days only up to today in the period in progress, with the longest run', () => {
-    // Spent on 1–10 except 4, 5, 6 (a 3-day run) and 9.
-    const q = quietDays(spent([1, 2, 3, 7, 8, 10]), range, '2026-09-10');
-    expect(q).toEqual({
-      countedDays: 10,
-      noSpendDays: 4,
-      longestRun: { days: 3, start: '2026-09-04', end: '2026-09-06' },
-    });
-  });
-
-  it('counts the whole period once it is over, and leaves out a run of just one day', () => {
-    const every = Array.from({ length: 30 }, (_, i) => i + 1).filter((d) => d !== 15);
-    expect(quietDays(spent(every), range, '2026-10-20')).toEqual({
-      countedDays: 30,
-      noSpendDays: 1,
-      longestRun: null,
-    });
-  });
-});
-
 describe('buildStoryCards', () => {
   const base: StoryInput = {
     mover: null,
@@ -340,11 +313,6 @@ describe('buildStoryCards', () => {
     patterns: [],
     recurringMinor: 0,
     discretionaryMinor: 0,
-    quiet: {
-      countedDays: 26,
-      noSpendDays: 5,
-      longestRun: { days: 2, start: '2026-09-11', end: '2026-09-12' },
-    },
     spendDays: 21,
     isCurrentPeriod: true,
     unit: 'month',
@@ -363,7 +331,7 @@ describe('buildStoryCards', () => {
     '2026-10-20'
   );
 
-  it('tells the period in order: what moved, the rhythm, what was spoken for, quiet days', () => {
+  it('tells the period in order: what moved, the one heaviest rhythm, what was spoken for', () => {
     const cards = buildStoryCards({
       ...base,
       mover: { categoryId: 'food', name: 'Food', pctChange: 32.4, totalMinor: 2600000 },
@@ -373,30 +341,18 @@ describe('buildStoryCards', () => {
     });
     expect(cards.map((c) => c.key)).toEqual([
       'mover',
-      ...facts.slice(0, 2).map((f) => `pattern-${f.key}`),
+      ...facts.slice(0, 1).map((f) => `pattern-${f.key}`),
       'fixed',
-      'quiet',
     ]);
     // The cards that point somewhere act on the page; the rest are plain.
     expect(cards[0].action).toEqual({ type: 'category', id: 'food' });
     expect(cards.find((c) => c.key === 'fixed')!.action).toEqual({ type: 'categories' });
-    expect(cards.find((c) => c.key === 'quiet')!.action).toBeUndefined();
     const heaviest = cards.find((c) => c.key === 'pattern-heaviest');
     if (heaviest) expect(heaviest.action).toEqual({ type: 'day', iso: '2026-09-12' });
     expect(cards[0].big).toBe('Food +32%');
     const fixed = cards.find((c) => c.key === 'fixed')!;
     expect(fixed.big).toBe('25%');
     expect(fixed.moonFraction).toBeCloseTo(0.25, 3);
-  });
-
-  it('says how many quiet days there were, and the longest run', () => {
-    const quiet = buildStoryCards(base).find((c) => c.key === 'quiet')!;
-    expect(quiet.big).toBe('5 no-spend days');
-    expect(quiet.detail).toMatch(/^Out of 26 so far\. Your longest run was 2 days, /);
-    // The run's dates are one unbreakable piece, so a wrapped line never leaves "Jan 1 –" at the end of a line.
-    const range = quiet.detail!.split('days, ')[1];
-    expect(range).toMatch(/\u00A0–\u00A0/);
-    expect(range.replace(/\u00A0/g, '').includes(' ')).toBe(false);
   });
 
   it('leaves out the fixed card when nothing fixed was paid', () => {
@@ -409,7 +365,9 @@ describe('buildStoryCards', () => {
     // It is a slim note, not a full-height card.
     expect(buildStoryCards({ ...base, spendDays: 2 })[0].compact).toBe(true);
     // A finished period is never "too early".
-    expect(buildStoryCards({ ...base, spendDays: 2, isCurrentPeriod: false })[0].key).not.toBe('early');
+    expect(
+      buildStoryCards({ ...base, spendDays: 2, isCurrentPeriod: false }).map((c) => c.key)
+    ).not.toContain('early');
   });
 });
 

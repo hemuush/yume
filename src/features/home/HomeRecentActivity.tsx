@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { Text } from '@/components/Text';
 import { EmptyState } from '@/components/EmptyState';
+import { groupedSurface } from '@/components/screenStyles';
 import { Section } from '@/components/Section';
 import { theme } from '@/constants/theme';
 import { dayLabel } from '@/lib/date';
@@ -105,20 +106,11 @@ export const HomeRecentActivity = memo(function HomeRecentActivity({
 
 const styles = themedStyles(() =>
   StyleSheet.create({
-    // A raised card to match the other home sections.
     recent: {
       marginHorizontal: 16,
-      backgroundColor: theme.colors.home.surface,
-      borderRadius: theme.radius.xl2,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.colors.home.edge,
+      ...groupedSurface.frame,
       paddingBottom: 4,
       overflow: 'hidden',
-      shadowColor: theme.colors.ink,
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.04,
-      shadowRadius: 8,
-      elevation: 2,
     },
     dayHead: {
       flexDirection: 'row',

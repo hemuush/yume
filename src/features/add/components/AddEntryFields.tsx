@@ -1,5 +1,7 @@
 import { memo } from 'react';
 import { View } from 'react-native';
+import Animated from 'react-native-reanimated';
+import { CONTENT_ENTER } from '@/lib/animation';
 import { Text } from '@/components/Text';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { CategoryPicker } from '@/components/CategoryPicker';
@@ -85,7 +87,8 @@ export function AddEntryFields({ model }: Props): ReactElement {
     setSearchFocused,
   } = model;
   return (
-    <>
+    // Each entry type fades its fields in, so switching Expense, Income, Transfer or Friend is not a hard cut.
+    <Animated.View key={type} entering={CONTENT_ENTER}>
       {type === 'friend' ? (
         <View style={styles.fieldCard}>
           <FriendFields
@@ -179,6 +182,6 @@ export function AddEntryFields({ model }: Props): ReactElement {
           )}
         </>
       )}
-    </>
+    </Animated.View>
   );
 }

@@ -42,14 +42,15 @@ export function GoalDraftHero({
       }
       saved={formatMaskableMoney(savedMinor, { masked: hideAmounts })}
       fraction={hideAmounts ? 0 : percent / 100}
+      // What is left and by when are fields of the Edit sheet itself, right below: only Add money (`after`) shows them.
       toGo={
-        hideAmounts
+        hideAmounts || !after
           ? undefined
           : done
             ? { reached: true }
             : { figure: formatMoney(Math.max(0, targetMinor - savedMinor)) }
       }
-      date={!hideAmounts && targetDate ? dayMonthYear(targetDate) : undefined}
+      date={!hideAmounts && after && targetDate ? dayMonthYear(targetDate) : undefined}
     />
   );
 }
