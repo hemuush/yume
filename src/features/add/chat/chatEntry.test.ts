@@ -71,7 +71,7 @@ describe('what can be picked', () => {
 });
 
 describe('the form order', () => {
-  it("lists each type's fields as the form does", () => {
+  it('lists each type’s fields as the form does', () => {
     expect(fieldsOf('expense')).toEqual(['amount', 'category', 'account', 'date', 'note']);
     expect(fieldsOf('income')).toEqual(['amount', 'category', 'account', 'date', 'note']);
     expect(fieldsOf('transfer')).toEqual(['amount', 'account', 'toAccount', 'date', 'note']);

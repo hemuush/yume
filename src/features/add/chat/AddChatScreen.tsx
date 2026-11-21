@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import Feather from '@expo/vector-icons/Feather';
 import { router } from 'expo-router';
@@ -11,7 +11,7 @@ import { CategoryIcon } from '@/components/CategoryIcon';
 import { CategoryPicker } from '@/components/CategoryPicker';
 import { Chip } from '@/components/Chip';
 import { PrimaryButton } from '@/components/PrimaryButton';
-import { Text } from '@/components/Text';
+import { Text, TextInput } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { AccountPickList } from '@/features/add/components/AccountPickList';
 import { typeWash } from '@/features/add/addEntry';
@@ -779,6 +779,6 @@ const s = themedStyles(() =>
       justifyContent: 'center',
       backgroundColor: theme.colors.action,
     },
-    sendOff: { opacity: 0.4 },
+    sendOff: { opacity: theme.opacity.disabled },
   })
 );
