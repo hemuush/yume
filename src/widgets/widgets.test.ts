@@ -154,7 +154,7 @@ describe('the five widgets', () => {
       } else visit(fn(el.props));
     }
     visit(widget);
-    const segments = primitives.filter((el) => el.props.style?.height === 7 && el.props.style?.width === 0);
+    const segments = primitives.filter((el) => el.props.style?.height === 8 && el.props.style?.width === 0);
     expect(segments).toHaveLength(4);
     const nativeWeights = segments.map((el) => FlexWidget.convertProps(el.props).weight!);
     expect(nativeWeights.every((weight) => Number.isInteger(weight) && weight > 0)).toBe(true);

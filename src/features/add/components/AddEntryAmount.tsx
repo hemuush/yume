@@ -21,6 +21,7 @@ export const AMOUNT_KEYS = [
   'invalidAmount',
   'roundingNote',
   'frequentAmounts',
+  'usual',
   'amountMinor',
   'setExpr',
 ] as const satisfies readonly (keyof AddEntryModel)[];
@@ -43,6 +44,7 @@ export function AddEntryAmount({ model }: Props): ReactElement {
     invalidAmount,
     roundingNote,
     frequentAmounts,
+    usual,
     amountMinor,
     setExpr,
   } = model;
@@ -79,7 +81,11 @@ export function AddEntryAmount({ model }: Props): ReactElement {
           setError(null);
         },
       }}
-      suggestions={{ amounts: frequentAmounts, onPick: (minor) => setExpr(exprFromMinor(minor)) }}
+      // "Your usual" below already offers amounts (with the category and account), so the plain amounts show only without it.
+      suggestions={{
+        amounts: usual.length > 0 && !isLinked ? [] : frequentAmounts,
+        onPick: (minor) => setExpr(exprFromMinor(minor)),
+      }}
     />
   );
 }

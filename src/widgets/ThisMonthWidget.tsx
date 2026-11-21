@@ -1,7 +1,7 @@
 import { FlexWidget, TextWidget, type ColorProp } from 'react-native-android-widget';
 import { formatMoney } from '@/lib/money';
 import { WidgetShell, WidgetLabel } from './WidgetShell';
-import { widgetColor, widgetTint, WIDGET_FONT } from './widgetTheme';
+import { widgetColor, widgetTint, widgetAlpha, WIDGET_FONT } from './widgetTheme';
 import type { ThisMonthWidgetData } from './data';
 
 /** Home's free-balance headline and proportional month line, sized for a 4×2 widget. */
@@ -38,7 +38,8 @@ export function ThisMonthWidget({
     <WidgetShell
       clickAction="OPEN_APP"
       justifyContent="space-between"
-      backgroundColor={widgetTint(primary, 98)}
+      // A solid sky wash: a native gradient would replace the drawable that holds the border.
+      backgroundColor={widgetTint(primary, 90)}
     >
       <FlexWidget
         style={{
@@ -60,7 +61,7 @@ export function ThisMonthWidget({
         style={{
           width: 'match_parent',
           fontFamily: WIDGET_FONT.body,
-          fontSize: 30,
+          fontSize: 36,
           adjustsFontSizeToFit: true,
           color: over || freeMinor < 0 ? widgetColor.expenseText : widgetColor.ink,
         }}
@@ -69,10 +70,10 @@ export function ThisMonthWidget({
         style={{
           flexDirection: 'row',
           width: 'match_parent',
-          height: 7,
+          height: 8,
           borderRadius: 4,
           overflow: 'hidden',
-          backgroundColor: widgetColor.surfaceAlt,
+          backgroundColor: widgetAlpha(widgetColor.white, 0.55),
         }}
       >
         {parts.map((p) => (
@@ -81,7 +82,7 @@ export function ThisMonthWidget({
             style={{
               width: 0,
               flex: Math.max(1, Math.round(p.share * 10000)),
-              height: 7,
+              height: 8,
               backgroundColor: p.color,
             }}
           />
@@ -108,7 +109,7 @@ export function ThisMonthWidget({
         }
         maxLines={1}
         truncate="END"
-        style={{ fontFamily: WIDGET_FONT.body, fontSize: 10, color: widgetColor.textMuted, marginTop: 6 }}
+        style={{ fontFamily: WIDGET_FONT.body, fontSize: 11, color: widgetColor.inkSoft, marginTop: 6 }}
       />
     </WidgetShell>
   );
@@ -132,7 +133,7 @@ function Figure({ label, value, color }: { label: string; value: string; color: 
         style={{
           width: 'match_parent',
           fontFamily: WIDGET_FONT.amount,
-          fontSize: 12,
+          fontSize: 13,
           adjustsFontSizeToFit: true,
           color: widgetColor.ink,
           marginTop: 2,

@@ -33,10 +33,10 @@ export function NextDueWidget({ data }: { data: NextDueWidgetData | null }) {
     >
       <FlexWidget
         style={{
-          width: 42,
-          height: 42,
-          borderRadius: 12,
-          backgroundColor: widgetAlpha(tint, 0.28),
+          width: 44,
+          height: 44,
+          borderRadius: 14,
+          backgroundColor: widgetAlpha(tint, 0.3),
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
@@ -62,7 +62,7 @@ export function NextDueWidget({ data }: { data: NextDueWidgetData | null }) {
           text={title}
           truncate="END"
           maxLines={1}
-          style={{ fontFamily: WIDGET_FONT.bodyMedium, fontSize: 14, color: widgetColor.ink }}
+          style={{ fontFamily: WIDGET_FONT.bodyMedium, fontSize: 15, color: widgetColor.ink }}
         />
         <TextWidget
           text={subtitle}
@@ -78,7 +78,7 @@ export function NextDueWidget({ data }: { data: NextDueWidgetData | null }) {
           width: 80,
           textAlign: 'right',
           fontFamily: WIDGET_FONT.amount,
-          fontSize: 15,
+          fontSize: 16,
           adjustsFontSizeToFit: true,
           color: sign === '+' ? widgetColor.incomeText : widgetColor.ink,
         }}

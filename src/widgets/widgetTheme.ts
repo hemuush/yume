@@ -5,18 +5,19 @@ import { hexToRgba, shade } from '@/lib/color';
  * depending on what RemoteViews can't render (font objects, StyleSheet.create()). Hex values synced by hand.
  */
 export const widgetColor = {
-  ink: '#12130F',
-  inkSoft: '#5B5748',
-  textMuted: '#6C685B',
-  cream: '#FFFDF8',
-  surfaceAlt: '#F3ECE0',
+  // The app's cool paper-and-navy palette (palette.ts), not the older warm cream.
+  ink: '#0C1230',
+  inkSoft: '#46506F',
+  textMuted: '#5E6784',
+  cream: '#FFFFFF',
+  surfaceAlt: '#E9EEFA',
   white: '#FFFFFF',
-  borderSoft: '#E8E1D1',
-  income: '#1C9A5B',
-  incomeText: '#167747',
-  expense: '#E23F55',
-  expenseText: '#BD3547',
-  tray: '#F8F3EA',
+  borderSoft: '#DCE3F2',
+  income: '#1B7A4F',
+  incomeText: '#1B7A4F',
+  expense: '#B3261E',
+  expenseText: '#B3261E',
+  tray: '#F1F4FB',
   slice: { spent: '#F6A88E', saved: '#4FD09F', due: '#EDB02F', free: '#7DB9F2' },
   // Account hues, the same as Home's account cards (see accountHue in lib/account).
   flatLime: '#E0F0A8',
