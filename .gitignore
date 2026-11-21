@@ -51,3 +51,7 @@ credentials.json
 /design-preview/
 /.codex-remote-attachments/
 /.codex-attachments/
+
+# Local-only
+start-expo.bat
+.claude/
