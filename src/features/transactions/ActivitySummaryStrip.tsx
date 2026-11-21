@@ -177,7 +177,7 @@ const styles = themedStyles(() =>
       overflow: 'hidden',
       // The same side padding as Home's month card and as this card's loading placeholder.
       paddingHorizontal: 16,
-      paddingVertical: 10,
+      paddingVertical: 8,
       flexDirection: 'row',
       alignItems: 'center',
       gap: 12,

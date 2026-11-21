@@ -72,7 +72,7 @@ export const PlanOverviewTab = memo(function PlanOverviewTab({
       subtitle: data.budgets.rows.length
         ? budgetLeft < 0
           ? 'Over planned limits'
-          : 'Remaining this month'
+          : 'Left this month'
         : 'No budgets this month',
       amount: data.budgets.rows.length ? money(Math.abs(budgetLeft)) : '',
     },
@@ -80,11 +80,7 @@ export const PlanOverviewTab = memo(function PlanOverviewTab({
       name: 'Goals',
       icon: 'flag-outline',
       id: 'goals' as const,
-      subtitle: !activeGoals.length
-        ? 'No active goals'
-        : data.hideAmounts
-          ? 'Savings hidden'
-          : 'Goals in progress',
+      subtitle: !activeGoals.length ? 'No active goals' : data.hideAmounts ? 'Savings hidden' : 'In progress',
       amount: !activeGoals.length || data.hideAmounts ? '' : String(openGoals.length),
     },
     {
@@ -96,7 +92,7 @@ export const PlanOverviewTab = memo(function PlanOverviewTab({
         : data.hideAmounts
           ? 'Values hidden'
           : data.investments.otherCurrency.length
-            ? 'Holdings across currencies'
+            ? 'Across currencies'
             : 'Portfolio value',
       amount:
         !holdings || data.hideAmounts
@@ -110,7 +106,7 @@ export const PlanOverviewTab = memo(function PlanOverviewTab({
       icon: 'credit-card-outline',
       id: 'debt' as const,
       subtitle: data.loans.borrowedCount
-        ? 'Principal remaining'
+        ? 'To repay'
         : data.loans.rows.length
           ? 'Money lent'
           : 'No open loans',
@@ -122,7 +118,8 @@ export const PlanOverviewTab = memo(function PlanOverviewTab({
   return (
     <>
       <Runway
-        onViewPayments={viewPayments}
+        // Next payments below already opens the schedule; the link here is for when there are none to show.
+        onViewPayments={next ? undefined : viewPayments}
         onViewDay={viewDay}
         dueSoon={data.dueSoon}
         runway={data.runway}
@@ -169,14 +166,14 @@ export const PlanOverviewTab = memo(function PlanOverviewTab({
             >
               <View style={styles.tileHead}>
                 <View style={[styles.disc, { backgroundColor: theme.colors.collection[id] }]}>
-                  <CategoryGlyph name={icon} size={14} color={theme.colors.onFlat} />
+                  <CategoryGlyph name={icon} size={12} color={theme.colors.onFlat} />
                 </View>
                 <Text style={styles.metricName} numberOfLines={1}>
                   {name}
                 </Text>
               </View>
               {amount ? <Text style={styles.metricValue}>{amount}</Text> : null}
-              <Text style={styles.metricSubtitle} numberOfLines={2}>
+              <Text style={styles.metricSubtitle} numberOfLines={1}>
                 {subtitle}
               </Text>
             </Pressable>
@@ -203,14 +200,14 @@ export const PlanOverviewTab = memo(function PlanOverviewTab({
 
 const styles = themedStyles(() =>
   StyleSheet.create({
-    tiles: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginHorizontal: 16 },
+    tiles: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginHorizontal: 16 },
     tile: {
       flexGrow: 1,
       flexBasis: '44%',
       minWidth: 0,
       paddingHorizontal: 12,
-      paddingVertical: 10,
-      gap: 4,
+      paddingVertical: 8,
+      gap: 2,
       borderRadius: theme.radius.xl,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: theme.colors.home.edge,
@@ -218,7 +215,7 @@ const styles = themedStyles(() =>
     },
     tileFull: { flexBasis: '100%' },
     tileHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-    disc: { width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
+    disc: { width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
     metricName: {
       flex: 1,
       minWidth: 0,
@@ -227,11 +224,11 @@ const styles = themedStyles(() =>
       color: theme.colors.textPrimary,
     },
     metricValue: {
-      fontSize: 17,
+      fontSize: 16,
       fontFamily: theme.font.bodyBold,
       color: theme.colors.textPrimary,
       fontVariant: ['tabular-nums'],
     },
-    metricSubtitle: { fontSize: 12, fontFamily: theme.font.body, color: theme.colors.home.secondaryText },
+    metricSubtitle: { fontSize: 11, fontFamily: theme.font.body, color: theme.colors.home.secondaryText },
   })
 );

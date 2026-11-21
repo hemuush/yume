@@ -196,18 +196,24 @@ export function HomeHeader({
           <ReanimatedAnimated.View
             entering={FadeIn.duration(MOTION.enter).easing(MOTION.ease).reduceMotion(ReduceMotion.System)}
           >
-            <Text style={styles.date}>
-              {new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' })}
-            </Text>
-            <Text style={styles.greet}>
-              Good {greetingWord()}
-              {userName ? (
-                <>
-                  , <Text style={styles.greetName}>{userName}</Text>
-                </>
-              ) : null}
-              .
-            </Text>
+            <View style={styles.greetRow}>
+              <Text style={styles.greet} numberOfLines={1}>
+                Good {greetingWord()}
+                {userName ? (
+                  <>
+                    , <Text style={styles.greetName}>{userName}</Text>
+                  </>
+                ) : null}
+                .
+              </Text>
+              <Text style={styles.date} numberOfLines={1}>
+                {new Date().toLocaleDateString(undefined, {
+                  weekday: 'short',
+                  day: 'numeric',
+                  month: 'short',
+                })}
+              </Text>
+            </View>
             {line ? <Text style={styles.insight}>{line}</Text> : null}
           </ReanimatedAnimated.View>
           {children}
@@ -234,16 +240,17 @@ const styles = themedStyles(() =>
     brandRow: { flexDirection: 'row', alignItems: 'center', gap: 7 },
     brand: { fontFamily: theme.font.roundedBold, fontSize: 22, letterSpacing: 0.2, color: theme.colors.ink },
     actions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    // The greeting and the date on one line: the date is a quiet note at the right, not a line of its own.
+    greetRow: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 12 },
     date: {
+      flexShrink: 0,
       fontFamily: theme.font.body,
-      fontSize: 11,
-      lineHeight: 15,
-      letterSpacing: 0.8,
-      textTransform: 'uppercase',
+      fontSize: 12,
+      lineHeight: 16,
       color: theme.colors.home.secondaryText,
-      marginBottom: 1,
     },
     greet: {
+      flexShrink: 1,
       fontFamily: theme.font.bodyMedium,
       fontSize: 17,
       lineHeight: 22,

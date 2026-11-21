@@ -1,4 +1,6 @@
 import { View, Pressable, StyleSheet } from 'react-native';
+import Animated from 'react-native-reanimated';
+import { PANEL_ENTER } from '@/lib/animation';
 import Feather from '@expo/vector-icons/Feather';
 import { Text, TextInput } from '@/components/Text';
 import { theme } from '@/constants/theme';
@@ -51,7 +53,9 @@ export function ProfileIdentity({
           </Text>
         </View>
         <View style={local.text}>
-          <Text style={local.name}>{name || 'Add your name'}</Text>
+          <Text style={local.name} numberOfLines={1}>
+            {name || 'Add your name'}
+          </Text>
           <Text style={local.sub}>{memberSince ? `Member since ${memberSince}` : 'On this device'}</Text>
         </View>
         {!editing && (
@@ -59,14 +63,16 @@ export function ProfileIdentity({
             onPress={onStartEdit}
             accessibilityRole="button"
             accessibilityLabel={name ? 'Edit profile name' : 'Add your name'}
-            style={withPressed(local.editButton)}
+            hitSlop={4}
+            style={withPressed(local.editPill)}
           >
-            <Feather name="edit-2" size={16} color={theme.colors.link} />
+            <Feather name="edit-2" size={14} color={theme.colors.textPrimary} />
+            <Text style={local.editText}>{name ? 'Edit' : 'Add'}</Text>
           </Pressable>
         )}
       </View>
       {editing && (
-        <View style={local.editForm}>
+        <Animated.View entering={PANEL_ENTER} style={local.editForm}>
           <Text style={local.inputLabel}>Your name</Text>
           <TextInput
             accessibilityLabel="Your name"
@@ -99,7 +105,7 @@ export function ProfileIdentity({
               style={local.editAction}
             />
           </View>
-        </View>
+        </Animated.View>
       )}
     </View>
   );
@@ -107,24 +113,42 @@ export function ProfileIdentity({
 
 const local = themedStyles(() =>
   StyleSheet.create({
-    // One slim line with no card: the avatar, the name with a line under it, and an edit button.
-    card: { marginHorizontal: SCREEN.gutter, marginTop: 6, marginBottom: 6 },
-    row: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+    // The identity as a card: a round avatar, the name large with the year under it, and a labelled Edit pill.
+    card: {
+      marginHorizontal: SCREEN.gutter,
+      marginTop: 6,
+      marginBottom: 6,
+      padding: 14,
+      borderRadius: theme.radius.xl,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.home.edge,
+      backgroundColor: theme.colors.home.surface,
+    },
+    row: { flexDirection: 'row', alignItems: 'center', gap: 14 },
     avatar: {
-      width: 36,
-      height: 36,
-      borderRadius: 12,
+      width: 56,
+      height: 56,
+      borderRadius: 28,
       alignItems: 'center',
       justifyContent: 'center',
       // A circular View's background can render clipped to a stale layout on Android.
       overflow: 'hidden',
     },
-    avatarInitial: { fontFamily: theme.font.roundedBold, fontSize: 17 },
-    text: { flex: 1, minWidth: 0, minHeight: 44, justifyContent: 'center' },
-    name: { fontFamily: theme.font.bodyBold, fontSize: 16, color: theme.colors.textPrimary },
-    sub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
-    editButton: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
-    editForm: { marginTop: 4, gap: 8 },
+    avatarInitial: { fontFamily: theme.font.roundedBold, fontSize: 24 },
+    text: { flex: 1, minWidth: 0, justifyContent: 'center', gap: 2 },
+    name: { fontFamily: theme.font.bodyBold, fontSize: 20, color: theme.colors.textPrimary },
+    sub: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textMuted },
+    editPill: {
+      minHeight: 40,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      paddingHorizontal: 14,
+      borderRadius: theme.radius.pill,
+      backgroundColor: theme.colors.home.control,
+    },
+    editText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
+    editForm: { marginTop: 12, gap: 8 },
     inputLabel: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
     editActions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
     editAction: { flexGrow: 1, flexBasis: 110 },

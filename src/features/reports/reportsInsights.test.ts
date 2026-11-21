@@ -331,7 +331,7 @@ describe('buildStoryCards', () => {
     '2026-10-20'
   );
 
-  it('tells the period in order: what moved, the one heaviest rhythm, what was spoken for', () => {
+  it('tells the period in order: what moved, one rhythm other than the heaviest day, what was spoken for', () => {
     const cards = buildStoryCards({
       ...base,
       mover: { categoryId: 'food', name: 'Food', pctChange: 32.4, totalMinor: 2600000 },
@@ -341,14 +341,17 @@ describe('buildStoryCards', () => {
     });
     expect(cards.map((c) => c.key)).toEqual([
       'mover',
-      ...facts.slice(0, 1).map((f) => `pattern-${f.key}`),
+      ...facts
+        .filter((f) => f.key !== 'heaviest' && f.key !== 'noSpend')
+        .slice(0, 1)
+        .map((f) => `pattern-${f.key}`),
       'fixed',
     ]);
     // The cards that point somewhere act on the page; the rest are plain.
     expect(cards[0].action).toEqual({ type: 'category', id: 'food' });
     expect(cards.find((c) => c.key === 'fixed')!.action).toEqual({ type: 'categories' });
-    const heaviest = cards.find((c) => c.key === 'pattern-heaviest');
-    if (heaviest) expect(heaviest.action).toEqual({ type: 'day', iso: '2026-09-12' });
+    // The heaviest day is left to the heatmap and Biggest spends.
+    expect(cards.find((c) => c.key === 'pattern-heaviest')).toBeUndefined();
     expect(cards[0].big).toBe('Food +32%');
     const fixed = cards.find((c) => c.key === 'fixed')!;
     expect(fixed.big).toBe('25%');

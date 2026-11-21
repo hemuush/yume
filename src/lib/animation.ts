@@ -2,7 +2,6 @@ import {
   Easing,
   FadeIn,
   FadeInDown,
-  FadeInRight,
   FadeOut,
   FadeOutDown,
   LinearTransition,
@@ -88,15 +87,22 @@ export const DOCK_EXIT = FadeOutDown.duration(DURATIONS.rowExit)
   .easing(MOTION.exit)
   .reduceMotion(ReduceMotion.System);
 
-/**
- * A tab of a screen swapping in place (Plan's and Reports' tabs): the new view fades in while drifting a few dp from
- * the right, the same motion as the bottom tabs, so every switch feels like one family.
- */
-export const TAB_ENTER = FadeInRight.duration(DURATIONS.slideIn)
-  .easing(MOTION.ease)
-  .reduceMotion(ReduceMotion.System);
-
 /** Content appearing in place (a loaded list, a picked day's detail): one plain fade, without moving. */
 export const CONTENT_ENTER = FadeIn.duration(DURATIONS.quick)
   .easing(MOTION.ease)
   .reduceMotion(ReduceMotion.System);
+
+/** A tab of a screen swapping in place (Plan's and Reports' tabs): the same plain fade, so every switch is quiet. */
+export const TAB_ENTER = CONTENT_ENTER;
+
+/**
+ * A list's first cards arriving one after another: each rises 12 dp while fading in, 35 ms after the one before it, for
+ * the first six only so a long list never waits. Built once per index.
+ */
+const STAGGER = Array.from({ length: 6 }, (_, i) =>
+  FadeInDown.duration(DURATIONS.standard)
+    .delay(i * 35)
+    .easing(MOTION.ease)
+    .reduceMotion(ReduceMotion.System)
+);
+export const staggerEnter = (index: number) => STAGGER[Math.min(Math.max(index, 0), STAGGER.length - 1)];

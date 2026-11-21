@@ -240,7 +240,7 @@ export default function WhatIfScreen() {
                   </View>
                   <Feather name="arrow-right" size={18} color={theme.colors.textMuted} />
                   <View style={[styles.compareSide, styles.compareRight]}>
-                    <Text style={styles.compareLabel}>Simulated monthly spend</Text>
+                    <Text style={styles.compareLabel}>With the cut, a month</Text>
                     <Amount
                       minor={cut.newMonthlyMinor}
                       sensitive={selectedCategory.isSensitive}

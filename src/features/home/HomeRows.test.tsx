@@ -5,6 +5,7 @@ jest.mock('@/theme/AccentContext', () => ({
   useAccent: () => ({ dot: '#F0876A', accent: '#8FCBFF', secondary: '#8FE8C8' }),
 }));
 jest.mock('@expo/vector-icons/Feather', () => 'Feather');
+jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
 jest.useFakeTimers();
 beforeEach(() => jest.setSystemTime(new Date(2026, 9, 17, 12)));
 import { UpcomingRow } from './UpcomingRow';

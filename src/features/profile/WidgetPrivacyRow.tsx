@@ -36,6 +36,7 @@ export const WidgetPrivacyRow = memo(function WidgetPrivacyRow({
     <SettingsRow
       compact
       icon="widgets-outline"
+      tone="lavender"
       label="Hide widget details"
       sub="Hide financial details on your home screen. Quick Add stays available."
       right={

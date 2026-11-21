@@ -291,6 +291,7 @@ export default function CategoryScreen() {
                           name: s.name,
                           minor: s.totalMinor,
                           count: s.count,
+                          color: s.color,
                         })),
                         ...(splitRest.length > 1
                           ? [
@@ -317,11 +318,16 @@ export default function CategoryScreen() {
                       onPress={() => router.push('/loans')}
                     />
                   ) : (
-                    <PrimaryButton
-                      title="What if I cut this?"
-                      variant="secondary"
+                    <Pressable
+                      style={withPressed(styles.noLimit)}
                       onPress={() => router.push(`/whatif?category=${category.id}`)}
-                    />
+                      accessibilityRole="button"
+                      accessibilityLabel="What if I cut this?"
+                    >
+                      <Feather name="scissors" size={16} color={theme.colors.textSecondary} />
+                      <Text style={styles.noLimitText}>What if I cut this?</Text>
+                      <Feather name="chevron-right" size={16} color={theme.colors.textMuted} />
+                    </Pressable>
                   )}
                 </View>
               )}

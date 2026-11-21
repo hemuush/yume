@@ -7,6 +7,8 @@ import { memo, useCallback, useEffect, useState } from 'react';
 import { useLocalSearchParams } from 'expo-router';
 import { View, Keyboard } from 'react-native';
 import { Text } from '@/components/Text';
+import Animated from 'react-native-reanimated';
+import { TAB_ENTER } from '@/lib/animation';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getUserName, setUserName, getMemberSinceYear } from '@/db/settings';
@@ -143,7 +145,9 @@ export default function ProfileScreen() {
 
                 <ProfileTabs value={tab} onChange={setTab} />
 
-                {tab === 'you' ? <You /> : <Settings />}
+                <Animated.View key={tab} entering={TAB_ENTER}>
+                  {tab === 'you' ? <You /> : <Settings />}
+                </Animated.View>
               </LoadFade>
             </KeyboardAwareScrollView>
             <SkyHeader

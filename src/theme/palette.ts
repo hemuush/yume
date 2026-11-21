@@ -101,6 +101,8 @@ const LIGHT = {
   dueInk: '#7A5100',
   // The soft tray under the month card's figures (Today, pace) and its meter track.
   tray: '#EAEFFA',
+  // The chosen pill of a segmented switch: raised above its tray, white on paper and a lighter slate on the dark.
+  pill: '#FFFFFF',
   trayTrack: '#D9E1F3',
   // The one grey segment that joins the thin categories in the Reports breakdown bar.
   otherSlice: '#C3CCE0',
@@ -209,6 +211,7 @@ const DARK: Palette = {
   dueRow: '#302A23',
   dueInk: '#E8B84A',
   tray: '#1C2538',
+  pill: '#303E5E',
   trayTrack: '#36425C',
   otherSlice: '#5C667D',
   link: '#9EC5FC',

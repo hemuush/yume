@@ -67,7 +67,7 @@ export function ReportInsights({
               <View style={s.mid}>
                 <Text style={s.kicker}>{card.kicker}</Text>
                 <Text style={s.big}>{headline}</Text>
-                {!card.compact && (
+                {!card.compact && !!card.detail && (
                   <Text style={s.detail} numberOfLines={2}>
                     {card.detail}
                   </Text>
@@ -102,7 +102,13 @@ export function ReportInsights({
 const s = themedStyles(() =>
   StyleSheet.create({
     block: { marginBottom: 10 },
-    card: { ...h.card, marginHorizontal: 0 },
+    card: {
+      paddingHorizontal: 14,
+      borderRadius: theme.radius.xl,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.borderSoft,
+      backgroundColor: theme.colors.home.surface,
+    },
     row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 0, paddingVertical: 10 },
     mark: {
       width: MARK,

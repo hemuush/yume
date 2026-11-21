@@ -406,14 +406,16 @@ export function buildStoryCards(input: StoryInput): StoryCard[] {
     });
   }
   input.patterns
-    .filter((p) => p.key !== 'noSpend')
+    // The heaviest day is already on the heatmap and, as its biggest payment, under Biggest spends.
+    .filter((p) => p.key !== 'noSpend' && p.key !== 'heaviest')
     .slice(0, 1)
     .forEach((p, i) => {
       cards.push({
         key: `pattern-${p.key}`,
         kicker: p.kicker,
         big: p.big,
-        detail: p.detail,
+        // "74% in 8 days" already says what the sentence would; the card drops it to save a line.
+        detail: p.key === 'frontLoaded' ? '' : p.detail,
         tone: PATTERN_TONE[i % PATTERN_TONE.length],
         ...(p.date ? { action: { type: 'day' as const, iso: p.date }, cta: 'Show on the heatmap' } : {}),
       });
@@ -426,8 +428,8 @@ export function buildStoryCards(input: StoryInput): StoryCard[] {
       key: 'fixed',
       kicker: 'Already spoken for',
       big: `${Math.round(share * 100)}%`,
-      detail: `${formatMoney(input.recurringMinor)} of it was EMI, rent, insurance and subscriptions — fixed before the ${input.unit} began.`,
-      foot: `${formatMoney(input.discretionaryMinor)} was flexible`,
+      detail: `${formatMoney(input.recurringMinor)} is EMI, rent, insurance and subscriptions.`,
+      foot: `${formatMoney(input.discretionaryMinor)} flexible`,
       tone: 'lavender',
       action: { type: 'categories' },
       cta: 'See categories',

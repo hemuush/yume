@@ -21,17 +21,14 @@ import { ToggleSwitch } from '@/components/ToggleSwitch';
 import { SettingsRow } from '@/components/SettingsRow';
 import { MovingRow } from '@/components/MovingRow';
 import { PrimaryButton } from '@/components/PrimaryButton';
-import { SegmentedControl } from '@/components/SegmentedControl';
 import { useAppearance } from '@/theme/AppearanceContext';
-import type { AppearancePreference } from '@/theme/scheme';
 import { theme } from '@/constants/theme';
 import { Section } from '@/components/Section';
-import { screenStyles as h } from '@/components/screenStyles';
+import { ListCard } from '@/components/SummaryCard';
 import { styles } from './profile.styles';
-import { cardSurface } from '@/components/CardSurface';
 import { errorMessage } from '@/lib/errorMessage';
-import { haptics } from '@/lib/haptics';
 import { AboutYume } from './AboutYume';
+import { AppearancePicker } from './AppearancePicker';
 import { CurrencySetting } from './CurrencySetting';
 import { DailyGoalSetting } from './DailyGoalSetting';
 import { WidgetPrivacyRow } from './WidgetPrivacyRow';
@@ -68,12 +65,6 @@ const ALERT_KEYS = [
   'recurringAlerts',
   'refundAlerts',
 ] as const satisfies readonly (keyof NotificationPrefs)[];
-
-const COLOUR_MODES: { value: AppearancePreference; label: string }[] = [
-  { value: 'system', label: 'System' },
-  { value: 'light', label: 'Light' },
-  { value: 'dark', label: 'Dark' },
-];
 
 /**
  * Settings starts with the colour mode, then a safety overview and grouped preferences.
@@ -206,23 +197,20 @@ export function SettingsSection() {
         </Appear>
       )}
       <Section compact title="Appearance">
-        <View style={[h.card, cardSurface.neutral, styles.settingsCard]}>
+        <ListCard style={styles.settingsCard}>
           <View style={styles.modeRow}>
             <Text style={styles.appearanceTitle}>Colour mode</Text>
-            <SegmentedControl
-              compact
-              options={COLOUR_MODES}
-              value={colourMode}
-              onChange={(next) => {
-                haptics.tap();
-                void setColourMode(next);
-              }}
-            />
           </View>
-        </View>
+          <AppearancePicker
+            value={colourMode}
+            onChange={(next) => {
+              void setColourMode(next);
+            }}
+          />
+        </ListCard>
       </Section>
       <Section compact title="Money">
-        <View style={[h.card, cardSurface.neutral, styles.settingsCard]}>
+        <ListCard style={styles.settingsCard}>
           <CurrencySetting
             currency={currency}
             loaded={currencyLoaded}
@@ -240,20 +228,22 @@ export function SettingsSection() {
             <SettingsRow
               compact
               icon="tag-outline"
+              tone="sky"
               label="Categories"
               sub="Add, rename, or archive"
               onPress={() => router.push('/categories')}
               divider
             />
           </MovingRow>
-        </View>
+        </ListCard>
       </Section>
 
       <Section compact title="Privacy & notifications">
-        <View style={[h.card, cardSurface.neutral, styles.settingsCard]}>
+        <ListCard style={styles.settingsCard}>
           <SettingsRow
             compact
             icon="fingerprint"
+            tone="lavender"
             label="Require unlock"
             sub="Fingerprint, face, or your phone’s PIN"
             right={
@@ -263,6 +253,7 @@ export function SettingsSection() {
           <SettingsRow
             compact
             icon="eye-off-outline"
+            tone="lavender"
             label="Hide savings & investment amounts"
             sub="Mask balances and totals that include them"
             right={
@@ -278,6 +269,7 @@ export function SettingsSection() {
           <SettingsRow
             compact
             icon="bell-outline"
+            tone="lavender"
             label="Notifications"
             sub={
               alertsOn == null
@@ -287,14 +279,15 @@ export function SettingsSection() {
             onPress={() => router.push('/notification-settings')}
             divider
           />
-        </View>
+        </ListCard>
       </Section>
 
       <Section compact title="Your data">
-        <View style={[h.card, cardSurface.neutral, styles.settingsCard]}>
+        <ListCard style={styles.settingsCard}>
           <SettingsRow
             compact
             icon="folder-outline"
+            tone="mint"
             label="Backup & restore"
             sub={backupSub}
             subColor={!backupLoaded || backupOk ? undefined : theme.colors.expenseText}
@@ -303,6 +296,7 @@ export function SettingsSection() {
           <SettingsRow
             compact
             icon="file-export-outline"
+            tone="mint"
             label="Export"
             sub="PDF reports and Excel spreadsheets"
             onPress={() => router.push('/export')}
@@ -311,6 +305,7 @@ export function SettingsSection() {
           <SettingsRow
             compact
             icon="delete-restore"
+            tone="mint"
             label="Recently deleted"
             sub={
               deletedCount == null || deletedCount === 0
@@ -323,6 +318,7 @@ export function SettingsSection() {
           <SettingsRow
             compact
             icon="broom"
+            tone="mint"
             label="Tidy up"
             sub={
               tidyCount == null
@@ -335,7 +331,7 @@ export function SettingsSection() {
             onPress={() => router.push('/tidy-up')}
             divider
           />
-        </View>
+        </ListCard>
       </Section>
 
       <AboutYume />

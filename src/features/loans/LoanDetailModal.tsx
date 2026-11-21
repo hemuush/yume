@@ -1,3 +1,5 @@
+import type { McIconName } from '@/components/iconName';
+import { loanIcon } from './loanIdentity';
 import { useSaveOnce } from '@/lib/useSaveOnce';
 import { SheetFlow } from '@/components/SheetFlow';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -336,7 +338,7 @@ function LoanDetailContent({
               hue={
                 hue ?? (liveLoan.direction === 'borrowed' ? theme.colors.idCoralDeep : theme.colors.secondary)
               }
-              icon={liveLoan.direction === 'borrowed' ? 'bank-outline' : 'hand-coin-outline'}
+              icon={loanIcon(liveLoan) as McIconName}
               title={liveLoan.counterparty}
               kicker={`${(liveLoan.interestRateAnnualBp / 100).toFixed(2)}% · ${
                 liveLoan.rateType === 'floating' ? 'floating' : 'fixed'

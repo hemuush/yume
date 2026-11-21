@@ -5,7 +5,10 @@ import { formatMoney } from '@/lib/money';
 import { DateTile } from '@/components/DateTile';
 import { toLocalIsoDate } from '@/lib/date';
 import { SCREEN } from '@/components/screenStyles';
-import { HomeRow } from './HomeRow';
+import { Text } from '@/components/Text';
+import { PlanMoneyRow, planRowText } from '@/features/plan/PlanMoneyRow';
+import { useAccent } from '@/theme/AccentContext';
+import { themeInk } from '@/theme/interactionColors';
 import { themedStyles } from '@/theme/themedStyles';
 
 /**
@@ -55,19 +58,23 @@ export function UpcomingRow({
   /** Home's list: a payable bill says its amount beside the due date, leaving Pay as the row's ending. */
   payInline?: boolean;
 }) {
+  const { accent } = useAccent();
+  const ink = themeInk(accent);
   const inline = payInline && !!actionLabel;
   const money = `${sign}${formatMoney(amountMinor)}`;
   const chip = urgent
-    ? {
-        label: dueDate && dueDate < toLocalIsoDate(new Date()) ? 'Overdue' : 'Due now',
-        tone: 'warning' as const,
-      }
+    ? dueDate && dueDate < toLocalIsoDate(new Date())
+      ? 'Overdue'
+      : 'Due now'
     : soon
-      ? { label: 'Due soon', tone: 'due' as const }
+      ? 'Due soon'
       : undefined;
+  const tone = urgent ? planRowText.bad : soon ? planRowText.warn : null;
+  // A bill with a Pay button says its amount beside the due date, so the button is the row's only ending.
+  const line = inline ? [subtitle, money].filter(Boolean).join(' · ') : subtitle;
   return (
-    <HomeRow
-      leading={
+    <PlanMoneyRow
+      icon={
         date ? (
           <DateTile iso={date} background={iconBg} urgent={urgent} soon={soon} />
         ) : (
@@ -77,14 +84,19 @@ export function UpcomingRow({
         )
       }
       title={title}
-      // A bill with a Pay button says its amount beside the due date, so the button is the row's only ending.
-      subtitle={inline ? `${subtitle} · ${money}` : subtitle}
-      subtitleTone={urgent ? 'urgent' : soon ? 'soon' : undefined}
-      value={inline ? undefined : money}
-      valueTone={sign === '+' ? 'income' : undefined}
-      // Overdue and Due now stay as a chip beside Pay; the amber panel already says "due soon".
-      chip={inline && !urgent ? undefined : chip}
-      action={actionLabel}
+      subtitle={line ? <Text style={[planRowText.subtitle, tone]}>{line}</Text> : undefined}
+      value={
+        inline ? null : <Text style={[planRowText.value, sign === '+' && planRowText.good]}>{money}</Text>
+      }
+      // Overdue and Due now stay as a note beside Pay; the amber panel already says "due soon".
+      note={chip && !(inline && !urgent) ? <Text style={[planRowText.note, tone]}>{chip}</Text> : undefined}
+      trailing={
+        actionLabel ? (
+          <View style={[styles.action, { backgroundColor: ink }]}>
+            <Text style={styles.actionText}>{actionLabel}</Text>
+          </View>
+        ) : undefined
+      }
       onPress={onPress}
       divider={divider}
       highlight={highlight}
@@ -95,6 +107,13 @@ export function UpcomingRow({
 
 const styles = themedStyles(() =>
   StyleSheet.create({
+    action: {
+      minHeight: 44,
+      justifyContent: 'center',
+      paddingHorizontal: 16,
+      borderRadius: theme.radius.pill,
+    },
+    actionText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.onInk },
     iconWrap: {
       width: SCREEN.mark,
       height: SCREEN.mark,

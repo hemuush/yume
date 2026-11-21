@@ -1,6 +1,6 @@
 import { useLocalDayRefresh } from '@/lib/useLocalDayRefresh';
 import { Appear } from '@/components/Appear';
-import { CONTENT_ENTER } from '@/lib/animation';
+import { CONTENT_ENTER, staggerEnter } from '@/lib/animation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { onTransactionsChanged } from '@/lib/dataEvents';
 import { useFreshness } from '@/lib/useFreshness';
@@ -775,7 +775,7 @@ export default function TransactionsScreen() {
                 </>
               )
             }
-            renderItem={({ item: group }) => (
+            renderItem={({ item: group, index }) => (
               <TimelineDay
                 accountCurrency={accountCurrency}
                 date={group.date}
@@ -797,7 +797,7 @@ export default function TransactionsScreen() {
                 }
                 // Today and yesterday are named alone, as in Home; any other day says its date too.
                 dateInHeading={group.date !== today && group.date !== yesterday}
-                entering={isArriving() ? CONTENT_ENTER : undefined}
+                entering={isArriving() ? staggerEnter(index) : undefined}
                 items={group.items}
                 categories={categories}
                 accountName={accountName}

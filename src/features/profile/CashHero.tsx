@@ -44,7 +44,7 @@ const styles = themedStyles(() =>
       backgroundColor: summaryInk.background,
       borderRadius: theme.radius.xl,
       overflow: 'hidden',
-      marginTop: 12,
+      marginTop: 4,
     },
     top: {
       gap: 3,

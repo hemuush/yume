@@ -20,6 +20,7 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 export function SettingsRow({
   icon,
   iconBg,
+  tone,
   label,
   sub,
   subColor,
@@ -37,6 +38,8 @@ export function SettingsRow({
   icon: string;
   /** Defaults to the neutral tile; only pass a colour when it says something. */
   iconBg?: string;
+  /** A group's colour from the logo's palette: a pastel tile with dark ink on it. Wins over the neutral default. */
+  tone?: 'sky' | 'mint' | 'lavender' | 'coral';
   label: string;
   sub?: string;
   /** Overrides the sub text colour — used for a "never backed up" nudge, otherwise left at the default muted tone. */
@@ -61,7 +64,15 @@ export function SettingsRow({
 }) {
   const inSheet = useSheetSurface();
   const { accent } = useAccent();
-  const tileBg = iconBg ?? (inSheet ? theme.colors.surfaceAlt : shade(accent, 92));
+  const toneBg =
+    tone &&
+    {
+      sky: theme.colors.primary,
+      mint: theme.colors.secondary,
+      lavender: theme.colors.accent,
+      coral: theme.colors.coral,
+    }[tone];
+  const tileBg = iconBg ?? toneBg ?? (inSheet ? theme.colors.surfaceAlt : shade(accent, 92));
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.99);
   const chevron = expanded === undefined ? 'chevron-right' : expanded ? 'chevron-up' : 'chevron-down';
   const content = (
@@ -69,7 +80,11 @@ export function SettingsRow({
       <View
         style={[h.iconTile, round && styles.round, inSheet && styles.sheetIcon, { backgroundColor: tileBg }]}
       >
-        <MaterialCommunityIcons name={icon as McIconName} size={17} color={theme.colors.ink} />
+        <MaterialCommunityIcons
+          name={icon as McIconName}
+          size={17}
+          color={toneBg ? theme.colors.onFlat : theme.colors.ink}
+        />
       </View>
       <View style={h.mid}>
         <Text

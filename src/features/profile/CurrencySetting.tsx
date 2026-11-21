@@ -37,6 +37,7 @@ export const CurrencySetting = memo(function CurrencySetting({
       <SettingsRow
         compact
         icon="currency-inr"
+        tone="sky"
         label="Default currency"
         sub="New accounts and displayed amounts"
         value={loaded ? currency : 'Unavailable'}

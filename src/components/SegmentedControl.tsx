@@ -58,7 +58,7 @@ function PillSwitch<T extends string>({
   // a switch whose options change (Add in edit mode) still sizes its pill right.
   const [innerWidth, setInnerWidth] = useState(0);
   const segWidth = options.length > 0 ? innerWidth / options.length : 0;
-  const pillColor = theme.colors.surface;
+  const pillColor = theme.colors.pill;
   const [x] = useState(() => new Animated.Value(0));
   const placed = useRef(false);
   const index = Math.max(

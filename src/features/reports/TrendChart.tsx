@@ -166,10 +166,7 @@ export function TrendChart({
 
   return (
     <View style={styles.trendCard}>
-      <View style={{ gap: 10 }}>
-        <Text style={styles.trendTitle}>{showing === 'spend' ? 'Spending' : 'Net worth'}</Text>
-      </View>
-
+      {/* The switch above already says which chart this is. */}
       <View
         testID="trend-touch"
         onLayout={(e) => setWidth(e.nativeEvent.layout.width)}
@@ -264,12 +261,16 @@ export function TrendChart({
                   strokeWidth={1.6}
                 />
                 <SvgText
-                  x={x(lastI) - 10}
-                  y={y(projected) + 4}
+                  // Above the end point with a halo, so it never sits on the usual-month line or the dashed run-in.
+                  x={x(lastI) - 8}
+                  y={y(projected) - 12}
                   textAnchor="end"
                   fontFamily={theme.font.bodyBold}
                   fontSize={11}
                   fill={theme.colors.textPrimary}
+                  stroke={theme.colors.surface}
+                  strokeWidth={3}
+                  strokeLinejoin="round"
                 >
                   {`projected ${formatMoney(roundedMinor(projected))}`}
                 </SvgText>

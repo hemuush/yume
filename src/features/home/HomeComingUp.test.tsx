@@ -206,3 +206,13 @@ describe('filter chips do not change size when they are used', () => {
     act(() => r.unmount());
   });
 });
+
+it('says "Due soon" once for payments due the same day, and again on a new day', () => {
+  const r = render({
+    upcoming: { items: [payment('A', 5), payment('B', 5), payment('C', 6)], next: null },
+    budgets: [],
+    goals: [],
+  });
+  expect(texts(r).filter((t) => t === 'Due soon')).toHaveLength(2);
+  act(() => r.unmount());
+});

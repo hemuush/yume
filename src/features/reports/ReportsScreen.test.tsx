@@ -497,7 +497,9 @@ describe('Reports screen', () => {
     const scroll = tree.root.findAllByType(ScrollView).find((n) => n.props.testID === 'reports-content')!;
     expect(scroll.props.stickyHeaderIndices).toBeUndefined();
     expect(scroll.findAllByType(Text).map((n) => n.props.children)).not.toContain('Reports');
-    expect(texts(tree)).toContain('Heaviest day');
+    expect(texts(tree)).toContain('Worth a look');
+    // The heaviest day is not told twice: it is on the heatmap and under Biggest spends.
+    expect(texts(tree)).not.toContain('Heaviest day');
   });
   it('Trends asks for the in-and-out and category tracks with savings left out while hidden', async () => {
     mockHide.current = true;
@@ -554,26 +556,6 @@ describe('Reports screen', () => {
     const shown = texts(tree);
     expect(shown).toEqual(expect.arrayContaining(['Income', 'Kept']));
     expect(tree.root.findAll((n) => n.props.accessibilityRole === 'adjustable')).toHaveLength(0);
-  });
-  it('the heaviest-day story opens that day on the heatmap', async () => {
-    const tree = await render();
-    const card = tree.root.find(
-      (n) =>
-        typeof n.props.onPress === 'function' &&
-        typeof n.props.accessibilityLabel === 'string' &&
-        n.props.accessibilityLabel.startsWith('Heaviest day')
-    );
-    await act(async () => {
-      card.props.onPress();
-      await new Promise((resolve) => setTimeout(resolve, 0));
-    });
-    await settle();
-    expect(mockListTransactions).toHaveBeenCalledWith({
-      fromDate: '2026-10-05',
-      toDate: '2026-10-05',
-      currency: 'INR',
-    });
-    expect(texts(await Promise.resolve(tree))).toContain('Groceries');
   });
   it('a category story switches to Categories with that row picked', async () => {
     const tree = await render();

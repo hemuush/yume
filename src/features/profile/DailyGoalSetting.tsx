@@ -83,6 +83,7 @@ export const DailyGoalSetting = memo(function DailyGoalSetting({
         <SettingsRow
           compact
           icon="gauge"
+          tone="sky"
           label="Daily spending goal"
           sub="Shown on Home each day"
           value={!loaded ? 'Unavailable' : goal != null ? `${formatMoney(goal, currency)}/day` : 'Not set'}

@@ -53,9 +53,6 @@ export function AccountTiles({
           {row.map((account) => (
             <AccountTile key={account.id} account={account} archived={archived} onPress={onPress} />
           ))}
-          {Array.from({ length: columns - row.length }, (_, k) => (
-            <View key={`gap${k}`} style={styles.slot} />
-          ))}
         </View>
       ))}
     </View>
@@ -145,7 +142,6 @@ const styles = themedStyles(() =>
   StyleSheet.create({
     grid: { marginHorizontal: SCREEN.gutter, gap: GAP },
     row: { flexDirection: 'row', gap: GAP },
-    slot: { flex: 1, minWidth: 0 },
     tile: {
       flex: 1,
       minWidth: 0,

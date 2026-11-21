@@ -115,20 +115,20 @@ export function SpendingExplanation({
             <>
               <EffectRow
                 label="Purchase frequency"
-                value={money(effects[0])}
+                value={effects[0]}
                 detail={`${result.previous.count} → ${result.current.count} ${result.current.count === 1 ? 'purchase' : 'purchases'}`}
               />
               <EffectRow
                 label="Purchase size"
-                value={money(effects[1])}
+                value={effects[1]}
                 detail={`Average ${money(result.previousAverage)} → ${money(result.currentAverage)}`}
               />
-              <EffectRow label="Refund changes" value={money(effects[2])} />
+              {effects[2] !== 0 && <EffectRow label="Refund changes" value={effects[2]} />}
             </>
           )}
           {hasActivity && (
             <Text style={[insight.caption, styles.footnote]}>
-              The three effects add up to the change. This describes recorded entries, not why you spent.
+              These add up to the change. This describes recorded entries, not why you spent.
             </Text>
           )}
           {result.largest.length > 0 && (
@@ -155,14 +155,18 @@ export function SpendingExplanation({
   );
 }
 
-function EffectRow({ label, value, detail }: { label: string; value: string; detail?: string }) {
+/** More spending reads as a cost (red, +), less as a saving (green); zero stays plain. */
+function EffectRow({ label, value, detail }: { label: string; value: number; detail?: string }) {
   return (
     <View style={styles.effect}>
       <View style={styles.copy}>
         <Text style={styles.label}>{label}</Text>
         {detail && <Text style={insight.caption}>{detail}</Text>}
       </View>
-      <Text style={styles.amount}>{value}</Text>
+      <Text style={[styles.amount, value > 0 && styles.more, value < 0 && styles.less]}>
+        {value > 0 ? '+' : ''}
+        {formatMoney(value)}
+      </Text>
     </View>
   );
 }
@@ -183,6 +187,8 @@ const styles = themedStyles(() =>
     effect: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8, paddingVertical: 4 },
     copy: { flexGrow: 1, flexBasis: 180, minWidth: 0, gap: 2 },
     label: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
+    more: { color: theme.colors.expenseText },
+    less: { color: theme.colors.incomeText },
     amount: {
       fontFamily: theme.font.bodyMedium,
       fontSize: 13,

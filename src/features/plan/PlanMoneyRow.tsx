@@ -21,6 +21,7 @@ export function PlanMoneyRow({
   progress,
   trailing,
   divider,
+  highlight,
   onPress,
   onLongPress,
   accessibilityLabel,
@@ -38,6 +39,8 @@ export function PlanMoneyRow({
   progress?: { pct: number; color: string; animKey: string };
   trailing?: React.ReactNode;
   divider?: boolean;
+  /** A pale amber panel behind the row (a bill due soon). */
+  highlight?: boolean;
   onPress: () => void;
   onLongPress?: () => void;
   /** Left out, the row is read from its text. */
@@ -53,7 +56,7 @@ export function PlanMoneyRow({
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
       accessibilityHint={accessibilityHint}
-      style={withPressedTint(accent, [s.row, divider && s.divider])}
+      style={withPressedTint(accent, [s.row, divider && s.divider, highlight && s.highlight])}
     >
       <View style={s.icon}>{icon}</View>
       <View style={s.body}>
@@ -124,6 +127,14 @@ const s = themedStyles(() =>
       minHeight: 64,
     },
     divider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.home.edge },
+    highlight: {
+      marginHorizontal: 8,
+      marginVertical: 4,
+      paddingHorizontal: 6,
+      borderRadius: 18,
+      borderTopWidth: 0,
+      backgroundColor: theme.colors.dueRow,
+    },
     icon: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
     body: { flex: 1, minWidth: 0, gap: 8 },
     line: { flexDirection: 'row', alignItems: 'center', gap: 10 },

@@ -65,7 +65,7 @@ export function ToggleSwitch({ value, onChange, disabled, small, accessibilityLa
           styles.track,
           small && styles.trackSmall,
           {
-            backgroundColor: value ? ink : theme.colors.surfaceAlt,
+            backgroundColor: value ? ink : theme.colors.trayTrack,
             borderColor: value ? ink : theme.colors.borderSoft,
           },
           disabled && styles.disabled,

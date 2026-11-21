@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Animated } from 'react-native';
+import { Animated, Easing } from 'react-native';
 import { Tabs } from 'expo-router';
 import { theme } from '@/constants/theme';
 import { haptics } from '@/lib/haptics';
@@ -11,16 +11,18 @@ import { useReduceMotion } from '@/lib/useReduceMotion';
 import { schemeScreenLayout, useSchemeVersion } from '@/theme/SchemeBoundary';
 
 /**
- * Switching tabs: the leaving and the arriving screen fade while drifting 12 dp sideways, toward the tab that was
- * tapped (a lower tab leaves to the left). The built-in shift moves 50 dp, which reads as a slide, not a nudge.
+ * Switching tabs is a fade-through: the screen you leave fades out and shrinks a hair in the first half, then the
+ * new one fades in and settles to full size in the second. They never show together, so there is no ghost of a
+ * header over another screen, and nothing slides sideways. One function of `progress` (0 = shown, 1 = a screen away)
+ * does both: it falls to 0 by half way, which for the leaving screen is early on and for the arriving one is late.
  */
 function tabSwitch({ current }: { current: { progress: Animated.Value } }) {
-  const at = (inputRange: number[], outputRange: number[]) =>
-    current.progress.interpolate({ inputRange, outputRange });
+  const at = (outputRange: number[]) =>
+    current.progress.interpolate({ inputRange: [-1, -0.5, 0, 0.5, 1], outputRange });
   return {
     sceneStyle: {
-      opacity: at([-1, 0, 1], [0, 1, 0]),
-      transform: [{ translateX: at([-1, 0, 1], [-12, 0, 12]) }],
+      opacity: at([0, 0, 1, 0, 0]),
+      transform: [{ scale: at([0.97, 0.97, 1, 0.97, 0.97]) }],
     },
   };
 }
@@ -48,7 +50,7 @@ export default function TabsLayout() {
             onAddLongPress={() => setRepeatSheetVisible(true)}
           />
         )}
-        // Switching tabs fades and nudges the screens sideways (see tabSwitch, 220 ms); with reduced motion
+        // Switching tabs is a 200 ms fade-through (see tabSwitch); with reduced motion
         // it is instant.
         screenOptions={{
           headerShown: false,
@@ -56,7 +58,10 @@ export default function TabsLayout() {
           sceneStyle: { backgroundColor: theme.colors.background },
           animation: reduce ? 'none' : 'shift',
           sceneStyleInterpolator: tabSwitch,
-          transitionSpec: { animation: 'timing', config: { duration: DURATIONS.slideIn } },
+          transitionSpec: {
+            animation: 'timing',
+            config: { duration: DURATIONS.standard, easing: Easing.out(Easing.quad) },
+          },
         }}
       >
         <Tabs.Screen name="index" options={{ title: 'Home' }} />

@@ -1,12 +1,17 @@
 import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
 import { SECTION_TITLE, SECTION_GAP } from '@/constants/textStyles';
-import { SCREEN, flatSection } from '@/components/screenStyles';
+import { SCREEN } from '@/components/screenStyles';
 import { GLASS } from '@/components/Glass';
 import { themedStyles, themedValue } from '@/theme/themedStyles';
 
-/** Every Reports card: the app's one flat card (cream, rounded, a hairline edge), without the screen margin. */
-const CARD = themedValue(() => ({ ...flatSection() }));
+/** Every Reports card: the app's one card (a surface, rounded, a hairline edge), without the screen margin. */
+const CARD = themedValue(() => ({
+  backgroundColor: theme.colors.home.surface,
+  borderWidth: StyleSheet.hairlineWidth,
+  borderColor: theme.colors.borderSoft,
+  borderRadius: theme.radius.xl,
+}));
 
 /** The even gap between Reports' blocks (heatmap card, day card, story cards, "Where it went"). */
 const BLOCK_GAP = SCREEN.sectionGap;
@@ -183,6 +188,7 @@ export const styles = themedStyles(() =>
     bigBlock: { marginBottom: BLOCK_GAP },
     bigCard: {
       ...CARD,
+      paddingHorizontal: 14,
       paddingTop: 4,
       paddingBottom: 12,
       overflow: 'hidden',
@@ -260,6 +266,7 @@ export const styles = themedStyles(() =>
     stripCard: {
       flexDirection: 'row',
       ...CARD,
+      overflow: 'hidden',
     },
     stripCardStack: { flexDirection: 'column' },
     stripCell: { flex: 1, minWidth: 0, paddingHorizontal: 14, paddingVertical: 14, gap: 3 },
@@ -278,6 +285,7 @@ export const styles = themedStyles(() =>
     tracksBlock: { marginTop: BLOCK_GAP },
     tracksCard: {
       ...CARD,
+      paddingHorizontal: 14,
       overflow: 'hidden',
     },
     trackRow: {
@@ -329,7 +337,7 @@ export const styles = themedStyles(() =>
 
     catCard: {
       ...CARD,
-      paddingHorizontal: 0,
+      paddingHorizontal: 14,
       overflow: 'hidden',
     },
     catBar: {

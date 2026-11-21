@@ -87,7 +87,7 @@ export function GoalOverviewModal({
             hideAmounts
               ? `Savings goal · of ${formatMoney(goal.targetAmountMinor)}`
               : done
-                ? 'Savings goal · Reached'
+                ? 'Savings goal'
                 : `Savings goal · ${Math.round(percent)}% of ${formatMoney(goal.targetAmountMinor)}`
           }
           saved={formatMaskableMoney(goal.currentAmountMinor, { masked: hideAmounts })}

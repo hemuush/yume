@@ -85,7 +85,7 @@ const styles = themedStyles(() =>
     strip: {
       flexDirection: 'row',
       marginHorizontal: SCREEN.gutter,
-      borderRadius: theme.radius.md,
+      borderRadius: theme.radius.xl,
       backgroundColor: theme.colors.surface,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: theme.colors.borderSoft,

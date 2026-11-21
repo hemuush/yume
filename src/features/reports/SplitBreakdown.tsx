@@ -13,6 +13,8 @@ interface SplitItem {
   count?: number;
   /** A grouped "rest" line says how often but has no usual amount. */
   visits?: string;
+  /** The place's own colour (as in Reports); without it the category colour in steps. */
+  color?: string;
 }
 
 // Alpha steps of the category colour, strongest first, so the segments read as one family.
@@ -33,7 +35,10 @@ export function SplitBreakdown({
     <View>
       <View style={styles.stack}>
         {items.map((s, i) => (
-          <View key={s.key} style={{ flex: Math.max(s.minor, 1), backgroundColor: tone(color, i) }} />
+          <View
+            key={s.key}
+            style={{ flex: Math.max(s.minor, 1), backgroundColor: s.color ?? tone(color, i) }}
+          />
         ))}
       </View>
       <View style={styles.legend}>
@@ -41,7 +46,7 @@ export function SplitBreakdown({
           const visits = s.visits ?? (s.count && s.count > 1 ? visitsLine(s.count, s.minor) : undefined);
           return (
             <View key={s.key} style={styles.row}>
-              <View style={[styles.dot, { backgroundColor: tone(color, i) }]} />
+              <View style={[styles.dot, { backgroundColor: s.color ?? tone(color, i) }]} />
               <View style={styles.names}>
                 <Text style={styles.name} numberOfLines={1}>
                   {s.name}

@@ -353,12 +353,12 @@ describe('Plan tab', () => {
       mockTab = undefined;
     }
   });
-  it('opens the full schedule from the upcoming preview', async () => {
+  it('opens the schedule from Next payments', async () => {
     const tree = await render();
     const button = tree.root.findAll(
       (n) =>
         typeof n.props.accessibilityLabel === 'string' &&
-        n.props.accessibilityLabel === 'View payments' &&
+        n.props.accessibilityLabel === 'View day — Next payments' &&
         n.props.onPress
     )[0];
     expect(button).toBeDefined();
@@ -394,8 +394,8 @@ describe('Plan tab', () => {
   it('shows the balance with its verdict, then the sections of Overview', async () => {
     const shown = texts(await render());
     const headings = [
-      'Runway · next 30 days',
       'Covered',
+      '· next 30 days',
       'Needs attention',
       'People & habit',
       'Friends',
@@ -608,7 +608,7 @@ describe('Plan tab', () => {
     expect(router.push).toHaveBeenLastCalledWith('/garden');
     // The Overview's Upcoming, Goals and Debt headers go to their tabs instead of leaving Plan.
     (router.push as jest.Mock).mockClear();
-    act(() => byLabel('View payments').props.onPress());
+    act(() => byLabel('View day — Next payments').props.onPress());
     expect(router.push).not.toHaveBeenCalled();
     expect(byLabel('Manage recurring rules')).toBeUndefined();
     expect(router.push).not.toHaveBeenCalled();

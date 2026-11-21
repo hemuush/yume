@@ -70,11 +70,13 @@ it('shows matching dates, explains the three effects and opens a contributing en
   expect(words(tree)).toContain(
     `${range('2026-10-01', '2026-10-12')} vs ${range('2026-09-01', '2026-09-12')} · 12 days each`
   );
-  expect(words(tree)).toContain('The three effects add up to the change');
+  expect(words(tree)).toContain('These add up to the change');
   expect(words(tree)).not.toContain('Comparison details');
   expect(words(tree)).toContain('Purchase frequency');
   expect(words(tree)).toContain('₹50');
   expect(words(tree)).toContain('-₹10');
+  // More spending reads with a plus, less with a minus.
+  expect(words(tree)).toContain('+₹50');
   expect(words(tree)).not.toContain('Dinner');
   await act(async () =>
     tree.root

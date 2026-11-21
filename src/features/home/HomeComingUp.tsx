@@ -152,7 +152,14 @@ function GoalRow({ entry }: { entry: Extract<ComingUpItem, { kind: 'goal' }> }) 
   );
 }
 
-function PaymentRow({ entry }: { entry: Extract<ComingUpItem, { kind: 'payment' }> }) {
+function PaymentRow({
+  entry,
+  repeatDate,
+}: {
+  entry: Extract<ComingUpItem, { kind: 'payment' }>;
+  /** The row above is due the same day: its "Due in 10 days" is not said again. */
+  repeatDate: boolean;
+}) {
   const { item } = entry;
   return (
     <UpcomingRow
@@ -160,7 +167,7 @@ function PaymentRow({ entry }: { entry: Extract<ComingUpItem, { kind: 'payment' 
       iconBg={theme.colors.home.control}
       iconColor={item.iconColor}
       title={item.title}
-      subtitle={item.subtitle}
+      subtitle={repeatDate ? '' : item.subtitle}
       amountMinor={item.amountMinor}
       sign={item.sign}
       onPress={() => router.push(item.route)}
@@ -172,6 +179,14 @@ function PaymentRow({ entry }: { entry: Extract<ComingUpItem, { kind: 'payment' 
       highlight={item.pinned}
       payInline
     />
+  );
+}
+
+function sameDayAsPrev(list: ComingUpItem[], i: number) {
+  const prev = list[i - 1];
+  const cur = list[i];
+  return (
+    !!prev && prev.kind === 'payment' && cur.kind === 'payment' && prev.item.sortDate === cur.item.sortDate
   );
 }
 
@@ -260,7 +275,7 @@ export function HomeComingUp({
               <Animated.View key={entry.key} entering={rowEntering(i)} exiting={ROW_EXIT} layout={ROW_LAYOUT}>
                 {i > 0 && <View style={styles.listDivider} />}
                 {entry.kind === 'payment' ? (
-                  <PaymentRow entry={entry} />
+                  <PaymentRow entry={entry} repeatDate={sameDayAsPrev(visible, i)} />
                 ) : entry.kind === 'budget' ? (
                   <BudgetRow entry={entry} />
                 ) : (

@@ -9,9 +9,8 @@ import { theme } from '@/constants/theme';
 import { PANEL_ENTER, ROW_EXIT } from '@/lib/animation';
 import { formatMaskableMoney, formatMoney } from '@/lib/money';
 import { withPressedTint } from '@/lib/pressed';
-import { screenStyles as h } from '@/components/screenStyles';
+import { ListCard } from '@/components/SummaryCard';
 import { useAccent } from '@/theme/AccentContext';
-import { cardSurface } from '@/components/CardSurface';
 import { themedStyles } from '@/theme/themedStyles';
 
 /** "+₹1,600" / "−₹23,18,958" / "₹0": a true minus sign, and a plus for the lines of a sum. */
@@ -64,7 +63,7 @@ export function TrackedCard({
   const [open, setOpen] = useState(false);
   const { secondary } = useAccent();
   return (
-    <View style={[h.card, cardSurface.neutral, styles.card]}>
+    <ListCard style={styles.card}>
       <Pressable
         style={withPressedTint(secondary, styles.head)}
         onPress={() => setOpen((v) => !v)}
@@ -137,13 +136,13 @@ export function TrackedCard({
           )}
         </ReanimatedAnimated.View>
       )}
-    </View>
+    </ListCard>
   );
 }
 
 const styles = themedStyles(() =>
   StyleSheet.create({
-    card: { marginTop: 10, paddingBottom: 4 },
+    card: { marginTop: 10, paddingBottom: 4, overflow: 'hidden' },
     // At the foot of the money map, which draws the glass and the padding.
     head: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, minHeight: 44 },
     headText: { flex: 1, minWidth: 0, flexDirection: 'row', flexWrap: 'wrap', columnGap: 6 },

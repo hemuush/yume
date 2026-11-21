@@ -95,6 +95,35 @@ it.each([
   act(() => tree.unmount());
 });
 
+it('a preview row says what it is, not the day its heading already names', () => {
+  const tree = render(
+    <ComingUpSection
+      preview
+      groups={[
+        {
+          date: '2026-10-20',
+          outMinor: 10000,
+          items: [
+            {
+              key: 'b',
+              title: 'Rent',
+              kind: 'bill',
+              dueDate: '2026-10-20',
+              amountMinor: 10000,
+              route: '/recurring',
+            },
+          ],
+        },
+      ]}
+      today="2026-10-09"
+      onOpen={jest.fn()}
+    />
+  );
+  expect(texts(tree)).toContain('Bill');
+  expect(texts(tree).some((t) => t.includes('Tue, 20 Oct'))).toBe(false);
+  act(() => tree.unmount());
+});
+
 describe('Plan sections with nothing in them yet', () => {
   it('says what is going out when there is no spending account to draw the runway from', () => {
     const next = {
@@ -337,7 +366,6 @@ describe('Runway card', () => {
     expect(tree.root.findByProps({ testID: 'income-day-2026-10-09' }).props.accessibilityLabel).not.toContain(
       'due now or late'
     );
-    expect(texts(tree)).toContain('Expected income');
     const outgoing = tree.root.findAll(
       (node) =>
         node.props.accessibilityRole === 'radio' &&

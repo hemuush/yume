@@ -64,12 +64,6 @@ export function UpcomingDates({
   return (
     <View testID="runway" style={s.root}>
       <View style={s.filters}>
-        <View style={s.totalRow} accessibilityLiveRegion="polite">
-          <View style={s.totalCopy}>
-            <Text style={s.caption}>{mode === 'income' ? 'Expected income' : 'Scheduled outflow'}</Text>
-            <Text style={[s.total, mode === 'income' && total > 0 && s.income]}>{formatMoney(total)}</Text>
-          </View>
-        </View>
         <View style={s.modeRow} accessibilityRole="radiogroup" accessibilityLabel="Schedule direction">
           {(['outgoing', 'income'] as const).map((value) => (
             <Pressable
@@ -79,9 +73,14 @@ export function UpcomingDates({
               onPress={() => update({ ...current, mode: value })}
               style={withPressedTint(accent, [s.mode, mode === value && s.modeOn])}
             >
-              <Text style={[s.modeLabel, mode === value && s.activeText]}>
-                {value === 'outgoing' ? 'Money out' : 'Money in'}
-              </Text>
+              <View style={s.modeInner}>
+                <Text style={[s.modeLabel, mode === value && s.activeText]}>
+                  {value === 'outgoing' ? 'Money out' : 'Money in'}
+                </Text>
+                {mode === value && (
+                  <Text style={[s.modeLabel, s.modeTotal, s.activeText]}>{formatMoney(total)}</Text>
+                )}
+              </View>
             </Pressable>
           ))}
         </View>
@@ -204,31 +203,14 @@ const s = themedStyles(() =>
     },
     modeOn: { backgroundColor: theme.colors.action, borderColor: theme.colors.ink },
     pillOn: { backgroundColor: theme.colors.action, borderColor: theme.colors.ink },
+    modeInner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
+    modeTotal: { fontFamily: theme.font.bodyBold, fontVariant: ['tabular-nums'] },
     modeLabel: {
       fontFamily: theme.font.bodyMedium,
       fontSize: 13,
       color: theme.colors.home.secondaryText,
       textAlign: 'center',
     },
-    totalRow: {
-      marginHorizontal: 16,
-      paddingVertical: 4,
-      minHeight: 44,
-      flexDirection: 'row',
-      alignItems: 'center',
-      flexWrap: 'wrap',
-      columnGap: 8,
-      rowGap: 2,
-    },
-    totalCopy: { flexGrow: 1, flexBasis: 120, minWidth: 0 },
-    total: {
-      fontFamily: theme.font.bodyBold,
-      fontSize: 24,
-      letterSpacing: -0.5,
-      color: theme.colors.textPrimary,
-      fontVariant: ['tabular-nums'],
-    },
-    income: { color: theme.colors.incomeText },
     dates: { paddingHorizontal: 16, gap: 6 },
     // A 44 dp touch area around a 32 dp pill.
     pillHit: { minHeight: 44, justifyContent: 'center' },

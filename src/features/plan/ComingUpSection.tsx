@@ -126,10 +126,11 @@ export function ComingUpSection({
                 const tone = dueTone(item, today);
                 const payable = !!item.loanId && item.nextInstallment !== false && !!onPay && tone != null;
                 const incoming = item.kind === 'income' || item.transfer?.flow === 'in';
+                // A preview sits under a heading that already names the day, so each row says what it is.
                 const subtitle = preview
                   ? item.dueDate === today
                     ? 'Due today'
-                    : weekdayDayMonthMaybeYear(item.dueDate, reference)
+                    : KIND_LABEL[item.kind]
                   : item.transfer
                     ? item.transfer.sub
                     : tone

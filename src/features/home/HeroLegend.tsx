@@ -23,6 +23,8 @@ export interface LegendItem {
 /** Compact metrics under the balance, with a stacked list at larger text sizes. */
 export function HeroLegend({ items }: { items: LegendItem[] }) {
   const stacked = useStacked();
+  // Two figures fit label-and-amount on one line each; three keep the label above its amount.
+  const inline = !stacked && items.length <= 2;
   return (
     <View style={[styles.list, stacked && styles.listStacked]}>
       {items.map((it) => {
@@ -41,11 +43,12 @@ export function HeroLegend({ items }: { items: LegendItem[] }) {
               it.onPress
                 ? ({ pressed }) => [
                     styles.metric,
+                    inline && styles.metricInline,
                     stacked && styles.metricStacked,
                     it.selected && styles.selected,
                     pressed && styles.pressed,
                   ]
-                : [styles.metric, stacked && styles.metricStacked]
+                : [styles.metric, inline && styles.metricInline, stacked && styles.metricStacked]
             }
           >
             <View style={[styles.labelRow, stacked && styles.labelRowStacked]}>
@@ -86,6 +89,13 @@ const styles = themedStyles(() =>
     },
     selected: { backgroundColor: theme.colors.home.selected },
     pressed: { backgroundColor: theme.colors.home.pressed },
+    metricInline: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'flex-start',
+      gap: 8,
+      minHeight: 40,
+    },
     metricStacked: {
       flex: 0,
       flexDirection: 'row',

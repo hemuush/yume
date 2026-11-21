@@ -81,7 +81,17 @@ export function RunwayCard({
           <>
             <View style={local.summary}>
               <View style={local.head}>
-                <Text style={[local.summaryFact, local.headCopy]}>{`Runway · next ${days} days`}</Text>
+                <Feather
+                  name={runway.short ? 'alert-circle' : 'check'}
+                  size={16}
+                  color={runway.short ? theme.colors.expenseText : theme.colors.incomeText}
+                />
+                <Text style={[local.statusText, runway.short && { color: theme.colors.expenseText }]}>
+                  {verdict}
+                </Text>
+                <Text style={[local.summaryFact, local.headCopy]} numberOfLines={1}>
+                  {`· next ${days} days`}
+                </Text>
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel={`Forecast details. ${note}`}
@@ -92,19 +102,7 @@ export function RunwayCard({
                   <Feather name="chevron-right" size={13} color={theme.colors.link} />
                 </Pressable>
               </View>
-              <View style={local.status}>
-                <Feather
-                  name={runway.short ? 'alert-circle' : 'check'}
-                  size={15}
-                  color={runway.short ? theme.colors.expenseText : theme.colors.incomeText}
-                />
-                <View style={local.headCopy}>
-                  <Text style={[local.statusText, runway.short && { color: theme.colors.expenseText }]}>
-                    {verdict}
-                  </Text>
-                  {verdictSub && <Text style={local.summaryFact}>{verdictSub}</Text>}
-                </View>
-              </View>
+              {verdictSub && <Text style={local.summaryFact}>{verdictSub}</Text>}
               <View style={local.stats}>
                 <View style={local.balanceColumn}>
                   <Text style={local.statLabel}>
@@ -195,7 +193,7 @@ const local = themedStyles(() =>
       justifyContent: 'center',
       gap: 3,
     },
-    stats: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 10 },
+    stats: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 6 },
     balanceColumn: { flexGrow: 1, flexBasis: 110, minWidth: 0, gap: 2 },
     projectedBalance: { alignItems: 'flex-end' },
     statLabel: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.home.secondaryText },
@@ -209,7 +207,7 @@ const local = themedStyles(() =>
     statNegative: { color: theme.colors.expenseText },
     bigNote: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textMuted },
     link: {
-      minHeight: 44,
+      minHeight: 36,
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
