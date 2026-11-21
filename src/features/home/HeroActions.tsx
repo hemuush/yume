@@ -12,7 +12,7 @@ const ACTIONS: {
   label: string;
   icon: React.ComponentProps<typeof Feather>['name'];
 }[] = [
-  { type: 'expense', label: 'Add expense', icon: 'arrow-up-right' },
+  { type: 'expense', label: 'Expense', icon: 'arrow-up-right' },
   { type: 'income', label: 'Income', icon: 'arrow-down-left' },
   { type: 'transfer', label: 'Transfer', icon: 'repeat' },
 ];
@@ -33,7 +33,7 @@ function Action({ type, label, icon }: (typeof ACTIONS)[number]) {
       onPressOut={onPressOut}
       style={({ pressed }) => [
         styles.wrap,
-        { flexBasis: 80 * Math.max(1, fontScale) },
+        { flexBasis: 88 * Math.max(1, fontScale) },
         type === 'expense' && styles.primary,
         pressed && styles.pressed,
       ]}
@@ -91,13 +91,15 @@ const styles = themedStyles(() =>
       backgroundColor: theme.colors.home.control,
     },
     pressed: { backgroundColor: theme.colors.home.pressed },
+    // One slim line, icon beside its name, so the three shortcuts take less of the first screen.
     action: {
-      minHeight: 64,
-      paddingHorizontal: 4,
+      minHeight: 48,
+      paddingHorizontal: 6,
       paddingVertical: 8,
+      flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
-      gap: 4,
+      gap: 8,
     },
     label: {
       fontFamily: theme.font.bodyMedium,

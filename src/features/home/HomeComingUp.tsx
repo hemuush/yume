@@ -19,7 +19,7 @@ import { GOAL_PACE_LABEL } from '@/features/goals/goalPlan';
 import type { BudgetProgress } from '@/db/budgets';
 import type { ExpectedRefund } from '@/db/refundTracking';
 import type { SavingsGoal } from '@/types';
-import { buildComingUp, summarizeComingUp, ComingUpFilter, ComingUpItem } from './comingUp';
+import { buildComingUp, summarizeComingUp, COMING_UP_ROWS, ComingUpFilter, ComingUpItem } from './comingUp';
 import type { Upcoming } from './upcomingItems';
 import { UpcomingRow } from './UpcomingRow';
 import { PlanMoneyRow, planRowText } from '@/features/plan/PlanMoneyRow';
@@ -253,7 +253,7 @@ export function HomeComingUp({
             <Text style={styles.retryText}>Some upcoming items couldn’t load. Try again</Text>
           </Pressable>
         )}
-        {kindsPresent > 1 && (
+        {kindsPresent > 1 && items.length > COMING_UP_ROWS && (
           <View style={styles.chips} accessibilityRole="toolbar" accessibilityLabel="Filter coming up">
             {FILTERS.filter((f) => f.key === 'all' || counts[f.key] > 0).map((f) => (
               <FilterChip

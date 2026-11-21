@@ -115,6 +115,7 @@ export default function DashboardScreen() {
     refundError,
     dailySpend,
     todaySpendMinor,
+    todayEverydayMinor,
     dailyGoalMinor,
     paceInputs,
     stillToPayMinor,
@@ -408,6 +409,7 @@ export default function DashboardScreen() {
                 recaps={recaps}
                 // Today is always about today — only alongside the current period.
                 today={todayGoal}
+                todaySpentMinor={isThisMonth ? todayEverydayMinor : null}
                 pace={pace}
                 savedExpenseIds={isThisMonth ? savedExpenseIds : undefined}
               />

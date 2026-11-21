@@ -10,6 +10,7 @@ import { listRecurringRules } from '@/db/recurring';
 import {
   getPeriodSummary,
   getTodaySpend,
+  getTodayEverydaySpend,
   getMonthPaceInputs,
   getStillToPayThisMonth,
   getCarryInMinor,
@@ -72,6 +73,7 @@ export function useHomeData(cursor: PeriodCursor) {
   // Both are always about today, not the browsed period (like Budgets/Goals above); `dailyGoal` stays
   // `null` (strip renders nothing) until the user sets one in Settings → Money.
   const [todaySpendMinor, setTodaySpendMinor] = useState(0);
+  const [todayEverydayMinor, setTodayEverydayMinor] = useState(0);
   const [dailyGoalMinor, setDailyGoalMinor] = useState<number | null>(null);
   // Inputs to the month forecast under the moon (see lib/pace.ts).
   const [paceInputs, setPaceInputs] = useState<{
@@ -138,6 +140,7 @@ export function useHomeData(cursor: PeriodCursor) {
           : c.granularity === 'month'
             ? daily.then((rows) => rows.find((row) => row.date === today)?.totalMinor ?? 0)
             : getTodaySpend(today, hideAmounts),
+        c.offset !== 0 ? Promise.resolve(0) : getTodayEverydaySpend(today, hideAmounts),
       ]);
     },
     [hideAmounts]
@@ -145,9 +148,13 @@ export function useHomeData(cursor: PeriodCursor) {
 
   // The period's own figures, as one update.
   const landPeriod = useCallback(
-    (c: PeriodCursor, [tx, period, carry, daily, todaySpend]: Awaited<ReturnType<typeof fetchPeriod>>) => {
+    (
+      c: PeriodCursor,
+      [tx, period, carry, daily, todaySpend, todayEveryday]: Awaited<ReturnType<typeof fetchPeriod>>
+    ) => {
       setDailySpend((prev) => keepIfEqual(prev, daily));
       setTodaySpendMinor(todaySpend);
+      setTodayEverydayMinor(todayEveryday);
       setRecent((prev) => reuseUnchanged(prev, tx));
       setSummary((prev) => keepIfEqual(prev, period));
       setCarryInMinor(carry);
@@ -359,6 +366,7 @@ export function useHomeData(cursor: PeriodCursor) {
     refundError,
     dailySpend,
     todaySpendMinor,
+    todayEverydayMinor,
     dailyGoalMinor,
     paceInputs,
     stillToPayMinor,

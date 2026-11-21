@@ -556,6 +556,28 @@ export async function getTodaySpend(
 }
 
 /**
+ * What went out today by choice: spending typed in by hand, net of refunds, without the system categories (Loan EMI,
+ * fees, Friends & Family) and without entries a repeating rule posted. Those are bills Home already set aside in what
+ * is free, so counting them against the daily figure would call a bill day an overspend.
+ */
+export async function getTodayEverydaySpend(
+  today: string = toIso(new Date()),
+  excludeSensitive = false
+): Promise<number> {
+  const db = await getDb();
+  const currency = await getDefaultCurrency();
+  const row = await db.getFirstAsync<{ total: number | null }>(
+    `SELECT SUM(${SPEND_AMOUNT}) AS total FROM transactions t
+     JOIN accounts a ON a.id = t.account_id
+     LEFT JOIN categories c ON c.id = t.category_id
+     WHERE ${SPEND_ROWS} AND a.currency = ? AND IFNULL(c.is_system, 0) = 0 AND t.rule_id IS NULL
+       AND t.date = ?${excludeSensitive ? ` AND ${NOT_SENSITIVE}` : ''}`,
+    [currency, today]
+  );
+  return Math.max(0, row?.total ?? 0);
+}
+
+/**
  * Home's forecast inputs (lib/pace.ts): everyday spend 1st→`today` (excl. Loan EMI, fees, Friends & Family)
  * plus still-due this month: unpaid non-closed borrowed-loan EMIs and active recurring expenses. Default currency only.
  */

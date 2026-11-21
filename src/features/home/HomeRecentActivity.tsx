@@ -70,7 +70,7 @@ export const HomeRecentActivity = memo(function HomeRecentActivity({
         <EmptyState {...emptyRecentCopy(cursor)} />
       ) : (
         <Animated.View layout={ROW_LAYOUT} style={styles.recent}>
-          {recent.slice(0, 5).map((tx, i, rows) => (
+          {recent.slice(0, 4).map((tx, i, rows) => (
             <Animated.View key={tx.id} entering={rowEntering(i)} layout={ROW_LAYOUT} exiting={ROW_EXIT}>
               {/* Each day is named once, above its rows; today also carries what went out. */}
               {(i === 0 || rows[i - 1].date !== tx.date) && (

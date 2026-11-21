@@ -27,7 +27,7 @@ export type ComingUpItem =
     };
 
 /** How many rows Coming up shows at once; the rest are one tap away in Plan, Budgets or Goals. */
-const COMING_UP_ROWS = 5;
+export const COMING_UP_ROWS = 4;
 /** Outgoing payments further away than this stay out of Home; Plan lists them all. */
 const PAYMENT_WINDOW_DAYS = 31;
 
@@ -95,11 +95,11 @@ export function buildComingUp(input: {
     .map(({ item }) => item);
 }
 
-/** On "All" the list is a mix, not the five most pressing of any kind: this many of each, then any slack. */
-const ALL_QUOTA: Record<ComingUpKind, number> = { payment: 3, budget: 1, goal: 1 };
+/** On "All" the list is a mix, not the four most pressing of any kind: this many of each (four rows in all), then any slack. */
+const ALL_QUOTA: Record<ComingUpKind, number> = { payment: 2, budget: 1, goal: 1 };
 
 /**
- * The rows "All" shows: up to three payments, one budget and one goal (each kind's most pressing), in rank
+ * The rows "All" shows: up to two payments, one budget and one goal (each kind's most pressing), in rank
  * order. A kind with fewer than its share leaves its rows to the next most pressing of the others.
  */
 function mixedRows(items: ComingUpItem[]): ComingUpItem[] {

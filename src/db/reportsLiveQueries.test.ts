@@ -18,6 +18,7 @@ import {
   getNetWorthTrend,
   getPeriodRanges,
   getTodaySpend,
+  getTodayEverydaySpend,
 } from '@/db/reports';
 
 describe('report queries against a real SQLite engine', () => {
@@ -109,5 +110,38 @@ describe('report queries against a real SQLite engine', () => {
     expect(await getTodaySpend('2026-01-11')).toBe(0);
     // The income-only day above shouldn't leak into a "spend" figure either.
     expect(await getTodaySpend('2026-01-05')).toBe(0);
+  });
+
+  it('getTodayEverydaySpend leaves out system categories and entries a repeating rule posted', async () => {
+    const cafe = await createCategory({ name: 'Cafe', kind: 'expense' });
+    const emi = await createCategory({ name: 'Home EMI', kind: 'expense' });
+    await mockTestDb.runAsync('UPDATE categories SET is_system = 1 WHERE id = ?', [emi.id]);
+    const day = '2026-02-03';
+    await createTransaction({
+      type: 'expense',
+      accountId,
+      categoryId: cafe.id,
+      amountMinor: 20000,
+      date: day,
+    });
+    await createTransaction({
+      type: 'expense',
+      accountId,
+      categoryId: emi.id,
+      amountMinor: 1800000,
+      date: day,
+    });
+    const bill = await createTransaction({
+      type: 'expense',
+      accountId,
+      categoryId: cafe.id,
+      amountMinor: 300000,
+      date: day,
+    });
+    await mockTestDb.runAsync("UPDATE transactions SET rule_id = 'rule' WHERE id = ?", [bill.id]);
+    // All three count in the day's outgoing total; only the typed-in cafe entry is a choice made today.
+    expect(await getTodaySpend(day)).toBe(20000 + 1800000 + 300000);
+    expect(await getTodayEverydaySpend(day)).toBe(20000);
+    expect(await getTodayEverydaySpend('2026-02-04')).toBe(0);
   });
 });

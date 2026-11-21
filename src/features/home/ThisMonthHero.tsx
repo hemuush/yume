@@ -47,6 +47,7 @@ export function ThisMonthHero({
   carryMinor = 0,
   dueMinor = null,
   today = null,
+  todaySpentMinor = null,
   pace = null,
   recaps = [],
   spendingTrend = null,
@@ -68,6 +69,8 @@ export function ThisMonthHero({
   onStep: (dir: -1 | 1) => void;
   /** Today's spend against the daily goal — only when a goal is set and the current period is showing. */
   today?: { spentMinor: number; goalMinor: number } | null;
+  /** What went out today (the current period only), shown against the daily figure under the headline. */
+  todaySpentMinor?: number | null;
   recaps?: { key: string; label: string; onPress: () => void }[];
   /** Where this month's spending is heading (monthPace) — the current month only, from the 5th. */
   pace?: { projectedMinor: number; byLabel: string } | null;
@@ -280,7 +283,11 @@ export function ThisMonthHero({
                 )}
               </View>
               {perDayMinor != null ? (
-                <AllowanceTile perDayMinor={perDayMinor} daysLeft={daysLeft} />
+                <AllowanceTile
+                  perDayMinor={perDayMinor}
+                  daysLeft={daysLeft}
+                  todaySpentMinor={isCurrentMonth ? todaySpentMinor : null}
+                />
               ) : (
                 <Text style={styles.figureCaption} accessibilityElementsHidden importantForAccessibility="no">
                   {headCaption}

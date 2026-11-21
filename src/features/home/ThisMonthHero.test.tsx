@@ -117,7 +117,7 @@ describe('month card', () => {
   it('leads with what is free to use, what it is out of, and what is left today as a chip', () => {
     const r = render();
     const all = texts(r);
-    expect(all).toEqual(expect.arrayContaining(['Free to use', '₹794', 'Add expense', 'Income', 'Transfer']));
+    expect(all).toEqual(expect.arrayContaining(['Free to use', '₹794', 'Expense', 'Income', 'Transfer']));
     // The money-bar legend stays scoped to this month.
     expect(all).toEqual(expect.arrayContaining(['Spent', 'Saved', '₹95,762', '₹99,500']));
     expect(all).not.toContain('Free');
@@ -137,6 +137,25 @@ describe('month card', () => {
     // The shares are in the bar and the tray, not a chip; the pace waits under Details.
     expect(all.some((t) => t.endsWith('% spent'))).toBe(false);
     expect(all.some((t) => t.startsWith('On pace'))).toBe(false);
+  });
+
+  it('shows what went out today under the daily figure, for the current month only', () => {
+    // The week chart also says "Today", so look at the daily figure's own spoken label.
+    const spoken = (r: ReactTestRenderer) =>
+      r.root
+        .findAll((n) => typeof n.props.accessibilityLabel === 'string')
+        .map((n) => n.props.accessibilityLabel as string)
+        .filter((label) => label.includes('a day'));
+    const now = render({ todaySpentMinor: 12_500 });
+    expect(spoken(now).some((label) => label.includes('Today ₹125 spent'))).toBe(true);
+    act(() => now.unmount());
+    // An earlier month has no daily pace, so no bar either.
+    const past = render({ periodKey: 'month:-1', todaySpentMinor: 12_500 });
+    expect(spoken(past).some((label) => label.includes('Today'))).toBe(false);
+    act(() => past.unmount());
+    const none = render({ todaySpentMinor: null });
+    expect(spoken(none).some((label) => label.includes('Today'))).toBe(false);
+    act(() => none.unmount());
   });
 
   it('puts the pace, a spending forecast, under Details', () => {

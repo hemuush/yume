@@ -124,7 +124,7 @@ describe('summarizeComingUp', () => {
     today,
   });
 
-  it('shows three payments, one budget and one goal on All, and up to five of one kind when filtered', () => {
+  it('shows two payments, one budget and one goal on All, and up to four of one kind when filtered', () => {
     const many = buildComingUp({
       upcoming: upcoming([1, 2, 3, 4, 5, 6].map((d) => payment(`p${d}`, d))),
       budgets: [budget('b1', 130), budget('b2', 90), budget('b3', 5)],
@@ -132,9 +132,9 @@ describe('summarizeComingUp', () => {
       today,
     });
     const rows = summarizeComingUp(many, 'all').visible;
-    expect(rows.map((i) => i.kind).sort()).toEqual(['budget', 'goal', 'payment', 'payment', 'payment']);
+    expect(rows.map((i) => i.kind).sort()).toEqual(['budget', 'goal', 'payment', 'payment']);
     expect(keys(rows)).toContain('budget-b1');
-    expect(summarizeComingUp(many, 'payment').visible).toHaveLength(5);
+    expect(summarizeComingUp(many, 'payment').visible).toHaveLength(4);
     expect(summarizeComingUp(many, 'budget').visible).toHaveLength(3);
     expect(summarizeComingUp(many, 'goal').visible).toHaveLength(2);
   });
@@ -146,8 +146,8 @@ describe('summarizeComingUp', () => {
       goals: [],
       today,
     });
-    expect(summarizeComingUp(noGoals, 'all').visible).toHaveLength(5);
-    expect(summarizeComingUp(noGoals, 'all').visible.filter((i) => i.kind === 'budget')).toHaveLength(3);
+    expect(summarizeComingUp(noGoals, 'all').visible).toHaveLength(4);
+    expect(summarizeComingUp(noGoals, 'all').visible.filter((i) => i.kind === 'budget')).toHaveLength(2);
   });
 
   it('counts each kind and flags the ones that need a look', () => {

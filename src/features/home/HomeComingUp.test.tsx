@@ -79,7 +79,8 @@ const press = (r: ReactTestRenderer, label: string) =>
   act(() => r.root.find((n) => n.props.onPress && n.props.accessibilityLabel === label).props.onPress());
 
 const base = {
-  upcoming: { items: [payment('Rent', 2)], next: null },
+  // Five rows in all: the chips only appear once the list is longer than Home shows.
+  upcoming: { items: [payment('Rent', 2), payment('Gym', 4), payment('Net', 6)], next: null },
   budgets: [budget('b1', 130)],
   goals: [goal('g1', 1000000)],
   today,
