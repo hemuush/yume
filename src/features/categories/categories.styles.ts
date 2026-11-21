@@ -5,8 +5,6 @@ import { SECTION_TITLE, SECTION_GAP } from '@/constants/textStyles';
 import { SCREEN, flatSection, groupedSurface } from '@/components/screenStyles';
 import { themedStyles } from '@/theme/themedStyles';
 
-/** Maximum choices per row; the editor keeps every touch target at least 44dp. */
-export const GRID_COLUMNS = 6;
 export const GRID_GAP = 8;
 
 // Shared by the Categories screen, its list section (CategorySection /
