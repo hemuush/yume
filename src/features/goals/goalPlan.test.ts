@@ -1,5 +1,5 @@
 /** What a goal needs to finish on time, and whether it is ahead of that. All figures are made up. */
-import { goalPlan, summarizeGoals, goalHues, createdLocalDate } from './goalPlan';
+import { goalPlan, summarizeGoals, createdLocalDate } from './goalPlan';
 
 const TODAY = '2026-10-02';
 
@@ -94,14 +94,6 @@ describe('summarizeGoals', () => {
 
   it('is zero for no goals', () => {
     expect(summarizeGoals([], TODAY)).toMatchObject({ savedMinor: 0, percent: 0, goalCount: 0 });
-  });
-});
-
-describe('goalHues', () => {
-  it('gives each goal a colour by its place and wraps around', () => {
-    const hues = goalHues(Array.from({ length: 7 }, (_, i) => ({ id: `g${i}` })));
-    expect(hues.g0).not.toBe(hues.g1);
-    expect(hues.g5).toBe(hues.g0);
   });
 });
 

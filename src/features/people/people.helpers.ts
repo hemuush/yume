@@ -81,13 +81,6 @@ export function showPeopleSummary(openCount: number): boolean {
   return openCount >= 2;
 }
 
-/** Splits a list into rows of `size` (the last may be shorter). */
-export function inRows<T>(items: T[], size: number): T[][] {
-  const rows: T[][] = [];
-  for (let i = 0; i < items.length; i += size) rows.push(items.slice(i, i + size));
-  return rows;
-}
-
 /** First two letters for one name; first and last initials for a multi-part name. */
 export function personInitials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);

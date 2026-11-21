@@ -1,4 +1,3 @@
-import { theme } from '@/constants/theme';
 import { parseLocalIsoDate, toLocalIsoDate } from '@/lib/date';
 import type { SavingsGoal } from '@/types';
 
@@ -103,23 +102,4 @@ export function summarizeGoals(goals: PlanGoal[], today: string): GoalsTotals {
   }
   const percent = targetMinor > 0 ? Math.min(100, (savedMinor / targetMinor) * 100) : 0;
   return { savedMinor, targetMinor, percent, goalCount: goals.length, perMonthMinor };
-}
-
-// A goal's colour only says which one it is; the numbers carry the meaning.
-const goalHueList = (): string[] => [
-  theme.colors.idTeal,
-  theme.colors.primary,
-  theme.colors.idGold,
-  theme.colors.idCoral,
-  theme.colors.idSage,
-];
-
-/** Each goal's identity colour by its place in the list, so it keeps it when another is archived or reached. */
-export function goalHues(goals: Pick<SavingsGoal, 'id'>[]): Record<string, string> {
-  const hueList = goalHueList();
-  const hues: Record<string, string> = {};
-  goals.forEach((g, i) => {
-    hues[g.id] = hueList[i % hueList.length];
-  });
-  return hues;
 }

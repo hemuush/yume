@@ -5,7 +5,6 @@ import {
   lastActivityShort,
   groupPeople,
   showPeopleSummary,
-  inRows,
 } from './people.helpers';
 
 describe('people helpers', () => {
@@ -65,13 +64,6 @@ describe('showPeopleSummary', () => {
     expect(showPeopleSummary(1)).toBe(false);
     expect(showPeopleSummary(2)).toBe(true);
     expect(showPeopleSummary(5)).toBe(true);
-  });
-});
-
-describe('inRows', () => {
-  it('chunks a list into rows, the last one shorter', () => {
-    expect(inRows([1, 2, 3, 4, 5], 2)).toEqual([[1, 2], [3, 4], [5]]);
-    expect(inRows([], 2)).toEqual([]);
   });
 });
 

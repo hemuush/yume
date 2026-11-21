@@ -66,13 +66,6 @@ export function costShares(rules: RecurringRule[], categoriesById: Map<string, C
     .sort((a, b) => b.minor - a.minor);
 }
 
-/** "Rent is 46% of it" — the biggest slice, said in words; nothing when there is only one. */
-export function topShareLine(shares: CostShare[]): string | null {
-  if (shares.length < 2) return null;
-  const total = shares.reduce((sum, s) => sum + s.minor, 0);
-  return `${shares[0].name} is ${Math.round((shares[0].minor / total) * 100)}% of it`;
-}
-
 /** One run of a rule on Recurring's "when they land" line. */
 export interface RunMark {
   key: string;
@@ -80,20 +73,6 @@ export interface RunMark {
   amountMinor: number;
   /** Money in (income) or out (expenses and transfers). */
   incoming: boolean;
-}
-
-/** A single visible date marker, retaining every entry rather than overpainting same-day dots. */
-export function groupRunMarks(marks: RunMark[]): (RunMark & { count: number })[] {
-  const groups = new Map<string, RunMark & { count: number }>();
-  for (const mark of marks) {
-    const group = groups.get(mark.date);
-    if (group) {
-      group.amountMinor += mark.amountMinor;
-      group.count += 1;
-      group.incoming = group.incoming && mark.incoming;
-    } else groups.set(mark.date, { ...mark, key: mark.date, count: 1 });
-  }
-  return [...groups.values()].sort((a, b) => a.date.localeCompare(b.date));
 }
 
 /** How far ahead the line looks, today included. */

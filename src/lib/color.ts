@@ -77,12 +77,6 @@ function darkLightness(lightness: number): number {
   return Math.min(92, Math.max(8, 100 - lightness));
 }
 
-/** Like `shade`, but the same in both colour modes (a fill that is dark by design, such as the primary button). */
-export function fixedShade(hex: string, lightness: number, saturationDelta = 0): string {
-  const [h, s] = hexToHsl(hex);
-  return hslToHex(h, s + saturationDelta, lightness);
-}
-
 /** #RGB/#RRGGBB to an 'rgba(r, g, b, alpha)' string at the given alpha. */
 export function hexToRgba(hex: string, alpha: number): string {
   const clean = hex.replace('#', '');

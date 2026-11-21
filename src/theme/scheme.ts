@@ -8,8 +8,6 @@ export type Scheme = 'light' | 'dark';
 /** What the person picked: follow the phone, or fix one mode. */
 export type AppearancePreference = 'system' | 'light' | 'dark';
 
-export const APPEARANCE_PREFERENCES: readonly AppearancePreference[] = ['system', 'light', 'dark'];
-
 let current: Scheme = 'light';
 /** Bumped on every change, so a cached style sheet knows it was made for another mode. */
 let version = 0;
