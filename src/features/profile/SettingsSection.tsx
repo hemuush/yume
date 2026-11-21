@@ -28,6 +28,7 @@ import { ListCard } from '@/components/SummaryCard';
 import { styles } from './profile.styles';
 import { errorMessage } from '@/lib/errorMessage';
 import { AboutYume } from './AboutYume';
+import { AddStyleSetting } from './AddStyleSetting';
 import { AppearancePicker } from './AppearancePicker';
 import { CurrencySetting } from './CurrencySetting';
 import { DailyGoalSetting } from './DailyGoalSetting';
@@ -207,6 +208,11 @@ export function SettingsSection() {
               void setColourMode(next);
             }}
           />
+        </ListCard>
+      </Section>
+      <Section compact title="Adding entries">
+        <ListCard style={styles.settingsCard}>
+          <AddStyleSetting />
         </ListCard>
       </Section>
       <Section compact title="Money">

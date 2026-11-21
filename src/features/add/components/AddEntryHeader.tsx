@@ -1,4 +1,5 @@
 import { Pressable } from 'react-native';
+import { router } from 'expo-router';
 import { Text } from '@/components/Text';
 import Feather from '@expo/vector-icons/Feather';
 import { theme } from '@/constants/theme';
@@ -71,18 +72,32 @@ export function AddEntryHeader({ model }: Props): ReactElement {
             </Pressable>
           ) : undefined
         ) : (
-          <Pressable
-            onPress={openRepeatSheet}
-            disabled={!formReady || saving || addingRow || saveDone}
-            accessibilityState={{ disabled: !formReady || saving || addingRow || saveDone }}
-            hitSlop={8}
-            accessibilityRole="button"
-            accessibilityLabel="Repeat a recent entry"
-            style={withPressedTint(accent, styles.repeatBtn)}
-          >
-            <Feather name="rotate-ccw" size={13} color={theme.colors.textPrimary} />
-            <Text style={styles.repeatBtnText}>Repeat</Text>
-          </Pressable>
+          <>
+            <Pressable
+              onPress={() => router.replace('/add-chat')}
+              disabled={!formReady || saving || addingRow || saveDone}
+              accessibilityState={{ disabled: !formReady || saving || addingRow || saveDone }}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel="Add by chat instead"
+              style={withPressedTint(accent, styles.repeatBtn)}
+            >
+              <Feather name="message-circle" size={13} color={theme.colors.textPrimary} />
+              <Text style={styles.repeatBtnText}>Chat</Text>
+            </Pressable>
+            <Pressable
+              onPress={openRepeatSheet}
+              disabled={!formReady || saving || addingRow || saveDone}
+              accessibilityState={{ disabled: !formReady || saving || addingRow || saveDone }}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel="Repeat a recent entry"
+              style={withPressedTint(accent, styles.repeatBtn)}
+            >
+              <Feather name="rotate-ccw" size={13} color={theme.colors.textPrimary} />
+              <Text style={styles.repeatBtnText}>Repeat</Text>
+            </Pressable>
+          </>
         )
       }
     >

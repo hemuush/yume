@@ -26,6 +26,8 @@ jest.mock('@/hooks/useScreenLoad', () => ({
 }));
 const mockSetName = jest.fn(async (_name: string) => {});
 jest.mock('@/db/settings', () => ({
+  getAddStyle: async () => 'form',
+  setAddStyle: async () => {},
   ...jest.requireActual('@/db/settings'),
   getUserName: async () => 'Hemant',
   getMemberSinceYear: async () => 2024,

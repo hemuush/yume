@@ -13,6 +13,8 @@ jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
 }));
 jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
+// The way into Add follows the person's choice of form or chat (openAdd has its own tests).
+jest.mock('@/lib/openAdd', () => ({ openAdd: jest.fn(async () => {}) }));
 jest.mock('@/lib/haptics', () => ({ haptics: { confirm: jest.fn(), tap: jest.fn(), warn: jest.fn() } }));
 const mockShowUndo = jest.fn();
 let mockHideAmounts = false;
@@ -54,7 +56,7 @@ jest.mock('@/lib/dataEvents', () => ({ emitTransactionsChanged: jest.fn() }));
 import { RepeatEntrySheet, repeatEntryLabel } from './RepeatEntrySheet';
 import { createTransaction, deleteTransaction, getRepeatEntries } from '@/db/ledger';
 import { emitTransactionsChanged } from '@/lib/dataEvents';
-import { router } from 'expo-router';
+import { openAdd } from '@/lib/openAdd';
 import { formatMoney } from '@/lib/money';
 import { toLocalIsoDate } from '@/lib/date';
 
@@ -143,6 +145,6 @@ describe('RepeatEntrySheet', () => {
   it('always offers a way into the full Add screen', async () => {
     const tree = await render();
     act(() => byLabel(tree, 'Open Add screen').props.onPress());
-    expect(router.push).toHaveBeenCalledWith('/add-transaction');
+    expect(openAdd).toHaveBeenCalledTimes(1);
   });
 });

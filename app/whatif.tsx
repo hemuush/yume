@@ -8,6 +8,7 @@ import { View } from 'react-native';
 import { Text } from '@/components/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
+import { openAdd } from '@/lib/openAdd';
 import { getCategoryMonthlyAverages, CategoryBreakdownItem } from '@/db/reports';
 import { listSavingsGoals } from '@/db/savingsGoals';
 import { getAccountMonthlyGrowth } from '@/db/ledger';
@@ -196,7 +197,9 @@ export default function WhatIfScreen() {
           <EmptyState
             title="Nothing to try yet"
             subtitle="Log a few expenses first — this needs some real spending to project from."
-          />
+          >
+            <PrimaryButton title="Add an expense" variant="secondary" onPress={() => void openAdd()} />
+          </EmptyState>
         ) : (
           <Section first compact title="Spend a little less">
             <SummaryCard style={styles.card}>

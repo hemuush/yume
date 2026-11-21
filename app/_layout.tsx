@@ -375,6 +375,7 @@ function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean;
             <Stack.Screen name="notification-settings" />
             <Stack.Screen name="notifications" />
             <Stack.Screen name="add-transaction" />
+            <Stack.Screen name="add-chat" />
             <Stack.Screen name="split" />
             <Stack.Screen name="recurring" options={{ animation: 'none' }} />
             <Stack.Screen name="people" />

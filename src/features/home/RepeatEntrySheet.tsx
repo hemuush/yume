@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
-import { router } from 'expo-router';
+import { openAdd } from '@/lib/openAdd';
 import { ActionSheet, ActionSheetItem } from '@/components/ActionSheet';
 import { useUndoToast } from '@/components/UndoToast';
 import { createTransaction, deleteTransaction, getRepeatEntries, RepeatEntry } from '@/db/ledger';
@@ -107,7 +107,7 @@ export function RepeatEntrySheet({
             key: 'open-add',
             label: 'Open Add screen',
             icon: 'plus' as const,
-            onPress: () => router.push('/add-transaction'),
+            onPress: () => void openAdd(),
           },
         ]),
   ];

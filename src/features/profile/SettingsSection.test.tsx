@@ -22,6 +22,8 @@ const mockBackupResult = jest.fn();
 const mockSetCurrency = jest.fn<Promise<void>, [string]>(async () => {});
 const mockSetDailyGoal = jest.fn<Promise<void>, [number | null]>(async () => {});
 jest.mock('@/db/settings', () => ({
+  getAddStyle: async () => 'form',
+  setAddStyle: async () => {},
   getHideWidgetValues: async () => false,
   setHideWidgetValues: (value: boolean) => mockSetWidgets(value),
   SUPPORTED_CURRENCIES: [

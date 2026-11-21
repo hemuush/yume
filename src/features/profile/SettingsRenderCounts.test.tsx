@@ -32,6 +32,8 @@ jest.mock('@/components/SettingsRow', () => {
   };
 });
 jest.mock('@/db/settings', () => ({
+  getAddStyle: async () => 'form',
+  setAddStyle: async () => {},
   getHideWidgetValues: async () => false,
   setHideWidgetValues: async () => {},
   SUPPORTED_CURRENCIES: [

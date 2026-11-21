@@ -5,7 +5,7 @@ import { theme } from '@/constants/theme';
 import { haptics } from '@/lib/haptics';
 import { RepeatEntrySheet } from '@/features/home/RepeatEntrySheet';
 import { PillTabBar } from '@/components/PillTabBar';
-import { pushOnce } from '@/lib/pushOnce';
+import { openAdd } from '@/lib/openAdd';
 import { DURATIONS } from '@/lib/motionTimings';
 import { useReduceMotion } from '@/hooks/useReduceMotion';
 import { schemeScreenLayout, useSchemeVersion } from '@/theme/SchemeBoundary';
@@ -44,7 +44,7 @@ export default function TabsLayout() {
             // Never navigate to the "add" route itself (it only holds a slot); Add is pushed onto the Stack.
             onAdd={() => {
               haptics.tap();
-              pushOnce('/add-transaction');
+              void openAdd();
             }}
             // Long-press: the "Log again" sheet, the user's most repeated entries saved for today in one tap.
             onAddLongPress={() => setRepeatSheetVisible(true)}

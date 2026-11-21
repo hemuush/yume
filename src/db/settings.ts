@@ -465,6 +465,7 @@ export function resetSettingsCache(): void {
   cachedSpendSpikesSent = undefined;
   cachedHideSensitiveAmounts = undefined;
   cachedAppearance = undefined;
+  cachedAddStyle = undefined;
   cachedHideWidgetValues = undefined;
   cachedBudgetNudgesSent = undefined;
   cachedMilestonesSeen = undefined;
@@ -740,6 +741,33 @@ export async function addQueuedAlerts(alerts: QueuedAlert[]): Promise<void> {
   await withSettingsLock(async () => {
     await writeAlertQueue([...(await getAlertQueue()).filter((a) => !ids.has(a.id)), ...alerts]);
   });
+}
+
+const ADD_STYLE_KEY = 'add_style';
+/** How the + button adds an entry: the form (the default), or by typing a sentence in a chat. */
+export type AddStyle = 'form' | 'chat';
+let cachedAddStyle: AddStyle | undefined; // undefined = not yet read
+
+/** Anything stored that is not "chat" (an older or damaged value) reads as the form. */
+export async function getAddStyle(): Promise<AddStyle> {
+  if (cachedAddStyle !== undefined) return cachedAddStyle;
+  const db = await getDb();
+  const row = await db.getFirstAsync<{ value: string }>('SELECT value FROM settings WHERE key = ?', [
+    ADD_STYLE_KEY,
+  ]);
+  cachedAddStyle = row?.value === 'chat' ? 'chat' : 'form';
+  return cachedAddStyle;
+}
+
+export async function setAddStyle(style: AddStyle): Promise<void> {
+  if (style !== 'form' && style !== 'chat') throw new Error('Choose the form or the chat.');
+  const db = await getDb();
+  await db.runAsync(
+    `INSERT INTO settings (key, value) VALUES (?, ?)
+     ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
+    [ADD_STYLE_KEY, style]
+  );
+  cachedAddStyle = style;
 }
 
 const APPEARANCE_KEY = 'appearance';
