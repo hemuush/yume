@@ -32,7 +32,10 @@ jest.mock('@/features/home/needsYouData', () => {
 jest.mock('@/lib/haptics', () => ({
   haptics: { tap: jest.fn(), confirm: jest.fn(), warn: jest.fn(), select: jest.fn() },
 }));
-jest.mock('@/lib/notifications', () => ({ rebuildNotifications: async () => true }));
+jest.mock('@/lib/notifications', () => ({
+  rebuildNotifications: async () => true,
+  rebuildFailed: () => false,
+}));
 
 jest.mock('react-native-keyboard-controller', () => ({
   KeyboardAvoidingView: require('react-native').View,

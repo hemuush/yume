@@ -196,7 +196,7 @@ const s = themedStyles(() =>
       justifyContent: 'center',
       backgroundColor: theme.colors.home.control,
     },
-    markGreen: { backgroundColor: '#8FE8C8' },
+    markGreen: { backgroundColor: theme.colors.collection.goals },
     copy: { flex: 1, minWidth: 0 },
     title: {
       fontFamily: theme.font.bodyMedium,

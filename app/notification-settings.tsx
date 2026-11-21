@@ -21,6 +21,7 @@ import { useLocalDayRefresh } from '@/hooks/useLocalDayRefresh';
 import { useStableCallback } from '@/hooks/useStableCallback';
 import { keepIfEqual } from '@/lib/stableData';
 import {
+  rebuildFailed,
   rebuildNotifications,
   requestNotificationPermission,
   getNotificationDeliveryStatus,
@@ -64,7 +65,8 @@ export default function NotificationSettingsScreen() {
   const [delivery, setDelivery] = useState<NotificationDeliveryStatus | null>(null);
   const [deliveryError, setDeliveryError] = useState<string | null>(null);
   const [deliveryBusy, setDeliveryBusy] = useState(false);
-  const [scheduleFailed, setScheduleFailed] = useState(false);
+  // Starts from the last rebuild, so one that failed at app start still shows here.
+  const [scheduleFailed, setScheduleFailed] = useState(rebuildFailed);
   const [troubleOpen, setTroubleOpen] = useState(false);
   const deliveryRunning = useRef(false);
   const deliveryRequest = useRef(0);
@@ -123,6 +125,7 @@ export default function NotificationSettingsScreen() {
     useCallback(() => {
       focused.current = true;
       setDeliveryBusy(deliveryRunning.current);
+      setScheduleFailed(rebuildFailed());
       void load();
       void refreshDelivery();
       return () => {

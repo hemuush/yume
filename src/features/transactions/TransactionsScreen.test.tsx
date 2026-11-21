@@ -127,7 +127,22 @@ it('clears search in place and ignores results from the cleared query', async ()
   expect(tree.root.findByType(SearchStatus).props.loading).toBe(false);
 });
 
+// The empty period's button opens Add the way the person chose, the form or the chat (openAdd has its own tests).
+jest.mock('@/lib/openAdd', () => ({ openAdd: jest.fn(async () => {}) }));
+import { openAdd } from '@/lib/openAdd';
+
 describe('Activity when the totals query fails', () => {
+  it('opens Add the way the person chose from the empty period’s button', async () => {
+    mockComparison.fail = false;
+    const tree = await render();
+    const add = tree.root.findAll(
+      (n) => n.props.title === 'Add an entry' && typeof n.props.onPress === 'function'
+    )[0];
+    expect(add).toBeDefined();
+    act(() => add.props.onPress());
+    expect(openAdd).toHaveBeenCalledTimes(1);
+  });
+
   it('leaves the skeleton and says the totals couldn’t load', async () => {
     mockComparison.fail = true;
     const shown = texts(await render());

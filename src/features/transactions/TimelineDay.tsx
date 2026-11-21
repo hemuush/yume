@@ -26,9 +26,13 @@ import { screenStyles as h, SCREEN } from '@/components/screenStyles';
 import { investLines, investRole } from '@/lib/investment';
 import { isSavingsEntry } from '@/lib/privateSummary';
 import { DraggableLine } from './DraggableLine';
+import { SwipeToDelete } from '@/components/SwipeToDelete';
 import { withPressedTint } from '@/lib/pressed';
 import { categoryPath, categorySpoken, joinSub, parentNameOf } from '@/lib/categoryLabel';
 import { useStacked } from '@/hooks/useStacked';
+
+/** About how tall one entry under an open group is (its 44-point minimum and the hairline above it). */
+const SUB_LINE_ESTIMATE = 46;
 
 const NO_ACCOUNTS: ReadonlySet<string> = new Set();
 const NO_NOTES: ValueNote[] = [];
@@ -87,6 +91,7 @@ function TimelineDayView({
   entering,
   onReorder,
   onDragActive,
+  onSwipeDelete,
   savingsAccountIds = NO_ACCOUNTS,
   investmentIds = NO_ACCOUNTS,
   notes = NO_NOTES,
@@ -113,6 +118,8 @@ function TimelineDayView({
   onReorder?: (date: string, orderedIds: string[]) => Promise<void>;
   /** True while a line is held and dragged, so the list can stop scrolling under the finger. */
   onDragActive?: (active: boolean) => void;
+  /** Dragging a plain entry left deletes it (with an undo); says whether it did. Not given: no swipe. */
+  onSwipeDelete?: (tx: Transaction) => Promise<boolean>;
   /**
    * Accounts of type savings — transfers into or out of them are hidden with "hide savings & investment
    * amounts".
@@ -177,37 +184,43 @@ function TimelineDayView({
       return (
         <MovingRow key={tx.id} moving={slides}>
           {i > 0 && <View style={styles.separator} />}
-          <Pressable
-            onPress={() => onPressTx(tx)}
-            {...reorderProps(i)}
-            style={withPressedTint(accent, [styles.line, stacked && styles.wrapLine])}
-            accessibilityRole="button"
-            accessibilityLabel={`${categorySpoken(categoryName(tx.categoryId), parentNameOf(tx.categoryId, categoriesById))}${tx.isRefund ? ', refund' : ''}${tx.note ? `, ${tx.note}` : ''}, ${money(tx.amountMinor, hidden(tx), tx.accountId)}`}
+          {/* A part of a split goes with its whole split, so it has no swipe: delete that from its detail. */}
+          <SwipeToDelete
+            enabled={!!onSwipeDelete && !tx.splitId}
+            onDelete={() => (onSwipeDelete ? onSwipeDelete(tx) : Promise.resolve(false))}
           >
-            <JustAddedGlow ids={[tx.id]} surface="activity" />
-            <View style={styles.lead}>
-              <CategoryIcon
-                name={cat?.icon ?? 'tag'}
-                color={cat?.color ?? theme.colors.textMuted}
-                square={SCREEN.mark}
-                round
-              />
-            </View>
-            <View style={[styles.mid, stacked && styles.wideMid]}>
-              <View style={styles.entryHead}>
-                <Text style={[styles.name, styles.stackName]}>{tx.note || category}</Text>
-                {tx.isRefund && <StatusBadge label="Refund" tone="complete" />}
-                {tx.splitId && <StatusBadge label="Split" />}
+            <Pressable
+              onPress={() => onPressTx(tx)}
+              {...reorderProps(i)}
+              style={withPressedTint(accent, [styles.line, stacked && styles.wrapLine])}
+              accessibilityRole="button"
+              accessibilityLabel={`${categorySpoken(categoryName(tx.categoryId), parentNameOf(tx.categoryId, categoriesById))}${tx.isRefund ? ', refund' : ''}${tx.note ? `, ${tx.note}` : ''}, ${money(tx.amountMinor, hidden(tx), tx.accountId)}`}
+            >
+              <JustAddedGlow ids={[tx.id]} surface="activity" />
+              <View style={styles.lead}>
+                <CategoryIcon
+                  name={cat?.icon ?? 'tag'}
+                  color={cat?.color ?? theme.colors.textMuted}
+                  square={SCREEN.mark}
+                  round
+                />
               </View>
-              <Text style={styles.sub}>{sub}</Text>
-            </View>
-            <Amount
-              type={tx.type}
-              minor={tx.amountMinor}
-              masked={hidden(tx)}
-              currency={accountCurrency(tx.accountId)}
-            />
-          </Pressable>
+              <View style={[styles.mid, stacked && styles.wideMid]}>
+                <View style={styles.entryHead}>
+                  <Text style={[styles.name, styles.stackName]}>{tx.note || category}</Text>
+                  {tx.isRefund && <StatusBadge label="Refund" tone="complete" />}
+                  {tx.splitId && <StatusBadge label="Split" />}
+                </View>
+                <Text style={styles.sub}>{sub}</Text>
+              </View>
+              <Amount
+                type={tx.type}
+                minor={tx.amountMinor}
+                masked={hidden(tx)}
+                currency={accountCurrency(tx.accountId)}
+              />
+            </Pressable>
+          </SwipeToDelete>
         </MovingRow>
       );
     }
@@ -279,7 +292,7 @@ function TimelineDayView({
                 />
               </Pressable>
               {/* The panel opens and closes by animating its own height, so the rows below move with it, frame by frame. */}
-              <Collapsible open={open} warm={warm}>
+              <Collapsible open={open} warm={warm} estimate={line.items.length * SUB_LINE_ESTIMATE}>
                 {() =>
                   line.items.map((tx) => {
                     // The category is already named above: the note leads with the account under it, or with no

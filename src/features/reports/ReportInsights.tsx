@@ -17,7 +17,7 @@ const MARK = 32;
 const TONE_HEX = themedValue(() => ({
   coral: theme.colors.slice.spent,
   sky: theme.colors.primary,
-  lavender: '#B7A4EC',
+  lavender: theme.colors.collection.investments,
   mint: theme.colors.slice.saved,
   gold: theme.colors.slice.due,
 }));

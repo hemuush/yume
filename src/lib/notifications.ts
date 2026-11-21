@@ -184,10 +184,17 @@ let rebuildChain: Promise<unknown> = Promise.resolve();
  * scheduled. Safe to re-call; serialized; never throws; false when enabled reminders cannot be scheduled.
  */
 export function rebuildNotifications(): Promise<boolean> {
-  const run = rebuildChain.then(doRebuild, doRebuild);
+  const run = rebuildChain.then(doRebuild, doRebuild).then((ok) => {
+    lastRebuildFailed = !ok;
+    return ok;
+  });
   rebuildChain = run;
   return run;
 }
+
+/** Whether the latest rebuild, from any caller (the one at app start included), could not schedule what is enabled. */
+let lastRebuildFailed = false;
+export const rebuildFailed = () => lastRebuildFailed;
 
 async function doRebuild(): Promise<boolean> {
   let scheduled: Notifications.NotificationRequest[] = [];

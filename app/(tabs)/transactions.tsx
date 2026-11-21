@@ -4,11 +4,12 @@ import { CONTENT_ENTER, staggerEnter } from '@/lib/animation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { onTransactionsChanged } from '@/lib/dataEvents';
 import { useFreshness } from '@/hooks/useFreshness';
-import { View, Pressable, useWindowDimensions, type FlatListInstance } from 'react-native';
+import { View, Pressable, RefreshControl, useWindowDimensions, type FlatListInstance } from 'react-native';
 import { Text, TextInput } from '@/components/Text';
 import ReanimatedAnimated from 'react-native-reanimated';
 import { PrimaryButton } from '@/components/PrimaryButton';
-import { useFocusEffect, router, useLocalSearchParams } from 'expo-router';
+import { openAdd } from '@/lib/openAdd';
+import { useFocusEffect, router } from 'expo-router';
 import Feather from '@expo/vector-icons/Feather';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { setDayOrder } from '@/db/ledger';
@@ -34,8 +35,11 @@ import { PeriodPicker } from '@/components/PeriodPicker';
 import { FilterModal } from '@/features/transactions/FilterModal';
 import { TimelineDay } from '@/features/transactions/TimelineDay';
 import { createStackStore } from '@/features/transactions/stackStore';
-import { getTransactionById } from '@/db/transactions';
+import { useActivityLinks } from '@/features/transactions/useActivityLinks';
+import { deleteTransaction, restoreTransaction } from '@/db/transactions';
+import { useUndoToast } from '@/components/UndoToast';
 import { showAlert } from '@/components/AppDialog';
+import { errorMessage } from '@/lib/errorMessage';
 import { TransactionDetailModal } from '@/features/transactions/TransactionDetailModal';
 import { TransactionsHeadline } from '@/features/transactions/TransactionsHeadline';
 import { ActivitySummaryStrip } from '@/features/transactions/ActivitySummaryStrip';
@@ -135,73 +139,19 @@ export default function TransactionsScreen() {
   // Slide direction of the headline/chart on the next period change (read by TransactionsHeadline): 0
   // (crossfade) unless it is a one-step move; a picked month or Week↔Month switch has no direction.
   const [direction, setDirection] = useState<-1 | 0 | 1>(0);
-  // A link can open Activity already filtered: ?category= (a category page's
-  // "See all") or ?account= (Home's account sheet), with ?month=YYYY-MM; a month alone (Home's "View all" on a
-  // past month) opens that month.
-  const linkParams = useLocalSearchParams<{
-    category?: string;
-    account?: string;
-    month?: string;
-    entry?: string;
-  }>();
-  useEffect(() => {
-    const { category, account, month } = linkParams;
-    // A real month that isn't in the future; anything else keeps the current view.
-    const [y, m] = month && /^\d{4}-\d{2}$/.test(month) ? month.split('-').map(Number) : [0, 0];
-    const now = new Date();
-    const validMonth =
-      m >= 1 && m <= 12 && (y < now.getFullYear() || (y === now.getFullYear() && m <= now.getMonth() + 1));
-    // A month on its own (Home's "View all") opens that month; a bad one is dropped and the view
-    // stays as it is.
-    if (!category && !account) {
-      if (!month) return;
-      if (!validMonth) {
-        router.setParams({ month: undefined });
-        return;
-      }
-    }
-    // A link shows its filter, not search results left open from before.
-    closeSearch();
-    setFilterType('all');
-    setFilterCategoryIds(category ? [category] : []);
-    setFilterAccountIds(account ? [account] : []);
-    setFilterLabel(undefined);
-    if (validMonth) {
-      setDirection(0);
-      setAnchor(new Date(y, m - 1, 1));
-      setViewScope('month');
-    }
-    router.setParams({ category: undefined, account: undefined, month: undefined });
-  }, [linkParams, closeSearch]);
-  useEffect(() => {
-    if (!linkParams.entry || accounts.length === 0) return;
-    let live = true;
-    getTransactionById(linkParams.entry)
-      .then((tx) => {
-        if (!live) return;
-        if (tx) {
-          const [year, month] = tx.date.split('-').map(Number);
-          closeSearch();
-          setFilterType('all');
-          setFilterCategoryIds([]);
-          setFilterAccountIds([]);
-          setFilterLabel(undefined);
-          setViewScope('month');
-          setAnchor(new Date(year, month - 1, 1));
-          setDetailTx(tx);
-        } else showAlert('Entry unavailable', 'This entry may have been deleted.');
-        router.setParams({ entry: undefined });
-      })
-      .catch(() => {
-        if (live) {
-          showAlert('Couldn’t open entry', 'Reopen it from Reports to retry.');
-          router.setParams({ entry: undefined });
-        }
-      });
-    return () => {
-      live = false;
-    };
-  }, [linkParams.entry, accounts.length, closeSearch]);
+  // A link can open Activity already filtered, on a month, or on one entry (see useActivityLinks).
+  useActivityLinks({
+    accountsLoaded: accounts.length > 0,
+    closeSearch,
+    setFilterType,
+    setFilterCategoryIds,
+    setFilterAccountIds,
+    setFilterLabel,
+    setDirection,
+    setAnchor,
+    setViewScope,
+    setDetailTx,
+  });
   // The last-tapped chart bar lifts while the rest fade (see SpendBarChart); cleared on period change since
   // its key belongs to the old period's bars.
   const [selectedBar, setSelectedBar] = useState<string | null>(null);
@@ -544,6 +494,40 @@ export default function TransactionsScreen() {
   const firstLoad = !loadedPeriod.fromDate && !loadError;
 
   const retryLoad = () => void load({ fromDate: rangeFromDate, toDate: rangeToDate }, viewScope);
+  // A swipe-to-delete on an entry: the same soft delete and undo as its detail sheet. Says whether it was deleted
+  // (a linked entry is not: it has to be undone from its detail, and the row springs back).
+  const { show: showUndo } = useUndoToast();
+  const deleteBySwipe = useCallback(
+    async (tx: Transaction) => {
+      const reloadList = () => {
+        void load({ fromDate: rangeFromDate, toDate: rangeToDate }, viewScope);
+        refreshSearch();
+      };
+      try {
+        const snapshot = await deleteTransaction(tx.id);
+        haptics.warn();
+        reloadList();
+        showUndo('Moved to Recently deleted', async () => {
+          await restoreTransaction(snapshot);
+          reloadList();
+        });
+        return true;
+      } catch (e) {
+        showAlert('Couldn’t delete', errorMessage(e));
+        return false;
+      }
+    },
+    [load, rangeFromDate, rangeToDate, viewScope, refreshSearch, showUndo]
+  );
+  const [refreshing, setRefreshing] = useState(false);
+  const refresh = async () => {
+    setRefreshing(true);
+    try {
+      await load({ fromDate: rangeFromDate, toDate: rangeToDate }, viewScope);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   // Under the header, at the top of the list: a load that failed, or totals that couldn't load.
   const banners = (
@@ -665,12 +649,27 @@ export default function TransactionsScreen() {
             onScroll={scrollHandler}
             scrollEventThrottle={16}
             scrollEnabled={!dragging}
+            // Search results are a lookup, not a period: nothing to reload there.
+            refreshControl={
+              searching ? undefined : (
+                <RefreshControl
+                  refreshing={refreshing}
+                  onRefresh={refresh}
+                  tintColor={accent}
+                  colors={[accent]}
+                  // Android draws the spinner at the list's top edge, which is under the header.
+                  progressViewOffset={headerHeight}
+                />
+              )
+            }
             data={displayedGroups}
             keyExtractor={(group) => group.date}
-            // Each row is a whole day, so mount only a few at first and keep the window small.
+            // Each row is a whole day, so mount only a few at first and keep the window small. A short batch every
+            // 50 ms keeps each frame light while scrolling.
             initialNumToRender={4}
-            maxToRenderPerBatch={4}
-            windowSize={7}
+            maxToRenderPerBatch={2}
+            updateCellsBatchingPeriod={50}
+            windowSize={5}
             contentContainerStyle={{
               // Under the header; search results have no headline above them, so keep the first day off the bar.
               paddingTop: headerHeight + (searching ? 14 : 0),
@@ -769,8 +768,14 @@ export default function TransactionsScreen() {
                           from: loadedPeriod.fromDate,
                           today: todayDate,
                         })}
-                        subtitle="Tap + to add an entry, or look at another period."
-                      />
+                        subtitle="Add an entry, or look at another period."
+                      >
+                        <PrimaryButton
+                          title="Add an entry"
+                          variant="secondary"
+                          onPress={() => void openAdd()}
+                        />
+                      </EmptyState>
                     )}
                 </>
               )
@@ -810,6 +815,7 @@ export default function TransactionsScreen() {
                 stacks={stacks}
                 onReorder={canReorder ? reorderDay : undefined}
                 onDragActive={setDragging}
+                onSwipeDelete={deleteBySwipe}
                 selected={
                   !searching &&
                   selectedBar != null &&

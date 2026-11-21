@@ -1,7 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { View, Pressable, StyleSheet, Keyboard, Animated as RNAnimated } from 'react-native';
-import Animated from 'react-native-reanimated';
-import { CONTENT_ENTER } from '@/lib/animation';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { hexToRgba } from '@/lib/color';
 import Feather from '@expo/vector-icons/Feather';
@@ -12,6 +11,7 @@ import { theme } from '@/constants/theme';
 import { haptics } from '@/lib/haptics';
 import { useTabDockMetrics } from '@/lib/uiScale';
 import { usePressScale } from '@/hooks/usePressScale';
+import { useReduceMotion } from '@/hooks/useReduceMotion';
 import { useAccent } from '@/theme/AccentContext';
 import { selectedFill } from '@/theme/interactionColors';
 import { themedStyles } from '@/theme/themedStyles';
@@ -30,7 +30,6 @@ function Tab({
   label,
   Icon,
   focused,
-  fill,
   layout,
   onPress,
   onLongPress,
@@ -39,8 +38,6 @@ function Tab({
   label: string;
   Icon: typeof HomeIcon;
   focused: boolean;
-  /** The chosen tab's pill: the theme colour itself, with ink on it. The Add button is the coral dot. */
-  fill: string;
   layout: { size: number; showLabel: boolean };
   onPress: () => void;
   onLongPress: () => void;
@@ -48,6 +45,15 @@ function Tab({
 }) {
   const { size, showLabel } = layout;
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.92);
+  const reduce = useReduceMotion();
+  // The chosen tab's icon pops: it starts a little small and springs to full size as the pill arrives.
+  const pop = useSharedValue(1);
+  useEffect(() => {
+    if (!focused || reduce) return;
+    pop.set(0.78);
+    pop.set(withSpring(1, { damping: 9, stiffness: 240, mass: 0.7 }));
+  }, [focused, reduce, pop]);
+  const popStyle = useAnimatedStyle(() => ({ transform: [{ scale: pop.get() }] }));
   return (
     <Pressable
       style={styles.tabSlot}
@@ -62,17 +68,9 @@ function Tab({
     >
       <RNAnimated.View style={animatedStyle}>
         <Animated.View style={[styles.tab, { height: size, borderRadius: size / 2 }]}>
-          {/* Only the chosen tab has a pill at all: one that is drawn and then faded away could be left showing
-              (two tabs lit at once) if its fade-out never ran. The arriving pill fades in. */}
-          {focused && (
-            <Animated.View
-              pointerEvents="none"
-              testID={`tab-fill-${label}`}
-              entering={CONTENT_ENTER}
-              style={[StyleSheet.absoluteFill, { borderRadius: size / 2, backgroundColor: fill }]}
-            />
-          )}
-          <Icon color={focused ? theme.colors.ink : theme.colors.inkSoft} size={20} />
+          <Animated.View style={popStyle}>
+            <Icon color={focused ? theme.colors.ink : theme.colors.inkSoft} size={20} />
+          </Animated.View>
           {showLabel && (
             <Text style={[styles.label, focused && styles.labelSelected]} numberOfLines={1}>
               {label}
@@ -105,6 +103,25 @@ export function PillTabBar({
   const activeLabel = active ? (descriptors[active.key].options.title ?? active.name) : '';
   const isHome = state.routes[state.index]?.name === 'index';
   const add = usePressScale(0.92);
+  const reduce = useReduceMotion();
+  // One pill under the tabs that glides to the chosen one (the slots are equal widths, so its place is index × slot).
+  const visible = state.routes.filter((route) => ICONS[route.name]);
+  const chosen = Math.max(
+    0,
+    visible.findIndex((route) => route.key === active?.key)
+  );
+  const [rowWidth, setRowWidth] = useState(0);
+  const slot = visible.length ? rowWidth / visible.length : 0;
+  const pillX = useSharedValue(0);
+  const placed = useRef(false);
+  useEffect(() => {
+    if (slot === 0) return;
+    const to = chosen * slot;
+    // The first placement (and reduced motion) is a jump, not a slide in from the left edge.
+    pillX.set(reduce || !placed.current ? to : withSpring(to, { damping: 20, stiffness: 260, mass: 0.8 }));
+    placed.current = true;
+  }, [chosen, slot, reduce, pillX]);
+  const pillStyle = useAnimatedStyle(() => ({ transform: [{ translateX: pillX.get() }] }));
   const [keyboard, setKeyboard] = useState(false);
   useEffect(() => {
     const show = Keyboard.addListener('keyboardDidShow', () => setKeyboard(true));
@@ -143,7 +160,23 @@ export function PillTabBar({
         ]}
         accessibilityRole="tablist"
       >
-        <View style={styles.tabs}>
+        <View style={styles.tabs} onLayout={(e) => setRowWidth(e.nativeEvent.layout.width)}>
+          {slot > 0 && (
+            <Animated.View
+              pointerEvents="none"
+              testID={`tab-fill-${activeLabel}`}
+              style={[
+                styles.indicator,
+                {
+                  width: slot,
+                  height: inner,
+                  borderRadius: inner / 2,
+                  backgroundColor: selectedFill(accent),
+                },
+                pillStyle,
+              ]}
+            />
+          )}
           {state.routes.map((route, index) => {
             const Icon = ICONS[route.name];
             if (!Icon) return null;
@@ -155,7 +188,6 @@ export function PillTabBar({
                 label={label}
                 Icon={Icon}
                 focused={focused}
-                fill={selectedFill(accent)}
                 layout={{ size: inner, showLabel: !stackedLabel }}
                 logAgain={isHome}
                 onPress={() => {
@@ -233,6 +265,7 @@ const styles = themedStyles(() =>
       color: theme.colors.ink,
       textAlign: 'center',
     },
+    indicator: { position: 'absolute', left: 0, top: 0 },
     tabSlot: { flex: 1, minWidth: theme.accessibility.minTouchTarget },
     tab: { alignItems: 'center', justifyContent: 'center', gap: 2 },
     label: { fontFamily: theme.font.bodyMedium, fontSize: 11, color: theme.colors.inkSoft, lineHeight: 14 },

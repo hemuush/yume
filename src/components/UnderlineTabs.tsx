@@ -36,6 +36,8 @@ export function UnderlineTabs<T extends string>({
               accessibilityRole="tab"
               accessibilityState={{ selected: on }}
               accessibilityLabel={option.label}
+              // The pill is 36dp tall; the slop lifts the touch target to 48dp without changing how it looks.
+              hitSlop={{ top: 6, bottom: 6 }}
               style={withPressed([styles.tab, on && styles.tabOn])}
             >
               <Text style={[styles.label, on && styles.labelOn]} numberOfLines={1}>

@@ -18,8 +18,8 @@ const FADE_MS = 900;
 export function JustAddedGlow({ ids, surface }: { ids: string[]; surface: JustAddedSurface }) {
   const reduce = useReduceMotion();
   const version = useSyncExternalStore(subscribeJustAdded, justAddedVersion);
-  const [glow] = useState(() => new Animated.Value(0));
-  const [on, setOn] = useState(false);
+  // Made only when a glow starts: nearly every entry on a long list never glows, so none pays for one on mount.
+  const [glow, setGlow] = useState<Animated.Value | null>(null);
   const idsKey = ids.join('|');
   // Held in a ref, not stopped by the effect's cleanup: a later mark (another
   // save) re-runs the effect, and stopping a glow mid-way would leave it stuck on.
@@ -30,11 +30,11 @@ export function JustAddedGlow({ ids, surface }: { ids: string[]; surface: JustAd
   // effect starts the glow through an Effect Event instead of depending on either.
   const startGlow = useEffectEvent(() => {
     if (!takeJustAdded(ids, surface)) return;
-    setOn(true);
-    glow.setValue(1);
+    const value = new Animated.Value(1);
+    setGlow(value);
     const anim = Animated.sequence([
       Animated.delay(reduce ? HOLD_MS + FADE_MS : HOLD_MS),
-      Animated.timing(glow, {
+      Animated.timing(value, {
         toValue: 0,
         duration: reduce ? 0 : FADE_MS,
         easing: EASE_OUT,
@@ -44,14 +44,14 @@ export function JustAddedGlow({ ids, surface }: { ids: string[]; surface: JustAd
     running.current?.stop();
     running.current = anim;
     anim.start(({ finished }) => {
-      if (finished) setOn(false);
+      if (finished) setGlow(null);
     });
   });
   useEffect(() => {
     startGlow();
   }, [idsKey, surface, version]);
 
-  if (!on) return null;
+  if (!glow) return null;
   return (
     <Animated.View
       pointerEvents="none"

@@ -10,6 +10,7 @@ import {
   sendTestNotification,
   notificationRoute,
   rebuildNotifications,
+  rebuildFailed,
   subscribeToNotificationTaps,
   NOTIFICATION_ROUTES,
 } from './notifications';
@@ -151,6 +152,17 @@ describe('rebuildNotifications', () => {
       });
       expect((call.trigger as { channelId?: string }).channelId).toBe('default');
     }
+  });
+
+  it('remembers that the latest rebuild failed, so a failure at app start still shows in settings, and clears it when one succeeds', async () => {
+    const quiet = jest.spyOn(console, 'error').mockImplementation(() => {});
+    N.scheduleNotificationAsync.mockRejectedValue(new Error('blocked'));
+    expect(await rebuildNotifications()).toBe(false);
+    expect(rebuildFailed()).toBe(true);
+    quiet.mockRestore();
+    N.scheduleNotificationAsync.mockResolvedValue('id');
+    expect(await rebuildNotifications()).toBe(true);
+    expect(rebuildFailed()).toBe(false);
   });
 
   it('refreshes the logging day when database reads cross midnight', async () => {

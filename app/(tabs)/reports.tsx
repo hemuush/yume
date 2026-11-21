@@ -1,6 +1,6 @@
 import { useKeptAcrossModeChange } from '@/theme/useKeptAcrossModeChange';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { View, ScrollView, ScrollViewInstance } from 'react-native';
+import { View, ScrollView, ScrollViewInstance, RefreshControl } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -90,6 +90,15 @@ export default function ReportsScreen() {
 
   const onLoadStart = useCallback(() => setCatExpanded(false), []);
   const data = useReportsData(cursor, { onLoadStart });
+  const [refreshing, setRefreshing] = useState(false);
+  const refresh = async () => {
+    setRefreshing(true);
+    try {
+      await data.reload();
+    } finally {
+      setRefreshing(false);
+    }
+  };
   const {
     hideAmounts,
     comparison,
@@ -294,6 +303,9 @@ export default function ReportsScreen() {
       <ScrollView
         ref={scrollRef}
         testID="reports-content"
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={accent} colors={[accent]} />
+        }
         contentContainerStyle={{
           paddingTop: 12,
           paddingHorizontal: 16,

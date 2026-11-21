@@ -3,24 +3,22 @@ jest.mock('react-native-android-widget', () => ({
   requestWidgetUpdate: (...a: unknown[]) => mockRequest(...(a as [])),
 }));
 jest.mock('./registry', () => ({ WIDGET_NAMES: ['A', 'B'], renderWidgetByName: jest.fn() }));
-jest.mock('expo-constants', () => ({
-  __esModule: true,
-  default: { executionEnvironment: 'bare' },
-  ExecutionEnvironment: { StoreClient: 'storeClient', Bare: 'bare' },
+const mockNative: { module: unknown } = { module: {} };
+jest.mock('react-native', () => ({
+  NativeModules: {},
+  TurboModuleRegistry: { get: () => mockNative.module },
 }));
-import Constants from 'expo-constants';
 import { refreshAllWidgets } from './notifyWidgets';
 
-const env = Constants as unknown as { executionEnvironment: string };
-
 describe('refreshAllWidgets', () => {
+  beforeEach(() => mockRequest.mockClear());
   it('asks every widget to refresh in a real build', () => {
-    env.executionEnvironment = 'bare';
+    mockNative.module = {};
     refreshAllWidgets();
     expect(mockRequest).toHaveBeenCalledTimes(2);
   });
-  it('does nothing in Expo Go, where there is no widget module to warn about', () => {
-    env.executionEnvironment = 'storeClient';
+  it('does nothing without the native module (Expo Go), where each call would only warn', () => {
+    mockNative.module = null;
     refreshAllWidgets();
     expect(mockRequest).not.toHaveBeenCalled();
   });

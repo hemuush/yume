@@ -145,6 +145,7 @@ export function RunwayCard({
             accessibilityRole="button"
             accessibilityLabel="View payments"
             onPress={onViewPayments}
+            hitSlop={{ top: 6, bottom: 6 }}
             style={withPressed(local.link)}
           >
             <Text style={local.linkText}>{dueSoon.count > 0 ? `View ${payments}` : 'View payments'}</Text>

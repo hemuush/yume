@@ -40,11 +40,17 @@ const MEASURE_WAIT = 150;
 export function Collapsible({
   open,
   warm = false,
+  estimate,
   children,
 }: {
   open: boolean;
   /** The entries are about to be wanted (a finger is down): have them in the tree and measured. */
   warm?: boolean;
+  /**
+   * About how tall the entries are. A panel not yet measured opens from this at once, instead of waiting for its
+   * first measure; the measure then corrects it (a few points, on the way).
+   */
+  estimate?: number;
   /** The entries, or a function that makes them: it runs only while they are wanted, so a closed panel costs nothing. */
   children: ReactNode | (() => ReactNode);
 }) {
@@ -69,6 +75,7 @@ export function Collapsible({
     heading.current = open;
     if (open) setMounted(true);
     started.current = false;
+    if (open && natural.get() === 0 && estimate) natural.set(estimate);
     // Closing, or opening with the height known, glides at once. Opening without it waits for the measure.
     if (!open || reduce || natural.get() > 0) {
       glide();
@@ -78,6 +85,8 @@ export function Collapsible({
       if (!started.current) glide();
     }, MEASURE_WAIT);
     return () => clearTimeout(timer);
+    // `estimate` only seeds a first opening; a changed estimate must not restart the glide.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, reduce, natural, glide]);
   // Out of the tree once it has closed (a touch longer than the glide). A panel that never opened has nothing to
   // close: a timer there once landed after the next opening and removed it.

@@ -122,8 +122,9 @@ eas build --platform android --profile preview
 | `preview`    | Installable `.apk`        | Internal/device testing; currently targets `arm64-v8a`. |
 | `production` | Android App Bundle `.aab` | A build for Play Store distribution.                    |
 
-Both profiles automatically increment the Android version code. EAS provides a build page and
-download link when the build completes. For a production bundle:
+Neither profile increments the Android version code (`autoIncrement: false`, local versions): raise
+`android.versionCode` in `app.json` yourself before each release, or Android will not install it over the previous one.
+EAS provides a build page and download link when the build completes. For a production bundle:
 
 ```bash
 eas build --platform android --profile production

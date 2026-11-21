@@ -71,6 +71,8 @@ export function UpcomingDates({
               accessibilityRole="radio"
               accessibilityState={{ checked: mode === value }}
               onPress={() => update({ ...current, mode: value })}
+              // The pill is 36dp tall; the slop lifts the touch target to 48dp.
+              hitSlop={{ top: 6, bottom: 6 }}
               style={withPressedTint(accent, [s.mode, mode === value && s.modeOn])}
             >
               <View style={s.modeInner}>

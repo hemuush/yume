@@ -1,11 +1,12 @@
 import { memo, useCallback, useMemo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { CategoryGlyph } from '@/components/CategoryGlyph';
+import { GrowFill } from '@/components/GrowFill';
 import { Text } from '@/components/Text';
 import { withPressed } from '@/lib/pressed';
 import { useStacked } from '@/hooks/useStacked';
 import { themedStyles } from '@/theme/themedStyles';
-import { formatMaskableMoney, formatMoney } from '@/lib/money';
+import { formatMoney } from '@/lib/money';
 import { weekdayDayMonth } from '@/lib/dateLabels';
 import { theme } from '@/constants/theme';
 import { Section } from '@/components/Section';
@@ -13,6 +14,7 @@ import { PendingRefunds } from '@/features/transactions/PendingRefunds';
 import type { PlanActions } from './planActions';
 import type { PlanData } from './planData';
 import { PLAN_DAYS } from './planOverview';
+import { planTiles } from './planTiles';
 import { PlanOverviewPanels } from './PlanOverviewPanels';
 import { PlanPeopleHabit } from './PlanPeopleHabit';
 import { ComingUpSection } from './ComingUpSection';
@@ -59,62 +61,8 @@ export const PlanOverviewTab = memo(function PlanOverviewTab({
         .find((day) => day.items.length > 0),
     [data.schedule.days, data.today]
   );
-  const activeGoals = data.goals.filter((goal) => !goal.archived);
-  const openGoals = activeGoals.filter((goal) => goal.currentAmountMinor < goal.targetAmountMinor);
-  const budgetLeft = data.budgets.budgetedMinor - data.budgets.usedMinor;
-  const holdings = data.investments.holdings.length + data.investments.otherCurrency.length;
   const money = (minor: number) => formatMoney(minor, data.currency);
-  const snapshot = [
-    {
-      name: 'Budgets',
-      icon: 'chart-donut',
-      id: 'budgets' as const,
-      subtitle: data.budgets.rows.length
-        ? budgetLeft < 0
-          ? 'Over planned limits'
-          : 'Left this month'
-        : 'No budgets this month',
-      amount: data.budgets.rows.length ? money(Math.abs(budgetLeft)) : '',
-    },
-    {
-      name: 'Goals',
-      icon: 'flag-outline',
-      id: 'goals' as const,
-      subtitle: !activeGoals.length ? 'No active goals' : data.hideAmounts ? 'Savings hidden' : 'In progress',
-      amount: !activeGoals.length || data.hideAmounts ? '' : String(openGoals.length),
-    },
-    {
-      name: 'Investments',
-      icon: 'chart-line',
-      id: 'investments' as const,
-      subtitle: !holdings
-        ? 'No holdings'
-        : data.hideAmounts
-          ? 'Values hidden'
-          : data.investments.otherCurrency.length
-            ? 'Across currencies'
-            : 'Portfolio value',
-      amount:
-        !holdings || data.hideAmounts
-          ? ''
-          : data.investments.otherCurrency.length
-            ? String(holdings)
-            : formatMaskableMoney(data.investments.valueMinor, { currency: data.investments.currency }),
-    },
-    {
-      name: 'Debt',
-      icon: 'credit-card-outline',
-      id: 'debt' as const,
-      subtitle: data.loans.borrowedCount
-        ? 'To repay'
-        : data.loans.rows.length
-          ? 'Money lent'
-          : 'No open loans',
-      amount: data.loans.rows.length
-        ? money(data.loans.borrowedCount ? data.loans.debtLeftMinor : data.loans.lentLeftMinor)
-        : '',
-    },
-  ];
+  const snapshot = planTiles(data);
   return (
     <>
       <Runway
@@ -156,7 +104,7 @@ export const PlanOverviewTab = memo(function PlanOverviewTab({
       )}
       <Section compact title="Plan at a glance">
         <View style={styles.tiles}>
-          {snapshot.map(({ id, name, icon, subtitle, amount }) => (
+          {snapshot.map(({ id, name, icon, subtitle, amount, progress, over }) => (
             <Pressable
               key={id}
               accessibilityRole="button"
@@ -172,8 +120,24 @@ export const PlanOverviewTab = memo(function PlanOverviewTab({
                   {name}
                 </Text>
               </View>
-              {amount ? <Text style={styles.metricValue}>{amount}</Text> : null}
-              <Text style={styles.metricSubtitle} numberOfLines={1}>
+              {amount ? (
+                <Text style={[styles.metricValue, over && styles.metricOver]} numberOfLines={1}>
+                  {amount}
+                </Text>
+              ) : null}
+              {progress != null && (
+                <View style={styles.track}>
+                  <GrowFill
+                    animKey={`plan:tile:${id}`}
+                    pct={progress * 100}
+                    style={[
+                      styles.fill,
+                      { backgroundColor: over ? theme.colors.expense : theme.colors.collection[id] },
+                    ]}
+                  />
+                </View>
+              )}
+              <Text style={[styles.metricSubtitle, over && styles.metricOver]} numberOfLines={1}>
                 {subtitle}
               </Text>
             </Pressable>
@@ -223,8 +187,17 @@ const styles = themedStyles(() =>
       fontFamily: theme.font.bodyMedium,
       color: theme.colors.textPrimary,
     },
+    track: {
+      height: 5,
+      borderRadius: 3,
+      overflow: 'hidden',
+      marginVertical: 3,
+      backgroundColor: theme.colors.home.edge,
+    },
+    fill: { height: 5, borderRadius: 3 },
+    metricOver: { color: theme.colors.expenseText },
     metricValue: {
-      fontSize: 16,
+      fontSize: 18,
       fontFamily: theme.font.bodyBold,
       color: theme.colors.textPrimary,
       fontVariant: ['tabular-nums'],

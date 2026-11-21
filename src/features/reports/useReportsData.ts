@@ -181,8 +181,11 @@ export function useReportsData(cursor: ReportWindow, { onLoadStart }: { onLoadSt
     },
     []
   );
+  // Pull-to-refresh: read the period again now, as Home and Plan do.
+  const reload = useCallback(() => load(cursor), [load, cursor]);
 
   return {
+    reload,
     hideAmounts,
     comparison,
     savingsIds: useStableSet(savingsIds),

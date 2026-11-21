@@ -41,6 +41,7 @@ let mockPermitted = true;
 let mockScheduledCount = 4;
 jest.mock('@/lib/notifications', () => ({
   rebuildNotifications: jest.fn(async () => true),
+  rebuildFailed: jest.fn(() => false),
   requestNotificationPermission: jest.fn(async () => true),
   sendTestNotification: async () => {},
   getNotificationDeliveryStatus: jest.fn(async () => ({

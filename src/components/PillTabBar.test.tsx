@@ -93,8 +93,10 @@ it('retains Add on other screens', () => {
   expect(add).toHaveBeenCalledTimes(1);
   act(() => tree.unmount());
 });
-it('draws a fill for the chosen tab only', () => {
+it('draws one gliding fill, labelled for the chosen tab only', () => {
   const { tree } = render(1);
+  const row = tree.root.findAll((n) => typeof n.props.onLayout === 'function')[0];
+  act(() => row.props.onLayout({ nativeEvent: { layout: { width: 320, height: 48, x: 0, y: 0 } } }));
   const has = (label: string) => tree.root.findAllByProps({ testID: `tab-fill-${label}` }).length > 0;
   expect(has('Activity')).toBe(true);
   expect(has('Home')).toBe(false);

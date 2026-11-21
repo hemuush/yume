@@ -1,4 +1,4 @@
-import Constants, { ExecutionEnvironment } from 'expo-constants';
+import { NativeModules, TurboModuleRegistry } from 'react-native';
 import { requestWidgetUpdate } from 'react-native-android-widget';
 import { WIDGET_NAMES, renderWidgetByName } from './registry';
 
@@ -8,7 +8,7 @@ import { WIDGET_NAMES, renderWidgetByName } from './registry';
  */
 export function refreshAllWidgets(): void {
   // Expo Go has no widget module (widgets need a real build), so there is nothing to refresh and each call would only warn.
-  if (Constants.executionEnvironment === ExecutionEnvironment.StoreClient) return;
+  if (!TurboModuleRegistry.get('AndroidWidget') && !NativeModules.AndroidWidget) return;
   for (const name of WIDGET_NAMES) {
     requestWidgetUpdate({
       widgetName: name,

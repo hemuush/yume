@@ -63,6 +63,7 @@ jest.mock('@/db/settings', () => ({
 }));
 jest.mock('@/lib/notifications', () => ({
   rebuildNotifications: jest.fn(async () => mockLater(true)),
+  rebuildFailed: jest.fn(() => false),
   requestNotificationPermission: jest.fn(async () => true),
   sendTestNotification: async () => {},
   // A fresh object every time, as every read of the real status is.

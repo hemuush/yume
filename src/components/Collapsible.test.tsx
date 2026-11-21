@@ -275,3 +275,24 @@ describe('entries made on demand', () => {
     act(() => tree.unmount());
   });
 });
+
+it('starts opening at once from an estimated height instead of waiting for the first measure', () => {
+  let tree!: ReactTestRenderer;
+  act(() => {
+    tree = create(
+      <Collapsible open={false} estimate={92}>
+        <Text>Phone Cover</Text>
+      </Collapsible>
+    );
+  });
+  act(() =>
+    tree.update(
+      <Collapsible open estimate={92}>
+        <Text>Phone Cover</Text>
+      </Collapsible>
+    )
+  );
+  // No timers have run: with no estimate this would still be hidden at height 0, waiting for a measure.
+  expect(panel(tree)).toMatchObject({ height: 92, opacity: 1 });
+  act(() => tree.unmount());
+});
