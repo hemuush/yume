@@ -144,4 +144,25 @@ describe('report queries against a real SQLite engine', () => {
     expect(await getTodayEverydaySpend(day)).toBe(20000);
     expect(await getTodayEverydaySpend('2026-02-04')).toBe(0);
   });
+
+  it('getTodayEverydaySpend nets a refund against the day’s purchases', async () => {
+    const shop = await createCategory({ name: 'Shop', kind: 'expense' });
+    const day = '2026-02-05';
+    await createTransaction({
+      type: 'expense',
+      accountId,
+      categoryId: shop.id,
+      amountMinor: 200000,
+      date: day,
+    });
+    const back = await createTransaction({
+      type: 'income',
+      accountId,
+      categoryId: shop.id,
+      amountMinor: 50000,
+      date: day,
+    });
+    await mockTestDb.runAsync('UPDATE transactions SET is_refund = 1 WHERE id = ?', [back.id]);
+    expect(await getTodayEverydaySpend(day)).toBe(150000);
+  });
 });
