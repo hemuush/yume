@@ -5,7 +5,7 @@ import { trackedBalanceParts, type TrackedBalanceParts } from '@/db/reports';
 import { listPeople } from '@/db/people';
 import { getDefaultCurrency } from '@/db/settings';
 import { keepFieldsIfEqual, reuseUnchanged } from '@/lib/stableData';
-import { useScreenLoad } from '@/lib/useScreenLoad';
+import { useScreenLoad } from '@/hooks/useScreenLoad';
 import type { Account } from '@/types';
 
 interface YouData {

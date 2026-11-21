@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { getLoanProgress, listLoans, type LoanProgress } from '@/db/loans';
 import { toLocalIsoDate } from '@/lib/date';
 import { keepEntriesIfEqual, reuseUnchanged } from '@/lib/stableData';
-import { useScreenLoad } from '@/lib/useScreenLoad';
+import { useScreenLoad } from '@/hooks/useScreenLoad';
 import type { Loan } from '@/types';
 
 interface LoansData {

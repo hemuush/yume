@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { CategoryGlyph } from '@/components/CategoryGlyph';
 import { Text } from '@/components/Text';
 import { withPressed } from '@/lib/pressed';
-import { useStacked } from '@/lib/useStacked';
+import { useStacked } from '@/hooks/useStacked';
 import { themedStyles } from '@/theme/themedStyles';
 import { formatMaskableMoney, formatMoney } from '@/lib/money';
 import { weekdayDayMonth } from '@/lib/dateLabels';

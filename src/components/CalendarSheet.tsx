@@ -6,7 +6,7 @@ import { ModalSheet } from '@/components/ModalSheet';
 import { theme } from '@/constants/theme';
 import { themeInk } from '@/theme/interactionColors';
 import { useAccent } from '@/theme/AccentContext';
-import { usePressScale } from '@/lib/usePressScale';
+import { usePressScale } from '@/hooks/usePressScale';
 import { haptics } from '@/lib/haptics';
 import { gridRows } from '@/lib/gridRows';
 import { parseLocalIsoDate, toLocalIsoDate, addMonthsToIsoDate, addDaysToIsoDate } from '@/lib/date';

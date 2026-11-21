@@ -11,7 +11,7 @@ jest.setTimeout(90000);
 let mockDb: AsyncDb;
 jest.mock('@/db/client', () => ({ getDb: async () => mockDb }));
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
-jest.mock('@/lib/useReduceMotion', () => ({ useReduceMotion: () => true }));
+jest.mock('@/hooks/useReduceMotion', () => ({ useReduceMotion: () => true }));
 jest.mock('@/components/AppHeader', () => ({ HeaderUserButton: () => null, HeaderIconButton: () => null }));
 jest.mock('@/components/CountUpAmount', () => ({ CountUpAmount: () => null }));
 // Every focus effect the page has registered; "showing the screen again" runs them and keeps what they return to undo.

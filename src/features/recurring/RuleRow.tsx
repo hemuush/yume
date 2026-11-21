@@ -14,7 +14,7 @@ import { withPressed } from '@/lib/pressed';
 import { weekdayDayMonthMaybeYear } from '@/lib/dateLabels';
 import { joinSub } from '@/lib/categoryLabel';
 import { gluePiece, noBreak } from '@/lib/keepTogether';
-import { useStacked } from '@/lib/useStacked';
+import { useStacked } from '@/hooks/useStacked';
 
 /**
  * One rule in the Running or Paused card: category icon, what and when, amount, and a pause switch. Tapping

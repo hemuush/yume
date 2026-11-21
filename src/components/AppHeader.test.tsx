@@ -8,7 +8,7 @@ jest.mock('@/db/settings', () => ({ getCachedUserName: jest.fn(), getUserName: j
 jest.mock('expo-router', () => ({
   useFocusEffect: (callback: () => void) => require('react').useEffect(callback, [callback]),
 }));
-jest.mock('@/lib/useReturnOrPush', () => ({ useReturnOrPush: () => jest.fn() }));
+jest.mock('@/hooks/useReturnOrPush', () => ({ useReturnOrPush: () => jest.fn() }));
 jest.mock('@/theme/AccentContext', () => ({ useAccent: () => ({ accent: '#8FCBFF', onAccent: '#12130F' }) }));
 jest.mock('@/theme/PrivacyContext', () => ({
   usePrivacy: () => ({ hideAmounts: false, toggleHideAmounts: jest.fn() }),

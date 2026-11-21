@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { listPeople, type PersonWithBalance } from '@/db/people';
 import { reuseUnchanged } from '@/lib/stableData';
-import { useScreenLoad } from '@/lib/useScreenLoad';
+import { useScreenLoad } from '@/hooks/useScreenLoad';
 
 const NONE: PersonWithBalance[] = [];
 

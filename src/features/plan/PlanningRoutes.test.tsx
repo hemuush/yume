@@ -4,7 +4,7 @@ jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMoc
 jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
 }));
-jest.mock('@/lib/useCollapsingHeader', () => ({
+jest.mock('@/hooks/useCollapsingHeader', () => ({
   useCollapsingHeader: () => ({ headerHeight: 0, collapse: 0, scrollHandler: jest.fn(), scrollRef: null }),
 }));
 jest.mock('@/features/budgets/useToday', () => ({ useToday: () => '2026-10-21' }));
@@ -16,7 +16,7 @@ jest.mock('@/components/Glass', () => ({
   Glass: ({ children }: any) => children,
 }));
 jest.mock('@/components/UndoToast', () => ({ useUndoToast: () => ({ show: jest.fn() }) }));
-jest.mock('@/lib/useScreenLoad', () => ({
+jest.mock('@/hooks/useScreenLoad', () => ({
   useScreenLoad: (load: () => Promise<void>) => {
     require('react').useEffect(() => {
       void load();

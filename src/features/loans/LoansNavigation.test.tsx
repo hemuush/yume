@@ -25,7 +25,7 @@ jest.mock('expo-router', () => ({
   useLocalSearchParams: () => mockParams,
 }));
 jest.mock('@/db/loans', () => ({ listLoans: () => mockListLoans(), getLoanProgress: async () => [] }));
-jest.mock('@/lib/useScreenLoad', () => ({
+jest.mock('@/hooks/useScreenLoad', () => ({
   useScreenLoad: (load: () => Promise<void>) => {
     const React = require('react');
     const [loaded, setLoaded] = React.useState(false);
@@ -36,7 +36,7 @@ jest.mock('@/lib/useScreenLoad', () => ({
   },
 }));
 jest.mock('@/components/AppDialog', () => ({ showAlert: (...args: unknown[]) => mockAlert(...args) }));
-jest.mock('@/lib/useCollapsingHeader', () => ({ useCollapsingHeader: () => ({ headerHeight: 100 }) }));
+jest.mock('@/hooks/useCollapsingHeader', () => ({ useCollapsingHeader: () => ({ headerHeight: 100 }) }));
 jest.mock('@/features/home/SkyHeader', () => ({ SkyHeader: () => null, HeaderSummary: () => null }));
 jest.mock('@/features/home/HomeWallpaper', () => ({ HomeWallpaper: () => null }));
 jest.mock('@/features/loans/LoansHero', () => ({ LoansHero: () => null }));

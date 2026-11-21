@@ -2,7 +2,7 @@ import { Animated, Pressable, StyleSheet, View } from 'react-native';
 import { CategoryGlyph } from '@/components/CategoryGlyph';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
-import { usePressScale } from '@/lib/usePressScale';
+import { usePressScale } from '@/hooks/usePressScale';
 import { softTint } from '@/components/softTint';
 import { useAccent } from '@/theme/AccentContext';
 import { themedStyles } from '@/theme/themedStyles';

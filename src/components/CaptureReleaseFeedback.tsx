@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { showAlert } from '@/components/AppDialog';
-import type { ScreenCaptureProtection } from '@/lib/useScreenCaptureProtection';
+import type { ScreenCaptureProtection } from '@/hooks/useScreenCaptureProtection';
 
 /** Reports release failures only beside the unlocked dialog host, without claiming screenshots are enabled. */
 export function CaptureReleaseFeedback({ protection }: { protection: ScreenCaptureProtection }): null {

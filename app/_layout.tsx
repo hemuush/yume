@@ -18,7 +18,7 @@ import { Fredoka_600SemiBold } from '@expo-google-fonts/fredoka/600SemiBold';
 import { getDb } from '@/db/client';
 import { DURATIONS } from '@/lib/motionTimings';
 import { shouldRelock } from '@/lib/appLock';
-import { useScreenCaptureProtection } from '@/lib/useScreenCaptureProtection';
+import { useScreenCaptureProtection } from '@/hooks/useScreenCaptureProtection';
 import { CaptureProtectionScreen } from '@/components/CaptureProtectionScreen';
 import { CaptureReleaseFeedback } from '@/components/CaptureReleaseFeedback';
 import { AppLockSaveFeedback } from '@/components/AppLockSaveFeedback';

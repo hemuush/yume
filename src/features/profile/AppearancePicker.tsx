@@ -5,7 +5,7 @@ import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { CONTENT_ENTER } from '@/lib/animation';
 import { haptics } from '@/lib/haptics';
-import { usePressScale } from '@/lib/usePressScale';
+import { usePressScale } from '@/hooks/usePressScale';
 import { PALETTES, type Palette } from '@/theme/palette';
 import type { AppearancePreference } from '@/theme/scheme';
 import { themedStyles } from '@/theme/themedStyles';

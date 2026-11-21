@@ -3,7 +3,7 @@ import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
 import { pushOnce } from '@/lib/pushOnce';
 import { theme } from '@/constants/theme';
-import { usePressScale } from '@/lib/usePressScale';
+import { usePressScale } from '@/hooks/usePressScale';
 import { haptics } from '@/lib/haptics';
 import { themedStyles } from '@/theme/themedStyles';
 

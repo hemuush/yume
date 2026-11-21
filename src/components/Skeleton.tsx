@@ -10,7 +10,7 @@ import ReanimatedAnimated, {
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { theme } from '@/constants/theme';
-import { useReduceMotion } from '@/lib/useReduceMotion';
+import { useReduceMotion } from '@/hooks/useReduceMotion';
 
 interface Props {
   /** Pixel width — needs to be a real number (not a percentage string) so the shimmer sweep's own travel distance can be computed from it. */

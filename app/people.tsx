@@ -11,7 +11,7 @@ import { theme, flatPalette } from '@/constants/theme';
 import { stableIndexFromId } from '@/lib/color';
 import { SkyHeader, HeaderSummary } from '@/features/home/SkyHeader';
 import ReanimatedAnimated from 'react-native-reanimated';
-import { useCollapsingHeader } from '@/lib/useCollapsingHeader';
+import { useCollapsingHeader } from '@/hooks/useCollapsingHeader';
 import { AddButton } from '@/components/AddButton';
 import { EmptyState } from '@/components/EmptyState';
 import { Skeleton } from '@/components/Skeleton';

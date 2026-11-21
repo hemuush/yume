@@ -13,7 +13,7 @@ jest.mock('react-native-reanimated', () => ({
     return target;
   },
 }));
-jest.mock('@/lib/useReduceMotion', () => ({ useReduceMotion: () => mockReduce }));
+jest.mock('@/hooks/useReduceMotion', () => ({ useReduceMotion: () => mockReduce }));
 jest.mock('@expo/vector-icons/Feather', () => () => null);
 jest.mock('@expo/vector-icons/MaterialCommunityIcons', () => () => null);
 jest.mock('@/lib/haptics', () => ({ haptics: { tap: jest.fn() } }));
@@ -25,7 +25,7 @@ jest.mock('./HeroActions', () => ({ HeroActions: () => null }));
 
 import { CountUpAmount } from '@/components/CountUpAmount';
 import { ThisMonthHero } from './ThisMonthHero';
-import { usePressScale } from '@/lib/usePressScale';
+import { usePressScale } from '@/hooks/usePressScale';
 import { SpendBars } from './SpendBars';
 
 const text = (r: ReactTestRenderer) =>

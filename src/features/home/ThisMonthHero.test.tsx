@@ -29,7 +29,7 @@ jest.mock('@expo/vector-icons/Feather', () => () => null);
 jest.mock('@expo/vector-icons/MaterialCommunityIcons', () => () => null);
 
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
-jest.mock('@/lib/useReduceMotion', () => ({ useReduceMotion: () => true }));
+jest.mock('@/hooks/useReduceMotion', () => ({ useReduceMotion: () => true }));
 jest.mock('@/lib/haptics', () => ({ haptics: { tap: jest.fn() } }));
 let mockHideAmounts = false;
 jest.mock('@/theme/PrivacyContext', () => ({
@@ -693,7 +693,7 @@ describe('the allocation breakdown', () => {
   it('lets a big figure shrink to fit its half of the legend rather than being cut off', () =>
     withScreen({ width: 412, fontScale: 1 }, () => {
       // The shared Text only shrinks a figure at normal text sizes (above 130% it wraps instead).
-      const scale = jest.spyOn(require('@/lib/useFontScale'), 'useFontScale').mockReturnValue(1);
+      const scale = jest.spyOn(require('@/hooks/useFontScale'), 'useFontScale').mockReturnValue(1);
       const r = render({ dueMinor: 10_000, spentMinor: 123_456_789_00, incomeMinor: 200_000_000_00 });
       const amount = r.root
         .findAllByType(Text)

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useSharedValue, useAnimatedStyle, withTiming, cancelAnimation } from 'react-native-reanimated';
-import { useReduceMotion } from '@/lib/useReduceMotion';
+import { useReduceMotion } from '@/hooks/useReduceMotion';
 import { DURATIONS } from '@/lib/motionTimings';
 import { timing } from '@/lib/animation';
 

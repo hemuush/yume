@@ -7,7 +7,7 @@ import { styles } from './transactions.styles';
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
 
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
-jest.mock('@/lib/useReduceMotion', () => ({ useReduceMotion: () => true }));
+jest.mock('@/hooks/useReduceMotion', () => ({ useReduceMotion: () => true }));
 jest.mock('@/components/CountUpAmount', () => ({ CountUpAmount: () => null }));
 jest.mock('./SpendBarChart', () => ({
   ...jest.requireActual('./SpendBarChart'),

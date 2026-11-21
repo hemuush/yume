@@ -17,7 +17,7 @@ jest.mock('@/components/AppHeader', () => ({
   HeaderIconButton: () => null,
   HeaderUserButton: () => null,
 }));
-jest.mock('@/lib/useReduceMotion', () => ({ useReduceMotion: () => true }));
+jest.mock('@/hooks/useReduceMotion', () => ({ useReduceMotion: () => true }));
 jest.mock('@/components/CountUpAmount', () => ({ CountUpAmount: () => null }));
 let mockParams: Record<string, string> = {};
 jest.mock('expo-router', () => ({

@@ -4,7 +4,7 @@ import { Animated, StyleSheet, View } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { Text } from './Text';
 import { theme } from '@/constants/theme';
-import { useReduceMotion } from '@/lib/useReduceMotion';
+import { useReduceMotion } from '@/hooks/useReduceMotion';
 import { themedStyles } from '@/theme/themedStyles';
 import { flatSection } from '@/components/screenStyles';
 

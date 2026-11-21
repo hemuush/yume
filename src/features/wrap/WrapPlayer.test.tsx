@@ -7,7 +7,7 @@ import { Text, AppState } from 'react-native';
 
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
 const mockReduce = { current: false };
-jest.mock('@/lib/useReduceMotion', () => ({ useReduceMotion: () => mockReduce.current }));
+jest.mock('@/hooks/useReduceMotion', () => ({ useReduceMotion: () => mockReduce.current }));
 jest.mock('@/lib/haptics', () => ({ haptics: { tap: jest.fn(), confirm: jest.fn(), warn: jest.fn() } }));
 jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),

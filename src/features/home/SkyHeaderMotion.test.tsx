@@ -17,13 +17,13 @@ jest.mock('react-native-reanimated', () => ({
   },
   scrollTo: (...args: unknown[]) => mockScroll(...args),
 }));
-jest.mock('@/lib/useReduceMotion', () => ({ useReduceMotion: () => mockReduce }));
+jest.mock('@/hooks/useReduceMotion', () => ({ useReduceMotion: () => mockReduce }));
 jest.mock('react-native-safe-area-context', () => ({ useSafeAreaInsets: () => ({ top: 0, bottom: 0 }) }));
 jest.mock('@/components/AppHeader', () => ({ HeaderUserButton: () => null }));
 jest.mock('@/features/home/SkyBackdrop', () => ({ SkyBackdrop: () => null }));
 
 import { SkyHeader } from './SkyHeader';
-import { useCollapsingHeader } from '@/lib/useCollapsingHeader';
+import { useCollapsingHeader } from '@/hooks/useCollapsingHeader';
 
 it('keeps invisible period controls out of touch/focus and avoids compact-chip flicker', () => {
   const scrollY = { value: 0 };

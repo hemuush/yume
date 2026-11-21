@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { cancelAnimation, SharedValue, useSharedValue, withTiming } from 'react-native-reanimated';
-import { timing } from './animation';
-import { DURATIONS } from './motionTimings';
+import { timing } from '@/lib/animation';
+import { DURATIONS } from '@/lib/motionTimings';
 import { useReduceMotion } from './useReduceMotion';
 
 /** The last value each mark showed while the app has been open (module state: it outlives the screen). */

@@ -16,7 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
-import { useReduceMotion } from '@/lib/useReduceMotion';
+import { useReduceMotion } from '@/hooks/useReduceMotion';
 import { haptics } from '@/lib/haptics';
 import { withPressed } from '@/lib/pressed';
 import { useAccent } from '@/theme/AccentContext';

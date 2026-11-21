@@ -25,7 +25,7 @@ jest.mock('@/db/savingsGoals', () => ({
 jest.mock('@/components/UndoToast', () => ({ useUndoToast: () => ({ show: mockShowUndo }) }));
 jest.mock('@/components/AppDialog', () => ({ showAlert: (...a: unknown[]) => mockAlert(...a) }));
 jest.mock('@/lib/haptics', () => ({ haptics: { tap: jest.fn(), warn: jest.fn(), confirm: jest.fn() } }));
-jest.mock('@/lib/useReduceMotion', () => ({ useReduceMotion: () => true }));
+jest.mock('@/hooks/useReduceMotion', () => ({ useReduceMotion: () => true }));
 jest.mock('@/components/ModalSheet', () => ({
   ModalSheet: ({ children, footer }: { children: unknown; footer?: unknown }) =>
     require('react').createElement(require('react').Fragment, null, children, footer),

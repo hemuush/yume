@@ -13,7 +13,7 @@ import { formatMoney } from '@/lib/money';
 import { compactMoney } from '@/lib/compactMoney';
 import { haptics } from '@/lib/haptics';
 import { timing, PANEL_ENTER, ROW_EXIT } from '@/lib/animation';
-import { useReduceMotion } from '@/lib/useReduceMotion';
+import { useReduceMotion } from '@/hooks/useReduceMotion';
 import { DURATIONS } from '@/lib/motionTimings';
 import { useAccent } from '@/theme/AccentContext';
 import { hexToRgba } from '@/lib/color';

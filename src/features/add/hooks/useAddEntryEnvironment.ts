@@ -2,7 +2,7 @@ import { useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useUndoToast } from '@/components/UndoToast';
 import { useAccent } from '@/theme/AccentContext';
-import { useReduceMotion } from '@/lib/useReduceMotion';
+import { useReduceMotion } from '@/hooks/useReduceMotion';
 
 export function useAddEntryEnvironment() {
   const insets = useSafeAreaInsets();

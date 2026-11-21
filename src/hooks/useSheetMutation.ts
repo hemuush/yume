@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { errorMessage } from './errorMessage';
+import { errorMessage } from '@/lib/errorMessage';
 import { Keyboard } from 'react-native';
 
 /** One keyed sheet session: write once, distinguish refresh errors, ignore late UI callbacks. */

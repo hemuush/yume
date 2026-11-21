@@ -2,7 +2,7 @@ import { act, create } from 'react-test-renderer';
 import { Text } from 'react-native';
 
 let mockKeysDrawn = 0;
-jest.mock('@/lib/usePressScale', () => ({
+jest.mock('@/hooks/usePressScale', () => ({
   usePressScale: () => {
     mockKeysDrawn++;
     return { animatedStyle: {}, onPressIn: jest.fn(), onPressOut: jest.fn() };

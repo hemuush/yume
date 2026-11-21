@@ -10,13 +10,13 @@ jest.mock('@/components/AmountField', () => ({
   AmountPadDock: ({ children }: { children: (props: object) => unknown }) =>
     children({ onScroll: jest.fn() }),
 }));
-jest.mock('@/lib/useCollapsingHeader', () => ({ useCollapsingHeader: () => ({ headerHeight: 0 }) }));
+jest.mock('@/hooks/useCollapsingHeader', () => ({ useCollapsingHeader: () => ({ headerHeight: 0 }) }));
 jest.mock('@/features/home/SkyHeader', () => ({ SkyHeader: () => null }));
 jest.mock('@/features/home/HomeWallpaper', () => ({ HomeWallpaper: () => null }));
 jest.mock('./YouSection', () => ({ YouSection: () => null }));
 jest.mock('./SettingsSection', () => ({ SettingsSection: () => null }));
 jest.mock('expo-router', () => ({ useLocalSearchParams: () => ({}) }));
-jest.mock('@/lib/useScreenLoad', () => ({
+jest.mock('@/hooks/useScreenLoad', () => ({
   useScreenLoad: (load: () => Promise<void>) => {
     require('react').useEffect(() => {
       void load();

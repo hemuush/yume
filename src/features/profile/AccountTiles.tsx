@@ -15,7 +15,7 @@ import { usePrivacy } from '@/theme/PrivacyContext';
 import { useAccent } from '@/theme/AccentContext';
 import { screenStyles as h, SCREEN } from '@/components/screenStyles';
 import type { Account } from '@/types';
-import { useStacked } from '@/lib/useStacked';
+import { useStacked } from '@/hooks/useStacked';
 import { themedStyles } from '@/theme/themedStyles';
 
 const ACCOUNT_TYPE_LABEL: Record<Account['type'], string> = {

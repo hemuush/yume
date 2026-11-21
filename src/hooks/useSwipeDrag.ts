@@ -3,7 +3,7 @@ import { PanResponder, PanResponderInstance } from 'react-native';
 import { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import { haptics } from '@/lib/haptics';
 import { MOTION, timing } from '@/lib/animation';
-import { useReduceMotion } from '@/lib/useReduceMotion';
+import { useReduceMotion } from '@/hooks/useReduceMotion';
 
 /** How far a horizontal drag must travel before letting go steps the period. */
 const SWIPE_STEP_PX = 60;

@@ -1,7 +1,7 @@
 import { View } from 'react-native';
 import { Skeleton } from '@/components/Skeleton';
 import { useContentWidth } from '@/components/ColumnFrame';
-import { useStacked } from '@/lib/useStacked';
+import { useStacked } from '@/hooks/useStacked';
 import { styles as hero } from './hero.styles';
 
 export { CardRowsSkeleton } from '@/components/ListSkeleton';

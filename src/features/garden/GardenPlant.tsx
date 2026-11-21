@@ -3,7 +3,7 @@ import { Animated, Easing } from 'react-native';
 import Svg, { Circle, Ellipse, Rect, G } from 'react-native-svg';
 import { theme } from '@/constants/theme';
 import { DURATIONS } from '@/lib/motionTimings';
-import { useReduceMotion } from '@/lib/useReduceMotion';
+import { useReduceMotion } from '@/hooks/useReduceMotion';
 import { stageLabel, type GrowthStage } from '@/lib/gardenGrowth';
 
 const STAGES: GrowthStage[] = ['seed', 'sprout', 'sapling', 'bloom'];

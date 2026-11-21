@@ -3,7 +3,7 @@ import { act } from 'react-test-renderer';
 import { renderHook } from '@/test-support/renderHook';
 
 const mockReduce = jest.fn(() => false);
-jest.mock('@/lib/useReduceMotion', () => ({ useReduceMotion: () => mockReduce() }));
+jest.mock('@/hooks/useReduceMotion', () => ({ useReduceMotion: () => mockReduce() }));
 
 import { useDayJump } from './useDayJump';
 

@@ -4,7 +4,7 @@ import type { Category } from '@/types';
 
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
 jest.mock('react-native-safe-area-context', () => ({ useSafeAreaInsets: () => ({ top: 0, bottom: 0 }) }));
-jest.mock('@/lib/useCollapsingHeader', () => ({
+jest.mock('@/hooks/useCollapsingHeader', () => ({
   useCollapsingHeader: () => ({ headerHeight: 0, scrollRef: require('react').useRef(null) }),
 }));
 jest.mock('@/components/UndoToast', () => ({ useUndoToast: () => ({ show: jest.fn() }) }));
@@ -15,7 +15,7 @@ jest.mock('@/features/home/SkyHeader', () => ({
 jest.mock('@/features/home/HomeWallpaper', () => ({ HomeWallpaper: () => null }));
 jest.mock('@/components/ActionSheet', () => ({ ActionSheet: () => null }));
 jest.mock('@/features/categories/AddCategoryModal', () => ({ AddCategoryModal: () => null }));
-jest.mock('@/lib/useScreenLoad', () => ({
+jest.mock('@/hooks/useScreenLoad', () => ({
   useScreenLoad: (load: () => Promise<void>) => {
     require('react').useEffect(() => {
       void load();

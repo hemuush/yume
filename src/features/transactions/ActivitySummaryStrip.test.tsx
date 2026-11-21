@@ -6,7 +6,7 @@ import { summaryInk } from '@/components/SummaryGradient';
 import { formatMoney } from '@/lib/money';
 
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
-jest.mock('@/lib/useReduceMotion', () => ({ useReduceMotion: () => true }));
+jest.mock('@/hooks/useReduceMotion', () => ({ useReduceMotion: () => true }));
 jest.mock('@/components/CountUpAmount', () => ({
   CountUpAmount: ({ minor }: { minor: number }) => {
     const { Text: T } = require('react-native');

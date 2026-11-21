@@ -14,7 +14,7 @@ jest.mock('expo-router', () => {
 });
 jest.mock('@/components/PillTabBar', () => ({ PillTabBar: () => null }));
 jest.mock('@/features/home/RepeatEntrySheet', () => ({ RepeatEntrySheet: () => null }));
-jest.mock('@/lib/useReduceMotion', () => ({ useReduceMotion: () => false }));
+jest.mock('@/hooks/useReduceMotion', () => ({ useReduceMotion: () => false }));
 
 import TabsLayout from '../../app/(tabs)/_layout';
 import { applyScheme } from '@/theme/scheme';

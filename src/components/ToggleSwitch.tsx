@@ -5,7 +5,7 @@ import { useAccent } from '@/theme/AccentContext';
 import { themeInk } from '@/theme/interactionColors';
 import { haptics } from '@/lib/haptics';
 import { DURATIONS, EASE_OUT } from '@/lib/motionTimings';
-import { useReduceMotion } from '@/lib/useReduceMotion';
+import { useReduceMotion } from '@/hooks/useReduceMotion';
 import { themedStyles } from '@/theme/themedStyles';
 
 interface Props {

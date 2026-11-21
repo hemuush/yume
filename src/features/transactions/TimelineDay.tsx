@@ -28,7 +28,7 @@ import { isSavingsEntry } from '@/lib/privateSummary';
 import { DraggableLine } from './DraggableLine';
 import { withPressedTint } from '@/lib/pressed';
 import { categoryPath, categorySpoken, joinSub, parentNameOf } from '@/lib/categoryLabel';
-import { useStacked } from '@/lib/useStacked';
+import { useStacked } from '@/hooks/useStacked';
 
 const NO_ACCOUNTS: ReadonlySet<string> = new Set();
 const NO_NOTES: ValueNote[] = [];

@@ -29,13 +29,13 @@ import { haptics } from '@/lib/haptics';
 import { PersonHistory } from './PersonHistory';
 import { SettleForm } from './SettleForm';
 import { createSettleForm } from './settleFormStore';
-import { useStableCallback } from '@/lib/useStableCallback';
+import { useStableCallback } from '@/hooks/useStableCallback';
 import { styles } from './people.styles';
 import { errorMessage } from '@/lib/errorMessage';
 import { withPressed } from '@/lib/pressed';
 import { showAlert } from '@/components/AppDialog';
 import { useAccent } from '@/theme/AccentContext';
-import { useStacked } from '@/lib/useStacked';
+import { useStacked } from '@/hooks/useStacked';
 
 /** One person: their live balance, linked loans, a form to record money either way, and history. */
 export function PersonDetailModal({

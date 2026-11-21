@@ -9,10 +9,10 @@ import { GLASS } from '@/components/Glass';
 import { themeInk } from '@/theme/interactionColors';
 import { useAccent } from '@/theme/AccentContext';
 import { usePrivacy } from '@/theme/PrivacyContext';
-import { usePressScale } from '@/lib/usePressScale';
+import { usePressScale } from '@/hooks/usePressScale';
 import { getCachedUserName, getUserName } from '@/db/settings';
 import { onSettingsRestored } from '@/lib/dataEvents';
-import { useReturnOrPush } from '@/lib/useReturnOrPush';
+import { useReturnOrPush } from '@/hooks/useReturnOrPush';
 import { themedStyles } from '@/theme/themedStyles';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);

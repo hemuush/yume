@@ -5,8 +5,8 @@ import { archiveCategory, deleteCategory, restoreCategory, unarchiveCategory } f
 import { errorMessage } from '@/lib/errorMessage';
 import { haptics } from '@/lib/haptics';
 import { showPrivacyReminderWarning } from '@/lib/privacyReminderFeedback';
-import { useSaveOnce } from '@/lib/useSaveOnce';
-import { useStableCallback } from '@/lib/useStableCallback';
+import { useSaveOnce } from '@/hooks/useSaveOnce';
+import { useStableCallback } from '@/hooks/useStableCallback';
 import type { Category } from '@/types';
 import type { CategoriesSheets } from './categoriesSheetsStore';
 

@@ -160,7 +160,7 @@ describe('entry detail', () => {
     [1, 96],
     [2, '100%'],
   ])('lays Log today, Recurring and Refund out at text scale %s with a basis of %s', async (scale, basis) => {
-    const spy = jest.spyOn(require('@/lib/useFontScale'), 'useFontScale').mockReturnValue(scale);
+    const spy = jest.spyOn(require('@/hooks/useFontScale'), 'useFontScale').mockReturnValue(scale);
     const tree = await render();
     const style = rows(tree, 'Log again today')[0].props.style;
     const flat = StyleSheet.flatten(typeof style === 'function' ? style({ pressed: false }) : style);

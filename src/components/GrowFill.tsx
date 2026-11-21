@@ -1,6 +1,6 @@
 import { StyleProp, ViewStyle } from 'react-native';
 import Animated, { useAnimatedStyle } from 'react-native-reanimated';
-import { useDrawnValue } from '@/lib/useDrawnValue';
+import { useDrawnValue } from '@/hooks/useDrawnValue';
 
 /**
  * A bar fill whose width grows on the UI thread: drawn in once after app open,

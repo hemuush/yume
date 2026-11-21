@@ -1,7 +1,7 @@
 import { View, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
-import { useStacked } from '@/lib/useStacked';
+import { useStacked } from '@/hooks/useStacked';
 import { themedStyles } from '@/theme/themedStyles';
 
 interface LoanStat {

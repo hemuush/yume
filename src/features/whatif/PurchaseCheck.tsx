@@ -10,7 +10,7 @@ import { listAccounts } from '@/db/accounts';
 import { estimatePurchase } from '@/db/purchaseAffordability';
 import { Account } from '@/types';
 import { router, useFocusEffect } from 'expo-router';
-import { useSaveOnce } from '@/lib/useSaveOnce';
+import { useSaveOnce } from '@/hooks/useSaveOnce';
 import { errorMessage } from '@/lib/errorMessage';
 import { toMinor, formatMaskableMoney } from '@/lib/money';
 import { toLocalIsoDate, addDaysToIsoDate } from '@/lib/date';

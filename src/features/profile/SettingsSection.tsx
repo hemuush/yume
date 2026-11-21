@@ -32,9 +32,9 @@ import { AppearancePicker } from './AppearancePicker';
 import { CurrencySetting } from './CurrencySetting';
 import { DailyGoalSetting } from './DailyGoalSetting';
 import { WidgetPrivacyRow } from './WidgetPrivacyRow';
-import { useStableCallback } from '@/lib/useStableCallback';
+import { useStableCallback } from '@/hooks/useStableCallback';
 import { showAlert } from '@/components/AppDialog';
-import { useStacked } from '@/lib/useStacked';
+import { useStacked } from '@/hooks/useStacked';
 
 /** "today" / "yesterday" / "N days ago" — deliberately coarse, no hours/minutes. */
 export function daysAgoLabel(iso: string, now: Date = new Date()): string {

@@ -19,7 +19,7 @@ import { normalizeCategoryIcon } from '@/lib/categoryIcon';
 import { styles } from './categories.styles';
 import { errorMessage } from '@/lib/errorMessage';
 import { withPressed } from '@/lib/pressed';
-import { useSaveOnce } from '@/lib/useSaveOnce';
+import { useSaveOnce } from '@/hooks/useSaveOnce';
 import { showPrivacyReminderWarning } from '@/lib/privacyReminderFeedback';
 import { softTint } from '@/components/softTint';
 

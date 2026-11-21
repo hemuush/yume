@@ -9,7 +9,7 @@ import { getDailyGoalStreakSeries, DailyGoalStreakPoint, getTodaySpend } from '@
 import { stageForStreak, stageLabel, GrowthStage } from '@/lib/gardenGrowth';
 import { parseLocalIsoDate, toLocalIsoDate } from '@/lib/date';
 import { SkyHeader, HeaderSummary } from '@/features/home/SkyHeader';
-import { useCollapsingHeader } from '@/lib/useCollapsingHeader';
+import { useCollapsingHeader } from '@/hooks/useCollapsingHeader';
 import { EmptyState } from '@/components/EmptyState';
 import { Skeleton } from '@/components/Skeleton';
 import { SuuIllustration } from '@/components/SuuIllustration';
@@ -19,7 +19,7 @@ import { GardenMonthCard } from '@/features/garden/GardenMonthCard';
 import { buildGardenMonth } from '@/features/garden/gardenMonth';
 import { GardenPlant } from '@/features/garden/GardenPlant';
 import { theme } from '@/constants/theme';
-import { useScreenLoad } from '@/lib/useScreenLoad';
+import { useScreenLoad } from '@/hooks/useScreenLoad';
 import { AmountField, AmountPadDock } from '@/components/AmountField';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { toMinor, formatMoney } from '@/lib/money';

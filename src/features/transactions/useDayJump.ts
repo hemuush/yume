@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react';
 import type { FlatListInstance } from 'react-native';
 import { addDaysToIsoDate } from '@/lib/date';
-import { useReduceMotion } from '@/lib/useReduceMotion';
+import { useReduceMotion } from '@/hooks/useReduceMotion';
 
 /**
  * Jumping the Activity list to a day (a tap on a chart bar). Days differ in height (line count, open groups), which

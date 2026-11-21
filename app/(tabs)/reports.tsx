@@ -10,7 +10,7 @@ import { TAB_ENTER } from '@/lib/animation';
 import { isIsoDate, toLocalIsoDate } from '@/lib/date';
 import { CURRENT_PERIOD, isCustomWindow, windowRange, type ReportWindow } from '@/lib/period';
 import { useTabScrollPad } from '@/lib/uiScale';
-import { useTabScrollToTop } from '@/lib/useTabScrollToTop';
+import { useTabScrollToTop } from '@/hooks/useTabScrollToTop';
 import { useAccent } from '@/theme/AccentContext';
 import { HomeWallpaper } from '@/features/home/HomeWallpaper';
 import { BreakdownTab } from '@/features/reports/BreakdownTab';

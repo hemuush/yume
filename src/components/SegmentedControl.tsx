@@ -3,10 +3,10 @@ import { View, Pressable, Animated, StyleSheet, LayoutChangeEvent, useWindowDime
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { haptics } from '@/lib/haptics';
-import { usePressScale } from '@/lib/usePressScale';
+import { usePressScale } from '@/hooks/usePressScale';
 import { withPressedTint } from '@/lib/pressed';
 import { tooTight } from '@/lib/tooTight';
-import { useReduceMotion } from '@/lib/useReduceMotion';
+import { useReduceMotion } from '@/hooks/useReduceMotion';
 import { DURATIONS, EASE_OUT } from '@/lib/motionTimings';
 
 import { useAccent } from '@/theme/AccentContext';

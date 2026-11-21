@@ -16,10 +16,10 @@ import { getNotificationPrefs, getCachedHideSensitiveAmounts } from '@/db/settin
 import { privateComparison } from '@/lib/privateSummary';
 import { formatPctChange } from '@/lib/format';
 import { haptics } from '@/lib/haptics';
-import { useScreenLoad } from '@/lib/useScreenLoad';
+import { useScreenLoad } from '@/hooks/useScreenLoad';
 import { SkyHeader, HeaderSummary } from '@/features/home/SkyHeader';
 import ReanimatedAnimated from 'react-native-reanimated';
-import { useCollapsingHeader } from '@/lib/useCollapsingHeader';
+import { useCollapsingHeader } from '@/hooks/useCollapsingHeader';
 import { EmptyState } from '@/components/EmptyState';
 import { CardRowsSkeleton } from '@/components/ListSkeleton';
 import { useUndoToast } from '@/components/UndoToast';

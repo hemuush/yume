@@ -8,7 +8,7 @@ import { haptics } from '@/lib/haptics';
 import { withPressed } from '@/lib/pressed';
 import { BIG_DAY_FACTOR, HeatDay, HeatModel, heatDayLabel } from './reportsInsights';
 import { HeatmapDayPicker } from './HeatmapDayPicker';
-import { useFontScale } from '@/lib/useFontScale';
+import { useFontScale } from '@/hooks/useFontScale';
 import { themedStyles } from '@/theme/themedStyles';
 
 const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];

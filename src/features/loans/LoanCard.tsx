@@ -7,7 +7,7 @@ import { weekdayDayMonthMaybeYear } from '@/lib/dateLabels';
 import { payoffFraction } from '@/lib/loan';
 import { roundedMinor } from '@/lib/round';
 import { Loan } from '@/types';
-import { usePressScale } from '@/lib/usePressScale';
+import { usePressScale } from '@/hooks/usePressScale';
 import { GrowFill } from '@/components/GrowFill';
 import { CountUpAmount } from '@/components/CountUpAmount';
 import type { McIconName } from '@/components/iconName';

@@ -3,7 +3,7 @@ import { Pressable, Animated, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
 import Feather from '@expo/vector-icons/Feather';
 import { theme } from '@/constants/theme';
-import { usePressScale } from '@/lib/usePressScale';
+import { usePressScale } from '@/hooks/usePressScale';
 import { PeriodPicker } from '@/components/PeriodPicker';
 import { PeriodCursor, periodLabel, periodRange, periodShortLabel } from '@/lib/period';
 import { themedStyles } from '@/theme/themedStyles';

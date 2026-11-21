@@ -9,7 +9,7 @@ import { listRecurringRules } from '@/db/recurring';
 import { listSavingsGoals } from '@/db/savingsGoals';
 import { getDailySpendingGoal, getDefaultCurrency } from '@/db/settings';
 import { keepFieldsIfEqual } from '@/lib/stableData';
-import { useScreenLoad } from '@/lib/useScreenLoad';
+import { useScreenLoad } from '@/hooks/useScreenLoad';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import { buildPlanData, planWindow, type PlanData } from './planData';
 

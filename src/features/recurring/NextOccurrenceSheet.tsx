@@ -12,7 +12,7 @@ import { toLocalIsoDate } from '@/lib/date';
 import { inputMinor } from '@/lib/money';
 import { errorMessage } from '@/lib/errorMessage';
 import { styles } from './recurring.styles';
-import { useSaveOnce } from '@/lib/useSaveOnce';
+import { useSaveOnce } from '@/hooks/useSaveOnce';
 
 export function NextOccurrenceSheet({
   rule,

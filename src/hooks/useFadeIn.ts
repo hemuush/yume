@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Animated } from 'react-native';
-import { DURATIONS, EASE_OUT } from './motionTimings';
+import { DURATIONS, EASE_OUT } from '@/lib/motionTimings';
 import { useReduceMotion } from './useReduceMotion';
 
 /**

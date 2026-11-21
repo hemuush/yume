@@ -11,7 +11,7 @@ import { useAccent } from '@/theme/AccentContext';
 import { themeInk } from '@/theme/interactionColors';
 import { DueGroup, PlanDueItem, PlanRoute, dueTone } from './planOverview';
 import { themedStyles } from '@/theme/themedStyles';
-import { useStacked } from '@/lib/useStacked';
+import { useStacked } from '@/hooks/useStacked';
 
 const KIND_LABEL: Record<PlanDueItem['kind'], string> = {
   emi: 'EMI',

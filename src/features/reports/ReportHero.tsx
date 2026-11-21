@@ -7,7 +7,7 @@ import { formatMoney } from '@/lib/money';
 import { roundedMinor } from '@/lib/round';
 import { SummaryGradient, summaryInk } from '@/components/SummaryGradient';
 import type { BudgetCover } from './reportsInsights';
-import { useStacked } from '@/lib/useStacked';
+import { useStacked } from '@/hooks/useStacked';
 import { themedStyles } from '@/theme/themedStyles';
 
 const money = (minor: number) => formatMoney(roundedMinor(minor));

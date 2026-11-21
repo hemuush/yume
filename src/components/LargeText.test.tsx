@@ -14,7 +14,7 @@ jest.mock('./icons/TabIcons', () => ({
   ReportsIcon: () => null,
 }));
 jest.mock('@/theme/AccentContext', () => ({ useAccent: () => ({ accent: '#8FCBFF' }) }));
-jest.mock('@/lib/usePressScale', () => ({
+jest.mock('@/hooks/usePressScale', () => ({
   usePressScale: () => ({ animatedStyle: {}, onPressIn: jest.fn(), onPressOut: jest.fn() }),
 }));
 

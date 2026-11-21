@@ -16,7 +16,7 @@ import { dayMonthYear, weekdayDayMonthMaybeYear } from '@/lib/dateLabels';
 import { styles } from './loans.styles';
 import { errorMessage } from '@/lib/errorMessage';
 import { showAlert } from '@/components/AppDialog';
-import { useReduceMotion } from '@/lib/useReduceMotion';
+import { useReduceMotion } from '@/hooks/useReduceMotion';
 import { noBreak } from '@/lib/keepTogether';
 
 /**

@@ -23,7 +23,7 @@ jest.mock('@/db/ledger', () => ({
   listCategories: async () => [{ id: 'food', name: 'Food' }],
   listAccounts: async () => JSON.parse(JSON.stringify(mockAccounts)),
 }));
-jest.mock('@/lib/useScreenLoad', () => ({
+jest.mock('@/hooks/useScreenLoad', () => ({
   useScreenLoad: (load: () => Promise<void>) => {
     const React = require('react');
     const [loaded, setLoaded] = React.useState(false);

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { EASE_OUT } from '@/lib/motionTimings';
 import { Animated, StyleSheet } from 'react-native';
 import { SuuIllustration } from '@/components/SuuIllustration';
-import { useReduceMotion } from '@/lib/useReduceMotion';
+import { useReduceMotion } from '@/hooks/useReduceMotion';
 import { themedStyles } from '@/theme/themedStyles';
 
 /**

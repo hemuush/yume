@@ -5,7 +5,7 @@ import { formatMoney } from '@/lib/money';
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { LimitMeter, LimitMeterTone } from '@/components/LimitMeter';
 import { budgetPace, BUDGET_PACE_LABEL } from '@/lib/pace';
-import { usePressScale } from '@/lib/usePressScale';
+import { usePressScale } from '@/hooks/usePressScale';
 import Feather from '@expo/vector-icons/Feather';
 import { theme } from '@/constants/theme';
 import { styles } from './budgets.styles';
@@ -15,7 +15,7 @@ import { withPressedTint } from '@/lib/pressed';
 import { useAccent } from '@/theme/AccentContext';
 import { categorySentence, inParent } from '@/lib/categoryLabel';
 import { useToday } from './useToday';
-import { useStacked } from '@/lib/useStacked';
+import { useStacked } from '@/hooks/useStacked';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 

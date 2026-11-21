@@ -44,7 +44,7 @@ import { categorySentence, parentNameOf, joinSub } from '@/lib/categoryLabel';
 import { gluePiece } from '@/lib/keepTogether';
 import { spendableAccountsOf } from '@/lib/account';
 import { AnnualBillPreparation } from './AnnualBillPreparation';
-import { useSaveOnce } from '@/lib/useSaveOnce';
+import { useSaveOnce } from '@/hooks/useSaveOnce';
 
 const TX_TYPES: { label: string; value: TransactionType }[] = [
   { label: 'Expense', value: 'expense' },

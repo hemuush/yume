@@ -34,7 +34,7 @@ jest.mock('@/db/subscriptions', () => ({
     return JSON.parse(JSON.stringify(mockSuggestions));
   },
 }));
-jest.mock('@/lib/useScreenLoad', () => ({
+jest.mock('@/hooks/useScreenLoad', () => ({
   useScreenLoad: (load: () => Promise<void>) => {
     const React = require('react');
     const [loaded, setLoaded] = React.useState(false);

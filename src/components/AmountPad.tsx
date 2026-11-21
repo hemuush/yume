@@ -3,7 +3,7 @@ import { View, Pressable, Animated, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
 import Feather from '@expo/vector-icons/Feather';
 import { theme } from '@/constants/theme';
-import { usePressScale } from '@/lib/usePressScale';
+import { usePressScale } from '@/hooks/usePressScale';
 import { haptics } from '@/lib/haptics';
 import { PadKey } from '@/lib/padMath';
 import { useUiScale } from '@/lib/uiScale';

@@ -14,11 +14,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getUserName, setUserName, getMemberSinceYear } from '@/db/settings';
 import { HeaderPrivacyToggle } from '@/components/AppHeader';
 import { SkyHeader } from '@/features/home/SkyHeader';
-import { useCollapsingHeader } from '@/lib/useCollapsingHeader';
+import { useCollapsingHeader } from '@/hooks/useCollapsingHeader';
 import { AmountPadDock } from '@/components/AmountField';
 import { ProfileTabs, type ProfileTab } from '@/features/profile/ProfileTabs';
 import { theme } from '@/constants/theme';
-import { useScreenLoad } from '@/lib/useScreenLoad';
+import { useScreenLoad } from '@/hooks/useScreenLoad';
 import { Skeleton } from '@/components/Skeleton';
 import { HomeWallpaper } from '@/features/home/HomeWallpaper';
 import { useAccent } from '@/theme/AccentContext';
@@ -28,7 +28,7 @@ import { SettingsSection } from '@/features/profile/SettingsSection';
 import { ProfileIdentity } from '@/features/profile/ProfileIdentity';
 import { errorMessage } from '@/lib/errorMessage';
 import { showAlert } from '@/components/AppDialog';
-import { useSaveOnce } from '@/lib/useSaveOnce';
+import { useSaveOnce } from '@/hooks/useSaveOnce';
 
 // Neither section takes anything from the page, so editing the name or any other change here does not draw them.
 const You = memo(YouSection);

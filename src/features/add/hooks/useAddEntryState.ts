@@ -5,11 +5,11 @@ import { AddDefaults } from '@/db/settings';
 import { PersonWithBalance } from '@/db/people';
 import { Account, Category, Transaction } from '@/types';
 import { toLocalIsoDate } from '@/lib/date';
-import { useFadeIn } from '@/lib/useFadeIn';
+import { useFadeIn } from '@/hooks/useFadeIn';
 import { EntryType, isTxType, Staged } from '@/features/add/addEntry';
 import { exprFromMinor } from '@/lib/padMath';
 import { MAX_AMOUNT_MINOR } from '@/lib/amountLimits';
-import { useOnKeyboardHide } from '@/lib/useOnKeyboardHide';
+import { useOnKeyboardHide } from '@/hooks/useOnKeyboardHide';
 import { DraftPart } from '@/features/add/splitDraft';
 import type { useAddEntryEnvironment } from '@/features/add/hooks/useAddEntryEnvironment';
 

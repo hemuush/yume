@@ -17,7 +17,7 @@ import Reanimated from 'react-native-reanimated';
 import { CONTENT_ENTER } from '@/lib/animation';
 import { Chip } from './Chip';
 import { topLevelOnly, childrenOf, searchCategories } from '@/lib/categoryTree';
-import { usePressScale } from '@/lib/usePressScale';
+import { usePressScale } from '@/hooks/usePressScale';
 import { haptics } from '@/lib/haptics';
 import { withPressed } from '@/lib/pressed';
 import { softTint } from './softTint';

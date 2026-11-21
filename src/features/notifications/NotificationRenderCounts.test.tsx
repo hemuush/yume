@@ -12,7 +12,7 @@ const mockLater = <T,>(value: T, ms = 15) =>
   new Promise<T>((resolve) => setTimeout(() => resolve(value), ms));
 
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
-jest.mock('@/lib/useReduceMotion', () => ({ useReduceMotion: () => true }));
+jest.mock('@/hooks/useReduceMotion', () => ({ useReduceMotion: () => true }));
 jest.mock('@/lib/haptics', () => ({ haptics: { tap: jest.fn(), confirm: jest.fn(), warn: jest.fn() } }));
 jest.mock('expo-router', () => ({
   router: { push: jest.fn(), back: jest.fn() },

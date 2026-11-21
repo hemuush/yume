@@ -8,7 +8,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { timing } from '@/lib/animation';
 import { DURATIONS } from '@/lib/motionTimings';
-import { useReduceMotion } from '@/lib/useReduceMotion';
+import { useReduceMotion } from '@/hooks/useReduceMotion';
 
 /**
  * The panel's height and opacity for how open it is. `natural` is the content's own height (0 until it has been

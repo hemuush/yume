@@ -4,7 +4,7 @@ import { GrowFill } from '@/components/GrowFill';
 import { theme } from '@/constants/theme';
 import { withPressedTint } from '@/lib/pressed';
 import { useAccent } from '@/theme/AccentContext';
-import { useStacked } from '@/lib/useStacked';
+import { useStacked } from '@/hooks/useStacked';
 import { themedStyles } from '@/theme/themedStyles';
 
 /**

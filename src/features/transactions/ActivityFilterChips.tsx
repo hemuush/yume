@@ -16,7 +16,7 @@ import { EmptyState } from '@/components/EmptyState';
 import { styles } from './transactions.styles';
 import { withPressed, withPressedTint } from '@/lib/pressed';
 import { useAccent } from '@/theme/AccentContext';
-import { useStacked } from '@/lib/useStacked';
+import { useStacked } from '@/hooks/useStacked';
 
 /** Chips are drawn 40 tall; this keeps their touch area 48. */
 const CHIP_SLOP = { top: 4, bottom: 4 } as const;

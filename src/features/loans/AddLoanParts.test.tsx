@@ -69,7 +69,7 @@ describe('OptionCards', () => {
   ])(
     'at text scale %s sits %s, each card sharing the row only when side by side',
     (scale, direction, flex) => {
-      const spy = jest.spyOn(require('@/lib/useFontScale'), 'useFontScale').mockReturnValue(scale);
+      const spy = jest.spyOn(require('@/hooks/useFontScale'), 'useFontScale').mockReturnValue(scale);
       const { StyleSheet } = require('react-native');
       let r!: ReactTestRenderer;
       act(() => {

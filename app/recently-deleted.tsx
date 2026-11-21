@@ -1,4 +1,4 @@
-import { useSaveOnce } from '@/lib/useSaveOnce';
+import { useSaveOnce } from '@/hooks/useSaveOnce';
 import { gluePiece } from '@/lib/keepTogether';
 import { Appear } from '@/components/Appear';
 import { ScreenLoadError } from '@/components/ScreenLoadError';
@@ -10,7 +10,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text } from '@/components/Text';
 import { SkyHeader, HeaderSummary } from '@/features/home/SkyHeader';
 import ReanimatedAnimated from 'react-native-reanimated';
-import { useCollapsingHeader } from '@/lib/useCollapsingHeader';
+import { useCollapsingHeader } from '@/hooks/useCollapsingHeader';
 import { EmptyState } from '@/components/EmptyState';
 import { CardRowsSkeleton, SummarySkeleton } from '@/components/ListSkeleton';
 import { CategoryIcon } from '@/components/CategoryIcon';
@@ -27,7 +27,7 @@ import {
   emptyDeletedEntries,
   DeletedEntry,
 } from '@/db/recentlyDeleted';
-import { useScreenLoad } from '@/lib/useScreenLoad';
+import { useScreenLoad } from '@/hooks/useScreenLoad';
 import { emitTransactionsChanged } from '@/lib/dataEvents';
 import { errorMessage } from '@/lib/errorMessage';
 import { haptics } from '@/lib/haptics';

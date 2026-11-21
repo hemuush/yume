@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text } from '@/components/Text';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { theme } from '@/constants/theme';
-import type { ScreenCaptureStatus } from '@/lib/useScreenCaptureProtection';
+import type { ScreenCaptureStatus } from '@/hooks/useScreenCaptureProtection';
 import { themedStyles } from '@/theme/themedStyles';
 import { useSchemeVersion } from '@/theme/SchemeBoundary';
 

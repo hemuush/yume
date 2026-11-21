@@ -2,7 +2,7 @@ import { create, act } from 'react-test-renderer';
 import { StyleSheet } from 'react-native';
 
 jest.mock('@/lib/haptics', () => ({ haptics: { tap: jest.fn() } }));
-jest.mock('@/lib/useReduceMotion', () => ({ useReduceMotion: () => true }));
+jest.mock('@/hooks/useReduceMotion', () => ({ useReduceMotion: () => true }));
 jest.mock('@/theme/AccentContext', () => ({ useAccent: () => ({ accent: '#8FCBFF' }) }));
 
 import { SegmentedControl } from './SegmentedControl';

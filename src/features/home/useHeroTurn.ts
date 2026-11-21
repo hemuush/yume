@@ -9,7 +9,7 @@ import {
 } from 'react-native-reanimated';
 import { MOTION, timing } from '@/lib/animation';
 import { haptics } from '@/lib/haptics';
-import { useReduceMotion } from '@/lib/useReduceMotion';
+import { useReduceMotion } from '@/hooks/useReduceMotion';
 
 /** What the month card shows for one period. */
 export interface HeroContent {

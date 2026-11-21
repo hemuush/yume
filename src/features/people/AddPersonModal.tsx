@@ -8,7 +8,7 @@ import { ModalSheet } from '@/components/ModalSheet';
 import { modalFooterStyles as f } from '@/constants/theme';
 import { styles } from './people.styles';
 import { errorMessage } from '@/lib/errorMessage';
-import { useSaveOnce } from '@/lib/useSaveOnce';
+import { useSaveOnce } from '@/hooks/useSaveOnce';
 
 export function AddPersonModal({
   visible,

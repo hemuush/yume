@@ -6,7 +6,7 @@ import type { ReportWindow } from '@/lib/period';
 let mockHide = false;
 jest.mock('@/theme/PrivacyContext', () => ({ usePrivacy: () => ({ hideAmounts: mockHide }) }));
 jest.mock('expo-router', () => ({ useFocusEffect: () => {} }));
-jest.mock('@/lib/useLocalDayRefresh', () => ({ useLocalDayRefresh: () => {} }));
+jest.mock('@/hooks/useLocalDayRefresh', () => ({ useLocalDayRefresh: () => {} }));
 const empty = {
   incomeMinor: 0,
   expenseMinor: 0,

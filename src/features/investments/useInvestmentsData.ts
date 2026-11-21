@@ -5,7 +5,7 @@ import { listRecurringRules } from '@/db/recurring';
 import { listInvestmentHistory } from '@/db/investmentHistory';
 import type { InvestmentFlow, InvestmentValuation } from '@/db/investmentHistory';
 import { keepIfEqual, reuseUnchanged } from '@/lib/stableData';
-import { useScreenLoad } from '@/lib/useScreenLoad';
+import { useScreenLoad } from '@/hooks/useScreenLoad';
 import type { Account, Category, RecurringRule } from '@/types';
 
 interface InvestmentsData {

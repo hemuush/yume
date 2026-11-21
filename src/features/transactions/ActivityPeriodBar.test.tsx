@@ -3,7 +3,7 @@ import { create, act, type ReactTestRenderer } from 'react-test-renderer';
 import { Text } from 'react-native';
 
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
-jest.mock('@/lib/useReduceMotion', () => ({ useReduceMotion: () => true }));
+jest.mock('@/hooks/useReduceMotion', () => ({ useReduceMotion: () => true }));
 
 import { ActivityPeriodBar } from './ActivityPeriodBar';
 

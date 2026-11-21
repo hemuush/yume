@@ -2,7 +2,7 @@ import { useLocalDayRefresh } from './useLocalDayRefresh';
 import { useCallback, useRef, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
 import { errorMessage } from '@/lib/errorMessage';
-import { useFreshness } from '@/lib/useFreshness';
+import { useFreshness } from '@/hooks/useFreshness';
 
 /**
  * First-load bookkeeping: `loaded` (initial data looks "empty"), `loadError` instead of stale state, and a

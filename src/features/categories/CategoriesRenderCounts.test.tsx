@@ -8,7 +8,7 @@ import type { Category } from '@/types';
 jest.setTimeout(60000);
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
 jest.mock('react-native-safe-area-context', () => ({ useSafeAreaInsets: () => ({ top: 0, bottom: 0 }) }));
-jest.mock('@/lib/useCollapsingHeader', () => ({ useCollapsingHeader: () => ({ headerHeight: 0 }) }));
+jest.mock('@/hooks/useCollapsingHeader', () => ({ useCollapsingHeader: () => ({ headerHeight: 0 }) }));
 jest.mock('@/components/UndoToast', () => ({ useUndoToast: () => ({ show: jest.fn() }) }));
 jest.mock('@/features/home/SkyHeader', () => ({
   SkyHeader: ({ actions }: { actions: unknown }) => actions,

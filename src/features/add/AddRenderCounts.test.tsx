@@ -16,7 +16,7 @@ jest.mock('@/db/entryDraft', () => ({
   writeEntryDraft: jest.fn(async () => {}),
 }));
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
-jest.mock('@/lib/useReduceMotion', () => ({ useReduceMotion: () => true }));
+jest.mock('@/hooks/useReduceMotion', () => ({ useReduceMotion: () => true }));
 jest.mock('@/lib/haptics', () => ({
   haptics: { tap: jest.fn(), confirm: jest.fn(), warn: jest.fn(), select: jest.fn() },
 }));

@@ -1,0 +1,38 @@
+# Smoothness and UI/UX review — 5 November 2026
+
+Target reported by the owner: Pixel 10a. This is a source/automated review, not a frame-time capture on that device. No Android emulator/device is attached. Source checks cannot establish touch latency, shader/GPU cost or release frame pacing on the phone.
+
+## Changes
+
+- Home's first financial content no longer waits for the secondary Needs you scan. That scan is scheduled when JS is idle, with the existing two-second idle deadline, a stale-load guard and contained errors. Alerts still refresh. A component regression holds housekeeping unresolved and verifies the financial skeleton is gone.
+- Card-to-page transitions keep a fixed full-screen layout and animate translation/scale instead of changing width/height/position every frame. The cover fades during expansion: its configured lifetime drops from 560 ms to 260 ms. These are configured durations, not measured response times. Navigation and touch handling remain owned by the existing router.
+- Changed amounts bound intermediate JS text paints to approximately 31 per second independently of display refresh rate. The animation progresses every frame, interrupted changes resume from the last painted value, final values bypass throttling, stale callbacks cannot repaint an obsolete amount, and TalkBack gets the settled amount. A renderer regression verifies these boundaries. This does not cap scrolling or native animation frame rates.
+- Home sections appear together in a 160 ms fade instead of delayed vertical entrances. Existing system reduced-motion settings still apply.
+- The common wallpaper defaults to a wash and one glow instead of four overlapping decorative glow circles. Twenty-seven source surfaces use this shared component. The palette and explicit richer-surface option remain available; this reduces visual layering without claiming a measured GPU speedup.
+- Expo's SDK 58-compatible versions are installed and locked, resolving the actual CI dependency mismatch. The native-module updates need a rebuilt Android binary; an already-installed release APK will not acquire these changes by itself.
+
+## Flow review and remaining device work
+
+| Area               | Source assessment / action                                                                                                                                                             | Pixel 10a verification still needed                                                                            |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| Startup/Home       | Secondary housekeeping removed from the first-content critical path; correctness is gated on actual financial reads.                                                                   | Cold launch, first paint and resume using a release build and realistic copied data.                           |
+| Tabs               | Existing data-version/day freshness checks avoid unchanged focus queries. Privacy still needs off-screen context updates; freezing all screens blindly would regress this.             | First visit versus warm revisit to Activity, Plan and Reports; trace mount and render time.                    |
+| Activity           | A FlatList already virtualizes day groups. Long-press ordering and horizontal period swipes use JS PanResponder callbacks; these remain candidates for device profiling under JS load. | Scroll rapidly through a large ledger, expand a busy day, drag a row, then change period.                      |
+| Plan/budgets/goals | Shared card transition now uses composited transforms and reveals the destination sooner. Existing sheet forms retain parent state.                                                    | Tap several cards, Back, contribute/reserve and return; ensure no flash or accidental double action.           |
+| Reports            | Chart values already use UI-thread shared values. Period loads retain stale-request guards and keep figures tied to the displayed period.                                              | Scrub dense charts and the calendar while changing periods; verify touch response and large text.              |
+| Add/Split          | Keyboard/sticky dock and safe-area ownership remain intact. Save intentionally waits for committed data, and still has a short explicit success acknowledgement.                       | Keypad typing, keyboard switching, split editing, Save and Android Back under 200% text.                       |
+| Shared sheets      | SheetFlow retains visited forms, which protects drafts. Blanket unmounting or layout-animation removal would change navigation/form behavior.                                          | Nested sheet opening, keyboard movement, close/back and scroll-to-action behavior.                             |
+| Backup/Export      | Authentication, snapshot reads and native sharing are real work, not decorative delays; preserve accurate loading feedback.                                                            | Large copied backup, revoked folder access, PDF creation, share cancellation and return.                       |
+| Visual hierarchy   | The shared lighter background reduces competing decoration. Existing text-scale, contrast, pressed-state and motion tests continue to cover shared controls.                           | Check actual screenshots, TalkBack, narrow layouts and reduced motion; no claim of complete visual acceptance. |
+
+A whole-app redesign is not claimed here. Screen composition and the gesture candidates above require hands-on evidence before further changes. There is no measured FPS or claim that every source of lag is resolved.
+
+## Performance evidence
+
+The existing 20,000-entry SQLite fixture, with console reporting enabled, recorded Home 55 ms / 59 calls, Activity month 8 ms / 15 calls, Reports month 81 ms / 51 calls and Needs you alone 51 ms / 38 calls on this cloud host. The benchmark uses representative query batches rather than mounting the actual phone UI, and its Plan batch predates the expanded schedule load. These are diagnostic priorities, not Pixel timings or a valid before/after speedup claim. Home now separates the Needs you phase; the total eventual housekeeping work is not eliminated.
+
+Validation performed includes the regression suite, explicit amount-update and delayed-housekeeping tests, type checking, lint, formatting, cycle guards, Android export, and SDK 58 production prebuild/autolinking in a disposable copy. One parallel regression run emitted a worker shutdown warning; the full serial `--detectOpenHandles` run passed and exited without reporting retained handles. The cloud machine cannot complete two remote-only Expo Doctor checks, but its dependency check passes; hosted CI is tracked separately on the pushed revision.
+
+### Verified results
+
+The final local regression run passed 367 suites / 11,794 tests, with two suites/tests skipped. Type checking, lint, formatting, cycle checks, security checks, dependency compatibility, the live advisory gate, Android export, and native generation/autolinking passed. Hosted CI for SDK compatibility commit `806d54f` passed, including Expo Doctor: https://github.com/hemuush/yume/actions/runs/41989522091. The subsequent UI revision's hosted result is tracked separately; these numbers do not imply phone performance acceptance.

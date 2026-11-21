@@ -14,7 +14,7 @@ jest.mock('@/db/client', () => ({
   getDb: async () => mockDb,
 }));
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
-jest.mock('@/lib/useReduceMotion', () => ({ useReduceMotion: () => true }));
+jest.mock('@/hooks/useReduceMotion', () => ({ useReduceMotion: () => true }));
 const mockNeedsGate: { wait: Promise<void> | null } = { wait: null };
 jest.mock('@/features/home/needsYouData', () => {
   const original = jest.requireActual('@/features/home/needsYouData');

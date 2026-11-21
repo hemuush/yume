@@ -5,7 +5,7 @@
 import { Text, View, StyleSheet } from 'react-native';
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
 
-jest.mock('@/lib/useReduceMotion', () => ({ useReduceMotion: () => true }));
+jest.mock('@/hooks/useReduceMotion', () => ({ useReduceMotion: () => true }));
 jest.mock('@/lib/money', () => ({
   ...jest.requireActual('@/lib/money'),
   formatMoney: (minor: number) => `₹${minor / 100}`,

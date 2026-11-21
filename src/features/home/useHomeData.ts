@@ -24,8 +24,8 @@ import type { Account, Category, Transaction, Loan, RecurringRule, SavingsGoal }
 import { CURRENT_PERIOD, periodRange, type PeriodCursor } from '@/lib/period';
 import { toLocalIsoDate } from '@/lib/date';
 import { onTransactionsChanged } from '@/lib/dataEvents';
-import { useFreshness } from '@/lib/useFreshness';
-import { useLocalDayRefresh } from '@/lib/useLocalDayRefresh';
+import { useFreshness } from '@/hooks/useFreshness';
+import { useLocalDayRefresh } from '@/hooks/useLocalDayRefresh';
 import { runWhenIdle } from '@/lib/runWhenIdle';
 import { errorMessage } from '@/lib/errorMessage';
 import { keepIfEqual, reuseUnchanged } from '@/lib/stableData';

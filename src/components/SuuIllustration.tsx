@@ -10,7 +10,7 @@ import ReanimatedAnimated, {
 } from 'react-native-reanimated';
 import { theme } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
-import { useReduceMotion } from '@/lib/useReduceMotion';
+import { useReduceMotion } from '@/hooks/useReduceMotion';
 import { themedStyles } from '@/theme/themedStyles';
 
 interface Props {

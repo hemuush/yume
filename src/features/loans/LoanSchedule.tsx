@@ -15,7 +15,7 @@ import { toLocalIsoDate } from '@/lib/date';
 import { shade } from '@/lib/color';
 import { useAccent } from '@/theme/AccentContext';
 import { softTint } from '@/components/softTint';
-import { useStacked } from '@/lib/useStacked';
+import { useStacked } from '@/hooks/useStacked';
 import { themedStyles } from '@/theme/themedStyles';
 
 function Marker({ status, isNext }: { status: LoanPayment['status']; isNext: boolean }) {

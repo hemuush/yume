@@ -2,7 +2,7 @@ import { StyleSheet, Text } from 'react-native';
 import { act, create, ReactTestRenderer } from 'react-test-renderer';
 
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
-jest.mock('@/lib/useReduceMotion', () => ({ useReduceMotion: () => false }));
+jest.mock('@/hooks/useReduceMotion', () => ({ useReduceMotion: () => false }));
 jest.mock('react-native-safe-area-context', () => ({ useSafeAreaInsets: () => ({ top: 0, bottom: 0 }) }));
 jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
 jest.mock('@/theme/AccentContext', () => ({

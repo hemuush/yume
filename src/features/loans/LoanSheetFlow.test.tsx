@@ -21,7 +21,7 @@ jest.mock('@/components/AmountField', () => ({
   AmountPadHostProvider: require('react').createContext(null).Provider,
   useAmountPadHost: () => ({ host: {}, pad: null, scrollProps: {} }),
 }));
-jest.mock('@/lib/useReduceMotion', () => ({ useReduceMotion: () => true }));
+jest.mock('@/hooks/useReduceMotion', () => ({ useReduceMotion: () => true }));
 jest.mock('@/theme/AccentContext', () => ({
   useAccent: () => ({ accent: '#8FCBFF', secondary: '#8FE8C8' }),
 }));

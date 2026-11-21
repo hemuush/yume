@@ -12,7 +12,7 @@ import { dayLabel, toLocalIsoDate } from '@/lib/date';
 import { categoryPath, joinSub } from '@/lib/categoryLabel';
 import { screenStyles as h, SCREEN } from '@/components/screenStyles';
 import { useAccent } from '@/theme/AccentContext';
-import { useStacked } from '@/lib/useStacked';
+import { useStacked } from '@/hooks/useStacked';
 import { themedStyles } from '@/theme/themedStyles';
 
 /**

@@ -7,7 +7,7 @@ import { PrimaryButton } from '@/components/PrimaryButton';
 import { RecurringRule, Account, SavingsGoal } from '@/types';
 import { getAnnualBillGoal, prepareAnnualBill, unlinkAnnualBill, annualPreparation } from '@/db/annualBills';
 import { listSavingsGoals } from '@/db/savingsGoals';
-import { useSaveOnce } from '@/lib/useSaveOnce';
+import { useSaveOnce } from '@/hooks/useSaveOnce';
 import { toLocalIsoDate } from '@/lib/date';
 import { dayMonthYear } from '@/lib/dateLabels';
 import { formatMaskableMoney } from '@/lib/money';

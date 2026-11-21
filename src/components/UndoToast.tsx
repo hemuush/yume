@@ -6,7 +6,7 @@ import ReanimatedAnimated, { FadeInDown, FadeOutDown, ReduceMotion } from 'react
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme } from '@/constants/theme';
 import { hexToRgba } from '@/lib/color';
-import { usePressScale } from '@/lib/usePressScale';
+import { usePressScale } from '@/hooks/usePressScale';
 import { haptics } from '@/lib/haptics';
 import { DURATIONS } from '@/lib/motionTimings';
 import { MOTION } from '@/lib/animation';

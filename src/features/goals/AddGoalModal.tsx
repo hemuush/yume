@@ -17,7 +17,7 @@ import { PrimaryButton } from '@/components/PrimaryButton';
 import { ToggleSwitch } from '@/components/ToggleSwitch';
 import { GoalAccountField } from './GoalAccountField';
 import { styles } from './goals.styles';
-import { useSheetMutation } from '@/lib/useSheetMutation';
+import { useSheetMutation } from '@/hooks/useSheetMutation';
 import { noBreak } from '@/lib/keepTogether';
 
 export function AddGoalModal(props: AddGoalProps) {

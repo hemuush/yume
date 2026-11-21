@@ -9,8 +9,8 @@ import { Category } from '@/types';
 import { topLevelOnly, childrenOf } from '@/lib/categoryTree';
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { useAccent } from '@/theme/AccentContext';
-import { usePressScale } from '@/lib/usePressScale';
-import { useStableCallback } from '@/lib/useStableCallback';
+import { usePressScale } from '@/hooks/usePressScale';
+import { useStableCallback } from '@/hooks/useStableCallback';
 import { styles } from './categories.styles';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);

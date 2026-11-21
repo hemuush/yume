@@ -23,9 +23,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ModalSafeArea } from './ModalSafeArea';
 import { dialogWidth, sheetWidth } from './ColumnFrame';
 import { theme } from '@/constants/theme';
-import { usePressScale } from '@/lib/usePressScale';
-import { useReduceMotion } from '@/lib/useReduceMotion';
-import { useSwipeToClose } from '@/lib/useSwipeToClose';
+import { usePressScale } from '@/hooks/usePressScale';
+import { useReduceMotion } from '@/hooks/useReduceMotion';
+import { useSwipeToClose } from '@/hooks/useSwipeToClose';
 import { AmountPadHostProvider, useAmountPadHost } from '@/components/AmountField';
 import { themedStyles, themedValue } from '@/theme/themedStyles';
 

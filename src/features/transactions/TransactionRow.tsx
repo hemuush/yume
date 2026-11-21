@@ -5,14 +5,14 @@ import { Category, Transaction } from '@/types';
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { Amount } from '@/components/Amount';
 import { theme } from '@/constants/theme';
-import { usePressScale } from '@/lib/usePressScale';
+import { usePressScale } from '@/hooks/usePressScale';
 import { styles } from './transactions.styles';
 import { screenStyles as h } from '@/components/screenStyles';
 import { formatMaskableMoney } from '@/lib/money';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import { useAccent } from '@/theme/AccentContext';
 import { dayMonthYear, shortMonth } from '@/lib/dateLabels';
-import { useStacked } from '@/lib/useStacked';
+import { useStacked } from '@/hooks/useStacked';
 import { themedStyles } from '@/theme/themedStyles';
 
 const AnimatedRowPressable = Animated.createAnimatedComponent(Pressable);

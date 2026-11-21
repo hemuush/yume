@@ -5,13 +5,13 @@ import { ActionSheet } from '@/components/ActionSheet';
 import Feather from '@expo/vector-icons/Feather';
 import { ReportWindow, windowLabel, windowRange, stepWindow, canStepWindowForward } from '@/lib/period';
 import { theme } from '@/constants/theme';
-import { useSwipeStep } from '@/lib/useSwipeStep';
+import { useSwipeStep } from '@/hooks/useSwipeStep';
 import { haptics } from '@/lib/haptics';
 import { styles } from './reports.styles';
 import { RangeSheet } from './RangeSheet';
 import { withPressedTint } from '@/lib/pressed';
 import { useAccent } from '@/theme/AccentContext';
-import { useStacked } from '@/lib/useStacked';
+import { useStacked } from '@/hooks/useStacked';
 
 const GRANULARITIES = [
   { key: 'month', label: 'Month', menuLabel: 'Month' },

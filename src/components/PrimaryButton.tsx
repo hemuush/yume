@@ -12,12 +12,12 @@ import {
 import { MAX_FONT_SCALE } from '@/components/Text';
 import ReanimatedAnimated, { FadeIn } from 'react-native-reanimated';
 import { theme } from '@/constants/theme';
-import { usePressScale } from '@/lib/usePressScale';
+import { usePressScale } from '@/hooks/usePressScale';
 import { haptics } from '@/lib/haptics';
 import { useUiScale } from '@/lib/uiScale';
 import { DURATIONS } from '@/lib/motionTimings';
 import { MOTION } from '@/lib/animation';
-import { useReduceMotion } from '@/lib/useReduceMotion';
+import { useReduceMotion } from '@/hooks/useReduceMotion';
 
 import { useAccent } from '@/theme/AccentContext';
 import { interactionColors } from '@/theme/interactionColors';

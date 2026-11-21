@@ -4,8 +4,8 @@ import { Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-nativ
 jest.unmock('./SheetFlow');
 jest.mock('@expo/vector-icons/Feather', () => () => null);
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
-jest.mock('@/lib/useReduceMotion', () => ({ useReduceMotion: () => true }));
-jest.mock('@/lib/usePressScale', () => ({
+jest.mock('@/hooks/useReduceMotion', () => ({ useReduceMotion: () => true }));
+jest.mock('@/hooks/usePressScale', () => ({
   usePressScale: () => ({ animatedStyle: {}, onPressIn: jest.fn(), onPressOut: jest.fn() }),
 }));
 jest.mock('react-native-safe-area-context', () => ({

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { listBudgetsForMonth, listLapsedBudgets, type BudgetProgress, type LapsedBudget } from '@/db/budgets';
 import { listAccounts, listCategories } from '@/db/ledger';
 import { reuseUnchanged, reuseUnchangedBy } from '@/lib/stableData';
-import { useScreenLoad } from '@/lib/useScreenLoad';
+import { useScreenLoad } from '@/hooks/useScreenLoad';
 import type { Account, Category } from '@/types';
 
 interface BudgetsData {

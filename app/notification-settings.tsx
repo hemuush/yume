@@ -8,7 +8,7 @@ import { useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SkyHeader } from '@/features/home/SkyHeader';
 import ReanimatedAnimated from 'react-native-reanimated';
-import { useCollapsingHeader } from '@/lib/useCollapsingHeader';
+import { useCollapsingHeader } from '@/hooks/useCollapsingHeader';
 import { Section } from '@/components/Section';
 import { SCREEN } from '@/components/screenStyles';
 import { AlertRow, type AlertKey } from '@/features/notifications/AlertRow';
@@ -17,8 +17,8 @@ import { CardRowsSkeleton } from '@/components/ListSkeleton';
 import { ScreenLoadError } from '@/components/ScreenLoadError';
 import type { NotificationPrefs } from '@/db/settings';
 import { useNotificationPreferences } from '@/features/notifications/useNotificationPreferences';
-import { useLocalDayRefresh } from '@/lib/useLocalDayRefresh';
-import { useStableCallback } from '@/lib/useStableCallback';
+import { useLocalDayRefresh } from '@/hooks/useLocalDayRefresh';
+import { useStableCallback } from '@/hooks/useStableCallback';
 import { keepIfEqual } from '@/lib/stableData';
 import {
   rebuildNotifications,

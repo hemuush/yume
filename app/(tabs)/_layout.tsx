@@ -7,7 +7,7 @@ import { RepeatEntrySheet } from '@/features/home/RepeatEntrySheet';
 import { PillTabBar } from '@/components/PillTabBar';
 import { pushOnce } from '@/lib/pushOnce';
 import { DURATIONS } from '@/lib/motionTimings';
-import { useReduceMotion } from '@/lib/useReduceMotion';
+import { useReduceMotion } from '@/hooks/useReduceMotion';
 import { schemeScreenLayout, useSchemeVersion } from '@/theme/SchemeBoundary';
 
 /**

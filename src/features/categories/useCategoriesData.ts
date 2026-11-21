@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { listCategories } from '@/db/ledger';
 import { reuseUnchanged } from '@/lib/stableData';
-import { useScreenLoad } from '@/lib/useScreenLoad';
+import { useScreenLoad } from '@/hooks/useScreenLoad';
 import type { Category } from '@/types';
 
 const NONE: Category[] = [];

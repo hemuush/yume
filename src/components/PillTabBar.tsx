@@ -11,7 +11,7 @@ import { HomeIcon, ActivityIcon, PlanIcon, ReportsIcon } from '@/components/icon
 import { theme } from '@/constants/theme';
 import { haptics } from '@/lib/haptics';
 import { useTabDockMetrics } from '@/lib/uiScale';
-import { usePressScale } from '@/lib/usePressScale';
+import { usePressScale } from '@/hooks/usePressScale';
 import { useAccent } from '@/theme/AccentContext';
 import { selectedFill } from '@/theme/interactionColors';
 import { themedStyles } from '@/theme/themedStyles';

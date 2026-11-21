@@ -1,4 +1,4 @@
-import { useSaveOnce } from '@/lib/useSaveOnce';
+import { useSaveOnce } from '@/hooks/useSaveOnce';
 import { useEffect, useEffectEvent, useState } from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';

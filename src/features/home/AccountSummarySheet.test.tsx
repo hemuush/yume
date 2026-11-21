@@ -17,7 +17,7 @@ jest.mock('@/db/cardCycles', () => ({ getCardCycle: (...a: unknown[]) => mockCyc
 jest.mock('@/db/valuations', () => ({ listValuations: (...a: unknown[]) => mockValuations(...a) }));
 jest.mock('@/db/recurring', () => ({ listRecurringRules: (...a: unknown[]) => mockRules(...a) }));
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
-jest.mock('@/lib/useReduceMotion', () => ({ useReduceMotion: () => true }));
+jest.mock('@/hooks/useReduceMotion', () => ({ useReduceMotion: () => true }));
 jest.mock('@/theme/AccentContext', () => ({ useAccent: () => ({ accent: '#8CCED6' }) }));
 let mockHide = false;
 jest.mock('@/theme/PrivacyContext', () => ({ usePrivacy: () => ({ hideAmounts: mockHide }) }));

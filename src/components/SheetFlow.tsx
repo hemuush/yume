@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Modal, View } from 'react-native';
 import { ModalSafeArea } from './ModalSafeArea';
-import { useReduceMotion } from '@/lib/useReduceMotion';
+import { useReduceMotion } from '@/hooks/useReduceMotion';
 import { SheetSurfaceProvider } from './SheetSurface';
 
 type SheetFlowContextValue = {

@@ -11,7 +11,7 @@ jest.setTimeout(90000);
 let mockDb: AsyncDb;
 jest.mock('@/db/client', () => ({ getDb: async () => mockDb }));
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
-jest.mock('@/lib/useReduceMotion', () => ({ useReduceMotion: () => true }));
+jest.mock('@/hooks/useReduceMotion', () => ({ useReduceMotion: () => true }));
 jest.mock('@/lib/haptics', () => ({
   haptics: { tap: jest.fn(), confirm: jest.fn(), warn: jest.fn(), select: jest.fn() },
 }));

@@ -1,7 +1,7 @@
 import { Animated, Text } from 'react-native';
 import { act, create } from 'react-test-renderer';
 let mockReduce = false;
-jest.mock('@/lib/useReduceMotion', () => ({ useReduceMotion: () => mockReduce }));
+jest.mock('@/hooks/useReduceMotion', () => ({ useReduceMotion: () => mockReduce }));
 jest.mock('@expo/vector-icons/Feather', () => () => null);
 import { CompletionCard } from './CompletionCard';
 import { GoalLetterReveal } from '@/features/goals/GoalLetterReveal';

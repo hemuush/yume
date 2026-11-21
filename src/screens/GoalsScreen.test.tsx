@@ -10,7 +10,7 @@ jest.setTimeout(90000);
 let mockDb: AsyncDb;
 jest.mock('@/db/client', () => ({ getDb: async () => mockDb }));
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
-jest.mock('@/lib/useReduceMotion', () => ({ useReduceMotion: () => true }));
+jest.mock('@/hooks/useReduceMotion', () => ({ useReduceMotion: () => true }));
 jest.mock('@/components/AppHeader', () => ({ HeaderUserButton: () => null, HeaderIconButton: () => null }));
 jest.mock('@/components/CountUpAmount', () => ({ CountUpAmount: () => null }));
 // The page's own sheet (the goal letter) and the others are not under test (and pull in the keyboard controller's native module).

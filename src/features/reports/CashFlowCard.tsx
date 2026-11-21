@@ -8,7 +8,7 @@ import { formatMoney } from '@/lib/money';
 import { roundedMinor } from '@/lib/round';
 import { haptics } from '@/lib/haptics';
 import { CountUpAmount } from '@/components/CountUpAmount';
-import { useDrawnValue } from '@/lib/useDrawnValue';
+import { useDrawnValue } from '@/hooks/useDrawnValue';
 import { withPressed, withPressedTint } from '@/lib/pressed';
 import { softTint } from '@/components/softTint';
 import { MIN_TREND_POINTS } from './TrendChart';

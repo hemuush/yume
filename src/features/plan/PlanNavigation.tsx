@@ -3,7 +3,7 @@ import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { haptics } from '@/lib/haptics';
 import { withPressed } from '@/lib/pressed';
-import { useStacked } from '@/lib/useStacked';
+import { useStacked } from '@/hooks/useStacked';
 import { themedStyles } from '@/theme/themedStyles';
 
 export type PlanTab = 'overview' | 'upcoming' | 'money' | 'debt';

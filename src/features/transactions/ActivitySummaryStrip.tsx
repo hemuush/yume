@@ -7,7 +7,7 @@ import { CountUpAmount } from '@/components/CountUpAmount';
 import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
 import { withPressed } from '@/lib/pressed';
-import { useStacked } from '@/lib/useStacked';
+import { useStacked } from '@/hooks/useStacked';
 import type { SpendBar } from './spendChart';
 import { usePeriodSlide } from './usePeriodSlide';
 import { themedStyles } from '@/theme/themedStyles';

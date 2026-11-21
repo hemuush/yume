@@ -16,7 +16,7 @@ jest.mock('@/db/ledger', () => ({
   ],
 }));
 jest.mock('@/db/people', () => ({ listPeople: async () => [] }));
-jest.mock('@/lib/useReduceMotion', () => ({ useReduceMotion: () => true }));
+jest.mock('@/hooks/useReduceMotion', () => ({ useReduceMotion: () => true }));
 jest.mock('@/components/ModalSheet', () => ({
   ModalSheet: ({ children, footer }: { children: unknown; footer?: unknown }) =>
     require('react').createElement(require('react').Fragment, null, children, footer),

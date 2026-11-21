@@ -7,7 +7,7 @@ import { haptics } from '@/lib/haptics';
 const mockPack = { primary: '#9EC5FC', secondary: '#8FE8C8' };
 
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
-jest.mock('@/lib/useReduceMotion', () => ({ useReduceMotion: () => true }));
+jest.mock('@/hooks/useReduceMotion', () => ({ useReduceMotion: () => true }));
 jest.mock('@/lib/haptics', () => ({ haptics: { tap: jest.fn() } }));
 jest.mock('@/theme/AccentContext', () => ({
   useAccent: () => ({ accent: mockPack.primary, secondary: mockPack.secondary }),

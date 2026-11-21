@@ -6,7 +6,7 @@ import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
 import { SkyHeader, HeaderSummary } from '@/features/home/SkyHeader';
 import ReanimatedAnimated from 'react-native-reanimated';
-import { useCollapsingHeader } from '@/lib/useCollapsingHeader';
+import { useCollapsingHeader } from '@/hooks/useCollapsingHeader';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { CategoryPicker } from '@/components/CategoryPicker';

@@ -11,7 +11,7 @@ import { haptics } from '@/lib/haptics';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { styles } from './add.styles';
 import { withPressedTint } from '@/lib/pressed';
-import { useStacked } from '@/lib/useStacked';
+import { useStacked } from '@/hooks/useStacked';
 import { formatMoney } from '@/lib/money';
 import { hueFor } from '@/lib/hueFor';
 

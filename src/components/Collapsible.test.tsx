@@ -4,7 +4,7 @@ import { create, act, type ReactTestRenderer } from 'react-test-renderer';
 
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
 const mockReduce = jest.fn(() => false);
-jest.mock('@/lib/useReduceMotion', () => ({ useReduceMotion: () => mockReduce() }));
+jest.mock('@/hooks/useReduceMotion', () => ({ useReduceMotion: () => mockReduce() }));
 
 import { Collapsible, panelStyle } from './Collapsible';
 

@@ -12,7 +12,7 @@ import { AmountPad } from '@/components/AmountPad';
 import { AddDetailRow } from '@/features/add/AddDetailRow';
 import { withPressedTint } from '@/lib/pressed';
 import { useAccent } from '@/theme/AccentContext';
-import { useFontScale } from '@/lib/useFontScale';
+import { useFontScale } from '@/hooks/useFontScale';
 import type { AddEntryModel } from '@/features/add/types/addEntryModel';
 import type { ReactElement } from 'react';
 

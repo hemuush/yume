@@ -252,7 +252,7 @@ describe('Add screen', () => {
   it.each([true, false])(
     'keeps batch save available at enlarged text with the pad open: %s',
     async (padOpen) => {
-      const fontScale = jest.spyOn(require('@/lib/useFontScale'), 'useFontScale').mockReturnValue(2);
+      const fontScale = jest.spyOn(require('@/hooks/useFontScale'), 'useFontScale').mockReturnValue(2);
       const tree = await render();
       try {
         await press(tree, 'Food');

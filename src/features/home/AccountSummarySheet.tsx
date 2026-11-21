@@ -17,7 +17,7 @@ import { accountHue, accountIcon, accountTypeLabel } from '@/lib/account';
 import { useAccent } from '@/theme/AccentContext';
 import { formatMaskableMoney } from '@/lib/money';
 import { usePrivacy } from '@/theme/PrivacyContext';
-import { useReduceMotion } from '@/lib/useReduceMotion';
+import { useReduceMotion } from '@/hooks/useReduceMotion';
 import { MOTION, timing } from '@/lib/animation';
 import { PeriodCursor, periodLabel, periodRange } from '@/lib/period';
 import { RecentTransactionRow } from './RecentTransactionRow';

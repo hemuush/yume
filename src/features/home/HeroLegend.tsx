@@ -3,7 +3,7 @@ import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
 import { themedStyles } from '@/theme/themedStyles';
-import { useStacked } from '@/lib/useStacked';
+import { useStacked } from '@/hooks/useStacked';
 
 export interface LegendItem {
   key: string;

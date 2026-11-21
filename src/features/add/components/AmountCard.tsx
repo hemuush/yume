@@ -10,7 +10,7 @@ import { ADD_TYPES, EntryType, TYPE_WASH, typeWash } from '@/features/add/addEnt
 import { withPressedTint } from '@/lib/pressed';
 import { softTint } from '@/components/softTint';
 import { useAccent } from '@/theme/AccentContext';
-import { useStacked } from '@/lib/useStacked';
+import { useStacked } from '@/hooks/useStacked';
 
 /**
  * The Add screen's display pieces: amount card, From/To pickers, "Your usual" chips, staged-entry list.

@@ -5,7 +5,7 @@ import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { shade } from '@/lib/color';
 import { useAccent } from '@/theme/AccentContext';
-import { usePressScale } from '@/lib/usePressScale';
+import { usePressScale } from '@/hooks/usePressScale';
 import { screenStyles as h } from '@/components/screenStyles';
 import { useSheetSurface } from './SheetSurface';
 import type { McIconName } from '@/components/iconName';

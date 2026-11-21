@@ -1,6 +1,6 @@
 import type { McIconName } from '@/components/iconName';
 import { loanIcon } from './loanIdentity';
-import { useSaveOnce } from '@/lib/useSaveOnce';
+import { useSaveOnce } from '@/hooks/useSaveOnce';
 import { SheetFlow } from '@/components/SheetFlow';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';

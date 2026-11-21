@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { AppState } from 'react-native';
 import { useFocusEffect } from 'expo-router';
-import { toLocalIsoDate } from './date';
+import { toLocalIsoDate } from '@/lib/date';
 
 /** Next local midnight, including 23/25-hour daylight-saving days. */
 export function millisecondsToNextDay(now = new Date()): number {

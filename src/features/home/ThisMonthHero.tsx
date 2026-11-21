@@ -11,7 +11,7 @@ import { ROW_LAYOUT, ROW_EXIT, PANEL_ENTER } from '@/lib/animation';
 import { CountUpAmount } from '@/components/CountUpAmount';
 import { JustAddedGlow } from '@/components/JustAddedGlow';
 import { usePrivacy } from '@/theme/PrivacyContext';
-import { useStacked } from '@/lib/useStacked';
+import { useStacked } from '@/hooks/useStacked';
 import { heroSlices, withoutSavings, heroPct } from './heroSlices';
 import { daysLeftInMonth, dailyAllowance } from './allowance';
 import { HeroLegend, type LegendItem } from './HeroLegend';

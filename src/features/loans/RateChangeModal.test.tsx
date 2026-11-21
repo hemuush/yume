@@ -7,7 +7,7 @@ jest.setTimeout(120000); // cold module loading is slow while the whole suite ru
 const mockApplyRateChange = jest.fn(async (..._a: unknown[]) => undefined as unknown);
 
 jest.mock('@/db/loans', () => ({ applyRateChange: (...a: unknown[]) => mockApplyRateChange(...a) }));
-jest.mock('@/lib/useReduceMotion', () => ({ useReduceMotion: () => true }));
+jest.mock('@/hooks/useReduceMotion', () => ({ useReduceMotion: () => true }));
 jest.mock('@/components/ModalSheet', () => ({
   ModalSheet: ({ children, footer }: { children: unknown; footer?: unknown }) =>
     require('react').createElement(require('react').Fragment, null, children, footer),

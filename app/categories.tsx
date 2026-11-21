@@ -11,7 +11,7 @@ import { CategoryKind } from '@/types';
 import { theme } from '@/constants/theme';
 import { SkyHeader, HeaderSummary } from '@/features/home/SkyHeader';
 import ReanimatedAnimated from 'react-native-reanimated';
-import { useCollapsingHeader } from '@/lib/useCollapsingHeader';
+import { useCollapsingHeader } from '@/hooks/useCollapsingHeader';
 import { AddButton } from '@/components/AddButton';
 import { styles } from '@/features/categories/categories.styles';
 import { CategorySection, MemoCategoryTile, CategoryRows } from '@/features/categories/CategorySection';

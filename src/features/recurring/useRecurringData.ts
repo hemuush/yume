@@ -5,7 +5,7 @@ import { getDefaultCurrency, getHiddenSubscriptionSuggestions } from '@/db/setti
 import { getSubscriptionSuggestions, type SubscriptionSuggestion } from '@/db/subscriptions';
 import { toLocalIsoDate } from '@/lib/date';
 import { reuseUnchanged, reuseUnchangedBy } from '@/lib/stableData';
-import { useScreenLoad } from '@/lib/useScreenLoad';
+import { useScreenLoad } from '@/hooks/useScreenLoad';
 import type { Account, Category, RecurringRule } from '@/types';
 
 interface RecurringData {

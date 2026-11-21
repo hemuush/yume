@@ -7,7 +7,7 @@ import { DateField } from '@/components/DateField';
 import { Chip } from '@/components/Chip';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { ToggleSwitch } from '@/components/ToggleSwitch';
-import { useSaveOnce } from '@/lib/useSaveOnce';
+import { useSaveOnce } from '@/hooks/useSaveOnce';
 import { toMinor, formatMaskableMoney } from '@/lib/money';
 import { toLocalIsoDate } from '@/lib/date';
 import { dayMonthYear } from '@/lib/dateLabels';

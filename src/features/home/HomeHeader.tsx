@@ -24,7 +24,7 @@ import { WrapButton } from './WrapButton';
 import type { ReadyWrap } from '@/features/wrap/wrapWindow';
 import { MOTION } from '@/lib/animation';
 import { headerIsCollapsed } from './headerMotion';
-import { useReduceMotion } from '@/lib/useReduceMotion';
+import { useReduceMotion } from '@/hooks/useReduceMotion';
 import { withPressed } from '@/lib/pressed';
 import { themedStyles } from '@/theme/themedStyles';
 

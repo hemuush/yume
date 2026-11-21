@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Animated } from 'react-native';
 import { Text } from '@/components/Text';
-import { useReduceMotion } from '@/lib/useReduceMotion';
+import { useReduceMotion } from '@/hooks/useReduceMotion';
 import { createLoan } from '@/db/loans';
 import { listAccounts, listCategories } from '@/db/ledger';
 import { listPeople, PersonWithBalance } from '@/db/people';
@@ -28,7 +28,7 @@ import { spendableAccountsOf, defaultCurrencyAccountsOf } from '@/lib/account';
 import { rateProblem, tenureProblem } from '@/lib/loanLimits';
 import { plural } from '@/lib/plural';
 import { useAccent } from '@/theme/AccentContext';
-import { useSaveOnce } from '@/lib/useSaveOnce';
+import { useSaveOnce } from '@/hooks/useSaveOnce';
 
 const RATE_TYPES: { label: string; value: LoanRateType }[] = [
   { label: 'Fixed', value: 'fixed' },

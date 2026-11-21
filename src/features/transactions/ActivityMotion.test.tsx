@@ -9,7 +9,7 @@ jest.mock('react-native-reanimated', () => ({
   withTiming: (target: number) => mockTiming(target),
   cancelAnimation: (value: unknown) => mockCancel(value),
 }));
-jest.mock('@/lib/useReduceMotion', () => ({ useReduceMotion: () => mockReduce }));
+jest.mock('@/hooks/useReduceMotion', () => ({ useReduceMotion: () => mockReduce }));
 jest.mock('@expo/vector-icons/Feather', () => () => null);
 jest.mock('@/components/CountUpAmount', () => ({ CountUpAmount: () => null }));
 

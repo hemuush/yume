@@ -19,7 +19,7 @@ jest.mock('@/db/loans', () => ({
   applyPrepayment: (...a: unknown[]) => mockApply(...a),
   previewPrepayment: (...a: unknown[]) => mockPreview(...a),
 }));
-jest.mock('@/lib/useReduceMotion', () => ({ useReduceMotion: () => true }));
+jest.mock('@/hooks/useReduceMotion', () => ({ useReduceMotion: () => true }));
 jest.mock('@/components/ModalSheet', () => ({
   ModalSheet: ({ children, footer }: { children: unknown; footer?: unknown }) =>
     require('react').createElement(require('react').Fragment, null, children, footer),

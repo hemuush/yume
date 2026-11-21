@@ -2,7 +2,7 @@ import { useEffect, useEffectEvent, useRef, useState, useSyncExternalStore } fro
 import { EASE_OUT } from '@/lib/motionTimings';
 import { Animated, StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
-import { useReduceMotion } from '@/lib/useReduceMotion';
+import { useReduceMotion } from '@/hooks/useReduceMotion';
 import { JustAddedSurface, justAddedVersion, subscribeJustAdded, takeJustAdded } from '@/lib/justAdded';
 import { themedStyles } from '@/theme/themedStyles';
 import { softTint } from '@/components/softTint';

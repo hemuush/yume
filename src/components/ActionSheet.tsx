@@ -3,7 +3,7 @@ import { Text } from '@/components/Text';
 import Feather from '@expo/vector-icons/Feather';
 import { ModalSheet } from './ModalSheet';
 import { theme } from '@/constants/theme';
-import { usePressScale } from '@/lib/usePressScale';
+import { usePressScale } from '@/hooks/usePressScale';
 
 import { useAccent } from '@/theme/AccentContext';
 import { interactionColors } from '@/theme/interactionColors';

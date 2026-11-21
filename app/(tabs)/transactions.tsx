@@ -1,9 +1,9 @@
-import { useLocalDayRefresh } from '@/lib/useLocalDayRefresh';
+import { useLocalDayRefresh } from '@/hooks/useLocalDayRefresh';
 import { Appear } from '@/components/Appear';
 import { CONTENT_ENTER, staggerEnter } from '@/lib/animation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { onTransactionsChanged } from '@/lib/dataEvents';
-import { useFreshness } from '@/lib/useFreshness';
+import { useFreshness } from '@/hooks/useFreshness';
 import { View, Pressable, useWindowDimensions, type FlatListInstance } from 'react-native';
 import { Text, TextInput } from '@/components/Text';
 import ReanimatedAnimated from 'react-native-reanimated';
@@ -16,11 +16,11 @@ import { getCachedCurrency } from '@/db/settings';
 import type { Transaction } from '@/types';
 import { HeaderIconButton } from '@/components/AppHeader';
 import { SkyHeader } from '@/features/home/SkyHeader';
-import { useCollapsingHeader } from '@/lib/useCollapsingHeader';
+import { useCollapsingHeader } from '@/hooks/useCollapsingHeader';
 import { theme } from '@/constants/theme';
 import { useTabScrollPad } from '@/lib/uiScale';
 import { toLocalIsoDate, addDaysToIsoDate, parseLocalIsoDate } from '@/lib/date';
-import { useSwipeDrag } from '@/lib/useSwipeDrag';
+import { useSwipeDrag } from '@/hooks/useSwipeDrag';
 import { styles } from '@/features/transactions/transactions.styles';
 import { ActivityFilterChips, SearchStatus } from '@/features/transactions/ActivityFilterChips';
 import { ActivityPeriodBar } from '@/features/transactions/ActivityPeriodBar';
@@ -69,8 +69,8 @@ import { haptics } from '@/lib/haptics';
 import { withPressed } from '@/lib/pressed';
 import { categoryPath, parentNameOf } from '@/lib/categoryLabel';
 import { EmptyState } from '@/components/EmptyState';
-import { useTabScrollToTop } from '@/lib/useTabScrollToTop';
-import { useScrollToTopOnChange } from '@/lib/useScrollToTopOnChange';
+import { useTabScrollToTop } from '@/hooks/useTabScrollToTop';
+import { useScrollToTopOnChange } from '@/hooks/useScrollToTopOnChange';
 
 /** One empty list for "no value updates": a new one each time was a state change, and a redraw of every day. */
 const NO_NOTES: ValueNote[] = [];

@@ -4,9 +4,9 @@ import Feather from '@expo/vector-icons/Feather';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { useAccent } from '@/theme/AccentContext';
-import { usePressScale } from '@/lib/usePressScale';
-import { useStacked } from '@/lib/useStacked';
-import type { useSwipeDrag } from '@/lib/useSwipeDrag';
+import { usePressScale } from '@/hooks/usePressScale';
+import { useStacked } from '@/hooks/useStacked';
+import type { useSwipeDrag } from '@/hooks/useSwipeDrag';
 import { withPressed, withPressedTint } from '@/lib/pressed';
 import { styles } from './transactions.styles';
 

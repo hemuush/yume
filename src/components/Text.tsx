@@ -1,7 +1,7 @@
 import { ComponentPropsWithRef } from 'react';
 import { StyleSheet, Text as RNText, TextInput as RNTextInput } from 'react-native';
 import { theme } from '@/constants/theme';
-import { useFontScale } from '@/lib/useFontScale';
+import { useFontScale } from '@/hooks/useFontScale';
 
 /**
  * Supported text scale. Enlarged labels wrap and controls grow instead of forcing text into a 130% tile.

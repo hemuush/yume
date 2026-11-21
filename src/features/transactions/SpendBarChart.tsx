@@ -3,7 +3,7 @@ import { DURATIONS, EASE_OUT } from '@/lib/motionTimings';
 import { View, Pressable, StyleSheet, Animated, useWindowDimensions } from 'react-native';
 import { Text, MAX_FONT_SCALE } from '@/components/Text';
 import { theme } from '@/constants/theme';
-import { useReduceMotion } from '@/lib/useReduceMotion';
+import { useReduceMotion } from '@/hooks/useReduceMotion';
 import { formatMoney } from '@/lib/money';
 import type { SpendBar } from './spendChart';
 

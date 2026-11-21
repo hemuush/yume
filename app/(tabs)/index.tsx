@@ -24,7 +24,7 @@ import { CURRENT_PERIOD, PeriodCursor, periodRange, stepPeriod, canStepForward }
 import { recurringRulesInCurrency } from '@/lib/recurringScope';
 import { roundedMinor } from '@/lib/round';
 import { useStableSet, useStableValue } from '@/lib/stableData';
-import { useReduceMotion } from '@/lib/useReduceMotion';
+import { useReduceMotion } from '@/hooks/useReduceMotion';
 import { useTabScrollPad } from '@/lib/uiScale';
 import { savingsAccountIdsOf } from '@/lib/account';
 import { useAccent } from '@/theme/AccentContext';
