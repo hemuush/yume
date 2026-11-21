@@ -16,6 +16,7 @@ import { SpaceMono_700Bold } from '@expo-google-fonts/space-mono/700Bold';
 import { Fredoka_500Medium } from '@expo-google-fonts/fredoka/500Medium';
 import { Fredoka_600SemiBold } from '@expo-google-fonts/fredoka/600SemiBold';
 import { getDb } from '@/db/client';
+import { DURATIONS } from '@/lib/motionTimings';
 import { shouldRelock } from '@/lib/appLock';
 import { useScreenCaptureProtection } from '@/lib/useScreenCaptureProtection';
 import { CaptureProtectionScreen } from '@/components/CaptureProtectionScreen';
@@ -356,7 +357,7 @@ function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean;
               // a slide or a swipe back, a flash that dark mode makes obvious.
               contentStyle: { backgroundColor: theme.colors.background },
               animation: 'slide_from_right',
-              animationDuration: 260,
+              animationDuration: DURATIONS.screen,
               // Swipe from anywhere to go back, not just the left edge: a pushed screen should feel as
               // dismissible as it looks.
               gestureEnabled: true,
@@ -369,20 +370,21 @@ function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean;
             <Stack.Screen name="profile" />
             <Stack.Screen name="backup" />
             <Stack.Screen name="export" />
-            <Stack.Screen name="investments" />
+            {/* These five only redirect into a Plan tab: no slide of an empty page before the jump. */}
+            <Stack.Screen name="investments" options={{ animation: 'none' }} />
             <Stack.Screen name="notification-settings" />
             <Stack.Screen name="notifications" />
             <Stack.Screen name="add-transaction" />
             <Stack.Screen name="split" />
-            <Stack.Screen name="recurring" />
+            <Stack.Screen name="recurring" options={{ animation: 'none' }} />
             <Stack.Screen name="people" />
             <Stack.Screen name="tidy-up" />
             <Stack.Screen name="whatif" />
             <Stack.Screen name="garden" />
-            <Stack.Screen name="budgets" />
-            <Stack.Screen name="savings-goals" />
+            <Stack.Screen name="budgets" options={{ animation: 'none' }} />
+            <Stack.Screen name="savings-goals" options={{ animation: 'none' }} />
             <Stack.Screen name="category/[id]" />
-            <Stack.Screen name="loans" />
+            <Stack.Screen name="loans" options={{ animation: 'none' }} />
             <Stack.Screen name="recently-deleted" />
             {/* A Wrap fades in over the screen it was opened from, like a story, rather than sliding. */}
             <Stack.Screen name="wrap" options={{ animation: 'fade' }} />

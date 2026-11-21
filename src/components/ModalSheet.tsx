@@ -1,3 +1,4 @@
+import { DURATIONS } from '@/lib/motionTimings';
 import { useCallback, useContext, useEffect, useId, useLayoutEffect, useState } from 'react';
 import { SheetFlowContext } from './SheetFlow';
 import {
@@ -24,6 +25,7 @@ import { dialogWidth, sheetWidth } from './ColumnFrame';
 import { theme } from '@/constants/theme';
 import { usePressScale } from '@/lib/usePressScale';
 import { useReduceMotion } from '@/lib/useReduceMotion';
+import { useSwipeToClose } from '@/lib/useSwipeToClose';
 import { AmountPadHostProvider, useAmountPadHost } from '@/components/AmountField';
 import { themedStyles, themedValue } from '@/theme/themedStyles';
 
@@ -48,6 +50,11 @@ interface Props {
   /** Compact styling shared by Home and Activity's linked sheets. */
   ledgerStyle?: boolean;
   dismissible?: boolean;
+  /**
+   * Take the swipe-down only from the header, not the whole sheet: for a sheet with its own tall vertical list inside
+   * (`scrollable={false}` and a FlatList), whose upward scroll would otherwise close the sheet.
+   */
+  swipeFromHeader?: boolean;
   backLabel?: string;
   /** A root page in a SheetFlow; child tasks with backLabel join the flow automatically. */
   flowPage?: boolean;
@@ -286,7 +293,7 @@ function RoundFooterButton({
  * the Reanimated entering animation that was here once got wrong (see the note by SHEET_SHADOW). With reduce motion on it
  * is already in place.
  */
-function useRise(distance: number) {
+function useRise(distance: number, drag?: Animated.Value) {
   const reduceMotion = useReduceMotion();
   const [y] = useState(() => new Animated.Value(reduceMotion ? 0 : distance));
   useEffect(() => {
@@ -296,14 +303,14 @@ function useRise(distance: number) {
     }
     const run = Animated.timing(y, {
       toValue: 0,
-      duration: 280,
+      duration: DURATIONS.screen,
       easing: Easing.out(Easing.cubic),
       useNativeDriver: true,
     });
     run.start();
     return () => run.stop();
   }, [reduceMotion, y]);
-  return { transform: [{ translateY: y }] };
+  return { transform: drag ? [{ translateY: y }, { translateY: drag }] : [{ translateY: y }] };
 }
 
 function ModalSheetBody({
@@ -319,6 +326,7 @@ function ModalSheetBody({
   size = 'standard',
   ledgerStyle = false,
   dismissible = true,
+  swipeFromHeader = false,
   backLabel,
   flowPage,
   flowHeight = 'shared',
@@ -334,7 +342,23 @@ function ModalSheetBody({
   const maxHeight =
     height < 640 || fontScale > 1.2 || size === 'expanded' ? '94%' : size === 'compact' ? '78%' : '90%';
   const isSheet = variant === 'sheet';
-  const rise = useRise(isSheet ? 40 : 16);
+  // A bottom sheet can be dragged down to close; a page inside a flow (it has a back arrow) is left for the arrow.
+  const swipe = useSwipeToClose({
+    enabled: isSheet && dismissible && !backLabel,
+    onClose,
+    resetKey: visible,
+  });
+  // The dim behind a sheet lightens as it is dragged down.
+  const backdropFade = isSheet
+    ? {
+        opacity: swipe.drag.interpolate({
+          inputRange: [0, 400],
+          outputRange: [1, 0.15],
+          extrapolate: 'clamp',
+        }),
+      }
+    : undefined;
+  const rise = useRise(isSheet ? 40 : 16, isSheet ? swipe.drag : undefined);
   const viewportHeight = flow?.viewportHeight ? Math.min(height, flow.viewportHeight) : height;
   // What this page needs on its own: header, content and footer as laid out. A page shared with a flow is held at
   // most FLOW_STRETCH above it, so a short page after a tall one is not left mostly empty.
@@ -462,8 +486,8 @@ function ModalSheetBody({
     return (
       <AmountPadHostProvider value={host}>
         <View style={styles.flex}>
-          <Pressable
-            style={styles.backdrop}
+          <AnimatedPressable
+            style={[styles.backdrop, backdropFade]}
             disabled={!dismissible}
             onPress={onClose}
             accessibilityRole="button"
@@ -477,6 +501,7 @@ function ModalSheetBody({
           >
             <Animated.View
               testID="sheet-surface"
+              {...swipe.panHandlers}
               onLayout={
                 sharesHeight && visible ? (event) => flow.measure(event.nativeEvent.layout.height) : undefined
               }
@@ -496,10 +521,15 @@ function ModalSheetBody({
                   sharesHeight ? (event) => setBand('header', event.nativeEvent.layout.height) : undefined
                 }
               >
+                {isSheet && !backLabel && dismissible && <View pointerEvents="none" style={styles.grabber} />}
                 {header}
               </View>
               <KeyboardAwareScrollView
                 {...scrollTracking}
+                onScroll={(e) => {
+                  scrollTracking.onScroll(e);
+                  swipe.onScroll(e);
+                }}
                 onContentSizeChange={
                   sharesHeight ? (_, contentHeight) => setBand('content', contentHeight) : undefined
                 }
@@ -547,6 +577,7 @@ function ModalSheetBody({
 
   const body = (
     <Animated.View
+      {...(isSheet && !swipeFromHeader ? swipe.panHandlers : {})}
       style={[
         isSheet ? [styles.sheet, sheetWidth] : [styles.dialog, dialogWidth],
         ledgerStyle && styles.ledgerSurface,
@@ -557,8 +588,9 @@ function ModalSheetBody({
       ]}
     >
       <SheetWash />
+      {isSheet && !backLabel && dismissible && <View pointerEvents="none" style={styles.grabber} />}
       {stripView}
-      {header}
+      {swipeFromHeader && isSheet ? <View {...swipe.panHandlers}>{header}</View> : header}
       {children}
       {pad && <View style={styles.inlineDock}>{pad}</View>}
     </Animated.View>
@@ -569,8 +601,8 @@ function ModalSheetBody({
       <View style={styles.flex}>
         {/* The backdrop is its own sibling rather than a parent of the sheet:
           a parent Pressable would swallow every tap inside the sheet too. */}
-        <Pressable
-          style={styles.backdrop}
+        <AnimatedPressable
+          style={[styles.backdrop, backdropFade]}
           disabled={!dismissible}
           onPress={onClose}
           accessibilityRole="button"
@@ -648,6 +680,16 @@ const styles = themedStyles(() =>
 
     // --- pinned-footer layouts ---
     framedPad: { paddingHorizontal: 20, paddingTop: 20 },
+    // The small bar at the top of a sheet that says it can be dragged down.
+    grabber: {
+      position: 'absolute',
+      top: 8,
+      alignSelf: 'center',
+      width: 36,
+      height: 4,
+      borderRadius: 2,
+      backgroundColor: theme.colors.borderSoft,
+    },
     framedBody: { flexGrow: 0, flexShrink: 1 },
     flowBody: { flexGrow: 1 },
     framedSheet: {

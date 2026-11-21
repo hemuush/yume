@@ -18,6 +18,8 @@ export const DURATIONS = {
   /** The opening fade-in of a screen, and a Home section arriving. Plain fades: no travel, no stagger. */
   enter: 180,
   section: 200,
+  /** A pushed screen sliding in, and a bottom sheet rising: the same time, so opening either feels alike. */
+  screen: 260,
   /** A list row sliding into its new place / fading out when removed. */
   rowMove: 200,
   rowExit: 150,

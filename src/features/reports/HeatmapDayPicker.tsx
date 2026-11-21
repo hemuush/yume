@@ -63,7 +63,8 @@ export function HeatmapDayPicker({
         accessibilityLabel="Choose day or month"
       >
         <Text style={styles.title}>Choose day or month</Text>
-        <Text style={styles.detail}>{selectedIso ? dayMonthYear(selectedIso) : 'Browse dates'}</Text>
+        {/* The picked day is named by the day card below; this only says what the button does. */}
+        <Text style={styles.detail}>Search any date</Text>
       </Pressable>
       <ModalSheet
         visible={open}
@@ -71,6 +72,7 @@ export function HeatmapDayPicker({
         title="Choose day or month"
         size="expanded"
         scrollable={false}
+        swipeFromHeader
       >
         <View style={{ height: Math.floor(height / 2) }}>
           <TextInput
