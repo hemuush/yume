@@ -188,7 +188,7 @@ Start with the [documentation index](docs/INDEX.md) and [architecture and logic 
 | [Backup & restore](BACKUP.md)                                | Local-folder backups, choosing existing data, restore safety and recovery. |
 | [Build guide](BUILD.md)                                      | APK/AAB builds and device verification.                                    |
 | [Security boundaries](SECURITY.md)                           | Implemented privacy, input, export and build controls and their limits.    |
-| [Repository re-audit](docs/REPOSITORY_REAUDIT_2026_10_25.md) | Per-file coverage, fixes, fresh checks and open device acceptance.         |
+| [Repository re-audit](docs/reports/REPOSITORY_REAUDIT_2026_10_25.md) | Per-file coverage, fixes, fresh checks and open device acceptance.         |
 | [Expo SDK 58](https://docs.expo.dev/versions/v58.0.0/)       | The versioned Expo reference used by this project.                         |
 
 ---

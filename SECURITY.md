@@ -1,6 +1,6 @@
 # Security boundaries
 
-This guide describes the implemented controls and their limits. Validation for the current revision is recorded in the [repository re-audit](docs/REPOSITORY_REAUDIT_2026_10_25.md); [device acceptance](docs/RELEASE_DEVICE_CHECKS.md) is tracked separately.
+This guide describes the implemented controls and their limits. Validation for the current revision is recorded in the [repository re-audit](docs/reports/REPOSITORY_REAUDIT_2026_10_25.md); [device acceptance](docs/RELEASE_DEVICE_CHECKS.md) is tracked separately.
 
 ## Data and access
 

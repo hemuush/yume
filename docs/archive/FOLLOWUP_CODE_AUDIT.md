@@ -6,7 +6,7 @@
 
 Reviewed against the repository on **11 October 2026**. Mutations must validate live records and balances, serialize related changes and retain a retry path after failure. Locks and stale-request guards complement database transactions; they do not replace them.
 
-Implementation: [src/lib/useSaveOnce.ts](src/lib/useSaveOnce.ts) and [src/lib/useScreenLoad.ts](src/lib/useScreenLoad.ts). Tests generally live beside these modules; use the [architecture and logic guide](docs/ARCHITECTURE.md) to find related flows.
+Implementation: [src/hooks/useSaveOnce.ts](src/hooks/useSaveOnce.ts) and [src/hooks/useScreenLoad.ts](src/hooks/useScreenLoad.ts). Tests generally live beside these modules; use the [architecture and logic guide](docs/ARCHITECTURE.md) to find related flows.
 
 This document preserves earlier findings and validation. Statements inside the historical record describe that revision, including old layouts, build status and test counts. They are not new verification results. See the [documentation index](docs/INDEX.md), [data model](DATA_MODEL.md), [backup guide](BACKUP.md) and [build guide](BUILD.md) for current contracts.
 

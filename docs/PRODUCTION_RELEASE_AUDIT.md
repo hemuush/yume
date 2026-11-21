@@ -1,6 +1,6 @@
 # Production release audit
 
-> Historical record: validation and implementation claims apply to the revision recorded below. For maintained behavior see [architecture](ARCHITECTURE.md); for the newer check results see the [repository re-audit](REPOSITORY_REAUDIT_2026_10_25.md).
+> Historical record: validation and implementation claims apply to the revision recorded below. For maintained behavior see [architecture](ARCHITECTURE.md); for the newer check results see the [repository re-audit](reports/REPOSITORY_REAUDIT_2026_10_25.md).
 
 Current source and validation: see the [release follow-up audit](RELEASE_FOLLOWUP_AUDIT.md). This document retains the preceding audit record.
 

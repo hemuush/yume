@@ -1,6 +1,6 @@
 # Screen source coverage
 
-> Historical record: validation and implementation claims apply to the revision recorded below. For maintained behavior see [architecture](ARCHITECTURE.md); for the newer check results see the [repository re-audit](REPOSITORY_REAUDIT_2026_10_25.md).
+> Historical record: validation and implementation claims apply to the revision recorded below. For maintained behavior see [architecture](ARCHITECTURE.md); for the newer check results see the [repository re-audit](reports/REPOSITORY_REAUDIT_2026_10_25.md).
 
 Recorded 13 October 2026 after commit `373ea5a`. Every tracked file was read by the inventory scan (749 files). Route closures below use TypeScript-resolved local imports; they include shared modules and are source coverage, not screenshots or proof of all interactive states. Layouts and the Add redirect are included separately.
 

@@ -20,7 +20,7 @@
 
 ## Current reading guide
 
-Maintained through **25 October 2026**; fresh verification is in the [repository re-audit](docs/REPOSITORY_REAUDIT_2026_10_25.md). Folder selection scans existing files before writing. Restore replaces local records rather than merging them. A private safety snapshot captures pre-restore data; its own timestamp describes what it contains, not the latest folder backup.
+Maintained through **25 October 2026**; fresh verification is in the [repository re-audit](docs/reports/REPOSITORY_REAUDIT_2026_10_25.md). Folder selection scans existing files before writing. Restore replaces local records rather than merging them. A private safety snapshot captures pre-restore data; its own timestamp describes what it contains, not the latest folder backup.
 
 Implementation: [src/lib/backup.ts](src/lib/backup.ts) and [src/lib/localBackup.ts](src/lib/localBackup.ts). Tests generally live beside these modules; use the [architecture and logic guide](docs/ARCHITECTURE.md) to find related flows.
 

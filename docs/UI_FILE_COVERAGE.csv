@@ -695,24 +695,24 @@ src/lib/spendingExplanation.ts,logic/tooling,43,content scanned; global static c
 src/lib/splitLimits.ts,logic/tooling,3,content scanned; global static checks apply,,502341b60d44a64438af5312752c37156070213dda8636593779b00bacc670c3
 src/lib/uiScale.test.ts,test,11,content scanned; existing test inventory,,ec4843cbccfb10141c346abb65d8e55441b700e477b6d67bd91a7ce003e7dcb0
 src/lib/uiScale.ts,logic/tooling,24,content scanned; global static checks apply,,3baa42ab3f3bcc77047ae50e09c23bde26f03bdb04abd85a02fd4a10de924ccb
-src/lib/useCollapsingHeader.ts,logic/tooling,97,content scanned; global static checks apply,,3b6636a41aa4c88092147e206009437e964c1a2c6e0af8328fe0cfb4e6b01f87
-src/lib/useFadeIn.ts,logic/tooling,35,content scanned; global static checks apply,,f64662b963b20a1e2b02021a58bcefd48e4059fc00fbdfd569cae5ccea8f5da2
-src/lib/useFreshness.ts,logic/tooling,50,content scanned; global static checks apply,,71faef91521ce859be62082167bb0709c442e9b0724dc4da2e3b19323727f492
+src/hooks/useCollapsingHeader.ts,logic/tooling,97,content scanned; global static checks apply,,3b6636a41aa4c88092147e206009437e964c1a2c6e0af8328fe0cfb4e6b01f87
+src/hooks/useFadeIn.ts,logic/tooling,35,content scanned; global static checks apply,,f64662b963b20a1e2b02021a58bcefd48e4059fc00fbdfd569cae5ccea8f5da2
+src/hooks/useFreshness.ts,logic/tooling,50,content scanned; global static checks apply,,71faef91521ce859be62082167bb0709c442e9b0724dc4da2e3b19323727f492
 src/lib/useGrowFrom.test.tsx,test,88,content scanned; existing test inventory,,73e0db79714684886e4561d47599a3b1b7f1d1d265e05e15828864b51248ca6d
 src/lib/useGrowFrom.ts,logic/tooling,61,content scanned; global static checks apply,,3d35e58a37a5af89c501f0e253338e03223e4f73adac3b9b2639dc248d4e5083
-src/lib/useOnKeyboardHide.ts,logic/tooling,21,content scanned; global static checks apply,,b5ca94f098d15aa03f5dbb876d70546a5d92c401d14be6afca15b40f7ef3d580
-src/lib/usePressScale.ts,logic/tooling,56,content scanned; global static checks apply,,f977c804a14b3081a510f99962c509c2af15250ea08f4aeee8d22686e57e5dab
-src/lib/useReduceMotion.ts,logic/tooling,42,content scanned; global static checks apply,,85996ffb18aa06002d6674280b385802ae1b6f4ca83c5b5d27d0c846a8609765
-src/lib/useReturnOrPush.test.tsx,test,70,content scanned; existing test inventory,,ab93b9d4756b526b47a388a95ee0303b80ce54a2a8427f1f9c40200d8df3dc88
-src/lib/useReturnOrPush.ts,logic/tooling,41,content scanned; global static checks apply,,6cff142320f4b795cdab2f4f654fc54dfc5f14a9fd3d050c28d9f69e1c9f4eb8
-src/lib/useSaveOnce.test.tsx,test,33,content scanned; existing test inventory,,ed1fa6997ce3e8fcee77627628379a793c30e70d2b3408e13ec3aa02910a5ffb
-src/lib/useSaveOnce.ts,logic/tooling,21,content scanned; global static checks apply,,28d70948295bcc332fbc4017616453351304420dc444108f9c4ca9f3d1e3a415
-src/lib/useScreenLoad.test.tsx,test,127,content scanned; existing test inventory,,2847186879c9733f56df6562810a614342cd064bf3dd7c9f26f2b3e80bad1dd7
-src/lib/useScreenLoad.ts,logic/tooling,56,content scanned; global static checks apply,,8a51ba9f4008bef0888dae1f262a38bb87a3d4fb21291981f50153dd92cf7b52
-src/lib/useSwipeDrag.test.tsx,test,65,content scanned; existing test inventory,,e1e46c8ae7c12391638ab6ec4fc94de869ec578ef9cc9c4ecd253b5e24d15662
-src/lib/useSwipeDrag.ts,logic/tooling,59,content scanned; global static checks apply,,c7dd0140cd3bdabf1d7e18d19c655c51665af702b58378e72baa2911408e3106
-src/lib/useSwipeStep.ts,logic/tooling,33,content scanned; global static checks apply,,e9328e8520f377506c654dfa42eb994dc7f3b3ad6d5716a87bba4838f759df78
-src/lib/useTabScrollToTop.ts,logic/tooling,11,content scanned; global static checks apply,,99e3e076c39fafee00ea35eacf1786dfe9e02b2b6d0dac18590d71be5f717a1e
+src/hooks/useOnKeyboardHide.ts,logic/tooling,21,content scanned; global static checks apply,,b5ca94f098d15aa03f5dbb876d70546a5d92c401d14be6afca15b40f7ef3d580
+src/hooks/usePressScale.ts,logic/tooling,56,content scanned; global static checks apply,,f977c804a14b3081a510f99962c509c2af15250ea08f4aeee8d22686e57e5dab
+src/hooks/useReduceMotion.ts,logic/tooling,42,content scanned; global static checks apply,,85996ffb18aa06002d6674280b385802ae1b6f4ca83c5b5d27d0c846a8609765
+src/hooks/useReturnOrPush.test.tsx,test,70,content scanned; existing test inventory,,ab93b9d4756b526b47a388a95ee0303b80ce54a2a8427f1f9c40200d8df3dc88
+src/hooks/useReturnOrPush.ts,logic/tooling,41,content scanned; global static checks apply,,6cff142320f4b795cdab2f4f654fc54dfc5f14a9fd3d050c28d9f69e1c9f4eb8
+src/hooks/useSaveOnce.test.tsx,test,33,content scanned; existing test inventory,,ed1fa6997ce3e8fcee77627628379a793c30e70d2b3408e13ec3aa02910a5ffb
+src/hooks/useSaveOnce.ts,logic/tooling,21,content scanned; global static checks apply,,28d70948295bcc332fbc4017616453351304420dc444108f9c4ca9f3d1e3a415
+src/hooks/useScreenLoad.test.tsx,test,127,content scanned; existing test inventory,,2847186879c9733f56df6562810a614342cd064bf3dd7c9f26f2b3e80bad1dd7
+src/hooks/useScreenLoad.ts,logic/tooling,56,content scanned; global static checks apply,,8a51ba9f4008bef0888dae1f262a38bb87a3d4fb21291981f50153dd92cf7b52
+src/hooks/useSwipeDrag.test.tsx,test,65,content scanned; existing test inventory,,e1e46c8ae7c12391638ab6ec4fc94de869ec578ef9cc9c4ecd253b5e24d15662
+src/hooks/useSwipeDrag.ts,logic/tooling,59,content scanned; global static checks apply,,c7dd0140cd3bdabf1d7e18d19c655c51665af702b58378e72baa2911408e3106
+src/hooks/useSwipeStep.ts,logic/tooling,33,content scanned; global static checks apply,,e9328e8520f377506c654dfa42eb994dc7f3b3ad6d5716a87bba4838f759df78
+src/hooks/useTabScrollToTop.ts,logic/tooling,11,content scanned; global static checks apply,,99e3e076c39fafee00ea35eacf1786dfe9e02b2b6d0dac18590d71be5f717a1e
 src/lib/whatIf.test.ts,test,63,content scanned; existing test inventory,,f07f87ec0b8cb347a58020538fca4fd36ba801b215da44ab8d758d85a7363220
 src/lib/whatIf.ts,logic/tooling,77,content scanned; global static checks apply,,cd91515f8035adaf07d9ef7c23275260f9edc85ccf8fe07d6f45af0ec9cec80f
 src/perf/loadPerf.test.ts,test,192,content scanned; existing test inventory,,bff7cd9e8f1915c248b7f6ebd67ee42ef08b98a2ea4309f24ffbb3f7bc8676ca

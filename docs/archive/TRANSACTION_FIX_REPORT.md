@@ -1,14 +1,14 @@
 # Transaction entry: implementation record
 
-> Historical record: validation and implementation claims apply to the revision recorded below. For maintained behavior see [architecture](../ARCHITECTURE.md); for the newer check results see the [repository re-audit](../REPOSITORY_REAUDIT_2026_10_25.md).
+> Historical record: validation and implementation claims apply to the revision recorded below. For maintained behavior see [architecture](../ARCHITECTURE.md); for the newer check results see the [repository re-audit](../reports/REPOSITORY_REAUDIT_2026_10_25.md).
 
 ## Reading guide for this record
 
 Reviewed against the repository on **11 October 2026**. Entry previews round to whole major units by design. Preserve stored precision when an amount has not been edited. Validate calculator results, account/category relationships and linked records before a transactional save; repeated taps must not duplicate it.
 
-Implementation: [app/add-transaction.tsx](../../app/add-transaction.tsx) and [src/features/add](../../src/features/add). Tests generally live beside these modules; use the [architecture and logic guide](../../docs/ARCHITECTURE.md) to find related flows.
+Implementation: [app/add-transaction.tsx](../../app/add-transaction.tsx) and [src/features/add](../../src/features/add). Tests generally live beside these modules; use the [architecture and logic guide](../ARCHITECTURE.md) to find related flows.
 
-This document preserves earlier findings and validation. Statements inside the historical record describe that revision, including old layouts, build status and test counts. They are not new verification results. See the [documentation index](../../docs/INDEX.md), [data model](../../DATA_MODEL.md), [backup guide](../../BACKUP.md) and [build guide](../../BUILD.md) for current contracts.
+This document preserves earlier findings and validation. Statements inside the historical record describe that revision, including old layouts, build status and test counts. They are not new verification results. See the [documentation index](../INDEX.md), [data model](../../DATA_MODEL.md), [backup guide](../../BACKUP.md) and [build guide](../../BUILD.md) for current contracts.
 
 <details>
 <summary>Historical findings, implementation and validation</summary>

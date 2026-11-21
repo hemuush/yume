@@ -16,11 +16,11 @@ Existing expense text is reused through `transactions.note`, and recurring expen
 
 Currency scope follows the existing default currency. Hidden sensitive category groups leave label suggestions and report totals. Reports show eight label rows initially and expand by 20 with Show more. Search is local, has a clear action, and does not trigger another load. Done, close and Show more dismiss the keyboard. The summary reserves space during loading; search becomes available after a successful read. Pending reads cannot replace newer scopes or update closed components. Comparisons, existing charts and financial calculations remain unchanged.
 
-Tracked refund receipts preserve the original purchase label, including an empty label, so partial and full refunds net against the same expense-label total and Activity filter. Startup and backup restore repair app-created linked receipts only when their text exactly matches the old generated `Refund: <purchase label or category>` value. Manually linked refund labels and custom receipt text are preserved. See [19 October audit fixes](AUDIT_FIXES_2026_10_19.md) for current validation; the results below belong to the original implementation.
+Tracked refund receipts preserve the original purchase label, including an empty label, so partial and full refunds net against the same expense-label total and Activity filter. Startup and backup restore repair app-created linked receipts only when their text exactly matches the old generated `Refund: <purchase label or category>` value. Manually linked refund labels and custom receipt text are preserved. See [19 October audit fixes](reports/AUDIT_FIXES_2026_10_19.md) for current validation; the results below belong to the original implementation.
 
 ## Original implementation validation
 
-The results here belong to the 13 October implementation. Use the [repository re-audit](REPOSITORY_REAUDIT_2026_10_25.md) for the newer full regression and current verification limits.
+The results here belong to the 13 October implementation. Use the [repository re-audit](reports/REPOSITORY_REAUDIT_2026_10_25.md) for the newer full regression and current verification limits.
 
 - Final full regression: 268 suites / 10,887 tests passed, exit 0, 465.534 seconds. Two opt-in performance tests were skipped by the ordinary Jest command; they were not rerun for this change.
 - New real-SQLite tests cover old text reuse, date/currency scope, refund-only negative totals, unlabelled rows, income exclusion and sensitive-parent/sibling privacy.

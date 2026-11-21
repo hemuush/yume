@@ -2,7 +2,7 @@
 
 ## Approved Home implementation — 5 November 2026
 
-Use a candidate containing the [approved Home refinement](HOME_REFINEMENT_2026_11_05.md). The approved screenshots are browser prototypes, not native-device acceptance evidence.
+Use a candidate containing the [approved Home refinement](reports/HOME_REFINEMENT_2026_11_05.md). The approved screenshots are browser prototypes, not native-device acceptance evidence.
 
 | Area                        | Action                                                                                         | Expected result                                                                                                                                      | Actual/status |
 | --------------------------- | ---------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
@@ -13,7 +13,7 @@ Use a candidate containing the [approved Home refinement](HOME_REFINEMENT_2026_1
 
 ## UI/UX follow-up — 5 November 2026
 
-Use a build containing the [UI/UX follow-up](UX_ENHANCEMENT_PLAN_2026_11_05.md). Component tests and JavaScript export do not replace these checks.
+Use a build containing the [UI/UX follow-up](reports/UX_ENHANCEMENT_PLAN_2026_11_05.md). Component tests and JavaScript export do not replace these checks.
 
 | Area             | Action                                                                                                                           | Expected result                                                                                                                   | Actual/status |
 | ---------------- | -------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | ------------- |
@@ -24,7 +24,7 @@ Use a build containing the [UI/UX follow-up](UX_ENHANCEMENT_PLAN_2026_11_05.md).
 
 ## Reported startup issues — 25 October 2026
 
-Use a newly built APK containing the [startup corrections](STARTUP_FIXES_2026_10_25.md), not an older binary with updated JavaScript.
+Use a newly built APK containing the [startup corrections](reports/STARTUP_FIXES_2026_10_25.md), not an older binary with updated JavaScript.
 
 | Area                  | Action                                                                                                                           | Expected result                                                                                                                    | Actual/status |
 | --------------------- | -------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ------------- |
@@ -35,7 +35,7 @@ Use a newly built APK containing the [startup corrections](STARTUP_FIXES_2026_10
 
 ## Repository re-audit acceptance — 25 October 2026
 
-Use a candidate containing the [repository re-audit](REPOSITORY_REAUDIT_2026_10_25.md). Automated checks below do not measure frame pacing or native file-provider behavior.
+Use a candidate containing the [repository re-audit](reports/REPOSITORY_REAUDIT_2026_10_25.md). Automated checks below do not measure frame pacing or native file-provider behavior.
 
 | Area          | Action                                                                                                                            | Expected result                                                                                                                               | Actual/status |
 | ------------- | --------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
@@ -50,7 +50,7 @@ Record: APK/build ___; phone/model ___; Android ___; launcher ___; date ___; tes
 
 ## App audit acceptance — 25 October 2026
 
-Use a candidate containing [this audit's corrections](FULL_APP_AUDIT_2026_10_25.md). All rows below remain unperformed on a phone.
+Use a candidate containing [this audit's corrections](reports/FULL_APP_AUDIT_2026_10_25.md). All rows below remain unperformed on a phone.
 
 | Area                    | Action                                                                                                                       | Expected result                                                                                                           | Actual/status |
 | ----------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | ------------- |
@@ -63,7 +63,7 @@ Use a candidate containing [this audit's corrections](FULL_APP_AUDIT_2026_10_25.
 
 ## Related sheet navigation — 21 October 2026
 
-Use a candidate containing the [persistent sheet flow](SHEET_FLOW_REVIEW_2026_10_21.md). The earlier APK `7c761af` does not contain this correction.
+Use a candidate containing the [persistent sheet flow](reports/SHEET_FLOW_REVIEW_2026_10_21.md). The earlier APK `7c761af` does not contain this correction.
 
 | Area                    | Action                                                                       | Expected result                                                                                                            | Actual/status |
 | ----------------------- | ---------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- | ------------- |
@@ -99,7 +99,7 @@ Technical gates separate from this manual checklist: inspect final APK/AAB permi
 
 ## Current cleanup acceptance — 21 October 2026
 
-These remain **not run on a phone**. ADB was unavailable on PATH and at the standard local SDK location during the recheck. Use a candidate built from the current uncommitted changes and copied test data. The [cleanup recheck](CLEANUP_RECHECK_2026_10_21.md) records automated results separately.
+These remain **not run on a phone**. ADB was unavailable on PATH and at the standard local SDK location during the recheck. Use a candidate built from the current uncommitted changes and copied test data. The [cleanup recheck](reports/CLEANUP_RECHECK_2026_10_21.md) records automated results separately.
 
 | Area                       | Action                                                                                                                  | Expected result                                                                                                   | Actual/status |
 | -------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- | ------------- |
@@ -113,7 +113,7 @@ These remain **not run on a phone**. ADB was unavailable on PATH and at the stan
 
 ## Goals and budgets acceptance — 21 October 2026
 
-Use a new candidate containing the [goals/budgets changes](GOALS_BUDGETS_FLOW_REVIEW_2026_10_21.md) and copied data. Automated checks do not close native acceptance.
+Use a new candidate containing the [goals/budgets changes](reports/GOALS_BUDGETS_FLOW_REVIEW_2026_10_21.md) and copied data. Automated checks do not close native acceptance.
 
 | Area                  | Action                                                                                        | Expected result                                                                                                                    | Actual/status |
 | --------------------- | --------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ------------- |
@@ -128,7 +128,7 @@ Use a new candidate containing the [goals/budgets changes](GOALS_BUDGETS_FLOW_RE
 
 ## Add transaction acceptance — 21 October 2026
 
-Use a new candidate containing the [Add-flow changes](ADD_TRANSACTION_FLOW_REVIEW_2026_10_21.md) and copied data. Renderer tests and a JavaScript export do not close native checks.
+Use a new candidate containing the [Add-flow changes](reports/ADD_TRANSACTION_FLOW_REVIEW_2026_10_21.md) and copied data. Renderer tests and a JavaScript export do not close native checks.
 
 | Area                     | Action                                                                                         | Expected result                                                                                   | Actual/status |
 | ------------------------ | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- | ------------- |
@@ -142,7 +142,7 @@ Use a new candidate containing the [Add-flow changes](ADD_TRANSACTION_FLOW_REVIE
 
 ## Loan-flow acceptance — 21 October 2026
 
-Use copied test data and a candidate containing the [loan-flow changes](LOAN_FLOW_REVIEW_2026_10_21.md). Automated tests do not close these native checks.
+Use copied test data and a candidate containing the [loan-flow changes](reports/LOAN_FLOW_REVIEW_2026_10_21.md). Automated tests do not close these native checks.
 
 | Area                | Action                                                                                                          | Expected result                                                                                                                 | Actual/status |
 | ------------------- | --------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------- |
@@ -157,7 +157,7 @@ Optional attention topics (not yet device-verified): enable Recurring expense he
 
 24 October notification audit additions (all **Not run** on a phone):
 
-The [24 October repository audit](CODE_AUDIT_2026_10_24.md) also needs phone acceptance for Investments/Exports refresh error and Retry layout, export period selection after a copied-data restore, PDF/Excel sharing, and the investment chart with a large copied ledger. These remain **Not run**; desktop timings and component tests do not close them.
+The [24 October repository audit](reports/CODE_AUDIT_2026_10_24.md) also needs phone acceptance for Investments/Exports refresh error and Retry layout, export period selection after a copied-data restore, PDF/Excel sharing, and the investment chart with a large copied ledger. These remain **Not run**; desktop timings and component tests do not close them.
 
 - Deny app permission or block the reminder category, then hide sensitive amounts and rebuild. Re-enable delivery in phone Settings; the page must refresh its status on return, and old private payloads must not reappear.
 - With phone permission disabled, change a reminder time. Verify the choice remains saved after reopening the page and the failed rebuild is surfaced rather than claiming readiness. The automated harness separately covers rejected same-ID replacement and cleanup.
