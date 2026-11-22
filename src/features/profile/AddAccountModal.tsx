@@ -222,7 +222,7 @@ export function AddAccountModal({
       <DraftCard
         ledgerStyle
         hue={accountHue(type, accent)}
-        icon={accountIcon(type, tracked)}
+        icon={accountIcon(type, tracked ? { kind } : false)}
         title={name.trim() || 'New account'}
         kicker={ACCOUNT_CHOICES.find((t) => t.value === choice)?.label ?? ''}
       />

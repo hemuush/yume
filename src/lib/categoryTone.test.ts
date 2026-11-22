@@ -33,3 +33,12 @@ it('leaves a colour that is not hex, or none, to the neutral tile', () => {
   expect(categoryTone(undefined)).toBeNull();
   expect(categoryTone('#12')).toBeNull();
 });
+
+it('gives the same tone again for the same colour, and a new one when the mode changes', () => {
+  applyScheme('light');
+  const first = categoryTone('#FF9E7D');
+  expect(categoryTone('#FF9E7D')).toBe(first);
+  applyScheme('dark');
+  expect(categoryTone('#FF9E7D')).not.toBe(first);
+  expect(categoryTone('#FF9E7D')!.fill).not.toBe(first!.fill);
+});

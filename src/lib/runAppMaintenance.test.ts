@@ -7,6 +7,7 @@ import { runDueRecurringRules } from '@/db/recurring';
 import { runLocalBackupIfDue } from './localBackup';
 import { emitTransactionsChanged } from './dataEvents';
 import { runAppMaintenance } from './runAppMaintenance';
+import { recordRebuild } from './rebuildState';
 
 it('waits for recurring transactions before backing up, sharing overlapping calls', async () => {
   let finish!: (count: number) => void;
@@ -41,4 +42,20 @@ it('renews reminders even when no recurring entry is due', async () => {
   expect(jest.mocked(rebuildNotificationsAfterCommit).mock.invocationCallOrder[0]).toBeLessThan(
     jest.mocked(runLocalBackupIfDue).mock.invocationCallOrder[0]
   );
+});
+
+describe('a rebuild that is still good', () => {
+  it('is kept when nothing new was posted', async () => {
+    recordRebuild(true);
+    jest.mocked(runDueRecurringRules).mockResolvedValue(0);
+    await runAppMaintenance();
+    expect(rebuildNotificationsAfterCommit).not.toHaveBeenCalled();
+  });
+
+  it('is redone when the catch-up posted entries, which change what is due and whether today has one', async () => {
+    recordRebuild(true);
+    jest.mocked(runDueRecurringRules).mockResolvedValue(2);
+    await runAppMaintenance();
+    expect(rebuildNotificationsAfterCommit).toHaveBeenCalledTimes(1);
+  });
 });

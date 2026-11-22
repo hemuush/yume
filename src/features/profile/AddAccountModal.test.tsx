@@ -17,7 +17,10 @@ jest.mock('@/components/ModalSheet', () => ({
       footer
     ),
 }));
-jest.mock('@/components/DraftCard', () => ({ DraftCard: () => null }));
+jest.mock('@/components/DraftCard', () => ({
+  DraftCard: (p: { icon: string }) =>
+    require('react').createElement(require('react-native').View, { testID: 'draft', icon: p.icon }),
+}));
 jest.mock('@/components/FormInput', () => ({ FormInput: () => null }));
 jest.mock('@/components/Chip', () => ({ Chip: () => null }));
 jest.mock('@/components/PrimaryButton', () => ({ PrimaryButton: () => null }));
@@ -190,6 +193,18 @@ describe('Investment account type', () => {
         0
       );
     }
+  });
+
+  it('draws the header with the picture of the kind of investment chosen, as everywhere else', async () => {
+    mockListAccounts.mockResolvedValue([bank]);
+    const { tree } = await render();
+    const icon = () => tree.root.findByProps({ testID: 'draft' }).props.icon;
+    expect(icon()).not.toBe('chart-areaspline');
+    await act(async () => byProps(tree, { label: 'Investment' }).props.onPress());
+    await act(async () => byProps(tree, { label: 'Mutual fund' }).props.onPress());
+    expect(icon()).toBe('chart-areaspline');
+    await act(async () => byProps(tree, { label: 'Gold' }).props.onPress());
+    expect(icon()).toBe('gold');
   });
 
   it('saves an investment as a tracked savings account with its kind and funding account', async () => {
