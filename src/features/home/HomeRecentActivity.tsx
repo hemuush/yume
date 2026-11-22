@@ -8,10 +8,9 @@ import { Section } from '@/components/Section';
 import { theme } from '@/constants/theme';
 import { dayLabel } from '@/lib/date';
 import { investRole } from '@/lib/investment';
-import { formatMoney } from '@/lib/money';
+import { formatMoneyExact } from '@/lib/money';
 import { ROW_EXIT, ROW_LAYOUT } from '@/lib/animation';
 import type { PeriodCursor } from '@/lib/period';
-import { roundedMinor } from '@/lib/round';
 import type { Account, Category, Transaction } from '@/types';
 import { RecentTransactionRow } from './RecentTransactionRow';
 import { emptyRecentCopy } from './recentActivity';
@@ -79,7 +78,7 @@ export const HomeRecentActivity = memo(function HomeRecentActivity({
                     <Text style={styles.dayHeadText}>{dayLabel(tx.date)}</Text>
                   </View>
                   {tx.date === today && cursor.offset === 0 && todaySpendMinor > 0 && (
-                    <Text style={styles.daySpendText}>−{formatMoney(roundedMinor(todaySpendMinor))}</Text>
+                    <Text style={styles.daySpendText}>−{formatMoneyExact(todaySpendMinor)}</Text>
                   )}
                 </View>
               )}

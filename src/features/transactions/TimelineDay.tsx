@@ -12,7 +12,7 @@ import { useStackOpen, type StackStore } from './stackStore';
 import { JustAddedGlow } from '@/components/JustAddedGlow';
 import { Category, Transaction } from '@/types';
 import { dayMonth } from '@/lib/dateLabels';
-import { formatMaskableMoney, formatMoney } from '@/lib/money';
+import { formatMaskableMoney, formatMoney, formatMoneyExact } from '@/lib/money';
 import { getCachedCurrency } from '@/db/settings';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import { useAccent } from '@/theme/AccentContext';
@@ -346,18 +346,18 @@ function TimelineDayView({
   const parts = [
     totals.spent > 0 && {
       word: 'spent',
-      amount: formatMoney(totals.spent),
-      drawn: `−${formatMoney(totals.spent)}`,
+      amount: formatMoneyExact(totals.spent),
+      drawn: `−${formatMoneyExact(totals.spent)}`,
     },
     totals.received > 0 && {
       word: 'in',
-      amount: formatMoney(totals.received),
-      drawn: `+${formatMoney(totals.received)}`,
+      amount: formatMoneyExact(totals.received),
+      drawn: `+${formatMoneyExact(totals.received)}`,
     },
     totals.back > 0 && {
       word: 'back',
-      amount: formatMoney(totals.back),
-      drawn: `${formatMoney(totals.back)} back`,
+      amount: formatMoneyExact(totals.back),
+      drawn: `${formatMoneyExact(totals.back)} back`,
     },
   ].filter(Boolean) as { word: string; amount: string; drawn: string }[];
   // One line alone would only repeat its own amount, so it has no total. A day of only transfers has nothing spent to
