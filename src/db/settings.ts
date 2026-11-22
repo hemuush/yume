@@ -1,7 +1,8 @@
-import { clampSlotMinutes } from '../lib/notificationTimes';
 import { toLocalIsoDate } from '../lib/date';
 import type { QueuedAlert, ScheduledReminder } from '../lib/queuedAlert';
 import { getDb } from './client';
+import { withSettingsLock } from './settingsLock';
+import { resetBackupSettingsCache } from './backupSettings';
 
 import {
   DEFAULT_CURRENCY,
@@ -13,17 +14,9 @@ import {
 import { isAppearancePreference, type AppearancePreference } from '@/theme/scheme';
 
 export { getCachedCurrency, primeCurrencyCache };
-
-/**
- * Read-modify-write settings (the "seen"/"sent"/queue lists) run one at a time: two overlapping calls would
- * otherwise both read the same old list and the second write would drop the first one's additions.
- */
-let settingsLockChain: Promise<unknown> = Promise.resolve();
-function withSettingsLock<T>(fn: () => Promise<T>): Promise<T> {
-  const run = settingsLockChain.then(fn, fn);
-  settingsLockChain = run.catch(() => {});
-  return run;
-}
+// The groups that moved out, so everything still imports from here.
+export * from './notificationPrefs';
+export * from './backupSettings';
 
 const CURRENCY_KEY = 'default_currency';
 
@@ -60,127 +53,6 @@ export async function setDefaultCurrency(code: string): Promise<void> {
     );
   });
   setCurrencyCache(code);
-}
-
-/**
- * The two times Yume can notify at, Morning and Evening (ranges in lib/notificationTimes.ts, never overlapping);
- * the rest are what it may mention at those times.
- */
-export interface NotificationPrefs {
-  recurringAlerts?: boolean;
-  refundAlerts?: boolean;
-  morningEnabled: boolean;
-  morningHour: number;
-  morningMinute: number;
-  eveningEnabled: boolean;
-  eveningHour: number;
-  eveningMinute: number;
-  overspendAlerts: boolean;
-  billAlerts: boolean;
-  weeklySummary: boolean;
-  suuCheckins: boolean;
-}
-
-const NOTIFICATION_PREFS_KEY = 'notification_prefs';
-const DEFAULT_NOTIFICATION_PREFS: NotificationPrefs = {
-  morningEnabled: true,
-  morningHour: 9,
-  morningMinute: 0,
-  eveningEnabled: false,
-  eveningHour: 20,
-  eveningMinute: 0,
-  overspendAlerts: true,
-  billAlerts: true,
-  weeklySummary: false,
-  suuCheckins: true,
-};
-
-function clampPrefTimes(prefs: NotificationPrefs): NotificationPrefs {
-  // Restored settings are untrusted JSON too. Invalid clock fields must not produce NaN dates,
-  // and strings such as "false" must not silently enable reminders.
-  const valid = { ...prefs };
-  for (const key of ['recurringAlerts', 'refundAlerts'] as const) {
-    if (key in prefs) valid[key] = prefs[key] === true;
-  }
-  for (const key of [
-    'morningEnabled',
-    'eveningEnabled',
-    'billAlerts',
-    'overspendAlerts',
-    'weeklySummary',
-    'suuCheckins',
-  ] as const) {
-    valid[key] = typeof prefs[key] === 'boolean' ? prefs[key] : DEFAULT_NOTIFICATION_PREFS[key];
-  }
-  for (const key of ['morningHour', 'morningMinute', 'eveningHour', 'eveningMinute'] as const) {
-    const value = prefs[key];
-    const max = key.endsWith('Hour') ? 23 : 59;
-    valid[key] =
-      Number.isInteger(value) && value >= 0 && value <= max ? value : DEFAULT_NOTIFICATION_PREFS[key];
-  }
-  const morning = clampSlotMinutes('morning', valid.morningHour * 60 + valid.morningMinute);
-  const evening = clampSlotMinutes('evening', valid.eveningHour * 60 + valid.eveningMinute);
-  return {
-    ...valid,
-    morningHour: Math.floor(morning / 60),
-    morningMinute: morning % 60,
-    eveningHour: Math.floor(evening / 60),
-    eveningMinute: evening % 60,
-  };
-}
-
-export async function getNotificationPrefs(): Promise<NotificationPrefs> {
-  const db = await getDb();
-  const row = await db.getFirstAsync<{ value: string }>('SELECT value FROM settings WHERE key = ?', [
-    NOTIFICATION_PREFS_KEY,
-  ]);
-  return readNotificationPrefs(row?.value);
-}
-
-function readNotificationPrefs(value: string | undefined): NotificationPrefs {
-  if (!value) return { ...DEFAULT_NOTIFICATION_PREFS };
-  try {
-    const stored = JSON.parse(value);
-    // `flynnCheckins` was renamed to `suuCheckins`; carry an existing install's value across so anyone who
-    // turned check-ins off doesn't get them back on.
-    if ('flynnCheckins' in stored && !('suuCheckins' in stored)) {
-      stored.suuCheckins = stored.flynnCheckins;
-    }
-    delete stored.flynnCheckins;
-    // The single daily reminder (`reminder*`) became the Evening time: an install that set it keeps it,
-    // with Morning on its default.
-    if (!('eveningEnabled' in stored) && 'reminderEnabled' in stored) {
-      stored.eveningEnabled = stored.reminderEnabled;
-      if (typeof stored.reminderHour === 'number') stored.eveningHour = stored.reminderHour;
-      if (typeof stored.reminderMinute === 'number') stored.eveningMinute = stored.reminderMinute;
-    }
-    delete stored.reminderEnabled;
-    delete stored.reminderHour;
-    delete stored.reminderMinute;
-    return clampPrefTimes({ ...DEFAULT_NOTIFICATION_PREFS, ...stored });
-  } catch {
-    return { ...DEFAULT_NOTIFICATION_PREFS };
-  }
-}
-
-/** Merge one UI change with live settings atomically; unrelated choices and restores cannot be overwritten. */
-export async function updateNotificationPrefs(patch: Partial<NotificationPrefs>): Promise<NotificationPrefs> {
-  return withSettingsLock(async () => {
-    const db = await getDb();
-    let updated!: NotificationPrefs;
-    await db.withTransactionAsync(async (tx) => {
-      const row = await tx.getFirstAsync<{ value: string }>('SELECT value FROM settings WHERE key = ?', [
-        NOTIFICATION_PREFS_KEY,
-      ]);
-      updated = clampPrefTimes({ ...readNotificationPrefs(row?.value), ...patch });
-      await tx.runAsync(
-        `INSERT INTO settings (key, value) VALUES (?, ?)
-         ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
-        [NOTIFICATION_PREFS_KEY, JSON.stringify(updated)]
-      );
-    });
-    return updated;
-  });
 }
 
 const DAILY_SPENDING_GOAL_KEY = 'daily_spending_goal_minor';
@@ -307,56 +179,6 @@ export async function getMemberSinceYear(): Promise<number> {
   return Number.isFinite(year) ? year : new Date().getFullYear();
 }
 
-const LOCAL_BACKUP_FOLDER_KEY = 'local_backup_folder_uri';
-let cachedLocalBackupFolder: string | null | undefined;
-
-export async function getLocalBackupFolderUri(): Promise<string | null> {
-  if (cachedLocalBackupFolder !== undefined) return cachedLocalBackupFolder;
-  const db = await getDb();
-  const row = await db.getFirstAsync<{ value: string }>('SELECT value FROM settings WHERE key = ?', [
-    LOCAL_BACKUP_FOLDER_KEY,
-  ]);
-  cachedLocalBackupFolder = row?.value ?? null;
-  return cachedLocalBackupFolder;
-}
-
-export async function setLocalBackupFolderUri(uri: string | null): Promise<void> {
-  const db = await getDb();
-  if (!uri) {
-    await db.runAsync('DELETE FROM settings WHERE key = ?', [LOCAL_BACKUP_FOLDER_KEY]);
-  } else {
-    await db.runAsync(
-      `INSERT INTO settings (key, value) VALUES (?, ?)
-       ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
-      [LOCAL_BACKUP_FOLDER_KEY, uri]
-    );
-  }
-  cachedLocalBackupFolder = uri;
-}
-
-const LAST_LOCAL_BACKUP_KEY = 'last_local_backup_at';
-let cachedLastLocalBackupAt: string | null | undefined;
-
-export async function getLastLocalBackupAt(): Promise<string | null> {
-  if (cachedLastLocalBackupAt !== undefined) return cachedLastLocalBackupAt;
-  const db = await getDb();
-  const row = await db.getFirstAsync<{ value: string }>('SELECT value FROM settings WHERE key = ?', [
-    LAST_LOCAL_BACKUP_KEY,
-  ]);
-  cachedLastLocalBackupAt = row?.value ?? null;
-  return cachedLastLocalBackupAt;
-}
-
-export async function setLastLocalBackupAt(iso: string): Promise<void> {
-  const db = await getDb();
-  await db.runAsync(
-    `INSERT INTO settings (key, value) VALUES (?, ?)
-     ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
-    [LAST_LOCAL_BACKUP_KEY, iso]
-  );
-  cachedLastLocalBackupAt = iso;
-}
-
 const APP_LOCK_ENABLED_KEY = 'app_lock_enabled';
 let cachedAppLockEnabled: boolean | undefined;
 
@@ -380,88 +202,16 @@ export async function setAppLockEnabled(value: boolean): Promise<void> {
   cachedAppLockEnabled = value;
 }
 
-export type BackupFrequency = 'daily' | 'weekly' | 'monthly';
-const BACKUP_FREQUENCY_KEY = 'backup_frequency';
-let cachedBackupFrequency: BackupFrequency | undefined;
-
-export async function getBackupFrequency(): Promise<BackupFrequency> {
-  if (cachedBackupFrequency !== undefined) return cachedBackupFrequency;
-  const db = await getDb();
-  const row = await db.getFirstAsync<{ value: string }>('SELECT value FROM settings WHERE key = ?', [
-    BACKUP_FREQUENCY_KEY,
-  ]);
-  const stored = row?.value;
-  cachedBackupFrequency =
-    stored === 'daily' || stored === 'weekly' || stored === 'monthly' ? stored : 'daily';
-  return cachedBackupFrequency;
-}
-
-export async function setBackupFrequency(value: BackupFrequency): Promise<void> {
-  const db = await getDb();
-  await db.runAsync(
-    `INSERT INTO settings (key, value) VALUES (?, ?)
-     ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
-    [BACKUP_FREQUENCY_KEY, value]
-  );
-  cachedBackupFrequency = value;
-}
-
-// Elapsed-time windows for the weekly and monthly backups. Daily is once per
-// calendar day instead — see isLocalBackupDue in lib/localBackup.ts.
-export const BACKUP_FREQUENCY_MS: Record<Exclude<BackupFrequency, 'daily'>, number> = {
-  weekly: 6.5 * 24 * 60 * 60 * 1000,
-  monthly: 28 * 24 * 60 * 60 * 1000,
-};
-
-export type BackupOutcome = { at: string; ok: boolean; sizeBytes?: number; error?: string };
-
-const LAST_LOCAL_BACKUP_RESULT_KEY = 'last_local_backup_result';
-let cachedLastLocalResult: BackupOutcome | null | undefined;
-
-async function getBackupOutcome(key: string): Promise<BackupOutcome | null> {
-  const db = await getDb();
-  const row = await db.getFirstAsync<{ value: string }>('SELECT value FROM settings WHERE key = ?', [key]);
-  if (!row) return null;
-  try {
-    return JSON.parse(row.value);
-  } catch {
-    return null;
-  }
-}
-
-async function setBackupOutcome(key: string, outcome: BackupOutcome): Promise<void> {
-  const db = await getDb();
-  await db.runAsync(
-    `INSERT INTO settings (key, value) VALUES (?, ?)
-     ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
-    [key, JSON.stringify(outcome)]
-  );
-}
-
-export async function getLastLocalBackupResult(): Promise<BackupOutcome | null> {
-  if (cachedLastLocalResult !== undefined) return cachedLastLocalResult;
-  cachedLastLocalResult = await getBackupOutcome(LAST_LOCAL_BACKUP_RESULT_KEY);
-  return cachedLastLocalResult;
-}
-
-export async function setLastLocalBackupResult(outcome: BackupOutcome): Promise<void> {
-  await setBackupOutcome(LAST_LOCAL_BACKUP_RESULT_KEY, outcome);
-  cachedLastLocalResult = outcome;
-}
-
 /**
  * Clears every in-memory settings cache so the next read hits the database. Needed after a full restore, which
  * writes the `settings` table directly (bypassing these setters) and would leave caches stale until relaunch.
  */
 export function resetSettingsCache(): void {
   setCurrencyCache(null);
+  resetBackupSettingsCache();
   cachedDailySpendingGoal = undefined;
   cachedUserName = undefined;
-  cachedLocalBackupFolder = undefined;
-  cachedLastLocalBackupAt = undefined;
   cachedAppLockEnabled = undefined;
-  cachedBackupFrequency = undefined;
-  cachedLastLocalResult = undefined;
   cachedSpendSpikesSent = undefined;
   cachedHideSensitiveAmounts = undefined;
   cachedAppearance = undefined;
