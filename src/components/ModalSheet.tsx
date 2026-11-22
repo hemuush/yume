@@ -2,6 +2,7 @@ import { DURATIONS } from '@/lib/motionTimings';
 import { useCallback, useContext, useEffect, useId, useLayoutEffect, useState } from 'react';
 import { SheetFlowContext } from './SheetFlow';
 import {
+  Dimensions,
   Keyboard,
   View,
   Modal,
@@ -374,6 +375,9 @@ function ModalSheetBody({
   // With the keyboard up it already covers the nav bar, so the footer needs no extra bottom inset.
   const keyboardUp = useKeyboardOpen();
   const { height, fontScale } = useWindowDimensions();
+  // The keyboard library places the sheet by the window's height. In a translucent-bar Modal that height leaves out the
+  // status bar the window really covers, so the sheet stopped that much (about a status bar) short of the keyboard.
+  const keyboardOffset = Math.min(0, height - Dimensions.get('screen').height);
   const maxHeight =
     height < 640 || fontScale > 1.2 || size === 'expanded' ? '94%' : size === 'compact' ? '78%' : '90%';
   const isSheet = variant === 'sheet';
@@ -471,6 +475,7 @@ function ModalSheetBody({
             // Only while the keyboard is really up: the library starts from the last keyboard height it saw, and a
             // stale one (an earlier sheet closed while the keyboard was moving) lifted the sheet off the bottom.
             enabled={keyboardUp}
+            keyboardVerticalOffset={keyboardOffset}
             style={[
               styles.flex,
               styles.alignCenter,
@@ -531,6 +536,7 @@ function ModalSheetBody({
           <KeyboardAvoidingView
             behavior="padding"
             enabled={keyboardUp}
+            keyboardVerticalOffset={keyboardOffset}
             style={[styles.flex, styles.alignBottom, { paddingTop: insets.top + 8 }]}
             pointerEvents="box-none"
           >

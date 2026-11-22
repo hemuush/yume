@@ -1,6 +1,6 @@
 import { act, create, ReactTestRenderer } from 'react-test-renderer';
 import { useEffect, useState } from 'react';
-import { Modal, Pressable, StyleSheet, Text, TextInput, View, Keyboard } from 'react-native';
+import { Modal, Pressable, StyleSheet, Text, TextInput, View, Keyboard, Dimensions } from 'react-native';
 jest.unmock('./SheetFlow');
 jest.mock('@expo/vector-icons/Feather', () => () => null);
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
@@ -405,6 +405,24 @@ describe('a keyboard that closed without the library saying so', () => {
     expect(avoiding().props.enabled).toBe(true);
     act(() => hide());
     expect(avoiding().props.enabled).toBe(false);
+    spy.mockRestore();
+    act(() => tree.unmount());
+  });
+});
+
+describe('a window shorter than the screen (the status bar left out)', () => {
+  it('moves the keyboard line down by the missing height, so the sheet sits on the keyboard', () => {
+    const real = Dimensions.get.bind(Dimensions);
+    const spy = jest
+      .spyOn(Dimensions, 'get')
+      .mockImplementation(((k: 'window' | 'screen') =>
+        k === 'screen' ? { ...real(k), height: 2000 } : { ...real(k), height: 1875 }) as never);
+    mockKeyboardUp = true;
+    const { tree } = render({});
+    const avoiding = tree.root.findAll(
+      (n) => n.props.behavior === 'padding' && typeof n.type !== 'string'
+    )[0];
+    expect(avoiding.props.keyboardVerticalOffset).toBe(-125);
     spy.mockRestore();
     act(() => tree.unmount());
   });
