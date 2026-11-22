@@ -61,8 +61,15 @@ afterAll(() => jest.restoreAllMocks());
 it('includes active upcoming expenses and pending dated refunds, excluding paused/ended/private/settled entries', async () => {
   const rows = await listReminderAttention('2026-10-15', true, true);
   expect(rows).toEqual([
-    { kind: 'bill', id: 'bill', label: 'bill', date: '2026-10-16' },
-    { kind: 'refund', id: 'pending', label: 'pending', date: '2026-10-15' },
+    { kind: 'bill', id: 'bill', label: 'bill', date: '2026-10-16', amountMinor: 1000, currency: 'INR' },
+    {
+      kind: 'refund',
+      id: 'pending',
+      label: 'pending',
+      date: '2026-10-15',
+      amountMinor: 1000,
+      currency: 'INR',
+    },
   ]);
   expect(await listReminderAttention('2026-10-15', false, false)).toEqual([]);
 });
@@ -88,6 +95,13 @@ it('omits an active recurring child of an archived category and includes it afte
   expect(await listReminderAttention('2026-10-15', true, false)).toEqual([]);
   await mockDb.runAsync("UPDATE categories SET archived=0 WHERE id='archived-parent'");
   expect(await listReminderAttention('2026-10-15', true, false)).toEqual([
-    { kind: 'bill', id: 'child-bill', label: 'Child bill', date: '2026-10-16' },
+    {
+      kind: 'bill',
+      id: 'child-bill',
+      label: 'Child bill',
+      date: '2026-10-16',
+      amountMinor: 1000,
+      currency: 'INR',
+    },
   ]);
 });

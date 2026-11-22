@@ -55,15 +55,15 @@ describe('planNotifications', () => {
     });
     const morning = find(notifications, at(3, 9));
     expect(morning?.route).toBe('/recurring');
-    expect(morning?.body).toContain('Internet');
-    expect(morning?.body).toContain('Shoes');
+    expect(morning?.title).toBe('Internet goes out tomorrow');
+    expect(morning?.body).toContain('Shoes refund is due today');
     expect(notifications.filter((n) => n.at.getTime() === at(3, 9).getTime())).toHaveLength(1);
-    expect(find(notifications, at(6, 9))?.title).toBe('Still waiting on your refund?');
+    expect(find(notifications, at(6, 9))?.title).toBe('Shoes refund: still waiting?');
   });
 
   it('keeps optional reminders off unless explicitly enabled, and honours disabled slots', () => {
     const attention = [{ id: 'refund', kind: 'refund' as const, label: 'Shoes', date: '2026-10-03' }];
-    expect(find(plan({ attention }).notifications, at(3, 9))?.title).toBe('Your day, at a glance');
+    expect(find(plan({ attention }).notifications, at(3, 9))).toBeUndefined();
     expect(
       plan({
         attention,
@@ -77,22 +77,15 @@ describe('planNotifications', () => {
       )?.route
     ).toBe('/(tabs)/plan');
   });
-  it('schedules morning-only daily check-ins without bills, alerts or a wrap, even after logging', () => {
-    const { notifications } = plan({ prefs: { ...prefs, eveningEnabled: false }, loggedToday: true });
-    expect(notifications).toHaveLength(PLAN_DAYS);
-    expect(notifications[0]).toMatchObject({
-      id: 'yume-2026-10-03-morning',
-      title: 'Your day, at a glance',
-      route: '/(tabs)/plan',
-    });
-    expect(notifications[0].at).toEqual(at(3, 9));
-    expect(notifications.at(-1)?.id).toBe('yume-2026-10-16-morning');
+  it('sends nothing at Morning on a day nothing is due, even with Evening off', () => {
+    expect(plan({ prefs: { ...prefs, eveningEnabled: false }, loggedToday: true }).notifications).toEqual([]);
   });
 
   it('uses the next morning after the configured time has passed', () => {
     const { notifications } = plan({
       prefs: { ...prefs, eveningEnabled: false, morningHour: 10 },
       now: at(3, 10),
+      loans: [loan({ dueDate: '2026-10-04' })],
     });
     expect(notifications[0].at).toEqual(at(4, 10));
     expect(notifications.every((n) => n.at > at(3, 10))).toBe(true);
@@ -102,10 +95,12 @@ describe('planNotifications', () => {
     expect(notifications).toHaveLength(PLAN_DAYS);
     expect(notifications[0]).toMatchObject({
       id: 'yume-2026-10-03-evening',
-      title: 'Before you call it a day',
-      body: 'Add today’s spending while it’s fresh in mind.',
+      title: 'Anything from today missing?', // Saturday
+      body: 'A quick add now saves guessing at the end of the month.',
       route: '/add-transaction',
     });
+    // Not the same words every night.
+    expect(new Set(notifications.map((n) => n.title)).size).toBe(7);
     expect(notifications[0].at).toEqual(at(3, 20));
     expect(notifications[PLAN_DAYS - 1].id).toBe('yume-2026-10-16-evening');
   });
@@ -129,6 +124,7 @@ describe('planNotifications', () => {
   it('keeps the Morning and Evening times apart even at their extremes', () => {
     const { notifications } = plan({
       prefs: { ...prefs, morningHour: 23, morningMinute: 0, eveningHour: 4, eveningMinute: 0 },
+      loans: [loan({ dueDate: '2026-10-04' })],
     });
     // Out-of-range times are pulled back into their own ranges (11:30 AM and 4:00 PM at the most/least).
     const day = notifications.filter((n) => n.at.getDate() === 4);
@@ -142,8 +138,12 @@ describe('planNotifications', () => {
     it('go out on the due day at the Morning time', () => {
       const { notifications } = plan({ loans: [loan()] });
       const emi = find(notifications, at(5, 9));
-      expect(emi).toMatchObject({ id: 'yume-2026-10-05-morning', title: 'EMI due today', route: '/loans' });
-      expect(emi?.body).toBe('Test Person Bank · ₹12,500\nReview your payment in Loans.');
+      expect(emi).toMatchObject({
+        id: 'yume-2026-10-05-morning',
+        title: 'Test Person Bank EMI ₹12,500 is due today',
+        route: '/loans',
+      });
+      expect(emi?.body).toBe('Paid on time, it stays off your late list.');
     });
 
     it('several due the same day make one notification', () => {
@@ -151,63 +151,67 @@ describe('planNotifications', () => {
         loans: [loan(), loan({ id: 'l2', counterparty: 'Ravi', emiMinor: 500000 })],
       });
       expect(find(notifications, at(5, 9))).toMatchObject({
-        title: '2 EMIs due today',
-        body: 'Test Person Bank, Ravi · ₹17,500\nReview your payments in Loans.',
+        title: '2 EMIs due today: ₹17,500',
+        body: 'Test Person Bank · ₹12,500\nRavi · ₹5,000',
       });
     });
 
     it('use the Evening time when the Morning is off', () => {
       const { notifications } = plan({ prefs: { ...prefs, morningEnabled: false }, loans: [loan()] });
       expect(find(notifications, at(5, 9))).toBeUndefined();
-      expect(find(notifications, at(5, 20))).toMatchObject({ title: 'EMI due today', route: '/loans' });
+      expect(find(notifications, at(5, 20))).toMatchObject({
+        title: 'Test Person Bank EMI ₹12,500 is due today',
+        route: '/loans',
+      });
     });
 
     it('go out at the next time still ahead when due today', () => {
       const lateNow = new Date(2026, 9, 3, 10, 0);
       const { notifications } = plan({ now: lateNow, loans: [loan({ dueDate: '2026-10-03' })] });
-      expect(find(notifications, at(3, 20))).toMatchObject({ title: 'EMI due today' });
+      expect(find(notifications, at(3, 20))).toMatchObject({
+        title: 'Test Person Bank EMI ₹12,500 is due today',
+      });
     });
 
     it('are skipped when already overdue, or when bill alerts are off', () => {
-      expect(
-        plan({ loans: [loan({ dueDate: '2026-10-01' })] }).notifications.map((n) => n.title)
-      ).not.toContain('EMI due today');
-      expect(
-        plan({ prefs: { ...prefs, billAlerts: false }, loans: [loan()] }).notifications.map((n) => n.title)
-      ).not.toContain('EMI due today');
+      const dueToday = (input: Parameters<typeof plan>[0]) =>
+        plan(input).notifications.some((n) => n.title.endsWith('is due today'));
+      expect(dueToday({ loans: [loan({ dueDate: '2026-10-01' })] })).toBe(false);
+      expect(dueToday({ prefs: { ...prefs, billAlerts: false }, loans: [loan()] })).toBe(false);
     });
 
     it('once missed, are reminded of each morning until a week after the due day', () => {
       // Due Thursday 1 October; today is Saturday the 3rd.
       const { notifications } = plan({ loans: [loan({ dueDate: '2026-10-01' })] });
-      const overdue = notifications.filter((n) => n.title === 'EMI overdue');
+      const overdue = notifications.filter((n) => n.title.endsWith('late'));
       expect(overdue.map((n) => n.at)).toEqual([3, 4, 5, 6, 7, 8].map((d) => at(d, 9)));
-      expect(overdue[0].body).toMatch(/^Test Person Bank · ₹12,500 · was due /);
+      expect(overdue[0].title).toBe('Test Person Bank EMI is 2 days late');
+      expect(overdue[1].title).toBe('Test Person Bank EMI is 3 days late');
+      expect(overdue[0].body).toMatch(/^₹12,500, was due /);
       expect(overdue[0].route).toBe('/loans');
     });
 
     it('are not reminded of as overdue when bill alerts are off, or long after', () => {
-      expect(
-        plan({
-          prefs: { ...prefs, billAlerts: false },
-          loans: [loan({ dueDate: '2026-10-01' })],
-        }).notifications.map((n) => n.title)
-      ).not.toContain('EMI overdue');
-      expect(
-        plan({ loans: [loan({ dueDate: '2026-09-01' })] }).notifications.map((n) => n.title)
-      ).not.toContain('EMI overdue');
+      const late = (input: Parameters<typeof plan>[0]) =>
+        plan(input).notifications.some((n) => n.title.endsWith('late'));
+      expect(late({ prefs: { ...prefs, billAlerts: false }, loans: [loan({ dueDate: '2026-10-01' })] })).toBe(
+        false
+      );
+      expect(late({ loans: [loan({ dueDate: '2026-09-01' })] })).toBe(false);
     });
 
     it('are reminded of even beyond the two-week window', () => {
       const { notifications } = plan({ loans: [loan({ dueDate: '2026-11-20' })] });
-      expect(find(notifications, new Date(2026, 10, 20, 9))).toMatchObject({ title: 'EMI due today' });
+      expect(find(notifications, new Date(2026, 10, 20, 9))).toMatchObject({
+        title: 'Test Person Bank EMI ₹12,500 is due today',
+      });
     });
 
     it('lead a merged notification, with the evening nudge as a line under it', () => {
       const { notifications } = plan({ prefs: { ...prefs, morningEnabled: false }, loans: [loan()] });
       expect(find(notifications, at(5, 20))).toMatchObject({
-        title: 'EMI due today',
-        body: 'Test Person Bank · ₹12,500\nReview your payment in Loans.\nAdd anything you spent today',
+        title: 'Test Person Bank EMI ₹12,500 is due today',
+        body: 'Paid on time, it stays off your late list.\nLog today before you forget',
         route: '/loans',
       });
     });
@@ -234,7 +238,7 @@ describe('planNotifications', () => {
       const { notifications } = plan({ prefs: { ...wrapPrefs, morningEnabled: false } });
       expect(find(notifications, at(5, 20))).toMatchObject({
         title: 'Your week, wrapped',
-        body: 'See where your money went and what stood out last week.\nAdd anything you spent today',
+        body: 'See where your money went and what stood out last week.\nLog today before you forget',
         route: '/wrap?period=week',
       });
     });
@@ -242,8 +246,8 @@ describe('planNotifications', () => {
     it('comes after an EMI due the same Monday', () => {
       const { notifications } = plan({ prefs: wrapPrefs, loans: [loan()] });
       expect(find(notifications, at(5, 9))).toMatchObject({
-        title: 'EMI due today',
-        body: 'Test Person Bank · ₹12,500\nReview your payment in Loans.\nYour week, wrapped',
+        title: 'Test Person Bank EMI ₹12,500 is due today',
+        body: 'Paid on time, it stays off your late list.\nYour week, wrapped',
         route: '/loans',
       });
     });
@@ -256,10 +260,8 @@ describe('planNotifications', () => {
       expect(find(notifications, at(4, 20))).toBeDefined();
     });
 
-    it('keeps the daily morning check-in when Evening is off', () => {
-      const { notifications } = plan({ prefs: { ...prefs, eveningEnabled: false } });
-      expect(notifications).toHaveLength(PLAN_DAYS);
-      expect(notifications.every((n) => n.title === 'Your day, at a glance')).toBe(true);
+    it('leaves a quiet day quiet when Evening is off', () => {
+      expect(plan({ prefs: { ...prefs, eveningEnabled: false } }).notifications).toEqual([]);
     });
 
     it('moves to the chosen Evening time', () => {
@@ -279,7 +281,7 @@ describe('planNotifications', () => {
       expect(waitingAlerts).toEqual([expect.objectContaining({ scheduledFor: at(3, 20).toISOString() })]);
       expect(find(notifications, at(3, 20))).toMatchObject({
         title: 'Food is over budget',
-        body: '₹1,050 of ₹1,000 this month.\nAdd anything you spent today',
+        body: '₹1,050 of ₹1,000 this month.\nAnything from today missing?',
         route: '/budgets',
       });
     });
@@ -348,7 +350,7 @@ describe('planNotifications', () => {
       const nearlyExpired = alert({ queuedAt: new Date(2026, 8, 30, 8).toISOString() });
       const result = plan({ alerts: [nearlyExpired] });
       expect(result.waitingAlerts).toEqual([]);
-      expect(find(result.notifications, at(3, 9))?.title).toBe('Your day, at a glance');
+      expect(find(result.notifications, at(3, 9))).toBeUndefined();
     });
 
     it('are not sent when spending alerts are off', () => {
@@ -378,9 +380,9 @@ describe('planNotifications', () => {
     const morning = find(plan(input).notifications, at(5, 9))!;
     const previouslyScheduled = morning.reminderKeys.map((key) => ({ key, at: morning.at.toISOString() }));
     const after = plan({ ...input, now: at(5, 10), previouslyScheduled });
-    expect(find(after.notifications, at(5, 20))?.title).toBe('Before you call it a day');
-    expect(find(after.notifications, at(6, 9))?.title).toBe('EMI overdue');
-    expect(find(after.notifications, at(8, 9))?.body).toContain('Shoes: refund follow-up');
+    expect(find(after.notifications, at(5, 20))?.title).toBe('Log today before you forget');
+    expect(find(after.notifications, at(6, 9))?.title).toBe('Test Person Bank EMI is 1 day late');
+    expect(find(after.notifications, at(8, 9))?.body).toContain('Shoes refund is still pending');
   });
 
   it('replans delayed requests still pending in Android instead of treating their passed time as consumed', () => {
@@ -399,7 +401,7 @@ describe('planNotifications', () => {
       pendingNotificationIds: ['yume-2026-10-03-morning'],
     });
     expect(find(result.notifications, at(3, 20))?.body).toContain('Food is over budget');
-    expect(find(result.notifications, at(3, 20))?.title).toBe('EMI due today');
+    expect(find(result.notifications, at(3, 20))?.title).toBe('Test Person Bank EMI ₹12,500 is due today');
     expect(result.waitingAlerts[0]).toMatchObject({
       scheduledFor: at(3, 20).toISOString(),
       scheduledNotificationId: 'yume-2026-10-03-evening',

@@ -2,11 +2,11 @@ import { getHideSensitiveAmounts } from './settings';
 import { listBudgetsForMonth } from './budgets';
 import { listCategories } from './categoryList';
 import { findTopGrowingCategory, getPeriodComparison } from './reports';
-import { budgetAlertCopy, spikeCopy } from '@/lib/notificationCopy';
+import { budgetAlertCopy, daysLeftThisMonth, spikeCopy } from '@/lib/notificationCopy';
 import { NOTIFICATION_ROUTES, type QueuedAlert } from '@/lib/notificationPlan';
 import { formatMoney } from '@/lib/money';
 import { formatPctChange } from '@/lib/format';
-import { parseLocalIsoDate } from '@/lib/date';
+import { parseLocalIsoDate, toLocalIsoDate } from '@/lib/date';
 
 /** Queued copy is a cache, never authority for today's privacy policy or financial figures. */
 export async function resolveQueuedSpendAlerts(alerts: QueuedAlert[]): Promise<QueuedAlert[]> {
@@ -46,7 +46,9 @@ export async function resolveQueuedSpendAlerts(alerts: QueuedAlert[]): Promise<Q
           budget.categoryName,
           formatMoney(budget.spentMinor),
           formatMoney(budget.effectiveLimitMinor),
-          formatMoney(Math.max(0, budget.remainingMinor))
+          formatMoney(Math.max(0, budget.remainingMinor)),
+          formatMoney(Math.max(0, budget.spentMinor - budget.effectiveLimitMinor)),
+          source.periodMonth === toLocalIsoDate(new Date()).slice(0, 7) ? daysLeftThisMonth() : undefined
         ),
       });
     } else if (source.kind === 'spike') {

@@ -14,10 +14,24 @@ export async function listReminderAttention(today: string, recurring: boolean, r
     AND COALESCE(hidden.parent_id, hidden.id) = COALESCE(c.parent_id, c.id)
   )`
     : '';
-  const items: { kind: 'bill' | 'refund'; id: string; label: string; date: string }[] = [];
+  const items: {
+    kind: 'bill' | 'refund';
+    id: string;
+    label: string;
+    date: string;
+    amountMinor?: number;
+    currency?: string;
+  }[] = [];
   if (recurring) {
-    const rows = await db.getAllAsync<{ id: string; label: string; date: string }>(
-      `SELECT r.id, COALESCE(NULLIF(trim(r.note), ''), c.name, 'Recurring bill') AS label, r.next_run_date AS date
+    const rows = await db.getAllAsync<{
+      id: string;
+      label: string;
+      date: string;
+      amountMinor: number;
+      currency: string;
+    }>(
+      `SELECT r.id, COALESCE(NULLIF(trim(r.note), ''), c.name, 'Recurring bill') AS label, r.next_run_date AS date,
+         r.amount_minor AS amountMinor, a.currency AS currency
        FROM recurring_rules r JOIN accounts a ON a.id = r.account_id LEFT JOIN categories c ON c.id = r.category_id
        WHERE r.active = 1 AND r.type = 'expense' AND a.archived = 0 AND c.archived = 0
        AND (c.parent_id IS NULL OR EXISTS (SELECT 1 FROM categories parent WHERE parent.id = c.parent_id AND parent.archived = 0))
@@ -27,8 +41,15 @@ export async function listReminderAttention(today: string, recurring: boolean, r
     items.push(...rows.map((row) => ({ ...row, kind: 'bill' as const })));
   }
   if (refunds) {
-    const rows = await db.getAllAsync<{ id: string; label: string; date: string }>(
-      `SELECT r.id, COALESCE(NULLIF(trim(p.note), ''), c.name, 'Purchase') AS label, r.due_date AS date
+    const rows = await db.getAllAsync<{
+      id: string;
+      label: string;
+      date: string;
+      amountMinor: number;
+      currency: string;
+    }>(
+      `SELECT r.id, COALESCE(NULLIF(trim(p.note), ''), c.name, 'Purchase') AS label, r.due_date AS date,
+         r.expected_amount_minor AS amountMinor, a.currency AS currency
        FROM refund_expectations r JOIN transactions p ON p.id = r.transaction_id JOIN accounts a ON a.id = p.account_id LEFT JOIN categories c ON c.id = p.category_id
        LEFT JOIN refund_receipts rr ON rr.expectation_id = r.id LEFT JOIN transactions t ON t.id = rr.transaction_id
        WHERE r.closed = 0 AND r.due_date BETWEEN ? AND ? ${privacy} GROUP BY r.id

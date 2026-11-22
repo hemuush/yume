@@ -203,7 +203,7 @@ describe('rebuildNotifications', () => {
     expect(
       N.scheduleNotificationAsync.mock.calls.some(
         ([request]) =>
-          request.content.body?.includes('Internet') &&
+          request.content.title?.includes('Internet') &&
           request.content.body?.includes('Shoes') &&
           request.content.data?.url === '/recurring'
       )
@@ -364,7 +364,7 @@ describe('rebuildNotifications', () => {
       expect(N.scheduleNotificationAsync).toHaveBeenCalledWith(
         expect.objectContaining({
           identifier: 'yume-2026-10-03-evening',
-          content: expect.objectContaining({ title: 'Before you call it a day' }),
+          content: expect.objectContaining({ title: 'Anything from today missing?' }),
         })
       );
     } finally {
@@ -469,7 +469,7 @@ describe('notification delivery checks', () => {
       morningEnabled: true,
       morningHour: 9,
       morningMinute: 0,
-      eveningEnabled: false,
+      eveningEnabled: true, // the evening nudge is always due, so there is something to send
       eveningHour: 20,
       eveningMinute: 0,
       overspendAlerts: true,

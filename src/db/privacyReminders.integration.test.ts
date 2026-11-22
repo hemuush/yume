@@ -40,8 +40,9 @@ import { saveHideSensitiveAmounts } from './afterCommit';
 
 const N = jest.mocked(Notifications);
 const scheduled = new Map<string, Notifications.NotificationContentInput>();
-const scheduledText = () => [...scheduled.values()].map((content) => content.body ?? '').join('\n');
+// Titles too: the bill or refund's name now leads the title, not the body.
 const allScheduledText = () => [...scheduled.values()].map((c) => `${c.title}\n${c.body}`).join('\n');
+const scheduledText = allScheduledText;
 const todaysEveningText = () => scheduled.get('yume-2026-10-19-evening')?.body ?? '';
 let categoryId: string;
 let accountId: string;
@@ -159,6 +160,7 @@ it('refreshes queued content after sensitivity and parent changes commit', async
 it('reports scheduler failure while preserving committed privacy/category changes', async () => {
   jest.spyOn(console, 'error').mockImplementation(() => {});
   jest.spyOn(console, 'warn').mockImplementation(() => {});
+  await updateNotificationPrefs({ eveningEnabled: true }); // so something is due once the bill and refund are hidden
   N.scheduleNotificationAsync.mockRejectedValue(new Error('OS scheduler unavailable'));
   expect(await saveHideSensitiveAmounts(true)).toBe(false);
   expect(await getHideSensitiveAmounts()).toBe(true);
@@ -181,6 +183,7 @@ it('cancels private OS payloads even when phone permission was revoked before hi
   expect(scheduledText()).toContain('Private purchase');
   N.getPermissionsAsync.mockResolvedValue({ granted: false } as Notifications.NotificationPermissionsStatus);
   jest.spyOn(console, 'warn').mockImplementation(() => {});
+  await updateNotificationPrefs({ eveningEnabled: true }); // so something is due once the bill and refund are hidden
   expect(await saveHideSensitiveAmounts(true)).toBe(false);
   expect(scheduledText()).not.toContain('Private bill');
   expect(scheduledText()).not.toContain('Private purchase');
@@ -281,7 +284,7 @@ it('removes queued sensitive budget copy on hide while retaining public alerts',
     });
   }
   expect(allScheduledText()).toContain('Queued medical');
-  expect(allScheduledText()).toContain('₹120');
+  expect(allScheduledText()).toContain('₹20 over budget');
   expect(await saveHideSensitiveAmounts(true)).toBe(true);
   expect(allScheduledText()).not.toContain('Queued medical');
   expect(allScheduledText()).toContain('Public groceries');
@@ -313,7 +316,7 @@ it('regenerates budget amounts and labels from live data before applying family 
     date: '2026-10-19',
   });
   expect(allScheduledText()).toContain('Renamed budget');
-  expect(allScheduledText()).toContain('₹140');
+  expect(allScheduledText()).toContain('₹40 over budget');
   expect(allScheduledText()).not.toContain('Public budget');
   await saveHideSensitiveAmounts(true);
   await createCategory({
@@ -392,7 +395,7 @@ it('refreshes logging reminders after person receipts, deletion, restoration and
   const person = await createPerson({ name: 'Friend' });
   const income = await createCategory({ name: 'Person receipts', kind: 'income' });
   expect(await hasLoggedOn('2026-10-19')).toBe(false);
-  expect(todaysEveningText()).toContain('Add today’s spending');
+  expect(todaysEveningText()).toContain('Cash and small spends');
   N.getAllScheduledNotificationsAsync.mockClear();
   await recordMoneyReceivedFromPerson({
     personId: person.id,
@@ -402,15 +405,15 @@ it('refreshes logging reminders after person receipts, deletion, restoration and
     date: '2026-10-19',
   });
   expect(await hasLoggedOn('2026-10-19')).toBe(true);
-  expect(todaysEveningText()).not.toContain('Add today’s spending');
+  expect(todaysEveningText()).not.toContain('Cash and small spends');
   expect(N.getAllScheduledNotificationsAsync).toHaveBeenCalledTimes(1);
   const [entry] = await getPersonLedger(person.id);
   const snapshots = await deleteLedgerEntry(entry.id);
-  expect(todaysEveningText()).toContain('Add today’s spending');
+  expect(todaysEveningText()).toContain('Cash and small spends');
   await restoreLedgerEntry(snapshots);
-  expect(todaysEveningText()).not.toContain('Add today’s spending');
+  expect(todaysEveningText()).not.toContain('Cash and small spends');
   await undoPersonTransaction(entry.transactionId!);
-  expect(todaysEveningText()).toContain('Add today’s spending');
+  expect(todaysEveningText()).toContain('Cash and small spends');
 });
 
 it('does not refresh for rejected person receipts or balance-only adjustments', async () => {

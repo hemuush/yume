@@ -34,7 +34,7 @@ const prefs = (over: object = {}) => ({
   morningEnabled: true,
   morningHour: 8,
   morningMinute: 0,
-  eveningEnabled: false,
+  eveningEnabled: true,
   eveningHour: 20,
   eveningMinute: 0,
   overspendAlerts: false,
@@ -98,7 +98,9 @@ it('does not ask when the phone will not show the prompt again', async () => {
 });
 
 it('does not ask when both reminder times are off', async () => {
-  (getNotificationPrefs as jest.Mock).mockResolvedValue(prefs({ morningEnabled: false }));
+  (getNotificationPrefs as jest.Mock).mockResolvedValue(
+    prefs({ morningEnabled: false, eveningEnabled: false })
+  );
   N.getPermissionsAsync.mockResolvedValue(permission({}) as never);
   expect(await askNotificationPermissionOnce()).toBe(false);
   expect(N.requestPermissionsAsync).not.toHaveBeenCalled();

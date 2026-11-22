@@ -45,17 +45,17 @@ describe('budget alerts', () => {
 
   it('queue one alert at 80%, counting a subcategory’s spending', async () => {
     await spend(zomato, 30000); // ₹800 of ₹1,000
-    expect(await queuedTitles()).toEqual(['Food budget is nearing its limit']);
+    expect(await queuedTitles()).toEqual(['Food: ₹200 left in your budget']);
     await spend(food, 5000);
-    expect(await queuedTitles()).toEqual(['Food budget is nearing its limit']);
+    expect(await queuedTitles()).toEqual(['Food: ₹200 left in your budget']);
   });
 
   it('queue one more on going over, then stay quiet', async () => {
     await spend(food, 20000); // ₹1,050
     const [alert] = await getAlertQueue();
-    expect(alert.title).toBe('Food is over budget');
+    expect(alert.title).toBe('Food is ₹50 over budget');
     expect(alert.route).toBe('/budgets');
-    expect(alert.body).toBe('₹1,050 spent against your ₹1,000 monthly budget. Tap to review it.');
+    expect(alert.body).toBe('₹1,050 spent of your ₹1,000 monthly budget.');
     await spend(food, 1000);
     expect(await getAlertQueue()).toHaveLength(1);
   });

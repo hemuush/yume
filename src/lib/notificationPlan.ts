@@ -1,4 +1,5 @@
-import { emiCopy, emiOverdueCopy, logCopy, wrapCopy, morningCopy } from './notificationCopy';
+import { billCopy, emiCopy, emiOverdueCopy, logCopy, refundCopy, wrapCopy } from './notificationCopy';
+import { formatMoney } from './money';
 import { dayMonth } from './dateLabels';
 import { clampSlotMinutes, TimeSlotKind } from './notificationTimes';
 import { toLocalIsoDate, addDaysToIsoDate } from './date';
@@ -111,7 +112,15 @@ function parseIsoDate(iso: string): Date {
 }
 
 export function planNotifications(input: {
-  attention?: { kind: 'bill' | 'refund'; id: string; label: string; date: string }[];
+  attention?: {
+    kind: 'bill' | 'refund';
+    id: string;
+    label: string;
+    date: string;
+    /** The bill's amount or the refund expected, in minor units; left out when unknown. */
+    amountMinor?: number;
+    currency?: string;
+  }[];
   prefs: PlanPrefs;
   loans: PlanLoan[];
   alerts: QueuedAlert[];
@@ -157,27 +166,12 @@ export function planNotifications(input: {
       const slot = firstSlotOn(day);
       if (!slot) continue;
       const late = item.kind === 'refund' && iso !== item.date;
-      add(
-        day,
-        slot,
-        item.kind === 'bill'
-          ? {
-              title: 'A bill is coming up tomorrow',
-              body: `${item.label} is scheduled for tomorrow. Take a look before it’s recorded.`,
-              extra: `${item.label} is scheduled tomorrow`,
-              route: '/recurring',
-              reminderKeys: [key],
-            }
-          : {
-              title: late ? 'Still waiting on your refund?' : 'A refund is expected today',
-              body: late
-                ? `${item.label}: check whether the refund arrived and update it in Plan.`
-                : `${item.label}: check whether the refund has arrived.`,
-              extra: `${item.label}: ${late ? 'refund follow-up' : 'refund expected today'}`,
-              route: '/(tabs)/plan',
-              reminderKeys: [key],
-            }
-      );
+      const amount = item.amountMinor != null ? formatMoney(item.amountMinor, item.currency) : null;
+      add(day, slot, {
+        ...(item.kind === 'bill' ? billCopy(item.label, amount) : refundCopy(item.label, amount, late)),
+        route: item.kind === 'bill' ? '/recurring' : '/(tabs)/plan',
+        reminderKeys: [key],
+      });
     }
   }
 
@@ -212,7 +206,10 @@ export function planNotifications(input: {
       const slot = firstSlotOn(day);
       if (slot)
         add(day, slot, {
-          ...emiOverdueCopy(overdue, dayMonth),
+          ...emiOverdueCopy(
+            overdue.map((l) => ({ ...l, daysLate: daysBetween(parseIsoDate(l.dueDate), day) })),
+            dayMonth
+          ),
           route: '/loans',
           reminderKeys: overdue.map((loan) => topicKey(day, 'emi', loan.id)),
         });
@@ -229,7 +226,7 @@ export function planNotifications(input: {
     // The nudge to log goes at the Evening time only, and not on a day something is already logged.
     const evening = slots.find((s) => s.kind === 'evening');
     if (evening && slotTime(day, evening) > now && !(i === 0 && loggedToday)) {
-      add(day, evening, { ...logCopy(), route: '/add-transaction' });
+      add(day, evening, { ...logCopy(day.getDay()), route: '/add-transaction' });
     }
   }
 
@@ -272,17 +269,8 @@ export function planNotifications(input: {
     }
   }
 
-  // Enabling Morning promises a daily check-in even when no financial alert is due.
-  // Existing due-item buckets take its place, keeping one notification per slot.
-  const morning = slots.find((slot) => slot.kind === 'morning');
-  if (morning) {
-    for (let i = 0; i < PLAN_DAYS; i++) {
-      const day = startOfDay(today, i);
-      if (slotTime(day, morning) > now && !due.has(slotId(day, morning))) {
-        add(day, morning, { ...morningCopy(), route: '/(tabs)/plan' });
-      }
-    }
-  }
+  // Morning has no message of its own: it carries what is due that day, and a day with nothing due gets no
+  // notification at all (a daily "check your plans" is what gets every other notification ignored).
 
   const notifications = [...due.entries()]
     .map(([id, { day, slot, entries }]): PlannedNotification => {

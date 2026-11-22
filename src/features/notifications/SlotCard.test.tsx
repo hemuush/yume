@@ -12,7 +12,7 @@ const mount = (minutes: number) => {
     tree = create(
       <SlotCard
         kind="morning"
-        sub="Check-in, EMIs, alerts"
+        sub="Only when something is due"
         on
         minutes={minutes}
         onToggle={jest.fn()}

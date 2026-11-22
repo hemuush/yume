@@ -212,6 +212,9 @@ export default function NotificationSettingsScreen() {
 
   const morningMinutes = prefs.morningHour * 60 + prefs.morningMinute;
   const eveningMinutes = prefs.eveningHour * 60 + prefs.eveningMinute;
+  // Morning alone has nothing to send on a day nothing is due, so zero scheduled is then the right answer.
+  const idleMorning =
+    !!delivery && delivery.scheduledCount === 0 && prefs.morningEnabled && !prefs.eveningEnabled;
   const deliveryOk =
     !deliveryError &&
     !scheduleFailed &&
@@ -219,7 +222,7 @@ export default function NotificationSettingsScreen() {
     delivery.permitted &&
     !delivery.channelBlocked &&
     !noTimesEarly(prefs) &&
-    delivery.scheduledCount > 0;
+    (delivery.scheduledCount > 0 || idleMorning);
   const deliveryTitle = deliveryError
     ? 'Could not check notifications'
     : !delivery
@@ -233,7 +236,9 @@ export default function NotificationSettingsScreen() {
             : scheduleFailed
               ? 'Reminders need rebuilding'
               : delivery.scheduledCount === 0
-                ? 'Nothing scheduled'
+                ? idleMorning
+                  ? 'Nothing due right now'
+                  : 'Nothing scheduled'
                 : 'Ready to notify';
   const deliverySub = deliveryError
     ? 'Try checking again'
@@ -285,7 +290,7 @@ export default function NotificationSettingsScreen() {
             <View>
               <Text style={[styles.deliveryHint, styles.deliveryNote]}>
                 {deliveryError ??
-                  'Morning includes a daily check-in. Evening skips the log reminder if you’ve logged that day. Reminders are planned 14 days ahead and renewed when you open Yume; Android may delay delivery.'}
+                  'Morning only sends when something is due: an EMI, a bill, a refund or an alert. Evening skips the log reminder if you’ve logged that day. Reminders are planned 14 days ahead and renewed when you open Yume; Android may delay delivery.'}
               </Text>
               {delivery?.permitted &&
                 !delivery.channelBlocked &&
@@ -362,7 +367,7 @@ export default function NotificationSettingsScreen() {
         <View style={styles.slots}>
           <SlotCard
             kind="morning"
-            sub="Check-in, EMIs, alerts"
+            sub="Only when something is due"
             on={prefs.morningEnabled}
             minutes={morningMinutes}
             onToggle={toggleMorning}

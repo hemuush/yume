@@ -9,7 +9,7 @@ import {
   getCachedHideSensitiveAmounts,
 } from './settings';
 import { rebuildNotificationsAfterCommit } from './afterCommit';
-import { budgetAlertCopy, spikeCopy } from '@/lib/notificationCopy';
+import { budgetAlertCopy, daysLeftThisMonth, spikeCopy } from '@/lib/notificationCopy';
 import type { QueuedAlert } from '@/lib/notificationPlan';
 import { listBudgetsForMonth, dueBudgetNudge, BudgetNudgeLevel } from './budgets';
 import { formatMoney } from '@/lib/money';
@@ -99,7 +99,9 @@ async function budgetAlertFor(
         budget.categoryName,
         formatMoney(budget.spentMinor),
         formatMoney(budget.effectiveLimitMinor),
-        formatMoney(Math.max(0, budget.remainingMinor))
+        formatMoney(Math.max(0, budget.remainingMinor)),
+        formatMoney(Math.max(0, budget.spentMinor - budget.effectiveLimitMinor)),
+        budget.budget.periodMonth === toLocalIsoDate(new Date()).slice(0, 7) ? daysLeftThisMonth() : undefined
       ),
     },
   };
