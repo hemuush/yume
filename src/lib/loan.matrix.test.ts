@@ -54,7 +54,7 @@ describe('EMI / amortization matrix — every principal × rate × tenure', () =
           expect(schedule.every((p) => p.interestComponentMinor >= 0)).toBe(true);
           if (rBp === 0) {
             expect(schedule.every((p) => p.interestComponentMinor === 0)).toBe(true);
-            expect(emi).toBe(Math.round(P / n));
+            expect(emi).toBe(Math.max(100, Math.round(P / n / 100) * 100));
           }
 
           // EMI matches the standalone formula for every installment except
@@ -103,7 +103,9 @@ describe('EMI is monotonic in its inputs', () => {
         let last = -1;
         for (const P of PRINCIPALS) {
           const emi = calculateEmi(P, rBp, n);
-          expect(emi).toBeGreaterThan(last);
+          // Whole-rupee EMIs: a rupee-sized loan can share an EMI with the next one up, but never drop below it.
+          expect(emi).toBeGreaterThanOrEqual(last);
+          if (P >= 100000) expect(emi).toBeGreaterThan(last);
           last = emi;
         }
       });

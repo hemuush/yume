@@ -68,7 +68,6 @@ import {
   getDailyExpenseTotals,
 } from '@/db/reports';
 import { getTidyUpReport, findRepeatGroups, findStartingBalances } from '@/db/tidyUp';
-import { countFractionalLedgerAmounts } from '@/db/maintenance';
 import { findMonthlyPatterns } from '@/db/subscriptions';
 import { loadNeedsYou } from '@/features/home/needsYouData';
 import { loadReadyWraps } from '@/features/wrap/wrapWindow';
@@ -194,7 +193,6 @@ run('load performance', () => {
       ['listPeople', () => listPeople()],
       ['findRepeatGroups', () => findRepeatGroups()],
       ['findStartingBalances', () => findStartingBalances()],
-      ['countFractional', () => countFractionalLedgerAmounts()],
       ['findMonthlyPatterns', () => findMonthlyPatterns()],
     ];
     for (const [name, load] of loaders) await measure(`  ${name}`, load);

@@ -44,7 +44,6 @@ import {
 } from '@/db/ledger';
 import { createLoan, getLoanSchedule, payInstallment, applyRateChange } from '@/db/loans';
 import { addValuation } from '@/db/valuations';
-import { roundLedgerAmountsToWholeRupees, countFractionalLedgerAmounts } from '@/db/maintenance';
 import { restoreRow } from '@/db/undoSnapshot';
 import { listDeletedEntries, restoreDeletedEntry } from '@/db/recentlyDeleted';
 import {
@@ -113,61 +112,6 @@ describe('a double-tapped loan payment pays once', () => {
       [emi]
     );
     expect(emiEntries?.n).toBe(1);
-  });
-});
-
-describe('Round off amounts', () => {
-  it('leaves an EMI entry (linked from loan_payments.transaction_id) exactly as it was', async () => {
-    await run(`INSERT INTO loans (id, direction, counterparty, principal_minor, interest_rate_annual_bp,
-                 tenure_months, start_date, emi_amount_minor, outstanding_principal_minor)
-               VALUES ('rl1', 'borrowed', 'Bank', 12411433, 760, 216, '2026-01-01', 107472, 12411433)`);
-    await run(
-      `INSERT INTO transactions (id, type, account_id, category_id, amount_minor, date)
-               VALUES ('emi-tx', 'expense', ?, ?, 107472, '2026-02-01')`,
-      [bank, food]
-    );
-    await run(`INSERT INTO loan_payments (id, loan_id, installment_number, due_date, emi_amount_minor,
-                 principal_component_minor, interest_component_minor, outstanding_after_minor, transaction_id)
-               VALUES ('rlp1', 'rl1', 1, '2026-02-01', 107472, 28850, 78622, 12382583, 'emi-tx')`);
-
-    const before = await countFractionalLedgerAmounts();
-    const outcome = await roundLedgerAmountsToWholeRupees();
-    const emi = await one<{ amount_minor: number }>(
-      "SELECT amount_minor FROM transactions WHERE id = 'emi-tx'"
-    );
-    expect(emi?.amount_minor).toBe(107472);
-    expect(before.transactions).toBe(0);
-    expect(outcome.transactions).toBe(0);
-  });
-
-  it('undo does not overwrite an amount edited after the rounding', async () => {
-    await run(
-      `INSERT INTO transactions (id, type, account_id, category_id, amount_minor, date)
-               VALUES ('round-a', 'expense', ?, ?, 20555, '2026-03-01')`,
-      [bank, food]
-    );
-    await run(
-      `INSERT INTO transactions (id, type, account_id, category_id, amount_minor, date)
-               VALUES ('round-b', 'expense', ?, ?, 30055, '2026-03-02')`,
-      [bank, food]
-    );
-    const outcome = await roundLedgerAmountsToWholeRupees();
-    expect(
-      (await one<{ amount_minor: number }>("SELECT amount_minor FROM transactions WHERE id = 'round-a'"))
-        ?.amount_minor
-    ).toBe(20600);
-    // The user edits one entry after rounding.
-    await run("UPDATE transactions SET amount_minor = 77700 WHERE id = 'round-a'");
-    await outcome.undo();
-    expect(
-      (await one<{ amount_minor: number }>("SELECT amount_minor FROM transactions WHERE id = 'round-a'"))
-        ?.amount_minor
-    ).toBe(77700);
-    // An untouched one still goes back to what it was.
-    expect(
-      (await one<{ amount_minor: number }>("SELECT amount_minor FROM transactions WHERE id = 'round-b'"))
-        ?.amount_minor
-    ).toBe(30055);
   });
 });
 

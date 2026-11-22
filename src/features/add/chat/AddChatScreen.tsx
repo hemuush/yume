@@ -21,7 +21,7 @@ import { AddAccountModal } from '@/features/profile/AddAccountModal';
 import { useCollapsingHeader } from '@/hooks/useCollapsingHeader';
 import { childrenOf } from '@/lib/categoryTree';
 import { addDaysToIsoDate } from '@/lib/date';
-import { formatMaskableMoney, formatMoney } from '@/lib/money';
+import { formatMaskableMoney, formatMoneyExact } from '@/lib/money';
 import { hasOperator } from '@/lib/padMath';
 import { withPressed } from '@/lib/pressed';
 import { useAccent } from '@/theme/AccentContext';
@@ -194,7 +194,7 @@ export function AddChatScreen() {
         {entry && (step === 'amount' || step === 'splitAmount') && (
           <View style={s.pickCard}>
             <View style={s.display} accessibilityLiveRegion="polite">
-              <Text style={s.displayAmount}>{formatMoney(chat.padMinor ?? 0, currency)}</Text>
+              <Text style={s.displayAmount}>{formatMoneyExact(chat.padMinor ?? 0, currency)}</Text>
               {hasOperator(chat.padExpr) && <Text style={s.typeHint}>{chat.padExpr}</Text>}
             </View>
             {step === 'amount' && chat.amountChips.length > 0 && (
@@ -207,7 +207,7 @@ export function AddChatScreen() {
                 {chat.amountChips.map((minor) => (
                   <Chip
                     key={minor}
-                    label={formatMoney(minor, currency)}
+                    label={formatMoneyExact(minor, currency)}
                     active={chat.padMinor === minor}
                     onPress={() => chat.answer('amount', minor)}
                   />

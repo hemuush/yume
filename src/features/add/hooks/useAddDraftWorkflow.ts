@@ -58,7 +58,7 @@ export function useAddDraftWorkflow(input: Input) {
 
   const amountValue = evaluateAmount(expr);
 
-  // Typed amounts are whole rupees, but an edit left untouched keeps its exact amount (paise and all).
+  // An edit left untouched keeps its exact stored amount, whatever the typed text would round to.
   const untouchedEdit = editing !== null && !editing.splitId && expr === exprFromMinor(editing.amountMinor);
 
   const amountMinor = untouchedEdit ? editing.amountMinor : amountValue === null ? 0 : toMinor(amountValue);

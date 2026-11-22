@@ -49,7 +49,7 @@ export const CurrencySetting = memo(function CurrencySetting({
         <ReanimatedAnimated.View entering={PANEL_ENTER} exiting={ROW_EXIT} style={styles.accordionBody}>
           <Text style={styles.pickerHint}>
             Existing accounts keep whatever currency they were created with. Combined totals only add up
-            accounts in this currency. Amounts are kept in whole units, so a typed 3.75 is saved as 4.
+            accounts in this currency.
           </Text>
           {SUPPORTED_CURRENCIES.map((c, i) => (
             <Pressable

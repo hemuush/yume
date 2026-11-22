@@ -2,7 +2,7 @@ import type { CreateLoanInput } from '@/db/loans';
 import { monthsBetweenIsoDates } from '@/lib/date';
 import { dayMonthYear } from '@/lib/dateLabels';
 import { rateProblem, tenureProblem } from '@/lib/loanLimits';
-import { toMinor } from '@/lib/money';
+import { toMinor, toWholeMinor } from '@/lib/money';
 import { plural } from '@/lib/plural';
 import type { LoanDirection, LoanRateType } from '@/types';
 
@@ -91,7 +91,7 @@ export function buildLoanInput(
   // when actually provided.
   let assetValueMinor: number | null = null;
   if (f.direction === 'borrowed' && f.trackAsset && f.assetValue.trim()) {
-    assetValueMinor = toMinor(parseFloat(f.assetValue));
+    assetValueMinor = toWholeMinor(parseFloat(f.assetValue));
     if (!Number.isFinite(assetValueMinor) || assetValueMinor <= 0)
       return { error: 'Enter a valid current value for the asset, or leave it blank for now' };
   }

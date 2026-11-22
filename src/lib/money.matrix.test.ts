@@ -1,8 +1,9 @@
 /**
- * Combinatorial coverage of the money helpers. `toMinor` is the sole entry for stored amounts (integer minor
- * units), quantizing to whole major units (no "205.55"). `formatMoney` must never throw.
+ * Combinatorial coverage of the money helpers. `toMinor` is the sole entry for typed amounts (integer minor units, to
+ * the paisa: 205.55 stays 20555); `toWholeMinor` is the whole-unit version loans use. `formatMoney` (whole units) and
+ * `formatMoneyExact` (paise when there are some) must never throw.
  */
-import { toMinor, toMajor, formatMoney, getCurrencySymbol } from './money';
+import { toMinor, toWholeMinor, toMajor, formatMoney, formatMoneyExact, getCurrencySymbol } from './money';
 import { MAX_AMOUNT_MAJOR, MAX_AMOUNT_MINOR } from './amountLimits';
 import { SUPPORTED_CURRENCIES } from '@/db/settings';
 
@@ -12,16 +13,38 @@ const MAJORS = [
 const NEGATIVES = MAJORS.filter((m) => m > 0).map((m) => -m);
 const CODES = SUPPORTED_CURRENCIES.map((c) => c.code);
 
-describe('toMinor — quantizes a major amount to whole-rupee minor units', () => {
+describe('toMinor — keeps a major amount to the paisa', () => {
   for (const major of [...MAJORS, ...NEGATIVES]) {
     it(`${major}`, () => {
       const minor = toMinor(major);
       expect(Number.isInteger(minor)).toBe(true);
-      // Always a whole major unit: rounded to the nearest rupee, times 100.
+      // The nearest paisa to what was typed, within float noise.
+      expect(Math.abs(minor - major * 100)).toBeLessThan(0.5 + 1e-6);
+      expect(toMajor(minor)).toBeCloseTo(major, 2);
+    });
+  }
+
+  it('does not lose a paisa to binary float noise', () => {
+    expect(toMinor(1.005)).toBe(101);
+    expect(toMinor(0.1 + 0.2)).toBe(30);
+    expect(toMinor(12.5)).toBe(1250);
+    expect(toMinor(205.55)).toBe(20555);
+  });
+});
+
+describe('toWholeMinor — quantizes a major amount to whole-unit minor units (loans)', () => {
+  for (const major of [...MAJORS, ...NEGATIVES]) {
+    it(`${major}`, () => {
+      const minor = toWholeMinor(major);
+      expect(Number.isInteger(minor)).toBe(true);
       expect(minor).toBe(Math.round(major) * 100);
       expect(minor % 100 === 0).toBe(true);
     });
   }
+
+  it('refuses what toMinor refuses', () => {
+    expect(toWholeMinor(MAX_AMOUNT_MAJOR + 1)).toBeNaN();
+  });
 });
 
 describe('toMinor — refuses amounts too large to sum exactly', () => {
@@ -43,10 +66,10 @@ describe('toMinor — refuses amounts too large to sum exactly', () => {
   });
 });
 
-describe('toMajor ∘ toMinor round-trips to the nearest whole major unit', () => {
+describe('toMajor ∘ toMinor round-trips to the paisa', () => {
   for (const major of [...MAJORS, ...NEGATIVES]) {
     it(`${major}`, () => {
-      expect(toMajor(toMinor(major))).toBeCloseTo(Math.round(major), 10);
+      expect(toMajor(toMinor(major))).toBeCloseTo(major, 2);
     });
   }
 });
@@ -58,7 +81,7 @@ describe('toMinor is additive over a running total (no float drift across many a
         let minorTotal = 0;
         for (let i = 0; i < count; i++) minorTotal += toMinor(step);
         expect(minorTotal).toBe(toMinor(step) * count);
-        expect(minorTotal % 100 === 0).toBe(true);
+        expect(Number.isInteger(minorTotal)).toBe(true);
       });
     }
   }
@@ -106,5 +129,27 @@ describe('getCurrencySymbol — resolves to a non-empty prefix for every support
 
   it('falls back to the raw code for an unknown currency', () => {
     expect(getCurrencySymbol('ZZZ')).toBe('ZZZ');
+  });
+});
+
+describe('formatMoneyExact — a recorded amount as it was typed', () => {
+  it('prints a whole amount like formatMoney, and an amount with paise with both digits', () => {
+    for (const code of CODES) {
+      expect(formatMoneyExact(12345_00, code)).toBe(formatMoney(12345_00, code));
+      const digits = formatMoneyExact(12345_67, code).replace(/[^0-9]/g, '');
+      expect(digits).toBe(code === 'JPY' ? '12346' : '1234567');
+    }
+  });
+
+  it('shows a single paisa, and keeps the minus on a negative amount', () => {
+    expect(formatMoneyExact(1, 'INR')).toBe('₹0.01');
+    expect(formatMoneyExact(-1250, 'INR')).toBe('-₹12.50');
+    expect(formatMoneyExact(0, 'INR')).toBe('₹0');
+  });
+
+  it('falls back to a plain number when Intl rejects the currency code, and never throws', () => {
+    expect(formatMoneyExact(12345_67, 'US')).toBe('12345.67');
+    expect(formatMoneyExact(500_00, 'DOLLARS')).toBe('500');
+    expect(() => formatMoneyExact(NaN, 'INR')).not.toThrow();
   });
 });

@@ -24,11 +24,25 @@ export function payoffFraction(principalMinor: number, outstandingPrincipalMinor
 export function calculateEmi(principalMinor: number, annualRateBp: number, tenureMonths: number): number {
   const r = monthlyRateFromAnnualBp(annualRateBp);
   if (tenureMonths <= 0) return 0;
-  if (r === 0) return Math.round(principalMinor / tenureMonths);
+  // At least a rupee a month, or a tiny interest-free loan would never move.
+  if (r === 0) return principalMinor > 0 ? Math.max(100, wholeRupees(principalMinor / tenureMonths)) : 0;
 
   const factor = Math.pow(1 + r, tenureMonths);
   const emi = (principalMinor * r * factor) / (factor - 1);
-  return Math.round(emi);
+  const rounded = wholeRupees(emi);
+  // Rounding must not leave the EMI at or below the first month's interest, or the loan would never amortize.
+  const firstInterest = wholeRupees(principalMinor * r);
+  return principalMinor > 0 && rounded <= firstInterest
+    ? Math.min(firstInterest + 100, wholeRupees(principalMinor + firstInterest))
+    : rounded;
+}
+
+/**
+ * A bank debits a whole-rupee EMI and quotes whole-rupee interest, so the schedule is built in whole rupees: the same
+ * amount leaves the account as leaves the bank, and the last installment absorbs the rounding.
+ */
+function wholeRupees(minor: number): number {
+  return Math.round(minor / 100) * 100;
 }
 
 /**
@@ -51,7 +65,7 @@ export function generateAmortizationSchedule(params: {
   let outstanding = principalMinor;
 
   for (let i = 1; i <= tenureMonths; i++) {
-    const interestComponent = Math.round(outstanding * r);
+    const interestComponent = wholeRupees(outstanding * r);
     let principalComponent = emi - interestComponent;
     let installmentEmi = emi;
 
@@ -113,7 +127,7 @@ export function recalculateAfterPrepayment(params: {
   let iterations = 0;
 
   while (outstanding > 0 && iterations < maxIterations) {
-    const interestComponent = Math.round(outstanding * r);
+    const interestComponent = wholeRupees(outstanding * r);
     let principalComponent = emiAmountMinor - interestComponent;
     let installmentEmi = emiAmountMinor;
 

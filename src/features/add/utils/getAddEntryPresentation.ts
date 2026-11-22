@@ -32,7 +32,7 @@ export function getAddEntryPresentation(input: Input) {
     addingRow,
     saveDone,
   } = input.state;
-  const { amountValue, amountMinor, untouchedEdit } = input.draft;
+  const { amountValue, amountMinor } = input.draft;
   const { currency, effectiveAccountId } = input.derived;
   const { formToStaged } = input.staging;
 
@@ -53,15 +53,6 @@ export function getAddEntryPresentation(input: Input) {
       : formatTyped(expr);
 
   const invalidAmount = expr !== '' && amountMinor <= 0 && !typedZero;
-
-  // Typed amounts are kept in whole units. One that rounds to nothing ("0.4") is not a calculation to check: say
-  // what happened.
-  const roundingNote =
-    !untouchedEdit && amountValue !== null && amountValue !== amountMinor / 100
-      ? amountMinor > 0
-        ? `Saved in whole units: ${formatMoney(amountMinor, currency)}`
-        : 'Amounts are saved in whole units, so this comes to nothing. Enter at least 1.'
-      : undefined;
 
   const currentValidation = formToStaged();
 
@@ -113,7 +104,6 @@ export function getAddEntryPresentation(input: Input) {
     sum,
     shownAmount,
     invalidAmount,
-    roundingNote,
     currentProblem,
     dockHint,
     cannotSave,

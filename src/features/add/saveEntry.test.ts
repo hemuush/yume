@@ -52,14 +52,20 @@ const tx = (type: 'expense' | 'income' | 'transfer', amountMinor: number): Stage
 beforeEach(() => jest.clearAllMocks());
 
 describe('formatTyped', () => {
-  it('groups the whole part and shows decimals rounded to the whole unit that will be saved', () => {
+  it('groups the whole part and shows up to two decimals, the figure that will be saved', () => {
     const grouped = (n: number) => new Intl.NumberFormat(undefined).format(n);
     expect(formatTyped('')).toBe('0');
     expect(formatTyped('1500')).toBe(grouped(1500));
     expect(formatTyped('12.')).toBe('12');
-    expect(formatTyped('.5')).toBe('1');
-    expect(formatTyped('1250.4')).toBe(grouped(1250));
-    expect(formatTyped('1250.5')).toBe(grouped(1251));
+    expect(formatTyped('.5')).toBe(
+      new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 }).format(0.5)
+    );
+    expect(formatTyped('1250.4')).toBe(
+      new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 }).format(1250.4)
+    );
+    expect(formatTyped('1250.456')).toBe(
+      new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 }).format(1250.46)
+    );
   });
 });
 

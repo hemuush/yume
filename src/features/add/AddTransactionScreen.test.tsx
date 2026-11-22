@@ -434,13 +434,13 @@ describe('Add screen', () => {
     });
   });
 
-  it('explains whole-unit rounding and saves the displayed value', async () => {
+  it('keeps the paise typed and saves the displayed value', async () => {
     const tree = await render();
     await press(tree, 'Food');
     await typeAmount(tree, '120.50');
-    expect(texts(tree)).toContain('Saved in whole units: ₹121');
+    expect(texts(tree)).toContain('₹120.5');
     await save(tree);
-    expect(createTransaction).toHaveBeenLastCalledWith(expect.objectContaining({ amountMinor: 12100 }));
+    expect(createTransaction).toHaveBeenLastCalledWith(expect.objectContaining({ amountMinor: 12050 }));
   });
   it('does not let an account lookup override a later manual choice', async () => {
     let finish!: (id: string) => void;

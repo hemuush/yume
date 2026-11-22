@@ -4,7 +4,7 @@ describe('a card’s opening balance is what it owes', () => {
   it('stores what is typed for a card as money owing, and leaves every other account as typed', () => {
     expect(openingToMinor('credit_card', '20000')).toBe(-2_000_000);
     expect(openingToMinor('bank', '20000')).toBe(2_000_000);
-    expect(openingToMinor('cash', '1234.56')).toBe(123_500);
+    expect(openingToMinor('cash', '1234.56')).toBe(123_456);
     expect(openingToMinor('savings', '')).toBe(0);
   });
 

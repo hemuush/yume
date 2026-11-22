@@ -11,14 +11,13 @@ const CURRENCIES = ['INR', 'USD', 'EUR', 'GBP', 'AED', 'AUD', 'CAD', 'SGD', 'JPY
 
 describe('money conversion matrix — every amount × currency combination', () => {
   for (const amount of MAJOR_AMOUNTS) {
-    it(`₹${amount}: toMinor/toMajor round-trips to the nearest whole rupee`, () => {
+    it(`₹${amount}: toMinor/toMajor round-trips to the paisa`, () => {
       const minor = toMinor(amount);
-      expect(toMajor(minor)).toBeCloseTo(Math.round(amount), 2);
+      expect(toMajor(minor)).toBeCloseTo(amount, 2);
     });
 
-    it(`₹${amount}: toMinor produces a whole rupee in minor units, never a fraction`, () => {
+    it(`₹${amount}: toMinor produces whole minor units, never a fraction of a paisa`, () => {
       expect(Number.isInteger(toMinor(amount))).toBe(true);
-      expect(toMinor(amount) % 100 === 0).toBe(true);
     });
 
     for (const currency of CURRENCIES) {
@@ -35,7 +34,7 @@ describe('money conversion matrix — every amount × currency combination', () 
   it('negative amounts round-trip and format with a visible negative sign', () => {
     for (const amount of [-1, -100, -9999.99, -10000000]) {
       const minor = toMinor(amount);
-      expect(toMajor(minor)).toBeCloseTo(Math.round(amount), 2);
+      expect(toMajor(minor)).toBeCloseTo(amount, 2);
       const formatted = formatMoney(minor, 'INR');
       expect(formatted).toMatch(/-/);
     }
@@ -54,8 +53,8 @@ describe('money conversion matrix — every amount × currency combination', () 
   });
 
   it('sub-unit amounts (a few paise) round to whole-unit display, same as zero', () => {
-    // A stray paisa can still exist (legacy data, EMI splits); formatMoney shows it as "0",
-    // like an exact zero. New input can't create one (see the toMinor quantization tests above).
+    // A paisa is a real amount now (a typed ₹0.01 is stored); a total or average still shows it as "0", like an exact
+    // zero. A recorded amount shows it through formatMoneyExact.
     expect(toMajor(1)).toBe(0.01);
     expect(formatMoney(1, 'INR')).toBe(formatMoney(0, 'INR'));
   });

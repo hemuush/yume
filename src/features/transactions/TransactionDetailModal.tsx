@@ -459,7 +459,12 @@ export function TransactionDetailModal({
           amount={
             <>
               {tx.type === 'expense' ? '−' : tx.type === 'income' ? '+' : ''}
-              <Amount minor={tx.amountMinor} sensitive={sensitiveEntry(tx)} currency={account?.currency} />
+              <Amount
+                minor={tx.amountMinor}
+                sensitive={sensitiveEntry(tx)}
+                currency={account?.currency}
+                exact
+              />
             </>
           }
           amountColor={
@@ -567,6 +572,7 @@ export function TransactionDetailModal({
                     <Amount
                       currency={accounts.find((a) => a.id === p.accountId)?.currency}
                       minor={p.amountMinor}
+                      exact
                       sensitive={sensitiveEntry(p)}
                       style={[styles.splitPartAmount, mine && styles.splitPartMine]}
                     />

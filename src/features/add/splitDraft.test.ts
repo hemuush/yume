@@ -29,8 +29,8 @@ describe('split draft', () => {
   it('reads typed amounts and sums, and ignores what has no value', () => {
     expect(partMinor('500')).toBe(50_000);
     expect(partMinor('120+45')).toBe(16_500);
-    // Whole rupees, like every amount typed anywhere in the app (toMinor).
-    expect(partMinor('12.5')).toBe(1_300);
+    // To the paisa, like every amount typed anywhere in the app (toMinor).
+    expect(partMinor('12.5')).toBe(1_250);
     expect(partMinor('')).toBe(0);
     expect(partMinor('5÷0')).toBe(0);
   });

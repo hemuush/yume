@@ -2,7 +2,6 @@ import { TransactionRow } from './rows';
 import { getDb } from './client';
 import { captureRow, restoreRow, RowSnapshot } from './undoSnapshot';
 import { deleteTransaction, restoreTransaction } from './ledger';
-import { countFractionalLedgerAmounts } from './maintenance';
 import { cachedRead } from './readCache';
 import { sensitiveOf } from './spendSql';
 
@@ -66,8 +65,6 @@ export interface StartingBalanceGroup {
 export interface TidyUpReport {
   repeats: RepeatGroup[];
   startingBalances: StartingBalanceGroup[];
-  /** Stored amounts still carrying paise (the old "Round off amounts" count). */
-  fractionalCount: number;
 }
 
 function parseKeptList(raw: string | undefined): string[] {
@@ -239,18 +236,14 @@ export async function findStartingBalances(): Promise<StartingBalanceGroup[]> {
 export function getTidyUpReport(): Promise<TidyUpReport> {
   // Scans the whole ledger; Home's Needs you and the Tidy up screen share one result until the data changes.
   return cachedRead('tidyUp', async () => {
-    const [repeats, startingBalances, fractional] = await Promise.all([
-      findRepeatGroups(),
-      findStartingBalances(),
-      countFractionalLedgerAmounts().catch(() => ({ total: 0 })),
-    ]);
-    return { repeats, startingBalances, fractionalCount: fractional.total };
+    const [repeats, startingBalances] = await Promise.all([findRepeatGroups(), findStartingBalances()]);
+    return { repeats, startingBalances };
   });
 }
 
 /** How many things Tidy up has for you — each repeat pair and group of old balances, plus one for paise. */
 export function tidyUpCount(report: TidyUpReport): number {
-  return report.repeats.length + report.startingBalances.length + (report.fractionalCount > 0 ? 1 : 0);
+  return report.repeats.length + report.startingBalances.length;
 }
 
 /** "Keep both": this group is fine as it is, and won't be shown again. */

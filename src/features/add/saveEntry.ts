@@ -3,11 +3,11 @@ import { recordMoneyGivenToPerson, recordMoneyReceivedFromPerson, addLedgerEntry
 import type { Category } from '@/types';
 import type { Staged } from './addEntry';
 
-/** "1,501" while typing "1500.5": amounts are kept in whole units, so the card shows the figure that will be saved. */
+/** "1,500.5" while typing "1500.5": the card shows the figure that will be saved, to the paisa. */
 export function formatTyped(expr: string): string {
   if (expr === '') return '0';
-  const whole = Math.round(Number(expr.endsWith('.') ? expr.slice(0, -1) : expr) || 0);
-  return new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(whole);
+  const value = Number(expr.endsWith('.') ? expr.slice(0, -1) : expr) || 0;
+  return new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 }).format(value);
 }
 
 /** Money in and out across the staged list; a friend entry counts by which way the cash moved. */

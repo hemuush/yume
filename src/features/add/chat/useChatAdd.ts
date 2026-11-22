@@ -30,7 +30,7 @@ import { errorMessage } from '@/lib/errorMessage';
 import { haptics } from '@/lib/haptics';
 import { addDaysToIsoDate, daysUntilIsoDate, toLocalIsoDate } from '@/lib/date';
 import { weekdayDayMonthMaybeYear } from '@/lib/dateLabels';
-import { formatMaskableMoney, formatMoney, toMinor } from '@/lib/money';
+import { formatMaskableMoney, formatMoneyExact, toMinor } from '@/lib/money';
 import { markJustAdded } from '@/lib/justAdded';
 import { applyPadKey, evaluateAmount, exprFromMinor, type PadKey } from '@/lib/padMath';
 import { usePrivacy } from '@/theme/PrivacyContext';
@@ -266,7 +266,7 @@ export function useChatAdd() {
   /** The words that show an answer in the chat ("Food & Dining", "SBI", "Yesterday"). */
   const labelOf = useCallback(
     (e: ChatEntry, field: Field): string => {
-      if (field === 'amount') return formatMoney(e.amountMinor ?? 0);
+      if (field === 'amount') return formatMoneyExact(e.amountMinor ?? 0);
       if (field === 'direction') return e.friendSign === -1 ? 'I got it' : 'I gave it';
       if (field === 'note') return e.note || 'No note';
       return fieldValue(e, field, lookups);
@@ -340,7 +340,7 @@ export function useChatAdd() {
   const padMinor = useMemo(() => {
     const major = evaluateAmount(padExpr);
     if (major === null) return null;
-    // Typed amounts are whole rupees everywhere in the app (toMinor), as in the form: 850.50 is saved as 851.
+    // Typed amounts keep their paise (toMinor), as in the form: 850.50 stays 850.50.
     const minor = toMinor(major);
     return Number.isFinite(minor) && minor > 0 ? minor : null;
   }, [padExpr]);
@@ -404,7 +404,7 @@ export function useChatAdd() {
               problem,
               next,
               (key) => nameOfCategory(next.find((p) => p.key === key)?.categoryId ?? null),
-              formatMoney
+              formatMoneyExact
             )
           : 'That leaves nothing for the first part.'
       );
@@ -414,10 +414,10 @@ export function useChatAdd() {
     setSplit(next);
     setSplitCategory(null);
     setStep('splitMore');
-    say('you', formatMoney(padMinor));
+    say('you', formatMoneyExact(padMinor));
     say(
       'suu',
-      `${nameOfCategory(next[0].categoryId)} keeps ${formatMoney(rest)}. ${canAddPart(next) ? 'Add another part?' : 'That is the most parts.'}`
+      `${nameOfCategory(next[0].categoryId)} keeps ${formatMoneyExact(rest)}. ${canAddPart(next) ? 'Add another part?' : 'That is the most parts.'}`
     );
   }, [entry, nameOfCategory, padExpr, padMinor, say, split, splitCategory]);
 
@@ -493,7 +493,7 @@ export function useChatAdd() {
         split && amounts
           ? split.map((part, i) => ({
               label: categories.find((c) => c.id === part.categoryId)?.name ?? 'Choose a category',
-              value: formatMoney(amounts[i]),
+              value: formatMoneyExact(amounts[i]),
             }))
           : null,
       rows: fieldsOf(entry.type).map((field) => ({
@@ -516,7 +516,7 @@ export function useChatAdd() {
           problem,
           split,
           (key) => nameOfCategory(split.find((p) => p.key === key)?.categoryId ?? null),
-          formatMoney
+          formatMoneyExact
         )
       );
       return;
@@ -571,7 +571,7 @@ export function useChatAdd() {
           haptics.warn();
           say(
             'suu',
-            `You added ${formatMoney(row.amountMinor)} · ${row.label} a moment ago. Tap Save again to add it anyway.`
+            `You added ${formatMoneyExact(row.amountMinor)} · ${row.label} a moment ago. Tap Save again to add it anyway.`
           );
           return;
         }

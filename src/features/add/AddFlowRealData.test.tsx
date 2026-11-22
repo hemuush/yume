@@ -211,20 +211,20 @@ describe('saving an entry', () => {
     act(() => tree.unmount());
   });
 
-  it('keeps whole rupees: a typed 1500.5 is saved as 1,501 and the card said so first', async () => {
+  it('keeps the paise: a typed 1500.5 is saved as 1,500.5 and the card said so first', async () => {
     const tree = await render();
     await press(tree, 'Food');
     await typeAmount(tree, '1500.5');
-    expect(texts(tree).some((t) => t.includes('1,501'))).toBe(true);
+    expect(texts(tree).some((t) => t.includes('1,500.5'))).toBe(true);
     await save(tree);
-    expect((await saved()).map((r) => r.amount_minor)).toEqual([150_100]);
+    expect((await saved()).map((r) => r.amount_minor)).toEqual([150_050]);
     act(() => tree.unmount());
   });
 
   it('refuses a nothing amount, says why, and saves nothing', async () => {
     const tree = await render();
     await press(tree, 'Food');
-    await typeAmount(tree, '0.4');
+    await typeAmount(tree, '0.004');
     await save(tree);
     expect(await saved()).toEqual([]);
     expect(mockBack).not.toHaveBeenCalled();
@@ -960,14 +960,11 @@ describe('what the form says is missing', () => {
     act(() => tree.unmount());
   });
 
-  it('explains an amount that rounds to nothing, and keeps "check the calculation" for a sum that is not positive', async () => {
+  it('does not call a typed zero a calculation, and keeps "check the calculation" for a sum that is not positive', async () => {
     const tree = await render();
     await press(tree, 'Food');
-    await typeAmount(tree, '0.4');
-    // It is not a calculation to check: it rounds to nothing in whole units, and says so, once.
-    expect(texts(tree)).toContain(
-      'Amounts are saved in whole units, so this comes to nothing. Enter at least 1.'
-    );
+    await typeAmount(tree, '0.00');
+    // A zero is not a calculation to check.
     expect(texts(tree)).not.toContain('Enter a positive amount. Check the calculation.');
     act(() => tree.unmount());
     // A sum that does not come out positive is a calculation.

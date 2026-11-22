@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
 import { applyPrepayment, previewPrepayment, PrepaymentSummary } from '@/db/loans';
-import { toMinor, formatMoney } from '@/lib/money';
+import { toWholeMinor, formatMoney } from '@/lib/money';
 import { roundedMinor } from '@/lib/round';
 import { theme, modalFooterStyles as f } from '@/constants/theme';
 import { Loan, Account } from '@/types';
@@ -167,7 +167,7 @@ export function PrepayModal({
   // shaved) instead of silently closing, using the comparison `applyPrepayment` already computes.
   const [result, setResult] = useState<PrepaymentSummary | null>(null);
 
-  const amountMinor = toMinor(parseFloat(amount || '0'));
+  const amountMinor = toWholeMinor(parseFloat(amount || '0'));
   const chargeBaseMinor = Math.round(amountMinor * (parseFloat(chargePercent || '0') / 100));
   // Rounded to a whole rupee like every other stored amount, so the "Charge +
   // amount = total debited" line the user sees actually adds up.

@@ -766,43 +766,42 @@ it('does not start an entry twice when a type card is tapped twice quickly', asy
   expect(texts(tree).filter((t) => t === 'Expense')).toHaveLength(1);
 });
 
-describe('amounts are whole rupees, as in the form', () => {
-  it('saves 850.50 as 851, not as 850.50', async () => {
+describe('amounts keep their paise, as in the form', () => {
+  it('saves 850.50 as typed', async () => {
     const tree = await open();
     await press(tree, 'Add Expense');
     await press(tree, 'Food & Dining');
     for (const k of '850.5') await press(tree, `key ${k}`);
-    expect(texts(tree)).toContain('₹851'); // what the pad shows is what is saved
+    expect(texts(tree)).toContain('₹850.50'); // what the pad shows is what is saved
     await press(tree, 'Done');
     await press(tree, 'SBI');
     await press(tree, 'Today');
     await press(tree, 'No note');
     await press(tree, 'Save');
-    expect(saved()).toMatchObject({ amountMinor: 85100 });
-    expect(Number(saved().amountMinor) % 100).toBe(0);
+    expect(saved()).toMatchObject({ amountMinor: 85050 });
   });
-  it('does not take an amount that rounds to nothing', async () => {
+  it('does not take an amount too small to keep', async () => {
     const tree = await open();
     await press(tree, 'Add Expense');
     await press(tree, 'Food & Dining');
-    for (const k of '0.4') await press(tree, `key ${k}`);
+    for (const k of '0.004') await press(tree, `key ${k}`);
     expect(control(tree, 'Done')?.props.disabled).toBe(true);
   });
-  it('keeps the parts of a split in whole rupees too', async () => {
+  it('keeps the parts of a split to the paisa too', async () => {
     const tree = await open();
     await summaryOf1000(tree);
     await press(tree, 'Split between categories');
     await press(tree, 'Rent');
     for (const k of '300.4') await press(tree, `key ${k}`);
     await press(tree, 'Done');
-    expect(texts(tree).some((t) => t.includes('keeps ₹700'))).toBe(true);
+    expect(texts(tree).some((t) => t.includes('keeps ₹699.60'))).toBe(true);
     await press(tree, 'Done splitting');
     await press(tree, 'Save');
     expect(saveSplit).toHaveBeenCalledWith(
       expect.objectContaining({
         parts: [
-          { categoryId: 'food', amountMinor: 70000 },
-          { categoryId: 'rent', amountMinor: 30000 },
+          { categoryId: 'food', amountMinor: 69960 },
+          { categoryId: 'rent', amountMinor: 30040 },
         ],
       })
     );

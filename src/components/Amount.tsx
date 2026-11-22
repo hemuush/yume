@@ -9,18 +9,20 @@ interface Props extends TextProps {
   /** Usually a category's own `isSensitive` flag — only masked when this AND the global privacy toggle are both on. */
   sensitive?: boolean;
   currency?: string;
+  /** A recorded amount: shows its paise when it has some (see formatMoneyExact). Totals leave this off. */
+  exact?: boolean;
 }
 
 /**
  * Drop-in for `<Text>{formatMoney(x)}</Text>` where an amount may be sensitive. Masks it (keeping the
  * currency symbol) only when "hide savings & investment amounts" is on AND the amount is tagged sensitive.
  */
-export function Amount({ minor, sensitive, currency, style, ...rest }: Props) {
+export function Amount({ minor, sensitive, currency, exact, style, ...rest }: Props) {
   const { hideAmounts } = usePrivacy();
   const masked = hideAmounts && sensitive;
   return (
     <Text style={style} {...rest}>
-      {formatMaskableMoney(minor, { currency, masked })}
+      {formatMaskableMoney(minor, { currency, masked, exact })}
     </Text>
   );
 }

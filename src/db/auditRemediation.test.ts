@@ -13,8 +13,6 @@ import {
 } from './ledger';
 import { createLoan, getLoanSchedule, payInstallment, listLoans, listPendingLoanPayments } from './loans';
 import { computeTrackedBalance } from './reports';
-import { createPerson, recordMoneyGivenToPerson, getPersonLedger } from './people';
-import { roundLedgerAmountsToWholeRupees } from './maintenance';
 import { restoreDeletedEntry, countDeletedEntries } from './recentlyDeleted';
 beforeAll(async () => {
   await mockDb.execAsync(CREATE_TABLES_SQL);
@@ -57,21 +55,6 @@ it('retains the financed asset after final payment closes its loan', async () =>
   expect(
     computeTrackedBalance({ accounts: [], loans: await listLoans(), people: [], defaultCurrency: 'INR' })
   ).toBe(70000000);
-});
-it('preserves linked sub-rupee friend movements through rounding and Undo', async () => {
-  const { account, category } = await setup();
-  const person = await createPerson({ name: 'Sam' });
-  await recordMoneyGivenToPerson({
-    personId: person.id,
-    accountId: account.id,
-    categoryId: category.id,
-    amountMinor: 40,
-    date: '2026-11-01',
-  });
-  const outcome = await roundLedgerAmountsToWholeRupees();
-  await outcome.undo();
-  expect((await listTransactions())[0].amountMinor).toBe(40);
-  expect((await getPersonLedger(person.id))[0].amountMinor).toBe(40);
 });
 it('rejects a restore after bank becomes savings and retains the recovery record', async () => {
   const { account, category } = await setup();

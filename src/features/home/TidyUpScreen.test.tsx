@@ -43,7 +43,7 @@ const oldBalance = {
   firstDate: '2026-08-01',
   lastDate: '2026-09-01',
 };
-const mockReport = { current: { repeats: [pair], startingBalances: [oldBalance], fractionalCount: 0 } };
+const mockReport = { current: { repeats: [pair], startingBalances: [oldBalance] } };
 jest.mock('@/db/tidyUp', () => ({
   getTidyUpReport: async () => mockReport.current,
   keepRepeatGroup: jest.fn(async () => {}),
@@ -57,11 +57,8 @@ jest.mock('@/db/tidyUp', () => ({
   })),
   undoMoveToOpeningBalance: jest.fn(async () => {}),
 }));
-jest.mock('@/db/maintenance', () => ({ roundLedgerAmountsToWholeRupees: jest.fn() }));
 
 import TidyUpScreen from '../../../app/tidy-up';
-import { roundLedgerAmountsToWholeRupees } from '@/db/maintenance';
-import { showAlert } from '@/components/AppDialog';
 import { keepRepeatGroup, deleteNewestOfGroup, moveToOpeningBalance, keepAsIncome } from '@/db/tidyUp';
 
 async function render() {
@@ -103,7 +100,6 @@ describe('Tidy up screen', () => {
       startingBalances: [
         { ...oldBalance, currency: 'USD', ids: ['i1'], firstDate: '2025-08-01', lastDate: '2025-08-01' },
       ],
-      fractionalCount: 0,
     };
     const shown = texts(await render());
     mockReport.current = saved;
@@ -142,39 +138,18 @@ describe('Tidy up screen', () => {
     expect(keepAsIncome).toHaveBeenCalledWith('bank|prev');
   });
 
-  it('rounds amounts only after a confirm, then offers an undo that puts them back', async () => {
-    const saved = mockReport.current;
-    mockReport.current = { repeats: [], startingBalances: [], fractionalCount: 3 };
-    const undo = jest.fn(async () => {});
-    (roundLedgerAmountsToWholeRupees as jest.Mock).mockResolvedValueOnce({ total: 3, undo });
-    const tree = await render();
-    await tap(tree, 'Round them');
-    expect(roundLedgerAmountsToWholeRupees).not.toHaveBeenCalled();
-    const [, message, buttons] = jest.mocked(showAlert).mock.calls.at(-1)!;
-    expect(message).not.toContain('cannot be undone');
-    await act(async () => {
-      await buttons!.find((b) => b.text === 'Round them')!.onPress!();
-    });
-    expect(mockShowUndo).toHaveBeenCalledWith('Rounded 3 amounts to whole rupees', expect.any(Function));
-    await act(async () => mockShowUndo.mock.calls.at(-1)![1]());
-    expect(undo).toHaveBeenCalledTimes(1);
-    mockReport.current = saved;
-  });
-
-  it('shows the three checks it ran, flagging what each found', async () => {
+  it('shows the two checks it ran, flagging what each found', async () => {
     const shown = texts(await render());
-    expect(shown).toEqual(
-      expect.arrayContaining(['Same entry twice', 'Old balances as income', 'Amounts with paise'])
-    );
+    expect(shown).toEqual(expect.arrayContaining(['Same entry twice', 'Old balances as income']));
     expect(shown.some((t) => /^\d+ (group|groups)$/.test(t))).toBe(true);
   });
 
   it('says all tidy when there is nothing, with every check ticked', async () => {
     const saved = mockReport.current;
-    mockReport.current = { repeats: [], startingBalances: [], fractionalCount: 0 };
+    mockReport.current = { repeats: [], startingBalances: [] };
     const shown = texts(await render());
     expect(shown).toContain('All tidy');
-    expect(shown.filter((t) => t === 'None')).toHaveLength(3);
+    expect(shown.filter((t) => t === 'None')).toHaveLength(2);
     mockReport.current = saved;
   });
 });

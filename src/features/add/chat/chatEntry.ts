@@ -3,7 +3,7 @@ import type { AddForm } from '@/features/add/addEntry';
 import { categoryPath, parentNameOf } from '@/lib/categoryLabel';
 import { addDaysToIsoDate } from '@/lib/date';
 import { weekdayDayMonthMaybeYear } from '@/lib/dateLabels';
-import { formatMoney } from '@/lib/money';
+import { formatMoneyExact } from '@/lib/money';
 import type { Account, Category } from '@/types';
 
 /**
@@ -225,7 +225,7 @@ export const dayLabel = (iso: string, today: string): string =>
 /** How an entry reads on its summary card. */
 export function previewEntry(e: ChatEntry, l: ChatLookups): EntryPreview {
   const currency = l.accounts.find((a) => a.id === e.accountId)?.currency;
-  const money = e.amountMinor === null ? '—' : formatMoney(e.amountMinor, currency);
+  const money = e.amountMinor === null ? '—' : formatMoneyExact(e.amountMinor, currency);
   const byId = new Map(l.categories.map((c) => [c.id, c]));
   const category = e.categoryId ? byId.get(e.categoryId) : undefined;
   let kind = 'Expense';

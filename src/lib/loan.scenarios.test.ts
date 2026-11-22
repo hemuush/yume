@@ -62,7 +62,8 @@ describe('loan calculation matrix — every principal × rate × tenure combinat
           if (rateBp === 0) {
             expect(schedule.every((p) => p.interestComponentMinor === 0)).toBe(true);
             // Interest-free: EMI is a plain even split of principal by tenure.
-            expect(emi).toBe(Math.round(principal / tenure));
+            // A whole rupee, and at least one: a bank debits whole rupees.
+            expect(emi).toBe(Math.max(100, Math.round(principal / tenure / 100) * 100));
           }
 
           // Due dates step forward by exactly one calendar month each time,

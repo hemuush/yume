@@ -18,7 +18,6 @@ import {
   RepeatGroup,
   StartingBalanceGroup,
 } from '@/db/tidyUp';
-import { roundLedgerAmountsToWholeRupees } from '@/db/maintenance';
 import { formatMaskableMoney } from '@/lib/money';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import { haptics } from '@/lib/haptics';
@@ -149,40 +148,7 @@ export default function TidyUpScreen() {
       haptics.tap();
     }, 'Couldn’t save that');
 
-  const roundAmounts = (count: number) =>
-    showAlert(
-      'Round amounts to whole rupees?',
-      `${count} stored amount${count === 1 ? '' : 's'} still ` +
-        `carr${count === 1 ? 'ies' : 'y'} paise. Rounding them makes on-screen ` +
-        'totals line up with their parts. Loan schedules are left untouched. Some account ' +
-        'balances may shift by a rupee or two. You can undo right after, if needed.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Round them',
-          style: 'destructive',
-          onPress: () =>
-            act(async () => {
-              const changed = await roundLedgerAmountsToWholeRupees();
-              haptics.confirm();
-              showUndo(
-                `Rounded ${changed.total} amount${changed.total === 1 ? '' : 's'} to whole rupees`,
-                async () => {
-                  await changed.undo();
-                  emitTransactionsChanged();
-                  await reload();
-                }
-              );
-            }, 'Couldn’t round amounts'),
-        },
-      ]
-    );
-
-  const allTidy =
-    report &&
-    report.repeats.length === 0 &&
-    report.startingBalances.length === 0 &&
-    report.fractionalCount === 0;
+  const allTidy = report && report.repeats.length === 0 && report.startingBalances.length === 0;
 
   const checklist = report && (
     <View style={styles.checks}>
@@ -202,19 +168,9 @@ export default function TidyUpScreen() {
             : null
         }
       />
-      <Check
-        label="Amounts with paise"
-        found={
-          report.fractionalCount
-            ? `${report.fractionalCount} ${report.fractionalCount === 1 ? 'amount' : 'amounts'}`
-            : null
-        }
-      />
     </View>
   );
-  const toLook = report
-    ? report.repeats.length + report.startingBalances.length + (report.fractionalCount > 0 ? 1 : 0)
-    : 0;
+  const toLook = report ? report.repeats.length + report.startingBalances.length : 0;
 
   if (!hasData && loadError)
     return <ScreenLoadError title="Tidy up" message={loadError} onRetry={() => void reload()} />;
@@ -367,40 +323,6 @@ export default function TidyUpScreen() {
                         </View>
                       );
                     })}
-                  </ListCard>
-                </Section>
-              )}
-
-              {report.fractionalCount > 0 && (
-                <Section compact title="Amounts with paise">
-                  <ListCard>
-                    <View style={styles.item}>
-                      <View style={styles.itemTop}>
-                        <CategoryIcon name="calculator-variant-outline" color={accent} />
-                        <View style={h.mid}>
-                          <Text style={h.title}>
-                            {report.fractionalCount} old amount{report.fractionalCount === 1 ? '' : 's'} still
-                            carry paise
-                          </Text>
-                          <Text style={h.sub}>Rounding them makes totals line up with their parts.</Text>
-                        </View>
-                      </View>
-                      <View style={styles.after}>
-                        <Feather name="hash" size={13} color={theme.colors.textMuted} />
-                        <Text style={styles.afterText}>
-                          Each goes to the <Text style={styles.afterBold}>nearest rupee</Text> · loan
-                          schedules stay as they are
-                        </Text>
-                      </View>
-                      <View style={styles.actions}>
-                        <PrimaryButton
-                          title="Round them"
-                          onPress={() => roundAmounts(report.fractionalCount)}
-                          disabled={busy}
-                          style={styles.action}
-                        />
-                      </View>
-                    </View>
                   </ListCard>
                 </Section>
               )}

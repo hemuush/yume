@@ -67,7 +67,7 @@ function Amount({
   return (
     <Text style={[styles.amount, type === 'income' && styles.income]} numberOfLines={1}>
       {type === 'income' ? '+' : type === 'expense' ? '−' : ''}
-      {formatMaskableMoney(minor, { masked, currency })}
+      {formatMaskableMoney(minor, { masked, currency, exact: true })}
     </Text>
   );
 }

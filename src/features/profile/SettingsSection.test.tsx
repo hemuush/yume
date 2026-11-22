@@ -44,11 +44,10 @@ jest.mock('@/db/settings', () => ({
   }),
   getLastLocalBackupResult: () => mockBackupResult(),
 }));
-const mockTidyReport = { repeats: [], startingBalances: [], fractionalCount: 0 };
+const mockTidyReport = { repeats: [] as unknown[], startingBalances: [] as unknown[] };
 jest.mock('@/db/tidyUp', () => ({
   getTidyUpReport: async () => mockTidyReport,
-  tidyUpCount: (r: typeof mockTidyReport) =>
-    r.repeats.length + r.startingBalances.length + (r.fractionalCount > 0 ? 1 : 0),
+  tidyUpCount: (r: typeof mockTidyReport) => r.repeats.length + r.startingBalances.length,
 }));
 const mockDeviceSecured = jest.fn();
 jest.mock('@/lib/appLock', () => ({ isDeviceSecured: () => mockDeviceSecured() }));
@@ -308,12 +307,12 @@ describe('Profile · Settings section', () => {
   });
 
   it('counts what Tidy up has found, and opens it', async () => {
-    mockTidyReport.fractionalCount = 3;
+    mockTidyReport.repeats = [{}];
     const tree = await render();
     expect(texts(tree)).toContain('1 thing to check');
     await press(tree, 'Tidy up');
     expect(router.push).toHaveBeenCalledWith('/tidy-up');
-    mockTidyReport.fractionalCount = 0;
+    mockTidyReport.repeats = [];
   });
 });
 

@@ -164,13 +164,13 @@ describe('adding an account', () => {
     act(() => tree.unmount());
   });
 
-  it('rounds a typed opening balance to whole rupees, as every typed amount is', async () => {
+  it('keeps the paise of a typed opening balance, as every typed amount does', async () => {
     const tree = await render();
     await press(tree, 'Add an account');
     await fill(tree, 'Name', 'Wallet');
     await fill(tree, 'Opening balance', '1234.56');
     await create_(tree);
-    expect((await accounts())[0].opening_balance_minor).toBe(123_500);
+    expect((await accounts())[0].opening_balance_minor).toBe(123_456);
     act(() => tree.unmount());
   });
 

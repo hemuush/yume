@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { View } from 'react-native';
 import { Text } from '@/components/Text';
 import { updateLoanAsset } from '@/db/loans';
-import { toMinor, formatMoney } from '@/lib/money';
+import { toWholeMinor, formatMoney } from '@/lib/money';
 import { Loan } from '@/types';
 import { FormInput } from '@/components/FormInput';
 import { AmountField } from '@/components/AmountField';
@@ -39,7 +39,7 @@ export function AssetModal({
       // provided; equity math in Reports/Profile treats "no value" as "not tracked" until one is set.
       let valueMinor: number | null = null;
       if (value.trim()) {
-        valueMinor = toMinor(parseFloat(value));
+        valueMinor = toWholeMinor(parseFloat(value));
         if (!Number.isFinite(valueMinor) || valueMinor <= 0) {
           setError('Enter a valid current value, or leave it blank for now');
           return;

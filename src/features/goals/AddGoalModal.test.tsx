@@ -105,13 +105,13 @@ describe('AddGoalModal', () => {
     expect(mockCreateGoal).not.toHaveBeenCalled();
   });
 
-  it('saves a trimmed name and a whole-unit target with no date, no account and no note', async () => {
+  it('saves a trimmed name and a target to the paisa with no date, no account and no note', async () => {
     const { tree, onCreated } = await render();
     await fill(tree, '  Test goal  ', '40000.6');
     await submit(tree);
     expect(mockCreateGoal).toHaveBeenCalledWith({
       name: 'Test goal',
-      targetAmountMinor: 4000100,
+      targetAmountMinor: 4000060,
       targetDate: null,
       linkedAccountId: null,
       tracksAccount: false,

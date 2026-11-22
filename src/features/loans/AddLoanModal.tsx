@@ -6,7 +6,7 @@ import { createLoan } from '@/db/loans';
 import { listAccounts, listCategories } from '@/db/ledger';
 import { listPeople, PersonWithBalance } from '@/db/people';
 import { calculateEmi } from '@/lib/loan';
-import { formatMoney, toMinor } from '@/lib/money';
+import { formatMoney, toWholeMinor } from '@/lib/money';
 import { LoanDirection, LoanRateType, Account, Category } from '@/types';
 import { FormInput } from '@/components/FormInput';
 import { AmountField } from '@/components/AmountField';
@@ -162,7 +162,7 @@ export function AddLoanModal({
     if (!emiTouched) setEmiStartDate(addMonthsToIsoDate(startDate, 1));
   }, [startDate, emiTouched]);
 
-  const principalMinor = toMinor(parseFloat(principal || '0'));
+  const principalMinor = toWholeMinor(parseFloat(principal || '0'));
   const rateBp = Math.round(parseFloat(rate || '0') * 100);
   const tenureMonths = parseInt(tenure || '0', 10);
   const alreadyPaidCount = parseInt(alreadyPaid || '0', 10);

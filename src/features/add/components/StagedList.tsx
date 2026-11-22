@@ -94,7 +94,11 @@ export function StagedList({
             </View>
             <Text style={[styles.stagedValue, incomeLike && styles.income, expenseLike && styles.expense]}>
               {incomeLike ? '+' : expenseLike ? '−' : ''}
-              {formatMaskableMoney(r.amountMinor, { currency: currencyOf(r), masked: masked(r) })}
+              {formatMaskableMoney(r.amountMinor, {
+                currency: currencyOf(r),
+                masked: masked(r),
+                exact: true,
+              })}
             </Text>
             <Pressable
               onPress={() => onRemove(r.id)}
