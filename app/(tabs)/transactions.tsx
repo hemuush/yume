@@ -28,6 +28,7 @@ import { ActivityFilterChips, SearchStatus } from '@/features/transactions/Activ
 import { ActivityPeriodBar } from '@/features/transactions/ActivityPeriodBar';
 import { useActivityLedger } from '@/features/transactions/useActivityLedger';
 import { useActivitySearch } from '@/features/transactions/useActivitySearch';
+import { useActivityChart } from '@/features/transactions/useActivityChart';
 import { useDayJump } from '@/features/transactions/useDayJump';
 import { useStableSet } from '@/lib/stableData';
 import { SEARCH_MIN_CHARS, SEARCH_RESULT_LIMIT } from '@/features/transactions/searchLimits';
@@ -46,7 +47,6 @@ import { TransactionsHeadline } from '@/features/transactions/TransactionsHeadli
 import { ActivitySummaryStrip } from '@/features/transactions/ActivitySummaryStrip';
 import { ModalSheet } from '@/components/ModalSheet';
 import { TransactionsSkeleton } from '@/features/transactions/TransactionsSkeleton';
-import { buildWeekSpendBars, buildWeeklySpendBars } from '@/features/transactions/spendChart';
 import {
   weekContaining,
   stepWeekAnchor,
@@ -54,7 +54,6 @@ import {
   groupByDate,
   periodHeading,
   filterActivity,
-  chartTransactionsFor,
   netActivitySpend,
   groupWithNotes,
   emptyPeriodTitle,
@@ -248,10 +247,20 @@ export default function TransactionsScreen() {
     () => topSpendCategories(transactions, categoriesById),
     [transactions, categoriesById]
   );
-  const chartTransactions = useMemo(
-    () => chartTransactionsFor(transactions, accountsById, categoriesById, getCachedCurrency(), hideAmounts),
-    [transactions, accountsById, categoriesById, hideAmounts]
-  );
+
+  const { narrowedTransactions, hasSpendFilters, bars } = useActivityChart({
+    transactions,
+    accountsById,
+    categoriesById,
+    categories,
+    investmentIds,
+    hideAmounts,
+    loadedPeriod,
+    today,
+    filterCategoryIds,
+    filterAccountIds,
+    filterLabel,
+  });
 
   const requestedHeading = periodHeading({ scope: viewScope, week, anchor, today: todayDate });
   const shownNotes = useMemo(
@@ -284,69 +293,6 @@ export default function TransactionsScreen() {
   // A new period opens at its top: the list keeps its offset when its data is replaced, so picking a month from the
   // shrunk header would otherwise land mid-way down it with the Spent strip out of view.
   useScrollToTopOnChange(scrollRef, `${loadedPeriod.scope}-${loadedPeriod.fromDate}`);
-  // Type chips organize the timeline. Account, category and label filters also scope the spending preview.
-  const hasSpendFilters = !!(filterCategoryIds.length || filterAccountIds.length || filterLabel);
-  const narrowedTransactions = useMemo(() => {
-    if (!hasSpendFilters) return chartTransactions;
-    return filterActivity(
-      chartTransactions,
-      {
-        type: 'all',
-        categoryIds: filterCategoryIds,
-        accountIds: filterAccountIds,
-        expenseLabel: filterLabel,
-      },
-      categories,
-      investmentIds
-    );
-  }, [
-    hasSpendFilters,
-    chartTransactions,
-    filterCategoryIds,
-    filterAccountIds,
-    filterLabel,
-    categories,
-    investmentIds,
-  ]);
-  const allBars = useMemo(
-    () =>
-      loadedPeriod.scope === 'week'
-        ? buildWeekSpendBars(
-            chartTransactions,
-            categories,
-            { start: loadedPeriod.fromDate, end: loadedPeriod.toDate },
-            today
-          )
-        : buildWeeklySpendBars(
-            chartTransactions,
-            categories,
-            loadedPeriod.fromDate,
-            loadedPeriod.toDate,
-            today
-          ),
-    [chartTransactions, categories, loadedPeriod, today]
-  );
-  const bars = useMemo(
-    () =>
-      narrowedTransactions === chartTransactions
-        ? allBars
-        : loadedPeriod.scope === 'week'
-          ? buildWeekSpendBars(
-              narrowedTransactions,
-              categories,
-              { start: loadedPeriod.fromDate, end: loadedPeriod.toDate },
-              today
-            )
-          : buildWeeklySpendBars(
-              narrowedTransactions,
-              categories,
-              loadedPeriod.fromDate,
-              loadedPeriod.toDate,
-              today
-            ),
-    [allBars, narrowedTransactions, chartTransactions, categories, loadedPeriod, today]
-  );
-
   // Destructured so the focus effect depends on primitive dates/scope, not the `visibleRange` object
   // rebuilt every render (which would re-run the load each time).
   const { fromDate: rangeFromDate, toDate: rangeToDate } = visibleRange;
