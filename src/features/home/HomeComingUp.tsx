@@ -385,7 +385,7 @@ const styles = themedStyles(() =>
     refunds: {
       marginTop: 4,
       marginHorizontal: -12,
-      borderRadius: 20,
+      borderRadius: theme.radius.lg,
       backgroundColor: theme.colors.home.surface,
     },
     empty: {
@@ -407,7 +407,7 @@ const styles = themedStyles(() =>
       justifyContent: 'center',
     },
     emptyChevron: {
-      opacity: 0.45,
+      opacity: theme.opacity.disabled,
     },
     copy: { flex: 1, minWidth: 0, gap: 3 },
     emptyTitle: {

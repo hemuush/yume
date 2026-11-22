@@ -216,3 +216,14 @@ it('shows an account as its name over its balance, and keeps the full kind in th
   expect(tile.props.accessibilityLabel).toBe('Index fund, investment · mutual fund. Open summary');
   act(() => tree.unmount());
 });
+
+it('treats a balance of a few paise as empty: no tile, and not counted as an account in hand', () => {
+  mockHideAmounts = false;
+  const tree = render({
+    currency: 'INR',
+    accounts: [account('Dust', 'bank', 44), account('Main', 'bank', 92_400)],
+  });
+  const copy = texts(tree).join(' ');
+  expect(copy).not.toContain('Dust');
+  expect(copy).toContain('across 1 account');
+});

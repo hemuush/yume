@@ -183,7 +183,7 @@ const s = themedStyles(() =>
       flexDirection: 'row',
       alignItems: 'center',
       backgroundColor: theme.colors.surfaceAlt,
-      borderRadius: 14,
+      borderRadius: theme.radius.md,
     },
     input: { flex: 1, minWidth: 0, minHeight: 48, padding: 12, color: theme.colors.textPrimary },
     clear: { minHeight: 44, minWidth: 44, paddingHorizontal: 12, justifyContent: 'center' },

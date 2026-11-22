@@ -75,7 +75,7 @@ function Check({ label, found }: { label: string; found: string | null }) {
 
 /**
  * Tidy up (Settings → Alerts & backup): data that looks off, each with a fix (duplicate entry, old balance
- * logged as income, amounts with paise). Fixes are undoable from the toast; "keep" choices are remembered.
+ * logged as income). Fixes are undoable from the toast; "keep" choices are remembered.
  */
 export default function TidyUpScreen() {
   const insets = useSafeAreaInsets();

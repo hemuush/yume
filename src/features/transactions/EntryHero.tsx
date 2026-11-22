@@ -88,7 +88,7 @@ export function EntryHero({
 const styles = themedStyles(() =>
   StyleSheet.create({
     card: {
-      borderRadius: 20,
+      borderRadius: theme.radius.lg,
       paddingHorizontal: 14,
       paddingVertical: 12,
       overflow: 'hidden',
@@ -113,7 +113,7 @@ const styles = themedStyles(() =>
       alignItems: 'center',
       gap: 10,
       minHeight: theme.accessibility.minTouchTarget,
-      borderRadius: 14,
+      borderRadius: theme.radius.md,
     },
     icon: {
       width: 34,

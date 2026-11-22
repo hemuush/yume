@@ -75,7 +75,7 @@ const styles = themedStyles(() =>
     list: {
       flexDirection: 'row',
       gap: 12,
-      marginTop: 6,
+      marginTop: 2,
     },
     listStacked: { flexDirection: 'column', gap: 0 },
     metric: {

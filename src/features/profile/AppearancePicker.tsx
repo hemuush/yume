@@ -123,14 +123,14 @@ const s = themedStyles(() =>
     slot: { flex: 1, minHeight: 44 },
     frame: {
       height: PREVIEW_H,
-      borderRadius: 14,
+      borderRadius: theme.radius.md,
       overflow: 'hidden',
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: theme.colors.home.edge,
     },
     ring: {
       ...StyleSheet.absoluteFill,
-      borderRadius: 14,
+      borderRadius: theme.radius.md,
       borderWidth: 2,
       borderColor: theme.colors.action,
       alignItems: 'flex-end',

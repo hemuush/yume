@@ -285,7 +285,7 @@ export function PrepayModal({
         label={lent ? 'Amount they paid' : 'Amount'}
         value={amount}
         onChangeText={setAmount}
-        placeholder="0.00"
+        placeholder="0"
       />
       <Text style={styles.hintText}>
         Outstanding {formatMoney(roundedMinor(loan.outstandingPrincipalMinor))} · EMI stays the same; the

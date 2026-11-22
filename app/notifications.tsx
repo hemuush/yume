@@ -366,7 +366,7 @@ const styles = themedStyles(() =>
     inboxIcon: {
       width: 32,
       height: 32,
-      borderRadius: 16,
+      borderRadius: theme.radius.lg,
       backgroundColor: theme.colors.surface,
       alignItems: 'center',
       justifyContent: 'center',

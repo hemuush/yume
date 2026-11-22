@@ -128,7 +128,7 @@ const frost = themedStyles(() =>
     kickerBadge: {
       width: 28,
       height: 28,
-      borderRadius: 14,
+      borderRadius: theme.radius.md,
       alignItems: 'center',
       justifyContent: 'center',
       backgroundColor: GLASS.fillStrong,

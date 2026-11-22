@@ -85,7 +85,7 @@ const styles = themedStyles(() =>
     chip: {
       width: 30,
       height: 30,
-      borderRadius: 15,
+      borderRadius: theme.radius.md,
       alignItems: 'center',
       justifyContent: 'center',
       backgroundColor: theme.colors.home.control,

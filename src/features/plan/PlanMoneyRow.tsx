@@ -131,7 +131,7 @@ const s = themedStyles(() =>
       marginHorizontal: 8,
       marginVertical: 4,
       paddingHorizontal: 6,
-      borderRadius: 18,
+      borderRadius: theme.radius.lg,
       borderTopWidth: 0,
       backgroundColor: theme.colors.dueRow,
     },

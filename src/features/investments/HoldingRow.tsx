@@ -78,7 +78,7 @@ const styles = themedStyles(() =>
     disc: {
       width: 40,
       height: 40,
-      borderRadius: 20,
+      borderRadius: theme.radius.lg,
       alignItems: 'center',
       justifyContent: 'center',
       backgroundColor: theme.colors.flatBlue,

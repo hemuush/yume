@@ -45,6 +45,8 @@ export function daysAgoLabel(iso: string, now: Date = new Date()): string {
   return `${days} days ago`;
 }
 
+const STALE_BACKUP_MS = 7 * 86400000;
+
 /** Undefined means a failed read; null remains a legitimate saved setting (for example, no daily goal). */
 async function orUnavailable<T>(read: () => Promise<T>): Promise<T | undefined> {
   try {
@@ -89,6 +91,9 @@ export function SettingsSection() {
   // A failed last attempt used to fall through to "Never backed up" — wrong
   // either way (there may well be older backups), and it hid the failure.
   const [lastBackupFailed, setLastBackupFailed] = useState(false);
+  // A backup a week old or more is worth a nudge: losing the phone then loses a week of entries. Worked out when it is read,
+  // not on every render.
+  const [backupStale, setBackupStale] = useState(false);
   // The backup note waits for the first read, so it doesn't flash on every visit.
   const [backupLoaded, setBackupLoaded] = useState(false);
   const [currencyLoaded, setCurrencyLoaded] = useState(false);
@@ -125,6 +130,7 @@ export function SettingsSection() {
     if (lastBackup !== undefined) {
       setLastBackupAt(lastBackup?.ok ? lastBackup.at : null);
       setLastBackupFailed(lastBackup?.ok === false);
+      setBackupStale(!!lastBackup?.ok && Date.now() - new Date(lastBackup.at).getTime() > STALE_BACKUP_MS);
       setBackupLoaded(true);
     }
   }, []);
@@ -174,7 +180,7 @@ export function SettingsSection() {
   };
 
   const alertsOn = notifPrefs ? ALERT_KEYS.filter((k) => notifPrefs[k]).length : null;
-  const backupOk = !!lastBackupAt && !lastBackupFailed;
+  const backupOk = !!lastBackupAt && !lastBackupFailed && !backupStale;
   const backupSub = !backupLoaded
     ? readFailed
       ? 'Backup status unavailable'
@@ -182,7 +188,7 @@ export function SettingsSection() {
     : lastBackupFailed
       ? 'Last backup failed — tap to check'
       : lastBackupAt
-        ? `Last backup ${daysAgoLabel(lastBackupAt)}`
+        ? `Last backup ${daysAgoLabel(lastBackupAt)}${backupStale ? ' — back up soon' : ''}`
         : 'Never backed up';
 
   return (
@@ -280,7 +286,7 @@ export function SettingsSection() {
             label="Tidy up"
             sub={
               tidyCount == null
-                ? 'Repeats, old balances, paise'
+                ? 'Repeats and old balances'
                 : tidyCount === 0
                   ? 'All tidy'
                   : `${tidyCount} thing${tidyCount === 1 ? '' : 's'} to check`

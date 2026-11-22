@@ -83,7 +83,7 @@ export function LoanHero({
 const styles = themedStyles(() =>
   StyleSheet.create({
     card: {
-      borderRadius: 20,
+      borderRadius: theme.radius.lg,
       paddingHorizontal: 14,
       paddingVertical: 12,
       overflow: 'hidden',

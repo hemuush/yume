@@ -148,7 +148,7 @@ export function PlanPeopleHabit({
                   name="sprout"
                   size={kept ? SPROUT_BASE + i * SPROUT_STEP : SPROUT_BASE - 1}
                   color={kept ? theme.colors.incomeText : theme.colors.textMuted}
-                  style={!kept && { opacity: 0.45 }}
+                  style={!kept && { opacity: theme.opacity.disabled }}
                 />
               ))}
             </View>
@@ -181,7 +181,7 @@ const s = themedStyles(() =>
     face: {
       width: 36,
       height: 36,
-      borderRadius: 18,
+      borderRadius: theme.radius.lg,
       borderWidth: 2,
       borderColor: theme.colors.home.surface,
       alignItems: 'center',
@@ -191,7 +191,7 @@ const s = themedStyles(() =>
     mark: {
       width: 36,
       height: 36,
-      borderRadius: 18,
+      borderRadius: theme.radius.lg,
       alignItems: 'center',
       justifyContent: 'center',
       backgroundColor: theme.colors.home.control,

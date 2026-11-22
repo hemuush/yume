@@ -130,6 +130,14 @@ describe('Profile · Settings section', () => {
     expect(shown).toContain('Last backup yesterday');
   });
 
+  it('asks for a fresh backup once the last one is a week old', async () => {
+    mockBackupResult.mockResolvedValue({ at: daysAgo(9), ok: true });
+    const tree = await render();
+    expect(texts(tree)).toContain('Last backup 9 days ago — back up soon');
+    mockBackupResult.mockResolvedValue({ at: daysAgo(1), ok: true });
+    act(() => tree.unmount());
+  });
+
   it('shows a failed backup on the Backup & restore row', async () => {
     mockBackupResult.mockResolvedValue({ at: daysAgo(0), ok: false, error: 'folder gone' });
     const tree = await render();

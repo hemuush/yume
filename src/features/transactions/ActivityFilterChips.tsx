@@ -162,6 +162,23 @@ export function ActivityFilterChips({
       <Text style={styles.chipText}>Clear all</Text>
     </Pressable>
   );
+  // The usual categories, one tap each. They join the type pills in the same row (scrolling together) so the filters
+  // take one line, not two; at large text, where that row wraps, they keep their own line below.
+  const showQuick = categoryIds.length === 0 && quickCategories.length > 0 && !!onPickCategory;
+  const quickChips = showQuick
+    ? quickCategories.map((c) => (
+        <Pressable
+          key={c.id}
+          onPress={() => onPickCategory?.(c.id)}
+          hitSlop={CHIP_SLOP}
+          style={withPressedTint(accent, styles.chip)}
+          accessibilityRole="button"
+          accessibilityLabel={`Show only ${c.name}`}
+        >
+          <Text style={styles.chipText}>{c.name}</Text>
+        </Pressable>
+      ))
+    : null;
   const filterButton = onOpenFilters && (
     <HeaderIconButton
       icon="sliders"
@@ -198,23 +215,20 @@ export function ActivityFilterChips({
             <View style={styles.pillGroup} accessibilityRole="radiogroup">
               {pills}
             </View>
+            {quickChips && (
+              <View
+                style={[styles.pillGroup, styles.quickGroup]}
+                accessibilityLabel="Top spending categories"
+              >
+                {quickChips}
+              </View>
+            )}
           </ScrollView>
         )}
       </View>
-      {categoryIds.length === 0 && quickCategories.length > 0 && onPickCategory && (
+      {wrapTabs && quickChips && (
         <View style={styles.appliedFilters} accessibilityLabel="Top spending categories">
-          {quickCategories.map((c) => (
-            <Pressable
-              key={c.id}
-              onPress={() => onPickCategory(c.id)}
-              hitSlop={CHIP_SLOP}
-              style={withPressedTint(accent, styles.chip)}
-              accessibilityRole="button"
-              accessibilityLabel={`Show only ${c.name}`}
-            >
-              <Text style={styles.chipText}>{c.name}</Text>
-            </Pressable>
-          ))}
+          {quickChips}
         </View>
       )}
       {picked > 0 && (

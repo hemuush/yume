@@ -262,6 +262,8 @@ export const styles = themedStyles(() =>
     pillGroup: { flexDirection: 'row', alignItems: 'center', gap: 6 },
     typeScrollContent: { minHeight: 44, alignItems: 'center' },
     pillWrap: { flex: 1, flexWrap: 'wrap' },
+    // The category shortcuts after the type pills: a little more air than between pills, so the two groups read apart.
+    quickGroup: { marginLeft: 10 },
     // 44 tall whatever it holds: the 40 dp pills and chips are drawn inside it with a touch area that reaches the edges, and
     // a row that grew when a chip arrived moved the pills and the whole list under them.
     appliedFilters: { marginTop: 6, marginHorizontal: 16, flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
@@ -293,13 +295,20 @@ export const styles = themedStyles(() =>
       gap: 6,
       // Drawn 40 tall like the type pills; the touch area stays 48 (hitSlop).
       minHeight: 40,
+      maxWidth: '100%',
       paddingHorizontal: 12,
       borderRadius: theme.radius.pill,
       backgroundColor: theme.colors.surface,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: theme.colors.borderSoft,
     },
-    chipText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textSecondary },
+    // flexShrink: a long label or category name wraps inside the chip instead of pushing it past the screen.
+    chipText: {
+      flexShrink: 1,
+      fontFamily: theme.font.bodyBold,
+      fontSize: 12,
+      color: theme.colors.textSecondary,
+    },
 
     income: { color: theme.colors.incomeText },
     expense: { color: theme.colors.expenseText },

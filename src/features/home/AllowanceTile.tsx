@@ -80,12 +80,12 @@ const styles = themedStyles(() =>
     todayOver: { fontFamily: theme.font.bodyBold, color: summaryInk.negative },
     track: {
       flexDirection: 'row',
-      height: 6,
-      borderRadius: 3,
+      height: 4,
+      borderRadius: 2,
       overflow: 'hidden',
       backgroundColor: 'rgba(255,255,255,0.55)',
     },
-    fill: { borderRadius: 3, backgroundColor: summaryInk.text },
+    fill: { borderRadius: 2, backgroundColor: summaryInk.text },
     fillOver: { backgroundColor: summaryInk.negative },
     todayText: { fontFamily: theme.font.body, fontSize: 13, color: summaryInk.secondary },
     text: {

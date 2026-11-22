@@ -48,7 +48,8 @@ export function LoanComparison({
   const [amount, setAmount] = useState('');
   const [retry, setRetry] = useState(0);
   const [result, setResult] = useState<{ key: string; rows: Result[]; refreshToken?: object }>();
-  const minor = inputMinor(amount);
+  // A prepayment is a whole-rupee amount (PrepayModal applies it so), so the preview compares the same figure.
+  const minor = Math.round(inputMinor(amount) / 100) * 100;
   const candidatesKey = loans.map((loan) => `${loan.id}:${loan.leftMinor}:${loan.nextDueDate}`).join('|');
   const date = toLocalIsoDate(new Date());
   const key = `${minor}|${candidatesKey}|${currency}|${date}|${retry}`;

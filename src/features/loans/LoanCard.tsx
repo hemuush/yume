@@ -334,7 +334,7 @@ const styles = themedStyles(() =>
     icon: {
       width: 34,
       height: 34,
-      borderRadius: 20,
+      borderRadius: theme.radius.lg,
       alignItems: 'center',
       justifyContent: 'center',
     },

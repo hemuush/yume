@@ -76,7 +76,7 @@ const s = themedStyles(() =>
     alerts: {
       marginHorizontal: 16,
       paddingHorizontal: 10,
-      borderRadius: 14,
+      borderRadius: theme.radius.md,
       backgroundColor: theme.colors.expenseTint,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: theme.colors.home.edge,

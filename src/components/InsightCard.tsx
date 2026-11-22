@@ -109,7 +109,7 @@ export function InsightDisclosure({
 export const insight = themedStyles(() =>
   StyleSheet.create({
     sheetDisclosure: {
-      borderRadius: 18,
+      borderRadius: theme.radius.lg,
       backgroundColor: theme.colors.surface,
       overflow: 'hidden',
       marginVertical: 4,
@@ -128,7 +128,7 @@ export const insight = themedStyles(() =>
     icon: {
       width: 36,
       height: 36,
-      borderRadius: 18,
+      borderRadius: theme.radius.lg,
       backgroundColor: theme.colors.surface,
       alignItems: 'center',
       justifyContent: 'center',
@@ -142,7 +142,7 @@ export const insight = themedStyles(() =>
       flexBasis: 125,
       padding: 12,
       gap: 5,
-      borderRadius: 16,
+      borderRadius: theme.radius.lg,
       backgroundColor: theme.colors.surface,
     },
     value: {

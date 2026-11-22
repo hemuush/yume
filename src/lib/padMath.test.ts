@@ -52,6 +52,8 @@ describe('evaluateAmount', () => {
 
   it('rounds to two decimals', () => {
     expect(evaluateAmount('100÷3')).toBe(33.33);
+    // 2.01÷2 is 1.005, which float math alone would round down to 1.00 (toMinor rounds it up).
+    expect(evaluateAmount('2.01÷2')).toBe(1.01);
     expect(evaluateAmount('0.1+0.2')).toBe(0.3);
   });
 

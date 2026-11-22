@@ -115,6 +115,34 @@ describe('a double-tapped loan payment pays once', () => {
   });
 });
 
+describe('paying an EMI', () => {
+  it('debits a whole rupee even when the saved schedule carries paise, and the loan balance still follows the schedule', async () => {
+    const emi = (await createCategory({ name: 'Home loan EMI', kind: 'expense' })).id;
+    const loan = await createLoan({
+      direction: 'borrowed',
+      counterparty: 'HDFC',
+      principalMinor: 1200000,
+      interestRateAnnualBp: 900,
+      tenureMonths: 12,
+      startDate: '2026-01-01',
+    });
+    const [first] = await getLoanSchedule(loan.id);
+    // A loan saved before schedules were built in whole rupees.
+    await run('UPDATE loan_payments SET emi_amount_minor = 1819684 WHERE id = ?', [first.id]);
+    await payInstallment(first.id, { accountId: bank, categoryId: emi, paidDate: '2026-01-01' });
+    const entry = await one<{ amount_minor: number }>(
+      'SELECT amount_minor FROM transactions WHERE category_id = ?',
+      [emi]
+    );
+    expect(entry?.amount_minor).toBe(1819700);
+    const owed = await one<{ outstanding_principal_minor: number }>(
+      'SELECT outstanding_principal_minor FROM loans WHERE id = ?',
+      [loan.id]
+    );
+    expect(owed?.outstanding_principal_minor).toBe(first.outstandingAfterMinor);
+  });
+});
+
 describe('updateAccount to savings', () => {
   it('refuses an account with spending on it, which a savings account could not hold', async () => {
     const acct = (

@@ -141,7 +141,7 @@ const styles = themedStyles(() =>
       minHeight: 60,
       paddingVertical: 10,
       paddingHorizontal: 12,
-      borderRadius: 18,
+      borderRadius: theme.radius.lg,
       backgroundColor: theme.colors.surface,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: theme.colors.borderSoft,
@@ -157,7 +157,7 @@ const styles = themedStyles(() =>
     icon: {
       width: 40,
       height: 40,
-      borderRadius: 14,
+      borderRadius: theme.radius.md,
       backgroundColor: theme.colors.surfaceAlt,
       alignItems: 'center',
       justifyContent: 'center',

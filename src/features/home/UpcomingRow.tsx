@@ -117,7 +117,7 @@ const styles = themedStyles(() =>
     iconWrap: {
       width: SCREEN.mark,
       height: SCREEN.mark,
-      borderRadius: 14,
+      borderRadius: theme.radius.md,
       alignItems: 'center',
       justifyContent: 'center',
     },

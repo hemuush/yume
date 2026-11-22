@@ -276,7 +276,7 @@ const styles = themedStyles(() =>
       flexDirection: 'row',
       gap: 2,
       padding: 3,
-      borderRadius: 18,
+      borderRadius: theme.radius.lg,
       backgroundColor: theme.colors.home.control,
     },
     segBtn: {

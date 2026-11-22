@@ -237,7 +237,7 @@ const s = themedStyles(() =>
       marginHorizontal: 16,
       padding: 12,
       gap: 8,
-      borderRadius: 16,
+      borderRadius: theme.radius.lg,
       backgroundColor: theme.colors.home.surface,
     },
     summaryDay: { gap: 4 },

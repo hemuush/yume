@@ -263,7 +263,7 @@ export function FilterModal({
               minHeight: 48,
               padding: 12,
               marginBottom: 12,
-              borderRadius: 14,
+              borderRadius: theme.radius.md,
               backgroundColor: theme.colors.home.control,
               color: theme.colors.textPrimary,
             }}

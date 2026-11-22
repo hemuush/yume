@@ -86,7 +86,7 @@ const styles = themedStyles(() =>
       padding: 14,
       gap: 8,
       marginBottom: 14,
-      borderRadius: 18,
+      borderRadius: theme.radius.lg,
       backgroundColor: theme.colors.surfaceAlt,
     },
     hint: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },

@@ -101,6 +101,19 @@ export async function restoreKeepingSafetyCopy(
   }
 }
 
+/**
+ * The data as it was just before the one-time move of loans to whole rupees, kept in one app-private file (its own, so it
+ * never stands in for a restore's recovery copy). Throws if it can't be saved; the move then waits for the next run.
+ */
+export async function keepCopyBeforeLoanRounding(): Promise<void> {
+  const file = new File(Paths.document, 'yume-before-loan-rounding.json');
+  const db = await getDb();
+  const snapshot = await db.exclusiveAsync((xdb) => buildBackupSnapshotOn(xdb));
+  removeIfPresent(file);
+  file.create();
+  await file.write(JSON.stringify({ savedAt: new Date().toISOString(), snapshot }));
+}
+
 async function readCopy(): Promise<SafetyCopyFile | null> {
   const file = copyFile();
   if (!file.exists) return null;

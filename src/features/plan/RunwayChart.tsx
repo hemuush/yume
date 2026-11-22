@@ -241,7 +241,7 @@ const styles = themedStyles(() =>
     pill: {
       position: 'absolute',
       top: 0,
-      borderRadius: 14,
+      borderRadius: theme.radius.md,
       backgroundColor: theme.colors.action,
       alignItems: 'center',
       justifyContent: 'center',
@@ -250,7 +250,7 @@ const styles = themedStyles(() =>
     pillText: { fontFamily: theme.font.bodyBold, fontSize: 11, color: theme.colors.surface },
     read: {
       marginTop: 10,
-      borderRadius: 14,
+      borderRadius: theme.radius.md,
       backgroundColor: theme.colors.surfaceAlt,
       paddingHorizontal: 12,
       paddingVertical: 10,

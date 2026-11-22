@@ -120,7 +120,7 @@ const styles = themedStyles(() =>
       gap: 10,
       paddingHorizontal: 12,
       paddingVertical: 10,
-      borderRadius: 18,
+      borderRadius: theme.radius.lg,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: theme.colors.borderSoft,
       backgroundColor: theme.colors.surface,

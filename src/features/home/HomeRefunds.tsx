@@ -180,7 +180,7 @@ const styles = themedStyles(() =>
     icon: {
       width: SCREEN.lead,
       height: 36,
-      borderRadius: 18,
+      borderRadius: theme.radius.lg,
       alignItems: 'center',
       justifyContent: 'center',
       backgroundColor: theme.colors.secondaryTint,

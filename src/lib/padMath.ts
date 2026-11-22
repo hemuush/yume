@@ -82,7 +82,7 @@ export function evaluateAmount(expr: string): number | null {
 
   const total = terms.reduce((sum, t, i) => sum + signs[i] * t, 0);
   if (!Number.isFinite(total)) return null;
-  const rounded = Math.round(total * 100) / 100;
+  const rounded = Math.round(Number((total * 100).toPrecision(15))) / 100; // same half-up as toMinor
   return rounded > 0 && rounded <= MAX_AMOUNT_MAJOR ? rounded : null;
 }
 

@@ -550,7 +550,7 @@ const styles = themedStyles(() =>
       alignItems: 'center',
     },
     ctaWithLink: { marginBottom: 6 },
-    ctaBusy: { opacity: 0.6 },
+    ctaBusy: { opacity: theme.opacity.pressed },
     restoreLink: {
       minHeight: 44,
       flexDirection: 'row',

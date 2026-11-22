@@ -14,6 +14,15 @@ import { rateProblem } from '@/lib/loanLimits';
 /** Paying EMIs, rate changes and prepayments (re-exported from ./loans). */
 
 /**
+ * What the bank takes: a whole rupee. A loan saved with a paise EMI (before schedules were built in whole rupees) still
+ * records the whole-rupee debit; the schedule keeps its own paise, so the loan balance is unchanged.
+ */
+function debitedAmount(emiMinor: number): number {
+  const whole = Math.round(emiMinor / 100) * 100;
+  return whole > 0 ? whole : emiMinor;
+}
+
+/**
  * Marks an installment paid: creates the linked transaction (expense if borrowed, income if lent)
  * and reduces the loan's outstanding principal.
  */
@@ -58,7 +67,7 @@ export async function payInstallment(
         loan.direction === 'borrowed' ? 'expense' : 'income',
         opts.accountId,
         opts.categoryId,
-        current.emi_amount_minor,
+        debitedAmount(current.emi_amount_minor),
         opts.paidDate,
         `EMI #${current.installment_number} — ${loan.counterparty}`,
       ]

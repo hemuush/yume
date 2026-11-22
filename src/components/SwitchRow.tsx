@@ -39,7 +39,7 @@ const styles = themedStyles(() =>
       paddingHorizontal: 14,
       paddingVertical: 10,
       marginBottom: 12,
-      borderRadius: 18,
+      borderRadius: theme.radius.lg,
       backgroundColor: theme.colors.surface,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: theme.colors.borderSoft,

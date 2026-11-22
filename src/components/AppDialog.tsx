@@ -118,7 +118,7 @@ const styles = themedStyles(() =>
     icon: {
       width: 38,
       height: 38,
-      borderRadius: 19,
+      borderRadius: theme.radius.lg,
       backgroundColor: theme.colors.expenseTint,
       alignItems: 'center',
       justifyContent: 'center',

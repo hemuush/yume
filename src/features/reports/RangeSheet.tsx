@@ -262,7 +262,7 @@ const styles = themedStyles(() =>
       minWidth: 36,
       minHeight: 36,
       padding: 4,
-      borderRadius: 16,
+      borderRadius: theme.radius.lg,
       alignItems: 'center',
       justifyContent: 'center',
       borderWidth: StyleSheet.hairlineWidth,

@@ -71,15 +71,18 @@ export const HomeRecentActivity = memo(function HomeRecentActivity({
         <Animated.View layout={ROW_LAYOUT} style={styles.recent}>
           {recent.slice(0, 4).map((tx, i, rows) => (
             <Animated.View key={tx.id} entering={rowEntering(i)} layout={ROW_LAYOUT} exiting={ROW_EXIT}>
-              {/* Each day is named once, above its rows; today also carries what went out. */}
+              {/* Each day is named once, above its rows; today also carries what went out, once it has more than one entry (a lone entry already says it). */}
               {(i === 0 || rows[i - 1].date !== tx.date) && (
                 <View style={[styles.dayHead, i > 0 && styles.dayHeadDivider]}>
                   <View style={styles.dayHeadLeft}>
                     <Text style={styles.dayHeadText}>{dayLabel(tx.date)}</Text>
                   </View>
-                  {tx.date === today && cursor.offset === 0 && todaySpendMinor > 0 && (
-                    <Text style={styles.daySpendText}>−{formatMoneyExact(todaySpendMinor)}</Text>
-                  )}
+                  {tx.date === today &&
+                    cursor.offset === 0 &&
+                    todaySpendMinor > 0 &&
+                    rows.filter((r) => r.date === today).length > 1 && (
+                      <Text style={styles.daySpendText}>−{formatMoneyExact(todaySpendMinor)}</Text>
+                    )}
                 </View>
               )}
               <RecentTransactionRow

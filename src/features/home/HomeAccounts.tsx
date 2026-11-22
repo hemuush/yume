@@ -7,6 +7,7 @@ import { CategoryGlyph } from '@/components/CategoryGlyph';
 import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
 import { accountTypeLabel, accountIcon, accountHue } from '@/lib/account';
+import { categoryTone } from '@/lib/categoryTone';
 import { withPressed, withPressedTint } from '@/lib/pressed';
 import { haptics } from '@/lib/haptics';
 import { useAccent } from '@/theme/AccentContext';
@@ -69,15 +70,17 @@ export function HomeAccounts({
       </Pressable>
     );
   }
-  // Only accounts holding money (or owing it) get a tile; an empty one is still one tap away under "View all".
-  const held = accounts.filter((a) => a.currentBalanceMinor !== 0);
+  // Only accounts holding money (or owing it) get a tile; an empty one is still one tap away under "View all". A few
+  // paise left over (from an old loan EMI) read as ₹0, so they count as empty too.
+  const held = accounts.filter((a) => Math.abs(a.currentBalanceMinor) >= 50);
   const savings = held.filter((a) => a.type === 'savings');
   const everyday = held.filter((a) => a.type !== 'savings');
   const preview = [...everyday, ...savings].slice(0, PREVIEW_ACCOUNTS);
   // Money you can reach today: bank, cash and wallet balances in the default currency. Savings, investments
   // and cards stay out, so the line never reveals a hidden savings figure.
   const inHand = accounts.filter(
-    (a) => IN_HAND_TYPES.has(a.type) && !a.investment && a.currency === currency && a.currentBalanceMinor > 0
+    (a) =>
+      IN_HAND_TYPES.has(a.type) && !a.investment && a.currency === currency && a.currentBalanceMinor >= 50
   );
   const inHandLine =
     currency && inHand.length > 0
@@ -143,6 +146,8 @@ const AccountTile = memo(function AccountTile({
 }) {
   const icon = accountIcon(a.type, a.investment);
   const hue = accountHue(a.type, accent);
+  // A pale wash with a deep glyph of the same hue, as on the category tiles: the bare hue was too faint to see on white.
+  const tone = categoryTone(hue);
   const isOwed = a.currentBalanceMinor < 0;
 
   return (
@@ -156,8 +161,8 @@ const AccountTile = memo(function AccountTile({
       style={withPressedTint(accent, [styles.tile, { width }])}
     >
       <View style={styles.tileHead}>
-        <View style={styles.iconChip}>
-          <CategoryGlyph name={icon} size={13} color={hue} />
+        <View style={[styles.iconChip, tone && { backgroundColor: tone.fill }]}>
+          <CategoryGlyph name={icon} size={13} color={tone?.glyph ?? hue} />
         </View>
         <Text style={styles.name} numberOfLines={1}>
           {a.name}
@@ -233,7 +238,7 @@ const styles = themedStyles(() =>
     addIconCircle: {
       width: 28,
       height: 28,
-      borderRadius: 14,
+      borderRadius: theme.radius.md,
       backgroundColor: theme.colors.surface,
       alignItems: 'center',
       justifyContent: 'center',
@@ -286,7 +291,7 @@ const styles = themedStyles(() =>
     freshAddPill: {
       width: 26,
       height: 26,
-      borderRadius: 13,
+      borderRadius: theme.radius.md,
       backgroundColor: theme.colors.surfaceAlt,
       alignItems: 'center',
       justifyContent: 'center',

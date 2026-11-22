@@ -168,7 +168,7 @@ const styles = themedStyles(() =>
     ghost: {
       minHeight: 44,
       paddingHorizontal: 14,
-      borderRadius: 18,
+      borderRadius: theme.radius.lg,
       alignItems: 'center',
       justifyContent: 'center',
       backgroundColor: theme.colors.tray,
