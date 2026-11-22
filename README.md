@@ -22,15 +22,15 @@
 
 ## What Yume does
 
-Yume brings everyday spending, future payments and longer-term goals together. Its pastel themes,
-translucent cards and compact overviews keep the information approachable, with rupee formatting
+Yume brings everyday spending, future payments and longer-term goals together. Its calm palette,
+light and dark modes and compact overviews keep the information approachable, with rupee formatting
 and India-friendly dates.
 
 | Screen       | What you can do                                                                                                                                               |
 | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Home**     | Review free-to-use money, today's spending allowance, interactive spending bars, account balances, the largest upcoming outgoings and five recent entries.    |
+| **Home**     | Review free-to-use money, today's spending allowance, interactive spending bars, account balances, the largest upcoming outgoings and the latest entries.    |
 | **Activity** | Browse entries by day, switch periods, search words or amounts, filter transactions and open entry details.                                                   |
-| **Add**      | Record expenses, income, transfers and friend entries with a calculator pad, usual entries, reusable labels, splits, staged entries and local draft recovery. |
+| **Add**      | Record expenses, income, transfers and friend entries with a calculator pad, usual entries, reusable labels, splits, staged entries and local draft recovery. Settings can switch the + button to **Add by chat**: Suu asks one thing at a time and you tap your answer, then check it before it is saved. |
 | **Plan**     | Review a 14-day forecast, budget limits, debt progress, savings goals, people balances, habits and scheduled payments.                                        |
 | **Reports**  | Explore daily spending, category or account breakdowns, income, trends, comparisons and custom date ranges.                                                   |
 
@@ -46,7 +46,7 @@ and India-friendly dates.
 | **Planning insights**     | Pending refunds and partial receipts, reservation-aware purchase checks, annual-bill preparation goals, and matched-period spending explanations.   |
 | **Friends & family**      | Money owed in either direction, settlement history, and a choice between balance adjustments and actual account movements.                          |
 | **Wrap & Suu**            | Weekly/monthly stories, selectable chapters, day and category exploration, replay, share cards and Suu's spending nudges.                           |
-| **Personalization**       | Five themes, app amount hiding, a separate widget-privacy setting, and app lock using the phone's authentication.                                   |
+| **Personalization**       | One theme in a light, dark or follow-the-phone mode, app amount hiding, a separate widget-privacy setting, and app lock using the phone's authentication.                                   |
 | **Everyday housekeeping** | Needs you alerts, duplicate/starting-balance checks, undoable tidy-up actions and recently deleted entries.                                         |
 
 ### Android widgets
@@ -161,7 +161,7 @@ src/
   db/                 SQLite schema, queries and transactional mutations
   lib/                Money/date logic, backups, exports, locks and reminders
   constants/          Design tokens and default categories
-  theme/              Theme packs and appearance/privacy contexts
+  theme/              Colour modes and appearance/privacy contexts
   widgets/            Android widgets and their data sources
   test-support/       Real SQLite test harness and native-module mocks
   __tests__/          Cross-cutting checks
