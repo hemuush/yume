@@ -76,7 +76,7 @@ export interface RunMark {
 }
 
 /** How far ahead the line looks, today included. */
-export const RUN_WINDOW_DAYS = 30;
+const RUN_WINDOW_DAYS = 30;
 
 /**
  * Every run of these rules from today through the next `days - 1` days, each on its own day: a weekly bill

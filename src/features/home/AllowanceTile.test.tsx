@@ -41,6 +41,16 @@ describe('the daily figure under the headline', () => {
     act(() => over.unmount());
   });
 
+  it('sets today against its own share when it is given, not the pace of the days after it', () => {
+    // ₹924 free after ₹243 today, 8 days to come: ₹116 a day after today, but today's own share was (924+243)/9.
+    const r = render(
+      <AllowanceTile perDayMinor={11600} daysLeft={8} todaySpentMinor={24300} todayBudgetMinor={12967} />
+    );
+    expect(words(r)).toContain('₹113 over pace');
+    expect(label(r)).toContain('₹113 over that pace');
+    act(() => r.unmount());
+  });
+
   it('says by how much today is over or under the pace, not only with a bar', () => {
     const under = render(<AllowanceTile perDayMinor={46700} daysLeft={9} todaySpentMinor={12500} />);
     expect(words(under)).toContain('₹342 under pace');

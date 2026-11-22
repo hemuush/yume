@@ -26,7 +26,8 @@ const DEFAULT_NOTIFICATION_PREFS: NotificationPrefs = {
   morningEnabled: true,
   morningHour: 9,
   morningMinute: 0,
-  eveningEnabled: false,
+  // On from the start: Morning only speaks when something is due, so Evening is the nudge a new install hears.
+  eveningEnabled: true,
   eveningHour: 20,
   eveningMinute: 0,
   overspendAlerts: true,

@@ -105,13 +105,7 @@ export function refundCopy(label: string, amount: string | null, late: boolean):
   };
 }
 
-/** Days left in the month, today included. */
-export function daysLeftThisMonth(now: Date = new Date()): number {
-  const last = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-  return last - now.getDate() + 1;
-}
-
-/** A budget passing 80% of its limit ('near'), or going over it. `daysLeft` is only said when it is this month's. */
+/** A budget passing 80% of its limit ('near'), or going over it. `daysLeft` (days after today, as Home counts them) is only said when it is this month's. */
 export function budgetAlertCopy(
   level: 'near' | 'over',
   categoryName: string,

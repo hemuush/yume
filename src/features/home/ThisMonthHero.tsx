@@ -287,6 +287,7 @@ export function ThisMonthHero({
                   perDayMinor={perDayMinor}
                   daysLeft={daysLeft}
                   todaySpentMinor={isCurrentMonth ? todaySpentMinor : null}
+                  todayBudgetMinor={dailyAllowance(freeMinor + (todaySpentMinor ?? 0), daysLeft + 1)}
                 />
               ) : (
                 <Text style={styles.figureCaption} accessibilityElementsHidden importantForAccessibility="no">

@@ -252,7 +252,10 @@ function ModalSheetBody({
   const { height, fontScale } = useWindowDimensions();
   // The keyboard library places the sheet by the window's height. In a translucent-bar Modal that height leaves out the
   // status bar the window really covers, so the sheet stopped that much (about a status bar) short of the keyboard.
-  const keyboardOffset = Math.min(0, height - Dimensions.get('screen').height);
+  // Only when the gap is about that size: in split-screen or a small window the window is far shorter than the screen
+  // for reasons that have nothing to do with the bars, and shifting the keyboard line by all of it hides the sheet.
+  const barGap = Dimensions.get('screen').height - height;
+  const keyboardOffset = barGap > 0 && barGap <= insets.top + insets.bottom + 8 ? -barGap : 0;
   const maxHeight =
     height < 640 || fontScale > 1.2 || size === 'expanded' ? '94%' : size === 'compact' ? '78%' : '90%';
   const isSheet = variant === 'sheet';

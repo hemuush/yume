@@ -410,21 +410,31 @@ describe('a keyboard that closed without the library saying so', () => {
   });
 });
 
-describe('a window shorter than the screen (the status bar left out)', () => {
-  it('moves the keyboard line down by the missing height, so the sheet sits on the keyboard', () => {
+describe('a window shorter than the screen', () => {
+  // The insets are 24 and 24, so a gap up to 56 is the bars; anything more is another reason for a small window.
+  const offsetFor = (windowHeight: number) => {
     const real = Dimensions.get.bind(Dimensions);
     const spy = jest
       .spyOn(Dimensions, 'get')
       .mockImplementation(((k: 'window' | 'screen') =>
-        k === 'screen' ? { ...real(k), height: 2000 } : { ...real(k), height: 1875 }) as never);
+        k === 'screen' ? { ...real(k), height: 2000 } : { ...real(k), height: windowHeight }) as never);
     mockKeyboardUp = true;
     const { tree } = render({});
     const avoiding = tree.root.findAll(
       (n) => n.props.behavior === 'padding' && typeof n.type !== 'string'
     )[0];
-    expect(avoiding.props.keyboardVerticalOffset).toBe(-125);
+    const offset = avoiding.props.keyboardVerticalOffset;
     spy.mockRestore();
     act(() => tree.unmount());
+    return offset;
+  };
+
+  it('moves the keyboard line down by the bars the window leaves out, so the sheet sits on the keyboard', () => {
+    expect(offsetFor(1950)).toBe(-50);
+  });
+
+  it('does not, when the window is short for another reason (split-screen)', () => {
+    expect(offsetFor(1000)).toBe(0);
   });
 });
 

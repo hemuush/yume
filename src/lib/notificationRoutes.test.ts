@@ -11,6 +11,7 @@ import {
   notificationRoute,
   rebuildNotifications,
   rebuildFailed,
+  rebuildIsStale,
   subscribeToNotificationTaps,
   NOTIFICATION_ROUTES,
 } from './notifications';
@@ -163,6 +164,25 @@ describe('rebuildNotifications', () => {
     N.scheduleNotificationAsync.mockResolvedValue('id');
     expect(await rebuildNotifications()).toBe(true);
     expect(rebuildFailed()).toBe(false);
+  });
+
+  it('is worth rebuilding again only after a failure, a few hours or a new day, not on a quick return to the app', async () => {
+    jest.useFakeTimers();
+    try {
+      jest.setSystemTime(new Date(2026, 9, 3, 9, 0));
+      N.scheduleNotificationAsync.mockResolvedValue('id');
+      expect(await rebuildNotifications()).toBe(true);
+      expect(rebuildIsStale(new Date(2026, 9, 3, 9, 30))).toBe(false);
+      expect(rebuildIsStale(new Date(2026, 9, 3, 16, 0))).toBe(true); // hours later
+      expect(rebuildIsStale(new Date(2026, 9, 4, 0, 5))).toBe(true); // a new day, though barely any time has passed
+      const quiet = jest.spyOn(console, 'error').mockImplementation(() => {});
+      N.scheduleNotificationAsync.mockRejectedValue(new Error('blocked'));
+      await rebuildNotifications();
+      quiet.mockRestore();
+      expect(rebuildIsStale(new Date(2026, 9, 3, 9, 1))).toBe(true); // the last one failed
+    } finally {
+      jest.useRealTimers();
+    }
   });
 
   it('refreshes the logging day when database reads cross midnight', async () => {

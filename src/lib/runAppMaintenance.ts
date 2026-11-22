@@ -2,6 +2,7 @@ import { runDueRecurringRules } from '@/db/recurring';
 import { runLocalBackupIfDue } from './localBackup';
 import { emitTransactionsChanged } from './dataEvents';
 import { rebuildNotificationsAfterCommit } from '@/db/afterCommit';
+import { rebuildIsStale } from '@/lib/notifications';
 
 let running: Promise<void> | null = null;
 
@@ -21,6 +22,6 @@ async function maintain(): Promise<void> {
   }
   // A process may stay alive beyond the notification plan's horizon. Renew on foreground too,
   // after catch-up has changed the ledger, not only on a cold start or a manual save.
-  await rebuildNotificationsAfterCommit();
+  if (rebuildIsStale()) await rebuildNotificationsAfterCommit();
   await runLocalBackupIfDue();
 }

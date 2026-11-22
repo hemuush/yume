@@ -13,23 +13,30 @@ export function AllowanceTile({
   perDayMinor,
   daysLeft,
   todaySpentMinor = null,
+  todayBudgetMinor,
 }: {
   perDayMinor: number;
   daysLeft: number;
   /** What went out today: shown against the daily figure, so the day can be read at a glance. */
   todaySpentMinor?: number | null;
+  /**
+   * Today's own share: what was free this morning over the days left counting today. Today is set against this,
+   * not against `perDayMinor`, which is what is left over the days after today, once today's spend is already out of it.
+   */
+  todayBudgetMinor?: number | null;
 }) {
   const days = `${daysLeft} ${daysLeft === 1 ? 'day' : 'days'}`;
   const showToday = todaySpentMinor != null && todaySpentMinor > 0;
-  const share = showToday ? Math.min(1, todaySpentMinor / perDayMinor) : 0;
-  const over = showToday && todaySpentMinor > perDayMinor;
+  const budget = todayBudgetMinor && todayBudgetMinor > 0 ? todayBudgetMinor : perDayMinor;
+  const share = showToday ? Math.min(1, todaySpentMinor / budget) : 0;
+  const over = showToday && todaySpentMinor > budget;
   return (
     <View
       style={styles.tile}
       accessible
       accessibilityLabel={`${days} left, about ${formatMoney(perDayMinor)} a day${
         showToday
-          ? `. Today ${formatMoney(todaySpentMinor)} spent, ${formatMoney(Math.abs(todaySpentMinor - perDayMinor))} ${over ? 'over' : 'under'} that pace`
+          ? `. Today ${formatMoney(todaySpentMinor)} spent, ${formatMoney(Math.abs(todaySpentMinor - budget))} ${over ? 'over' : 'under'} that pace`
           : ''
       }`}
     >
@@ -46,8 +53,8 @@ export function AllowanceTile({
             </Text>
             <Text style={[styles.todayText, over && styles.todayOver]}>
               {over
-                ? `${formatMoney(todaySpentMinor - perDayMinor)} over pace`
-                : `${formatMoney(perDayMinor - todaySpentMinor)} under pace`}
+                ? `${formatMoney(todaySpentMinor - budget)} over pace`
+                : `${formatMoney(budget - todaySpentMinor)} under pace`}
             </Text>
           </View>
           <View style={styles.track}>

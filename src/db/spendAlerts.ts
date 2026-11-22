@@ -9,14 +9,14 @@ import {
   getCachedHideSensitiveAmounts,
 } from './settings';
 import { rebuildNotificationsAfterCommit } from './afterCommit';
-import { budgetAlertCopy, daysLeftThisMonth, spikeCopy } from '@/lib/notificationCopy';
+import { budgetAlertCopy, spikeCopy } from '@/lib/notificationCopy';
 import type { QueuedAlert } from '@/lib/notificationPlan';
 import { listBudgetsForMonth, dueBudgetNudge, BudgetNudgeLevel } from './budgets';
 import { formatMoney } from '@/lib/money';
 import { formatPctChange } from '@/lib/format';
 import { getPeriodComparison, findTopGrowingCategory } from './reports';
 import { privateComparison } from '@/lib/privateSummary';
-import { toLocalIsoDate } from '@/lib/date';
+import { daysLeftInMonth, toLocalIsoDate } from '@/lib/date';
 
 /** Budget and spending-jump checks run right after an expense is saved (re-exported from ./ledger). */
 
@@ -101,7 +101,9 @@ async function budgetAlertFor(
         formatMoney(budget.effectiveLimitMinor),
         formatMoney(Math.max(0, budget.remainingMinor)),
         formatMoney(Math.max(0, budget.spentMinor - budget.effectiveLimitMinor)),
-        budget.budget.periodMonth === toLocalIsoDate(new Date()).slice(0, 7) ? daysLeftThisMonth() : undefined
+        budget.budget.periodMonth === toLocalIsoDate(new Date()).slice(0, 7)
+          ? daysLeftInMonth(new Date())
+          : undefined
       ),
     },
   };

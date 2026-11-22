@@ -6,7 +6,6 @@ jest.mock('./money', () => ({
 import {
   billCopy,
   budgetAlertCopy,
-  daysLeftThisMonth,
   emiCopy,
   emiOverdueCopy,
   logCopy,
@@ -65,10 +64,4 @@ it('says how far over, or how much is left and for how long', () => {
 it('rotates the evening line through the week, never twice the same', () => {
   expect(new Set(all.slice(-7).map((t) => t.title)).size).toBe(7);
   expect(logCopy(7)).toEqual(logCopy(0));
-});
-
-it('counts the days left in a month, today included', () => {
-  expect(daysLeftThisMonth(new Date(2026, 9, 31))).toBe(1);
-  expect(daysLeftThisMonth(new Date(2026, 9, 1))).toBe(31);
-  expect(daysLeftThisMonth(new Date(2028, 1, 10))).toBe(20); // a leap February
 });

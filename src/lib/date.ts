@@ -112,3 +112,9 @@ export function assertValidIsoDate(value: string): void {
     throw new Error('Pick a valid date');
   }
 }
+
+/** How many days of the month are still to come after `now`'s date (the last day has none left). */
+export function daysLeftInMonth(now: Date): number {
+  const last = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+  return Math.max(0, last - now.getDate());
+}

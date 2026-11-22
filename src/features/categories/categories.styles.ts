@@ -5,7 +5,7 @@ import { SECTION_TITLE, SECTION_GAP } from '@/constants/textStyles';
 import { SCREEN, flatSection, groupedSurface } from '@/components/screenStyles';
 import { themedStyles } from '@/theme/themedStyles';
 
-export const GRID_GAP = 8;
+const GRID_GAP = 8;
 
 // Shared by the Categories screen, its list section (CategorySection /
 // CategoryTile / SubcategoryPill) and AddCategoryModal.

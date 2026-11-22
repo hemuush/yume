@@ -29,7 +29,7 @@ export function CategoryGlyph({ name, size, color }: { name: string; size: numbe
 }
 
 /** The line version of a built-in icon where the font has one (`home` → `home-outline`); the quiet look draws lines. */
-export function outlineOf(name: string): string {
+function outlineOf(name: string): string {
   const glyphs = MaterialCommunityIcons.glyphMap as Record<string, number> | undefined;
   if (!glyphs || name.endsWith('-outline') || glyphs[`${name}-outline`] === undefined) return name;
   return `${name}-outline`;

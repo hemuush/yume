@@ -1,8 +1,4 @@
-/** How many days of the month are still to come after `now`'s date (the last day has none left). */
-export function daysLeftInMonth(now: Date): number {
-  const last = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-  return Math.max(0, last - now.getDate());
-}
+export { daysLeftInMonth } from '@/lib/date';
 
 /**
  * What can be spent each remaining day and still end the month free: what is free now over the days to come.

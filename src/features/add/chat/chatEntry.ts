@@ -104,7 +104,7 @@ export function nextField(e: ChatEntry, asked: ReadonlySet<Field>): Field | null
  * Fills what is not known yet with the form's own starting point: the account and category last used for this type
  * (or the only account there is). The chat shows them and any can be changed, as in the form.
  */
-export function fillDefaults(e: ChatEntry, l: ChatLookups): ChatEntry {
+function fillDefaults(e: ChatEntry, l: ChatLookups): ChatEntry {
   const active = usableAccounts(l);
   const validAccount = (id: string | null | undefined) => (id && active.some((a) => a.id === id) ? id : null);
   let next = e;
