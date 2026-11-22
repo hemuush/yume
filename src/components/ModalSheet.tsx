@@ -2,9 +2,6 @@ import { DURATIONS } from '@/lib/motionTimings';
 import { useCallback, useContext, useEffect, useId, useLayoutEffect, useState } from 'react';
 import { SheetFlowContext } from './SheetFlow';
 import { useKeyboardOpen } from './useKeyboardOpen';
-
-// The footer bar and text link live in SheetActions; they are still exported from here.
-export { SheetFooter, SheetLink } from './SheetActions';
 import {
   Dimensions,
   Keyboard,
@@ -29,6 +26,9 @@ import { useReduceMotion } from '@/hooks/useReduceMotion';
 import { useSwipeToClose } from '@/hooks/useSwipeToClose';
 import { AmountPadHostProvider, useAmountPadHost } from '@/components/AmountField';
 import { themedStyles, themedValue } from '@/theme/themedStyles';
+
+// The footer bar and text link live in SheetActions; they are still exported from here.
+export { SheetFooter, SheetLink } from './SheetActions';
 
 /**
  * How much taller than its own content a page in a flow may be held, so it does not jump to the height of a taller
