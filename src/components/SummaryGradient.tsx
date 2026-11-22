@@ -27,6 +27,8 @@ const DARK = {
   faint: '#F3F7FF66',
   chip: '#FFFFFF24',
 };
+/** Both modes' roles, for the contrast test. */
+export const SUMMARY_INK = { light: LIGHT, dark: DARK } as const;
 export const summaryInk = themedValue(() => (getScheme() === 'dark' ? DARK : LIGHT));
 
 export const LIGHT_GRADIENT = ['#C4DCFD', '#A6CBFC', '#8EBBF8'] as const;

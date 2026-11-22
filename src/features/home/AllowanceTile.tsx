@@ -28,7 +28,9 @@ export function AllowanceTile({
       style={styles.tile}
       accessible
       accessibilityLabel={`${days} left, about ${formatMoney(perDayMinor)} a day${
-        showToday ? `. Today ${formatMoney(todaySpentMinor)} spent${over ? ', over that pace' : ''}` : ''
+        showToday
+          ? `. Today ${formatMoney(todaySpentMinor)} spent, ${formatMoney(Math.abs(todaySpentMinor - perDayMinor))} ${over ? 'over' : 'under'} that pace`
+          : ''
       }`}
     >
       <Text style={styles.text}>
