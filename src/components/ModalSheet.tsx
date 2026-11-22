@@ -1,6 +1,10 @@
 import { DURATIONS } from '@/lib/motionTimings';
 import { useCallback, useContext, useEffect, useId, useLayoutEffect, useState } from 'react';
 import { SheetFlowContext } from './SheetFlow';
+import { useKeyboardOpen } from './useKeyboardOpen';
+
+// The footer bar and text link live in SheetActions; they are still exported from here.
+export { SheetFooter, SheetLink } from './SheetActions';
 import {
   Dimensions,
   Keyboard,
@@ -15,12 +19,7 @@ import {
 import { Text } from '@/components/Text';
 import { SheetSurfaceProvider } from './SheetSurface';
 import Feather from '@expo/vector-icons/Feather';
-import {
-  KeyboardAvoidingView,
-  KeyboardAwareScrollView,
-  KeyboardEvents,
-  useKeyboardState,
-} from 'react-native-keyboard-controller';
+import { KeyboardAvoidingView, KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ModalSafeArea } from './ModalSafeArea';
 import { dialogWidth, sheetWidth } from './ColumnFrame';
@@ -77,40 +76,6 @@ interface Props {
   footer?: React.ReactNode;
   /** A dialog's strip along its top edge, like a StripCard's: what it is about (coral for a delete). */
   strip?: string;
-}
-
-/**
- * Whether the phone keyboard is up, for the sheet's `KeyboardAvoidingView`. That view moves with the keyboard only while
- * it is enabled, and switching it off leaves whatever padding it had at that moment: so this must not turn false when the
- * keyboard starts to close (the library's flag does), or the sheet is left lifted by a whole keyboard over an empty gap.
- * It turns false once the keyboard is really gone (a hide event from the library or React Native), or after a short while
- * if the library's flag has been false that long and no event came.
- */
-const KEYBOARD_CLOSE_MS = 600;
-function useKeyboardOpen(): boolean {
-  const reported = useKeyboardState((state) => state.isVisible);
-  const [open, setOpen] = useState(reported);
-  useEffect(() => {
-    if (reported) {
-      setOpen(true);
-      return;
-    }
-    const timer = setTimeout(() => setOpen(false), KEYBOARD_CLOSE_MS);
-    return () => clearTimeout(timer);
-  }, [reported]);
-  useEffect(() => {
-    const on = () => setOpen(true);
-    const off = () => setOpen(false);
-    // `?.`: a test double of the library has no event emitter.
-    const subs = [
-      Keyboard.addListener('keyboardDidShow', on),
-      Keyboard.addListener('keyboardDidHide', off),
-      KeyboardEvents?.addListener('keyboardDidShow', on),
-      KeyboardEvents?.addListener('keyboardDidHide', off),
-    ];
-    return () => subs.forEach((sub) => sub?.remove());
-  }, []);
-  return open;
 }
 
 /**
@@ -229,96 +194,6 @@ function ModalCloseButton({
         size={ledgerStyle ? 17 : 20}
         color={theme.colors.textPrimary}
       />
-    </AnimatedPressable>
-  );
-}
-
-/**
- * A sheet's pinned action bar: the main button(s), with an optional round button in front, a red bin for
- * Delete (never a full-width Delete as loud as Save) or ⋯ for a menu of rarer actions.
- */
-export function SheetFooter({
-  children,
-  onDelete,
-  deleteLabel = 'Delete',
-  onMore,
-  moreLabel = 'More actions',
-  disabled,
-}: {
-  children?: React.ReactNode;
-  onDelete?: () => void;
-  deleteLabel?: string;
-  onMore?: () => void;
-  moreLabel?: string;
-  disabled?: boolean;
-}) {
-  return (
-    <View style={styles.footerRow}>
-      {onDelete && (
-        <RoundFooterButton icon="trash-2" label={deleteLabel} onPress={onDelete} disabled={disabled} danger />
-      )}
-      {onMore && (
-        <RoundFooterButton icon="more-horizontal" label={moreLabel} onPress={onMore} disabled={disabled} />
-      )}
-      {children}
-    </View>
-  );
-}
-
-/**
- * A quiet text action at the end of a sheet ("Delete recurring entry", "Archive goal") for rarer, riskier
- * things, so they never sit in the footer beside Save.
- */
-export function SheetLink({
-  label,
-  onPress,
-  danger = true,
-  disabled,
-}: {
-  label: string;
-  onPress: () => void;
-  danger?: boolean;
-  disabled?: boolean;
-}) {
-  return (
-    <Pressable
-      onPress={onPress}
-      disabled={disabled}
-      style={({ pressed }) => [styles.link, (pressed || disabled) && styles.disabled]}
-      hitSlop={{ top: 6, bottom: 6 }}
-      accessibilityRole="button"
-    >
-      <Text style={[styles.linkText, danger && styles.linkDanger]}>{label}</Text>
-    </Pressable>
-  );
-}
-
-function RoundFooterButton({
-  icon,
-  label,
-  onPress,
-  disabled,
-  danger,
-}: {
-  icon: 'trash-2' | 'more-horizontal';
-  label: string;
-  onPress: () => void;
-  disabled?: boolean;
-  danger?: boolean;
-}) {
-  const { animatedStyle, onPressIn, onPressOut } = usePressScale();
-  return (
-    <AnimatedPressable
-      style={[styles.roundBtn, danger && styles.roundBtnDanger, animatedStyle, disabled && styles.disabled]}
-      onPress={onPress}
-      onPressIn={onPressIn}
-      onPressOut={onPressOut}
-      disabled={disabled}
-      hitSlop={2}
-      accessibilityRole="button"
-      accessibilityLabel={label}
-    >
-      <Feather name={icon} size={18} color={danger ? theme.colors.expense : theme.colors.ink} />
     </AnimatedPressable>
   );
 }
@@ -760,28 +635,7 @@ const styles = themedStyles(() =>
       borderTopWidth: StyleSheet.hairlineWidth,
       borderTopColor: theme.colors.divider,
     },
-    footerRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
-    roundBtn: {
-      width: 48,
-      height: 48,
-      borderRadius: 24,
-      backgroundColor: theme.colors.surface,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.colors.borderSoft,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    roundBtnDanger: { backgroundColor: theme.colors.expenseTint, borderColor: theme.colors.expenseTint },
     disabled: { opacity: theme.opacity.disabled },
-    link: {
-      alignSelf: 'center',
-      minHeight: 44,
-      justifyContent: 'center',
-      paddingVertical: 10,
-      paddingHorizontal: 16,
-    },
-    linkText: { fontFamily: theme.font.roundedBold, fontSize: 13, color: theme.colors.textPrimary },
-    linkDanger: { color: theme.colors.expenseText },
 
     sheet: {
       backgroundColor: theme.colors.surface,
