@@ -84,10 +84,14 @@ export function ReportHero({
             numberOfLines={stacked ? undefined : 1}
             adjustsFontSizeToFit={!stacked}
           />
-          {incomeChange != null && incomeChange !== 0 && (
+          {/* A period still going is not like for like with the whole one before, so a percentage ("↓ 65%") would alarm
+              for nothing: it says what the other one came to, and the reader sets the two side by side. */}
+          {inProgress && previousIncomeMinor > 0 && (
+            <Text style={styles.kpiSub}>{`${money(previousIncomeMinor)} in ${comparedTo}`}</Text>
+          )}
+          {!inProgress && incomeChange != null && incomeChange !== 0 && (
             <Text style={[styles.kpiSub, incomeChange > 0 && styles.good]}>
-              {/* A period in progress is set against the whole one before: "so far" says it is not like for like. */}
-              {`${incomeChange > 0 ? '↑' : '↓'} ${Math.abs(incomeChange)}%${inProgress ? ' so far' : ''} vs ${comparedTo}`}
+              {`${incomeChange > 0 ? '↑' : '↓'} ${Math.abs(incomeChange)}% vs ${comparedTo}`}
             </Text>
           )}
         </View>

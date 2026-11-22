@@ -78,14 +78,16 @@ describe('the income comparison', () => {
     return out;
   };
 
-  it('says "so far" when the period is still going, since it is set against all of the one before', () => {
-    expect(texts(true)).toContain('↓ 40% so far vs the month before');
+  it('gives no percentage while the period is still going, only what the one before came to', () => {
+    const shown = texts(true);
+    expect(shown).toContain('₹100 in the month before');
+    expect(shown.some((t) => t.includes('↓') || t.includes('↑'))).toBe(false);
   });
 
   it('is a plain comparison once the period is over', () => {
     const shown = texts(false);
     expect(shown).toContain('↓ 40% vs the month before');
-    expect(shown.some((t) => t.includes('so far vs'))).toBe(false);
+    expect(shown.some((t) => t.includes(' in the month before'))).toBe(false);
   });
 });
 
