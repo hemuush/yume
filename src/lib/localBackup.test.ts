@@ -326,6 +326,18 @@ describe('recognising backup files by their own name', () => {
     expect(deleted).not.toContain(safUri('Backups', 'keep-me.txt'));
   });
 
+  it('prunes by name, so a file that fails to read is never what gets deleted', async () => {
+    const day = (n: number) => safUri('Backups', `yume-backup-2025-03-${String(n).padStart(2, '0')}.json`);
+    const uris = Array.from({ length: 15 }, (_, i) => day(i + 1));
+    (StorageAccessFramework.readDirectoryAsync as jest.Mock).mockResolvedValue(uris);
+    (StorageAccessFramework.readAsStringAsync as jest.Mock).mockRejectedValue(new Error('storage hiccup'));
+    (StorageAccessFramework.createFileAsync as jest.Mock).mockResolvedValue('content://new-file');
+    await writeLocalBackupNow('content://folder/Backups');
+    const deleted = (StorageAccessFramework.deleteAsync as jest.Mock).mock.calls.map((c) => c[0]);
+    expect(deleted).toEqual([uris[0]]); // the oldest day, not the newest
+    expect(StorageAccessFramework.readAsStringAsync).not.toHaveBeenCalled();
+  });
+
   it('replaces today’s file even when Android named it with .json or a copy number', async () => {
     const todayIso = toLocalIsoDate(new Date());
     const today = safUri('Backups', `yume-backup-${todayIso}.json`);
@@ -411,6 +423,29 @@ describe('folder discovery and automatic backup protection', () => {
     expect(settings.setLastLocalBackupResult).toHaveBeenCalledWith(
       expect.objectContaining({ ok: false, error: expect.stringContaining('need review') })
     );
+  });
+
+  it('does not read the folder at all when this phone’s own record says nothing is due', async () => {
+    settings.getLocalBackupFolderUri.mockResolvedValue('content://folder');
+    settings.getLastLocalBackupAt.mockResolvedValue(new Date().toISOString());
+    settings.getBackupFrequency.mockResolvedValue('daily');
+    await runLocalBackupIfDue();
+    expect(saf.readDirectoryAsync).not.toHaveBeenCalled();
+    expect(saf.readAsStringAsync).not.toHaveBeenCalled();
+  });
+
+  it('backs up into a folder whose backup files are all unreadable, keeping them', async () => {
+    settings.getLocalBackupFolderUri.mockResolvedValue('content://folder');
+    settings.getLastLocalBackupAt.mockResolvedValue('2026-10-01T00:00:00Z');
+    settings.getBackupFrequency.mockResolvedValue('daily');
+    saf.readDirectoryAsync.mockResolvedValue([`content://folder/yume-backup-${toLocalIsoDate(new Date())}`]);
+    saf.readAsStringAsync.mockResolvedValue('{ half a file');
+    saf.createFileAsync.mockResolvedValue('content://new');
+    saf.writeAsStringAsync.mockResolvedValue(undefined);
+    await runLocalBackupIfDue();
+    expect(saf.createFileAsync).toHaveBeenCalledTimes(1);
+    expect(saf.deleteAsync).not.toHaveBeenCalled();
+    expect(settings.setLastLocalBackupResult).toHaveBeenCalledWith(expect.objectContaining({ ok: true }));
   });
 
   it('preserves existing files when explicitly starting backups in an occupied folder', async () => {

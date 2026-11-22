@@ -91,16 +91,14 @@ const byteLength = (text: string): number => new TextEncoder().encode(text).leng
 const KEEP_DAILY_BACKUPS = 14;
 
 /**
- * Deletes all but the newest `KEEP_DAILY_BACKUPS` managed daily backups by their contents.
+ * Deletes all but the newest `KEEP_DAILY_BACKUPS` managed daily backups, judged by the day in each file's name: reading
+ * contents would count a file that failed to read (even once) as broken and delete it first, maybe yesterday's.
  * Exported copies are outside automatic retention. Best effort: a failed delete must never fail the backup that just succeeded.
  */
 async function pruneOldLocalBackups(directoryUri: string): Promise<void> {
   try {
-    const files = await listLocalBackups(directoryUri, Number.MAX_SAFE_INTEGER);
-    const backups = files
-      .filter((file) => BACKUP_NAME.test(backupBaseName(file.uri) ?? ''))
-      .map((file) => file.uri)
-      .reverse();
+    const uris = await StorageAccessFramework.readDirectoryAsync(directoryUri);
+    const backups = backupFilesOldestFirst(uris).filter((uri) => BACKUP_NAME.test(backupBaseName(uri) ?? ''));
     for (const uri of backups.slice(0, Math.max(0, backups.length - KEEP_DAILY_BACKUPS))) {
       await StorageAccessFramework.deleteAsync(uri).catch(() => {});
     }
@@ -197,12 +195,14 @@ async function backUpIfDue(): Promise<void> {
 
     const lastBackup = await getLastLocalBackupAt();
     const frequency = await getBackupFrequency();
+    // Not due by this phone's own record: skip reading the folder, which parses every backup file in it.
+    if (!isLocalBackupDue(lastBackup, frequency, new Date())) return;
     const files = await listLocalBackups(directoryUri);
     const latest = files.find((file) => file.summary);
     // A newer file may belong to another install. Never overwrite it automatically.
     if (
-      files.length &&
-      (!latest?.exportedAt ||
+      latest &&
+      (!latest.exportedAt ||
         !lastBackup ||
         !Number.isFinite(Date.parse(lastBackup)) ||
         Date.parse(latest.exportedAt) > Date.parse(lastBackup))
@@ -213,7 +213,10 @@ async function backUpIfDue(): Promise<void> {
     }
     if (!isLocalBackupDue(latest?.exportedAt ?? null, frequency, new Date())) return;
 
-    const { sizeBytes } = await writeLocalBackupNow(directoryUri);
+    // Files that exist but cannot be read as backups are kept, not replaced: one may be a good backup that failed to read.
+    const { sizeBytes } = await writeLocalBackupNow(directoryUri, {
+      preserveExisting: files.length > 0 && !latest,
+    });
     await setLastLocalBackupResult({ at: new Date().toISOString(), ok: true, sizeBytes });
   } catch (e) {
     await setLastLocalBackupResult({
