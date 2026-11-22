@@ -20,13 +20,12 @@ import { toLocalIsoDate, monthsBetweenIsoDates, addMonthsToIsoDate } from '@/lib
 import { DateField } from '@/components/DateField';
 import { ToggleSwitch } from '@/components/ToggleSwitch';
 import { OptionCards, CountStepper, Option } from './AddLoanParts';
+import { buildLoanInput, problemWithLoanBasics, type LoanSetupForm } from './loanSetup';
 import { styles } from './loans.styles';
 import { errorMessage } from '@/lib/errorMessage';
 import { DURATIONS, EASE_OUT } from '@/lib/motionTimings';
-import { dayMonthYear } from '@/lib/dateLabels';
 import { spendableAccountsOf, defaultCurrencyAccountsOf } from '@/lib/account';
 import { rateProblem, tenureProblem } from '@/lib/loanLimits';
-import { plural } from '@/lib/plural';
 import { useAccent } from '@/theme/AccentContext';
 import { useSaveOnce } from '@/hooks/useSaveOnce';
 
@@ -244,24 +243,33 @@ export function AddLoanModal({
     setWizardStep(1);
   };
 
-  const step1Invalid =
-    !counterparty.trim() ||
-    !Number.isFinite(principalMinor) ||
-    principalMinor <= 0 ||
-    !Number.isFinite(tenureMonths) ||
-    tenureMonths <= 0 ||
-    !Number.isFinite(rateBp) ||
-    rateBp < 0;
+  const form: LoanSetupForm = {
+    direction,
+    counterparty,
+    principalMinor,
+    rateBp,
+    tenureMonths,
+    rateType,
+    personId,
+    loanTiming,
+    startDate,
+    emiStartDate,
+    alreadyPaidCount,
+    disbAccountId,
+    disbCategoryId,
+    disbFee,
+    feeCategoryId,
+    repayAccountId,
+    trackAsset,
+    assetLabel,
+    assetValue,
+  };
 
   const nextStep = () => {
     setError(null);
-    if (step1Invalid) {
-      setError('Fill in who it’s with, the amount, the tenure and a valid interest rate');
-      return;
-    }
-    const limit = rateProblem(rateBp) ?? tenureProblem(tenureMonths);
-    if (limit) {
-      setError(limit);
+    const problem = problemWithLoanBasics(form);
+    if (problem) {
+      setError(problem);
       return;
     }
     setWizardStep(2);
@@ -269,98 +277,14 @@ export function AddLoanModal({
 
   const submit = async () => {
     setError(null);
-    if (step1Invalid) {
-      setError('Fill in who it’s with, the amount, the tenure and a valid interest rate');
+    const built = buildLoanInput(form, toLocalIsoDate(new Date()));
+    if ('error' in built) {
+      setError(built.error);
       return;
-    }
-    const limit = rateProblem(rateBp) ?? tenureProblem(tenureMonths);
-    if (limit) {
-      setError(limit);
-      return;
-    }
-    if (loanTiming === 'new' && (!disbAccountId || !disbCategoryId)) {
-      setError('Pick an account and category for the disbursement, or switch to "Already in progress"');
-      return;
-    }
-    if (loanTiming === 'existing' && !repayAccountId) {
-      setError('Pick which account future EMIs should come out of');
-      return;
-    }
-    // Both branches share one date picker: a real disbursement date is often earlier than the day you enter
-    // it into Yume (or than a sanction letter's print date), so "new" can't only mean "today".
-    if (loanTiming === 'new' && emiStartDate < startDate) {
-      setError('The first EMI is before the disbursement date');
-      return;
-    }
-    if (loanTiming === 'existing' && (!Number.isFinite(alreadyPaidCount) || alreadyPaidCount < 0)) {
-      setError('Enter how many EMIs are already paid, or 0');
-      return;
-    }
-    if (loanTiming === 'existing' && alreadyPaidCount > tenureMonths) {
-      setError(
-        `The loan only has ${plural(tenureMonths, 'EMI')}, so ${alreadyPaidCount} can’t be paid already`
-      );
-      return;
-    }
-    if (loanTiming === 'existing' && alreadyPaidCount > 0) {
-      // The two numbers must agree: 50 installments paid from a start date 13 months ago is a mismatch
-      // either way (a real loan got a next-due date 3 years out while active). Caught here, not downstream.
-      const elapsedMonths = monthsBetweenIsoDates(startDate, toLocalIsoDate(new Date()));
-      if (alreadyPaidCount > elapsedMonths) {
-        setError(
-          `You said ${plural(alreadyPaidCount, 'installment')} ${alreadyPaidCount === 1 ? 'is' : 'are'} already paid, but only about ${plural(elapsedMonths, 'month')} ${elapsedMonths === 1 ? 'has' : 'have'} passed since ${dayMonthYear(startDate)} — double-check the start date or the paid count.`
-        );
-        return;
-      }
-    }
-    // A processing fee is only asked for on a borrowed loan, so a stale value from before switching to
-    // "I lent" is ignored rather than recorded.
-    const feeAmountMinor =
-      loanTiming === 'new' && direction === 'borrowed' && disbFee ? toMinor(parseFloat(disbFee)) : 0;
-    if (!Number.isFinite(feeAmountMinor) || feeAmountMinor < 0) {
-      setError('Enter a valid processing fee, or leave it blank');
-      return;
-    }
-    if (feeAmountMinor > 0 && direction === 'borrowed' && !feeCategoryId) {
-      setError('Pick a category for the processing fee');
-      return;
-    }
-    // The value is optional here too — matching the same "loan asset" edit
-    // modal on the detail screen — only validated when actually provided.
-    let assetValueMinor: number | null = null;
-    if (direction === 'borrowed' && trackAsset && assetValue.trim()) {
-      assetValueMinor = toMinor(parseFloat(assetValue));
-      if (!Number.isFinite(assetValueMinor) || assetValueMinor <= 0) {
-        setError('Enter a valid current value for the asset, or leave it blank for now');
-        return;
-      }
     }
     setSaving(true);
     try {
-      await createLoan({
-        direction,
-        counterparty: counterparty.trim(),
-        principalMinor,
-        interestRateAnnualBp: rateBp,
-        tenureMonths,
-        startDate,
-        emiStartDate: loanTiming === 'new' ? emiStartDate : undefined,
-        rateType,
-        personId,
-        assetLabel: direction === 'borrowed' && trackAsset ? assetLabel.trim() || 'Asset' : null,
-        assetValueMinor: direction === 'borrowed' && trackAsset ? assetValueMinor : null,
-        alreadyPaidInstallments: loanTiming === 'existing' ? alreadyPaidCount : 0,
-        linkedAccountId: loanTiming === 'existing' ? repayAccountId : null,
-        disbursement:
-          loanTiming === 'new' && disbAccountId && disbCategoryId
-            ? {
-                accountId: disbAccountId,
-                categoryId: disbCategoryId,
-                feeAmountMinor: feeAmountMinor > 0 ? feeAmountMinor : undefined,
-                feeCategoryId: direction === 'borrowed' ? (feeCategoryId ?? undefined) : undefined,
-              }
-            : null,
-      });
+      await createLoan(built.input);
       reset();
       onCreated();
     } catch (e) {
