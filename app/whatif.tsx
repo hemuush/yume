@@ -7,6 +7,8 @@ import { memo, useCallback, useState } from 'react';
 import { View } from 'react-native';
 import { Text } from '@/components/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
+import { AmountPadDock } from '@/components/AmountField';
 import { router, useLocalSearchParams } from 'expo-router';
 import { openAdd } from '@/lib/openAdd';
 import { getCategoryMonthlyAverages, CategoryBreakdownItem } from '@/db/reports';
@@ -90,7 +92,7 @@ export default function WhatIfScreen() {
   const insets = useSafeAreaInsets();
   const { accent, secondary } = useAccent();
   // The header sits over the page and shrinks as it scrolls.
-  const { collapse, headerHeight, scrollHandler, scrollRef } = useCollapsingHeader();
+  const { collapse, headerHeight, onJsScroll, onJsScrollEnd } = useCollapsingHeader();
   // `category` opens What-if with that category already chosen (from its category page).
   const { category: askedCategoryId, cut: askedCut } = useLocalSearchParams<{
     category?: string;
@@ -174,167 +176,199 @@ export default function WhatIfScreen() {
   return (
     <View style={styles.container}>
       <HomeWallpaper accent={accent} secondary={secondary} />
-      <ReanimatedAnimated.ScrollView
-        // The data arriving after the placeholders: one short fade, the header and wallpaper stay solid.
-        entering={CONTENT_ENTER}
-        ref={scrollRef}
-        onScroll={scrollHandler}
-        scrollEventThrottle={16}
-        contentContainerStyle={{
-          paddingTop: headerHeight,
-          paddingBottom: theme.layout.screenScrollPad + insets.bottom,
-        }}
-      >
-        {loadError && (
-          <Appear style={styles.errorBanner}>
-            <Text style={styles.errorTitle}>Couldn’t load your data</Text>
-            <Text style={styles.errorDetail}>{loadError}</Text>
-            <PrimaryButton title="Retry" compact variant="secondary" onPress={() => void reload()} />
-          </Appear>
-        )}
-
-        {categories.length === 0 ? (
-          <EmptyState
-            title="Nothing to try yet"
-            subtitle="Log a few expenses first — this needs some real spending to project from."
-          >
-            <PrimaryButton title="Add an expense" variant="secondary" onPress={() => void openAdd()} />
-          </EmptyState>
-        ) : (
-          <Section first compact title="Spend a little less">
-            <SummaryCard style={styles.card}>
-              <Text style={styles.fieldLabel}>Cut spending on</Text>
-              <View style={styles.chipRow}>
-                {shownCategories.map((c) => (
-                  <Chip
-                    key={c.categoryId}
-                    label={c.name}
-                    active={c.categoryId === categoryId}
-                    activeBorderColor={c.color}
-                    onPress={() => setCategoryId(c.categoryId)}
-                  />
-                ))}
-                {bySpend.length > CATEGORY_CHIPS && (
-                  <Chip
-                    label={showAllCategories ? 'Fewer' : `${hiddenCount} more`}
-                    active={false}
-                    onPress={() => setShowAllCategories((v) => !v)}
-                  />
+      {/* "Before you buy" has an amount field: the app’s own pad docks under the page, as on Profile, instead of the
+          phone keyboard. */}
+      <AmountPadDock>
+        {(scrollProps) => (
+          <>
+            <KeyboardAwareScrollView
+              {...scrollProps}
+              onScroll={(e) => {
+                scrollProps.onScroll(e);
+                onJsScroll(e.nativeEvent.contentOffset.y);
+              }}
+              onScrollEndDrag={onJsScrollEnd}
+              onMomentumScrollEnd={onJsScrollEnd}
+              contentContainerStyle={{
+                paddingTop: headerHeight,
+                paddingBottom: theme.layout.screenScrollPad + insets.bottom,
+              }}
+              keyboardShouldPersistTaps="handled"
+              bottomOffset={20}
+            >
+              {/* The data arriving after the placeholders: one short fade, the header and wallpaper stay solid. */}
+              <ReanimatedAnimated.View entering={CONTENT_ENTER}>
+                {loadError && (
+                  <Appear style={styles.errorBanner}>
+                    <Text style={styles.errorTitle}>Couldn’t load your data</Text>
+                    <Text style={styles.errorDetail}>{loadError}</Text>
+                    <PrimaryButton title="Retry" compact variant="secondary" onPress={() => void reload()} />
+                  </Appear>
                 )}
-              </View>
 
-              <Text style={[styles.fieldLabel, { marginTop: 16 }]}>By how much</Text>
-              <View style={styles.chipRow}>
-                {CUT_OPTIONS.map((pct) => (
-                  <Chip key={pct} label={`-${pct}%`} active={pct === cutPct} onPress={() => setCutPct(pct)} />
-                ))}
-              </View>
-
-              {cut && selectedCategory && (
-                // Where it stands now, and where the cut takes it, a month.
-                <View style={styles.compare}>
-                  <View style={styles.compareSide}>
-                    <Text style={styles.compareLabel}>Now, a month</Text>
-                    <Amount
-                      minor={selectedCategory.totalMinor}
-                      sensitive={selectedCategory.isSensitive}
-                      style={styles.compareValue}
+                {categories.length === 0 ? (
+                  <EmptyState
+                    title="Nothing to try yet"
+                    subtitle="Log a few expenses first — this needs some real spending to project from."
+                  >
+                    <PrimaryButton
+                      title="Add an expense"
+                      variant="secondary"
+                      onPress={() => void openAdd()}
                     />
-                  </View>
-                  <Feather name="arrow-right" size={18} color={theme.colors.textMuted} />
-                  <View style={[styles.compareSide, styles.compareRight]}>
-                    <Text style={styles.compareLabel}>With the cut, a month</Text>
-                    <Amount
-                      minor={cut.newMonthlyMinor}
-                      sensitive={selectedCategory.isSensitive}
-                      style={[styles.compareValue, styles.compareNew]}
-                    />
-                  </View>
-                </View>
-              )}
-            </SummaryCard>
-
-            {goals.length === 0 ? (
-              <SummaryCard style={styles.goalCard}>
-                <Text style={styles.extraLabel}>No open savings goals</Text>
-                <Text style={[styles.avgLabel, { marginTop: 6 }]}>
-                  Set a savings goal to see how much sooner this change could get you there.
-                </Text>
-                <PrimaryButton
-                  title="Set a savings goal"
-                  variant="secondary"
-                  compact
-                  onPress={() => router.push('/savings-goals')}
-                  style={{ marginTop: 12, alignSelf: 'flex-start' }}
-                />
-              </SummaryCard>
-            ) : cut ? (
-              <SummaryCard style={styles.goalCard}>
-                <Text style={styles.extraLabel}>
-                  Extra <Amount minor={cut.extraMinor} sensitive={selectedCategory?.isSensitive} /> / month
-                  toward
-                </Text>
-                <View style={[styles.chipRow, { marginTop: 10 }]}>
-                  {goals.map((g) => (
-                    <Chip
-                      key={g.id}
-                      label={g.name}
-                      active={g.id === goalId}
-                      onPress={() => setGoalId(g.id)}
-                    />
-                  ))}
-                </View>
-
-                {pace && !pace.alreadyDone && (
-                  <View style={styles.paceRow}>
-                    <View>
-                      <View style={styles.paceHeadRow}>
-                        <Text style={styles.paceLabel}>Current pace</Text>
-                        <Text style={styles.paceDate}>
-                          {pace.currentEtaDate ? dayMonth(pace.currentEtaDate) : '—'}
-                        </Text>
+                  </EmptyState>
+                ) : (
+                  <Section first compact title="Spend a little less">
+                    <SummaryCard style={styles.card}>
+                      <Text style={styles.fieldLabel}>Cut spending on</Text>
+                      <View style={styles.chipRow}>
+                        {shownCategories.map((c) => (
+                          <Chip
+                            key={c.categoryId}
+                            label={c.name}
+                            active={c.categoryId === categoryId}
+                            activeBorderColor={c.color}
+                            onPress={() => setCategoryId(c.categoryId)}
+                          />
+                        ))}
+                        {bySpend.length > CATEGORY_CHIPS && (
+                          <Chip
+                            label={showAllCategories ? 'Fewer' : `${hiddenCount} more`}
+                            active={false}
+                            onPress={() => setShowAllCategories((v) => !v)}
+                          />
+                        )}
                       </View>
-                      <PaceLane width={paceBarWidths(pace).current} color={theme.colors.textMuted} faded />
-                    </View>
-                    <View style={{ marginTop: 10 }}>
-                      <View style={styles.paceHeadRow}>
-                        <Text style={styles.paceLabelStrong}>With this change</Text>
-                        <Text style={styles.paceDateStrong}>
-                          {pace.newEtaDate ? dayMonth(pace.newEtaDate) : '—'}
-                        </Text>
-                      </View>
-                      <PaceLane width={paceBarWidths(pace).next} color={theme.colors.income} />
-                    </View>
 
-                    {pace.daysSooner > 0 ? (
-                      <Text style={styles.soonerText}>{soonerLabel(pace.daysSooner)}</Text>
-                    ) : (
-                      <Text style={styles.neutralText}>
-                        {pace.currentEtaDate
-                          ? 'This change doesn’t move the date — try a bigger cut.'
-                          : selectedGoal?.tracksAccount
-                            ? 'Its account hasn’t grown in the last 3 months, so there’s no date to compare yet.'
-                            : 'Add a bit more progress to this goal first to project a date.'}
-                      </Text>
-                    )}
-                  </View>
+                      <Text style={[styles.fieldLabel, { marginTop: 16 }]}>By how much</Text>
+                      <View style={styles.chipRow}>
+                        {CUT_OPTIONS.map((pct) => (
+                          <Chip
+                            key={pct}
+                            label={`-${pct}%`}
+                            active={pct === cutPct}
+                            onPress={() => setCutPct(pct)}
+                          />
+                        ))}
+                      </View>
+
+                      {cut && selectedCategory && (
+                        // Where it stands now, and where the cut takes it, a month.
+                        <View style={styles.compare}>
+                          <View style={styles.compareSide}>
+                            <Text style={styles.compareLabel}>Now, a month</Text>
+                            <Amount
+                              minor={selectedCategory.totalMinor}
+                              sensitive={selectedCategory.isSensitive}
+                              style={styles.compareValue}
+                            />
+                          </View>
+                          <Feather name="arrow-right" size={18} color={theme.colors.textMuted} />
+                          <View style={[styles.compareSide, styles.compareRight]}>
+                            <Text style={styles.compareLabel}>With the cut, a month</Text>
+                            <Amount
+                              minor={cut.newMonthlyMinor}
+                              sensitive={selectedCategory.isSensitive}
+                              style={[styles.compareValue, styles.compareNew]}
+                            />
+                          </View>
+                        </View>
+                      )}
+                    </SummaryCard>
+
+                    {goals.length === 0 ? (
+                      <SummaryCard style={styles.goalCard}>
+                        <Text style={styles.extraLabel}>No open savings goals</Text>
+                        <Text style={[styles.avgLabel, { marginTop: 6 }]}>
+                          Set a savings goal to see how much sooner this change could get you there.
+                        </Text>
+                        <PrimaryButton
+                          title="Set a savings goal"
+                          variant="secondary"
+                          compact
+                          onPress={() => router.push('/savings-goals')}
+                          style={{ marginTop: 12, alignSelf: 'flex-start' }}
+                        />
+                      </SummaryCard>
+                    ) : cut ? (
+                      <SummaryCard style={styles.goalCard}>
+                        <Text style={styles.extraLabel}>
+                          Extra <Amount minor={cut.extraMinor} sensitive={selectedCategory?.isSensitive} /> /
+                          month toward
+                        </Text>
+                        <View style={[styles.chipRow, { marginTop: 10 }]}>
+                          {goals.map((g) => (
+                            <Chip
+                              key={g.id}
+                              label={g.name}
+                              active={g.id === goalId}
+                              onPress={() => setGoalId(g.id)}
+                            />
+                          ))}
+                        </View>
+
+                        {pace && !pace.alreadyDone && (
+                          <View style={styles.paceRow}>
+                            <View>
+                              <View style={styles.paceHeadRow}>
+                                <Text style={styles.paceLabel}>Current pace</Text>
+                                <Text style={styles.paceDate}>
+                                  {pace.currentEtaDate ? dayMonth(pace.currentEtaDate) : '—'}
+                                </Text>
+                              </View>
+                              <PaceLane
+                                width={paceBarWidths(pace).current}
+                                color={theme.colors.textMuted}
+                                faded
+                              />
+                            </View>
+                            <View style={{ marginTop: 10 }}>
+                              <View style={styles.paceHeadRow}>
+                                <Text style={styles.paceLabelStrong}>With this change</Text>
+                                <Text style={styles.paceDateStrong}>
+                                  {pace.newEtaDate ? dayMonth(pace.newEtaDate) : '—'}
+                                </Text>
+                              </View>
+                              <PaceLane width={paceBarWidths(pace).next} color={theme.colors.income} />
+                            </View>
+
+                            {pace.daysSooner > 0 ? (
+                              <Text style={styles.soonerText}>{soonerLabel(pace.daysSooner)}</Text>
+                            ) : (
+                              <Text style={styles.neutralText}>
+                                {pace.currentEtaDate
+                                  ? 'This change doesn’t move the date — try a bigger cut.'
+                                  : selectedGoal?.tracksAccount
+                                    ? 'Its account hasn’t grown in the last 3 months, so there’s no date to compare yet.'
+                                    : 'Add a bit more progress to this goal first to project a date.'}
+                              </Text>
+                            )}
+                          </View>
+                        )}
+                        {pace?.alreadyDone && (
+                          <Text style={styles.soonerText}>Already reached — nice work.</Text>
+                        )}
+                      </SummaryCard>
+                    ) : null}
+
+                    <View style={styles.footer}>
+                      <PrimaryButton title="Reset" variant="secondary" onPress={reset} />
+                    </View>
+                  </Section>
                 )}
-                {pace?.alreadyDone && <Text style={styles.soonerText}>Already reached — nice work.</Text>}
-              </SummaryCard>
-            ) : null}
-
-            <View style={styles.footer}>
-              <PrimaryButton title="Reset" variant="secondary" onPress={reset} />
-            </View>
-          </Section>
+                <Section compact first={categories.length === 0} title="Before you buy">
+                  <BeforeYouBuy />
+                </Section>
+              </ReanimatedAnimated.View>
+            </KeyboardAwareScrollView>
+            <SkyHeader collapse={collapse} summary={undefined} title="What if…?" showBack hideUser wallpaper>
+              <Text style={styles.intro}>
+                Try a change, see where it lands. Nothing here changes your money.
+              </Text>
+            </SkyHeader>
+          </>
         )}
-        <Section compact first={categories.length === 0} title="Before you buy">
-          <BeforeYouBuy />
-        </Section>
-      </ReanimatedAnimated.ScrollView>
-      <SkyHeader collapse={collapse} summary={undefined} title="What if…?" showBack hideUser wallpaper>
-        <Text style={styles.intro}>Try a change, see where it lands. Nothing here changes your money.</Text>
-      </SkyHeader>
+      </AmountPadDock>
     </View>
   );
 }

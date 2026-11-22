@@ -10,6 +10,9 @@ jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMoc
 jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
 }));
+jest.mock('react-native-keyboard-controller', () => ({
+  KeyboardAwareScrollView: require('react-native').ScrollView,
+}));
 jest.mock('@/components/AppHeader', () => ({ HeaderUserButton: () => null }));
 let mockParams: { category?: string; cut?: string } = {};
 jest.mock('expo-router', () => ({
@@ -48,7 +51,9 @@ const mockPurchaseDraws = { count: 0 };
 jest.mock('./PurchaseCheck', () => ({
   PurchaseCheck: () => {
     mockPurchaseDraws.count++;
-    return null;
+    // A real amount field, as the purchase check has: whether the page gives it the app's pad is what is tested.
+    const { AmountField } = require('@/components/AmountField');
+    return <AmountField label="Planned purchase" value="" onChangeText={() => {}} placeholder="purchase" />;
   },
 }));
 import WhatIfScreen from '../../../app/whatif';
@@ -97,6 +102,12 @@ beforeAll(async () => {
 }, 180000);
 
 describe('What-if', () => {
+  it('gives the purchase amount the app’s own pad, not the phone keyboard', async () => {
+    const tree = await render();
+    const input = tree.root.find((n) => typeof n.type === 'string' && n.props.placeholder === 'purchase');
+    expect(input.props.showSoftInputOnFocus).toBe(false);
+  });
+
   it('does not draw the purchase check again when a category, a cut or a goal is picked', async () => {
     mockGoals = [goal];
     const tree = await render();

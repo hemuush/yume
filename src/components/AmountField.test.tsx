@@ -4,7 +4,7 @@
  */
 import { useState } from 'react';
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
-import { Keyboard } from 'react-native';
+import { Keyboard, TextInput, View } from 'react-native';
 
 jest.setTimeout(30000);
 
@@ -175,5 +175,80 @@ describe('AmountField', () => {
       tree = create(<AmountField label="Amount" value="" onChangeText={() => {}} placeholder="0.00" />);
     });
     expect(input(tree).props.keyboardType).toBe('decimal-pad');
+  });
+});
+
+describe('AmountField · Next', () => {
+  /** Two amount fields under one pad, the lower one first in the tree: the pad must go by position, not by mount order. */
+  async function twoFields() {
+    const spy = jest.spyOn((TextInput as unknown as { prototype: { focus: () => void } }).prototype, 'focus');
+    function Two() {
+      const [a, setA] = useState('');
+      const [b, setB] = useState('');
+      return (
+        <AmountPadDock>
+          {() => (
+            <>
+              <AmountField label="Lower" value={b} onChangeText={setB} placeholder="lower" />
+              <AmountField label="Upper" value={a} onChangeText={setA} placeholder="upper" />
+            </>
+          )}
+        </AmountPadDock>
+      );
+    }
+    // Each field's wrapper reports where it sits on screen: "Lower" under "Upper".
+    jest
+      .spyOn((View as unknown as { prototype: { measureInWindow: () => void } }).prototype, 'measureInWindow')
+      .mockImplementation(function (
+        this: { props: { children?: { props?: { label?: string } } } },
+        ...args: unknown[]
+      ) {
+        (args[0] as (x: number, y: number) => void)(
+          0,
+          this.props.children?.props?.label === 'Lower' ? 300 : 100
+        );
+      } as never);
+    let tree!: ReactTestRenderer;
+    await act(async () => {
+      tree = create(<Two />);
+    });
+    const focused = () =>
+      spy.mock.instances.map(
+        (instance) => (instance as unknown as { props: { placeholder: string } }).props.placeholder
+      );
+    return { tree, focused };
+  }
+  const titled = (tree: ReactTestRenderer, title: string) =>
+    tree.root.findAll((n) => n.props.title === title && typeof n.props.onPress === 'function');
+  const field = (tree: ReactTestRenderer, placeholder: string) =>
+    tree.root.find((n) => typeof n.type === 'string' && n.props.placeholder === placeholder);
+  const pressNext = async (tree: ReactTestRenderer) => {
+    await act(async () => titled(tree, 'Next')[0].props.onPress());
+    await act(async () => {}); // the fields are measured before one is picked
+  };
+
+  it('offers Next only when the page has more than one amount field', async () => {
+    const single = await render();
+    await focus(single);
+    expect(titled(single, 'Next')).toHaveLength(0);
+    const { tree } = await twoFields();
+    await act(async () => field(tree, 'lower').props.onFocus({}));
+    expect(titled(tree, 'Next').length).toBeGreaterThan(0);
+  });
+
+  it('moves down the page to the next field, whatever order they mounted in', async () => {
+    const { tree, focused } = await twoFields();
+    await act(async () => field(tree, 'upper').props.onFocus({}));
+    await pressNext(tree);
+    expect(focused()).toEqual(['lower']);
+  });
+
+  it('closes the pad when Next is pressed on the last field', async () => {
+    const dismiss = jest.spyOn(Keyboard, 'dismiss').mockImplementation(() => {});
+    const { tree, focused } = await twoFields();
+    await act(async () => field(tree, 'lower').props.onFocus({}));
+    await pressNext(tree);
+    expect(dismiss).toHaveBeenCalled();
+    expect(focused()).toEqual([]);
   });
 });
