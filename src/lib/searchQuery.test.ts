@@ -9,6 +9,13 @@ describe('parseSearchQuery', () => {
     expect(parse('sep')).toEqual({ date: null, words: [{ text: 'sep' }] });
   });
 
+  it('does not read a word that merely starts like a month as a date', () => {
+    expect(parse('2 market').date).toBeNull();
+    expect(parse('jane 5').date).toBeNull();
+    expect(parse('24 september').date).toBe('2026-09-24');
+    expect(parse('sept 24').date).toBe('2026-09-24');
+  });
+
   it('reads a whole number as an amount shown in whole rupees', () => {
     expect(parse('184').words).toEqual([{ text: '184', amountMinor: { min: 18350, max: 18449 } }]);
   });

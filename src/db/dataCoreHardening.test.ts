@@ -225,6 +225,26 @@ describe('deleteAccount', () => {
     expect(await linkOf('loans', loan.id)).toBe(acct);
     expect(await linkOf('savings_goals', goal.id)).toBe(acct);
   });
+
+  it('Undo puts back the funding link an investment had to the account', async () => {
+    const bank = (await createAccount({ name: 'Pays', type: 'bank', currency: 'INR' })).id;
+    const inv = (
+      await createAccount({
+        name: 'Fund',
+        type: 'savings',
+        currency: 'INR',
+        tracked: true,
+        fundingAccountId: bank,
+      })
+    ).id;
+    const snapshot = await deleteAccount(bank);
+    const fundingOf = async () =>
+      (await one<{ f: string | null }>('SELECT funding_account_id AS f FROM accounts WHERE id = ?', [inv]))
+        ?.f;
+    expect(await fundingOf()).toBeNull();
+    await restoreAccount(snapshot);
+    expect(await fundingOf()).toBe(bank);
+  });
 });
 
 describe('unarchiveCategory', () => {

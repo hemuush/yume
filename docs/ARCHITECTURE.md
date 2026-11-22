@@ -123,7 +123,7 @@ Payoff dates are available only when the final pending row clears principal. Loa
 | Reports                 | [reports](../src/db/reports.ts), [spendSql](../src/db/spendSql.ts)                 | Apply currency/privacy scope consistently, preserve refund signs and distinguish partial-period comparisons from completed periods. No implicit currency conversion.   |
 | Deleted records         | [recentlyDeleted](../src/db/recentlyDeleted.ts)                                    | Restoration must validate related records; retention and permanent deletion are separate from backup recovery.                                                         |
 
-See [data model](../DATA_MODEL.md) for persisted fields. Whole-major-unit entry, local SQLite and plain JSON backup are current product decisions.
+See [data model](../DATA_MODEL.md) for persisted fields. Paise on typed amounts (whole rupees for loans), local SQLite and plain JSON backup are current product decisions.
 
 ## Preference loading and privacy
 
@@ -477,7 +477,7 @@ Credit cards stay plain accounts whose balance is what is owed. The card's limit
 
 ## November audit corrections
 
-Tracked wealth retains a borrowed loan's financed asset after repayment closes the loan; the discharged liability and closed lending receivable contribute zero. Tidy-up preserves exact linked friend/account movements, including partial IOU allocations, and excludes both sides from rounding counts and Undo snapshots. Recently deleted validates current account eligibility within the restore transaction: ordinary spending/income cannot return to an account retyped as savings; archived historical references and valid transfers remain restorable.
+Tracked wealth retains a borrowed loan's financed asset after repayment closes the loan; the discharged liability and closed lending receivable contribute zero. Tidy-up preserves exact linked friend/account movements, including partial IOU allocations, and excludes both sides from Undo snapshots. Recently deleted validates current account eligibility within the restore transaction: ordinary spending/income cannot return to an account retyped as savings; archived historical references and valid transfers remain restorable.
 
 Untouched opening balances and credit limits retain their exact stored minor units during account edits. Consecutive account creation clears minimum-payment, interest-rate and maturity inputs. Staged entries carry each account's currency and show independent totals by currency. Account latest-entry and investment SIP labels also retain their account currency. Activity filter counts use the same investment scope as rendered results.
 

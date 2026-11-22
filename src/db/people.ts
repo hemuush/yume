@@ -3,7 +3,7 @@ import { PersonLedgerEntryRow, PersonRow } from './rows';
 import { getDb, AppDb } from './client';
 import { newId } from '@/lib/id';
 import { Person, PersonLedgerEntry } from '@/types';
-import { queueSpendAlerts, assertValidTransactionInput } from './ledger';
+import { checkOverspendForNewTransaction, assertValidTransactionInput } from './ledger';
 import { assertValidIsoDate } from '@/lib/date';
 import { captureRow, restoreRows, RowSnapshot } from './undoSnapshot';
 import { assertDefaultCurrencyAccount } from './currencyInvariant';
@@ -182,7 +182,8 @@ export async function recordMoneyGivenToPerson(input: {
   await db.withTransactionAsync((tx) =>
     insertPersonMoneyMovement(tx, { ...input, type: 'expense', ledgerAmountMinor: input.amountMinor })
   );
-  await queueSpendAlerts(input.categoryId).catch(() => {});
+  // Same post-write check as any expense: a backdated entry must not trigger this month’s spend alerts.
+  await checkOverspendForNewTransaction({ ...input, type: 'expense' });
 }
 
 /**

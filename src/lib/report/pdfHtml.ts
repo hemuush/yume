@@ -1,4 +1,4 @@
-import { formatMoney } from '@/lib/money';
+import { formatMoney, formatMoneyExact } from '@/lib/money';
 import type { Report, ReportEntry, CategoryRow } from './reportData';
 import { MONTH_SHORT, WEEKDAY_SHORT, periodLabel } from './period';
 
@@ -267,7 +267,12 @@ const stack = (rows: Fixed[]) => rows.map((x) => x.html).join('');
 
 function biggestExpenses(r: Report): Fixed {
   const rows = r.topExpenses.map((e, i) =>
-    listRow(i + 1, e.title, `${dayMonthYear(e.tx.date)} · ${e.category}`, money(e.tx.amountMinor, r.currency))
+    listRow(
+      i + 1,
+      e.title,
+      `${dayMonthYear(e.tx.date)} · ${e.category}`,
+      formatMoneyExact(e.tx.amountMinor, r.currency)
+    )
   );
   const body = rows.length ? stack(rows) : emptyNote('No spending yet.').html;
   return { h: 8 + (rows.length ? rows.length * 8.4 : 9), html: heading('Biggest spends').html + body };
@@ -429,7 +434,7 @@ function entriesBlock(r: Report): RowsBlock | null {
       const sign = t.type === 'income' ? '+' : t.type === 'expense' ? '−' : '';
       rows.push({
         h: 8.2,
-        html: `<div class="erow"><i class="dot" style="background:${safeColor(e.color, C.other)}"></i><div class="lt"><b>${esc(e.title)}</b><span>${esc(e.detail)}</span></div><strong style="color:${color}">${sign}${esc(money(t.amountMinor, e.currency))}</strong></div>`,
+        html: `<div class="erow"><i class="dot" style="background:${safeColor(e.color, C.other)}"></i><div class="lt"><b>${esc(e.title)}</b><span>${esc(e.detail)}</span></div><strong style="color:${color}">${sign}${esc(formatMoneyExact(t.amountMinor, e.currency))}</strong></div>`,
       });
     }
   }

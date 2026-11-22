@@ -451,8 +451,10 @@ export default function TransactionsScreen() {
   const { show: showUndo } = useUndoToast();
   const deleteBySwipe = useCallback(
     async (tx: Transaction) => {
+      // The period on screen when it runs: Undo can be tapped after paging on, and must not reload the old one.
       const reloadList = () => {
-        void load({ fromDate: rangeFromDate, toDate: rangeToDate }, viewScope);
+        const now = shown.current;
+        void load({ fromDate: now.fromDate, toDate: now.toDate }, now.scope);
         refreshSearch();
       };
       try {
@@ -469,7 +471,7 @@ export default function TransactionsScreen() {
         return false;
       }
     },
-    [load, rangeFromDate, rangeToDate, viewScope, refreshSearch, showUndo]
+    [load, refreshSearch, showUndo]
   );
   const [refreshing, setRefreshing] = useState(false);
   const refresh = async () => {

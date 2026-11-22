@@ -282,7 +282,7 @@ const styles = themedStyles(() =>
       justifyContent: 'center',
     },
     cellEmpty: { borderWidth: StyleSheet.hairlineWidth, borderColor: theme.colors.borderSoft },
-    cellFuture: { borderWidth: 0, opacity: 0.35 },
+    cellFuture: { borderWidth: 0, opacity: theme.opacity.limit },
     cellSelected: { borderWidth: 2, borderColor: theme.colors.textSecondary },
     cellLabel: { fontFamily: theme.font.body, fontSize: 12 },
     cellLabelTop: { fontFamily: theme.font.bodyBold },
@@ -310,7 +310,7 @@ const styles = themedStyles(() =>
     matrixLabelOn: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
     dotSlot: { flex: 1, minWidth: 0, paddingHorizontal: 1 },
     dot: { height: DOT_H, borderRadius: 4 },
-    dotFuture: { borderWidth: 0, opacity: 0.35 },
+    dotFuture: { borderWidth: 0, opacity: theme.opacity.limit },
     dotSelected: { borderWidth: 1.5, borderColor: theme.colors.textSecondary },
   })
 );

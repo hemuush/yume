@@ -102,6 +102,15 @@ describe('add loan', () => {
     expect(byId(tree, 'card').props.meta).toContain('interest over the term');
   });
 
+  it('won’t treat a blank rate as 0%', async () => {
+    const { tree } = await render();
+    await fillStepOne(tree);
+    await act(async () => byId(tree, 'Annual interest rate (%)').props.onChangeText(''));
+    await act(async () => footerButton(tree, 'Next').props.onPress());
+    expect(hasId(tree, 'Disbursement date')).toBe(false);
+    expect(JSON.stringify(tree.toJSON())).toContain('Enter the interest rate');
+  });
+
   it('ignores hidden asset fields after switching from borrowing to lending', async () => {
     const { tree } = await render();
     act(() => tree.root.findByType(ToggleSwitch).props.onChange(true));

@@ -26,7 +26,7 @@ The [5 November UI/UX enhancement plan](reports/UX_ENHANCEMENT_PLAN_2026_11_05.m
 
 The [25 October startup corrections](reports/STARTUP_FIXES_2026_10_25.md) address onboarding content under Android's navigation bar and the original splash icon flashing after selecting a theme icon. These changes require a rebuilt Android binary and separate phone acceptance.
 
-The [25 October repository re-audit](reports/REPOSITORY_REAUDIT_2026_10_25.md) records per-file coverage, dependency/security checks, small motion improvements, cleanup and current validation. Its [coverage inventory](REPOSITORY_REAUDIT_COVERAGE_2026_10_25.csv) distinguishes full-content automated checks from focused manual flow review. The preceding [25 October app-flow audit](reports/FULL_APP_AUDIT_2026_10_25.md) records the setup, loan, valuation, category, theme, split and restore corrections.
+The [25 October repository re-audit](reports/REPOSITORY_REAUDIT_2026_10_25.md) records per-file coverage, dependency/security checks, small motion improvements, cleanup and current validation. Its [coverage inventory](archive/REPOSITORY_REAUDIT_COVERAGE_2026_10_25.csv) distinguishes full-content automated checks from focused manual flow review. The preceding [25 October app-flow audit](reports/FULL_APP_AUDIT_2026_10_25.md) records the setup, loan, valuation, category, theme, split and restore corrections.
 
 The [14 November performance pass](reports/PERFORMANCE_2026_11_14.md) measures every screen with a ledger of up to 300,000 entries, fixes what scaled badly (Reports' cash-flow read, Activity's repeated redraws, date formatting) and adds bulk-data tests. It does not establish device smoothness.
 

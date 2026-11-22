@@ -15,7 +15,7 @@ import { theme } from '@/constants/theme';
 import { screenStyles as h } from '@/components/screenStyles';
 import { childrenOf } from '@/lib/categoryTree';
 import { categorySentence, categorySpoken, inParent, joinSub, parentNameOf } from '@/lib/categoryLabel';
-import { formatMoney } from '@/lib/money';
+import { formatMoneyExact } from '@/lib/money';
 import { withPressed } from '@/lib/pressed';
 import { haptics } from '@/lib/haptics';
 import { shade } from '@/lib/color';
@@ -74,7 +74,7 @@ export function SplitScreen() {
   if (!session) return null;
 
   const { totalMinor, categories, currency } = session;
-  const money = (minor: number) => formatMoney(minor, currency);
+  const money = (minor: number) => formatMoneyExact(minor, currency);
   const amounts = partAmounts(totalMinor, parts);
   const rest = amounts[0] ?? totalMinor;
   const problem = splitProblem(totalMinor, parts);

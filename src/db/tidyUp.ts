@@ -6,7 +6,7 @@ import { cachedRead } from './readCache';
 import { sensitiveOf } from './spendSql';
 
 /**
- * Tidy up: data that looks off, each fixable: identical-entry pairs, old balances logged as income, paise.
+ * Tidy up: data that looks off, each fixable: identical-entry pairs and old balances logged as income.
  * Plain entries only; loan- or Friends & Family-linked ones are managed from there.
  */
 
@@ -241,7 +241,7 @@ export function getTidyUpReport(): Promise<TidyUpReport> {
   });
 }
 
-/** How many things Tidy up has for you — each repeat pair and group of old balances, plus one for paise. */
+/** How many things Tidy up has for you — each repeat pair and group of old balances. */
 export function tidyUpCount(report: TidyUpReport): number {
   return report.repeats.length + report.startingBalances.length;
 }

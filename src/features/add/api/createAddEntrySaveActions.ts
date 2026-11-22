@@ -1,6 +1,6 @@
 import { emitTransactionsChanged } from '@/lib/dataEvents';
 import { updateTransaction } from '@/db/ledger';
-import { formatMoney } from '@/lib/money';
+import { formatMoneyExact } from '@/lib/money';
 import { addDaysToIsoDate, daysUntilIsoDate } from '@/lib/date';
 import { weekdayDayMonthMaybeYear } from '@/lib/dateLabels';
 import { markJustAdded } from '@/lib/justAdded';
@@ -59,7 +59,7 @@ export function createAddEntrySaveActions(input: Input) {
       const nameOf = (key: string) =>
         categories.find((c) => c.id === splitParts.find((p) => p.key === key)?.categoryId)?.name ??
         'this part';
-      setError(splitProblemText(problem, splitParts, nameOf, (m) => formatMoney(m, currency)));
+      setError(splitProblemText(problem, splitParts, nameOf, (m) => formatMoneyExact(m, currency)));
       return;
     }
     if (!effectiveAccountId) {

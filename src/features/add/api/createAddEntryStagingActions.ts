@@ -1,6 +1,6 @@
 import { findRecentRepeat } from '@/db/ledger';
 import { AddDefaults, setAddDefaults } from '@/db/settings';
-import { formatMoney } from '@/lib/money';
+import { formatMoneyExact } from '@/lib/money';
 import { haptics } from '@/lib/haptics';
 import { EntryType, formToStaged as formToStagedEntry, repeatKey, Staged } from '@/features/add/addEntry';
 import { applyPadKey, PadKey } from '@/lib/padMath';
@@ -140,7 +140,7 @@ export function createAddEntryStagingActions(input: Input) {
     if (editing || row.kind !== 'transaction') return false;
     const key = repeatKey(row);
     if (repeatWarning?.key === key) return false;
-    const what = `${formatMoney(row.amountMinor, currency)} · ${row.label}`;
+    const what = `${formatMoneyExact(row.amountMinor, currency)} · ${row.label}`;
     let message: string | null = null;
     if (rows.some((r) => r.kind === 'transaction' && repeatKey(r) === key)) {
       message = `${what} is already on your list below. Tap again to add it anyway.`;

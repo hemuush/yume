@@ -62,7 +62,7 @@ export function StagedList({
             return (
               <Text key={currency} style={styles.stagedHeadTotal}>
                 {!privateTotal && (netMinor >= 0 ? '+' : '−')}
-                {formatMaskableMoney(Math.abs(netMinor), { currency, masked: privateTotal })}
+                {formatMaskableMoney(Math.abs(netMinor), { currency, masked: privateTotal, exact: true })}
               </Text>
             );
           })}

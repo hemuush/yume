@@ -263,15 +263,21 @@ export function useChatAdd() {
     advance(entry);
   }, [advance, entry, say]);
 
+  /** The currency of the account an entry is on, so its amounts carry the right symbol. */
+  const currencyOf = useCallback(
+    (e: ChatEntry) => accounts.find((a) => a.id === e.accountId)?.currency,
+    [accounts]
+  );
+
   /** The words that show an answer in the chat ("Food & Dining", "SBI", "Yesterday"). */
   const labelOf = useCallback(
     (e: ChatEntry, field: Field): string => {
-      if (field === 'amount') return formatMoneyExact(e.amountMinor ?? 0);
+      if (field === 'amount') return formatMoneyExact(e.amountMinor ?? 0, currencyOf(e));
       if (field === 'direction') return e.friendSign === -1 ? 'I got it' : 'I gave it';
       if (field === 'note') return e.note || 'No note';
       return fieldValue(e, field, lookups);
     },
-    [lookups]
+    [currencyOf, lookups]
   );
 
   const answer = useCallback(
@@ -493,7 +499,7 @@ export function useChatAdd() {
         split && amounts
           ? split.map((part, i) => ({
               label: categories.find((c) => c.id === part.categoryId)?.name ?? 'Choose a category',
-              value: formatMoneyExact(amounts[i]),
+              value: formatMoneyExact(amounts[i], currencyOf(entry)),
             }))
           : null,
       rows: fieldsOf(entry.type).map((field) => ({
@@ -503,7 +509,7 @@ export function useChatAdd() {
         needed: need.includes(field),
       })),
     };
-  }, [categories, entry, lookups, split]);
+  }, [categories, currencyOf, entry, lookups, split]);
 
   /** Saves a split: one entry per part on the same account and day, as the form's split does. */
   const saveSplitEntry = useCallback(async () => {
@@ -549,7 +555,7 @@ export function useChatAdd() {
     }
   }, [entry, lookups.today, nameOfCategory, reset, say, split]);
 
-  const saveNow = useCallback(async () => {
+  const saveOnce = useCallback(async () => {
     if (saving || !entry || !summary?.complete) return;
     if (split) {
       await saveSplitEntry();
@@ -571,7 +577,7 @@ export function useChatAdd() {
           haptics.warn();
           say(
             'suu',
-            `You added ${formatMoneyExact(row.amountMinor)} · ${row.label} a moment ago. Tap Save again to add it anyway.`
+            `You added ${formatMoneyExact(row.amountMinor, currencyOf(entry))} · ${row.label} a moment ago. Tap Save again to add it anyway.`
           );
           return;
         }
@@ -602,6 +608,7 @@ export function useChatAdd() {
   }, [
     accounts,
     categories,
+    currencyOf,
     defaults,
     entry,
     lookups.today,
@@ -613,6 +620,18 @@ export function useChatAdd() {
     split,
     summary,
   ]);
+
+  // A synchronous lock: two quick taps both pass `saving` while the repeat check is awaited.
+  const saveLock = useRef(false);
+  const saveNow = useCallback(async () => {
+    if (saveLock.current) return;
+    saveLock.current = true;
+    try {
+      await saveOnce();
+    } finally {
+      saveLock.current = false;
+    }
+  }, [saveOnce]);
 
   /** Saves, but first asks about a date more than a week ahead: a wrong year is what that check is for (as in the form). */
   const save = useCallback(async () => {

@@ -541,6 +541,8 @@ interface DeletedAccount extends RowSnapshot {
   /** Loans and goals that pointed at the account; the delete unlinks them (ON DELETE SET NULL), Undo relinks. */
   linkedLoanIds: string[];
   linkedGoalIds: string[];
+  /** Investments paid from this account; the delete clears their funding link (ON DELETE SET NULL), Undo relinks. */
+  linkedFundedIds?: string[];
 }
 
 /**
@@ -599,8 +601,17 @@ export async function deleteAccount(id: string): Promise<DeletedAccount> {
       'SELECT id FROM savings_goals WHERE linked_account_id = ?',
       [id]
     );
+    const funded = await tx.getAllAsync<{ id: string }>(
+      'SELECT id FROM accounts WHERE funding_account_id = ?',
+      [id]
+    );
     await tx.runAsync('DELETE FROM accounts WHERE id = ?', [id]);
-    snapshot = { ...row, linkedLoanIds: loans.map((l) => l.id), linkedGoalIds: goals.map((g) => g.id) };
+    snapshot = {
+      ...row,
+      linkedLoanIds: loans.map((l) => l.id),
+      linkedGoalIds: goals.map((g) => g.id),
+      linkedFundedIds: funded.map((a) => a.id),
+    };
   });
   return snapshot as unknown as DeletedAccount;
 }
@@ -619,6 +630,12 @@ export async function restoreAccount(snapshot: DeletedAccount): Promise<void> {
         id,
         loanId,
       ]);
+    }
+    for (const fundedId of snapshot.linkedFundedIds ?? []) {
+      await tx.runAsync(
+        'UPDATE accounts SET funding_account_id = ? WHERE id = ? AND funding_account_id IS NULL',
+        [id, fundedId]
+      );
     }
     for (const goalId of snapshot.linkedGoalIds) {
       await tx.runAsync(

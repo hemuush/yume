@@ -283,6 +283,13 @@ export async function undoInstallmentPayment(loanPaymentId: string): Promise<voi
         fromDate: anchor.fromDate,
         anchorInstallmentNumber: anchor.anchorInstallmentNumber,
       });
+      // The EMI may no longer cover interest on the restored (higher) balance: refuse rather than delete the row and
+      // leave an active loan with no schedule.
+      if (!newSchedule.length || newSchedule[newSchedule.length - 1].outstandingAfterMinor !== 0) {
+        throw new Error(
+          'This installment can’t be undone: the current EMI no longer covers the interest on the balance it would restore.'
+        );
+      }
       await tx.runAsync(
         `DELETE FROM loan_payments WHERE loan_id = ? AND (status IN ('pending', 'overdue') OR id = ?)`,
         [current.loan_id, loanPaymentId]

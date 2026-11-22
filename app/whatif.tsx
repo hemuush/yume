@@ -70,7 +70,13 @@ function PaceLane({ width, color, faded }: { width: `${number}%`; color: string;
     <View style={styles.paceTrack}>
       {width !== '0%' && (
         <>
-          <View style={[styles.paceFill, { width, backgroundColor: color }, faded && { opacity: 0.35 }]} />
+          <View
+            style={[
+              styles.paceFill,
+              { width, backgroundColor: color },
+              faded && { opacity: theme.opacity.limit },
+            ]}
+          />
           <View style={[styles.paceDot, { left: width, borderColor: color }]} />
         </>
       )}

@@ -73,11 +73,12 @@ export async function convertLoansToWholeRupees(): Promise<number> {
           ]
         );
       }
-      // The last paid row's balance follows the loan's, so an Undo still sees the balance as unmoved.
+      // The last paid row's balance follows the loan's, so an Undo still sees the balance as unmoved. Only when it was unmoved:
+      // after a prepayment the two differ, and Undo must keep rebuilding the schedule.
       await tx.runAsync(
         `UPDATE loan_payments SET outstanding_after_minor = ?
-         WHERE loan_id = ? AND status = 'paid' AND installment_number = ?`,
-        [outstanding, loan.id, first.installment_number - 1]
+         WHERE loan_id = ? AND status = 'paid' AND installment_number = ? AND outstanding_after_minor = ?`,
+        [outstanding, loan.id, first.installment_number - 1, loan.outstanding_principal_minor]
       );
       await tx.runAsync(
         'UPDATE loans SET emi_amount_minor = ?, outstanding_principal_minor = ? WHERE id = ?',

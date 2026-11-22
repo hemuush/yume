@@ -1,4 +1,5 @@
 import { ENTRY_DRAFT_KEY } from '@/features/add/entryDraft';
+import { MAX_AMOUNT_MINOR } from '@/lib/amountLimits';
 import { getDb, type AppDb } from '@/db/client';
 import { resetSettingsCache } from '@/db/settings';
 import { assertValidIsoDate } from './date';
@@ -29,6 +30,8 @@ const CURRENT_WINS_SETTINGS = ['app_lock_enabled', 'hide_widget_values'];
 const PHONE_SETTINGS = [...DEVICE_BOUND_SETTINGS, ...CURRENT_WINS_SETTINGS];
 
 export const BACKUP_FORMAT_VERSION = 6;
+
+const ACCUMULATED_MINOR = new Set(['current_amount_minor', 'balance_after_minor']);
 
 const TABLES = [
   'accounts',
@@ -226,7 +229,12 @@ export async function restoreFromSnapshotOn(db: AppDb, snapshot: BackupSnapshot)
       throw new Error('This backup contains invalid goal reservations. Nothing was changed.');
     const badAmount = rows.some((r) =>
       Object.entries(r as Record<string, unknown>).some(
-        ([key, value]) => key.endsWith('_minor') && value != null && !Number.isSafeInteger(value)
+        ([key, value]) =>
+          key.endsWith('_minor') &&
+          value != null &&
+          (!Number.isSafeInteger(value) ||
+            // Running totals may legitimately pass one entry's cap; every other amount is capped as in the app.
+            (!ACCUMULATED_MINOR.has(key) && Math.abs(value as number) > MAX_AMOUNT_MINOR))
       )
     );
     if (badAmount) {

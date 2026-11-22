@@ -2,7 +2,7 @@ import { View, Pressable, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
 import { theme } from '@/constants/theme';
 import { EYEBROW } from '@/constants/textStyles';
-import { formatMoney } from '@/lib/money';
+import { formatMoneyExact } from '@/lib/money';
 import { withPressed } from '@/lib/pressed';
 import { categorySentence, parentNameOf } from '@/lib/categoryLabel';
 import { Category } from '@/types';
@@ -94,7 +94,7 @@ export function SplitCard({
                 <Text style={styles.name} numberOfLines={2}>
                   {labelOf(p.categoryId) ?? 'No category yet'}
                 </Text>
-                <Text style={styles.amount}>{formatMoney(Math.max(0, amounts[i]), currency)}</Text>
+                <Text style={styles.amount}>{formatMoneyExact(Math.max(0, amounts[i]), currency)}</Text>
               </View>
             );
           })}
@@ -102,7 +102,7 @@ export function SplitCard({
         {problem && (
           // The payment was changed on Add to less than the other parts: say what's off.
           <Text style={styles.problem}>
-            {splitProblemText(problem, parts, nameOf, (m) => formatMoney(m, currency))}. Tap Edit split.
+            {splitProblemText(problem, parts, nameOf, (m) => formatMoneyExact(m, currency))}. Tap Edit split.
           </Text>
         )}
       </View>

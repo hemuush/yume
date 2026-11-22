@@ -1,7 +1,9 @@
 import { toLocalIsoDate } from './date';
 
 const MONTHS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
-const MONTH = `(${MONTHS.join('|')})[a-z]*`;
+// Whole month names or their usual short forms only: "2 market" or "jane 5" are words, not 2 Mar / 5 Jan.
+const MONTH =
+  '(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)';
 // "24 sep", "24 september", "sep 24", "24/9", "24-9", "24.9" — day first, as dates are written here.
 const DAY_MONTH_NAME = new RegExp(`(?:^|\\s)(\\d{1,2})(?:st|nd|rd|th)?\\s+${MONTH}(?=\\s|$)`, 'i');
 const MONTH_NAME_DAY = new RegExp(`(?:^|\\s)${MONTH}\\s+(\\d{1,2})(?:st|nd|rd|th)?(?=\\s|$)`, 'i');

@@ -148,7 +148,7 @@ const styles = themedStyles(() =>
     swatch: { width: 12, height: 12, borderRadius: 4, borderWidth: 1 },
     swatchDashed: { borderStyle: 'dashed' },
     legendText: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
-    faint: { opacity: 0.45 },
+    faint: { opacity: theme.opacity.disabled },
     today: { borderWidth: 2, borderColor: theme.colors.ink },
     day: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
     stateMark: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textPrimary },

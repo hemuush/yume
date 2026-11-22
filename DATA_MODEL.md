@@ -1,6 +1,6 @@
 # Data model
 
-Persisted money uses **integer minor units** (for example paise). Rate, interest and schedule calculations may use floating-point intermediates before rounding to stored units; do not assume every intermediate is an integer. New typed amounts intentionally round to whole major units in [money.ts](src/lib/money.ts). Unedited historical and loan-linked amounts can retain minor-unit precision. Display formatting uses whole major units.
+Persisted money uses **integer minor units** (for example paise). Rate, interest and schedule calculations may use floating-point intermediates before rounding to stored units; do not assume every intermediate is an integer. Typed amounts keep two decimals (`toMinor` in [money.ts](src/lib/money.ts)); loan principal, asset values, prepayments and EMIs are whole rupees (`toWholeMinor`), though a loan saved before that change keeps the paise it had. Recorded amounts show paise only when they have any; totals and averages show whole units.
 
 Currency is never hardcoded. `formatMoney()` reads the user's chosen currency from Settings; a specific ISO code can still be passed per-call (an account keeps its own currency if it differs from the default).
 

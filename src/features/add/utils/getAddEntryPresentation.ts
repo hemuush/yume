@@ -1,4 +1,4 @@
-import { formatMoney } from '@/lib/money';
+import { formatMoneyExact } from '@/lib/money';
 import { hasOperator } from '@/lib/padMath';
 import { splitProblem } from '@/features/add/splitDraft';
 import { formatTyped, saveButtonTitle } from '@/features/add/saveEntry';
@@ -78,7 +78,7 @@ export function getAddEntryPresentation(input: Input) {
     : (expr !== '' || rows.length === 0) && !!currentProblem;
 
   // The Save button names the amount it saves; the category shows on the grid and the account on its chip.
-  const saveSummary = amountMinor > 0 && !invalidAmount ? formatMoney(amountMinor, currency) : undefined;
+  const saveSummary = amountMinor > 0 && !invalidAmount ? formatMoneyExact(amountMinor, currency) : undefined;
 
   const saveTitle = saveButtonTitle({
     saving,

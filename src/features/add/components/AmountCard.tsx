@@ -3,7 +3,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Text } from '@/components/Text';
 import Feather from '@expo/vector-icons/Feather';
 import { theme } from '@/constants/theme';
-import { formatMoney, getCurrencySymbol } from '@/lib/money';
+import { formatMoneyExact, getCurrencySymbol } from '@/lib/money';
 import { haptics } from '@/lib/haptics';
 import { styles } from '@/features/add/add.styles';
 import { ADD_TYPES, EntryType, TYPE_WASH, typeWash } from '@/features/add/addEntry';
@@ -132,7 +132,7 @@ export function AmountCard({
                 accessibilityRole="button"
                 accessibilityState={{ selected: active }}
               >
-                <Text style={styles.frequentChipText}>{formatMoney(minor, currency)}</Text>
+                <Text style={styles.frequentChipText}>{formatMoneyExact(minor, currency)}</Text>
               </Pressable>
             );
           })}

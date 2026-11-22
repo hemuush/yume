@@ -267,7 +267,10 @@ export function AddLoanModal({
 
   const nextStep = () => {
     setError(null);
-    const problem = problemWithLoanBasics(form);
+    // A blank rate is not 0%: an interest-free loan has to be typed as 0.
+    const problem = rate.trim()
+      ? problemWithLoanBasics(form)
+      : 'Enter the interest rate, or 0 if there is none';
     if (problem) {
       setError(problem);
       return;
