@@ -1,3 +1,4 @@
+import { pullRefreshColors } from '@/components/pullRefreshColors';
 import { useKeptAcrossModeChange } from '@/theme/useKeptAcrossModeChange';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, ScrollView, ScrollViewInstance, RefreshControl } from 'react-native';
@@ -304,7 +305,7 @@ export default function ReportsScreen() {
         ref={scrollRef}
         testID="reports-content"
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={accent} colors={[accent]} />
+          <RefreshControl refreshing={refreshing} onRefresh={refresh} {...pullRefreshColors()} />
         }
         contentContainerStyle={{
           paddingTop: 12,

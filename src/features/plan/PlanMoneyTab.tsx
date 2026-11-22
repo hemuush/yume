@@ -75,7 +75,7 @@ export const PlanMoneyTab = memo(function PlanMoneyTab({
   );
   const cut = WHAT_IF_CUTS[1];
   const savings = whatIf ? projectedMonthlySpend(whatIf.avgMonthlyMinor, cut).extraMinor : 0;
-  const { overCount, rows: budgets } = data.budgets;
+  const { overCount, rows: budgets, budgetedMinor, usedMinor } = data.budgets;
   const openGoals = data.goals.filter((goal) => !goal.archived);
   const reached = hideAmounts
     ? 0
@@ -100,7 +100,11 @@ export const PlanMoneyTab = memo(function PlanMoneyTab({
               </Text>
               {budgets.length > 0 && (
                 <Text style={[styles.ledgerNote, overCount > 0 && styles.ledgerWarning]}>
-                  {overCount > 0 ? `${overCount} over budget` : 'Within limits'}
+                  {overCount > 0
+                    ? `${overCount} over budget`
+                    : hideAmounts || budgetedMinor <= usedMinor
+                      ? 'Within limits'
+                      : `${formatMoney(budgetedMinor - usedMinor, data.currency)} left`}
                 </Text>
               )}
             </View>

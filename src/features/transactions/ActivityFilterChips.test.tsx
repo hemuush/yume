@@ -64,6 +64,23 @@ describe.each(LAYOUTS)('filter row, %s', (_name, width, fontScale) => {
     rowAt(width, fontScale, over);
   const TYPES = ['Show all', 'Show spent', 'Show income', 'Show transfers'];
 
+  it('offers the period’s top categories after the types, and not once a category is picked', () => {
+    const quick = [
+      { id: 'food', name: 'Food' },
+      { id: 'travel', name: 'Travel' },
+    ];
+    const onPick = jest.fn();
+    expect(row({ quickCategories: quick, onPickCategory: onPick })).toEqual([
+      'Filters',
+      ...TYPES,
+      'Show only Food',
+      'Show only Travel',
+    ]);
+    expect(row({ quickCategories: quick, onPickCategory: onPick, categoryIds: ['food'] })).not.toContain(
+      'Show only Food'
+    );
+  });
+
   it('has no Clear all while nothing is picked', () => {
     expect(row()).toEqual(['Filters', ...TYPES]);
   });

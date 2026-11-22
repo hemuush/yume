@@ -1,5 +1,6 @@
 import { Account, Category, Transaction } from '@/types';
 import {
+  topSpendCategories,
   weekContaining,
   stepWeekAnchor,
   weekCompareLabel,
@@ -320,5 +321,50 @@ describe('searchSuggestionsFor', () => {
 
   it('has nothing to suggest from an empty period', () => {
     expect(searchSuggestionsFor([], cats, none)).toEqual([]);
+  });
+});
+
+describe('topSpendCategories', () => {
+  const cat = (id: string, parentId: string | null = null, extra: Partial<Category> = {}) =>
+    ({ id, name: id, parentId, kind: 'expense', isSystem: false, isSensitive: false, ...extra }) as Category;
+  const byId = new Map(
+    [
+      cat('Food'),
+      cat('Zomato', 'Food'),
+      cat('Travel'),
+      cat('Rent'),
+      cat('Loan EMI', null, { isSystem: true }),
+      cat('Medical', null, { isSensitive: true }),
+    ].map((c) => [c.id, c])
+  );
+  const tx = (categoryId: string, amountMinor: number, extra: Partial<Transaction> = {}) =>
+    ({
+      id: `${categoryId}${amountMinor}`,
+      type: 'expense',
+      categoryId,
+      amountMinor,
+      ...extra,
+    }) as Transaction;
+
+  it('rolls subcategories into their parent, biggest first, and leaves out built-in and hidden ones', () => {
+    const list = [
+      tx('Zomato', 300),
+      tx('Food', 400),
+      tx('Travel', 600),
+      tx('Rent', 100),
+      tx('Loan EMI', 9000),
+      tx('Medical', 9000),
+    ];
+    expect(topSpendCategories(list, byId).map((c) => c.id)).toEqual(['Food', 'Travel', 'Rent']);
+  });
+
+  it('takes a refund off its category, and drops one that nets to nothing', () => {
+    const list = [tx('Travel', 500), tx('Travel', 500, { type: 'income', isRefund: true }), tx('Rent', 100)];
+    expect(topSpendCategories(list, byId).map((c) => c.id)).toEqual(['Rent']);
+  });
+
+  it('keeps only the number asked for', () => {
+    const list = [tx('Food', 4), tx('Travel', 3), tx('Rent', 2)];
+    expect(topSpendCategories(list, byId, 2).map((c) => c.id)).toEqual(['Food', 'Travel']);
   });
 });

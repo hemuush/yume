@@ -376,3 +376,29 @@ export function searchSuggestionsFor(
   if (transactions[0]) out.push(dayMonth(transactions[0].date));
   return out;
 }
+
+/**
+ * The categories this period's spending went to most, for Activity's one-tap category chips: spending (a refund
+ * lowers its category), each entry counted under its top-level category so a parent and its subcategories are one
+ * chip, biggest first. Built-in categories (EMIs, fees) and hidden (sensitive) ones are left out.
+ */
+export function topSpendCategories(
+  transactions: readonly Transaction[],
+  categoriesById: ReadonlyMap<string, Category>,
+  limit = 4
+): { id: string; name: string }[] {
+  const total = new Map<string, number>();
+  for (const t of transactions) {
+    if (!t.categoryId || (t.type !== 'expense' && !(t.type === 'income' && t.isRefund))) continue;
+    const category = categoriesById.get(t.categoryId);
+    if (!category) continue;
+    const top = category.parentId ? categoriesById.get(category.parentId) : category;
+    if (!top || top.isSystem || top.isSensitive) continue;
+    total.set(top.id, (total.get(top.id) ?? 0) + (t.type === 'expense' ? t.amountMinor : -t.amountMinor));
+  }
+  return [...total]
+    .filter(([, minor]) => minor > 0)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, limit)
+    .map(([id]) => ({ id, name: categoriesById.get(id)!.name }));
+}

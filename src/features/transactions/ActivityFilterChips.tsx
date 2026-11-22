@@ -50,6 +50,8 @@ export function ActivityFilterChips({
   onClearAll,
   onOpenFilters,
   filterCount = 0,
+  quickCategories = [],
+  onPickCategory,
 }: {
   filterType: ActivityType;
   onFilterType: (type: ActivityType) => void;
@@ -65,6 +67,9 @@ export function ActivityFilterChips({
   onClearAll: () => void;
   onOpenFilters?: () => void;
   filterCount?: number;
+  /** This period's biggest spending categories, one tap each. Shown only while no category is picked. */
+  quickCategories?: { id: string; name: string }[];
+  onPickCategory?: (id: string) => void;
 }) {
   const picked =
     categoryIds.length + accountIds.length + (expenseLabel ? 1 : 0) + (filterType === 'all' ? 0 : 1);
@@ -196,6 +201,22 @@ export function ActivityFilterChips({
           </ScrollView>
         )}
       </View>
+      {categoryIds.length === 0 && quickCategories.length > 0 && onPickCategory && (
+        <View style={styles.appliedFilters} accessibilityLabel="Top spending categories">
+          {quickCategories.map((c) => (
+            <Pressable
+              key={c.id}
+              onPress={() => onPickCategory(c.id)}
+              hitSlop={CHIP_SLOP}
+              style={withPressedTint(accent, styles.chip)}
+              accessibilityRole="button"
+              accessibilityLabel={`Show only ${c.name}`}
+            >
+              <Text style={styles.chipText}>{c.name}</Text>
+            </Pressable>
+          ))}
+        </View>
+      )}
       {picked > 0 && (
         <View style={styles.appliedFilters}>
           {pickedChips}

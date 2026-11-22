@@ -1,3 +1,4 @@
+import { pullRefreshColors } from '@/components/pullRefreshColors';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, StyleSheet, RefreshControl } from 'react-native';
 import Animated, { useSharedValue, useAnimatedScrollHandler } from 'react-native-reanimated';
@@ -365,8 +366,7 @@ export default function DashboardScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor={accent}
-            colors={[accent]}
+            {...pullRefreshColors()}
             // Android draws the spinner at the ScrollView's top edge, which is
             // under the header — start it below the header instead.
             progressViewOffset={headerHeight}

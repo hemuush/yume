@@ -1,3 +1,4 @@
+import { pullRefreshColors } from '@/components/pullRefreshColors';
 import { type ComponentRef, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
@@ -149,12 +150,7 @@ export default function PlanScreen() {
         style={styles.scroll}
         testID="plan-content"
         refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={refresh}
-            tintColor={theme.colors.link}
-            colors={[theme.colors.link]}
-          />
+          <RefreshControl refreshing={refreshing} onRefresh={refresh} {...pullRefreshColors()} />
         }
         contentContainerStyle={{
           paddingTop: tab === 'upcoming' ? 0 : theme.layout.screenTopGap,

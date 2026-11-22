@@ -14,7 +14,7 @@ import type { McIconName } from '@/components/iconName';
 import { theme } from '@/constants/theme';
 import { payoffMonthShort } from '@/lib/loanPayoff';
 import type { LoanProgress } from '@/db/loans';
-import { loanGlyph, loanIcon, loanTint } from './loanIdentity';
+import { loanBarTone, loanGlyph, loanIcon, loanTint } from './loanIdentity';
 import { flatSection } from '@/components/screenStyles';
 import { DUE_SOON_DAYS } from '@/lib/dueDate';
 import { daysUntilIsoDate, toLocalIsoDate } from '@/lib/date';
@@ -84,17 +84,17 @@ export function LoanCard({
         !compact && dueSoon && styles.footerDue,
       ]}
     >
-      {compact ? (
+      {compact && !nextPayment ? (
+        <Text style={[styles.compactDate, styles.compactLine, lateDays > 0 && styles.late]} numberOfLines={1}>
+          {`EMI ${formatMoney(nextEmiMinor)} · ${nextWhen}`}
+        </Text>
+      ) : compact ? (
         <>
           <View style={styles.compactDue}>
-            {nextPayment && <Text style={[styles.nextLabel, styles.priorityLabel]}>Next payment</Text>}
-            <Text style={[styles.compactDate, lateDays > 0 && styles.late]}>
-              {nextPayment ? nextWhen : `EMI · ${nextWhen}`}
-            </Text>
+            <Text style={[styles.nextLabel, styles.priorityLabel]}>Next payment</Text>
+            <Text style={[styles.compactDate, lateDays > 0 && styles.late]}>{nextWhen}</Text>
           </View>
-          <Text style={[styles.compactEmi, nextPayment && styles.priorityAmount]}>
-            {formatMoney(nextEmiMinor)}
-          </Text>
+          <Text style={[styles.compactEmi, styles.priorityAmount]}>{formatMoney(nextEmiMinor)}</Text>
         </>
       ) : (
         <View style={styles.footerText}>
@@ -112,7 +112,7 @@ export function LoanCard({
         accessibilityRole="button"
         accessibilityLabel={`${isBorrowed ? 'Pay' : 'Mark received'} next EMI for ${loan.counterparty}`}
         accessibilityHint={compact ? `${formatMoney(nextEmiMinor)}, ${nextWhen}` : undefined}
-        hitSlop={8}
+        hitSlop={compact ? 12 : 8}
         style={({ pressed }) => [
           styles.pill,
           compact ? styles.compactPay : { backgroundColor: ink },
@@ -169,6 +169,20 @@ export function LoanCard({
             />
           )}
         </Pressable>
+        {!isClosed && (
+          <View
+            style={styles.compactTrack}
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
+          >
+            <View
+              style={[
+                styles.compactFill,
+                { width: `${Math.max(0, Math.min(1, fraction)) * 100}%`, backgroundColor: loanBarTone(hue) },
+              ]}
+            />
+          </View>
+        )}
         {payment}
       </View>
     );
@@ -254,7 +268,7 @@ const styles = themedStyles(() =>
     card: { ...flatSection(), marginHorizontal: 2, marginBottom: 12, padding: 14 },
     compactCard: {
       paddingHorizontal: 12,
-      paddingTop: 8,
+      paddingTop: 6,
       paddingBottom: 4,
     },
     compactDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.borderSoft },
@@ -268,7 +282,18 @@ const styles = themedStyles(() =>
       borderRadius: 12,
       backgroundColor: theme.colors.home.control,
     },
+    // How much of the loan is repaid, under the name: indented to sit beneath the text, past the icon.
+    compactTrack: {
+      height: 4,
+      borderRadius: 2,
+      marginStart: 42,
+      marginBottom: 6,
+      backgroundColor: theme.colors.inkHairline,
+      overflow: 'hidden',
+    },
+    compactFill: { height: '100%', borderRadius: 2 },
     compactDue: { flex: 1, minWidth: 88, gap: 2 },
+    compactLine: { flex: 1, minWidth: 0 },
     compactDate: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
     priorityLabel: { fontFamily: theme.font.bodyMedium, color: theme.colors.link },
     compactEmi: {
@@ -281,7 +306,13 @@ const styles = themedStyles(() =>
     },
     late: { color: theme.colors.expenseText },
     priorityAmount: { fontFamily: theme.font.bodyBold, fontSize: 15 },
-    compactPay: { backgroundColor: 'transparent', minWidth: 44, alignItems: 'center', paddingHorizontal: 6 },
+    compactPay: {
+      backgroundColor: 'transparent',
+      minWidth: 44,
+      minHeight: 34,
+      alignItems: 'center',
+      paddingHorizontal: 6,
+    },
     compactPayText: {
       color: theme.colors.link,
       backgroundColor: theme.colors.home.control,

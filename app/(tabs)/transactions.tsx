@@ -1,3 +1,4 @@
+import { pullRefreshColors } from '@/components/pullRefreshColors';
 import { useLocalDayRefresh } from '@/hooks/useLocalDayRefresh';
 import { Appear } from '@/components/Appear';
 import { CONTENT_ENTER, staggerEnter } from '@/lib/animation';
@@ -59,6 +60,7 @@ import {
   emptyPeriodTitle,
   searchDayLabel,
   searchSuggestionsFor,
+  topSpendCategories,
   type ValueNote,
 } from '@/features/transactions/transactions.helpers';
 import type { ActivityType } from '@/features/transactions/activityFilter';
@@ -242,6 +244,10 @@ export default function TransactionsScreen() {
   // investment categories stay out). Week = bar per day; month = bar per week, as 28-31 bars crowded.
   const accountsById = useMemo(() => new Map(accounts.map((a) => [a.id, a])), [accounts]);
   const categoriesById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
+  const quickCategories = useMemo(
+    () => topSpendCategories(transactions, categoriesById),
+    [transactions, categoriesById]
+  );
   const chartTransactions = useMemo(
     () => chartTransactionsFor(transactions, accountsById, categoriesById, getCachedCurrency(), hideAmounts),
     [transactions, accountsById, categoriesById, hideAmounts]
@@ -655,8 +661,7 @@ export default function TransactionsScreen() {
                 <RefreshControl
                   refreshing={refreshing}
                   onRefresh={refresh}
-                  tintColor={accent}
-                  colors={[accent]}
+                  {...pullRefreshColors()}
                   // Android draws the spinner at the list's top edge, which is under the header.
                   progressViewOffset={headerHeight}
                 />
@@ -742,6 +747,18 @@ export default function TransactionsScreen() {
                     onRemoveCategory={(id) => setFilterCategoryIds((ids) => ids.filter((x) => x !== id))}
                     onRemoveAccount={(id) => setFilterAccountIds((ids) => ids.filter((x) => x !== id))}
                     onClearAll={clearFilters}
+                    quickCategories={
+                      searching ||
+                      filterType === 'income' ||
+                      filterType === 'transfer' ||
+                      filterType === 'invest'
+                        ? undefined
+                        : quickCategories
+                    }
+                    onPickCategory={(id) => {
+                      haptics.tap();
+                      setFilterCategoryIds([id]);
+                    }}
                   />
 
                   {/* The same Suu empty state as every other screen, not a bare line of grey text. */}
