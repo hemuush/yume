@@ -13,6 +13,7 @@ import { hasLoggedOn, listLoansDue, listReminderAttention } from '@/db/notificat
 import { resolveQueuedSpendAlerts } from '@/db/queuedSpendAlerts';
 import { theme } from '@/constants/theme';
 import { toLocalIsoDate } from './date';
+import { recordRebuild } from './rebuildState';
 import { errorMessage } from './errorMessage';
 import { NOTIFICATION_ROUTES, NotificationRoute, planNotifications } from './notificationPlan';
 
@@ -186,29 +187,11 @@ let rebuildChain: Promise<unknown> = Promise.resolve();
 export function rebuildNotifications(): Promise<boolean> {
   const run = rebuildChain.then(doRebuild, doRebuild).then((ok) => {
     lastRebuildFailed = !ok;
-    if (ok) lastRebuiltAt = new Date();
+    recordRebuild(ok);
     return ok;
   });
   rebuildChain = run;
   return run;
-}
-
-/** When the last rebuild that worked finished. */
-let lastRebuiltAt: Date | null = null;
-
-/** How long a rebuild stays good for the app coming to the foreground: writes that change content rebuild by themselves. */
-const REBUILD_GOOD_MS = 6 * 60 * 60 * 1000;
-
-/**
- * Whether the plan is worth working out again when the app comes to the front: never built, last one failed, a new
- * day has begun (the 14-day horizon moves) or it is a few hours old. A quick hop back to the app changes nothing.
- */
-export function rebuildIsStale(now: Date = new Date()): boolean {
-  if (!lastRebuiltAt || lastRebuildFailed) return true;
-  return (
-    toLocalIsoDate(lastRebuiltAt) !== toLocalIsoDate(now) ||
-    now.getTime() - lastRebuiltAt.getTime() > REBUILD_GOOD_MS
-  );
 }
 
 /** Whether the latest rebuild, from any caller (the one at app start included), could not schedule what is enabled. */

@@ -226,7 +226,7 @@ describe('AddCategoryModal — new category', () => {
   it('offers the whole built-in icon list: the first 24 at once, the rest under Browse all icons', async () => {
     const { tree } = await render();
     measureGrid(tree);
-    expect(CATEGORY_ICON_CHOICES.length).toBe(104);
+    expect(CATEGORY_ICON_CHOICES.length).toBe(142);
     expect(new Set(CATEGORY_ICON_CHOICES).size).toBe(CATEGORY_ICON_CHOICES.length);
     const label = (name: string) => `${name.replace(/-/g, ' ')} icon`;
     for (const name of CATEGORY_ICON_CHOICES.slice(0, 24)) expect(pressable(tree, label(name))).toBeDefined();

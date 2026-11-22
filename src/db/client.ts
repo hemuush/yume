@@ -1,7 +1,7 @@
 import * as SQLite from 'expo-sqlite';
 import { Directory, File, Paths } from 'expo-file-system';
 import { CREATE_TABLES_SQL } from './schema';
-import { DEFAULT_CATEGORIES } from '@/constants/categories';
+import { BUILT_IN_ICON_UPGRADES, DEFAULT_CATEGORIES } from '@/constants/categories';
 import { newId } from '@/lib/id';
 import type { AppDb, SqlParam } from './dbTypes';
 import { primeCurrencyCache } from './currencyCache';
@@ -164,6 +164,17 @@ const LEGACY_CATEGORY_COLOR_REMAP: { name: string; kind: 'income' | 'expense'; f
     { name: 'Miscellaneous', kind: 'expense', from: '#71717A', to: '#A8D8FF' },
   ];
 
+async function upgradeBuiltInCategoryIcons(db: AppDb): Promise<void> {
+  for (const u of BUILT_IN_ICON_UPGRADES) {
+    await db.runAsync('UPDATE categories SET icon = ? WHERE name = ? AND kind = ? AND icon = ?', [
+      u.to,
+      u.name,
+      u.kind,
+      u.from,
+    ]);
+  }
+}
+
 async function remapLegacyCategoryColors(db: AppDb): Promise<void> {
   for (const r of LEGACY_CATEGORY_COLOR_REMAP) {
     await db.runAsync('UPDATE categories SET color = ? WHERE name = ? AND kind = ? AND color = ?', [
@@ -241,6 +252,7 @@ async function applyIdempotentMigrations(db: AppDb): Promise<void> {
   await ensureColumn(db, 'categories', 'is_system', `is_system INTEGER NOT NULL DEFAULT 0`);
   await flagSystemCategories(db);
   await remapLegacyCategoryColors(db);
+  await upgradeBuiltInCategoryIcons(db);
 
   if (addedIsSensitive) {
     // One-time backfill: the two built-ins this feature needs start flagged on upgrade, as on a fresh

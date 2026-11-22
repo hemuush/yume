@@ -2,7 +2,7 @@ import { runDueRecurringRules } from '@/db/recurring';
 import { runLocalBackupIfDue } from './localBackup';
 import { emitTransactionsChanged } from './dataEvents';
 import { rebuildNotificationsAfterCommit } from '@/db/afterCommit';
-import { rebuildIsStale } from '@/lib/notifications';
+import { rebuildIsStale } from '@/lib/rebuildState';
 
 let running: Promise<void> | null = null;
 

@@ -1,4 +1,4 @@
-/** The account picker names an investment as an investment (not "savings") and gives it the trend icon. */
+/** The account picker names an investment as an investment (not "savings") and gives it its kind’s icon. */
 import { act, create, ReactTestRenderer } from 'react-test-renderer';
 import { Text } from 'react-native';
 import type { Account } from '@/types';
@@ -39,10 +39,10 @@ const icons = (tree: ReactTestRenderer) =>
   tree.root.findAll((n) => (n.type as unknown) === 'MaterialCommunityIcons').map((n) => n.props.name);
 
 describe('AccountPickList', () => {
-  it('names an investment as an investment, with its kind and the trend icon', () => {
+  it('names an investment as an investment, with its kind and that kind’s icon', () => {
     const tree = render([account({ investment: { kind: 'mutual_fund' } as Account['investment'] })]);
     expect(subs(tree)[0]).toMatch(/^investment · mutual fund/);
-    expect(icons(tree)).toEqual(['trending-up']);
+    expect(icons(tree)).toEqual(['chart-areaspline']);
   });
 
   it('keeps a plain savings account as savings with the piggy bank', () => {

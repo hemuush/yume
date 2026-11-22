@@ -141,7 +141,7 @@ const AccountTile = memo(function AccountTile({
   accent: string;
   onOpen: (account: Account) => void;
 }) {
-  const icon = accountIcon(a.type, !!a.investment);
+  const icon = accountIcon(a.type, a.investment);
   const hue = accountHue(a.type, accent);
   const isOwed = a.currentBalanceMinor < 0;
 

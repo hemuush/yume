@@ -316,7 +316,7 @@ export async function getAccountsWidgetData(): Promise<AccountsWidgetData> {
     typeLabel: a.investment
       ? 'Investment'
       : a.type.charAt(0).toUpperCase() + a.type.slice(1).replace('_', ' '),
-    icon: accountIcon(a.type, !!a.investment),
+    icon: accountIcon(a.type, a.investment),
     hue: accountWidgetHue(a.type, theme.primary, theme.secondary),
     // Same rule as Home's account cards: the account's own currency, and a
     // savings balance masked when "hide savings & investment amounts" is on.

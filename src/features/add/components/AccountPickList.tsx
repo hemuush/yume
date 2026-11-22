@@ -41,7 +41,7 @@ export function AccountPickList({
           >
             <View style={[styles.transferIcon, { backgroundColor: accountBadgeColor(a.type, accent) }]}>
               <MaterialCommunityIcons
-                name={accountIcon(a.type, !!a.investment) as McIconName}
+                name={accountIcon(a.type, a.investment) as McIconName}
                 size={18}
                 color={theme.colors.ink}
               />

@@ -86,3 +86,34 @@ describe('schema versioning', () => {
     expect(await versionOf(db)).toBe(7);
   });
 });
+
+describe('built-in category icons', () => {
+  const insert = (
+    db: Awaited<ReturnType<typeof freshDb>>,
+    id: string,
+    name: string,
+    kind: string,
+    icon: string
+  ) =>
+    db.runAsync(
+      "INSERT INTO categories (id, name, kind, icon, color, sort_order) VALUES (?, ?, ?, ?, '#8FCBFF', 0)",
+      [id, name, kind, icon]
+    );
+  const iconOf = async (db: Awaited<ReturnType<typeof freshDb>>, id: string) =>
+    (await db.getFirstAsync<{ icon: string }>('SELECT icon FROM categories WHERE id = ?', [id]))?.icon;
+
+  it('moves a built-in that still has its old picture to the better one, and leaves a changed or own category alone', async () => {
+    const db = await freshDb();
+    await insert(db, 'emi', 'Loan EMI', 'expense', 'credit-card');
+    await insert(db, 'card', 'Credit Card Payment', 'expense', 'credit-card');
+    await insert(db, 'changed', 'Subscriptions', 'expense', 'netflix'); // the person chose their own
+    await insert(db, 'mine', 'My cards', 'expense', 'credit-card'); // not a built-in
+    await runMigrations(db);
+    expect(await iconOf(db, 'emi')).toBe('bank-transfer');
+    expect(await iconOf(db, 'card')).toBe('credit-card-check');
+    expect(await iconOf(db, 'changed')).toBe('netflix');
+    expect(await iconOf(db, 'mine')).toBe('credit-card');
+    await runMigrations(db); // and nothing moves twice
+    expect(await iconOf(db, 'emi')).toBe('bank-transfer');
+  });
+});

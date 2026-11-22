@@ -23,7 +23,7 @@ jest.mock('@/lib/account', () => {
   const actual = jest.requireActual('@/lib/account');
   return {
     ...actual,
-    accountIcon: (type: string, investment: boolean) => {
+    accountIcon: (type: string, investment: unknown) => {
       mockDrawn.tiles.push(type);
       return actual.accountIcon(type, investment);
     },

@@ -69,7 +69,7 @@ function Tab({
       <RNAnimated.View style={animatedStyle}>
         <Animated.View style={[styles.tab, { height: size, borderRadius: size / 2 }]}>
           <Animated.View style={popStyle}>
-            <Icon color={focused ? theme.colors.ink : theme.colors.inkSoft} size={20} />
+            <Icon color={focused ? theme.colors.ink : theme.colors.inkSoft} size={20} active={focused} />
           </Animated.View>
           {showLabel && (
             <Text style={[styles.label, focused && styles.labelSelected]} numberOfLines={1}>

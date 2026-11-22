@@ -1,4 +1,5 @@
 import { INVESTMENT_KIND_LABEL } from './investment';
+import type { InvestmentKind } from '@/types';
 import { theme } from '@/constants/theme';
 import { Account } from '@/types';
 import { getCachedCurrency } from '@/db/settings';
@@ -33,8 +34,27 @@ export function accountTypeLabel(account: Pick<Account, 'type' | 'investment'>):
     : 'investment';
 }
 
-export function accountIcon(type: Account['type'], investment = false): string {
-  return investment ? 'trending-up' : (ACCOUNT_ICON[type] ?? 'credit-card');
+/** An investment account's picture by what it holds, so a gold account and a mutual fund are told apart at a glance. */
+const INVESTMENT_ICON: Record<InvestmentKind, string> = {
+  mutual_fund: 'chart-areaspline',
+  stocks: 'chart-line',
+  gold: 'gold',
+  fixed_deposit: 'bank-check',
+  ppf_epf: 'shield-account',
+  other: 'trending-up',
+};
+
+/**
+ * Pass the account's `investment` (or `true` where only "it is one" is known): an investment shows its kind's picture, or the
+ * plain trend line when the kind is not known.
+ */
+export function accountIcon(
+  type: Account['type'],
+  investment: boolean | { kind?: InvestmentKind | null } | null | undefined = false
+): string {
+  if (!investment) return ACCOUNT_ICON[type] ?? 'credit-card';
+  const kind = typeof investment === 'object' ? investment.kind : null;
+  return (kind && INVESTMENT_ICON[kind]) || 'trending-up';
 }
 
 /** The ids of the savings accounts — what "hide savings & investment amounts" masks transfers by. */

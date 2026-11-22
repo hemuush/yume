@@ -104,7 +104,7 @@ const AccountTile = memo(function AccountTile({
     >
       <View style={styles.head}>
         <CategoryIcon
-          name={accountIcon(account.type, !!account.investment)}
+          name={accountIcon(account.type, account.investment)}
           color={quiet ? theme.colors.textMuted : accountBadgeColor(account.type, accent)}
           square={28}
           size={14}

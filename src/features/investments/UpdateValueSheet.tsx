@@ -182,7 +182,7 @@ export function UpdateValueSheet({
       <DraftCard
         ledgerStyle={ledgerStyle}
         hue={accountHue(account.type, accent)}
-        icon={accountIcon(account.type, true)}
+        icon={accountIcon(account.type, account.investment ?? true)}
         title={account.name}
         kicker="Investment"
         figure={money(account.currentBalanceMinor)}

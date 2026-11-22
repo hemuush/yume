@@ -11,7 +11,6 @@ import {
   notificationRoute,
   rebuildNotifications,
   rebuildFailed,
-  rebuildIsStale,
   subscribeToNotificationTaps,
   NOTIFICATION_ROUTES,
 } from './notifications';
@@ -24,6 +23,7 @@ import {
 } from '@/db/settings';
 import { hasLoggedOn, listLoansDue, listReminderAttention } from '@/db/notificationData';
 import { addDaysToIsoDate, toLocalIsoDate } from './date';
+import { rebuildIsStale } from './rebuildState';
 
 jest.mock('@/db/settings', () => ({
   getHideSensitiveAmounts: jest.fn(async () => false),

@@ -4,6 +4,7 @@ import { StyleSheet, Text } from 'react-native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { CategoryGlyph } from './CategoryGlyph';
 import { CategoryIcon } from './CategoryIcon';
+import { categoryTone } from '@/lib/categoryTone';
 
 const COFFEE = '☕';
 const FAMILY = '\u{1F468}‍\u{1F469}‍\u{1F467}‍\u{1F466}';
@@ -67,5 +68,29 @@ describe('CategoryIcon', () => {
       StyleSheet.flatten(t.root.findAll((n) => typeof n.type === 'string')[0].props.style);
     expect(tile(own)).toEqual(tile(builtIn));
     expect(own.root.findByType(Text).props.children).toBe(COFFEE);
+  });
+});
+
+describe('CategoryIcon tile', () => {
+  const tileStyle = (t: ReactTestRenderer) =>
+    StyleSheet.flatten(t.root.findAll((n) => typeof n.type === 'string')[0].props.style);
+
+  it('is a wash of the category colour with a deep glyph of the same hue', () => {
+    const tree = render(<CategoryIcon name="home" color="#FF9E7D" square={40} size={18} />);
+    const tone = categoryTone('#FF9E7D')!;
+    expect(tileStyle(tree).backgroundColor).toBe(tone.fill);
+    expect(tree.root.findByType(MaterialCommunityIcons).props.color).toBe(tone.glyph);
+  });
+
+  it('gives two categories two different tiles', () => {
+    const a = render(<CategoryIcon name="home" color="#FF9E7D" />);
+    const b = render(<CategoryIcon name="home" color="#8FCBFF" />);
+    expect(tileStyle(a).backgroundColor).not.toBe(tileStyle(b).backgroundColor);
+  });
+
+  it('stays the quiet neutral tile when the colour is not a hex value', () => {
+    const tree = render(<CategoryIcon name="home" color="not-a-colour" />);
+    expect(tileStyle(tree).backgroundColor).not.toBe(categoryTone('#FF9E7D')!.fill);
+    expect(tree.root.findByType(MaterialCommunityIcons).props.color).not.toBe(categoryTone('#FF9E7D')!.glyph);
   });
 });

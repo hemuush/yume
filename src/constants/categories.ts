@@ -16,7 +16,7 @@ interface DefaultCategory {
 // (src/features/loans, src/features/people, app/add-transaction.tsx), so protected. Colours: theme.ts palette.
 export const DEFAULT_CATEGORIES: DefaultCategory[] = [
   { name: 'Salary', kind: 'income', icon: 'briefcase', color: '#7FE0A8', sortOrder: 0 },
-  { name: 'Business', kind: 'income', icon: 'trending-up', color: '#8FE8C8', sortOrder: 1 },
+  { name: 'Business', kind: 'income', icon: 'storefront', color: '#8FE8C8', sortOrder: 1 },
   { name: 'Interest & Dividends', kind: 'income', icon: 'percent', color: '#C5E0A0', sortOrder: 2 },
   { name: 'Gifts Received', kind: 'income', icon: 'gift', color: '#FFEA9E', sortOrder: 3 },
   { name: 'Other Income', kind: 'income', icon: 'plus-circle', color: '#A8D8FF', sortOrder: 4 },
@@ -46,22 +46,28 @@ export const DEFAULT_CATEGORIES: DefaultCategory[] = [
   { name: 'Health & Medical', kind: 'expense', icon: 'heart-pulse', color: '#FFA8CE', sortOrder: 16 },
   { name: 'Shopping', kind: 'expense', icon: 'shopping', color: '#C9B8FF', sortOrder: 17 },
   { name: 'Entertainment', kind: 'expense', icon: 'movie-open', color: '#FFD84D', sortOrder: 18 },
-  { name: 'Education', kind: 'expense', icon: 'book-open-variant', color: '#A8D8FF', sortOrder: 19 },
-  { name: 'Subscriptions', kind: 'expense', icon: 'sync', color: '#8FE8C8', sortOrder: 20 },
+  { name: 'Education', kind: 'expense', icon: 'school', color: '#A8D8FF', sortOrder: 19 },
+  { name: 'Subscriptions', kind: 'expense', icon: 'calendar-sync', color: '#8FE8C8', sortOrder: 20 },
   { name: 'Insurance', kind: 'expense', icon: 'shield-check', color: '#E0C29A', sortOrder: 21 },
   {
     name: 'Loan EMI',
     kind: 'expense',
-    icon: 'credit-card',
+    icon: 'bank-transfer',
     color: '#E0A8C9',
     sortOrder: 22,
     system: true,
   },
-  { name: 'Credit Card Payment', kind: 'expense', icon: 'credit-card', color: '#C5E0A0', sortOrder: 23 },
+  {
+    name: 'Credit Card Payment',
+    kind: 'expense',
+    icon: 'credit-card-check',
+    color: '#C5E0A0',
+    sortOrder: 23,
+  },
   {
     name: 'Investments',
     kind: 'expense',
-    icon: 'chart-bar',
+    icon: 'chart-line',
     color: '#8FE0DC',
     sortOrder: 24,
     sensitive: true,
@@ -79,7 +85,7 @@ export const DEFAULT_CATEGORIES: DefaultCategory[] = [
   {
     name: 'Fees & Charges',
     kind: 'expense',
-    icon: 'file-document',
+    icon: 'receipt-text',
     color: '#E0C29A',
     sortOrder: 28,
     system: true,
@@ -142,6 +148,9 @@ export const CATEGORY_ICON_CHOICES: string[] = [
   'hanger',
   'shoe-sneaker',
   'watch',
+  'tshirt-crew',
+  'glasses',
+  'cart-heart',
   // Home
   'home-city',
   'water',
@@ -152,6 +161,9 @@ export const CATEGORY_ICON_CHOICES: string[] = [
   'sofa',
   'broom',
   'hammer-wrench',
+  'gas-cylinder',
+  'water-boiler',
+  'toolbox',
   // Getting around
   'motorbike',
   'rickshaw',
@@ -159,6 +171,9 @@ export const CATEGORY_ICON_CHOICES: string[] = [
   'car-wrench',
   'parking',
   'ev-station',
+  'car-electric',
+  'car-key',
+  'train-car',
   // Screens & fun
   'television-play',
   'netflix',
@@ -169,6 +184,11 @@ export const CATEGORY_ICON_CHOICES: string[] = [
   'laptop',
   'robot-outline',
   'headphones',
+  'popcorn',
+  'ticket',
+  'camera',
+  'palette',
+  'soccer',
   // Health & care
   'pill',
   'hospital-box',
@@ -177,6 +197,8 @@ export const CATEGORY_ICON_CHOICES: string[] = [
   'spa',
   'hair-dryer',
   'lipstick',
+  'medical-bag',
+  'hospital-building',
   // Fitness
   'dumbbell',
   'run',
@@ -189,9 +211,11 @@ export const CATEGORY_ICON_CHOICES: string[] = [
   'paw',
   'dog',
   'cat',
+  'baby-bottle',
   // Learning
   'book-open-variant',
   'pencil-ruler',
+  'book-multiple',
   // Money
   'bank',
   'chart-bar',
@@ -204,11 +228,23 @@ export const CATEGORY_ICON_CHOICES: string[] = [
   'receipt-text',
   'calculator',
   'cash-refund',
+  'storefront',
+  'bank-transfer',
+  'credit-card-check',
+  'calendar-sync',
+  'cash-plus',
+  'wallet-plus',
+  'briefcase-account',
+  'cash-fast',
+  'hand-coin',
   // Trips
   'beach',
   'bed',
   'map-marker',
   'passport',
+  'airplane-takeoff',
+  'tent',
+  'umbrella',
   // Other
   'party-popper',
   'hand-heart',
@@ -216,4 +252,27 @@ export const CATEGORY_ICON_CHOICES: string[] = [
   'briefcase',
   'plus-circle',
   'dots-horizontal-circle',
+  'temple-hindu',
+  'church',
+  'mosque',
+  'candle',
+  'flower',
+  'tree',
+  'bicycle',
+  'cellphone',
+];
+
+/**
+ * Better-fitting pictures for built-ins that shared one or said little (two credit cards, a bare sync arrow), applied to
+ * installs that seeded the old ones. Matches name + kind + exact old icon, so a category whose icon the person changed, and
+ * one they made themselves, is never touched.
+ */
+export const BUILT_IN_ICON_UPGRADES: { name: string; kind: CategoryKind; from: string; to: string }[] = [
+  { name: 'Business', kind: 'income', from: 'trending-up', to: 'storefront' },
+  { name: 'Education', kind: 'expense', from: 'book-open-variant', to: 'school' },
+  { name: 'Subscriptions', kind: 'expense', from: 'sync', to: 'calendar-sync' },
+  { name: 'Loan EMI', kind: 'expense', from: 'credit-card', to: 'bank-transfer' },
+  { name: 'Credit Card Payment', kind: 'expense', from: 'credit-card', to: 'credit-card-check' },
+  { name: 'Investments', kind: 'expense', from: 'chart-bar', to: 'chart-line' },
+  { name: 'Fees & Charges', kind: 'expense', from: 'file-document', to: 'receipt-text' },
 ];

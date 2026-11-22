@@ -257,7 +257,7 @@ export function AccountSummarySheet({
         <DraftCard
           ledgerStyle
           hue={accountHue(account.type, accent)}
-          icon={accountIcon(account.type, !!account.investment)}
+          icon={accountIcon(account.type, account.investment)}
           title={account.name}
           kicker={typeLabel}
           figure={money(account.currentBalanceMinor)}

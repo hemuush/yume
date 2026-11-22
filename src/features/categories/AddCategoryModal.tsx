@@ -21,7 +21,7 @@ import { errorMessage } from '@/lib/errorMessage';
 import { withPressed } from '@/lib/pressed';
 import { useSaveOnce } from '@/hooks/useSaveOnce';
 import { showPrivacyReminderWarning } from '@/lib/privacyReminderFeedback';
-import { softTint } from '@/components/softTint';
+import { categoryTone } from '@/lib/categoryTone';
 
 /** Icons shown before "Browse all icons". */
 const PREVIEW_ICON_COUNT = 24;
@@ -139,6 +139,7 @@ export function AddCategoryModal({
 
   // Calm-sheets layout: a card that takes on the picked colour and icon, then the form.
   // Archive/delete is a quiet link at the end, not a third footer button.
+  const tone = categoryTone(color);
   const parent = allCategories.find((c) => c.id === parentId);
   const parentName = parent?.name;
   // Under a parent marked sensitive, a subcategory is hidden with it (db/spendSql.ts sensitiveOf).
@@ -168,8 +169,11 @@ export function AddCategoryModal({
     >
       {/* The picked colour and icon live here, beside the name, instead of a separate preview card. */}
       <View style={styles.identityRow}>
-        <View testID="preview" style={[styles.identityDisc, { backgroundColor: softTint(color, 0.45) }]}>
-          <CategoryGlyph name={icon} color={theme.colors.ink} size={24} />
+        <View
+          testID="preview"
+          style={[styles.identityDisc, { backgroundColor: tone?.fill ?? theme.colors.surfaceAlt }]}
+        >
+          <CategoryGlyph name={icon} color={tone?.glyph ?? theme.colors.ink} size={24} />
         </View>
         <View style={styles.identityName}>
           <FormInput
@@ -272,10 +276,17 @@ export function AddCategoryModal({
                 style={withPressed([
                   styles.iconChoice,
                   cellSize,
-                  icon === iconName && [styles.iconChoiceActive, { backgroundColor: softTint(color, 0.4) }],
+                  icon === iconName && [
+                    styles.iconChoiceActive,
+                    { backgroundColor: tone?.fill ?? theme.colors.surfaceAlt },
+                  ],
                 ])}
               >
-                <CategoryGlyph name={iconName} color={theme.colors.ink} size={22} />
+                <CategoryGlyph
+                  name={iconName}
+                  color={icon === iconName ? (tone?.glyph ?? theme.colors.ink) : theme.colors.ink}
+                  size={22}
+                />
               </Pressable>
             ))}
         </View>
