@@ -32,17 +32,26 @@ export function AllowanceTile({
       }`}
     >
       <Text style={styles.text}>
-        About <Text style={styles.amount}>{formatMoney(perDayMinor)} a day</Text> for {days}
+        About <Text style={styles.perDay}>{formatMoney(perDayMinor)} a day</Text> for {days}
       </Text>
       {showToday && (
-        <View style={styles.todayRow}>
+        <View style={styles.today}>
+          {/* What today came to and how that sits against the pace, in words: a full red bar alone says "bad", not
+              by how much. */}
+          <View style={styles.todayRow}>
+            <Text style={styles.todayText}>
+              Today <Text style={styles.amount}>{formatMoney(todaySpentMinor)}</Text>
+            </Text>
+            <Text style={[styles.todayText, over && styles.todayOver]}>
+              {over
+                ? `${formatMoney(todaySpentMinor - perDayMinor)} over pace`
+                : `${formatMoney(perDayMinor - todaySpentMinor)} under pace`}
+            </Text>
+          </View>
           <View style={styles.track}>
             <View style={[styles.fill, over && styles.fillOver, { flex: Math.max(0.02, share) }]} />
             <View style={{ flex: Math.max(0, 1 - Math.max(0.02, share)) }} />
           </View>
-          <Text style={styles.todayText}>
-            Today <Text style={styles.amount}>{formatMoney(todaySpentMinor)}</Text>
-          </Text>
         </View>
       )}
     </View>
@@ -57,9 +66,10 @@ const styles = themedStyles(() =>
       paddingBottom: 2,
       gap: 8,
     },
-    todayRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+    today: { gap: 5 },
+    todayRow: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 10 },
+    todayOver: { fontFamily: theme.font.bodyBold, color: summaryInk.negative },
     track: {
-      flex: 1,
       flexDirection: 'row',
       height: 6,
       borderRadius: 3,
@@ -68,16 +78,24 @@ const styles = themedStyles(() =>
     },
     fill: { borderRadius: 3, backgroundColor: summaryInk.text },
     fillOver: { backgroundColor: summaryInk.negative },
-    todayText: { fontFamily: theme.font.body, fontSize: 12, color: summaryInk.secondary },
+    todayText: { fontFamily: theme.font.body, fontSize: 13, color: summaryInk.secondary },
     text: {
       flexShrink: 1,
       fontFamily: theme.font.body,
-      fontSize: 12,
+      fontSize: 13,
+      lineHeight: 22,
       color: summaryInk.secondary,
+    },
+    // The figure to act on each day: second only to the headline, not the same small size as its caption.
+    perDay: {
+      fontFamily: theme.font.bodyBold,
+      fontSize: 16,
+      color: summaryInk.text,
+      fontVariant: ['tabular-nums'],
     },
     amount: {
       fontFamily: theme.font.bodyBold,
-      fontSize: 12,
+      fontSize: 13,
       color: summaryInk.text,
       fontVariant: ['tabular-nums'],
     },

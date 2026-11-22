@@ -40,4 +40,13 @@ describe('the daily figure under the headline', () => {
     act(() => under.unmount());
     act(() => over.unmount());
   });
+
+  it('says by how much today is over or under the pace, not only with a bar', () => {
+    const under = render(<AllowanceTile perDayMinor={46700} daysLeft={9} todaySpentMinor={12500} />);
+    expect(words(under)).toContain('₹342 under pace');
+    const over = render(<AllowanceTile perDayMinor={11600} daysLeft={8} todaySpentMinor={24300} />);
+    expect(words(over)).toContain('₹127 over pace');
+    act(() => under.unmount());
+    act(() => over.unmount());
+  });
 });

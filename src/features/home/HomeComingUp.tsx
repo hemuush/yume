@@ -340,7 +340,9 @@ const styles = themedStyles(() =>
       flexWrap: 'wrap',
       alignItems: 'center',
       gap: 4,
-      paddingVertical: 4,
+      // The chips are drawn 36 tall and keep their 44 touch area through hitSlop, so the row adds no padding of its
+      // own: it sat a full chip further from its heading than the lists under the other headings do.
+      paddingVertical: 0,
     },
     // Sized so All, Payments, Budgets and Goals share one line on a 360 dp phone; the same weight selected or not,
     // so picking one never changes its width either.
