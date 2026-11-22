@@ -346,7 +346,8 @@ describe('notification slot planning', () => {
       }
       const times = notifications.map((n) => n.at.getTime());
       expect(times).toEqual([...times].sort((a, b) => a - b));
-      const lastDay = addDaysToIsoDate(toLocalIsoDate(start), PLAN_DAYS - 1);
+      // The plan ends with the one reminder to open the app, the day after the planned days.
+      const lastDay = addDaysToIsoDate(toLocalIsoDate(start), PLAN_DAYS);
       expect(toLocalIsoDate(notifications[notifications.length - 1].at) <= lastDay).toBe(true);
     }
   });
