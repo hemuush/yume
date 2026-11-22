@@ -1,6 +1,5 @@
 import { useCallback, useState } from 'react';
 import { Appear } from '@/components/Appear';
-import { View } from 'react-native';
 import { Text } from '@/components/Text';
 import { useFocusEffect, router } from 'expo-router';
 import {
@@ -29,7 +28,7 @@ import { styles } from './profile.styles';
 import { errorMessage } from '@/lib/errorMessage';
 import { AboutYume } from './AboutYume';
 import { AddStyleSetting } from './AddStyleSetting';
-import { AppearancePicker } from './AppearancePicker';
+import { ColourModeSetting } from './ColourModeSetting';
 import { CurrencySetting } from './CurrencySetting';
 import { DailyGoalSetting } from './DailyGoalSetting';
 import { WidgetPrivacyRow } from './WidgetPrivacyRow';
@@ -197,53 +196,6 @@ export function SettingsSection() {
           <PrimaryButton title="Retry" variant="secondary" compact onPress={() => void load()} />
         </Appear>
       )}
-      <Section compact title="Appearance">
-        <ListCard style={styles.settingsCard}>
-          <View style={styles.modeRow}>
-            <Text style={styles.appearanceTitle}>Colour mode</Text>
-          </View>
-          <AppearancePicker
-            value={colourMode}
-            onChange={(next) => {
-              void setColourMode(next);
-            }}
-          />
-        </ListCard>
-      </Section>
-      <Section compact title="Adding entries">
-        <ListCard style={styles.settingsCard}>
-          <AddStyleSetting />
-        </ListCard>
-      </Section>
-      <Section compact title="Money">
-        <ListCard style={styles.settingsCard}>
-          <CurrencySetting
-            currency={currency}
-            loaded={currencyLoaded}
-            stacked={stackValues}
-            onSelect={onSelectCurrency}
-          />
-          <DailyGoalSetting
-            goal={dailyGoal}
-            currency={currency}
-            loaded={goalLoaded && currencyLoaded}
-            stacked={stackValues}
-            onChanged={setDailyGoalState}
-          />
-          <MovingRow>
-            <SettingsRow
-              compact
-              icon="tag-outline"
-              tone="sky"
-              label="Categories"
-              sub="Add, rename, or archive"
-              onPress={() => router.push('/categories')}
-              divider
-            />
-          </MovingRow>
-        </ListCard>
-      </Section>
-
       <Section compact title="Privacy & notifications">
         <ListCard style={styles.settingsCard}>
           <SettingsRow
@@ -337,6 +289,49 @@ export function SettingsSection() {
             onPress={() => router.push('/tidy-up')}
             divider
           />
+        </ListCard>
+      </Section>
+
+      <Section compact title="Money">
+        <ListCard style={styles.settingsCard}>
+          <CurrencySetting
+            currency={currency}
+            loaded={currencyLoaded}
+            stacked={stackValues}
+            onSelect={onSelectCurrency}
+          />
+          <DailyGoalSetting
+            goal={dailyGoal}
+            currency={currency}
+            loaded={goalLoaded && currencyLoaded}
+            stacked={stackValues}
+            onChanged={setDailyGoalState}
+          />
+          <MovingRow>
+            <SettingsRow
+              compact
+              icon="tag-outline"
+              tone="sky"
+              label="Categories"
+              sub="Add, rename, or archive"
+              onPress={() => router.push('/categories')}
+              divider
+            />
+          </MovingRow>
+        </ListCard>
+      </Section>
+
+      <Section compact title="Preferences">
+        <ListCard style={styles.settingsCard}>
+          <ColourModeSetting
+            value={colourMode}
+            onChange={(next) => {
+              void setColourMode(next);
+            }}
+          />
+          <MovingRow>
+            <AddStyleSetting />
+          </MovingRow>
         </ListCard>
       </Section>
 

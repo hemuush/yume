@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { listCategories } from '@/db/ledger';
+import { getCategoryUseCounts, listCategories } from '@/db/ledger';
 import { reuseUnchanged } from '@/lib/stableData';
 import { useScreenLoad } from '@/hooks/useScreenLoad';
 import type { Category } from '@/types';
 
 const NONE: Category[] = [];
+const NO_COUNTS: ReadonlyMap<string, number> = new Map();
 
 /**
  * What the Categories page reads: every category, archived ones too, reloaded when the page is shown after a write. A
@@ -16,6 +17,8 @@ export function useCategoriesData() {
   // What is held, so a reload that found nothing new sets no state (React still draws a component once for a state
   // update that changes nothing).
   const held = useRef(NONE);
+  // Entries per category: a nicety, so a failed read just leaves the rows without it.
+  const [useCounts, setUseCounts] = useState(NO_COUNTS);
   // Only the newest load may land, and none after the page is gone.
   const request = useRef(0);
   useEffect(
@@ -27,7 +30,11 @@ export function useCategoriesData() {
   const loadCategories = useCallback(async () => {
     const id = ++request.current;
     const list = await listCategories(true);
+    const counts = await Promise.resolve()
+      .then(() => getCategoryUseCounts())
+      .catch(() => null);
     if (id !== request.current) return;
+    if (counts) setUseCounts(counts);
     const next =
       list.length === 0 && held.current.length === 0 ? held.current : reuseUnchanged(held.current, list);
     if (next === held.current) return;
@@ -44,5 +51,5 @@ export function useCategoriesData() {
       income: active.filter((c) => c.kind === 'income'),
     };
   }, [allCategories]);
-  return { allCategories, ...lists, loaded, hasData, loadError, reload };
+  return { allCategories, useCounts, ...lists, loaded, hasData, loadError, reload };
 }

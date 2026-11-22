@@ -70,6 +70,13 @@ export function useAmountPadHost() {
     []
   );
 
+  // A field of this kind never raises the phone keyboard, so one rising means a text field took focus: the pad must
+  // not stay under it (both at once squeezed the sheet to a sliver).
+  useEffect(() => {
+    const sub = Keyboard.addListener('keyboardDidShow', () => setActive(null));
+    return () => sub.remove();
+  }, []);
+
   const host = useMemo<PadHost>(() => {
     const scrollIntoView = (node: ViewInstance) => {
       if (scrollTimer.current) clearTimeout(scrollTimer.current);

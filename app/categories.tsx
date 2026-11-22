@@ -7,7 +7,7 @@ import { Keyboard, Pressable, View } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { Text, TextInput } from '@/components/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { CategoryKind } from '@/types';
+import { Category, CategoryKind } from '@/types';
 import { theme } from '@/constants/theme';
 import { SkyHeader, HeaderSummary } from '@/features/home/SkyHeader';
 import ReanimatedAnimated from 'react-native-reanimated';
@@ -25,6 +25,12 @@ import { useAccent } from '@/theme/AccentContext';
 import { SheetTabs } from '@/components/SheetTabs';
 import { searchCategories, topLevelOnly } from '@/lib/categoryTree';
 
+/** The line under a search result: its parent, and "Income" for an income one (the tabs are not there to say so). */
+function contextOf(cat: Category, byId: Map<string, Category>): string | undefined {
+  const parent = cat.parentId ? byId.get(cat.parentId)?.name : undefined;
+  return [parent, cat.kind === 'income' ? 'Income' : undefined].filter(Boolean).join(' · ') || undefined;
+}
+
 // The tiles are drawn again only when their categories change, not for a sheet opening or a tab's panel.
 const Section = memo(CategorySection);
 
@@ -40,6 +46,7 @@ export default function CategoriesScreen() {
   const [kind, setKind] = useState<CategoryKind>('expense');
   const {
     allCategories,
+    useCounts,
     active: categories,
     archived: archivedCategories,
     expense: expenseCats,
@@ -59,10 +66,11 @@ export default function CategoriesScreen() {
   const parentCount = topLevelOnly(visibleCategories).length;
   const searching = query.trim().length > 0;
   const visible = showArchived ? archivedCategories : visibleCategories;
-  const matches = useMemo(
-    () => (searching ? searchCategories(visible, query) : visible),
-    [visible, query, searching]
-  );
+  // A search looks through both types: what is typed is what you are after, not the tab you happen to be on.
+  const matches = useMemo(() => {
+    if (!searching) return visible;
+    return searchCategories(showArchived ? archivedCategories : [...expenseCats, ...incomeCats], query);
+  }, [visible, query, searching, showArchived, archivedCategories, expenseCats, incomeCats]);
   const byId = useMemo(
     () => new Map(allCategories.map((category) => [category.id, category])),
     [allCategories]
@@ -128,6 +136,17 @@ export default function CategoriesScreen() {
               onChange={setKind}
             />
           )}
+          {showArchived && (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Show active categories"
+              onPress={switchCollection}
+              style={styles.collectionAction}
+            >
+              <Feather name="arrow-left" size={15} color={theme.colors.link} />
+              <Text style={styles.collectionActionText}>Active categories</Text>
+            </Pressable>
+          )}
           {(visible.length > 0 || searching) && (
             <View style={styles.categorySearch}>
               <Feather name="search" size={16} color={theme.colors.textMuted} />
@@ -154,19 +173,6 @@ export default function CategoriesScreen() {
               )}
             </View>
           )}
-          {(showArchived || archivedCategories.length > 0) && (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={showArchived ? 'Show active categories' : 'Show archived categories'}
-              onPress={switchCollection}
-              style={styles.collectionAction}
-            >
-              <Feather name={showArchived ? 'arrow-left' : 'archive'} size={15} color={theme.colors.link} />
-              <Text style={styles.collectionActionText}>
-                {showArchived ? 'Active categories' : `Archived · ${archivedCategories.length}`}
-              </Text>
-            </Pressable>
-          )}
         </View>
         {searching || showArchived ? (
           matches.length > 0 ? (
@@ -175,7 +181,8 @@ export default function CategoriesScreen() {
               renderRow={(cat) => (
                 <MemoCategoryTile
                   category={cat}
-                  context={cat.parentId ? byId.get(cat.parentId)?.name : undefined}
+                  context={contextOf(cat, byId)}
+                  uses={useCounts.get(cat.id) ?? 0}
                   onPress={(category) => {
                     Keyboard.dismiss();
                     if (showArchived) onManageArchived(category);
@@ -191,12 +198,30 @@ export default function CategoriesScreen() {
             </Text>
           )
         ) : parentCount > 0 ? (
-          <Section key={kind} cats={visibleCategories} onEdit={sheets.edit} onManage={onManage} />
+          <Section
+            key={kind}
+            cats={visibleCategories}
+            useCounts={useCounts}
+            onAddSub={sheets.addUnder}
+            onEdit={sheets.edit}
+            onManage={onManage}
+          />
         ) : (
           <View style={styles.emptyCard}>
             <Text style={styles.emptyTitle}>No {kind} categories yet</Text>
             <PrimaryButton title="Add category" compact onPress={sheets.openAdd} />
           </View>
+        )}
+        {!showArchived && !searching && archivedCategories.length > 0 && (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Show archived categories"
+            onPress={switchCollection}
+            style={[styles.collectionAction, styles.archivedLink]}
+          >
+            <Feather name="archive" size={15} color={theme.colors.link} />
+            <Text style={styles.collectionActionText}>{`Archived · ${archivedCategories.length}`}</Text>
+          </Pressable>
         )}
       </ReanimatedAnimated.ScrollView>
       <SkyHeader
@@ -204,7 +229,7 @@ export default function CategoriesScreen() {
         summary={
           !showArchived && categories.length > 0 ? (
             <HeaderSummary
-              figure={String(expenseCats.length + incomeCats.length)}
+              figure={String(topLevelOnly(expenseCats).length + topLevelOnly(incomeCats).length)}
               rest="in use"
               dot={theme.colors.slice.free}
             />

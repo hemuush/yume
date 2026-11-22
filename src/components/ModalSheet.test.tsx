@@ -1,6 +1,6 @@
 import { act, create, ReactTestRenderer } from 'react-test-renderer';
 import { useEffect, useState } from 'react';
-import { Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Modal, Pressable, StyleSheet, Text, TextInput, View, Keyboard } from 'react-native';
 jest.unmock('./SheetFlow');
 jest.mock('@expo/vector-icons/Feather', () => () => null);
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
@@ -388,6 +388,53 @@ describe.each(['sheet', 'center'] as const)('the %s making room for the keyboard
     const { tree } = render({ variant });
     expect(avoiding(tree).props.enabled).toBe(true);
     act(() => tree.unmount());
+  });
+});
+
+describe('a keyboard that closed without the library saying so', () => {
+  it('stops making room once React Native reports the keyboard hidden', () => {
+    let hide = () => {};
+    const spy = jest.spyOn(Keyboard, 'addListener').mockImplementation(((event: string, cb: () => void) => {
+      if (event === 'keyboardDidHide') hide = cb;
+      return { remove: () => {} };
+    }) as never);
+    mockKeyboardUp = true; // the library still says up
+    const { tree } = render({});
+    const avoiding = () =>
+      tree.root.findAll((n) => n.props.behavior === 'padding' && typeof n.type !== 'string')[0];
+    expect(avoiding().props.enabled).toBe(true);
+    act(() => hide());
+    expect(avoiding().props.enabled).toBe(false);
+    spy.mockRestore();
+    act(() => tree.unmount());
+  });
+});
+
+describe('a keyboard that is closing', () => {
+  it('keeps the sheet moving with it until it is gone, so no padding is left behind', () => {
+    jest.useFakeTimers();
+    try {
+      mockKeyboardUp = true;
+      const { tree } = render({});
+      const avoiding = () =>
+        tree.root.findAll((n) => n.props.behavior === 'padding' && typeof n.type !== 'string')[0];
+      mockKeyboardUp = false; // the library says closed as the keyboard starts to go
+      act(() =>
+        tree.update(
+          <ModalSheet visible onClose={jest.fn()} title="Edit amount" footer={<Text>Save</Text>}>
+            {null}
+          </ModalSheet>
+        )
+      );
+      expect(avoiding().props.enabled).toBe(true);
+      act(() => {
+        jest.advanceTimersByTime(700);
+      });
+      expect(avoiding().props.enabled).toBe(false);
+      act(() => tree.unmount());
+    } finally {
+      jest.useRealTimers();
+    }
   });
 });
 

@@ -15,7 +15,8 @@ jest.mock('@/db/ledger', () => ({
     { id: 'fee', name: 'Fees & Charges', kind: 'expense' },
   ],
 }));
-jest.mock('@/db/people', () => ({ listPeople: async () => [] }));
+let mockPeople: { id: string; name: string }[] = [];
+jest.mock('@/db/people', () => ({ listPeople: async () => mockPeople }));
 jest.mock('@/hooks/useReduceMotion', () => ({ useReduceMotion: () => true }));
 jest.mock('@/components/ModalSheet', () => ({
   ModalSheet: ({ children, footer }: { children: unknown; footer?: unknown }) =>
@@ -53,6 +54,7 @@ jest.mock('./AddLoanParts', () => ({
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
 
 import { AddLoanModal } from './AddLoanModal';
+import { Chip } from '@/components/Chip';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { DateField } from '@/components/DateField';
 import { ToggleSwitch } from '@/components/ToggleSwitch';
@@ -84,6 +86,7 @@ async function fillStepOne(tree: ReactTestRenderer) {
 }
 
 afterEach(() => {
+  mockPeople = [];
   act(() => mounted.splice(0).forEach((t) => t.unmount()));
   mockCreateLoan.mockClear();
 });
@@ -213,5 +216,45 @@ describe('add loan', () => {
         /^You said 1 installment is already paid, but only about 0 months have passed since /.test(t)
       )
     ).toBe(true);
+  });
+
+  it('fills the name from a person and links them, and unlinks when the name is typed over', async () => {
+    mockPeople = [{ id: 'p1', name: 'Asha' }];
+    const { tree } = await render();
+    await fillStepOne(tree);
+    await act(async () =>
+      tree.root
+        .findAllByType(Chip)
+        .find((c) => c.props.label === 'Asha')!
+        .props.onPress()
+    );
+    expect(byId(tree, 'Borrower (person)').props.value).toBe('Asha');
+    await act(async () => footerButton(tree, 'Next').props.onPress());
+    await act(async () => footerButton(tree, 'Create loan').props.onPress());
+    expect(mockCreateLoan).toHaveBeenLastCalledWith(
+      expect.objectContaining({ counterparty: 'Asha', personId: 'p1' })
+    );
+    // The form starts clean after a save: link again, then type over the name.
+    await fillStepOne(tree);
+    await act(async () =>
+      tree.root
+        .findAllByType(Chip)
+        .find((c) => c.props.label === 'Asha')!
+        .props.onPress()
+    );
+    await act(async () => byId(tree, 'Borrower (person)').props.onChangeText('Asha K'));
+    await act(async () => footerButton(tree, 'Next').props.onPress());
+    await act(async () => footerButton(tree, 'Create loan').props.onPress());
+    expect(mockCreateLoan).toHaveBeenLastCalledWith(expect.objectContaining({ personId: null }));
+  });
+
+  it('suggests the EMIs already paid from the start date, capped at the tenure', async () => {
+    const { tree } = await render();
+    await fillStepOne(tree);
+    await act(async () => footerButton(tree, 'Next').props.onPress());
+    await act(async () => byId(tree, 'options-new').props.onChange('existing'));
+    const first = tree.root.findAllByType(DateField)[0];
+    await act(async () => first.props.onChange('2020-01-15'));
+    expect(byId(tree, 'stepper').props.value).toBe(12); // years have passed, the loan has 12 EMIs
   });
 });

@@ -39,6 +39,7 @@ export function AddCategoryModal({
   onSaved,
   onManage,
   initialKind = 'expense',
+  initialParentId = null,
 }: {
   visible: boolean;
   category: Category | null;
@@ -48,6 +49,8 @@ export function AddCategoryModal({
   /** Opens Archive / Delete for the category being edited — shown for your own categories only. */
   onManage?: () => void;
   initialKind?: CategoryKind;
+  /** A new category starts as a subcategory of this one. */
+  initialParentId?: string | null;
 }) {
   const { accent } = useAccent();
   const [gridWidth, setGridWidth] = useState(0);
@@ -65,14 +68,18 @@ export function AddCategoryModal({
 
   // The form starts fresh each time the sheet opens (or switches to another category). Done while rendering
   // rather than in an effect, so the first painted frame is already the reset form, not last time's.
-  const openKey = visible ? (category ? `edit:${category.id}` : `new:${initialKind}`) : null;
+  const openKey = visible
+    ? category
+      ? `edit:${category.id}`
+      : `new:${initialKind}:${initialParentId}`
+    : null;
   const [syncedKey, setSyncedKey] = useState<string | null>(null);
   if (openKey !== syncedKey) {
     setSyncedKey(openKey);
     if (openKey) {
       setName(category?.name ?? '');
       setKind(category?.kind ?? initialKind);
-      setParentId(category?.parentId ?? null);
+      setParentId(category ? category.parentId : initialParentId);
       setColor(category?.color ?? CATEGORY_COLOR_PALETTE[0]);
       setIcon(category ? normalizeCategoryIcon(category.icon) : CATEGORY_ICON_CHOICES[0]);
       setShowAllIcons(false);

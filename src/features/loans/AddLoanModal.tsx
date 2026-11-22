@@ -41,8 +41,8 @@ const DIRECTIONS: Option<LoanDirection>[] = [
 ];
 
 const TIMINGS: Option<'new' | 'existing'>[] = [
-  { value: 'new', title: 'Yes, record it', sub: 'The money moved just now', icon: 'swap-horizontal' },
-  { value: 'existing', title: 'No, already done', sub: 'A loan already under way', icon: 'history' },
+  { value: 'new', title: 'New loan', sub: 'Money moves now; Yume records it', icon: 'swap-horizontal' },
+  { value: 'existing', title: 'Already running', sub: 'Started earlier; nothing recorded', icon: 'history' },
 ];
 
 /** Tenure shortcuts, in years; the loan itself is stored in months. */
@@ -87,6 +87,8 @@ export function AddLoanModal({
   const [alreadyPaid, setAlreadyPaid] = useState('0');
   const [startDate, setStartDate] = useState(() => toLocalIsoDate(new Date()));
   const startDateTouched = useRef(false);
+  // The EMIs-paid count follows the start date (months gone by, never past the tenure) until it is set by hand.
+  const paidTouched = useRef(false);
   // First EMI due date, separate from the disbursement date (lenders often leave a gap). Defaults to one
   // month after disbursement and follows it until the user edits it.
   const [emiTouched, setEmiTouched] = useState(false);
@@ -166,6 +168,12 @@ export function AddLoanModal({
   const tenureMonths = parseInt(tenure || '0', 10);
   const alreadyPaidCount = parseInt(alreadyPaid || '0', 10);
 
+  useEffect(() => {
+    if (loanTiming !== 'existing' || paidTouched.current) return;
+    const gone = Math.max(0, monthsBetweenIsoDates(startDate, toLocalIsoDate(new Date())));
+    setAlreadyPaid(String(tenureMonths > 0 ? Math.min(gone, tenureMonths) : gone));
+  }, [loanTiming, startDate, tenure]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const disbursementCategories = useMemo(
     () => categories.filter((c) => c.kind === (direction === 'borrowed' ? 'income' : 'expense')),
     [categories, direction]
@@ -224,6 +232,7 @@ export function AddLoanModal({
     setLoanTiming('new');
     setAlreadyPaid('0');
     startDateTouched.current = false;
+    paidTouched.current = false;
     const now = toLocalIsoDate(new Date());
     setStartDate(now);
     setEmiTouched(false);
@@ -440,10 +449,29 @@ export function AddLoanModal({
           <FormInput
             label={direction === 'borrowed' ? 'Lender (bank/person)' : 'Borrower (person)'}
             value={counterparty}
-            onChangeText={setCounterparty}
+            onChangeText={(text) => {
+              setCounterparty(text);
+              // A person stays linked only while their name is what is written.
+              if (personId && people.find((x) => x.id === personId)?.name !== text) setPersonId(null);
+            }}
             placeholder="e.g. HDFC Bank"
             autoCapitalize="words"
           />
+          {people.length > 0 && (
+            <View style={styles.chipRow}>
+              {people.map((p) => (
+                <Chip
+                  key={p.id}
+                  label={p.name}
+                  active={personId === p.id}
+                  onPress={() => {
+                    setPersonId(p.id);
+                    setCounterparty(p.name);
+                  }}
+                />
+              ))}
+            </View>
+          )}
           <AmountField
             label="Principal amount"
             value={principal}
@@ -532,7 +560,7 @@ export function AddLoanModal({
 
       {wizardStep === 2 && (
         <>
-          <Text style={styles.fieldLabel}>Should Yume record the money moving?</Text>
+          <Text style={styles.fieldLabel}>Is this loan new, or already running?</Text>
           <OptionCards options={TIMINGS} value={loanTiming} onChange={setLoanTiming} />
 
           {loanTiming === 'new' ? (
@@ -567,6 +595,11 @@ export function AddLoanModal({
               <Text style={styles.fieldLabel}>
                 {direction === 'borrowed' ? 'Deposit into' : 'Pay from'} account
               </Text>
+              {spendableAccounts.length === 0 && (
+                <Text style={styles.hintText}>
+                  Add a bank or cash account first: the loan’s money moves through one.
+                </Text>
+              )}
               <View style={styles.chipRow}>
                 {spendableAccounts.map((acc) => (
                   <Chip
@@ -608,13 +641,21 @@ export function AddLoanModal({
                     label="EMIs paid"
                     value={Number.isFinite(alreadyPaidCount) ? alreadyPaidCount : 0}
                     max={tenureMonths > 0 ? tenureMonths : 600}
-                    onChange={(n) => setAlreadyPaid(String(n))}
+                    onChange={(n) => {
+                      paidTouched.current = true;
+                      setAlreadyPaid(String(n));
+                    }}
                   />
                 </View>
               </View>
               <Text style={styles.fieldLabel}>
                 {direction === 'lent' ? 'Future repayments arrive in' : 'Future EMIs come out of'}
               </Text>
+              {spendableAccounts.length === 0 && (
+                <Text style={styles.hintText}>
+                  Add a bank or cash account first: the loan’s money moves through one.
+                </Text>
+              )}
               <View style={styles.chipRow}>
                 {spendableAccounts.map((acc) => (
                   <Chip
@@ -628,23 +669,6 @@ export function AddLoanModal({
               <Text style={styles.hintText}>
                 Nothing is recorded for money that moved before Yume. You can change the account later.
               </Text>
-            </>
-          )}
-
-          {people.length > 0 && (
-            <>
-              <Text style={styles.fieldLabel}>Link to a person (optional)</Text>
-              <View style={styles.chipRow}>
-                <Chip label="None" active={personId === null} onPress={() => setPersonId(null)} />
-                {people.map((p) => (
-                  <Chip
-                    key={p.id}
-                    label={p.name}
-                    active={personId === p.id}
-                    onPress={() => setPersonId(p.id)}
-                  />
-                ))}
-              </View>
             </>
           )}
         </>

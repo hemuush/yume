@@ -19,6 +19,7 @@ export function CategoryTile({
   category,
   context,
   count,
+  uses,
   selected,
   nested,
   onPress,
@@ -28,6 +29,8 @@ export function CategoryTile({
   context?: string;
   /** A parent's subcategory count, shown below its name. */
   count?: number;
+  /** Entries filed under it (a parent: with its subcategories). Not given: nothing is said. */
+  uses?: number;
   /** The parent whose pills are open below. */
   selected?: boolean;
   /** A subcategory inside its parent's open panel: a smaller icon and a lower row. */
@@ -70,12 +73,13 @@ export function CategoryTile({
         <View style={styles.tileText}>
           <Text style={styles.tileName}>{category.name}</Text>
           {context && <Text style={styles.tileCount}>{context}</Text>}
-          {!!count && (
-            <Text style={styles.tileCount}>
-              {count} subcategor{count === 1 ? 'y' : 'ies'}
-            </Text>
-          )}
         </View>
+        {uses !== undefined && !category.archived && (
+          <Text style={styles.tileUses}>
+            {uses === 0 ? 'Unused' : `${uses} ${uses === 1 ? 'entry' : 'entries'}`}
+          </Text>
+        )}
+        {!!count && <Text style={styles.tileBadge}>{count}</Text>}
         {/* A row that only edits has no icon: the whole row is the button, and ⋯ carries the rest. */}
         {(count || category.archived) && (
           <Feather
@@ -129,10 +133,16 @@ export function CategoryRows<T extends { id: string }>({
  */
 export function CategorySection({
   cats,
+  useCounts,
+  onAddSub,
   onEdit,
   onManage,
 }: {
   cats: Category[];
+  /** Entries per category id; left out, the rows say nothing about use. */
+  useCounts?: ReadonlyMap<string, number>;
+  /** Adds a subcategory under a parent: a row at the end of its open panel. */
+  onAddSub?: (parent: Category) => void;
   onEdit: (cat: Category) => void;
   onManage: (cat: Category) => void;
 }) {
@@ -154,6 +164,7 @@ export function CategorySection({
           <MemoCategoryTile
             category={cat}
             count={kids.length || undefined}
+            uses={useCounts && usesOf(useCounts, cat, kids)}
             selected={openId === cat.id}
             onPress={onTile}
             onLongPress={onManage}
@@ -168,10 +179,19 @@ export function CategorySection({
             <View style={styles.panel}>
               {kids.map((child, index) => (
                 <View key={child.id} style={index > 0 ? styles.categoryDivider : undefined}>
-                  <MemoCategoryTile nested category={child} onPress={onEdit} onLongPress={onManage} />
+                  <MemoCategoryTile
+                    nested
+                    category={child}
+                    uses={useCounts?.get(child.id) ?? (useCounts ? 0 : undefined)}
+                    onPress={onEdit}
+                    onLongPress={onManage}
+                  />
                 </View>
               ))}
-              <PanelEdit parent={parent} onPress={() => onEdit(parent)} />
+              <PanelAction icon="edit-2" label={`Edit ${parent.name}`} onPress={() => onEdit(parent)} />
+              {onAddSub && (
+                <PanelAction icon="plus" label="Add subcategory" onPress={() => onAddSub(parent)} />
+              )}
             </View>
           </View>
         );
@@ -180,18 +200,31 @@ export function CategorySection({
   );
 }
 
-/** The parent's own edit, as the last line of its open panel: one quiet link, not a heading and a button. */
-function PanelEdit({ parent, onPress }: { parent: Category; onPress: () => void }) {
+/** Entries under a parent and all its subcategories. */
+function usesOf(counts: ReadonlyMap<string, number>, parent: Category, kids: Category[]): number {
+  return kids.reduce((sum, k) => sum + (counts.get(k.id) ?? 0), counts.get(parent.id) ?? 0);
+}
+
+/** A quiet link line at the end of a parent's open panel: edit the parent, or add a subcategory. */
+function PanelAction({
+  icon,
+  label,
+  onPress,
+}: {
+  icon: 'edit-2' | 'plus';
+  label: string;
+  onPress: () => void;
+}) {
   const { accent } = useAccent();
   return (
     <Pressable
       onPress={onPress}
       style={withPressedTint(accent, styles.parentEdit)}
       accessibilityRole="button"
-      accessibilityLabel={`Edit ${parent.name}`}
+      accessibilityLabel={label}
     >
-      <Feather name="edit-2" size={14} color={theme.colors.link} />
-      <Text style={styles.parentEditText}>{`Edit ${parent.name}`}</Text>
+      <Feather name={icon} size={14} color={theme.colors.link} />
+      <Text style={styles.parentEditText}>{label}</Text>
     </Pressable>
   );
 }

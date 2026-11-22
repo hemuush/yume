@@ -38,3 +38,15 @@ export async function listCategories(includeArchived = false): Promise<Category[
   );
   return rows.map(rowToCategory);
 }
+
+/**
+ * How many entries each category has (a subcategory's count is its own; a parent's counts only entries filed
+ * straight under it). Archived ones included, so "Unused" is only said of a category nothing was ever filed under.
+ */
+export async function getCategoryUseCounts(): Promise<Map<string, number>> {
+  const db = await getDb();
+  const rows = await db.getAllAsync<{ category_id: string; n: number }>(
+    'SELECT category_id, COUNT(*) AS n FROM transactions WHERE category_id IS NOT NULL GROUP BY category_id'
+  );
+  return new Map(rows.map((r) => [r.category_id, r.n]));
+}

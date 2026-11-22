@@ -33,6 +33,7 @@ import { theme } from '@/constants/theme';
 import { errorMessage } from '@/lib/errorMessage';
 import { showAlert } from '@/components/AppDialog';
 import { PrimaryButton } from '@/components/PrimaryButton';
+import { SettingsRow } from '@/components/SettingsRow';
 import { useAccent } from '@/theme/AccentContext';
 import { ListCard } from '@/components/SummaryCard';
 import { HomeWallpaper } from '@/features/home/HomeWallpaper';
@@ -256,6 +257,87 @@ export default function NotificationSettingsScreen() {
         contentContainerStyle={{ paddingTop: headerHeight }}
       >
         {settingsError}
+        <ListCard style={styles.statusCard}>
+          <Pressable
+            onPress={() => setTroubleOpen((v) => !v)}
+            style={withPressedTint(accent, styles.troubleRow)}
+            accessibilityRole="button"
+            accessibilityState={{ expanded: troubleOpen }}
+            accessibilityLabel="Delivery check"
+          >
+            <View
+              style={[
+                styles.live,
+                { backgroundColor: deliveryOk ? theme.colors.income : theme.colors.expense },
+              ]}
+            />
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <Text style={styles.troubleLabel}>{deliveryTitle}</Text>
+              <Text style={styles.deliveryHint}>{deliverySub}</Text>
+            </View>
+            <Feather
+              name={troubleOpen ? 'chevron-up' : 'chevron-down'}
+              size={16}
+              color={theme.colors.textSecondary}
+            />
+          </Pressable>
+          {troubleOpen && (
+            <View>
+              <Text style={[styles.deliveryHint, styles.deliveryNote]}>
+                {deliveryError ??
+                  'Morning includes a daily check-in. Evening skips the log reminder if you’ve logged that day. Reminders are planned 14 days ahead and renewed when you open Yume; Android may delay delivery.'}
+              </Text>
+              {delivery?.permitted &&
+                !delivery.channelBlocked &&
+                typeof delivery.morningCount === 'number' &&
+                typeof delivery.eveningCount === 'number' && (
+                  <Text style={[styles.deliveryHint, styles.deliveryNote]}>
+                    Morning: {prefs.morningEnabled ? `${delivery.morningCount} scheduled` : 'Off'} · Evening:{' '}
+                    {prefs.eveningEnabled ? `${delivery.eveningCount} scheduled` : 'Off'}
+                  </Text>
+                )}
+              {deliveryError && (
+                <SettingsRow
+                  compact
+                  icon="refresh"
+                  tone="sky"
+                  label="Check again"
+                  divider
+                  onPress={() => void refreshDelivery()}
+                />
+              )}
+              <SettingsRow
+                compact
+                icon="bell-ring-outline"
+                tone="sky"
+                label="Test notification"
+                sub="Sends one now"
+                divider
+                dimmed={deliveryBusy}
+                onPress={() => void checkDelivery(true)}
+              />
+              <SettingsRow
+                compact
+                icon="calendar-refresh-outline"
+                tone="sky"
+                label="Rebuild reminders"
+                sub="Plans the next 14 days again"
+                divider
+                dimmed={deliveryBusy}
+                onPress={() => void checkDelivery(false)}
+              />
+              <SettingsRow
+                compact
+                icon="battery-heart-variant"
+                tone="sky"
+                label="Battery settings"
+                sub="Xiaomi, Oppo, Vivo, Samsung: set Yume to unrestricted"
+                divider
+                onPress={() => void openBatterySettings()}
+              />
+            </View>
+          )}
+        </ListCard>
         <DayArc
           morning={{ on: prefs.morningEnabled, minutes: morningMinutes }}
           evening={{ on: prefs.eveningEnabled, minutes: eveningMinutes }}
@@ -295,7 +377,11 @@ export default function NotificationSettingsScreen() {
             onChange={changeEvening}
           />
         </View>
-        {noTimes && <Text style={styles.warn}>Switch on a time to get notifications.</Text>}
+        {noTimes ? (
+          <Text style={styles.warn}>Topics arrive at your morning and evening times. Turn one on.</Text>
+        ) : (
+          <Text style={styles.footNote}>At most one notification per time. Nothing leaves your phone.</Text>
+        )}
 
         <Section
           compact
@@ -345,86 +431,6 @@ export default function NotificationSettingsScreen() {
           </ListCard>
         </Section>
 
-        <Section compact title="Delivery">
-          <ListCard>
-            <Pressable
-              onPress={() => setTroubleOpen((v) => !v)}
-              style={withPressedTint(accent, styles.troubleRow)}
-              accessibilityRole="button"
-              accessibilityState={{ expanded: troubleOpen }}
-              accessibilityLabel="Delivery check"
-            >
-              <View
-                style={[
-                  styles.live,
-                  { backgroundColor: deliveryOk ? theme.colors.income : theme.colors.expense },
-                ]}
-              />
-              <View style={{ flex: 1, minWidth: 0 }}>
-                <Text style={styles.troubleLabel}>{deliveryTitle}</Text>
-                <Text style={styles.deliveryHint}>{deliverySub}</Text>
-              </View>
-              <Feather
-                name={troubleOpen ? 'chevron-up' : 'chevron-down'}
-                size={16}
-                color={theme.colors.textSecondary}
-              />
-            </Pressable>
-            {troubleOpen && (
-              <View style={styles.deliveryCard}>
-                <Text style={styles.deliveryHint}>
-                  {deliveryError ??
-                    'Morning includes a daily check-in. Evening skips the log reminder if you’ve logged that day. Reminders are planned 14 days ahead and renewed when you open Yume; Android may delay delivery.'}
-                </Text>
-                {delivery?.permitted &&
-                  !delivery.channelBlocked &&
-                  typeof delivery.morningCount === 'number' &&
-                  typeof delivery.eveningCount === 'number' && (
-                    <Text style={styles.deliveryHint}>
-                      Morning: {prefs.morningEnabled ? `${delivery.morningCount} scheduled` : 'Off'} ·
-                      Evening: {prefs.eveningEnabled ? `${delivery.eveningCount} scheduled` : 'Off'}
-                    </Text>
-                  )}
-                <View style={styles.deliveryActions}>
-                  {deliveryError && (
-                    <PrimaryButton
-                      compact
-                      variant="secondary"
-                      title="Check again"
-                      onPress={() => void refreshDelivery()}
-                    />
-                  )}
-                  <PrimaryButton
-                    compact
-                    variant="secondary"
-                    title="Test notification"
-                    disabled={deliveryBusy}
-                    onPress={() => void checkDelivery(true)}
-                  />
-                  <PrimaryButton
-                    compact
-                    variant="secondary"
-                    title="Rebuild reminders"
-                    disabled={deliveryBusy}
-                    onPress={() => void checkDelivery(false)}
-                  />
-                  <PrimaryButton
-                    compact
-                    variant="secondary"
-                    title="Battery settings"
-                    onPress={() => void openBatterySettings()}
-                  />
-                </View>
-                <Text style={styles.deliveryHint}>
-                  On some phones (Xiaomi, Oppo, Vivo, Samsung) battery saving stops reminders. Set Yume to
-                  unrestricted or no restrictions, and allow it to start by itself if the phone offers it.
-                </Text>
-              </View>
-            )}
-          </ListCard>
-        </Section>
-
-        <Text style={styles.footNote}>At most one notification per time. Nothing leaves your phone.</Text>
         <View style={{ height: theme.layout.screenScrollPad + insets.bottom }} />
       </ReanimatedAnimated.ScrollView>
       <SkyHeader collapse={collapse} title="Notifications" showBack hideUser wallpaper />
@@ -455,6 +461,8 @@ const styles = themedStyles(() =>
       marginTop: 12,
     },
     count: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textMuted },
+    statusCard: { marginHorizontal: SCREEN.gutter, marginTop: 12 },
+    deliveryNote: { paddingHorizontal: 14, paddingBottom: 8 },
     live: { width: 10, height: 10, borderRadius: 5, marginRight: 2 },
     troubleRow: {
       minHeight: 56,
@@ -485,7 +493,7 @@ const styles = themedStyles(() =>
       fontSize: 12,
       color: theme.colors.textMuted,
       marginHorizontal: SCREEN.gutter,
-      marginTop: 16,
+      marginTop: 8,
       lineHeight: 18,
     },
   })

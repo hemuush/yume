@@ -5,6 +5,8 @@ import { createValueStore, useStoreValue } from '@/lib/valueStore';
 export interface CategoriesSheetsState {
   /** The new-category form. */
   adding: boolean;
+  /** The category a new one is being added under (a subcategory), or null for a top-level one. */
+  addParent: Category | null;
   /** The category being edited. */
   editing: Category | null;
   /**
@@ -14,7 +16,7 @@ export interface CategoriesSheetsState {
   manage: { cat: Category; archived: boolean } | null;
 }
 
-const CLOSED: CategoriesSheetsState = { adding: false, editing: null, manage: null };
+const CLOSED: CategoriesSheetsState = { adding: false, addParent: null, editing: null, manage: null };
 
 /**
  * The Categories page's sheets, kept outside React state: opening or closing one redraws the sheets alone, not the tiles
@@ -26,7 +28,8 @@ export function createCategoriesSheets() {
   return {
     get: store.get,
     subscribe: store.subscribe,
-    openAdd: () => set({ adding: true }),
+    openAdd: () => set({ adding: true, addParent: null }),
+    addUnder: (parent: Category) => set({ adding: true, addParent: parent }),
     closeAdd: () => set({ adding: false }),
     edit: (editing: Category | null) => set({ editing }),
     manage: (cat: Category, archived: boolean) => set({ manage: { cat, archived } }),

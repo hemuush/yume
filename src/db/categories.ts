@@ -6,9 +6,9 @@ import { normalizeCategoryIcon } from '@/lib/categoryIcon';
 import { captureRows, restoreRows, RowSnapshot } from './undoSnapshot';
 import { Category } from '@/types';
 import { refreshPrivacyNotificationsAfterCommit } from './afterCommit';
-import { CATEGORY_SELECT, rowToCategory, listCategories } from './categoryList';
+import { CATEGORY_SELECT, rowToCategory, listCategories, getCategoryUseCounts } from './categoryList';
 
-export { listCategories };
+export { listCategories, getCategoryUseCounts };
 
 /** Used by mutations that return a category/snapshot rather than the refresh status. Saves stay successful. */
 async function refreshCategoryPrivacy(onReminderRefreshFailed?: () => void): Promise<void> {

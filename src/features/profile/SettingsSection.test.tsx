@@ -161,9 +161,9 @@ describe('Profile · Settings section', () => {
     expect(mockLock.setLockEnabled).toHaveBeenCalledWith(true);
   });
 
-  it('leads with appearance, then groups money, privacy and data', async () => {
+  it('leads with privacy and data, then money and preferences', async () => {
     const shown = texts(await render());
-    const order = ['Appearance', 'Money', 'Privacy & notifications', 'Your data', 'Yume · v1.4.0'].map((g) =>
+    const order = ['Privacy & notifications', 'Your data', 'Money', 'Preferences', 'Yume · v1.4.0'].map((g) =>
       shown.indexOf(g)
     );
     expect(order.every((i) => i >= 0)).toBe(true);
@@ -229,7 +229,10 @@ describe('Profile · Settings section', () => {
   it('offers the colour mode as System, Light and Dark, and saves the one picked', async () => {
     mockPreference = 'system';
     const tree = await render();
-    expect(texts(tree)).toEqual(expect.arrayContaining(['Colour mode', 'System', 'Light', 'Dark']));
+    expect(texts(tree)).toEqual(expect.arrayContaining(['Colour mode', 'System']));
+    expect(texts(tree)).not.toContain('Dark');
+    await press(tree, 'Colour mode');
+    expect(texts(tree)).toEqual(expect.arrayContaining(['Light', 'Dark']));
     await press(tree, 'Dark');
     expect(mockSetPreference).toHaveBeenCalledWith('dark');
   });

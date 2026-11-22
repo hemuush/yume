@@ -81,6 +81,19 @@ describe('AmountField', () => {
     expect(keyOf(tree, '7')).toHaveLength(0);
   });
 
+  it('takes the pad away when the phone keyboard comes up for a text field', async () => {
+    let onShow = () => {};
+    jest.spyOn(Keyboard, 'addListener').mockImplementation(((_e: string, cb: () => void) => {
+      onShow = cb;
+      return { remove: () => {} };
+    }) as never);
+    const tree = await render();
+    await focus(tree);
+    expect(keyOf(tree, '7').length).toBeGreaterThan(0);
+    await act(async () => onShow());
+    expect(keyOf(tree, '7')).toHaveLength(0);
+  });
+
   it('types digits and a decimal point, and backspaces', async () => {
     const tree = await render();
     await focus(tree);

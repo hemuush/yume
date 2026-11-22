@@ -52,6 +52,8 @@ export const AlertRow = memo(function AlertRow({
   const row = ROWS[rowKey];
   return (
     <SettingsRow
+      compact
+      tone={rowKey === 'suuCheckins' ? 'mint' : 'lavender'}
       icon={row.icon}
       label={row.label}
       sub={row.sub}

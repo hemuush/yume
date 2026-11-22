@@ -17,7 +17,7 @@ const MODES: { value: AppearancePreference; label: string }[] = [
 ];
 
 /** The picture height; the tile is this plus its label. */
-const PREVIEW_H = 76;
+const PREVIEW_H = 60;
 
 /**
  * Colour mode as three small pictures of the app: what Light, Dark and "follow the phone" (half and half) look like,
@@ -119,7 +119,7 @@ function MiniScreen({ palette }: { palette: Palette }) {
 
 const s = themedStyles(() =>
   StyleSheet.create({
-    row: { flexDirection: 'row', gap: 10, paddingHorizontal: 14, paddingVertical: 12 },
+    row: { flexDirection: 'row', gap: 10, paddingHorizontal: 14, paddingVertical: 8 },
     slot: { flex: 1, minHeight: 44 },
     frame: {
       height: PREVIEW_H,

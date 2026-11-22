@@ -121,3 +121,22 @@ it('finds a subcategory directly, shows its parent and opens its editor', async 
       .some((node) => node.props.visible && node.props.category?.id === 'Coffee')
   ).toBe(true);
 });
+
+it('searches both types, saying which one a result is in', async () => {
+  const tree = await render();
+  act(() => tree.root.findByType(TextInput).props.onChangeText('sal'));
+  const tile = tree.root.findByType(CategoryTile);
+  expect(tile.props.category.id).toBe('Salary');
+  expect(tile.props.context).toBe('Income');
+});
+
+it('starts a new category under the parent it was added from', async () => {
+  const tree = await render();
+  act(() =>
+    tree.root.findByType(CategorySection).props.onAddSub(mockCategories.find((c) => c.id === 'Food'))
+  );
+  const form = tree.root
+    .findAllByType(AddCategoryModal)
+    .find((n) => n.props.category === null && n.props.visible);
+  expect(form?.props.initialParentId).toBe('Food');
+});

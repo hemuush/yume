@@ -17,6 +17,7 @@ import Feather from '@expo/vector-icons/Feather';
 import {
   KeyboardAvoidingView,
   KeyboardAwareScrollView,
+  KeyboardEvents,
   useKeyboardState,
 } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -75,6 +76,40 @@ interface Props {
   footer?: React.ReactNode;
   /** A dialog's strip along its top edge, like a StripCard's: what it is about (coral for a delete). */
   strip?: string;
+}
+
+/**
+ * Whether the phone keyboard is up, for the sheet's `KeyboardAvoidingView`. That view moves with the keyboard only while
+ * it is enabled, and switching it off leaves whatever padding it had at that moment: so this must not turn false when the
+ * keyboard starts to close (the library's flag does), or the sheet is left lifted by a whole keyboard over an empty gap.
+ * It turns false once the keyboard is really gone (a hide event from the library or React Native), or after a short while
+ * if the library's flag has been false that long and no event came.
+ */
+const KEYBOARD_CLOSE_MS = 600;
+function useKeyboardOpen(): boolean {
+  const reported = useKeyboardState((state) => state.isVisible);
+  const [open, setOpen] = useState(reported);
+  useEffect(() => {
+    if (reported) {
+      setOpen(true);
+      return;
+    }
+    const timer = setTimeout(() => setOpen(false), KEYBOARD_CLOSE_MS);
+    return () => clearTimeout(timer);
+  }, [reported]);
+  useEffect(() => {
+    const on = () => setOpen(true);
+    const off = () => setOpen(false);
+    // `?.`: a test double of the library has no event emitter.
+    const subs = [
+      Keyboard.addListener('keyboardDidShow', on),
+      Keyboard.addListener('keyboardDidHide', off),
+      KeyboardEvents?.addListener('keyboardDidShow', on),
+      KeyboardEvents?.addListener('keyboardDidHide', off),
+    ];
+    return () => subs.forEach((sub) => sub?.remove());
+  }, []);
+  return open;
 }
 
 /**
@@ -337,7 +372,7 @@ function ModalSheetBody({
   const sharesHeight = inFlow && flowHeight === 'shared';
   const insets = useSafeAreaInsets();
   // With the keyboard up it already covers the nav bar, so the footer needs no extra bottom inset.
-  const keyboardUp = useKeyboardState((state) => state.isVisible);
+  const keyboardUp = useKeyboardOpen();
   const { height, fontScale } = useWindowDimensions();
   const maxHeight =
     height < 640 || fontScale > 1.2 || size === 'expanded' ? '94%' : size === 'compact' ? '78%' : '90%';

@@ -81,7 +81,7 @@ describe('Notification settings', () => {
   it('shows no banner while notifications are allowed, and keeps the delivery check folded', async () => {
     const shown = texts(await render());
     expect(shown).not.toContain('Notifications are off for Yume');
-    expect(shown).toContain('Delivery');
+    expect(shown).toContain('Ready to notify');
     expect(shown).not.toContain('Test notification');
   });
 
@@ -254,7 +254,7 @@ describe('Notification settings', () => {
         .props.onPress();
     });
     const battery = () =>
-      tree.root.find((n) => n.props.title === 'Battery settings' && typeof n.props.onPress === 'function');
+      tree.root.find((n) => n.props.label === 'Battery settings' && typeof n.props.onPress === 'function');
     await act(async () => battery().props.onPress());
     expect(send).toHaveBeenCalledWith('android.settings.IGNORE_BATTERY_OPTIMIZATION_SETTINGS');
     expect(open).not.toHaveBeenCalled();

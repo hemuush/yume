@@ -30,7 +30,7 @@ export const CategoriesSheets = memo(function CategoriesSheets({
   /** Reloads the page in place after something was saved. */
   reload: () => Promise<void>;
 }) {
-  const { adding, editing, manage } = useCategoriesSheets(sheets);
+  const { adding, addParent, editing, manage } = useCategoriesSheets(sheets);
 
   // Feeds the one shared `ActionSheet`: only its two rows differ between an active category's menu
   // (Archive/Delete) and an archived one's (Restore/Delete).
@@ -75,7 +75,8 @@ export const CategoriesSheets = memo(function CategoriesSheets({
       <AddCategoryModal
         visible={adding}
         category={null}
-        initialKind={kind}
+        initialKind={addParent?.kind ?? kind}
+        initialParentId={addParent?.id ?? null}
         allCategories={categories}
         onClose={sheets.closeAdd}
         onSaved={async () => {

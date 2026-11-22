@@ -39,10 +39,10 @@ const texts = (tree: ReactTestRenderer) =>
 const pressable = (tree: ReactTestRenderer, label: string) =>
   tree.root.find((n) => n.props.accessibilityLabel === label && typeof n.props.onPress === 'function');
 
-async function render(onEdit = jest.fn(), onManage = jest.fn()) {
+async function render(onEdit = jest.fn(), onManage = jest.fn(), extra: Record<string, unknown> = {}) {
   let tree!: ReactTestRenderer;
   await act(async () => {
-    tree = create(<CategorySection cats={cats} onEdit={onEdit} onManage={onManage} />);
+    tree = create(<CategorySection cats={cats} onEdit={onEdit} onManage={onManage} {...extra} />);
   });
   return { tree, onEdit, onManage };
 }
@@ -68,7 +68,8 @@ describe('Categories · tile grid', () => {
 
   it('labels a parent with its subcategory count and edits a childless tile on tap', async () => {
     const { tree, onEdit } = await render();
-    expect(texts(tree)).toContain('2 subcategories');
+    expect(pressable(tree, 'Food & Dining, 2 subcategories')).toBeTruthy();
+    expect(texts(tree)).toContain('2'); // the badge
     act(() => pressable(tree, 'Rent').props.onPress());
     expect(onEdit).toHaveBeenCalledWith(expect.objectContaining({ id: 'rent' }));
   });
@@ -134,4 +135,27 @@ it('renders children under their parent before the next category', async () => {
   expect(shown.indexOf('Swiggy')).toBeLessThan(shown.indexOf('Rent'));
   expect(shown.indexOf('Cafes')).toBeLessThan(shown.indexOf('Rent'));
   act(() => tree.unmount());
+});
+
+describe('Categories · use and adding under a parent', () => {
+  const counts = new Map([
+    ['food', 3],
+    ['swiggy', 4],
+    ['rent', 1],
+  ]);
+  it('says how many entries each row has, a parent with its subcategories, and Unused for none', async () => {
+    const { tree } = await render(jest.fn(), jest.fn(), { useCounts: counts });
+    expect(texts(tree)).toEqual(expect.arrayContaining(['7 entries', '1 entry', 'Unused']));
+  });
+  it('says nothing about use when the counts could not be read', async () => {
+    const { tree } = await render();
+    expect(texts(tree).some((t) => /entr|Unused/.test(t))).toBe(false);
+  });
+  it('adds a subcategory from the end of a parent’s open panel', async () => {
+    const onAddSub = jest.fn();
+    const { tree } = await render(jest.fn(), jest.fn(), { onAddSub });
+    act(() => pressable(tree, 'Food & Dining, 2 subcategories').props.onPress());
+    act(() => pressable(tree, 'Add subcategory').props.onPress());
+    expect(onAddSub).toHaveBeenCalledWith(expect.objectContaining({ id: 'food' }));
+  });
 });
