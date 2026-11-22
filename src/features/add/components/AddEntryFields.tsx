@@ -6,9 +6,8 @@ import { Text } from '@/components/Text';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { CategoryPicker } from '@/components/CategoryPicker';
 import { styles } from '@/features/add/add.styles';
-import { exprFromMinor } from '@/lib/padMath';
 import { FriendFields } from '@/features/add/AddFields';
-import { TransferAccounts, UsualChips } from '@/features/add/AddSections';
+import { TransferAccounts } from '@/features/add/AddSections';
 import { SplitCard } from '@/features/add/SplitCard';
 import type { AddEntryModel } from '@/features/add/types/addEntryModel';
 import type { ReactElement } from 'react';
@@ -40,12 +39,10 @@ export const FIELDS_KEYS = [
   'editing',
   'setSplitParts',
   'setError',
-  'usual',
-  'isLinked',
   'categoryId',
   'setCategoryId',
-  'setExpr',
   'setSearchFocused',
+  'openAddCategory',
 ] as const satisfies readonly (keyof AddEntryModel)[];
 
 // The grid of every category is drawn again only when its own inputs change, not for each digit typed above it.
@@ -79,12 +76,10 @@ export function AddEntryFields({ model }: Props): ReactElement {
     editing,
     setSplitParts,
     setError,
-    usual,
-    isLinked,
     categoryId,
     setCategoryId,
-    setExpr,
     setSearchFocused,
+    openAddCategory,
   } = model;
   return (
     // Each entry type fades its fields in, so switching Expense, Income, Transfer or Friend is not a hard cut.
@@ -154,19 +149,6 @@ export function AddEntryFields({ model }: Props): ReactElement {
             />
           ) : (
             <View style={styles.section}>
-              {usual.length > 0 && !isLinked && (
-                <UsualChips
-                  usual={usual}
-                  categoryId={categoryId}
-                  amountMinor={amountMinor}
-                  accountId={effectiveAccountId}
-                  onPick={(u) => {
-                    setCategoryId(u.categoryId);
-                    setExpr(exprFromMinor(u.amountMinor));
-                    pickAccount(u.accountId);
-                  }}
-                />
-              )}
               <View style={styles.categorySection}>
                 <Picker
                   categories={filteredCategories}
@@ -176,6 +158,7 @@ export function AddEntryFields({ model }: Props): ReactElement {
                   compact
                   searchable
                   onSearchFocusChange={setSearchFocused}
+                  onAddCategory={openAddCategory}
                 />
               </View>
             </View>

@@ -101,7 +101,7 @@ export function ReportInsights({
 
 const s = themedStyles(() =>
   StyleSheet.create({
-    block: { marginBottom: 10 },
+    block: { marginBottom: 8 },
     card: {
       paddingHorizontal: 14,
       borderRadius: theme.radius.xl,

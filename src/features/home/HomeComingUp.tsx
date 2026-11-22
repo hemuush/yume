@@ -98,7 +98,7 @@ function BudgetRow({ entry }: { entry: Extract<ComingUpItem, { kind: 'budget' }>
       value={<Text style={[planRowText.value, state === 'over' && planRowText.bad]}>{percent}</Text>}
       progress={{
         pct: Math.min(100, progress.percentUsed),
-        color: state === 'over' ? theme.colors.expenseText : theme.colors.link,
+        color: state === 'over' ? theme.colors.expenseText : theme.colors.ink,
         animKey: `budget:${progress.budget.id}`,
       }}
       onPress={() => router.push({ pathname: '/budgets', params: { budget: progress.budget.id } })}

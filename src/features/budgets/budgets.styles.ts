@@ -77,7 +77,7 @@ export const styles = themedStyles(() =>
     },
     rowHeadOver: { color: theme.colors.expenseText },
     rowCaption: {
-      marginTop: 7,
+      marginTop: 8,
       fontVariant: ['tabular-nums'],
       fontFamily: theme.font.bodyMedium,
       fontSize: 12,

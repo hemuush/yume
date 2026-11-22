@@ -12,6 +12,10 @@ import { AmountPadDock } from '@/components/AmountField';
 import { router, useLocalSearchParams } from 'expo-router';
 import { openAdd } from '@/lib/openAdd';
 import { getCategoryMonthlyAverages, CategoryBreakdownItem } from '@/db/reports';
+import { getMonthlyCashFlow } from '@/db/reports';
+import { savingAdvice, usualCash, type SavingAdvice } from '@/lib/savingAdvice';
+import { SavingAdviceList } from '@/features/whatif/SavingAdvice';
+import { formatMoney } from '@/lib/money';
 import { listSavingsGoals } from '@/db/savingsGoals';
 import { getAccountMonthlyGrowth } from '@/db/ledger';
 import { goalProgress } from '@/lib/savingsGoalProgress';
@@ -114,9 +118,16 @@ export default function WhatIfScreen() {
   });
   // Monthly growth of the account each following goal tracks, by goal id.
   const [growth, setGrowth] = useState<Record<string, number>>({});
+  // Three completed months of income and spending, for the advice.
+  const [cash, setCash] = useState({ incomeMinor: 0, spendMinor: 0 });
 
   const load = useCallback(async () => {
-    const [avgs, goalList] = await Promise.all([getCategoryMonthlyAverages(3), listSavingsGoals()]);
+    const [avgs, goalList, flow] = await Promise.all([
+      getCategoryMonthlyAverages(3),
+      listSavingsGoals(),
+      getMonthlyCashFlow(5),
+    ]);
+    setCash(usualCash(flow));
     const spendable = avgs.filter((c) => c.totalMinor > 0);
     const openGoals = goalList.filter(
       (g) => !g.archived && !goalProgress(g.currentAmountMinor, g.targetAmountMinor).done
@@ -161,6 +172,15 @@ export default function WhatIfScreen() {
         )
       : null;
 
+  const advice: SavingAdvice[] = savingAdvice(
+    {
+      ...cash,
+      categories: categories.map((c) => ({ name: c.name, monthlyMinor: c.totalMinor })),
+      openGoals: goals.length,
+    },
+    formatMoney
+  );
+
   const reset = () => setCutPct(DEFAULT_CUT_PCT);
 
   if (!hasData && loadError)
@@ -173,7 +193,7 @@ export default function WhatIfScreen() {
         <SkyHeader title="What if…?" showBack hideUser wallpaper />
         <SummaryCard style={styles.card}>
           <Skeleton width={120} height={12} radius={4} />
-          <Skeleton width={200} height={10} radius={4} style={{ marginTop: 10 }} />
+          <Skeleton width={200} height={10} radius={4} style={{ marginTop: 8 }} />
         </SummaryCard>
       </View>
     );
@@ -212,6 +232,12 @@ export default function WhatIfScreen() {
                   </Appear>
                 )}
 
+                {advice.length > 0 && (
+                  <Section first compact title="Where you can save">
+                    <SavingAdviceList advice={advice} />
+                  </Section>
+                )}
+
                 {categories.length === 0 ? (
                   <EmptyState
                     title="Nothing to try yet"
@@ -224,7 +250,7 @@ export default function WhatIfScreen() {
                     />
                   </EmptyState>
                 ) : (
-                  <Section first compact title="Spend a little less">
+                  <Section first={advice.length === 0} compact title="Spend a little less">
                     <SummaryCard style={styles.card}>
                       <Text style={styles.fieldLabel}>Cut spending on</Text>
                       <View style={styles.chipRow}>
@@ -302,7 +328,7 @@ export default function WhatIfScreen() {
                           Extra <Amount minor={cut.extraMinor} sensitive={selectedCategory?.isSensitive} /> /
                           month toward
                         </Text>
-                        <View style={[styles.chipRow, { marginTop: 10 }]}>
+                        <View style={[styles.chipRow, { marginTop: 8 }]}>
                           {goals.map((g) => (
                             <Chip
                               key={g.id}
@@ -328,7 +354,7 @@ export default function WhatIfScreen() {
                                 faded
                               />
                             </View>
-                            <View style={{ marginTop: 10 }}>
+                            <View style={{ marginTop: 8 }}>
                               <View style={styles.paceHeadRow}>
                                 <Text style={styles.paceLabelStrong}>With this change</Text>
                                 <Text style={styles.paceDateStrong}>
@@ -362,7 +388,11 @@ export default function WhatIfScreen() {
                     </View>
                   </Section>
                 )}
-                <Section compact first={categories.length === 0} title="Before you buy">
+                <Section
+                  compact
+                  first={categories.length === 0 && advice.length === 0}
+                  title="Before you buy"
+                >
                   <BeforeYouBuy />
                 </Section>
               </ReanimatedAnimated.View>

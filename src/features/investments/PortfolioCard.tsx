@@ -44,6 +44,6 @@ export const PortfolioCard = memo(function PortfolioCard({
 const styles = themedStyles(() =>
   StyleSheet.create({
     // Cards sit on the screen gutter like every other screen's.
-    card: { padding: 14, gap: 10, marginTop: 12 },
+    card: { padding: 12, gap: 8, marginTop: 10 },
   })
 );

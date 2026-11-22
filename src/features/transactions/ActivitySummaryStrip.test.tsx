@@ -85,7 +85,9 @@ it('says what was spent this week, how it compares in a chip, and opens Insights
   // The chip carries the amount; the words after it say what it is against.
   expect(shown).toContain(formatMoney(390_000));
   const button = r.root.find((n) => n.props.accessibilityRole === 'button' && n.props.onPress);
-  expect(button.props.accessibilityLabel).toMatch(/^Spent this week, .*less than last week\. Open insights$/);
+  expect(button.props.accessibilityLabel).toMatch(
+    /^Spent this week, .*less than last week\. Heaviest day, .*\. Open insights$/
+  );
   act(() => button.props.onPress());
   expect(onPress).toHaveBeenCalledTimes(1);
   act(() => r.unmount());
@@ -224,4 +226,24 @@ it('never captions a past week "This week"', () => {
   expect(texts(r)).toContain('Spent');
   expect(texts(r)).not.toContain('This week');
   act(() => r.unmount());
+});
+
+it('names the heaviest bar once, in compact money, and says so in the card’s label', () => {
+  const { r } = strip();
+  expect(texts(r).filter((t) => /^₹\d/.test(t) && t.endsWith('k'))).toEqual(['₹2k']);
+  const button = r.root.find((n) => n.props.accessibilityRole === 'button' && n.props.onPress);
+  expect(button.props.accessibilityLabel).toContain('Heaviest day');
+  act(() => r.unmount());
+});
+
+it('labels the first of tied peaks, and nothing when no bar has spend', () => {
+  const tie = strip({ bars: [bar('2026-11-08', 50_000), bar('2026-11-09', 50_000)] });
+  expect(texts(tie.r).filter((t) => t === '₹500')).toHaveLength(1);
+  act(() => tie.r.unmount());
+  const none = strip({ bars: [bar('2026-11-08', 0), bar('2026-11-09', 0)] });
+  expect(
+    none.r.root.find((n) => n.props.accessibilityRole === 'button' && n.props.onPress).props
+      .accessibilityLabel
+  ).not.toContain('Heaviest');
+  act(() => none.r.unmount());
 });

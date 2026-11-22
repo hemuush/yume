@@ -18,8 +18,8 @@ export const styles = themedStyles(() =>
       marginTop: SECTION_GAP.top,
       marginBottom: SECTION_GAP.bottom,
     },
-    screenIntro: { marginHorizontal: SCREEN.gutter, marginTop: theme.layout.screenTopGap, marginBottom: 10 },
-    archiveTitle: { ...SECTION_TITLE, marginBottom: 10 },
+    screenIntro: { marginHorizontal: SCREEN.gutter, marginTop: theme.layout.screenTopGap, marginBottom: 8 },
+    archiveTitle: { ...SECTION_TITLE, marginBottom: 8 },
     categorySearch: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -78,7 +78,7 @@ export const styles = themedStyles(() =>
     collectionAction: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 7,
+      gap: 8,
       minHeight: 44,
       alignSelf: 'flex-start',
     },
@@ -92,7 +92,7 @@ export const styles = themedStyles(() =>
       minHeight: 48,
       paddingHorizontal: 12,
       paddingVertical: 6,
-      gap: 10,
+      gap: 8,
     },
     tileText: { flex: 1, minWidth: 0 },
     tileCount: {
@@ -141,7 +141,7 @@ export const styles = themedStyles(() =>
       fontFamily: theme.font.bodyMedium,
       fontSize: 12,
       color: theme.colors.textSecondary,
-      marginBottom: 10,
+      marginBottom: 8,
     },
     iconGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: GRID_GAP },
     iconChoice: {
@@ -155,7 +155,7 @@ export const styles = themedStyles(() =>
     iconChoiceActive: { borderColor: theme.colors.ink },
     moreIcons: {
       minHeight: 44,
-      marginTop: 10,
+      marginTop: 8,
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
@@ -163,7 +163,7 @@ export const styles = themedStyles(() =>
     },
     moreIconsText: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
     colorRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 0, marginBottom: 12 },
-    chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 20 },
+    chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 20 },
     colorSwatch: {
       width: 44,
       height: 44,
@@ -186,7 +186,7 @@ export const styles = themedStyles(() =>
       maxWidth: '100%',
       justifyContent: 'center',
       paddingHorizontal: 12,
-      paddingVertical: 7,
+      paddingVertical: 8,
       borderRadius: 999,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: theme.colors.borderSoft,

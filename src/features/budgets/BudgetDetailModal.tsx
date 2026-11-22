@@ -187,7 +187,7 @@ export function BudgetDetailModal({
 }
 const styles = themedStyles(() =>
   StyleSheet.create({
-    errorBox: { paddingVertical: 4, gap: 12, marginBottom: 10 },
+    errorBox: { paddingVertical: 4, gap: 12, marginBottom: 8 },
     caption: { fontFamily: theme.font.body, fontSize: 13, lineHeight: 19, color: theme.colors.textSecondary },
     headingRow: {
       flexDirection: 'row',

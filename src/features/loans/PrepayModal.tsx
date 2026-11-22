@@ -89,7 +89,7 @@ function PreviewRow({
 const previewStyles = themedStyles(() =>
   StyleSheet.create({
     card: {
-      marginTop: 10,
+      marginTop: 8,
       marginBottom: 6,
       padding: 12,
       gap: 6,

@@ -69,7 +69,7 @@ export const styles = themedStyles(() =>
     goalCard: { marginTop: 12, padding: 16, gap: 0 },
     extraLabel: { ...EYEBROW, color: theme.colors.incomeText },
 
-    paceRow: { marginTop: 14, gap: 7 },
+    paceRow: { marginTop: 14, gap: 8 },
     paceHeadRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
     paceLabel: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textSecondary },
     paceLabelStrong: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textPrimary },

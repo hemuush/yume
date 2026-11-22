@@ -142,22 +142,22 @@ export function TrackedCard({
 
 const styles = themedStyles(() =>
   StyleSheet.create({
-    card: { marginTop: 10, paddingBottom: 4, overflow: 'hidden' },
+    card: { marginTop: 8, paddingBottom: 4, overflow: 'hidden' },
     // At the foot of the money map, which draws the glass and the padding.
-    head: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, minHeight: 44 },
+    head: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 14, minHeight: 44 },
     headText: { flex: 1, minWidth: 0, flexDirection: 'row', flexWrap: 'wrap', columnGap: 6 },
     label: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textPrimary },
     headSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted },
     value: { fontFamily: theme.font.bodyBold, fontSize: 15, color: theme.colors.textPrimary, flexShrink: 1 },
     // The sum, on a brighter pane: each part, then a rule and the total.
     sumLines: {
-      marginTop: 10,
+      marginTop: 8,
       paddingHorizontal: 0,
       paddingVertical: 10,
       gap: 8,
     },
-    inset: { marginHorizontal: 14, marginBottom: 10 },
-    sumLine: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 10 },
+    inset: { marginHorizontal: 14, marginBottom: 8 },
+    sumLine: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
     sumKey: { width: 10, height: 10, borderRadius: 3 },
     sumLabel: { flex: 1, fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textSecondary },
     sumValue: {
@@ -170,7 +170,7 @@ const styles = themedStyles(() =>
       flexDirection: 'row',
       flexWrap: 'wrap',
       alignItems: 'center',
-      gap: 10,
+      gap: 8,
       paddingTop: 7,
       borderTopWidth: 1.5,
       borderTopColor: theme.colors.ink,
@@ -184,7 +184,7 @@ const styles = themedStyles(() =>
     hint: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 10,
+      gap: 8,
       marginTop: 8,
       paddingHorizontal: 12,
       paddingVertical: 10,

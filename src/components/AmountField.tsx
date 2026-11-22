@@ -311,10 +311,10 @@ const styles = themedStyles(() =>
       borderTopWidth: StyleSheet.hairlineWidth,
       borderTopColor: theme.colors.borderSoft,
     },
-    pad: { gap: 7 },
-    row: { flexDirection: 'row', gap: 7 },
+    pad: { gap: 8 },
+    row: { flexDirection: 'row', gap: 8 },
     gap: { flex: 1 },
-    done: { paddingVertical: 11 },
+    done: { paddingVertical: 12 },
     doneBtn: { flex: 1 },
     figure: { fontFamily: theme.font.bodyBold, fontVariant: ['tabular-nums'], fontSize: 15 },
   })

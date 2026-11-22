@@ -1,5 +1,5 @@
 import type { PaymentMode } from '@/types';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { RefObject } from 'react';
 import { AddDefaults } from '@/db/settings';
 import { PersonWithBalance } from '@/db/people';
@@ -127,6 +127,10 @@ export function useAddEntryState(input: Input) {
 
   const [addPersonVisible, setAddPersonVisible] = useState(false);
 
+  const [addCategoryVisible, setAddCategoryVisible] = useState(false);
+  // One function for good, so the category grid is not drawn again for it.
+  const openAddCategory = useCallback(() => setAddCategoryVisible(true), []);
+
   const [repeatSheetVisible, setRepeatSheetVisible] = useState(false);
 
   // A repeat warning names the entry it's about; tapping Save again with
@@ -231,6 +235,9 @@ export function useAddEntryState(input: Input) {
     setAddAccountVisible,
     addPersonVisible,
     setAddPersonVisible,
+    addCategoryVisible,
+    setAddCategoryVisible,
+    openAddCategory,
     repeatSheetVisible,
     setRepeatSheetVisible,
     repeatWarning,

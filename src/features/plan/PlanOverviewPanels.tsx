@@ -82,10 +82,10 @@ const s = themedStyles(() =>
       borderColor: theme.colors.home.edge,
     },
     alert: {
-      minHeight: 48,
+      minHeight: 44,
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 10,
+      gap: 8,
       paddingVertical: 8,
     },
     alertCopy: { flex: 1, minWidth: 0, flexDirection: 'row', flexWrap: 'wrap', columnGap: 6 },

@@ -245,7 +245,7 @@ const styles = themedStyles(() =>
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      gap: 10,
+      gap: 8,
       minHeight: ROW,
       zIndex: 1,
     },
@@ -263,7 +263,7 @@ const styles = themedStyles(() =>
     // The title is the one that must stay whole: when the row is short, the summary (invisible until the header
     // collapses) gives way, so "Savings goals" never reads "Savings …" because of a figure nobody can see yet.
     summary: { marginLeft: 10, flexShrink: 1, minWidth: 0 },
-    below: { gap: 10, paddingTop: 8, paddingBottom: 2 },
+    below: { gap: 8, paddingTop: 8, paddingBottom: 2 },
     // Just the chevron, nudged so the icon (not its 40dp touch area) sits on the page gutter.
     backBtn: {
       width: HEADER.actionSize,

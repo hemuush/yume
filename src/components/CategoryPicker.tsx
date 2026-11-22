@@ -47,6 +47,8 @@ interface Props {
   minColumnWidth?: number;
   /** Tighter medal spacing for Add, without changing names or touch targets. */
   compact?: boolean;
+  /** Adds a "New" tile at the end of the medal grid (and under an empty search) that opens the host's add-category form. */
+  onAddCategory?: () => void;
 }
 
 /**
@@ -63,6 +65,7 @@ export function CategoryPicker({
   dimmedIds,
   minColumnWidth = MEDAL_MIN_WIDTH,
   compact = false,
+  onAddCategory,
 }: Props) {
   const topLevel = topLevelOnly(categories);
   // The medal grid fills its width evenly: as many columns as fit, each an equal share,
@@ -201,7 +204,21 @@ export function CategoryPicker({
       <View>
         {search}
         {matches.length === 0 ? (
-          <Text style={styles.noMatch}>No category called "{query.trim()}"</Text>
+          <View>
+            <Text style={styles.noMatch}>No category called "{query.trim()}"</Text>
+            {onAddCategory && (
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => {
+                  Keyboard.dismiss();
+                  onAddCategory();
+                }}
+                style={withPressed(styles.noMatchAdd)}
+              >
+                <Text style={styles.noMatchAddText}>Add a new category</Text>
+              </Pressable>
+            )}
+          </View>
         ) : (
           <View style={[styles.medalGrid, compact && styles.medalGridCompact]} onLayout={onGridLayout}>
             {matches.map((cat) => (
@@ -288,6 +305,17 @@ export function CategoryPicker({
             {compact && parentIndex >= 0 && index === subcategoryRowEnd && subcategories}
           </Fragment>
         ))}
+        {onAddCategory && (
+          <MedalTile
+            compact={compact}
+            width={tileWidth}
+            active={false}
+            name="New"
+            icon="plus-circle"
+            color={theme.colors.textMuted}
+            onPress={onAddCategory}
+          />
+        )}
       </View>
       {(!compact || parentIndex < 0) && subcategories}
     </View>
@@ -434,8 +462,10 @@ const styles = themedStyles(() =>
       borderColor: theme.colors.home.edge,
     },
     noMatch: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.textMuted, paddingVertical: 8 },
+    noMatchAdd: { minHeight: 44, justifyContent: 'center' },
+    noMatchAddText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textSecondary },
     subGroup: {
-      marginTop: 10,
+      marginTop: 8,
       paddingTop: 10,
       borderTopWidth: StyleSheet.hairlineWidth,
       borderTopColor: theme.colors.borderSoft,

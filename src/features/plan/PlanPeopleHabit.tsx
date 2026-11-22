@@ -163,14 +163,14 @@ export function PlanPeopleHabit({
 const s = themedStyles(() =>
   StyleSheet.create({
     // Two separate tiles, drawn like the cards of Plan at a glance.
-    card: { marginHorizontal: 16, gap: 10 },
+    card: { marginHorizontal: 16, gap: 8 },
     row: {
       minHeight: 60,
       paddingHorizontal: 12,
       paddingVertical: 8,
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 10,
+      gap: 8,
       borderRadius: theme.radius.xl,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: theme.colors.home.edge,

@@ -144,7 +144,7 @@ const styles = themedStyles(() =>
       justifyContent: 'center',
       minHeight: 48,
     },
-    baseCompact: { paddingVertical: 7, paddingHorizontal: 14 },
+    baseCompact: { paddingVertical: 8, paddingHorizontal: 14 },
     withIcon: { flexDirection: 'row', gap: 8 },
     textCompact: { fontFamily: theme.font.bodyMedium, fontSize: 13 },
     primary: { backgroundColor: theme.colors.action },

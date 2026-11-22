@@ -125,7 +125,7 @@ export function FriendFields({
     return (
       <View style={styles.section}>
         <Text style={styles.label}>Person</Text>
-        <Text style={[styles.hint, { marginTop: 0, marginBottom: 10 }]}>
+        <Text style={[styles.hint, { marginTop: 0, marginBottom: 8 }]}>
           Nobody here yet. Add the friend or family member this is with.
         </Text>
         <PrimaryButton title="Add a person" variant="secondary" onPress={onAddPerson} />

@@ -95,7 +95,7 @@ const styles = themedStyles(() =>
       borderWidth: 1,
       borderColor: theme.colors.home.edge,
       backgroundColor: theme.colors.home.surface,
-      marginBottom: 10,
+      marginBottom: 8,
     },
     // Wraps under the name when the amount is wide or the text is enlarged.
     top: {
@@ -111,7 +111,7 @@ const styles = themedStyles(() =>
       flexBasis: 150,
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 10,
+      gap: 8,
       minHeight: theme.accessibility.minTouchTarget,
       borderRadius: theme.radius.md,
     },

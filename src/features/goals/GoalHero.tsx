@@ -104,7 +104,7 @@ const styles = themedStyles(() =>
       borderWidth: 1,
       borderColor: theme.colors.glass,
       backgroundColor: theme.colors.surface,
-      marginBottom: 10,
+      marginBottom: 8,
     },
     top: {
       flexDirection: 'row',
@@ -119,7 +119,7 @@ const styles = themedStyles(() =>
       flexBasis: 150,
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 10,
+      gap: 8,
     },
     icon: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center' },
     names: { flex: 1, minWidth: 0 },

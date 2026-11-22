@@ -36,7 +36,7 @@ export const styles = themedStyles(() =>
     streakSummary: {
       gap: 8,
       marginHorizontal: 16,
-      marginTop: 10,
+      marginTop: 8,
       borderTopWidth: StyleSheet.hairlineWidth,
       borderBottomWidth: StyleSheet.hairlineWidth,
       borderColor: theme.colors.borderSoft,
@@ -65,7 +65,7 @@ export const styles = themedStyles(() =>
     },
     summaryGoal: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textSecondary },
 
-    bedCard: { marginHorizontal: 16, marginTop: 10, overflow: 'hidden' },
+    bedCard: { marginHorizontal: 16, marginTop: 8, overflow: 'hidden' },
     bed: {
       paddingHorizontal: 14,
       paddingTop: 12,
@@ -120,7 +120,7 @@ export const styles = themedStyles(() =>
       fontFamily: theme.font.body,
       fontSize: 12,
       color: theme.colors.expenseText,
-      marginBottom: 10,
+      marginBottom: 8,
     },
   })
 );

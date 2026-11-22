@@ -237,7 +237,7 @@ const styles = themedStyles(() =>
       justifyContent: 'space-between',
       gap: 12,
     },
-    brandRow: { flexDirection: 'row', alignItems: 'center', gap: 7 },
+    brandRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
     brand: { fontFamily: theme.font.roundedBold, fontSize: 22, letterSpacing: 0.2, color: theme.colors.ink },
     actions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
     // The greeting and the date on one line: the date is a quiet note at the right, not a line of its own.

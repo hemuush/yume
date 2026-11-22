@@ -49,6 +49,16 @@ jest.mock('@/components/CalendarSheet', () => ({
   },
 }));
 jest.mock('@/features/home/RepeatEntrySheet', () => ({ RepeatEntrySheet: () => null }));
+// Keeps the add-category form's props, so a test can finish it the way the real form does.
+const mockCategoryForm: {
+  current: { visible: boolean; initialKind: string; onSaved: (c?: unknown) => void } | null;
+} = { current: null };
+jest.mock('@/features/categories/AddCategoryModal', () => ({
+  AddCategoryModal: (props: { visible: boolean; initialKind: string; onSaved: (c?: unknown) => void }) => {
+    mockCategoryForm.current = props;
+    return null;
+  },
+}));
 jest.mock('@/features/people/AddPersonModal', () => ({ AddPersonModal: () => null }));
 jest.mock('@/components/ModalSheet', () => ({
   ModalSheet: ({ visible, children }: { visible: boolean; children: React.ReactNode }) =>
@@ -214,6 +224,41 @@ describe('Add hard cases', () => {
     await typeAmount(tree, typed);
     await save(tree);
     expect((await saved()).map((r) => r.amount_minor)).toEqual([minor]);
+    act(() => tree.unmount());
+  });
+
+  it('adds a category from the grid, picks it and saves the entry under it', async () => {
+    const tree = await render();
+    await typeAmount(tree, '75');
+    await press(tree, 'New');
+    expect(mockCategoryForm.current).toMatchObject({ visible: true, initialKind: 'expense' });
+    const created = await createCategory({ name: 'Pets', kind: 'expense' });
+    await act(async () => {
+      mockCategoryForm.current!.onSaved(created);
+      await settle();
+    });
+    expect(mockCategoryForm.current?.visible).toBe(false);
+    await save(tree);
+    const rows = await saved();
+    expect(rows.map((r) => [r.amount_minor, r.category_id])).toEqual([[7500, created.id]]);
+    act(() => tree.unmount());
+  });
+
+  it('does not pick a new category of the other kind', async () => {
+    const tree = await render();
+    await typeAmount(tree, '75');
+    await press(tree, 'Food');
+    await press(tree, 'New');
+    const created = await createCategory({ name: 'Bonus', kind: 'income' });
+    await act(async () => {
+      mockCategoryForm.current!.onSaved(created);
+      await settle();
+    });
+    await save(tree);
+    const foodId = (await mockDb.getFirstAsync<{ id: string }>(
+      "SELECT id FROM categories WHERE name = 'Food'"
+    ))!.id;
+    expect((await saved()).map((r) => r.category_id)).toEqual([foodId]);
     act(() => tree.unmount());
   });
 

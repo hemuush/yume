@@ -140,7 +140,6 @@ import {
   getTransactionById,
   getLastAccountForCategory,
   findRecentRepeat,
-  getRepeatEntries,
 } from '@/db/ledger';
 import { getAddDefaults, setAddDefaults } from '@/db/settings';
 import { saveSplit, deleteSplit, restoreSplit, getSplitParts } from '@/db/splits';
@@ -400,38 +399,6 @@ describe('Add screen', () => {
     });
     expect(createTransaction).toHaveBeenCalledTimes(1);
     act(() => tree.unmount());
-  });
-
-  it('hides shortcuts from the previous entry type while the next query loads', async () => {
-    (getRepeatEntries as jest.Mock).mockResolvedValueOnce([
-      {
-        type: 'expense',
-        accountId: 'bank',
-        accountCurrency: 'INR',
-        categoryId: 'food',
-        categoryName: 'Old shortcut',
-        categoryIcon: 'tag',
-        categoryColor: '#8FCBFF',
-        amountMinor: 12000,
-        note: '',
-        timesLogged: 3,
-      },
-    ]);
-    let finish!: (entries: never[]) => void;
-    (getRepeatEntries as jest.Mock).mockImplementationOnce(
-      () =>
-        new Promise<never[]>((resolve) => {
-          finish = resolve;
-        })
-    );
-    const tree = await render();
-    expect(texts(tree)).toContain('Old shortcut');
-    await press(tree, 'Income');
-    expect(texts(tree)).not.toContain('Old shortcut');
-    await act(async () => {
-      finish([]);
-      await settle();
-    });
   });
 
   it('keeps the paise typed and saves the displayed value', async () => {
@@ -886,37 +853,6 @@ describe('Add screen', () => {
     expect(mockAddPersonVisible.current).toBe(true);
     (listPeople as jest.Mock).mockResolvedValue(everyone);
   });
-  it('fills category, amount and account from a "Your usual" chip', async () => {
-    (getRepeatEntries as jest.Mock).mockResolvedValue([
-      {
-        type: 'expense',
-        accountId: 'cash',
-        accountCurrency: 'INR',
-        categoryId: 'rapido',
-        categoryName: 'Rapido',
-        categoryIcon: 'bike',
-        categoryColor: '#8FCBFF',
-        amountMinor: 12600,
-        note: '',
-        timesLogged: 3,
-      },
-    ]);
-    const tree = await render();
-    expect(texts(tree)).toContain('Your usual');
-    // The chip's name and amount are separate texts, so the amount is never the part cut short.
-    expect(texts(tree)).toEqual(expect.arrayContaining(['Rapido', '₹126']));
-    await act(async () => {
-      tree.root
-        .find((n) => n.props.accessibilityLabel === 'Rapido, ₹126, logged 3 times' && n.props.onPress)
-        .props.onPress();
-    });
-    await save(tree);
-    expect(createTransaction).toHaveBeenLastCalledWith(
-      expect.objectContaining({ categoryId: 'rapido', amountMinor: 12600, accountId: 'cash' })
-    );
-    (getRepeatEntries as jest.Mock).mockResolvedValue([]);
-  });
-
   it('opens a transfer into the account a goal follows, from a different account', async () => {
     mockParams.current = { type: 'transfer', toAccountId: 'bank' };
     const tree = await render();

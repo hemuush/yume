@@ -23,7 +23,7 @@ export const s = themedStyles(() =>
       color: theme.colors.textPrimary,
     },
     bubbleTextYou: { color: theme.colors.onInk },
-    typeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, paddingHorizontal: 16, marginTop: 14 },
+    typeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingHorizontal: 16, marginTop: 14 },
     typeCard: {
       width: '48%',
       flexGrow: 1,
@@ -55,7 +55,7 @@ export const s = themedStyles(() =>
       borderBottomColor: theme.colors.home.edge,
     },
     usualMid: { flex: 1, minWidth: 0 },
-    useParent: { marginTop: 10, marginHorizontal: 6 },
+    useParent: { marginTop: 8, marginHorizontal: 6 },
     display: { alignItems: 'center', paddingVertical: 10, gap: 2 },
     displayAmount: {
       fontFamily: theme.font.bodyBold,
@@ -69,12 +69,12 @@ export const s = themedStyles(() =>
       minHeight: 48,
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 10,
+      gap: 8,
       paddingHorizontal: 8,
     },
     noneText: { fontFamily: theme.font.bodyMedium, fontSize: 14, color: theme.colors.textPrimary },
     chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, padding: 6 },
-    twoCards: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, paddingHorizontal: 16, marginTop: 14 },
+    twoCards: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingHorizontal: 16, marginTop: 14 },
     bigCard: {
       flexGrow: 1,
       flexBasis: '30%',
@@ -91,7 +91,7 @@ export const s = themedStyles(() =>
     },
     bigCardOn: { borderColor: theme.colors.ink, backgroundColor: theme.colors.home.selected },
     bigLabel: { fontFamily: theme.font.bodyBold, fontSize: 15, color: theme.colors.textPrimary },
-    noteRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginHorizontal: 16, marginTop: 12 },
+    noteRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginHorizontal: 16, marginTop: 12 },
     typeRow: { flexDirection: 'row', gap: 6, paddingHorizontal: 6, paddingBottom: 6 },
     typeChip: {
       flex: 1,
@@ -175,7 +175,7 @@ export const s = themedStyles(() =>
       borderTopWidth: StyleSheet.hairlineWidth,
       borderTopColor: theme.colors.home.edge,
     },
-    inputRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+    inputRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
     input: {
       flex: 1,
       minHeight: 48,

@@ -536,6 +536,6 @@ const styles = themedStyles(() =>
       marginTop: 4,
       lineHeight: 16,
     },
-    errorRetry: { marginTop: 10, alignSelf: 'flex-start' },
+    errorRetry: { marginTop: 8, alignSelf: 'flex-start' },
   })
 );

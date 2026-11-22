@@ -47,7 +47,7 @@ export const styles = themedStyles(() =>
     },
     /** A note under a card on the screen: lines up with the card's edge, not the sheet hints that share `hint`. */
     listNote: { marginHorizontal: SCREEN.gutter },
-    row: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8 },
+    row: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 8 },
     rowDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.borderSoft },
     rowMuted: { opacity: 0.6 },
     rowTitle: { fontFamily: theme.font.bodyMedium, fontSize: 15, color: theme.colors.textPrimary },
@@ -60,7 +60,7 @@ export const styles = themedStyles(() =>
     },
     /** The second line under a rule's title sits right under the first. */
     rowSubNext: { marginTop: 0 },
-    ruleMain: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10, minWidth: 0 },
+    ruleMain: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8, minWidth: 0 },
     ruleCopy: { flex: 1, minWidth: 0 },
     ruleMainStacked: { flex: 0 },
     ruleStacked: { flexDirection: 'column', alignItems: 'stretch', gap: 8 },
@@ -72,7 +72,7 @@ export const styles = themedStyles(() =>
     },
     amountButton: { minHeight: 44, justifyContent: 'center' },
     suggestion: { paddingVertical: 12, gap: 8 },
-    suggestionHead: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+    suggestionHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
     suggestionActions: {
       flexDirection: 'row',
       flexWrap: 'wrap',
@@ -133,7 +133,7 @@ export const styles = themedStyles(() =>
       alignItems: 'center',
       minHeight: 44,
       justifyContent: 'space-between',
-      marginTop: 10,
+      marginTop: 8,
       marginBottom: 8,
     },
     errorText: {

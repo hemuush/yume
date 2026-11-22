@@ -137,7 +137,7 @@ const styles = themedStyles(() =>
     row: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 10,
+      gap: 8,
       minHeight: 60,
       paddingVertical: 10,
       paddingHorizontal: 12,

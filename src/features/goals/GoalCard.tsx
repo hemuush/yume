@@ -237,7 +237,7 @@ const styles = themedStyles(() =>
     row: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 10,
+      gap: 8,
       paddingVertical: 12,
       paddingLeft: 14,
       paddingRight: 8,

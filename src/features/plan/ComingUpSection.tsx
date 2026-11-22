@@ -264,7 +264,7 @@ const s = themedStyles(() =>
     row: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 10,
+      gap: 8,
       minHeight: 52,
       paddingVertical: 6,
       paddingHorizontal: 14,
@@ -307,6 +307,6 @@ const s = themedStyles(() =>
     },
     payText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.link },
     previewPayText: { color: theme.colors.onInk },
-    emptyRow: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 64, paddingHorizontal: 14 },
+    emptyRow: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 64, paddingHorizontal: 14 },
   })
 );

@@ -121,10 +121,10 @@ const s = themedStyles(() =>
       flexDirection: 'row',
       alignItems: 'center',
       gap: 12,
-      paddingVertical: 10,
+      paddingVertical: 8,
       paddingLeft: 14,
       paddingRight: 10,
-      minHeight: 60,
+      minHeight: 56,
     },
     divider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.home.edge },
     highlight: {
@@ -136,8 +136,8 @@ const s = themedStyles(() =>
       backgroundColor: theme.colors.dueRow,
     },
     icon: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
-    body: { flex: 1, minWidth: 0, gap: 6 },
-    line: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+    body: { flex: 1, minWidth: 0, gap: 5 },
+    line: { flexDirection: 'row', alignItems: 'center', gap: 8 },
     stacked: { flexDirection: 'column', alignItems: 'flex-start', gap: 4 },
     copy: { flex: 1, minWidth: 0, gap: 2 },
     title: {
@@ -148,7 +148,7 @@ const s = themedStyles(() =>
     },
     figure: { flexShrink: 1, alignItems: 'flex-end', gap: 2 },
     figureStacked: { alignItems: 'flex-start' },
-    track: { height: 6, borderRadius: 3, backgroundColor: theme.colors.home.control, overflow: 'hidden' },
-    fill: { height: 6, borderRadius: 3 },
+    track: { height: 5, borderRadius: 3, backgroundColor: theme.colors.home.control, overflow: 'hidden' },
+    fill: { height: 5, borderRadius: 3 },
   })
 );

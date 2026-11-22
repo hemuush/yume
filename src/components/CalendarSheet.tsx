@@ -401,7 +401,7 @@ const styles = themedStyles(() =>
       alignItems: 'center',
       minHeight: 44,
       justifyContent: 'center',
-      paddingVertical: 7,
+      paddingVertical: 8,
       borderRadius: 12,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: theme.colors.borderSoft,

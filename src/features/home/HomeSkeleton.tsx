@@ -52,5 +52,5 @@ const styles = {
   figure: { gap: 4 },
   row: { flexDirection: 'row', gap: 18, paddingTop: 8 },
   stacked: { flexDirection: 'column', gap: 8 },
-  accountTiles: { marginHorizontal: 16, flexDirection: 'row', gap: 10, overflow: 'hidden' },
+  accountTiles: { marginHorizontal: 16, flexDirection: 'row', gap: 8, overflow: 'hidden' },
 } as const;

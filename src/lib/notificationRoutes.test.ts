@@ -452,6 +452,7 @@ describe('notification delivery checks', () => {
     expect(await getNotificationDeliveryStatus()).toEqual({
       permitted: true,
       channelBlocked: true,
+      exactBlocked: false,
       scheduledCount: 0,
       morningCount: 0,
       eveningCount: 0,

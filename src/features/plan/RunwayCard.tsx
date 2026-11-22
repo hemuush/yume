@@ -174,7 +174,7 @@ const local = themedStyles(() =>
     status: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 7,
+      gap: 8,
       paddingBottom: 2,
     },
     statusText: { fontFamily: theme.font.bodyBold, fontSize: 20, color: theme.colors.incomeText },
@@ -194,7 +194,7 @@ const local = themedStyles(() =>
       justifyContent: 'center',
       gap: 3,
     },
-    stats: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 6 },
+    stats: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 6 },
     balanceColumn: { flexGrow: 1, flexBasis: 110, minWidth: 0, gap: 2 },
     projectedBalance: { alignItems: 'flex-end' },
     statLabel: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.home.secondaryText },

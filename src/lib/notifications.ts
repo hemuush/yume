@@ -105,19 +105,40 @@ export interface NotificationDeliveryStatus {
   eveningCount?: number;
   permitted: boolean;
   channelBlocked: boolean;
+  /** Android 12+: without "Alarms & reminders" the phone may hold a reminder back by minutes or hours. */
+  exactBlocked: boolean;
   scheduledCount: number;
+}
+
+/** Whether the phone lets Yume fire a reminder at the exact minute (always true off Android and below Android 12). */
+async function exactAlarmsAllowed(): Promise<boolean> {
+  if (Platform.OS !== 'android') return true;
+  try {
+    return (await Notifications.getExactAlarmPermissionsAsync()).granted;
+  } catch {
+    return true;
+  }
+}
+
+/** Opens the phone's "Alarms & reminders" screen for Yume, then rebuilds so the reminders are set with the exact time. */
+export async function requestExactAlarmPermission(): Promise<boolean> {
+  const granted = (await Notifications.requestExactAlarmPermissionsAsync()).granted;
+  if (granted) await rebuildNotifications();
+  return granted;
 }
 
 /** App permission and the reminder channel are independent Android settings. */
 export async function getNotificationDeliveryStatus(): Promise<NotificationDeliveryStatus> {
-  const [permission, scheduled, channel] = await Promise.all([
+  const [permission, scheduled, channel, exact] = await Promise.all([
     Notifications.getPermissionsAsync(),
     Notifications.getAllScheduledNotificationsAsync(),
     Platform.OS === 'android'
       ? Notifications.getNotificationChannelAsync(NOTIFICATION_CHANNEL_ID)
       : Promise.resolve(null),
+    exactAlarmsAllowed(),
   ]);
   return {
+    exactBlocked: !exact,
     permitted: !!permission?.granted,
     channelBlocked: channel?.importance === Notifications.AndroidImportance.NONE,
     morningCount: (scheduled ?? []).filter((n) => /^yume-\d{4}-\d{2}-\d{2}-morning$/.test(n.identifier))

@@ -72,7 +72,7 @@ export function Section({
             hitSlop={12}
             accessibilityRole="button"
             accessibilityLabel={`${actionLabel} — ${title}`}
-            style={[styles.seeAll, compact && { minHeight: 44 }, animatedStyle]}
+            style={[styles.seeAll, compact && { minHeight: 32 }, animatedStyle]}
           >
             <Text style={[styles.seeAllText, { color: ink }]}>{actionLabel}</Text>
             <Feather name="arrow-right" size={14} color={ink} />

@@ -35,6 +35,15 @@ export function logCopy(weekday: number): NotificationText {
   return { ...line, extra: line.title };
 }
 
+/** The last reminder of a plan: it only ever shows if Yume was not opened for the whole plan, which is when the reminders would stop. */
+export function keepGoingCopy(): NotificationText {
+  return {
+    title: 'Open Yume to keep reminders going',
+    body: 'Reminders are set two weeks at a time. Open the app once to set the next two weeks.',
+    extra: 'Open Yume to keep reminders going',
+  };
+}
+
 export function wrapCopy(): NotificationText {
   return {
     title: 'Your week, wrapped',

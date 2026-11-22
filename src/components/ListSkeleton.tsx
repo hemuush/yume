@@ -71,7 +71,7 @@ const styles = themedStyles(() =>
       borderColor: theme.colors.borderSoft,
       overflow: 'hidden',
     },
-    row: { flexDirection: 'row', alignItems: 'center', gap: 11, paddingVertical: 11, paddingHorizontal: 14 },
+    row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 14 },
     rowDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.borderSoft },
     rowMid: { flex: 1 },
   })

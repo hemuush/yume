@@ -89,7 +89,7 @@ export function MinDueFields({
 
 const styles = themedStyles(() =>
   StyleSheet.create({
-    row: { flexDirection: 'row', gap: 10 },
+    row: { flexDirection: 'row', gap: 8 },
     half: { flex: 1 },
     // Sits under the fields and keeps the form's 14 gap before whatever follows.
     hint: {

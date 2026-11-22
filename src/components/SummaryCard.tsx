@@ -137,7 +137,7 @@ const styles = themedStyles(() =>
       marginTop: theme.layout.screenTopGap,
       paddingVertical: 14,
       paddingHorizontal: SCREEN.rowInset,
-      gap: 10,
+      gap: 8,
       overflow: 'visible',
     },
     top: {

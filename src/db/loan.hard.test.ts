@@ -292,10 +292,9 @@ async function legacyLoan(seed: number): Promise<Legacy> {
   let emi = mr === 0 ? Math.round(principal / n) : Math.round((principal * mr * f) / (f - 1));
   if (emi % 100 === 0) emi += 37; // genuinely paise
   const paidCount = kind === 'closed' ? 0 : Math.floor(r() * (n - 1));
-  const built: { emi: number; principal: number; interest: number; out: number }[] = [];
   const buildFrom = (from: number, start: number, e: number, mrate: number, last: boolean) => {
     let o = start;
-    const list: typeof built = [];
+    const list: { emi: number; principal: number; interest: number; out: number }[] = [];
     for (let i = from; i <= n && o > 0; i++) {
       const interest = Math.round(o * mrate);
       let p = e - interest;

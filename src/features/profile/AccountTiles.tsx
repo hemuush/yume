@@ -145,7 +145,7 @@ const styles = themedStyles(() =>
     tile: {
       flex: 1,
       minWidth: 0,
-      paddingVertical: 12,
+      paddingVertical: 10,
       paddingHorizontal: 10,
       gap: 6,
       backgroundColor: theme.colors.surface,

@@ -249,7 +249,7 @@ const styles = themedStyles(() =>
     pillShort: { backgroundColor: theme.colors.expenseText },
     pillText: { fontFamily: theme.font.bodyBold, fontSize: 11, color: theme.colors.surface },
     read: {
-      marginTop: 10,
+      marginTop: 8,
       borderRadius: theme.radius.md,
       backgroundColor: theme.colors.surfaceAlt,
       paddingHorizontal: 12,

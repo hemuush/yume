@@ -26,7 +26,7 @@ export const styles = themedStyles(() =>
       borderColor: theme.colors.home.selected,
     },
     // A friend entry's people: round avatars with an ink ring on the picked one.
-    people: { gap: 10, paddingRight: 4 },
+    people: { gap: 8, paddingRight: 4 },
     person: { width: 60, alignItems: 'center', gap: 5 },
     avatarRing: { padding: 2, borderRadius: 28, borderWidth: 2, borderColor: 'transparent' },
     avatar: { width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center' },
@@ -235,7 +235,7 @@ export const styles = themedStyles(() =>
       minHeight: 44,
       justifyContent: 'center',
       paddingHorizontal: 11,
-      paddingVertical: 7,
+      paddingVertical: 8,
       borderRadius: theme.radius.md,
       backgroundColor: theme.colors.home.surface,
       borderWidth: StyleSheet.hairlineWidth,
@@ -248,7 +248,7 @@ export const styles = themedStyles(() =>
     },
 
     noteInput: {
-      marginBottom: 10,
+      marginBottom: 8,
       borderWidth: 1,
       borderColor: theme.colors.borderSoft,
       borderRadius: theme.radius.lg,
@@ -315,7 +315,7 @@ export const styles = themedStyles(() =>
     stagedRow: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 10,
+      gap: 8,
       paddingVertical: 9,
     },
     stagedRowDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.borderSoft },

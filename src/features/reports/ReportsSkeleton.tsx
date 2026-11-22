@@ -19,5 +19,5 @@ export function ReportsSkeleton() {
   );
 }
 const styles = themedStyles(() =>
-  StyleSheet.create({ wrap: { paddingHorizontal: 16, paddingTop: 12, gap: 10 } })
+  StyleSheet.create({ wrap: { paddingHorizontal: 16, paddingTop: 12, gap: 8 } })
 );

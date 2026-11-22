@@ -242,7 +242,7 @@ const styles = themedStyles(() =>
       marginTop: 0,
       paddingTop: 8,
       paddingBottom: 8,
-      gap: 10,
+      gap: 8,
       borderTopWidth: 0,
       borderBottomWidth: 0,
     },
@@ -304,7 +304,7 @@ const styles = themedStyles(() =>
       borderTopWidth: StyleSheet.hairlineWidth,
       borderTopColor: theme.colors.divider,
     },
-    lanes: { gap: 10, paddingBottom: 10 },
+    lanes: { gap: 8, paddingBottom: 10 },
     lane: { gap: 5 },
     laneHead: {
       flexDirection: 'row',

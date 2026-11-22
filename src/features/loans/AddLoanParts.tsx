@@ -117,7 +117,7 @@ const styles = themedStyles(() =>
     card: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 10,
+      gap: 8,
       paddingHorizontal: 12,
       paddingVertical: 10,
       borderRadius: theme.radius.lg,

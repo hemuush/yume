@@ -126,7 +126,7 @@ export function BiggestSpends({
 // This list only: the day sheet's rows keep the shared, roomier size.
 const compact = themedStyles(() =>
   StyleSheet.create({
-    row: { minHeight: 48, gap: 10, paddingVertical: 6, paddingHorizontal: 12 },
+    row: { minHeight: 48, gap: 8, paddingVertical: 6, paddingHorizontal: 12 },
     sub: { fontFamily: theme.font.body, fontSize: 12, marginTop: 1 },
     foot: {
       marginTop: 0,

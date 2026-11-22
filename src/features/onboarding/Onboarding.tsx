@@ -463,7 +463,7 @@ const styles = themedStyles(() =>
     kicker: { ...EYEBROW, color: theme.colors.textSecondary },
     titleCompact: { marginTop: 6 },
     accountsScroll: { flexGrow: 0, flexShrink: 1, marginTop: 18, alignSelf: 'stretch' },
-    accountsList: { gap: 10, paddingBottom: 4 },
+    accountsList: { gap: 8, paddingBottom: 4 },
     // A white card; picked, it gets a strip in the account's colour along its top.
     accountCard: {
       backgroundColor: theme.colors.surface,
@@ -488,7 +488,7 @@ const styles = themedStyles(() =>
     },
     checkOn: { backgroundColor: theme.colors.action, borderColor: theme.colors.ink },
     openingInput: {
-      marginTop: 10,
+      marginTop: 8,
       backgroundColor: theme.colors.surfaceAlt,
       borderRadius: theme.radius.lg,
       paddingHorizontal: 14,

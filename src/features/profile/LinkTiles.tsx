@@ -95,7 +95,7 @@ const styles = themedStyles(() =>
     stat: {
       flex: 1,
       minWidth: 0,
-      minHeight: 56,
+      minHeight: 52,
       paddingHorizontal: 6,
       paddingVertical: 8,
       alignItems: 'center',

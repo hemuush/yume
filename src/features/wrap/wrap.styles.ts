@@ -30,7 +30,7 @@ export const styles = themedStyles(() =>
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      marginTop: 10,
+      marginTop: 8,
       marginHorizontal: 14,
     },
     topEyebrow: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.textSecondary },
@@ -151,7 +151,7 @@ export const styles = themedStyles(() =>
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'baseline',
-      gap: 10,
+      gap: 8,
       marginBottom: 6,
     },
     barName: { flex: 1, fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textPrimary },
@@ -178,7 +178,7 @@ export const styles = themedStyles(() =>
     calRing: { ...StyleSheet.absoluteFill, borderRadius: 8, borderWidth: 2.5, borderColor: theme.colors.ink },
     calDay: { fontFamily: theme.font.mono, fontSize: 11, color: theme.colors.textPrimary },
 
-    moverRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 10 },
+    moverRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8 },
 
     week: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, height: 170 },
     weekCol: { flex: 1, alignItems: 'center', justifyContent: 'flex-end', gap: 6, height: '100%' },
@@ -189,7 +189,7 @@ export const styles = themedStyles(() =>
     finalMiddle: { flexGrow: 1, justifyContent: 'center' },
     card: { marginTop: 16, padding: 12, borderRadius: 30, overflow: 'hidden' },
     cardBody: { padding: 18, paddingTop: 22 },
-    cardHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
+    cardHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
     cardKicker: { ...EYEBROW, color: theme.colors.textMuted },
     cardTotal: {
       fontVariant: ['tabular-nums'],
@@ -200,7 +200,7 @@ export const styles = themedStyles(() =>
       marginTop: 6,
     },
     cardLine: { fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textSecondary },
-    cardRows: { gap: 7, marginTop: 14 },
+    cardRows: { gap: 8, marginTop: 14 },
     cardRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
     cardDot: { width: 9, height: 9, borderRadius: 5 },
     cardName: { flex: 1, fontFamily: theme.font.body, fontSize: 13, color: theme.colors.textPrimary },
@@ -212,7 +212,7 @@ export const styles = themedStyles(() =>
     },
     cardBrand: { flexDirection: 'row', alignItems: 'center', gap: 6 },
     cardBrandText: { fontFamily: theme.font.roundedBold, fontSize: 12, color: theme.colors.textPrimary },
-    actions: { flexDirection: 'row', gap: 10 },
+    actions: { flexDirection: 'row', gap: 8 },
     action: { flex: 1 },
   })
 );

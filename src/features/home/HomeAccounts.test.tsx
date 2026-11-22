@@ -156,7 +156,7 @@ it.each([
   }
 });
 
-it('widens the tiles with the text size so a balance keeps one line', () => {
+it('sizes the tiles so two and a half show, widening with the text size so a balance keeps one line', () => {
   const widthOf = (fontScale: number) => {
     const dimensions = jest
       .spyOn(require('react-native'), 'useWindowDimensions')
@@ -175,8 +175,8 @@ it('widens the tiles with the text size so a balance keeps one line', () => {
       dimensions.mockRestore();
     }
   };
-  expect(widthOf(1)).toBe(148);
-  expect(widthOf(1.5)).toBe(192);
+  expect(widthOf(1)).toBe(136);
+  expect(widthOf(1.5)).toBe(177);
 });
 
 it('ends the row with an Add account tile', () => {

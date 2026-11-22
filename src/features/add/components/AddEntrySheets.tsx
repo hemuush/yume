@@ -18,6 +18,10 @@ export const SHEETS_KEYS = [
   'addPersonVisible',
   'setAddPersonVisible',
   'onPersonAdded',
+  'addCategoryVisible',
+  'setAddCategoryVisible',
+  'categories',
+  'setCategoryId',
   'calendarOpen',
   'date',
   'setCalendarOpen',
@@ -43,6 +47,10 @@ export function AddEntrySheets({ model }: Props): ReactElement {
     addPersonVisible,
     setAddPersonVisible,
     onPersonAdded,
+    addCategoryVisible,
+    setAddCategoryVisible,
+    categories,
+    setCategoryId,
     calendarOpen,
     date,
     setCalendarOpen,
@@ -78,6 +86,19 @@ export function AddEntrySheets({ model }: Props): ReactElement {
         visible: addPersonVisible,
         onClose: () => setAddPersonVisible(false),
         onCreated: () => void onPersonAdded(),
+      }}
+      addCategory={{
+        visible: addCategoryVisible,
+        kind: type === 'income' ? 'income' : 'expense',
+        categories,
+        onClose: () => setAddCategoryVisible(false),
+        // The new category is picked for this entry, so nothing typed so far is lost or redone.
+        onSaved: async (created) => {
+          setAddCategoryVisible(false);
+          await load();
+          if (created && created.kind === (type === 'income' ? 'income' : 'expense'))
+            setCategoryId(created.id);
+        },
       }}
       calendar={{
         visible: calendarOpen,

@@ -245,7 +245,7 @@ const styles = themedStyles(() =>
     },
     pickText: { fontFamily: theme.font.roundedMedium, fontSize: 13, color: theme.colors.textPrimary },
     pickTextOn: { fontFamily: theme.font.roundedBold },
-    header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 },
+    header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
     navBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
     monthLabel: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.textPrimary },
     row: { flexDirection: 'row' },
@@ -275,7 +275,7 @@ const styles = themedStyles(() =>
       fontSize: 12,
       color: theme.colors.textSecondary,
       textAlign: 'center',
-      marginTop: 10,
+      marginTop: 8,
     },
   })
 );

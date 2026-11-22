@@ -116,11 +116,11 @@ export const styles = themedStyles(() =>
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      marginTop: 10,
+      marginTop: 8,
       marginBottom: 8,
     },
     // Two fields side by side, wrapping to separate rows on a narrow screen or at large text.
-    pairRow: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 10 },
+    pairRow: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 8 },
     pairCell: { flexGrow: 1, flexBasis: 150, minWidth: 0 },
     assetRow: {
       flexDirection: 'row',

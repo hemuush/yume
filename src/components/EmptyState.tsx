@@ -39,7 +39,7 @@ const styles = themedStyles(() =>
       fontFamily: theme.font.bodyBold,
       fontSize: 16,
       color: theme.colors.textPrimary,
-      marginTop: 10,
+      marginTop: 8,
       textAlign: 'center',
       maxWidth: 360,
       lineHeight: 24,

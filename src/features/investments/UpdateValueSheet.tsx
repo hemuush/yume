@@ -298,7 +298,7 @@ const styles = themedStyles(() =>
       lineHeight: 17,
     },
     unitsBlock: { gap: 8, marginBottom: 6 },
-    unitsRow: { flexDirection: 'row', gap: 10 },
+    unitsRow: { flexDirection: 'row', gap: 8 },
     unitsHalf: { flex: 1 },
     strip: {
       backgroundColor: theme.colors.inkWash,

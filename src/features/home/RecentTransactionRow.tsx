@@ -154,7 +154,7 @@ const styles = themedStyles(() =>
       paddingHorizontal: 14,
       minHeight: SCREEN.rowMinHeight,
     },
-    denseRow: { minHeight: 48, paddingVertical: 7, paddingHorizontal: 12, gap: 10 },
+    denseRow: { minHeight: 48, paddingVertical: 8, paddingHorizontal: 12, gap: 8 },
     denseLead: { width: DENSE_MARK },
     denseTitle: { fontFamily: theme.font.bodyMedium, fontSize: 15 },
     denseSub: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, marginTop: 1 },

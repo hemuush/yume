@@ -147,7 +147,7 @@ const styles = themedStyles(() =>
     },
     editText: { fontFamily: theme.font.bodyBold, fontSize: 12, color: theme.colors.textPrimary },
     lines: { gap: 8 },
-    line: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+    line: { flexDirection: 'row', alignItems: 'center', gap: 8 },
     dot: { width: 10, height: 10, borderRadius: 3 },
     name: { flex: 1, fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
     amount: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textPrimary },

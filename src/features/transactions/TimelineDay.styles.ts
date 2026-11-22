@@ -16,7 +16,7 @@ export const ROW_H = SCREEN.rowMinHeight;
 export const styles = themedStyles(() =>
   StyleSheet.create({
     // A day is one cell of the list: its card, with the day named inside it.
-    day: { marginTop: 10 },
+    day: { marginTop: 8 },
     // Home's list card. It does not clip (Home's does): a held line is lifted out of the card with a shadow, and a
     // clipped card would cut that off; the rows round their own pressed tint instead.
     lane: {

@@ -13,6 +13,7 @@ jest.mock('@/components/ModalSheet', () => ({
 }));
 jest.mock('@/components/CalendarSheet', () => ({ CalendarSheet: mockStub('calendar') }));
 jest.mock('@/features/profile/AddAccountModal', () => ({ AddAccountModal: mockStub('add-account') }));
+jest.mock('@/features/categories/AddCategoryModal', () => ({ AddCategoryModal: mockStub('add-category') }));
 jest.mock('@/features/people/AddPersonModal', () => ({ AddPersonModal: mockStub('add-person') }));
 jest.mock('@/features/home/RepeatEntrySheet', () => ({ RepeatEntrySheet: mockStub('repeat') }));
 // One stub row per account, with what the real row is given: its account, whether it is the picked one, a tap.
@@ -77,6 +78,13 @@ function render(open = true) {
           onPick: fns.onPick,
         }}
         addAccount={{ visible: false, onClose: fns.addAccountClose, onCreated: fns.addAccountCreated }}
+        addCategory={{
+          visible: false,
+          kind: 'expense',
+          categories: [],
+          onClose: jest.fn(),
+          onSaved: jest.fn(),
+        }}
         addPerson={{ visible: true, onClose: fns.personClose, onCreated: fns.personCreated }}
         calendar={{
           visible: true,

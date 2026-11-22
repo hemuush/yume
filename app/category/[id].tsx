@@ -449,10 +449,10 @@ const styles = themedStyles(() =>
       marginHorizontal: 2,
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 10,
+      gap: 8,
       minHeight: 44,
       paddingHorizontal: 14,
-      paddingVertical: 11,
+      paddingVertical: 12,
     },
     noLimitText: {
       flex: 1,

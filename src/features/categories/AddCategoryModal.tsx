@@ -45,7 +45,8 @@ export function AddCategoryModal({
   category: Category | null;
   allCategories: Category[];
   onClose: () => void;
-  onSaved: () => void;
+  /** Called after a save; a new category is handed over so the caller can pick it. */
+  onSaved: (created?: Category) => void;
   /** Opens Archive / Delete for the category being edited — shown for your own categories only. */
   onManage?: () => void;
   initialKind?: CategoryKind;
@@ -121,10 +122,12 @@ export function AddCategoryModal({
         });
         if (refreshed === false) showPrivacyReminderWarning();
       } else {
-        await createCategory(
+        const created = await createCategory(
           { name: name.trim(), kind, color, icon, parentId, isSensitive },
           showPrivacyReminderWarning
         );
+        onSaved(created);
+        return;
       }
       onSaved();
     } catch (e) {

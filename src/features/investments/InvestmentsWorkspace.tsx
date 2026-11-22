@@ -371,7 +371,7 @@ const styles = themedStyles(() =>
     container: { flex: 1, backgroundColor: theme.colors.background },
     hint: { fontFamily: theme.font.body, fontSize: 12, lineHeight: 17, color: theme.colors.textMuted },
     hintPad: { marginHorizontal: SCREEN.gutter, marginTop: 6 },
-    mainActions: { flexDirection: 'row', gap: 8, marginHorizontal: SCREEN.gutter, marginTop: 12 },
+    mainActions: { flexDirection: 'row', gap: 8, marginHorizontal: SCREEN.gutter, marginTop: 10 },
     mainAction: { flex: 1 },
     portfolio: {
       flex: 1,

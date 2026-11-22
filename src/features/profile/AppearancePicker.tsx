@@ -119,7 +119,7 @@ function MiniScreen({ palette }: { palette: Palette }) {
 
 const s = themedStyles(() =>
   StyleSheet.create({
-    row: { flexDirection: 'row', gap: 10, paddingHorizontal: 14, paddingVertical: 8 },
+    row: { flexDirection: 'row', gap: 8, paddingHorizontal: 14, paddingVertical: 8 },
     slot: { flex: 1, minHeight: 44 },
     frame: {
       height: PREVIEW_H,

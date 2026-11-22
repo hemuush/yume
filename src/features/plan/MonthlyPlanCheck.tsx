@@ -324,7 +324,7 @@ const s = themedStyles(() =>
       gap: 2,
     },
     dot: { width: 7, height: 7, borderRadius: 4 },
-    breakdown: { gap: 10, paddingTop: 4 },
+    breakdown: { gap: 8, paddingTop: 4 },
     facts: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 8, rowGap: 4 },
     fact: { flexGrow: 1, flexShrink: 1, minWidth: 0, minHeight: 44, justifyContent: 'center' },
     factLabelRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: 4 },

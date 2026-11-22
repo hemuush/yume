@@ -166,6 +166,15 @@ describe('month card', () => {
     expect(all.some((t) => t.startsWith('about ₹'))).toBe(true);
   });
 
+  it('opens the breakdown when the big figure is tapped', () => {
+    const r = render();
+    const figure = byLabel(r, 'Free to use, ₹794');
+    expect(figure.props.accessibilityRole).toBe('button');
+    expect(texts(r).some((t) => t.startsWith('On pace by '))).toBe(false);
+    act(() => figure.props.onPress());
+    expect(texts(r).some((t) => t.startsWith('On pace by '))).toBe(true);
+  });
+
   it('says how far over the daily goal today is', () => {
     const all = texts(render({ today: { spentMinor: 600_000, goalMinor: 500_000 } }));
     expect(all).toEqual(expect.arrayContaining(['Today', '₹6,000', '₹1,000 over']));

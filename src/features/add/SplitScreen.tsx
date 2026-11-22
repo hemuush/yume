@@ -450,7 +450,7 @@ const styles = themedStyles(() =>
       justifyContent: 'center',
       backgroundColor: theme.colors.surfaceAlt,
     },
-    addRow: { minHeight: 52, gap: 10 },
+    addRow: { minHeight: 52, gap: 8 },
     addText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.textSecondary },
     addTextLead: { color: theme.colors.textPrimary },
     hint: {
@@ -483,6 +483,6 @@ const styles = themedStyles(() =>
     typingName: { fontFamily: theme.font.bodyBold, color: theme.colors.textPrimary },
     done: { flex: 1 },
     actionRow: { flexDirection: 'row' },
-    pickNote: { fontFamily: theme.font.bodyBold, fontSize: 12, marginBottom: 10 },
+    pickNote: { fontFamily: theme.font.bodyBold, fontSize: 12, marginBottom: 8 },
   })
 );

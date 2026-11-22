@@ -173,7 +173,7 @@ function EffectRow({ label, value, detail }: { label: string; value: number; det
 
 const styles = themedStyles(() =>
   StyleSheet.create({
-    section: { ...flatSection(), gap: 4, paddingHorizontal: 14, paddingVertical: 12, marginTop: 10 },
+    section: { ...flatSection(), gap: 4, paddingHorizontal: 14, paddingVertical: 12, marginTop: 8 },
     heading: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.textPrimary },
     change: {
       fontFamily: theme.font.body,

@@ -35,7 +35,7 @@ const styles = themedStyles(() =>
     card: {
       flexDirection: 'row',
       borderRadius: theme.radius.xl,
-      marginBottom: 10,
+      marginBottom: 8,
       backgroundColor: theme.colors.surface,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: theme.colors.borderSoft,

@@ -24,6 +24,7 @@ import {
   rebuildFailed,
   rebuildNotifications,
   requestNotificationPermission,
+  requestExactAlarmPermission,
   getNotificationDeliveryStatus,
   sendTestNotification,
   NotificationDeliveryStatus,
@@ -69,6 +70,8 @@ export default function NotificationSettingsScreen() {
   // Starts from the last rebuild, so one that failed at app start still shows here.
   const [scheduleFailed, setScheduleFailed] = useState(rebuildFailed);
   const [troubleOpen, setTroubleOpen] = useState(false);
+  // The "allow exact timing" question is asked once a visit, not at every switch.
+  const exactAsked = useRef(false);
   const deliveryRunning = useRef(false);
   const deliveryRequest = useRef(0);
   const focused = useRef(false);
@@ -168,6 +171,29 @@ export default function NotificationSettingsScreen() {
     if (enabled && !(await ensurePermission())) return;
     if (!focused.current || toggleRequests.current[key] !== request) return;
     await save({ [key]: enabled });
+    if (enabled) void offerExactTiming();
+  };
+
+  /** Turning a reminder on is the moment to ask: on Android 12+ the phone holds reminders back unless Yume may set exact alarms. */
+  const offerExactTiming = async () => {
+    const status = await getNotificationDeliveryStatus().catch(() => null);
+    if (!status?.permitted || !status.exactBlocked || !focused.current || exactAsked.current) return;
+    exactAsked.current = true;
+    showAlert(
+      'Get reminders on time',
+      'Allow “Alarms & reminders” for Yume so they arrive at the minute you set, not later.',
+      [
+        { text: 'Not now', style: 'cancel' },
+        {
+          text: 'Allow',
+          onPress: () => {
+            void requestExactAlarmPermission()
+              .then(() => refreshDelivery())
+              .catch((e) => showAlert('Phone settings', errorMessage(e)));
+          },
+        },
+      ]
+    );
   };
 
   const setSlotMinutes = async (kind: TimeSlotKind, minutes: number) => {
@@ -347,6 +373,25 @@ export default function NotificationSettingsScreen() {
           morning={{ on: prefs.morningEnabled, minutes: morningMinutes }}
           evening={{ on: prefs.eveningEnabled, minutes: eveningMinutes }}
         />
+        {delivery?.permitted && !delivery.channelBlocked && delivery.exactBlocked && (
+          <View style={styles.permissionBanner}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.permissionTitle}>Reminders may arrive late</Text>
+              <Text style={styles.permissionSub}>
+                Allow “Alarms & reminders” so they arrive at the time you set.
+              </Text>
+            </View>
+            <PrimaryButton
+              title="Allow"
+              compact
+              onPress={() => {
+                void requestExactAlarmPermission()
+                  .then(() => refreshDelivery())
+                  .catch((e) => showAlert('Phone settings', errorMessage(e)));
+              }}
+            />
+          </View>
+        )}
         {delivery && (!delivery.permitted || delivery.channelBlocked) && (
           <View style={styles.permissionBanner}>
             <View style={{ flex: 1 }}>
@@ -454,7 +499,7 @@ const styles = themedStyles(() =>
       backgroundColor: theme.colors.expenseTint,
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 10,
+      gap: 8,
     },
     permissionTitle: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.expenseText },
     permissionSub: { fontFamily: theme.font.body, fontSize: 12, color: theme.colors.expenseText },
@@ -474,7 +519,7 @@ const styles = themedStyles(() =>
       paddingHorizontal: 14,
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 10,
+      gap: 8,
     },
     troubleLabel: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
     deliveryCard: { paddingHorizontal: 14, paddingBottom: 14 },
@@ -485,7 +530,7 @@ const styles = themedStyles(() =>
       color: theme.colors.textSecondary,
       marginTop: 6,
     },
-    deliveryActions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 },
+    deliveryActions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 },
     warn: {
       fontFamily: theme.font.body,
       fontSize: 12,

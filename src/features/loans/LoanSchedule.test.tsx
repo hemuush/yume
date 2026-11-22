@@ -52,3 +52,49 @@ it('does not call a real transaction pre-tracking history when its date is missi
   );
   act(() => tree.unmount());
 });
+
+describe('a year with EMIs still to pay', () => {
+  const emi = (n: number, status: LoanPayment['status']) =>
+    entry({
+      id: 'p' + n,
+      installmentNumber: n,
+      dueDate: '2026-' + String(n + 5).padStart(2, '0') + '-05',
+      status,
+    });
+  const labels = (tree: ReactTestRenderer) =>
+    tree.root.findAllByType(Text).map((n) => [n.props.children].flat().join(''));
+
+  it('folds the paid EMIs into one line, so the next EMI is in view, and shows them on tap', () => {
+    let tree!: ReactTestRenderer;
+    act(() => {
+      tree = create(
+        <LoanSchedule schedule={[emi(1, 'paid'), emi(2, 'paid'), emi(3, 'pending'), emi(4, 'pending')]} />
+      );
+    });
+    expect(labels(tree)).toContain('2 paid · Show');
+    expect(labels(tree).some((t) => t.startsWith('#3 '))).toBe(true);
+    expect(labels(tree).some((t) => t.startsWith('#1 '))).toBe(false);
+    act(() => {
+      tree.root
+        .find(
+          (n) =>
+            typeof n.props.onPress === 'function' &&
+            n.findAllByType(Text).some((t) => [t.props.children].flat().join('') === '2 paid · Show')
+        )
+        .props.onPress();
+    });
+    expect(labels(tree).some((t) => t.startsWith('#1 '))).toBe(true);
+    expect(labels(tree)).not.toContain('2 paid · Show');
+    act(() => tree.unmount());
+  });
+
+  it('shows every EMI of a year that is all paid, with no fold', () => {
+    let tree!: ReactTestRenderer;
+    act(() => {
+      tree = create(<LoanSchedule schedule={[emi(1, 'paid'), emi(2, 'paid')]} />);
+    });
+    expect(labels(tree).some((t) => t.includes('Show'))).toBe(false);
+    expect(labels(tree).filter((t) => t.startsWith('#'))).toHaveLength(2);
+    act(() => tree.unmount());
+  });
+});

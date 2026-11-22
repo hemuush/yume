@@ -355,7 +355,7 @@ const styles = themedStyles(() =>
     inboxSummary: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 10,
+      gap: 8,
       marginHorizontal: SCREEN.gutter,
       marginTop: 6,
       paddingHorizontal: 12,
@@ -373,7 +373,7 @@ const styles = themedStyles(() =>
     },
     inboxCount: { flex: 1, fontFamily: theme.font.bodyBold, fontSize: 14, color: theme.colors.textPrimary },
     // Suu, then its lines in a bubble whose corner points back at it.
-    suu: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginHorizontal: SCREEN.gutter },
+    suu: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginHorizontal: SCREEN.gutter },
     suuFace: { width: 38, height: 38 },
     suuLines: {
       flex: 1,

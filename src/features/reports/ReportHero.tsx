@@ -146,7 +146,7 @@ const styles = themedStyles(() =>
       paddingHorizontal: 14,
       paddingVertical: 12,
     },
-    lead: { marginBottom: 10 },
+    lead: { marginBottom: 8 },
     figure: {
       fontFamily: theme.font.bodyBold,
       fontSize: 28,
@@ -155,7 +155,7 @@ const styles = themedStyles(() =>
       color: summaryInk.text,
       fontVariant: ['tabular-nums'],
     },
-    budget: { marginTop: 10, gap: 5 },
+    budget: { marginTop: 8, gap: 5 },
     track: { backgroundColor: summaryInk.divider, height: 6, borderRadius: 3, overflow: 'hidden' },
     fill: { height: 6, borderRadius: 3 },
     budgetText: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: summaryInk.secondary },

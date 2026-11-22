@@ -1,4 +1,5 @@
-import { Account } from '@/types';
+import { Account, Category, CategoryKind } from '@/types';
+import { AddCategoryModal } from '@/features/categories/AddCategoryModal';
 import { ModalSheet } from '@/components/ModalSheet';
 import { CalendarSheet } from '@/components/CalendarSheet';
 import { AddAccountModal } from '@/features/profile/AddAccountModal';
@@ -11,6 +12,7 @@ export function AddSheets({
   accountSheet,
   addAccount,
   addPerson,
+  addCategory,
   calendar,
   repeat,
 }: {
@@ -24,6 +26,13 @@ export function AddSheets({
   };
   addAccount: { visible: boolean; onClose: () => void; onCreated: () => Promise<void> };
   addPerson: { visible: boolean; onClose: () => void; onCreated: () => void };
+  addCategory: {
+    visible: boolean;
+    kind: CategoryKind;
+    categories: Category[];
+    onClose: () => void;
+    onSaved: (created?: Category) => void | Promise<void>;
+  };
   calendar: { visible: boolean; value: string; onClose: () => void; onPick: (date: string) => void };
   repeat: { visible: boolean; onClose: () => void; onLogged: () => void };
 }) {
@@ -46,6 +55,15 @@ export function AddSheets({
       <AddAccountModal {...addAccount} />
 
       <AddPersonModal {...addPerson} ledgerStyle />
+
+      <AddCategoryModal
+        visible={addCategory.visible}
+        category={null}
+        allCategories={addCategory.categories}
+        initialKind={addCategory.kind}
+        onClose={addCategory.onClose}
+        onSaved={(created) => void addCategory.onSaved(created)}
+      />
 
       <CalendarSheet
         ledgerStyle

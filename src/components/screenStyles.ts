@@ -1,3 +1,4 @@
+import { getScheme } from '@/theme/scheme';
 import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
 import { EYEBROW } from '@/constants/textStyles';
@@ -15,7 +16,7 @@ export const SCREEN = {
   rowInset: 14,
   /** Padding inside a standalone card. */
   cardPad: 12,
-  rowMinHeight: 56,
+  rowMinHeight: 52,
   iconTile: 34,
   /** The slot every list row's leading mark sits in, so titles start at the same place on every row. */
   lead: 44,
@@ -36,6 +37,18 @@ export const flatSection = () =>
     borderColor: theme.colors.borderSoft,
   }) as const;
 
+/** A very soft lift under a card in light mode; dark mode keeps its flat surfaces. */
+export const softShadow = () =>
+  getScheme() === 'light'
+    ? {
+        shadowColor: '#000',
+        shadowOpacity: 0.05,
+        shadowRadius: 8,
+        shadowOffset: { width: 0, height: 2 },
+        elevation: 1,
+      }
+    : {};
+
 export const groupedSurface = themedStyles(() =>
   StyleSheet.create({
     frame: {
@@ -43,6 +56,7 @@ export const groupedSurface = themedStyles(() =>
       borderRadius: theme.radius.lg,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: theme.colors.borderSoft,
+      ...softShadow(),
     },
   })
 );
@@ -70,7 +84,7 @@ export const screenStyles = themedStyles(() =>
     row: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 10,
+      gap: 8,
       paddingVertical: 10,
       paddingHorizontal: 14,
       minHeight: SCREEN.rowMinHeight,
@@ -118,7 +132,7 @@ export const screenStyles = themedStyles(() =>
       justifyContent: 'space-between',
       columnGap: 8,
       paddingHorizontal: 14,
-      paddingTop: 12,
+      paddingTop: 10,
       paddingBottom: 2,
     },
     dayHeadDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.borderSoft },

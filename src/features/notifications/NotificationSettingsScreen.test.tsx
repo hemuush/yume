@@ -39,14 +39,18 @@ jest.mock('@/db/settings', () => ({
 }));
 let mockPermitted = true;
 let mockScheduledCount = 4;
+let mockExactBlocked = false;
+const mockRequestExact = jest.fn(async () => true);
 jest.mock('@/lib/notifications', () => ({
   rebuildNotifications: jest.fn(async () => true),
   rebuildFailed: jest.fn(() => false),
   requestNotificationPermission: jest.fn(async () => true),
+  requestExactAlarmPermission: (...a: []) => mockRequestExact(...a),
   sendTestNotification: async () => {},
   getNotificationDeliveryStatus: jest.fn(async () => ({
     permitted: mockPermitted,
     channelBlocked: false,
+    exactBlocked: mockExactBlocked,
     scheduledCount: mockScheduledCount,
   })),
 }));
@@ -70,6 +74,7 @@ describe('Notification settings', () => {
     jest.clearAllMocks();
     mockPermitted = true;
     mockScheduledCount = 4;
+    mockExactBlocked = false;
     mockPrefs = initialPrefs();
     require('@/lib/notifications').rebuildNotifications.mockResolvedValue(true);
     require('@/db/settings').updateNotificationPrefs.mockImplementation(
@@ -121,6 +126,21 @@ describe('Notification settings', () => {
     );
     act(() => turnOn.props.onPress());
     expect(open).toHaveBeenCalled();
+  });
+
+  it('warns that reminders may arrive late when exact alarms are off, and asks the phone on Allow', async () => {
+    mockExactBlocked = true;
+    const tree = await render();
+    expect(texts(tree)).toContain('Reminders may arrive late');
+    const allow = tree.root.find((n) => n.props.title === 'Allow' && typeof n.props.onPress === 'function');
+    await act(async () => {
+      allow.props.onPress();
+    });
+    expect(mockRequestExact).toHaveBeenCalledTimes(1);
+  });
+
+  it('says nothing about timing while exact alarms are allowed', async () => {
+    expect(texts(await render())).not.toContain('Reminders may arrive late');
   });
 
   it('steps a time by 30 minutes from its card, and shows how many of the mentions are on', async () => {

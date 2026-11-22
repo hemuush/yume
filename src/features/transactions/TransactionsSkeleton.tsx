@@ -21,7 +21,7 @@ export function TransactionsSkeleton() {
         <View style={styles.lead}>
           <Skeleton width={96} height={11} radius={4} />
           <Skeleton width={104} height={25} radius={6} style={{ marginTop: 5 }} />
-          <Skeleton width={132} height={22} radius={11} style={{ marginTop: 7 }} />
+          <Skeleton width={132} height={22} radius={11} style={{ marginTop: 8 }} />
         </View>
         <View style={styles.preview}>
           <View style={styles.bars}>
@@ -87,7 +87,7 @@ const styles = themedStyles(() =>
       gap: 12,
     },
     lead: { flex: 1 },
-    preview: { width: PREVIEW_W, gap: 7 },
+    preview: { width: PREVIEW_W, gap: 8 },
     bars: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', height: 40 },
     // The filter row: the Filters button, then the type choices, in the real row's 44 dp.
     filters: {
@@ -112,7 +112,7 @@ const styles = themedStyles(() =>
       paddingTop: 12,
       paddingBottom: 2,
     },
-    // Home's row: 56 dp least, 14 dp of side padding, the 40 dp disc in its 44 dp slot.
+    // Home's row: 52 dp least, 14 dp of side padding, the 40 dp disc in its 44 dp slot.
     row: { ...screenStyles.row, gap: 12 },
     divider: screenStyles.divider,
     slot: { width: SCREEN.lead, alignItems: 'center', justifyContent: 'center' },

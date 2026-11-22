@@ -1,4 +1,12 @@
-import { billCopy, emiCopy, emiOverdueCopy, logCopy, refundCopy, wrapCopy } from './notificationCopy';
+import {
+  billCopy,
+  emiCopy,
+  emiOverdueCopy,
+  keepGoingCopy,
+  logCopy,
+  refundCopy,
+  wrapCopy,
+} from './notificationCopy';
 import { formatMoney } from './money';
 import { dayMonth } from './dateLabels';
 import { clampSlotMinutes, TimeSlotKind } from './notificationTimes';
@@ -229,6 +237,11 @@ export function planNotifications(input: {
       add(day, evening, { ...logCopy(day.getDay()), route: '/add-transaction' });
     }
   }
+
+  // The day after the plan ends: a reminder to open the app. Any open rebuilds the plan and replaces it, so it only
+  // ever shows when Yume was not opened for the whole plan, which is when the reminders would otherwise stop silently.
+  const first = slots[0];
+  if (first) add(startOfDay(today, PLAN_DAYS), first, { ...keepGoingCopy(), route: '/(tabs)/plan' });
 
   // A passed slot consumes an alert only after the OS accepted it. Permission/scheduler failures
   // leave it waiting for the next enabled time, within its original three-day lifetime.

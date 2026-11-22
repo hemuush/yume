@@ -243,7 +243,7 @@ export function PillTabBar({
 
 const styles = themedStyles(() =>
   StyleSheet.create({
-    dock: { position: 'absolute', flexDirection: 'row', alignItems: 'center', gap: 10 },
+    dock: { position: 'absolute', flexDirection: 'row', alignItems: 'center', gap: 8 },
     fade: { position: 'absolute' },
     pill: {
       flex: 1,

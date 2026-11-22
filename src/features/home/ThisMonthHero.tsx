@@ -254,10 +254,20 @@ export function ThisMonthHero({
             <View style={styles.figure}>
               <SummaryGradient />
               {savedExpenseIds && <JustAddedGlow ids={savedExpenseIds} surface="homeBalance" />}
-              <View
+              <Pressable
+                disabled={!slices.hasIncome}
+                onPress={() => {
+                  haptics.tap();
+                  setShowWorking((v) => !v);
+                }}
+                style={withPressed()}
                 accessible
+                accessibilityRole={slices.hasIncome ? 'button' : undefined}
+                accessibilityState={slices.hasIncome ? { expanded: showWorking } : undefined}
                 accessibilityLabel={
-                  slices.hasIncome ? `${headLabel}, ${formatMoney(headMinor)}, ${headCaption}` : headCaption
+                  slices.hasIncome
+                    ? `${headLabel}, ${formatMoney(headMinor)}, ${headCaption}. Show how it adds up`
+                    : headCaption
                 }
                 // The swipe, for a screen reader: swipe up or down on the figure to step the period.
                 accessibilityActions={[
@@ -281,7 +291,7 @@ export function ThisMonthHero({
                 ) : (
                   <Text style={styles.headValue}>—</Text>
                 )}
-              </View>
+              </Pressable>
               {perDayMinor != null ? (
                 <AllowanceTile
                   perDayMinor={perDayMinor}

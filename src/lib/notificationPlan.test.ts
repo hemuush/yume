@@ -25,6 +25,9 @@ const plan = (over: Partial<Parameters<typeof planNotifications>[0]> = {}) =>
   planNotifications({ prefs, loans: [], alerts: [], loggedToday: false, now, ...over });
 
 const at = (day: number, hour: number, minute = 0) => new Date(2026, 9, day, hour, minute);
+// The planned days only: the one reminder after them (to open the app) is tested on its own.
+const withinPlan = (notifications: ReturnType<typeof plan>['notifications']) =>
+  notifications.filter((n) => n.at < new Date(2026, 9, 3 + PLAN_DAYS));
 const find = (notifications: ReturnType<typeof plan>['notifications'], when: Date) =>
   notifications.find((n) => n.at.getTime() === when.getTime());
 const loan = (over: Partial<PlanLoan> = {}): PlanLoan => ({
@@ -78,7 +81,26 @@ describe('planNotifications', () => {
     ).toBe('/(tabs)/plan');
   });
   it('sends nothing at Morning on a day nothing is due, even with Evening off', () => {
-    expect(plan({ prefs: { ...prefs, eveningEnabled: false }, loggedToday: true }).notifications).toEqual([]);
+    expect(
+      withinPlan(plan({ prefs: { ...prefs, eveningEnabled: false }, loggedToday: true }).notifications)
+    ).toEqual([]);
+  });
+
+  it('ends the plan with one reminder to open the app, so reminders do not stop silently', () => {
+    const { notifications } = plan({ prefs: { ...prefs, eveningEnabled: false }, loggedToday: true });
+    expect(notifications).toHaveLength(1);
+    expect(notifications[0]).toMatchObject({
+      id: 'yume-2026-10-17-morning',
+      title: 'Open Yume to keep reminders going',
+      route: '/(tabs)/plan',
+    });
+    expect(notifications[0].at).toEqual(at(17, 9));
+  });
+
+  it('sets no open-the-app reminder when both times are off', () => {
+    expect(plan({ prefs: { ...prefs, morningEnabled: false, eveningEnabled: false } }).notifications).toEqual(
+      []
+    );
   });
 
   it('uses the next morning after the configured time has passed', () => {
@@ -261,7 +283,7 @@ describe('planNotifications', () => {
     });
 
     it('leaves a quiet day quiet when Evening is off', () => {
-      expect(plan({ prefs: { ...prefs, eveningEnabled: false } }).notifications).toEqual([]);
+      expect(withinPlan(plan({ prefs: { ...prefs, eveningEnabled: false } }).notifications)).toEqual([]);
     });
 
     it('moves to the chosen Evening time', () => {

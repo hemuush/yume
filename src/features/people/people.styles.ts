@@ -46,7 +46,7 @@ export const styles = themedStyles(() =>
     },
     groupTitle: SECTION_TITLE,
     groupDot: { width: 8, height: 8, borderRadius: 4, alignSelf: 'center' },
-    tileRow: { flexDirection: 'row', gap: 10, marginHorizontal: SCREEN.gutter, marginBottom: 10 },
+    tileRow: { flexDirection: 'row', gap: 8, marginHorizontal: SCREEN.gutter, marginBottom: 8 },
     tileCell: { flex: 1, minWidth: 0 },
     // A white tile (StripCard) whose top strip says which way the money goes: mint they owe you, coral you owe.
     personTile: { ...flatSection(), padding: 14, overflow: 'hidden' },
@@ -124,7 +124,7 @@ export const styles = themedStyles(() =>
       flexDirection: 'row',
       flexWrap: 'wrap',
       alignItems: 'center',
-      gap: 10,
+      gap: 8,
       paddingHorizontal: 14,
       paddingVertical: 12,
       borderBottomWidth: StyleSheet.hairlineWidth,
@@ -164,7 +164,7 @@ export const styles = themedStyles(() =>
       fontFamily: theme.font.body,
       fontSize: 12,
       color: theme.colors.textMuted,
-      marginBottom: 10,
+      marginBottom: 8,
       lineHeight: 17,
     },
     errorText: {

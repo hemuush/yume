@@ -6,6 +6,7 @@ import { Text } from '@/components/Text';
 import { CountUpAmount } from '@/components/CountUpAmount';
 import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
+import { compactMoney } from '@/lib/compactMoney';
 import { withPressed } from '@/lib/pressed';
 import { useStacked } from '@/hooks/useStacked';
 import type { SpendBar } from './spendChart';
@@ -56,6 +57,10 @@ export function ActivitySummaryStrip({
   const showPreview = !useStacked();
   const counted = bars.filter((bar) => !bar.state);
   const peak = Math.max(1, ...counted.map((bar) => bar.totalMinor));
+  // The first heaviest bar (a tie goes to the earlier one); no spend, no label. Hidden bars carry no spend already.
+  const peakIndex = peak > 1 ? bars.findIndex((bar) => !bar.state && bar.totalMinor === peak) : -1;
+  const peakWords =
+    peakIndex >= 0 ? `Heaviest ${viewScope === 'month' ? 'week' : 'day'}, ${formatMoney(peak)}` : null;
   const kicker = narrowedTo
     ? `${narrowedTo === 'matching entries' ? 'Spent in' : 'Spent on'} ${narrowedTo}${current ? ` this ${viewScope}` : ''}`
     : current
@@ -72,7 +77,7 @@ export function ActivitySummaryStrip({
       onPress={onPress}
       style={withPressed(styles.strip)}
       accessibilityRole="button"
-      accessibilityLabel={`${kicker}, ${formatMoney(spentMinor)}${changeWords ? `, ${changeWords}` : ''}. Open insights`}
+      accessibilityLabel={`${kicker}, ${formatMoney(spentMinor)}${changeWords ? `, ${changeWords}` : ''}${peakWords ? `. ${peakWords}` : ''}. Open insights`}
     >
       <SummaryGradient />
       <ReanimatedAnimated.View style={[styles.glide, slideStyle]}>
@@ -122,6 +127,17 @@ export function ActivitySummaryStrip({
                         future ? styles.barFuture : { backgroundColor: barColor(bar) },
                       ]}
                     />
+                    {i === peakIndex && !future && (
+                      <Text
+                        style={[
+                          styles.peakLabel,
+                          { bottom: barHeight(bar, false, viewScope === 'month', peak) + 1 },
+                        ]}
+                        numberOfLines={1}
+                      >
+                        {compactMoney(bar.totalMinor)}
+                      </Text>
+                    )}
                   </View>
                 );
               })}
@@ -230,6 +246,18 @@ const styles = themedStyles(() =>
     preview: { width: PREVIEW_W, gap: 3 },
     bars: { flexDirection: 'row', alignItems: 'flex-end', gap: 4, height: BAR_MAX },
     col: { flex: 1, alignItems: 'center', justifyContent: 'flex-end' },
+    // Over the heaviest bar, in the card's spare room above the preview; centred and wider than its column.
+    peakLabel: {
+      position: 'absolute',
+      left: -12,
+      right: -12,
+      textAlign: 'center',
+      fontFamily: theme.font.bodyMedium,
+      fontSize: 11,
+      lineHeight: 13,
+      color: summaryInk.secondary,
+      fontVariant: ['tabular-nums'],
+    },
     bar: { width: '100%', maxWidth: 16, borderRadius: 4 },
     // Not here yet: an outline, not a bar, so it never reads as a day with nothing spent.
     barFuture: {

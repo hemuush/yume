@@ -138,7 +138,7 @@ const styles = themedStyles(() =>
   StyleSheet.create({
     box: {
       marginHorizontal: 12,
-      marginTop: 10,
+      marginTop: 8,
       paddingHorizontal: 12,
       paddingVertical: 10,
       backgroundColor: theme.colors.home.control,

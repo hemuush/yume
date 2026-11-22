@@ -17,7 +17,10 @@ import { themedStyles } from '@/theme/themedStyles';
 
 /** Accounts shown in the row; the rest are one tap away under "View all". */
 const PREVIEW_ACCOUNTS = 8;
-const TILE_WIDTH = 148;
+// Two and a half tiles show at any screen width, so the next one always peeks in and the strip reads as scrollable.
+const VISIBLE_TILES = 2.6;
+const MIN_TILE_WIDTH = 124;
+const MAX_TILE_WIDTH = 164;
 const IN_HAND_TYPES = new Set<Account['type']>(['bank', 'cash', 'wallet']);
 const TILE_GAP = 10;
 
@@ -40,7 +43,7 @@ export function HomeAccounts({
   onAddAccount: () => void;
 }) {
   const { accent } = useAccent();
-  const { fontScale } = useWindowDimensions();
+  const { fontScale, width: screenWidth } = useWindowDimensions();
   if (accounts.length === 0) {
     return (
       <Pressable
@@ -90,7 +93,9 @@ export function HomeAccounts({
         )} in hand across ${inHand.length} ${inHand.length === 1 ? 'account' : 'accounts'}`
       : undefined;
   // Bigger text needs a wider tile for a balance to stay on one line.
-  const width = Math.round(TILE_WIDTH * Math.min(1.3, Math.max(1, fontScale)));
+  const fit = (screenWidth - 16 - TILE_GAP * 2) / VISIBLE_TILES;
+  const baseWidth = Math.min(MAX_TILE_WIDTH, Math.max(MIN_TILE_WIDTH, fit));
+  const width = Math.round(baseWidth * Math.min(1.3, Math.max(1, fontScale)));
   return (
     <Section
       compact
@@ -184,7 +189,7 @@ const styles = themedStyles(() =>
   StyleSheet.create({
     // A horizontally-scrolling strip of modern cards with gentle gaps between them.
     strip: { overflow: 'visible' },
-    row: { paddingHorizontal: 16, gap: 10 },
+    row: { paddingHorizontal: 16, gap: 8 },
     tile: {
       minHeight: 68,
       paddingVertical: 8,
@@ -230,7 +235,7 @@ const styles = themedStyles(() =>
     addTile: {
       alignItems: 'center',
       justifyContent: 'center',
-      gap: 7,
+      gap: 8,
       backgroundColor: theme.colors.home.control,
       borderStyle: 'dashed',
       borderColor: theme.colors.home.edge,

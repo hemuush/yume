@@ -40,7 +40,7 @@ export const styles = themedStyles(() =>
       flex: 1,
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 10,
+      gap: 8,
       minHeight: 44,
       paddingHorizontal: 14,
       borderRadius: theme.radius.lg,
@@ -67,7 +67,7 @@ export const styles = themedStyles(() =>
       color: theme.colors.textMuted,
     },
     // Search before anything is typed: what it looks at, things to try, and past searches.
-    searchEmpty: { alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingTop: 24 },
+    searchEmpty: { alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingTop: 24 },
     searchEmptyIcon: {
       width: 56,
       height: 56,
@@ -150,10 +150,10 @@ export const styles = themedStyles(() =>
       color: theme.colors.textMuted,
     },
     sumChangeValue: { fontFamily: theme.font.bodyBold, fontSize: 12, fontVariant: ['tabular-nums'] },
-    sumChart: { marginTop: 10 },
+    sumChart: { marginTop: 8 },
     sumLead: { flexShrink: 1, minWidth: 0 },
     // Money in and Left: one quiet line under the categories.
-    sumCashflow: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 16, rowGap: 2, marginTop: 10 },
+    sumCashflow: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 16, rowGap: 2, marginTop: 8 },
     sumMetric: { flexDirection: 'row', alignItems: 'baseline', gap: 5 },
     sumMetricAmount: {
       fontFamily: theme.font.bodyMedium,
@@ -240,7 +240,7 @@ export const styles = themedStyles(() =>
       paddingHorizontal: 16,
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 10,
+      gap: 8,
     },
     dragHintText: { flex: 1, fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.onInk },
     // The period, as a small chip in the shrunk header; it opens the month picker.
@@ -314,7 +314,7 @@ export const styles = themedStyles(() =>
     expense: { color: theme.colors.expenseText },
     rowRefund: { fontFamily: theme.font.bodyBold, color: theme.colors.incomeText },
     // A transaction's actions, as three compact buttons under its card (the hint text is the accessibility hint).
-    quickRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 10 },
+    quickRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 },
     quickBtn: {
       flexGrow: 1,
       flexBasis: 96,
@@ -366,7 +366,7 @@ export const styles = themedStyles(() =>
     deleteAskText: { fontFamily: theme.font.bodyBold, fontSize: 13, color: theme.colors.onInk },
     // A split part's detail: the whole payment, this part in bold.
     splitCard: {
-      marginBottom: 10,
+      marginBottom: 8,
       paddingHorizontal: 14,
       paddingVertical: 10,
       gap: 8,
@@ -381,7 +381,7 @@ export const styles = themedStyles(() =>
       flexWrap: 'wrap',
       alignItems: 'center',
       justifyContent: 'space-between',
-      gap: 10,
+      gap: 8,
     },
     splitPartName: {
       flexGrow: 1,
@@ -401,7 +401,7 @@ export const styles = themedStyles(() =>
       fontFamily: theme.font.body,
       fontSize: 12,
       color: theme.colors.textMuted,
-      marginBottom: 10,
+      marginBottom: 8,
       lineHeight: 17,
     },
     fieldLabel: {
@@ -409,9 +409,9 @@ export const styles = themedStyles(() =>
       fontFamily: theme.font.bodyMedium,
       color: theme.colors.home.secondaryText,
       marginBottom: 6,
-      marginTop: 10,
+      marginTop: 8,
     },
-    chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 10 },
+    chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 8 },
     // The filter sheet's Clear sits small beside its wide Show button.
     filterClear: { flexGrow: 1, flexBasis: 140, paddingHorizontal: 18 },
     filterFoot: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },

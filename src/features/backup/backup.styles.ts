@@ -15,7 +15,7 @@ export const styles = themedStyles(() =>
     },
     // A SummaryCard: its children bring their own spacing, so the card adds no gap.
     statusCard: { padding: 14, gap: 0 },
-    statusHead: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+    statusHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
     statusTitle: { fontFamily: theme.font.roundedBold, fontSize: 17, color: theme.colors.textPrimary },
     errorLine: { color: theme.colors.expenseText },
     mainAction: { marginTop: 14 },
@@ -31,7 +31,7 @@ export const styles = themedStyles(() =>
       flexWrap: 'wrap',
       alignItems: 'center',
       justifyContent: 'space-between',
-      gap: 10,
+      gap: 8,
     },
     scheduleHint: {
       flexGrow: 1,

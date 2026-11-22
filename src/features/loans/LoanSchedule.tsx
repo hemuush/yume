@@ -10,7 +10,7 @@ import { haptics } from '@/lib/haptics';
 import type { LoanPayment } from '@/types';
 import { styles as shared } from './loans.styles';
 import { groupScheduleByYear, currentScheduleYear } from './scheduleYears';
-import { isOverdueInstallment, nextUnpaidInstallment } from './installmentStatus';
+import { isOverdueInstallment, isUnpaidInstallment, nextUnpaidInstallment } from './installmentStatus';
 import { toLocalIsoDate } from '@/lib/date';
 import { shade } from '@/lib/color';
 import { useAccent } from '@/theme/AccentContext';
@@ -50,6 +50,8 @@ export function LoanSchedule({
   const nextId = nextUnpaidInstallment(schedule)?.id;
   const todayIso = toLocalIsoDate(new Date());
   const [toggled, setToggled] = useState<Record<number, boolean>>({});
+  // Years whose already-paid EMIs the person opened.
+  const [showPaid, setShowPaid] = useState<Record<number, boolean>>({});
   const startYear = currentScheduleYear(years);
   const { accent } = useAccent();
 
@@ -57,6 +59,11 @@ export function LoanSchedule({
     <>
       {years.map((y) => {
         const open = (y.year === startYear) !== !!toggled[y.year];
+        // A year with EMIs still to pay opens on those: the ones already paid fold into one line, so the next EMI is in view.
+        const donePayments = y.payments.filter((p) => !isUnpaidInstallment(p));
+        const folded =
+          !showPaid[y.year] && donePayments.length > 0 && donePayments.length < y.payments.length;
+        const rows = folded ? y.payments.filter(isUnpaidInstallment) : y.payments;
         return (
           <View key={y.year}>
             <Pressable
@@ -82,60 +89,77 @@ export function LoanSchedule({
                 color={theme.colors.textMuted}
               />
             </Pressable>
-            {open &&
-              y.payments.map((p) => {
-                // Principal and interest rounded so they add up to the rounded EMI exactly
-                // (the stored paise components already sum to it; this keeps that true on screen).
-                const [dispPrincipal, dispInterest] = allocateRoundedMinor(
-                  [p.principalComponentMinor, p.interestComponentMinor],
-                  p.emiAmountMinor
-                );
-                const isNext = p.id === nextId;
-                const overdue = isOverdueInstallment(p, todayIso);
-                return (
-                  <View
-                    key={p.id}
-                    style={[
-                      shared.scheduleRow,
-                      styles.row,
-                      isNext && [styles.rowNext, { backgroundColor: shade(accent, 95) }],
-                    ]}
+            {open && (
+              <>
+                {folded && (
+                  <Pressable
+                    accessibilityRole="button"
+                    onPress={() => {
+                      haptics.tap();
+                      setShowPaid((v) => ({ ...v, [y.year]: true }));
+                    }}
+                    style={({ pressed }) => [styles.paidFold, pressed && { opacity: theme.opacity.pressed }]}
                   >
-                    <Marker status={p.status} isNext={isNext} />
-                    <View style={styles.content}>
-                      <View style={[styles.payment, stacked && styles.paymentStacked]}>
-                        <View style={styles.description}>
-                          <Text style={shared.rowLabel}>
-                            #{p.installmentNumber} · {dayMonthYear(p.dueDate)}
-                          </Text>
-                          <Text style={shared.rowSub}>
-                            Principal {formatMoney(dispPrincipal)} · Interest {formatMoney(dispInterest)}
-                          </Text>
-                          {p.status === 'paid' && (
-                            <Text style={shared.rowSub}>
-                              {p.paidDate
-                                ? `${direction === 'lent' ? 'Received' : 'Paid'} ${dayMonthYear(p.paidDate)}`
-                                : p.transactionId
-                                  ? 'Recorded payment · date unavailable'
-                                  : 'Paid before tracking · no account entry'}
+                    <Text style={styles.paidFoldText}>
+                      {donePayments.length} {direction === 'lent' ? 'received' : 'paid'} · Show
+                    </Text>
+                  </Pressable>
+                )}
+                {rows.map((p) => {
+                  // Principal and interest rounded so they add up to the rounded EMI exactly
+                  // (the stored paise components already sum to it; this keeps that true on screen).
+                  const [dispPrincipal, dispInterest] = allocateRoundedMinor(
+                    [p.principalComponentMinor, p.interestComponentMinor],
+                    p.emiAmountMinor
+                  );
+                  const isNext = p.id === nextId;
+                  const overdue = isOverdueInstallment(p, todayIso);
+                  return (
+                    <View
+                      key={p.id}
+                      style={[
+                        shared.scheduleRow,
+                        styles.row,
+                        isNext && [styles.rowNext, { backgroundColor: shade(accent, 95) }],
+                      ]}
+                    >
+                      <Marker status={p.status} isNext={isNext} />
+                      <View style={styles.content}>
+                        <View style={[styles.payment, stacked && styles.paymentStacked]}>
+                          <View style={styles.description}>
+                            <Text style={shared.rowLabel}>
+                              #{p.installmentNumber} · {dayMonthYear(p.dueDate)}
                             </Text>
-                          )}
-                        </View>
-                        <View style={[styles.amount, stacked && styles.amountStacked]}>
-                          <Text style={shared.rowValue}>{formatMoney(p.emiAmountMinor)}</Text>
-                          {overdue ? (
-                            <Text style={[shared.statusTag, styles.overdueTag]}>Overdue</Text>
-                          ) : isNext ? (
-                            <Text style={[shared.statusTag, styles.nextTag]}>Next</Text>
-                          ) : p.status === 'prepaid' ? (
-                            <Text style={shared.statusTag}>{p.status}</Text>
-                          ) : null}
+                            <Text style={shared.rowSub}>
+                              Principal {formatMoney(dispPrincipal)} · Interest {formatMoney(dispInterest)}
+                            </Text>
+                            {p.status === 'paid' && (
+                              <Text style={shared.rowSub}>
+                                {p.paidDate
+                                  ? `${direction === 'lent' ? 'Received' : 'Paid'} ${dayMonthYear(p.paidDate)}`
+                                  : p.transactionId
+                                    ? 'Recorded payment · date unavailable'
+                                    : 'Paid before tracking · no account entry'}
+                              </Text>
+                            )}
+                          </View>
+                          <View style={[styles.amount, stacked && styles.amountStacked]}>
+                            <Text style={shared.rowValue}>{formatMoney(p.emiAmountMinor)}</Text>
+                            {overdue ? (
+                              <Text style={[shared.statusTag, styles.overdueTag]}>Overdue</Text>
+                            ) : isNext ? (
+                              <Text style={[shared.statusTag, styles.nextTag]}>Next</Text>
+                            ) : p.status === 'prepaid' ? (
+                              <Text style={shared.statusTag}>{p.status}</Text>
+                            ) : null}
+                          </View>
                         </View>
                       </View>
                     </View>
-                  </View>
-                );
-              })}
+                  );
+                })}
+              </>
+            )}
           </View>
         );
       })}
@@ -150,13 +174,20 @@ const styles = themedStyles(() =>
       flexDirection: 'row',
       flexWrap: 'wrap',
       alignItems: 'center',
-      gap: 10,
+      gap: 8,
       paddingVertical: 12,
       borderBottomWidth: StyleSheet.hairlineWidth,
       borderBottomColor: theme.colors.borderSoft,
     },
     year: { fontFamily: theme.font.roundedBold, fontSize: 15, color: theme.colors.textPrimary },
     yearSub: { fontFamily: theme.font.body, fontSize: 11, color: theme.colors.textMuted },
+    paidFold: {
+      minHeight: 44,
+      justifyContent: 'center',
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: theme.colors.borderSoft,
+    },
+    paidFoldText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textSecondary },
     row: { gap: 12 },
     content: { flex: 1, minWidth: 0 },
     payment: { flexDirection: 'row', alignItems: 'center', gap: 8 },

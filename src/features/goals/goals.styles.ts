@@ -78,7 +78,7 @@ export const styles = themedStyles(() =>
     followOpt: {
       flexDirection: 'row',
       alignItems: 'flex-start',
-      gap: 10,
+      gap: 8,
       paddingHorizontal: 12,
       paddingVertical: 10,
       borderTopWidth: StyleSheet.hairlineWidth,
@@ -110,7 +110,7 @@ export const styles = themedStyles(() =>
       backgroundColor: theme.colors.idGold,
       borderRadius: 16,
       padding: 10,
-      marginBottom: 10,
+      marginBottom: 8,
     },
     letterNote: {
       fontFamily: theme.font.body,

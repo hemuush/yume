@@ -8,7 +8,7 @@ import { themedStyles } from '@/theme/themedStyles';
 export const styles = themedStyles(() =>
   StyleSheet.create({
     // Two fields side by side, wrapping to separate rows on a narrow screen or at large text.
-    pairRow: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 10 },
+    pairRow: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 8 },
     pairCell: { flexGrow: 1, flexBasis: 150, minWidth: 0 },
 
     container: { flex: 1, backgroundColor: theme.colors.background },
@@ -104,7 +104,7 @@ export const styles = themedStyles(() =>
       lineHeight: 18,
       marginBottom: 6,
     },
-    pickerRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 11 },
+    pickerRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10 },
     codeBubble: {
       width: 44,
       minHeight: 30,
@@ -135,7 +135,7 @@ export const styles = themedStyles(() =>
     aboutCard: { padding: 14, gap: 12, marginTop: 8 },
     aboutTagline: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },
     aboutFacts: { gap: 8 },
-    aboutFactRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
+    aboutFactRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
     aboutFactText: {
       flex: 1,
       fontFamily: theme.font.body,
@@ -164,7 +164,7 @@ export const styles = themedStyles(() =>
       fontFamily: theme.font.body,
       fontSize: 12,
       color: theme.colors.textMuted,
-      marginBottom: 10,
+      marginBottom: 8,
       lineHeight: 17,
     },
     errorText: {

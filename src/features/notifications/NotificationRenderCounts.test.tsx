@@ -68,7 +68,7 @@ jest.mock('@/lib/notifications', () => ({
   sendTestNotification: async () => {},
   // A fresh object every time, as every read of the real status is.
   getNotificationDeliveryStatus: jest.fn(async () =>
-    mockLater({ permitted: true, channelBlocked: false, scheduledCount: 4 })
+    mockLater({ permitted: true, channelBlocked: false, exactBlocked: false, scheduledCount: 4 })
   ),
 }));
 

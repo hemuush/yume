@@ -25,7 +25,15 @@ jest.mock('@/theme/PrivacyContext', () => ({ usePrivacy: () => ({ hideAmounts: m
 let mockSensitive = false;
 let mockExtraCategories = 0;
 let mockRent = false;
+// Three finished months and the one running: 1,00,000 in and 90,000 out a month.
+let mockFlow = [1, 2, 3, 4].map((m) => ({
+  label: `m${m}`,
+  incomeMinor: 10_000_000,
+  expenseMinor: 9_000_000,
+  recorded: true,
+}));
 jest.mock('@/db/reports', () => ({
+  getMonthlyCashFlow: async () => mockFlow,
   // Biggest first, as the real query returns them: rent (when a test asks for it) leads.
   getCategoryMonthlyAverages: async () => [
     ...(mockRent
@@ -129,6 +137,12 @@ describe('What-if', () => {
     mockSensitive = false;
     mockExtraCategories = 0;
     mockRent = false;
+    mockFlow = [1, 2, 3, 4].map((m) => ({
+      label: `m${m}`,
+      incomeMinor: 10_000_000,
+      expenseMinor: 9_000_000,
+      recorded: true,
+    }));
   });
 
   it('shows the six biggest categories and the rest behind "N more"', async () => {
@@ -190,6 +204,17 @@ describe('What-if', () => {
     const shown = texts(await render());
     expect(shown).toEqual(expect.arrayContaining(['Current pace', 'With this change']));
     expect(shown.some((t) => /(weeks?|days?) sooner$/.test(t))).toBe(true);
+  });
+
+  it('says where to save from three months of income and spending', async () => {
+    const shown = texts(await render());
+    expect(shown).toContain('Where you can save');
+    expect(shown).toContain('You keep 10% of what you earn');
+  });
+
+  it('leaves the advice out when nothing is recorded', async () => {
+    mockFlow = [];
+    expect(texts(await render())).not.toContain('Where you can save');
   });
 
   it('points to Savings goals when there is no open goal', async () => {

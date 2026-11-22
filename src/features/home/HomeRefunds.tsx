@@ -171,7 +171,7 @@ const styles = themedStyles(() =>
       flexDirection: 'row',
       flexWrap: 'wrap',
       alignItems: 'center',
-      gap: 10,
+      gap: 8,
       padding: 14,
       minHeight: 64,
       borderTopWidth: StyleSheet.hairlineWidth,

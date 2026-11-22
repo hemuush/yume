@@ -380,7 +380,7 @@ const styles = themedStyles(() =>
       flexDirection: 'row',
       flexWrap: 'wrap',
       alignItems: 'center',
-      gap: 10,
+      gap: 8,
       marginTop: 6,
       paddingTop: 6,
       borderTopWidth: StyleSheet.hairlineWidth,

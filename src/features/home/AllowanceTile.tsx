@@ -76,7 +76,7 @@ const styles = themedStyles(() =>
       gap: 8,
     },
     today: { gap: 5 },
-    todayRow: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 10 },
+    todayRow: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 },
     todayOver: { fontFamily: theme.font.bodyBold, color: summaryInk.negative },
     track: {
       flexDirection: 'row',

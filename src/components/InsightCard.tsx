@@ -124,7 +124,7 @@ export const insight = themedStyles(() =>
       backgroundColor: theme.colors.surfaceAlt,
       marginVertical: 8,
     },
-    header: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+    header: { flexDirection: 'row', alignItems: 'center', gap: 8 },
     icon: {
       width: 36,
       height: 36,
@@ -164,7 +164,7 @@ export const insight = themedStyles(() =>
       flexDirection: 'row',
       flexWrap: 'wrap',
       alignItems: 'center',
-      gap: 10,
+      gap: 8,
       minHeight: 48,
       paddingVertical: 9,
       borderBottomWidth: StyleSheet.hairlineWidth,
@@ -174,7 +174,7 @@ export const insight = themedStyles(() =>
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      gap: 10,
+      gap: 8,
       minHeight: 44,
     },
     link: {
@@ -184,7 +184,7 @@ export const insight = themedStyles(() =>
       flexShrink: 1,
     },
     content: { gap: 8, paddingBottom: 8 },
-    result: { padding: 14, borderRadius: 18, backgroundColor: theme.colors.secondaryTint, gap: 10 },
+    result: { padding: 14, borderRadius: 18, backgroundColor: theme.colors.secondaryTint, gap: 8 },
     warning: {
       fontFamily: theme.font.bodyMedium,
       fontSize: 13,

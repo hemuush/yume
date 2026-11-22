@@ -561,7 +561,7 @@ describe('days as a heading above a card', () => {
       act(() => tree.unmount());
     }));
 
-  it('uses Home’s row: a 40 dp disc in a 44 dp slot, a 56 dp least height, 14 dp of side padding', () =>
+  it('uses Home’s row: a 40 dp disc in a 44 dp slot, a 52 dp least height, 14 dp of side padding', () =>
     withWidth(() => {
       const tree = day();
       const styles = tree.root
@@ -569,7 +569,7 @@ describe('days as a heading above a card', () => {
         .map((n) => StyleSheet.flatten(n.props.style) ?? {});
       expect(styles.some((s) => s.width === 44 && s.alignItems === 'center')).toBe(true);
       expect(styles.some((s) => s.width === 40 && s.height === 40)).toBe(true);
-      expect(styles.some((s) => s.minHeight === 56 && s.paddingHorizontal === 14)).toBe(true);
+      expect(styles.some((s) => s.minHeight === 52 && s.paddingHorizontal === 14)).toBe(true);
       act(() => tree.unmount());
     }));
 

@@ -69,7 +69,7 @@ const styles = themedStyles(() =>
   StyleSheet.create({
     stack: { flexDirection: 'row', height: 12, borderRadius: theme.radius.pill, overflow: 'hidden', gap: 2 },
     legend: { marginTop: 8 },
-    row: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 6 },
+    row: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 6 },
     dot: { width: 9, height: 9, borderRadius: 5 },
     names: { flex: 1, minWidth: 0 },
     name: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.textPrimary },

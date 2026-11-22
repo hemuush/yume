@@ -153,7 +153,7 @@ export function BudgetRow({
         }
         progress={{
           pct: barPct,
-          color: progress.overBudget ? theme.colors.expenseText : theme.colors.link,
+          color: progress.overBudget ? theme.colors.expenseText : theme.colors.ink,
           animKey: `budget:${progress.budget.id}`,
         }}
         trailing={more}
@@ -197,7 +197,7 @@ export function BudgetRow({
                     styles.compactFill,
                     {
                       width: `${Math.max(0, barPct)}%`,
-                      backgroundColor: progress.overBudget ? theme.colors.expenseText : theme.colors.link,
+                      backgroundColor: progress.overBudget ? theme.colors.expenseText : theme.colors.ink,
                     },
                   ]}
                 />
