@@ -134,7 +134,7 @@ export const PlanMoneyTab = memo(function PlanMoneyTab({
                 Goals
               </Text>
               {reached > 0 && (
-                <Text style={styles.ledgerNote}>
+                <Text style={[styles.ledgerNote, styles.ledgerGood]}>
                   {reached} of {openGoals.length} reached
                 </Text>
               )}
@@ -213,6 +213,7 @@ const styles = themedStyles(() =>
       color: theme.colors.home.secondaryText,
     },
     ledgerWarning: { color: theme.colors.expenseText },
+    ledgerGood: { color: theme.colors.incomeText },
     ledgerTitle: {
       flexShrink: 1,
       fontFamily: theme.font.bodyBold,

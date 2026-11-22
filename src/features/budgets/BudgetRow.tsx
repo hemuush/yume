@@ -148,7 +148,7 @@ export function BudgetRow({
         }
         note={
           <Text style={[planRowText.note, progress.overBudget && planRowText.bad]}>
-            {progress.overBudget ? 'Over budget' : 'Remaining'}
+            {progress.overBudget ? 'over' : 'left'}
           </Text>
         }
         progress={{
