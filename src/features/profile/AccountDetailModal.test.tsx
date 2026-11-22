@@ -14,7 +14,10 @@ jest.mock('@/components/ModalSheet', () => ({
   SheetLink: ({ label }: { label: string }) =>
     require('react').createElement(require('react-native').Text, null, `link:${label}`),
 }));
-jest.mock('@/components/DraftCard', () => ({ DraftCard: () => null }));
+jest.mock('@/components/DraftCard', () => ({
+  DraftCard: (p: { icon: string }) =>
+    require('react').createElement(require('react-native').View, { testID: 'draft', icon: p.icon }),
+}));
 jest.mock('@/components/FormInput', () => ({ FormInput: () => null }));
 jest.mock('@/components/Chip', () => ({ Chip: () => null }));
 jest.mock('@/components/PrimaryButton', () => ({ PrimaryButton: () => null }));
@@ -143,6 +146,14 @@ describe('AccountDetailModal investments', () => {
     expect(tree.root.find((n) => typeof n.type === 'function' && n.props.label === 'Gold').props.active).toBe(
       true
     );
+  });
+
+  it('draws the header with the picture of the investment kind, and follows a different kind picked', async () => {
+    const tree = await render(tracked());
+    const icon = () => tree.root.findByProps({ testID: 'draft' }).props.icon;
+    expect(icon()).toBe('gold');
+    await press(tree, 'Mutual fund');
+    expect(icon()).toBe('chart-areaspline');
   });
 
   it('turns an ordinary savings account into an investment by picking the type', async () => {
