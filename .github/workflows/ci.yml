@@ -3,6 +3,8 @@ name: CI
 on:
   push:
     branches: [main, master]
+    # A change to the site or a document alone has nothing to test or build, so it starts no CI run and no EAS build.
+    paths-ignore: ['site/**', '**/*.md']
   pull_request:
   # A branch with no pull request yet is checked on demand (Actions > CI > Run workflow), without a second run
   # on every push once the pull request is open.

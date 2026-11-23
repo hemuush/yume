@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Yume · Better money. Bigger dreams.</title>
+    <meta
+      name="description"
+      content="Yume is a calm, private money tracker for Android. Your records stay on your phone."
+    />
+    <meta name="theme-color" content="#f1f4fb" />
+    <link rel="icon" href="img/yume-mark.png" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header class="nav">
+      <div class="wrap">
+        <a class="brand" href="#top"><img src="img/yume-mark.png" alt="" /> Yume</a>
+        <a class="link" href="#features">Features</a>
+        <a class="link" href="#privacy">Privacy</a>
+        <a class="link" href="#faq">FAQ</a>
+        <button id="theme" type="button" aria-label="Switch light or dark">◐</button>
+      </div>
+    </header>
+
+    <main id="top">
+      <div class="wrap hero">
+        <img class="mark" src="img/icon.png" alt="Yume logo" width="88" height="88" />
+        <h1>Yume · 夢</h1>
+        <p class="lead">
+          Better money. Bigger dreams. A calm, private money tracker for Android that keeps your records on
+          your phone.
+        </p>
+        <div class="btns">
+          <a class="btn main" href="https://github.com/hemuush/yume/releases">Get the app</a>
+          <a class="btn" href="https://github.com/hemuush/yume">View the code</a>
+        </div>
+        <div class="pills">
+          <span class="pill">Works offline</span>
+          <span class="pill">No account</span>
+          <span class="pill">Light and dark</span>
+          <span class="pill">Made for India</span>
+        </div>
+      </div>
+
+      <section id="features">
+        <div class="wrap">
+          <h2>What you can do</h2>
+          <p class="sub">Pick a screen to see what it does.</p>
+          <div class="tabs" role="tablist">
+            <button role="tab" id="t-home" aria-controls="p-home" aria-selected="true">Home</button>
+            <button role="tab" id="t-activity" aria-controls="p-activity" aria-selected="false">
+              Activity
+            </button>
+            <button role="tab" id="t-add" aria-controls="p-add" aria-selected="false">Add</button>
+            <button role="tab" id="t-plan" aria-controls="p-plan" aria-selected="false">Plan</button>
+            <button role="tab" id="t-reports" aria-controls="p-reports" aria-selected="false">Reports</button>
+          </div>
+          <div class="panel" role="tabpanel" id="p-home" aria-labelledby="t-home">
+            <h3>Home</h3>
+            <p>
+              See what is free to use, today's spending allowance, account balances, the biggest payments
+              coming up and your latest entries.
+            </p>
+          </div>
+          <div class="panel" role="tabpanel" id="p-activity" aria-labelledby="t-activity" hidden>
+            <h3>Activity</h3>
+            <p>
+              Browse entries day by day, switch periods, search by word or amount, filter and open any entry
+              for details.
+            </p>
+          </div>
+          <div class="panel" role="tabpanel" id="p-add" aria-labelledby="t-add" hidden>
+            <h3>Add</h3>
+            <p>
+              Record expenses, income, transfers and friend entries with a calculator pad, usual entries,
+              labels and splits. Add a new category right from the picker.
+            </p>
+          </div>
+          <div class="panel" role="tabpanel" id="p-plan" aria-labelledby="t-plan" hidden>
+            <h3>Plan</h3>
+            <p>
+              A 14-day forecast, budget limits, debt progress, savings goals, people balances and scheduled
+              payments in one place.
+            </p>
+          </div>
+          <div class="panel" role="tabpanel" id="p-reports" aria-labelledby="t-reports" hidden>
+            <h3>Reports</h3>
+            <p>
+              Daily spending, category and account breakdowns, trends and comparisons, with a PDF or Excel
+              export of any month or year.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <div class="wrap">
+          <h2>More than a ledger</h2>
+          <p class="sub">The parts that make everyday money easier.</p>
+          <div class="grid">
+            <div class="card">
+              <h3><span class="dot" style="background: #9ec5fc"></span>Loans and EMIs</h3>
+              <p>Schedules, prepayments, rate changes and what is still to pay.</p>
+            </div>
+            <div class="card">
+              <h3><span class="dot" style="background: #8fe8c8"></span>Investments</h3>
+              <p>Worth, gain, yearly rate, holdings and SIPs on one page.</p>
+            </div>
+            <div class="card">
+              <h3><span class="dot" style="background: #c9b8ff"></span>Friends and family</h3>
+              <p>Who owes whom, and a settlement history for each person.</p>
+            </div>
+            <div class="card">
+              <h3><span class="dot" style="background: #fc7b5e"></span>Saving advice</h3>
+              <p>
+                A plain look at your own last months: what you keep, your biggest choice, and what
+                subscriptions cost a year.
+              </p>
+            </div>
+            <div class="card">
+              <h3><span class="dot" style="background: #9ec5fc"></span>Reminders</h3>
+              <p>Morning and evening check-ins, bills and recurring payments, all on the phone.</p>
+            </div>
+            <div class="card">
+              <h3><span class="dot" style="background: #8fe8c8"></span>Wrap and Suu</h3>
+              <p>Weekly and monthly stories, share cards and gentle spending nudges.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <div class="wrap">
+          <h2>Home screen widgets</h2>
+          <p class="sub">This Month, Quick Add, Suu Check-in, Next Due and Accounts. Scroll sideways.</p>
+          <div class="widgets">
+            <img src="img/this-month.png" alt="This Month widget" />
+            <img src="img/quick-add.png" alt="Quick Add widget" />
+            <img src="img/suu.png" alt="Suu Check-in widget" />
+            <img src="img/next-due.png" alt="Next Due widget" />
+            <img src="img/accounts.png" alt="Accounts widget" />
+          </div>
+        </div>
+      </section>
+
+      <section id="privacy">
+        <div class="wrap">
+          <h2>Your money stays yours</h2>
+          <p class="sub">Privacy is how Yume is built, not a setting you have to find.</p>
+          <div class="grid">
+            <div class="card">
+              <h3>On your phone</h3>
+              <p>Records live in a database on your device. There is no Yume account or server.</p>
+            </div>
+            <div class="card">
+              <h3>No tracking</h3>
+              <p>No analytics and no ads. Release builds do not ask for Internet access.</p>
+            </div>
+            <div class="card">
+              <h3>You choose backups</h3>
+              <p>Backups and exports go only where you send them, such as a folder you pick.</p>
+            </div>
+            <div class="card">
+              <h3>Lock and hide</h3>
+              <p>Use your phone's fingerprint or PIN, and hide amounts on screen and in widgets.</p>
+            </div>
+          </div>
+          <p class="sub" style="margin-top: 16px">Read the full <a href="privacy.html">privacy page</a>.</p>
+        </div>
+      </section>
+
+      <section id="faq">
+        <div class="wrap">
+          <h2>Questions</h2>
+          <details>
+            <summary>Is it free?</summary>
+            <p>Yes. The code is open on GitHub under its licence.</p>
+          </details>
+          <details>
+            <summary>Does it work on iPhone?</summary>
+            <p>No. Yume is built for Android.</p>
+          </details>
+          <details>
+            <summary>Do I need internet?</summary>
+            <p>No. It works fully offline.</p>
+          </details>
+          <details>
+            <summary>What if I lose my phone?</summary>
+            <p>
+              Your records are only on the phone, so keep a backup copy somewhere you trust. Yume can save
+              backups to a folder you choose.
+            </p>
+          </details>
+          <details>
+            <summary>My reminders arrive late.</summary>
+            <p>
+              On newer Android, allow <strong>Alarms &amp; reminders</strong> for Yume. Open Settings →
+              Notifications in the app and tap Allow.
+            </p>
+          </details>
+          <details>
+            <summary>How do I run it myself?</summary>
+            <pre>
+git clone https://github.com/hemuush/yume.git
+cd yume
+npm ci
+npx expo run:android</pre>
+          </details>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div class="wrap">
+        Small daily decisions. More room for your dreams. ·
+        <a href="https://github.com/hemuush/yume">Source</a> · <a href="privacy.html">Privacy</a>
+      </div>
+    </footer>
+    <script src="site.js"></script>
+  </body>
+</html>
