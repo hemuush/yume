@@ -652,9 +652,9 @@
 }
 .picker button[aria-selected='true'],
 .mode button[aria-pressed='true'] {
-  background: var(--ink);
-  color: var(--bg);
-  border-color: var(--ink);
+  background: var(--action);
+  color: var(--on-action);
+  border-color: var(--action);
 }
 .mode {
   display: flex;

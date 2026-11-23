@@ -29,6 +29,9 @@
   --lav: #c9b8ff;
   --gold: #f0e1a8;
   --coral: #fc7b5e;
+  --action: #0c1230;
+  --on-action: #f1f4fb;
+  --link: #2d5db0;
   --income: #1b7a4f;
   --expense: #b3261e;
   --shadow: 0 1px 2px rgba(12, 18, 48, 0.05), 0 8px 24px rgba(12, 18, 48, 0.06);
@@ -43,6 +46,9 @@
     --alt: #212b3f;
     --edge: #32405f;
     --ink: #f1f4fa;
+    --action: #9ec5fc;
+    --on-action: #0b1533;
+    --link: #9ec5fc;
     --soft: #b8c0d2;
     --income: #6fd6a5;
     --expense: #ff8f8a;
@@ -56,6 +62,9 @@
   --alt: #212b3f;
   --edge: #32405f;
   --ink: #f1f4fa;
+  --action: #9ec5fc;
+  --on-action: #0b1533;
+  --link: #9ec5fc;
   --soft: #b8c0d2;
   --income: #6fd6a5;
   --expense: #ff8f8a;
@@ -176,9 +185,9 @@ header.nav {
   box-shadow: var(--shadow);
 }
 .btn.main {
-  background: var(--ink);
-  color: var(--bg);
-  border-color: var(--ink);
+  background: var(--action);
+  color: var(--on-action);
+  border-color: var(--action);
 }
 .btns {
   display: flex;
@@ -378,20 +387,41 @@ section {
 }
 
 .dark {
-  background: var(--band);
-  color: #f1f4fa;
+  --band-text: #0b1533;
+  --band-soft: #26355f;
+  --band-tile: rgba(255, 255, 255, 0.62);
+  --band-link: #173f8f;
+  background: linear-gradient(to top right, #c4dcfd, #a6cbfc 55%, #8ebbf8);
+  color: var(--band-text);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .dark {
+    --band-text: #f3f7ff;
+    --band-soft: #bccde8;
+    --band-tile: rgba(255, 255, 255, 0.08);
+    --band-link: #a9ccff;
+    background: linear-gradient(to top right, #244a78, #1b3558 55%, #142744);
+  }
+}
+:root[data-theme='dark'] .dark {
+  --band-text: #f3f7ff;
+  --band-soft: #bccde8;
+  --band-tile: rgba(255, 255, 255, 0.08);
+  --band-link: #a9ccff;
+  background: linear-gradient(to top right, #244a78, #1b3558 55%, #142744);
 }
 .dark .head p,
 .dark .tile p {
-  color: #b3bddb;
+  color: var(--band-soft);
 }
 .dark .tile {
-  background: #151c3f;
-  border-color: #2a345f;
+  background: var(--band-tile);
+  border-color: transparent;
   box-shadow: none;
+  color: var(--band-text);
 }
 .dark a {
-  color: var(--sky);
+  color: var(--band-link);
 }
 .widgets {
   display: flex;
@@ -565,4 +595,10 @@ footer {
 }
 .tile .num small {
   font-size: 0.6em;
+}
+
+main p a,
+.doc a,
+footer a {
+  color: var(--link);
 }

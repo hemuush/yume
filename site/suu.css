@@ -24,8 +24,8 @@
 .blobs i {
   position: absolute;
   border-radius: 50%;
-  filter: blur(60px);
-  opacity: 0.5;
+  filter: blur(70px);
+  opacity: 0.3;
   animation: drift 18s ease-in-out infinite alternate;
 }
 .blobs i:nth-child(1) {
@@ -171,9 +171,9 @@
 .finder button[aria-pressed='true'],
 .segs button[aria-selected='true'],
 .segs button[aria-pressed='true'] {
-  background: var(--ink);
-  color: var(--bg);
-  border-color: var(--ink);
+  background: var(--action);
+  color: var(--on-action);
+  border-color: var(--action);
 }
 .tile.off {
   display: none;
@@ -318,9 +318,9 @@
   cursor: pointer;
 }
 .says button[aria-pressed='true'] {
-  background: var(--ink);
-  color: var(--bg);
-  border-color: var(--ink);
+  background: var(--action);
+  color: var(--on-action);
+  border-color: var(--action);
 }
 .bubble {
   background: var(--alt);
@@ -366,8 +366,8 @@
   align-self: flex-start;
 }
 .msg.you {
-  background: var(--ink);
-  color: var(--bg);
+  background: var(--action);
+  color: var(--on-action);
   border-bottom-right-radius: 6px;
   align-self: flex-end;
 }
