@@ -308,3 +308,11 @@ footer {
     transform: none;
   }
 }
+.panel ol {
+  color: var(--soft);
+  padding-left: 20px;
+  margin: 8px 0 16px;
+}
+.panel li {
+  margin-bottom: 6px;
+}
