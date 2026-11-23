@@ -4,6 +4,7 @@
   <p><strong>Better money. Bigger dreams.</strong></p>
   <p>A calm, local-first money tracker for Android.<br />Track today, plan ahead, and see where your money goes.</p>
   <p>
+    <a href="https://github.com/hemuush/yume/actions/workflows/ci.yml"><img src="https://github.com/hemuush/yume/actions/workflows/ci.yml/badge.svg" alt="CI status" /></a>
     <img src="https://img.shields.io/badge/Android-12130F?style=flat-square&amp;logo=android&amp;logoColor=8FE8C8" alt="Android" />
     <img src="https://img.shields.io/badge/Expo-SDK%2058-8FCBFF?style=flat-square&amp;labelColor=12130F" alt="Expo SDK 58" />
     <img src="https://img.shields.io/badge/TypeScript-C9B8FF?style=flat-square&amp;labelColor=12130F" alt="TypeScript" />
@@ -30,11 +31,33 @@ and India-friendly dates.
 | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Home**     | Review free-to-use money, today's spending allowance, interactive spending bars, account balances, the largest upcoming outgoings and the latest entries.    |
 | **Activity** | Browse entries by day, switch periods, search words or amounts, filter transactions and open entry details.                                                   |
-| **Add**      | Record expenses, income, transfers and friend entries with a calculator pad, usual entries, reusable labels, splits, staged entries and local draft recovery. Settings can switch the + button to **Add by chat**: Suu asks one thing at a time and you tap your answer, then check it before it is saved. |
+| **Add**      | Record expenses, income, transfers and friend entries with a calculator pad, usual entries, reusable labels, splits, staged entries and local draft recovery. A category can be added from the picker without leaving the screen. Settings can switch the + button to **Add by chat**: Suu asks one thing at a time and you tap your answer, then check it before it is saved. |
 | **Plan**     | Review a 14-day forecast, budget limits, debt progress, savings goals, people balances, habits and scheduled payments.                                        |
 | **Reports**  | Explore daily spending, category or account breakdowns, income, trends, comparisons and custom date ranges.                                                   |
 
+### How it fits together
+
+```mermaid
+flowchart LR
+  A[Add entry] --> B[(On-device SQLite)]
+  B --> C[Home]
+  B --> D[Activity]
+  B --> E[Plan]
+  B --> F[Reports]
+  B --> G[Widgets]
+  B --> H[Reminders]
+  B --> I[Backup and export]
+  I -. you choose where .-> J[Your own storage]
+```
+
+Everything starts from the entries you add. Every screen, widget and reminder reads the same local
+database, and nothing is sent anywhere unless you export or back up.
+
 ### The details that matter
+
+<details open>
+<summary><strong>Show every feature area</strong></summary>
+
 
 | Area                      | Included                                                                                                                                            |
 | ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -43,11 +66,15 @@ and India-friendly dates.
 | **Loans**                 | EMI schedules and amortization, prepayments, rate changes, payment tracking and linked assets.                                                      |
 | **Budgets & goals**       | Monthly limits, rollover, goal contributions, whole-account tracking and shared goal reservations without moving money.                             |
 | **Recurring payments**    | Scheduled expenses, income and transfers, subscription suggestions, and monthly/yearly totals.                                                      |
+| **Saving advice**         | What-if shows a *Where you can save* card built from your own last months: how much of income you keep against a 20% goal, your biggest choice category, how much of the month is already spoken for, and what subscriptions cost a year. Plain arithmetic, nothing leaves the phone. |
 | **Planning insights**     | Pending refunds and partial receipts, reservation-aware purchase checks, annual-bill preparation goals, and matched-period spending explanations.   |
 | **Friends & family**      | Money owed in either direction, settlement history, and a choice between balance adjustments and actual account movements.                          |
 | **Wrap & Suu**            | Weekly/monthly stories, selectable chapters, day and category exploration, replay, share cards and Suu's spending nudges.                           |
 | **Personalization**       | One theme in a light, dark or follow-the-phone mode, app amount hiding, a separate widget-privacy setting, and app lock using the phone's authentication.                                   |
+| **Reminders**             | Morning and evening check-ins, bill, overspend and recurring-payment alerts, all scheduled on the phone for the next 14 days and rebuilt whenever Yume opens. |
 | **Everyday housekeeping** | Needs you alerts, duplicate/starting-balance checks, undoable tidy-up actions and recently deleted entries.                                         |
+
+</details>
 
 ### Android widgets
 
@@ -58,6 +85,12 @@ Five widgets keep useful shortcuts and summaries on your home screen: **This Mon
   <img src="assets/widget-preview/this-month.png" alt="This Month widget preview" width="300" />
   &nbsp;
   <img src="assets/widget-preview/quick-add.png" alt="Quick Add widget preview" width="180" />
+  &nbsp;
+  <img src="assets/widget-preview/suu.png" alt="Suu Check-in widget preview" width="180" />
+  &nbsp;
+  <img src="assets/widget-preview/next-due.png" alt="Next Due widget preview" width="180" />
+  &nbsp;
+  <img src="assets/widget-preview/accounts.png" alt="Accounts widget preview" width="180" />
 </p>
 
 Financial widgets have their own **Hide widget details** setting. App Lock alone does not conceal
@@ -80,6 +113,22 @@ account or a hosted backend to track your money.
 
 Backups belong to you. Keep a copy outside the app's private storage before uninstalling or clearing
 app data. See [Backup & restore](BACKUP.md) for folder selection, restore validation and recovery behavior.
+
+## Reminders on Android
+
+Reminders are local notifications. On Android 12 and newer the phone only lets an app fire them at the exact minute when **Alarms & reminders** is allowed for it (off by default on Android 14+). Without it, reminders can arrive a few minutes late. **Settings → Notifications** shows a banner with an **Allow** button when this is the case.
+
+Because the plan covers 14 days, a closing reminder asks you to open Yume before it runs out. For a Play Store release, declare the `SCHEDULE_EXACT_ALARM` permission in Play Console.
+
+## Quick start
+
+| I want to… | Run |
+| --- | --- |
+| Install and run on a phone or emulator | `npm ci` then `npx expo run:android` |
+| Start the dev server again | `npm start` |
+| Check my change before pushing | `npm run typecheck && npm run lint && npm run format:check` |
+| Test one area | `npm test -- src/lib` |
+| Build an installable APK | `eas build --platform android --profile preview` |
 
 ## Run locally
 
@@ -108,6 +157,9 @@ npm start
 
 ## Build an APK
 
+<details>
+<summary><strong>Build steps and profiles</strong></summary>
+
 The EAS profiles are defined in [eas.json](eas.json). Building through EAS requires an Expo account;
 using the installed app does not.
 
@@ -132,25 +184,35 @@ eas build --platform android --profile production
 
 See [Build guide](BUILD.md) for additional setup and physical-device checks.
 
+</details>
+
 ## Development checks
+
+<details>
+<summary><strong>Commands and what CI runs</strong></summary>
 
 ```bash
 npm run typecheck
 npm run lint
 npm run format:check
-npm test -- --runInBand
+npm test -- src/lib src/db   # run by folder: a full run needs a lot of memory
 npm run test:security
 npx expo export --platform android
 ```
 
-Use `npm run format` to apply formatting and `npm run test:perf` for the repository's performance
-fixtures. CI also runs Expo Doctor and the dependency audit gate.
+`npm test` takes folder arguments, so run the folders you changed rather than everything at once. Use `npm run format` to apply formatting and `npm run test:perf` for the repository's performance
+fixtures. CI (`.github/workflows/ci.yml`) also runs the cycle check, Expo Doctor, the dependency audit gate, an Android export, a prebuild and the native check. After a green run, `eas-build.yml` queues the Android build.
 
 Tests cover money/date calculations, SQLite queries, backup validation, privacy, component
 interactions and screen flows. Release validation also needs a real phone: keyboard behavior,
 back gestures, enlarged text, scrolling, app-resume behavior and widgets are device checks.
 
+</details>
+
 ## Project structure
+
+<details>
+<summary><strong>Folder map and where code belongs</strong></summary>
 
 ```text
 app/                  Expo Router screens and navigation
@@ -178,6 +240,8 @@ parameters use an `_` prefix.
 
 When evaluating unused code, include file-based routes, the widget handler in `index.js`, config
 plugins and performance fixtures. Native integration can use a dependency without a direct app import.
+
+</details>
 
 ## Documentation
 
