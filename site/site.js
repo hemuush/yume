@@ -34,8 +34,40 @@
       t.setAttribute('aria-selected', on ? 'true' : 'false');
       t.tabIndex = on ? 0 : -1;
       document.getElementById(t.getAttribute('aria-controls')).classList.toggle('on', on);
+      const bar = document.querySelector('.tabx[data-go="' + t.id.slice(2) + '"]');
+      if (bar) bar.classList.toggle('on', on);
     });
   }
+  // The phone's own tab bar works too.
+  document.querySelectorAll('.tabx').forEach(function (bar) {
+    bar.addEventListener('click', function () {
+      const tab = document.getElementById('b-' + bar.dataset.go);
+      if (tab) {
+        clearInterval(timer);
+        show(tab);
+      }
+    });
+  });
+
+  // The phone has its own light and dark, as the app does. It starts in the site's mode.
+  const phone = document.querySelector('.phone');
+  const modes = document.querySelectorAll('.mode button');
+  function setMode(mode) {
+    if (!phone) return;
+    phone.setAttribute('data-mode', mode);
+    modes.forEach(function (b) {
+      b.setAttribute('aria-pressed', b.dataset.set === mode ? 'true' : 'false');
+    });
+  }
+  modes.forEach(function (b) {
+    b.addEventListener('click', function () {
+      setMode(b.dataset.set);
+    });
+  });
+  const siteDark =
+    root.getAttribute('data-theme') === 'dark' ||
+    (!root.getAttribute('data-theme') && matchMedia('(prefers-color-scheme: dark)').matches);
+  setMode(siteDark ? 'dark' : 'light');
   tabs.forEach(function (tab, i) {
     tab.addEventListener('click', function () {
       clearInterval(timer);
