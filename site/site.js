@@ -1,6 +1,9 @@
-// Theme toggle and the screen tabs. Everything else on the site is plain HTML.
+// Theme toggle, the sample phone, reveal on scroll, the sticky download bar and the checksum copy button.
+// The page reads fine without any of it.
 (function () {
   const root = document.documentElement;
+  const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
   try {
     const saved = localStorage.getItem('yume-theme');
     if (saved) root.setAttribute('data-theme', saved);
@@ -22,14 +25,100 @@
       }
     });
 
-  const tabs = document.querySelectorAll('[role=tab]');
-  tabs.forEach(function (tab) {
+  // Sample phone: tabs by tap or arrow keys, and a gentle auto-cycle until the visitor picks one.
+  const tabs = Array.from(document.querySelectorAll('.picker [role=tab]'));
+  let timer;
+  function show(tab) {
+    tabs.forEach(function (t) {
+      const on = t === tab;
+      t.setAttribute('aria-selected', on ? 'true' : 'false');
+      t.tabIndex = on ? 0 : -1;
+      document.getElementById(t.getAttribute('aria-controls')).classList.toggle('on', on);
+    });
+  }
+  tabs.forEach(function (tab, i) {
     tab.addEventListener('click', function () {
-      tabs.forEach(function (t) {
-        const on = t === tab;
-        t.setAttribute('aria-selected', on ? 'true' : 'false');
-        document.getElementById(t.getAttribute('aria-controls')).hidden = !on;
-      });
+      clearInterval(timer);
+      show(tab);
+    });
+    tab.addEventListener('keydown', function (e) {
+      const step = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
+      if (!step) return;
+      clearInterval(timer);
+      const next = tabs[(i + step + tabs.length) % tabs.length];
+      next.focus();
+      show(next);
     });
   });
+  if (tabs.length) {
+    show(tabs[0]);
+    if (!calm) {
+      let at = 0;
+      timer = setInterval(function () {
+        at = (at + 1) % tabs.length;
+        show(tabs[at]);
+      }, 4500);
+    }
+  }
+
+  // Cards fade in as they scroll into view.
+  const reveals = document.querySelectorAll('.reveal');
+  if ('IntersectionObserver' in window && !calm) {
+    const io = new IntersectionObserver(
+      function (entries) {
+        entries.forEach(function (e) {
+          if (e.isIntersecting) {
+            e.target.classList.add('in-view');
+            io.unobserve(e.target);
+          }
+        });
+      },
+      { threshold: 0.12 }
+    );
+    reveals.forEach(function (el) {
+      io.observe(el);
+    });
+  } else {
+    reveals.forEach(function (el) {
+      el.classList.add('in-view');
+    });
+  }
+
+  // The download bar on small screens shows once the top of the page has gone and hides at the download section.
+  const sticky = document.getElementById('sticky');
+  const hero = document.querySelector('.hero');
+  const download = document.getElementById('download');
+  if (sticky && hero && 'IntersectionObserver' in window) {
+    let heroSeen = true;
+    let dlSeen = false;
+    const update = function () {
+      sticky.classList.toggle('show', !heroSeen && !dlSeen);
+    };
+    new IntersectionObserver(function (entries) {
+      heroSeen = entries[0].isIntersecting;
+      update();
+    }).observe(hero);
+    if (download)
+      new IntersectionObserver(function (entries) {
+        dlSeen = entries[0].isIntersecting;
+        update();
+      }).observe(download);
+  }
+
+  const copy = document.getElementById('copy');
+  const hash = document.getElementById('hash');
+  if (copy && hash)
+    copy.addEventListener('click', function () {
+      navigator.clipboard
+        .writeText(hash.textContent.trim())
+        .then(function () {
+          copy.textContent = 'Copied';
+        })
+        .catch(function () {
+          copy.textContent = 'Select and copy';
+        });
+      setTimeout(function () {
+        copy.textContent = 'Copy';
+      }, 2000);
+    });
 })();

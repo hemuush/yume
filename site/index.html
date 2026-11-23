@@ -1,131 +1,257 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="no-js">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Yume · Better money. Bigger dreams.</title>
     <meta
       name="description"
-      content="Yume is a calm, private money tracker for Android. Your records stay on your phone."
+      content="Yume is a calm, private money tracker for Android. Track spending, plan ahead and save, with every record kept on your phone."
     />
     <meta name="theme-color" content="#f1f4fb" />
+    <link rel="canonical" href="https://hemuush.github.io/yume/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Yume · Better money. Bigger dreams." />
+    <meta
+      property="og:description"
+      content="A calm, private money tracker for Android. No account, no ads, works offline."
+    />
+    <meta property="og:image" content="https://hemuush.github.io/yume/img/icon.png" />
+    <meta name="twitter:card" content="summary" />
     <link rel="icon" href="img/yume-mark.png" />
+    <link rel="preload" href="fonts/Fredoka_600SemiBold.ttf" as="font" type="font/ttf" crossorigin />
     <link rel="stylesheet" href="style.css" />
+    <script>
+      document.documentElement.classList.remove('no-js');
+    </script>
   </head>
   <body>
     <header class="nav">
       <div class="wrap">
         <a class="brand" href="#top"><img src="img/yume-mark.png" alt="" /> Yume</a>
         <a class="link" href="#features">Features</a>
-        <a class="link" href="#download">Download</a>
         <a class="link" href="#privacy">Privacy</a>
         <a class="link" href="#faq">FAQ</a>
-        <button id="theme" type="button" aria-label="Switch light or dark">◐</button>
+        <a class="btn main cta" href="#download">Download</a>
+        <button class="theme" id="theme" type="button" aria-label="Switch light or dark">◐</button>
       </div>
     </header>
 
     <main id="top">
       <div class="wrap hero">
-        <img class="mark" src="img/icon.png" alt="Yume logo" width="88" height="88" />
-        <h1>Yume · 夢</h1>
-        <p class="lead">
-          Better money. Bigger dreams. A calm, private money tracker for Android that keeps your records on
-          your phone.
-        </p>
-        <div class="btns">
-          <a class="btn main" href="#download">Download for Android</a>
-          <a class="btn" href="https://github.com/hemuush/yume">View the code</a>
+        <div>
+          <span class="eyebrow"><i></i> Made for India · Android</span>
+          <h1>Better money. <em>Bigger dreams.</em></h1>
+          <p class="lead">
+            Yume is a calm money tracker that keeps every rupee on your phone. Track today, plan the next two
+            weeks and see where it all goes, without an account or an internet connection.
+          </p>
+          <div class="btns">
+            <a class="btn main" href="#download">Download for Android</a>
+            <a class="btn" href="#features">See how it works</a>
+          </div>
+          <div class="trust">
+            <span>Works offline</span>
+            <span>No account</span>
+            <span>No ads</span>
+            <span>Open source</span>
+          </div>
         </div>
-        <div class="pills">
-          <span class="pill">Works offline</span>
-          <span class="pill">No account</span>
-          <span class="pill">Light and dark</span>
-          <span class="pill">Made for India</span>
+
+        <div class="stage">
+          <div class="phone" aria-label="Sample Yume screens">
+            <div class="screens">
+              <div class="screen on" id="s-home" role="tabpanel" aria-labelledby="b-home">
+                <h4>Good evening</h4>
+                <p class="hi">Here is your month so far</p>
+                <div class="card ring">
+                  <svg viewBox="0 0 90 90" aria-hidden="true">
+                    <circle cx="45" cy="45" r="36" fill="none" stroke="var(--alt)" stroke-width="10" />
+                    <circle
+                      cx="45"
+                      cy="45"
+                      r="36"
+                      fill="none"
+                      stroke="var(--mint)"
+                      stroke-width="10"
+                      stroke-linecap="round"
+                      stroke-dasharray="150 226"
+                      transform="rotate(-90 45 45)"
+                    />
+                    <circle cx="45" cy="9" r="5" fill="var(--coral)" />
+                  </svg>
+                  <div>
+                    <div class="note">Free to use</div>
+                    <div class="big">₹18,450<span class="p">.50</span></div>
+                    <div class="note">₹1,230 a day left</div>
+                  </div>
+                </div>
+                <div class="mini" style="margin-top: 8px">
+                  <div class="k">Coming up</div>
+                  <div class="row">
+                    <span class="d" style="background: var(--sky)"></span>
+                    <span class="n">Rent <small>in 3 days</small></span>
+                    <span class="out">₹12,000</span>
+                  </div>
+                  <div class="row">
+                    <span class="d" style="background: var(--lav)"></span>
+                    <span class="n">Phone EMI <small>in 6 days</small></span>
+                    <span class="out">₹2,150</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="screen" id="s-activity" role="tabpanel" aria-labelledby="b-activity">
+                <h4>Activity</h4>
+                <div class="day">
+                  <span>Today</span><span>−₹486<span class="p">.00</span></span>
+                </div>
+                <div class="card" style="padding: 6px 12px">
+                  <div class="row">
+                    <span class="d" style="background: var(--mint)"></span>
+                    <span class="n">Groceries <small>Cash</small></span>
+                    <span class="out">−₹342<span class="p">.50</span></span>
+                  </div>
+                  <div class="row">
+                    <span class="d" style="background: var(--gold)"></span>
+                    <span class="n">Auto <small>UPI</small></span>
+                    <span class="out">−₹143<span class="p">.50</span></span>
+                  </div>
+                </div>
+                <div class="day"><span>Yesterday</span><span>+₹3,000</span></div>
+                <div class="card" style="padding: 6px 12px">
+                  <div class="row">
+                    <span class="d" style="background: var(--sky)"></span>
+                    <span class="n">Freelance <small>Bank</small></span>
+                    <span class="in">+₹3,000</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="screen" id="s-plan" role="tabpanel" aria-labelledby="b-plan">
+                <h4>Plan</h4>
+                <p class="hi">Next 14 days</p>
+                <div class="card">
+                  <div class="note">Money left after bills</div>
+                  <div class="big" style="font: 600 22px var(--head)">₹9,300</div>
+                  <div class="bars" aria-hidden="true">
+                    <i style="height: 90%"></i><i style="height: 80%"></i><i style="height: 72%"></i
+                    ><i class="hot" style="height: 40%"></i><i style="height: 55%"></i
+                    ><i style="height: 48%"></i><i style="height: 38%"></i>
+                  </div>
+                </div>
+                <div class="mini" style="margin-top: 8px">
+                  <div class="k">Goal · Goa trip</div>
+                  <b style="font-size: 13px">₹14,000 of ₹20,000</b>
+                  <div class="prog"><b style="width: 70%"></b></div>
+                </div>
+              </div>
+
+              <div class="screen" id="s-reports" role="tabpanel" aria-labelledby="b-reports">
+                <h4>Reports</h4>
+                <p class="hi">Where it went this month</p>
+                <div class="card">
+                  <div class="bars" aria-hidden="true">
+                    <i style="height: 95%"></i><i style="height: 60%"></i><i style="height: 45%"></i
+                    ><i style="height: 30%"></i><i class="hot" style="height: 22%"></i>
+                  </div>
+                  <div class="row">
+                    <span class="d" style="background: var(--sky)"></span>
+                    <span class="n">Food</span><span>₹6,420</span>
+                  </div>
+                  <div class="row">
+                    <span class="d" style="background: var(--mint)"></span>
+                    <span class="n">Travel</span><span>₹4,100</span>
+                  </div>
+                  <div class="row">
+                    <span class="d" style="background: var(--coral)"></span>
+                    <span class="n">Shopping</span><span>₹2,310</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="tabbar" aria-hidden="true">
+              <span class="on">Home</span><span>Activity</span><i></i><span>Plan</span><span>Reports</span>
+            </div>
+          </div>
+          <div class="picker" role="tablist" aria-label="Sample screens">
+            <button role="tab" id="b-home" aria-controls="s-home" aria-selected="true">Home</button>
+            <button role="tab" id="b-activity" aria-controls="s-activity" aria-selected="false">
+              Activity
+            </button>
+            <button role="tab" id="b-plan" aria-controls="s-plan" aria-selected="false">Plan</button>
+            <button role="tab" id="b-reports" aria-controls="s-reports" aria-selected="false">Reports</button>
+          </div>
+          <p class="note">Sample figures, not real data.</p>
         </div>
       </div>
 
       <section id="features">
         <div class="wrap">
-          <h2>What you can do</h2>
-          <p class="sub">Pick a screen to see what it does.</p>
-          <div class="tabs" role="tablist">
-            <button role="tab" id="t-home" aria-controls="p-home" aria-selected="true">Home</button>
-            <button role="tab" id="t-activity" aria-controls="p-activity" aria-selected="false">
-              Activity
-            </button>
-            <button role="tab" id="t-add" aria-controls="p-add" aria-selected="false">Add</button>
-            <button role="tab" id="t-plan" aria-controls="p-plan" aria-selected="false">Plan</button>
-            <button role="tab" id="t-reports" aria-controls="p-reports" aria-selected="false">Reports</button>
+          <div class="head reveal">
+            <h2>Everything for everyday money</h2>
+            <p>From a quick expense to a loan that ends in 2031, all in one calm place.</p>
           </div>
-          <div class="panel" role="tabpanel" id="p-home" aria-labelledby="t-home">
-            <h3>Home</h3>
-            <p>
-              See what is free to use, today's spending allowance, account balances, the biggest payments
-              coming up and your latest entries.
-            </p>
-          </div>
-          <div class="panel" role="tabpanel" id="p-activity" aria-labelledby="t-activity" hidden>
-            <h3>Activity</h3>
-            <p>
-              Browse entries day by day, switch periods, search by word or amount, filter and open any entry
-              for details.
-            </p>
-          </div>
-          <div class="panel" role="tabpanel" id="p-add" aria-labelledby="t-add" hidden>
-            <h3>Add</h3>
-            <p>
-              Record expenses, income, transfers and friend entries with a calculator pad, usual entries,
-              labels and splits. Add a new category right from the picker.
-            </p>
-          </div>
-          <div class="panel" role="tabpanel" id="p-plan" aria-labelledby="t-plan" hidden>
-            <h3>Plan</h3>
-            <p>
-              A 14-day forecast, budget limits, debt progress, savings goals, people balances and scheduled
-              payments in one place.
-            </p>
-          </div>
-          <div class="panel" role="tabpanel" id="p-reports" aria-labelledby="t-reports" hidden>
-            <h3>Reports</h3>
-            <p>
-              Daily spending, category and account breakdowns, trends and comparisons, with a PDF or Excel
-              export of any month or year.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <section>
-        <div class="wrap">
-          <h2>More than a ledger</h2>
-          <p class="sub">The parts that make everyday money easier.</p>
           <div class="grid">
-            <div class="card">
-              <h3><span class="dot" style="background: #9ec5fc"></span>Loans and EMIs</h3>
-              <p>Schedules, prepayments, rate changes and what is still to pay.</p>
-            </div>
-            <div class="card">
-              <h3><span class="dot" style="background: #8fe8c8"></span>Investments</h3>
-              <p>Worth, gain, yearly rate, holdings and SIPs on one page.</p>
-            </div>
-            <div class="card">
-              <h3><span class="dot" style="background: #c9b8ff"></span>Friends and family</h3>
-              <p>Who owes whom, and a settlement history for each person.</p>
-            </div>
-            <div class="card">
-              <h3><span class="dot" style="background: #fc7b5e"></span>Saving advice</h3>
+            <div class="tile reveal">
+              <div class="ic" style="background: var(--sky)">+</div>
+              <h3>Add in seconds</h3>
               <p>
-                A plain look at your own last months: what you keep, your biggest choice, and what
-                subscriptions cost a year.
+                A calculator pad, usual entries, labels and splits. Add a new category right from the picker.
               </p>
             </div>
-            <div class="card">
-              <h3><span class="dot" style="background: #9ec5fc"></span>Reminders</h3>
-              <p>Morning and evening check-ins, bills and recurring payments, all on the phone.</p>
+            <div class="tile reveal">
+              <div class="ic" style="background: var(--mint)">₹</div>
+              <h3>Loans and EMIs</h3>
+              <p>Schedules, prepayments, rate changes and exactly what is still left to pay.</p>
             </div>
-            <div class="card">
-              <h3><span class="dot" style="background: #8fe8c8"></span>Wrap and Suu</h3>
-              <p>Weekly and monthly stories, share cards and gentle spending nudges.</p>
+            <div class="tile reveal">
+              <div class="ic" style="background: var(--lav)">↗</div>
+              <h3>Investments</h3>
+              <p>Worth, gain, yearly rate, holdings and SIPs on a single page.</p>
+            </div>
+            <div class="tile reveal">
+              <div class="ic" style="background: var(--gold)">☺</div>
+              <h3>Friends and family</h3>
+              <p>Who owes whom, with a settlement history for every person.</p>
+            </div>
+            <div class="tile reveal">
+              <div class="ic" style="background: var(--coral)">◔</div>
+              <h3>Reminders</h3>
+              <p>Morning and evening check-ins, bills and recurring payments, scheduled on your phone.</p>
+            </div>
+            <div class="tile reveal">
+              <div class="ic" style="background: var(--sky)">▤</div>
+              <h3>Reports you can share</h3>
+              <p>Daily, category and account views, with a PDF or Excel export of any month or year.</p>
+            </div>
+            <div class="tile wide reveal">
+              <div>
+                <div class="ic" style="background: var(--mint)">✦</div>
+                <h3>Real saving advice</h3>
+                <p>
+                  What-if looks at your own last months and tells you plainly where you can save: what you
+                  keep, your biggest choice and what subscriptions cost a year. It is arithmetic on your
+                  records, nothing leaves the phone.
+                </p>
+              </div>
+              <div class="card advice" aria-label="Example advice">
+                <div class="item">
+                  <span class="disc" style="background: var(--gold)"></span>
+                  <div>
+                    <b>You keep 14% of what you earn</b>
+                    <span>A common goal is 20%. Move ₹3,000 to savings the day income arrives.</span>
+                  </div>
+                </div>
+                <div class="item">
+                  <span class="disc" style="background: var(--sky)"></span>
+                  <div>
+                    <b>Food is your biggest choice</b>
+                    <span>Trimming it by 15% frees ₹960 a month, ₹11,520 a year.</span>
+                  </div>
+                </div>
+                <div class="note" style="margin-top: 6px">Example figures.</div>
+              </div>
             </div>
           </div>
         </div>
@@ -133,115 +259,151 @@
 
       <section>
         <div class="wrap">
-          <h2>Home screen widgets</h2>
-          <p class="sub">This Month, Quick Add, Suu Check-in, Next Due and Accounts. Scroll sideways.</p>
-          <div class="widgets">
-            <img src="img/this-month.png" alt="This Month widget" />
-            <img src="img/quick-add.png" alt="Quick Add widget" />
-            <img src="img/suu.png" alt="Suu Check-in widget" />
-            <img src="img/next-due.png" alt="Next Due widget" />
-            <img src="img/accounts.png" alt="Accounts widget" />
+          <div class="head reveal"><h2>Three steps, no setup</h2></div>
+          <div class="steps">
+            <div class="step reveal">
+              <h3>Add what happens</h3>
+              <p>Expenses, income, transfers and friend entries. It takes a few taps.</p>
+            </div>
+            <div class="step reveal">
+              <h3>See where it goes</h3>
+              <p>Home, Activity and Reports turn entries into clear pictures.</p>
+            </div>
+            <div class="step reveal">
+              <h3>Plan ahead</h3>
+              <p>A 14-day forecast, budgets and goals show what is safe to spend.</p>
+            </div>
           </div>
         </div>
       </section>
 
-      <section id="privacy">
+      <section id="privacy" class="dark">
         <div class="wrap">
-          <h2>Your money stays yours</h2>
-          <p class="sub">Privacy is how Yume is built, not a setting you have to find.</p>
-          <div class="grid">
-            <div class="card">
+          <div class="head reveal">
+            <h2>Your money stays yours</h2>
+            <p>Privacy is how Yume is built, not a setting you have to find.</p>
+          </div>
+          <div class="grid four">
+            <div class="tile reveal">
               <h3>On your phone</h3>
               <p>Records live in a database on your device. There is no Yume account or server.</p>
             </div>
-            <div class="card">
+            <div class="tile reveal">
               <h3>No tracking</h3>
-              <p>No analytics and no ads. Release builds do not ask for Internet access.</p>
+              <p>No analytics and no ads. Release builds do not ask for Internet access at all.</p>
             </div>
-            <div class="card">
+            <div class="tile reveal">
               <h3>You choose backups</h3>
               <p>Backups and exports go only where you send them, such as a folder you pick.</p>
             </div>
-            <div class="card">
+            <div class="tile reveal">
               <h3>Lock and hide</h3>
-              <p>Use your phone's fingerprint or PIN, and hide amounts on screen and in widgets.</p>
+              <p>Use your fingerprint or PIN, and hide amounts on screen and in widgets.</p>
             </div>
           </div>
-          <p class="sub" style="margin-top: 16px">Read the full <a href="privacy.html">privacy page</a>.</p>
+          <p style="text-align: center; margin-top: 20px">
+            Read the full <a href="privacy.html">privacy page</a> or check the
+            <a href="https://github.com/hemuush/yume">source code</a>.
+          </p>
+        </div>
+      </section>
+
+      <section>
+        <div class="wrap">
+          <div class="head reveal">
+            <h2>On your home screen</h2>
+            <p>This Month, Quick Add, Suu Check-in, Next Due and Accounts. Scroll sideways.</p>
+          </div>
+          <div class="widgets reveal">
+            <img src="img/this-month.png" alt="This Month widget" loading="lazy" />
+            <img src="img/quick-add.png" alt="Quick Add widget" loading="lazy" />
+            <img src="img/suu.png" alt="Suu Check-in widget" loading="lazy" />
+            <img src="img/next-due.png" alt="Next Due widget" loading="lazy" />
+            <img src="img/accounts.png" alt="Accounts widget" loading="lazy" />
+          </div>
         </div>
       </section>
 
       <section id="download">
         <div class="wrap">
-          <h2>Download</h2>
-          <p class="sub">Version 1.0.0 for Android phones (arm64). about 39 MB.</p>
-          <div class="panel">
-            <div class="btns" style="justify-content: flex-start">
-              <a
-                class="btn main"
-                href="https://github.com/hemuush/yume/releases/download/v1.0.0/Yume-1.0.0-arm64.apk"
-                >Download Yume 1.0.0 (.apk)</a
-              >
-              <a class="btn" href="https://github.com/hemuush/yume/releases">All releases</a>
+          <div class="head reveal">
+            <h2>Get Yume</h2>
+            <p>Version 1.0.0 for Android phones (arm64), about 39 MB.</p>
+          </div>
+          <div class="dl">
+            <div class="tile reveal">
+              <div class="btns">
+                <a
+                  class="btn main"
+                  href="https://github.com/hemuush/yume/releases/download/v1.0.0/Yume-1.0.0-arm64.apk"
+                  >Download Yume 1.0.0 (.apk)</a
+                >
+                <a class="btn" href="https://github.com/hemuush/yume/releases">All releases</a>
+              </div>
+              <h3 style="margin-top: 20px">Install in four steps</h3>
+              <ol>
+                <li>Open the download on your phone.</li>
+                <li>If Android asks, allow your browser or Files app to install apps.</li>
+                <li>
+                  Tap Install. If Play Protect warns about an unknown app, choose Install anyway: Yume is not
+                  on the Play Store yet.
+                </li>
+                <li>
+                  Open Yume, then go to Settings → Notifications and tap Allow so reminders arrive on time.
+                </li>
+              </ol>
             </div>
-            <h3 style="margin-top: 20px">Install in four steps</h3>
-            <ol>
-              <li>Open the download on your phone.</li>
-              <li>If Android asks, allow your browser or Files app to install apps.</li>
-              <li>
-                Tap Install. If Play Protect warns about an unknown app, choose Install anyway: Yume is not on
-                the Play Store yet.
-              </li>
-              <li>
-                Open Yume, then go to Settings → Notifications and tap Allow so reminders arrive on time.
-              </li>
-            </ol>
-            <details>
-              <summary>Check the file is genuine</summary>
-              <p>SHA-256, so you can compare it with the file you downloaded:</p>
-              <pre>e78a0386a390d22e56ac34d8fbdae94ea67505410497d462f1a753efefaef53b</pre>
-            </details>
+            <div class="tile reveal">
+              <h3>Check the file is genuine</h3>
+              <p style="margin: 6px 0 12px">SHA-256 of the file, to compare with your download:</p>
+              <div class="hash">
+                <code id="hash">e78a0386a390d22e56ac34d8fbdae94ea67505410497d462f1a753efefaef53b</code>
+                <button type="button" id="copy">Copy</button>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
       <section id="faq">
         <div class="wrap">
-          <h2>Questions</h2>
-          <details>
-            <summary>Is it free?</summary>
-            <p>Yes. The code is open on GitHub under its licence.</p>
-          </details>
-          <details>
-            <summary>Does it work on iPhone?</summary>
-            <p>No. Yume is built for Android.</p>
-          </details>
-          <details>
-            <summary>Do I need internet?</summary>
-            <p>No. It works fully offline.</p>
-          </details>
-          <details>
-            <summary>What if I lose my phone?</summary>
-            <p>
-              Your records are only on the phone, so keep a backup copy somewhere you trust. Yume can save
-              backups to a folder you choose.
-            </p>
-          </details>
-          <details>
-            <summary>My reminders arrive late.</summary>
-            <p>
-              On newer Android, allow <strong>Alarms &amp; reminders</strong> for Yume. Open Settings →
-              Notifications in the app and tap Allow.
-            </p>
-          </details>
-          <details>
-            <summary>How do I run it myself?</summary>
-            <pre>
+          <div class="head reveal"><h2>Questions</h2></div>
+          <div class="faq">
+            <details>
+              <summary>Is it free?</summary>
+              <p>Yes. The code is open on GitHub under its licence.</p>
+            </details>
+            <details>
+              <summary>Does it work on iPhone?</summary>
+              <p>No. Yume is built for Android.</p>
+            </details>
+            <details>
+              <summary>Do I need internet?</summary>
+              <p>No. It works fully offline.</p>
+            </details>
+            <details>
+              <summary>What if I lose my phone?</summary>
+              <p>
+                Your records are only on the phone, so keep a backup copy somewhere you trust. Yume can save
+                backups to a folder you choose.
+              </p>
+            </details>
+            <details>
+              <summary>My reminders arrive late.</summary>
+              <p>
+                On newer Android, allow <strong>Alarms &amp; reminders</strong> for Yume. Open Settings →
+                Notifications in the app and tap Allow.
+              </p>
+            </details>
+            <details>
+              <summary>How do I run it myself?</summary>
+              <pre>
 git clone https://github.com/hemuush/yume.git
 cd yume
 npm ci
 npx expo run:android</pre>
-          </details>
+            </details>
+          </div>
         </div>
       </section>
     </main>
@@ -252,6 +414,9 @@ npx expo run:android</pre>
         <a href="https://github.com/hemuush/yume">Source</a> · <a href="privacy.html">Privacy</a>
       </div>
     </footer>
+    <div class="sticky" id="sticky">
+      <a class="btn main" href="#download">Download for Android</a>
+    </div>
     <script src="site.js"></script>
   </body>
 </html>
