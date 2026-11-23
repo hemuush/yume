@@ -63,7 +63,6 @@ Hands-on Android outcomes belong in [release device acceptance](RELEASE_DEVICE_C
 | [Release device acceptance](RELEASE_DEVICE_CHECKS.md) | Unperformed and recorded Android acceptance checks       |
 | [Expense labels](EXPENSE_LABELS.md)                   | The current single-field expense-label contract          |
 | [Repository instructions](../AGENTS.md)               | Repository contributor instructions                      |
-| [Shared repository guidance](../CLAUDE.md)            | Compatibility entry point for contributor guidance       |
 
 ## Historical reviews and implementation records
 

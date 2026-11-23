@@ -6,7 +6,7 @@
 
 Reviewed tracked source imports, named exports, route entry points, widget registration, native configuration, scripts, tests and documentation references. The repository already enforces unused locals and parameters through TypeScript.
 
-Removed the unused Home headline label map and obsolete tap-cycle helper, including tests specific to the removed helper. Retained the live slice, percentage, privacy and resting-headline calculations used by Home and widgets. Removed the repository-specific Claude plugin configuration; it is not part of the Expo application.
+Removed the unused Home headline label map and obsolete tap-cycle helper, including tests specific to the removed helper. Retained the live slice, percentage, privacy and resting-headline calculations used by Home and widgets.
 
 Moved 16 historical reports into `docs/archive/` and updated their links. Kept current guides, licenses, brand source assets, backups, build artifacts and the separate design project. No runtime screen, dependency, database table or financial behavior was removed.
 

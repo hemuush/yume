@@ -9,7 +9,6 @@ file,category,lines,review_method,review_prompts_not_confirmed_defects,sha256
 AGENTS.md,documentation/other,9,content scanned; reference/context,,38c1de4f18f15d5853e3e928ebf02d6845004168fbd31ef7c7bdabb070f04859
 BACKUP.md,documentation/other,65,content scanned; reference/context,,7dab5691dd394b52fdf9bc5daf96cdb482f25e7758dec88d311a43b435f5a756
 BUILD.md,documentation/other,70,content scanned; reference/context,,ba2fc58b0e607973cf0f196536b02a49c52f9e95ee742a248c7be02f630c0a8e
-CLAUDE.md,documentation/other,7,content scanned; reference/context,,65ca59550170a957b562e29f64132b761871719573d6f75ddb55804bbdf44ce8
 DATA_MODEL.md,documentation/other,110,content scanned; reference/context,,b29cd2b52959a72aa7fccb46a596dc269599dec5b13320829a3bd74da216e5f3
 FOLLOWUP_CODE_AUDIT.md,documentation/other,78,content scanned; reference/context,,0fb73f0d009c80fc07e1f3beffc13d2fe0ebfec7a912366e07ca55d9f45a8523
 LICENSE,documentation/other,21,content scanned; reference/context,,fb3ca4a837f5779e83cef89b78253a8949cfb9429c340309f62d0465ec6610b4
