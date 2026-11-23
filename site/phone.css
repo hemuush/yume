@@ -299,7 +299,7 @@
   justify-content: space-between;
   padding: 0 2px 6px;
 }
-.p-sec-head h5 {
+.p-sec-head .p-h5 {
   margin: 0;
   font: 600 15px var(--head);
 }

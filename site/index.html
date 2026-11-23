@@ -8,7 +8,9 @@
       name="description"
       content="Yume is a calm, private money tracker for Android. Track spending, plan ahead and save, with every record kept on your phone."
     />
-    <meta name="theme-color" content="#f1f4fb" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#f1f4fb" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0a0e17" media="(prefers-color-scheme: dark)" />
     <link rel="canonical" href="https://hemuush.github.io/yume/" />
     <meta property="og:type" content="website" />
     <meta property="og:title" content="Yume · Better money. Bigger dreams." />
@@ -85,6 +87,37 @@
           <rect x="2" y="5" width="20" height="14" rx="2" />
           <path d="M2 10h20" />
         </symbol>
+        <symbol id="i-sun" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="4" />
+          <path
+            d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"
+          />
+        </symbol>
+        <symbol id="i-moon" viewBox="0 0 24 24">
+          <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" />
+        </symbol>
+        <symbol id="i-gauge" viewBox="0 0 24 24">
+          <path d="m12 14 4-4" />
+          <path d="M3.3 17a10 10 0 1 1 17.4 0" />
+        </symbol>
+        <symbol id="i-spark" viewBox="0 0 24 24">
+          <path d="m12 3 1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z" />
+          <path d="M19 17v4M17 19h4" />
+        </symbol>
+        <symbol id="i-file" viewBox="0 0 24 24">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+          <path d="M14 2v6h6M8 13h8M8 17h5" />
+        </symbol>
+        <symbol id="i-rupee" viewBox="0 0 24 24"><path d="M6 4h12M6 9h12M9 4c6 0 6 9 0 9H6l8 8" /></symbol>
+        <symbol id="i-people" viewBox="0 0 24 24">
+          <circle cx="9" cy="8" r="3.5" />
+          <path d="M2.5 20a6.5 6.5 0 0 1 13 0" />
+          <path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14.5a6.5 6.5 0 0 1 3.5 5.5" />
+        </symbol>
+        <symbol id="i-forecast" viewBox="0 0 24 24">
+          <path d="m3 17 5-5 4 4 8-9" />
+          <path d="M3 21h18" />
+        </symbol>
         <!-- the app's own tab icons (components/icons/TabIcons.tsx) -->
         <symbol
           id="t-home"
@@ -128,11 +161,12 @@
         </symbol>
       </defs>
     </svg>
+    <a class="skip" href="#top">Skip to content</a>
     <div class="progress" aria-hidden="true"></div>
     <header class="nav">
       <div class="wrap">
         <a class="brand" href="#top"><img src="img/yume-mark.png" alt="" /> Yume</a>
-        <a class="link" href="#suu">Suu</a>
+        <a class="link" href="#meet-suu">Suu</a>
         <a class="link" href="#features">Features</a>
         <a class="link" href="#privacy">Privacy</a>
         <a class="link" href="#faq">FAQ</a>
@@ -209,7 +243,7 @@
 
                 <div class="p-sec">
                   <div class="p-sec-head">
-                    <h5>Your accounts</h5>
+                    <div class="p-h5">Your accounts</div>
                     <span class="p-link"
                       >View all <svg class="ico"><use href="#i-right" /></svg
                     ></span>
@@ -248,7 +282,7 @@
 
                 <div class="p-sec">
                   <div class="p-sec-head">
-                    <h5>Coming up</h5>
+                    <div class="p-h5">Coming up</div>
                     <span class="p-link"
                       >See all <svg class="ico"><use href="#i-right" /></svg
                     ></span>
@@ -273,7 +307,7 @@
 
                 <div class="p-sec">
                   <div class="p-sec-head">
-                    <h5>Recent activity</h5>
+                    <div class="p-h5">Recent activity</div>
                     <span class="p-link"
                       >See all <svg class="ico"><use href="#i-right" /></svg
                     ></span>
@@ -299,7 +333,7 @@
 
               <!-- Activity -->
               <div class="screen" id="s-activity" role="tabpanel" aria-labelledby="b-activity">
-                <h4 class="p-title" style="margin-top: 6px">Activity</h4>
+                <div class="p-title" style="margin-top: 6px">Activity</div>
                 <div class="search">
                   <svg class="ico"><use href="#i-search" /></svg>Search words or amounts
                 </div>
@@ -347,7 +381,7 @@
               <!-- Plan -->
               <div class="screen" id="s-plan" role="tabpanel" aria-labelledby="b-plan">
                 <div class="p-top" style="margin-top: 2px">
-                  <h4 class="p-title" style="margin-right: auto">Plan</h4>
+                  <div class="p-title" style="margin-right: auto">Plan</div>
                   <span class="p-link"
                     ><svg class="ico"><use href="#i-plus" /></svg>Add</span
                   >
@@ -357,7 +391,7 @@
                   ><span>Debt</span>
                 </div>
                 <div class="p-sec">
-                  <div class="p-sec-head"><h5>Plan at a glance</h5></div>
+                  <div class="p-sec-head"><div class="p-h5">Plan at a glance</div></div>
                   <div class="tiles">
                     <div class="tile2">
                       <div class="h">
@@ -401,7 +435,7 @@
                   </div>
                 </div>
                 <div class="p-sec">
-                  <div class="p-sec-head"><h5>Coming up</h5></div>
+                  <div class="p-sec-head"><div class="p-h5">Coming up</div></div>
                   <div class="group">
                     <div class="line">
                       <span class="mark" style="background: #9ec5fc"
@@ -416,7 +450,7 @@
 
               <!-- Reports -->
               <div class="screen" id="s-reports" role="tabpanel" aria-labelledby="b-reports">
-                <h4 class="p-title" style="margin-top: 6px">Reports</h4>
+                <div class="p-title" style="margin-top: 6px">Reports</div>
                 <div class="ptabs">
                   <span class="on">Days</span><span>Categories</span><span>Trends</span>
                 </div>
@@ -484,7 +518,7 @@
         </div>
       </div>
 
-      <section id="suu" class="suu-sec">
+      <section id="meet-suu" class="suu-sec">
         <div class="blobs" aria-hidden="true"><i></i><i></i><i></i></div>
         <div class="wrap">
           <div class="head reveal">
@@ -606,39 +640,53 @@
           </div>
           <div class="grid">
             <div class="tile reveal" data-tags="track">
-              <div class="ic" style="background: var(--sky)">+</div>
+              <div class="ic" style="background: var(--sky)">
+                <svg class="ico" aria-hidden="true"><use href="#i-plus" /></svg>
+              </div>
               <h3>Add in seconds</h3>
               <p>
                 A calculator pad, usual entries, labels and splits. Add a new category right from the picker.
               </p>
             </div>
             <div class="tile reveal" data-tags="borrow plan">
-              <div class="ic" style="background: var(--mint)">₹</div>
+              <div class="ic" style="background: var(--mint)">
+                <svg class="ico" aria-hidden="true"><use href="#i-rupee" /></svg>
+              </div>
               <h3>Loans and EMIs</h3>
               <p>Schedules, prepayments, rate changes and exactly what is still left to pay.</p>
             </div>
             <div class="tile reveal" data-tags="save plan">
-              <div class="ic" style="background: var(--lav)">↗</div>
+              <div class="ic" style="background: var(--lav)">
+                <svg class="ico" aria-hidden="true"><use href="#i-trend" /></svg>
+              </div>
               <h3>Investments</h3>
               <p>Worth, gain, yearly rate, holdings and SIPs on a single page.</p>
             </div>
             <div class="tile reveal" data-tags="borrow">
-              <div class="ic" style="background: var(--gold)">☺</div>
+              <div class="ic" style="background: var(--gold)">
+                <svg class="ico" aria-hidden="true"><use href="#i-people" /></svg>
+              </div>
               <h3>Friends and family</h3>
               <p>Who owes whom, with a settlement history for every person.</p>
             </div>
             <div class="tile reveal" data-tags="track">
-              <div class="ic" style="background: var(--coral)">◔</div>
+              <div class="ic" style="background: var(--coral)">
+                <svg class="ico" aria-hidden="true"><use href="#i-bell" /></svg>
+              </div>
               <h3>Reminders</h3>
               <p>Morning and evening check-ins, bills and recurring payments, scheduled on your phone.</p>
             </div>
             <div class="tile reveal" data-tags="track">
-              <div class="ic" style="background: var(--sky)">▤</div>
+              <div class="ic" style="background: var(--sky)">
+                <svg class="ico" aria-hidden="true"><use href="#i-file" /></svg>
+              </div>
               <h3>Reports you can share</h3>
               <p>Daily, category and account views, with a PDF or Excel export of any month or year.</p>
             </div>
             <div class="tile reveal" data-tags="plan save">
-              <div class="ic" style="background: var(--mint)">◎</div>
+              <div class="ic" style="background: var(--mint)">
+                <svg class="ico" aria-hidden="true"><use href="#i-target" /></svg>
+              </div>
               <h3>Budgets and goals</h3>
               <p>
                 Monthly limits with rollover, and goals with a date. A goal can reserve money without moving
@@ -646,13 +694,17 @@
               </p>
             </div>
             <div class="tile reveal" data-tags="plan">
-              <div class="ic" style="background: var(--lav)">⇢</div>
+              <div class="ic" style="background: var(--lav)">
+                <svg class="ico" aria-hidden="true"><use href="#i-forecast" /></svg>
+              </div>
               <h3>A 14-day forecast</h3>
               <p>See what is coming out before it does, so a big bill is never a surprise.</p>
             </div>
             <div class="tile wide reveal" data-tags="save">
               <div>
-                <div class="ic" style="background: var(--mint)">✦</div>
+                <div class="ic" style="background: var(--mint)">
+                  <svg class="ico" aria-hidden="true"><use href="#i-spark" /></svg>
+                </div>
                 <h3>Real saving advice</h3>
                 <p>
                   What-if looks at your own last months and tells you plainly where you can save: what you
@@ -690,7 +742,9 @@
           </div>
           <div class="day" id="daytl">
             <div class="stop reveal">
-              <span class="when" aria-hidden="true">☀</span>
+              <span class="when" aria-hidden="true"
+                ><svg class="ico" aria-hidden="true"><use href="#i-sun" /></svg
+              ></span>
               <div class="card3">
                 <small>Morning</small>
                 <h3>A quiet look at today</h3>
@@ -701,7 +755,9 @@
               </div>
             </div>
             <div class="stop reveal">
-              <span class="when" aria-hidden="true">☕</span>
+              <span class="when" aria-hidden="true"
+                ><svg class="ico" aria-hidden="true"><use href="#i-coffee" /></svg
+              ></span>
               <div class="card3">
                 <small>Lunch</small>
                 <h3>Log it in a few taps</h3>
@@ -712,7 +768,9 @@
               </div>
             </div>
             <div class="stop reveal">
-              <span class="when" aria-hidden="true">◔</span>
+              <span class="when" aria-hidden="true"
+                ><svg class="ico" aria-hidden="true"><use href="#i-gauge" /></svg
+              ></span>
               <div class="card3">
                 <small>Afternoon</small>
                 <h3>See if you are on pace</h3>
@@ -722,7 +780,9 @@
               </div>
             </div>
             <div class="stop reveal">
-              <span class="when" aria-hidden="true">☾</span>
+              <span class="when" aria-hidden="true"
+                ><svg class="ico" aria-hidden="true"><use href="#i-moon" /></svg
+              ></span>
               <div class="card3">
                 <small>Evening</small>
                 <h3>Suu asks if you spent anything</h3>
@@ -730,7 +790,9 @@
               </div>
             </div>
             <div class="stop reveal">
-              <span class="when" aria-hidden="true">✦</span>
+              <span class="when" aria-hidden="true"
+                ><svg class="ico" aria-hidden="true"><use href="#i-spark" /></svg
+              ></span>
               <div class="card3">
                 <small>Sunday</small>
                 <h3>Your week, wrapped</h3>
@@ -738,7 +800,9 @@
               </div>
             </div>
             <div class="stop reveal">
-              <span class="when" aria-hidden="true">▤</span>
+              <span class="when" aria-hidden="true"
+                ><svg class="ico" aria-hidden="true"><use href="#i-file" /></svg
+              ></span>
               <div class="card3">
                 <small>Month end</small>
                 <h3>Share the month</h3>
@@ -910,8 +974,14 @@ npx expo run:android</pre>
 
     <footer>
       <div class="wrap">
-        Small daily decisions. More room for your dreams. ·
-        <a href="https://github.com/hemuush/yume">Source</a> · <a href="privacy.html">Privacy</a>
+        <div class="foot-links">
+          <a href="#download">Download</a>
+          <a href="#meet-suu">Meet Suu</a>
+          <a href="privacy.html">Privacy</a>
+          <a href="https://github.com/hemuush/yume/releases">Releases</a>
+          <a href="https://github.com/hemuush/yume">Source</a>
+        </div>
+        <p>Small daily decisions. More room for your dreams.</p>
       </div>
     </footer>
     <div class="sticky" id="sticky">

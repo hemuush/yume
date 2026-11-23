@@ -32,6 +32,7 @@
   --action: #0c1230;
   --on-action: #f1f4fb;
   --link: #2d5db0;
+  --coral-text: #b8431f;
   --income: #1b7a4f;
   --expense: #b3261e;
   --shadow: 0 1px 2px rgba(12, 18, 48, 0.05), 0 8px 24px rgba(12, 18, 48, 0.06);
@@ -49,6 +50,7 @@
     --action: #9ec5fc;
     --on-action: #0b1533;
     --link: #9ec5fc;
+    --coral-text: #fc7b5e;
     --soft: #b8c0d2;
     --income: #6fd6a5;
     --expense: #ff8f8a;
@@ -65,6 +67,7 @@
   --action: #9ec5fc;
   --on-action: #0b1533;
   --link: #9ec5fc;
+  --coral-text: #fc7b5e;
   --soft: #b8c0d2;
   --income: #6fd6a5;
   --expense: #ff8f8a;
@@ -601,4 +604,77 @@ main p a,
 .doc a,
 footer a {
   color: var(--link);
+}
+
+.tile .ic svg,
+.stop .when svg {
+  width: 22px;
+  height: 22px;
+}
+.skip {
+  position: absolute;
+  left: 12px;
+  top: -60px;
+  z-index: 50;
+  padding: 10px 16px;
+  border-radius: 12px;
+  background: var(--action);
+  color: var(--on-action);
+  font-weight: 600;
+  text-decoration: none;
+}
+.skip:focus {
+  top: 12px;
+}
+summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  list-style: none;
+}
+summary::-webkit-details-marker {
+  display: none;
+}
+summary::after {
+  content: '';
+  flex: none;
+  width: 9px;
+  height: 9px;
+  border-right: 2px solid var(--soft);
+  border-bottom: 2px solid var(--soft);
+  transform: rotate(45deg) translateY(-2px);
+  transition: transform 0.2s ease;
+}
+details[open] summary::after {
+  transform: rotate(225deg) translate(-2px, 0);
+}
+details[open] > :not(summary) {
+  animation: fadein 0.25s ease;
+}
+@keyframes fadein {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+.foot-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 20px;
+  margin-bottom: 10px;
+}
+.foot-links a {
+  color: var(--soft);
+  text-decoration: none;
+}
+.foot-links a:hover {
+  color: var(--ink);
+  text-decoration: underline;
+}
+@media (prefers-reduced-motion: reduce) {
+  details[open] > :not(summary) {
+    animation: none;
+  }
 }

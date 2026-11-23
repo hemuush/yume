@@ -601,7 +601,7 @@
   box-shadow: var(--shadow);
 }
 .stop small {
-  color: var(--coral);
+  color: var(--coral-text);
   font-weight: 600;
   font-size: 12px;
   letter-spacing: 0.06em;
