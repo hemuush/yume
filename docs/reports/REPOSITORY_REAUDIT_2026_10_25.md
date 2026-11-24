@@ -4,7 +4,7 @@ This pass extends the [app-flow audit](FULL_APP_AUDIT_2026_10_25.md) and its nin
 
 ## Coverage method
 
-The [per-file inventory](../REPOSITORY_REAUDIT_COVERAGE_2026_10_25.csv) records every tracked or nonignored first-party file, byte count, SHA-256 and check category. Every file's complete contents were read by the inventory checks. Source files also received syntax/import and repository static checks; tests were exercised by the runners below. Manual inspection traced the routes and boundaries listed in the app-flow audit, with additional checks of dependency/configuration ownership, native plugins, exports, locks, file inputs and shared motion.
+The per-file inventory records every tracked or nonignored first-party file, byte count, SHA-256 and check category. Every file's complete contents were read by the inventory checks. Source files also received syntax/import and repository static checks; tests were exercised by the runners below. Manual inspection traced the routes and boundaries listed in the app-flow audit, with additional checks of dependency/configuration ownership, native plugins, exports, locks, file inputs and shared motion.
 
 This distinguishes automated full-file coverage from manual review: it does **not** claim that a human-equivalent line-by-line review of every source/test line or every possible device state occurred. Generated native projects, node_modules, ignored build outputs, local attachments and the separate design-preview/site workspaces are outside the first-party inventory. Binary assets were inspected for references and signatures rather than interpreted as code. The inventory itself has no self-hash.
 

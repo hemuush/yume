@@ -1,6 +1,6 @@
 # Calm motion — 11 November 2026
 
-Replaces the "longer, softer" direction of [MOTION_POLISH_2026_11_11.md](MOTION_POLISH_2026_11_11.md). The aim is neat, minimal and smooth everywhere: things fade or glide to a new state, and never rise, roll, stagger or bounce.
+Replaces the "longer, softer" direction of MOTION_POLISH_2026_11_11.md. The aim is neat, minimal and smooth everywhere: things fade or glide to a new state, and never rise, roll, stagger or bounce.
 
 ## The rule
 
@@ -11,13 +11,13 @@ Replaces the "longer, softer" direction of [MOTION_POLISH_2026_11_11.md](MOTION_
 - Press feedback is the original quick dip: 80 ms in, 120 ms out, no spring.
 - The Home capsules show at their height; the picked one still lifts. The heatmap cells no longer fade in one by one.
 - The tab pill fades its fill and slides its row; it no longer scales in.
-- Sheets fade in with their backdrop (the Modal's own fade) and no longer rise: a Reanimated entering animation on the sheet surface is a suspect in sheets standing above the bottom of the screen (see [the sheets review](SECONDARY_SCREENS_REVIEW_2026_11_13.md)). The toast rises 16 pt.
+- Sheets fade in with their backdrop (the Modal's own fade) and no longer rise: a Reanimated entering animation on the sheet surface is a suspect in sheets standing above the bottom of the screen (see the sheets review). The toast rises 16 pt.
 - Screens open the same way everywhere: the standard slide. The card-grow transition (a card expanding into Budgets, Savings goals and Category detail) and its overlay (`CardGrowHost`, `cardGrow`) were removed.
 - Everything still turns off with the phone's reduce-motion setting.
 
 ## Follow-up, 14 November 2026: CSS transitions for state changes on Home
 
-**Withdrawn on 13 November 2026.** Reanimated 4's CSS transitions were tried for Home's day capsules, the month ring's dimmed slices and Activity's Week | Month underline, through a `glide(property, reduce)` helper. A panel that glided its own height the same way (Activity's groups) did not work on a phone, and no Android device is available here to find out why, so no CSS transition is left in the app (the mechanism was never checked on a device). Home's capsules are back on shared values (`useSharedValue`, `withTiming`, as before), the ring's unpicked slices dim at once, and the underline appears and disappears. The sheen on the month ring stays (it is a plain SVG gradient). Nothing draws in, rolls, staggers or springs; the calm rule stands. See [the review](SECONDARY_SCREENS_REVIEW_2026_11_13.md).
+**Withdrawn on 13 November 2026.** Reanimated 4's CSS transitions were tried for Home's day capsules, the month ring's dimmed slices and Activity's Week | Month underline, through a `glide(property, reduce)` helper. A panel that glided its own height the same way (Activity's groups) did not work on a phone, and no Android device is available here to find out why, so no CSS transition is left in the app (the mechanism was never checked on a device). Home's capsules are back on shared values (`useSharedValue`, `withTiming`, as before), the ring's unpicked slices dim at once, and the underline appears and disappears. The sheen on the month ring stays (it is a plain SVG gradient). Nothing draws in, rolls, staggers or springs; the calm rule stands. See the review.
 
 **Activity, same day.** Its Insights bar chart still drew every bar up from empty, one after another (about 0.45 s), which this rule had retired elsewhere; the bars now show at their height at once and glide only when a day's value really changes (core `Animated`, not Reanimated: the chart is in a Modal sheet).
 

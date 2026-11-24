@@ -2,7 +2,7 @@
 
 > Historical record: validation and implementation claims apply to the revision recorded below. For maintained behavior see [architecture](../ARCHITECTURE.md); for the newer check results see the [repository re-audit](REPOSITORY_REAUDIT_2026_10_25.md).
 
-Follow-up to the [seven-finding code re-audit](CODE_REAUDIT_2026_10_19.md), on revision `6109b40232266423db459fcd361e1e4d71f57c28` plus the existing fix working tree. Those earlier changes were preserved. Repository instructions, current guides and the exact Expo SDK 57 documentation were consulted before implementation. Historical audit/test results remain in their original reports.
+Follow-up to the seven-finding code re-audit, on revision `6109b40232266423db459fcd361e1e4d71f57c28` plus the existing fix working tree. Those earlier changes were preserved. Repository instructions, current guides and the exact Expo SDK 57 documentation were consulted before implementation. Historical audit/test results remain in their original reports.
 
 ## Resolution checklist
 

@@ -2,9 +2,9 @@
 
 > Historical record: validation and implementation claims apply to the revision recorded below. For maintained behavior see [architecture](../ARCHITECTURE.md); for the newer check results see the [repository re-audit](REPOSITORY_REAUDIT_2026_10_25.md).
 
-Follow-up to the [18 October code audit](CODE_AUDIT_2026_10_18.md), based on revision `6109b40232266423db459fcd361e1e4d71f57c28`. The original audit is retained as baseline evidence. This report describes the subsequent working-tree changes. Expo SDK 57 documentation, the documentation index and architecture guide were read before implementation.
+Follow-up to the 18 October code audit, based on revision `6109b40232266423db459fcd361e1e4d71f57c28`. The original audit is retained as baseline evidence. This report describes the subsequent working-tree changes. Expo SDK 57 documentation, the documentation index and architecture guide were read before implementation.
 
-**Later review, 19 October:** the [fresh code re-audit](CODE_REAUDIT_2026_10_19.md) reopens part of finding 7: existing queued spending alerts still retain private copy after a successful refresh. The bill/refund cases below remain covered. The other seven original fixes remain supported by fresh regression and source review. The implementation claims and test results below record the earlier fix batch; they are not a resolution of the later findings.
+**Later review, 19 October:** the fresh code re-audit reopens part of finding 7: existing queued spending alerts still retain private copy after a successful refresh. The bill/refund cases below remain covered. The other seven original fixes remain supported by fresh regression and source review. The implementation claims and test results below record the earlier fix batch; they are not a resolution of the later findings.
 
 The subsequent [re-audit fix batch](REAUDIT_FIXES_2026_10_19.md) covers that spending-alert gap and the other six follow-up findings. Its validation is recorded separately below that checklist.
 

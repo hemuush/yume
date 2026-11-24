@@ -6,7 +6,7 @@ Started on 24 October from `728b6d9` with the notification changes already prese
 
 ## Scope and evidence
 
-The [file inventory](../CODE_AUDIT_COVERAGE_2026_10_24.csv) lists every first-party code file, line count and SHA-256. Repository-wide automated checks are combined with focused source inspection of data writes, currency/privacy boundaries, loading recovery, navigation, exports, notifications, investment calculations and native configuration. The inventory distinguishes focused inspection from automated checks. It is **not** a claim that every line was manually read or that tests prove every possible state correct.
+The file inventory lists every first-party code file, line count and SHA-256. Repository-wide automated checks are combined with focused source inspection of data writes, currency/privacy boundaries, loading recovery, navigation, exports, notifications, investment calculations and native configuration. The inventory distinguishes focused inspection from automated checks. It is **not** a claim that every line was manually read or that tests prove every possible state correct.
 
 The inventory contains **911 code files / 136,606 lines**, with focused inspection recorded for **132 files**, sometimes limited to the relevant sections. All 907 TypeScript/JavaScript files were parsed, both Python scripts passed AST parsing, and the Kotlin/Gradle module was inspected without compiling it. Tests are included in the file count.
 

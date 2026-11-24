@@ -79,7 +79,7 @@ export function totalRowStyle(extra?: CellStyle): CellStyle {
 }
 
 /** One Summary KPI tile's fill+border, applied to every physical cell in its merge so the block reads as one solid card, not just its top-left cell. */
-export function tileStyle(fill: string): CellStyle {
+function tileStyle(fill: string): CellStyle {
   return {
     fill: { fgColor: { rgb: fill }, patternType: 'solid' },
     border: allBorders(C.ink),

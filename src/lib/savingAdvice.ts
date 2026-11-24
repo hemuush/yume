@@ -25,7 +25,7 @@ export interface SavingAdvice {
 }
 
 /** The yardstick: keep at least a fifth of what comes in. */
-export const TARGET_SAVE_RATE = 0.2;
+const TARGET_SAVE_RATE = 0.2;
 /** A choice category worth a look once it takes this share of income. */
 const BIG_SHARE = 0.15;
 /** The share of a choice category a person can usually trim without feeling it. */
