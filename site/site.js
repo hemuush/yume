@@ -57,7 +57,7 @@
     const col = document.querySelector('.phone-sticky');
     if (!col || !fit) return;
     const h = col.clientHeight;
-    fit.style.setProperty('--ps', Math.max(0.5, Math.min(1.5, (h - 48) / 640)).toFixed(3));
+    fit.style.setProperty('--ps', Math.max(0.5, Math.min(1.1, (h - 40) / 640)).toFixed(3));
   }
   // the scene whose middle is nearest the reading line wins: lower on a phone, where the phone sits above the text
   let ticking = false;

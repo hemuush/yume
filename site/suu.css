@@ -5,7 +5,7 @@
 }
 .suu-grid {
   display: grid;
-  gap: clamp(28px, 5vw, 72px);
+  gap: clamp(18px, 3vw, 36px);
   grid-template-columns: 0.8fr 1.2fr;
   align-items: center;
 }
@@ -22,8 +22,8 @@
 }
 .suu {
   position: relative;
-  width: 260px;
-  height: 260px;
+  width: 170px;
+  height: 170px;
   cursor: pointer;
   border: 0;
   background: none;
@@ -95,8 +95,8 @@
   background: var(--surface);
   color: var(--ink);
   border-radius: 28px;
-  padding: 22px;
-  min-height: 400px;
+  padding: 16px;
+  min-height: 330px;
 }
 .panel2 p {
   color: var(--soft);
@@ -134,12 +134,12 @@
   animation: pop 0.35s ease backwards;
 }
 .pane h3 {
-  font-size: 24px;
+  font-size: 18px;
   margin-bottom: 4px;
 }
 .pane > p {
-  margin: 0 0 16px;
-  font-size: 16px;
+  margin: 0 0 12px;
+  font-size: 14px;
 }
 .says {
   display: flex;
@@ -164,8 +164,8 @@
 .bubble {
   background: var(--alt);
   border-radius: 22px 22px 22px 6px;
-  padding: 16px 18px;
-  min-height: 90px;
+  padding: 12px 14px;
+  min-height: 70px;
 }
 .bubble small {
   display: block;
@@ -176,7 +176,7 @@
   margin-bottom: 4px;
 }
 .bubble b {
-  font: 600 22px var(--head);
+  font: 600 18px var(--head);
 }
 .bubble b.swap {
   animation: pop 0.3s ease backwards;
