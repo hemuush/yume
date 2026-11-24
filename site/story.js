@@ -46,7 +46,7 @@
 
   // ---------- the feature finder ----------
   const finder = document.querySelectorAll('.finder button');
-  const tiles = document.querySelectorAll('.tile[data-tags]');
+  const tiles = document.querySelectorAll('.feat[data-tags]');
   finder.forEach(function (btn) {
     btn.addEventListener('click', function () {
       const tag = btn.dataset.tag;

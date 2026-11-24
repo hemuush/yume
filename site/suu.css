@@ -1,207 +1,15 @@
-/* Motion and the story sections: floating shapes, the scroll bar, Meet Suu, a day with Yume, the feature finder. */
-
-/* ---------- scroll progress ---------- */
-.progress {
-  position: fixed;
-  top: 0;
-  left: 0;
-  height: 3px;
-  width: 100%;
-  z-index: 30;
-  transform-origin: 0 50%;
-  transform: scaleX(var(--scroll, 0));
-  background: linear-gradient(90deg, var(--sky), var(--mint), var(--coral));
-}
-
-/* ---------- drifting shapes ---------- */
-.blobs {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  pointer-events: none;
-  z-index: 0;
-}
-.blobs i {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(70px);
-  opacity: 0.3;
-  animation: drift 18s ease-in-out infinite alternate;
-}
-.blobs i:nth-child(1) {
-  width: 340px;
-  height: 340px;
-  background: var(--sky);
-  top: -80px;
-  left: -60px;
-}
-.blobs i:nth-child(2) {
-  width: 300px;
-  height: 300px;
-  background: var(--mint);
-  top: 120px;
-  right: -80px;
-  animation-duration: 22s;
-  animation-delay: -6s;
-}
-.blobs i:nth-child(3) {
-  width: 240px;
-  height: 240px;
-  background: var(--lav);
-  bottom: -60px;
-  left: 35%;
-  animation-duration: 26s;
-  animation-delay: -12s;
-}
-@keyframes drift {
-  from {
-    transform: translate(0, 0) scale(1);
-  }
-  to {
-    transform: translate(40px, 30px) scale(1.12);
-  }
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) .blobs i {
-    opacity: 0.22;
-  }
-}
-:root[data-theme='dark'] .blobs i {
-  opacity: 0.22;
-}
-.hero-wrap {
-  position: relative;
-}
-.hero-wrap .hero {
-  position: relative;
-  z-index: 1;
-}
-
-/* entrance of the hero */
-.rise {
-  opacity: 0;
-  transform: translateY(18px);
-  animation: rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
-  animation-delay: calc(var(--d, 0) * 90ms);
-}
-@keyframes rise {
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-.float {
-  animation: float 7s ease-in-out infinite;
-}
-@keyframes float {
-  50% {
-    transform: translateY(-8px);
-  }
-}
-.meter i {
-  animation: fillbar 1.2s 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) backwards;
-}
-@keyframes fillbar {
-  from {
-    width: 0;
-  }
-}
-.btn.main {
-  position: relative;
-  overflow: hidden;
-}
-.btn.main::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(110deg, transparent 35%, rgba(255, 255, 255, 0.28) 50%, transparent 65%);
-  transform: translateX(-120%);
-  animation: shine 5s 2s infinite;
-}
-@keyframes shine {
-  to {
-    transform: translateX(120%);
-  }
-}
-.tile {
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
-}
-.tile:hover {
-  transform: translateY(-4px);
-}
-
-/* ---------- kicker, finder ---------- */
-.kicker {
-  display: inline-block;
-  padding: 4px 12px;
-  border-radius: 999px;
-  background: var(--lav);
-  color: #0c1230;
-  font-size: 12px;
-  font-weight: 600;
-  margin-bottom: 10px;
-}
-.finder {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  justify-content: center;
-  margin: 0 0 22px;
-}
-.finder button,
-.segs button {
-  border: 1px solid var(--edge);
-  background: var(--surface);
-  color: var(--ink);
-  border-radius: 999px;
-  padding: 8px 16px;
-  font: 600 14px var(--body);
-  cursor: pointer;
-  transition:
-    background 0.15s,
-    color 0.15s,
-    transform 0.15s;
-}
-.finder button:hover,
-.segs button:hover {
-  transform: translateY(-1px);
-}
-.finder button[aria-pressed='true'],
-.segs button[aria-selected='true'],
-.segs button[aria-pressed='true'] {
-  background: var(--action);
-  color: var(--on-action);
-  border-color: var(--action);
-}
-.tile.off {
-  display: none;
-}
-.tile.pop {
-  animation: pop 0.35s ease backwards;
-}
-@keyframes pop {
-  from {
-    opacity: 0;
-    transform: scale(0.94);
-  }
-}
-
-/* ---------- Meet Suu ---------- */
+/* Meet Suu: the ring with one coral dot, and four small demos of what Suu does. Sits on a lavender colour field. */
 .suu-sec {
   position: relative;
   overflow: hidden;
 }
 .suu-grid {
-  position: relative;
-  z-index: 1;
   display: grid;
-  gap: 28px;
+  gap: clamp(28px, 5vw, 72px);
   grid-template-columns: 0.8fr 1.2fr;
   align-items: center;
 }
-@media (max-width: 800px) {
+@media (max-width: 860px) {
   .suu-grid {
     grid-template-columns: 1fr;
   }
@@ -210,12 +18,12 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 14px;
+  gap: 16px;
 }
 .suu {
   position: relative;
-  width: 220px;
-  height: 220px;
+  width: 260px;
+  height: 260px;
   cursor: pointer;
   border: 0;
   background: none;
@@ -272,19 +80,51 @@
     transform: translateY(-14px) scale(1.04);
   }
 }
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+}
+.suu-stage .note {
+  color: var(--on-band-soft);
+  text-align: center;
+}
+
 .panel2 {
   background: var(--surface);
-  border: 1px solid var(--edge);
+  color: var(--ink);
   border-radius: 28px;
-  padding: 20px;
-  box-shadow: var(--shadow);
-  min-height: 380px;
+  padding: 22px;
+  min-height: 400px;
+}
+.panel2 p {
+  color: var(--soft);
 }
 .segs {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  margin-bottom: 16px;
+  margin-bottom: 18px;
+}
+.segs button {
+  border: 1.5px solid var(--edge);
+  background: transparent;
+  color: var(--ink);
+  border-radius: 999px;
+  padding: 8px 16px;
+  font: 600 14px var(--body);
+  cursor: pointer;
+}
+.suu-stage .segs button {
+  border-color: currentColor;
+  color: var(--on-band);
+}
+.segs button[aria-selected='true'],
+.segs button[aria-pressed='true'] {
+  background: var(--action);
+  color: var(--on-action);
+  border-color: var(--action);
 }
 .pane {
   display: none;
@@ -294,27 +134,26 @@
   animation: pop 0.35s ease backwards;
 }
 .pane h3 {
-  font-size: 20px;
+  font-size: 24px;
   margin-bottom: 4px;
 }
 .pane > p {
-  margin: 0 0 14px;
-  color: var(--soft);
-  font-size: 15px;
+  margin: 0 0 16px;
+  font-size: 16px;
 }
 .says {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 .says button {
-  border: 1px solid var(--edge);
-  background: var(--alt);
+  border: 1.5px solid var(--edge);
+  background: transparent;
   color: var(--ink);
   border-radius: 999px;
-  padding: 6px 12px;
-  font: 600 12px var(--body);
+  padding: 6px 13px;
+  font: 600 13px var(--body);
   cursor: pointer;
 }
 .says button[aria-pressed='true'] {
@@ -324,9 +163,9 @@
 }
 .bubble {
   background: var(--alt);
-  border-radius: 20px 20px 20px 6px;
-  padding: 14px 16px;
-  min-height: 84px;
+  border-radius: 22px 22px 22px 6px;
+  padding: 16px 18px;
+  min-height: 90px;
 }
 .bubble small {
   display: block;
@@ -337,7 +176,7 @@
   margin-bottom: 4px;
 }
 .bubble b {
-  font: 600 20px var(--head);
+  font: 600 22px var(--head);
 }
 .bubble b.swap {
   animation: pop 0.3s ease backwards;
@@ -346,16 +185,16 @@
 /* the Add chat demo */
 .chat {
   background: var(--alt);
-  border-radius: 20px;
-  padding: 12px;
-  min-height: 250px;
+  border-radius: 22px;
+  padding: 14px;
+  min-height: 260px;
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 .msg {
   max-width: 86%;
-  padding: 9px 13px;
+  padding: 9px 14px;
   border-radius: 18px;
   font-size: 14px;
   animation: pop 0.3s ease backwards;
@@ -380,7 +219,7 @@
   animation: pop 0.3s 0.1s ease backwards;
 }
 .opts button {
-  border: 1px solid var(--edge);
+  border: 1.5px solid var(--edge);
   background: var(--surface);
   color: var(--ink);
   border-radius: 999px;
@@ -400,7 +239,6 @@
 .sumcard {
   align-self: flex-start;
   background: var(--surface);
-  border: 1px solid var(--edge);
   border-radius: 18px;
   padding: 12px 14px;
   min-width: 70%;
@@ -416,9 +254,8 @@
 }
 .sumcard .btn {
   margin-top: 8px;
-  padding: 8px 16px;
+  padding: 8px 18px;
   font-size: 13px;
-  cursor: pointer;
 }
 .restart {
   align-self: center;
@@ -467,7 +304,6 @@
   height: 120px;
   width: auto;
   border-radius: 16px;
-  box-shadow: var(--shadow);
 }
 
 /* the garden */
@@ -500,11 +336,16 @@
 .pot b {
   font: 600 15px var(--head);
 }
-.pot svg .stem,
-.pot svg .leaf,
-.pot svg .flower {
-  transition: all 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+.pot svg g.grown {
   transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: grown 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.3);
+}
+@keyframes grown {
+  from {
+    transform: scale(0.7);
+    opacity: 0.4;
+  }
 }
 .days {
   display: grid;
@@ -516,7 +357,7 @@
   aspect-ratio: 1;
   min-height: 36px;
   border-radius: 12px;
-  border: 1px solid var(--edge);
+  border: 0;
   background: var(--alt);
   color: var(--soft);
   font: 600 12px var(--body);
@@ -528,7 +369,6 @@
 .days button[aria-pressed='true'] {
   background: var(--mint);
   color: #0c1230;
-  border-color: transparent;
 }
 .days button[aria-pressed='true'].deep {
   background: #4fd0a0;
@@ -542,124 +382,15 @@
   margin: 6px 0 0;
 }
 
-/* ---------- a day with Yume ---------- */
-.day {
-  position: relative;
-  max-width: 720px;
-  margin: 0 auto;
-  padding-left: 56px;
-}
-.day::before,
-.day::after {
-  content: '';
-  position: absolute;
-  left: 19px;
-  top: 6px;
-  bottom: 6px;
-  width: 3px;
-  border-radius: 3px;
-  background: var(--edge);
-}
-.day::after {
-  background: linear-gradient(var(--sky), var(--mint), var(--coral));
-  transform-origin: 0 0;
-  transform: scaleY(var(--p, 0));
-}
-.stop {
-  position: relative;
-  padding: 0 0 26px;
-}
-.stop:last-child {
-  padding-bottom: 0;
-}
-.stop .when {
-  position: absolute;
-  left: -56px;
-  top: 0;
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  background: var(--surface);
-  border: 2px solid var(--edge);
-  font-size: 18px;
-  z-index: 1;
-  transition:
-    border-color 0.3s,
-    transform 0.3s;
-}
-.stop.in-view .when {
-  border-color: var(--coral);
-  transform: scale(1.08);
-}
-.stop .card3 {
-  background: var(--surface);
-  border: 1px solid var(--edge);
-  border-radius: 22px;
-  padding: 16px 18px;
-  box-shadow: var(--shadow);
-}
-.stop small {
-  color: var(--coral-text);
-  font-weight: 600;
-  font-size: 12px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-.stop h3 {
-  font-size: 19px;
-  margin: 2px 0 4px;
-}
-.stop p {
-  margin: 0;
-  color: var(--soft);
-  font-size: 15px;
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .blobs i,
-  .float,
   .suu img,
-  .suu-dot,
-  .btn.main::after,
-  .meter i {
+  .suu-dot {
     animation: none;
   }
-  .rise {
-    opacity: 1;
-    transform: none;
-    animation: none;
-  }
-}
-
-.pot svg g.grown {
-  transform-box: fill-box;
-  transform-origin: 50% 100%;
-  animation: grown 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.3);
-}
-@keyframes grown {
-  from {
-    transform: scale(0.7);
-    opacity: 0.4;
-  }
-}
-
-.hero-wrap .blobs {
-  -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent);
-  mask-image: linear-gradient(to bottom, #000 55%, transparent);
-}
-.suu-sec .blobs {
-  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 18%, #000 80%, transparent);
-  mask-image: linear-gradient(to bottom, transparent, #000 18%, #000 80%, transparent);
-}
-
-@media (prefers-reduced-motion: reduce) {
   .pane.on,
   .msg,
   .opts,
   .sumcard,
-  .tile.pop,
   .bubble b.swap,
   .pot svg g.grown {
     animation: none;

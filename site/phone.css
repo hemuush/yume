@@ -670,3 +670,96 @@
     transition: none;
   }
 }
+
+/* the Add by chat screen */
+.cwrap {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  margin-top: 10px;
+}
+.who {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 8px 0 2px;
+}
+.who .av {
+  position: relative;
+  width: 38px;
+  height: 38px;
+}
+.who .av img {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.who .av i {
+  position: absolute;
+  left: 57%;
+  top: 37%;
+  width: 26%;
+  height: 26%;
+  border-radius: 50%;
+  background: var(--coral);
+  transform: translate(-50%, -50%);
+}
+.who b {
+  font: 600 17px var(--head);
+}
+.who small {
+  display: block;
+  font-size: 11px;
+  color: var(--p-text);
+}
+.cb {
+  max-width: 86%;
+  padding: 9px 13px;
+  border-radius: 18px;
+  font-size: 14px;
+  background: var(--p-surface);
+  border: 1px solid var(--p-edge);
+  border-bottom-left-radius: 6px;
+  align-self: flex-start;
+}
+.cu {
+  max-width: 86%;
+  padding: 9px 13px;
+  border-radius: 18px;
+  font-size: 14px;
+  background: var(--p-ink);
+  color: var(--p-bg);
+  border-bottom-right-radius: 6px;
+  align-self: flex-end;
+  font-weight: 600;
+}
+.ccard {
+  align-self: flex-start;
+  min-width: 74%;
+  background: var(--p-surface);
+  border: 1px solid var(--p-edge);
+  border-radius: 20px;
+  padding: 12px 14px;
+}
+.ccard b {
+  font: 700 24px var(--body);
+  letter-spacing: -0.5px;
+}
+.ccard small {
+  display: block;
+  color: var(--p-text);
+  font-size: 12px;
+}
+.ccard .save {
+  margin-top: 10px;
+  display: inline-block;
+  padding: 9px 22px;
+  border-radius: 999px;
+  background: var(--p-ink);
+  color: var(--p-bg);
+  font-weight: 600;
+  font-size: 13px;
+}
+.phone .screen {
+  transition: opacity 0.35s ease;
+}
