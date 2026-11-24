@@ -296,47 +296,45 @@ section {
   margin: 0;
 }
 
-/* ---------- the story: one phone that stays while the steps scroll ---------- */
-.story {
-  padding: 0;
+/* ---------- hero: the copy, a tour of the app and one phone ---------- */
+.hero {
+  padding: clamp(20px, 3vw, 36px) 0 clamp(24px, 3.5vw, 40px);
   overflow-x: clip;
 }
-.story-grid {
+.hero-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 360px;
-  column-gap: 48px;
-}
-.scene {
-  grid-column: 1;
-  min-height: 38vh;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: 24px 0;
-  transition: opacity 0.4s ease;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  grid-template-areas:
+    'copy phone'
+    'tour phone';
+  align-content: center;
+  column-gap: clamp(24px, 5vw, 64px);
+  row-gap: 18px;
 }
 .hero-copy {
-  min-height: min(calc(100vh - 54px), 560px);
+  grid-area: copy;
+  align-self: end;
 }
-.phone-col {
-  grid-column: 2;
-  grid-row: 1 / span 7;
-}
-.phone-sticky {
-  position: sticky;
-  top: 54px;
-  height: calc(100vh - 54px);
+.hero-phone {
+  grid-area: phone;
+  position: relative;
   display: grid;
   grid-template-rows: minmax(0, 1fr);
   grid-template-columns: minmax(0, 1fr);
   place-items: center;
+  height: min(640px, calc(100vh - 96px));
+  min-height: 460px;
+}
+.tour-box {
+  grid-area: tour;
+  align-self: start;
 }
 .phone-fit {
   position: relative;
   z-index: 1;
   width: 300px;
   height: 620px;
-  transform: scale(var(--ps, 1.2));
+  transform: scale(var(--ps, 1));
   transform-origin: center;
 }
 .ring-bg {
@@ -365,20 +363,16 @@ section {
   background: var(--coral);
   transform: translate(-50%, -50%);
 }
-.js .scene:not(.active):not(.hero-copy) {
-  opacity: 0.32;
-}
 .eyebrow {
   display: inline-flex;
   align-items: center;
-  align-self: flex-start;
   gap: 8px;
   padding: 4px 12px;
   border-radius: 999px;
   border: 1.5px solid var(--edge);
   font-size: 13px;
   color: var(--soft);
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 }
 .eyebrow i {
   width: 8px;
@@ -391,8 +385,7 @@ section {
   line-height: 1.04;
   letter-spacing: -0.025em;
 }
-.hero-copy h1 em,
-.step h2 em {
+.hero-copy h1 em {
   font-style: normal;
   color: var(--link);
 }
@@ -400,15 +393,15 @@ section {
   font-size: 16px;
   color: var(--soft);
   max-width: 32em;
-  margin: 14px 0 20px;
+  margin: 12px 0 18px;
 }
 .facts {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px 24px;
+  gap: 6px 20px;
   list-style: none;
   padding: 0;
-  margin: 18px 0 0;
+  margin: 16px 0 0;
   color: var(--soft);
   font-size: 14px;
 }
@@ -417,60 +410,69 @@ section {
   color: var(--income);
   font-weight: 600;
 }
-.num {
-  font: 600 12px var(--body);
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--coral-text);
-  margin-bottom: 8px;
+.tour {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 12px;
 }
-.step h2 {
-  font-size: clamp(24px, 3vw, 36px);
-  line-height: 1.1;
-  letter-spacing: -0.02em;
-  max-width: 12em;
+.tour button {
+  border: 1.5px solid var(--edge);
+  background: transparent;
+  color: var(--ink);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font: 600 13px var(--body);
+  cursor: pointer;
 }
-.step p {
-  font-size: 16px;
+.tour button:hover {
+  border-color: var(--ink);
+}
+.tour button[aria-selected='true'] {
+  background: var(--action);
+  color: var(--on-action);
+  border-color: var(--action);
+}
+.tour-text {
+  min-height: 92px;
+}
+.tour-text h2 {
+  font-size: clamp(20px, 2.2vw, 26px);
+  line-height: 1.15;
+  margin-bottom: 4px;
+}
+.tour-text h2 em {
+  font-style: normal;
+  color: var(--link);
+}
+.tour-text p {
+  margin: 0;
   color: var(--soft);
-  max-width: 28em;
-  margin: 8px 0 0;
+  font-size: 15px;
+  max-width: 34em;
 }
-
-@media (max-width: 959px) {
-  .story-grid {
+@media (max-width: 860px) {
+  .hero-grid {
     grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      'copy'
+      'phone'
+      'tour';
   }
   .hero-copy {
-    order: 1;
+    align-self: start;
+  }
+  .hero-phone {
+    height: 440px;
     min-height: 0;
-    padding: 22px 0 14px;
-  }
-  .phone-col {
-    order: 2;
-    grid-column: 1;
-    grid-row: auto;
-    position: sticky;
-    top: 54px;
-    z-index: 5;
-    height: 46vh;
-    background: var(--bg);
-  }
-  .phone-sticky {
-    position: relative;
-    top: 0;
-    height: 100%;
   }
   .ring-bg {
-    width: 230px;
-    height: 230px;
-    margin: -115px 0 0 -115px;
+    width: 280px;
+    height: 280px;
+    margin: -140px 0 0 -140px;
   }
-  .scene.step {
-    order: 3;
-    min-height: 24vh;
-    justify-content: flex-start;
-    padding: 18px 0 12px;
+  .tour-text {
+    min-height: 120px;
   }
 }
 
@@ -523,8 +525,8 @@ section {
 }
 .feats {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  column-gap: 40px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  column-gap: 28px;
 }
 .feat {
   display: flex;
@@ -559,7 +561,12 @@ section {
   line-height: 1.5;
   max-width: 34em;
 }
-@media (max-width: 760px) {
+@media (max-width: 980px) {
+  .feats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 620px) {
   .feats {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -567,7 +574,14 @@ section {
 
 /* ---------- privacy ---------- */
 .pvs {
-  max-width: 860px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 40px;
+}
+@media (max-width: 700px) {
+  .pvs {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 .pv {
   display: grid;
@@ -606,9 +620,9 @@ section {
   scroll-snap-type: x mandatory;
 }
 .widgets img {
-  height: 112px;
+  height: 92px;
   width: auto;
-  border-radius: 16px;
+  border-radius: 14px;
   scroll-snap-align: start;
   background: var(--alt);
 }
@@ -699,14 +713,19 @@ section {
 
 /* ---------- FAQ ---------- */
 .faq {
-  max-width: 820px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 40px;
+  align-items: start;
+}
+@media (max-width: 760px) {
+  .faq {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 details {
   border-top: 1.5px solid var(--edge);
   padding: 13px 0;
-}
-details:last-of-type {
-  border-bottom: 1.5px solid var(--edge);
 }
 summary {
   display: flex;
@@ -831,5 +850,66 @@ main p a {
   }
   .js .scene:not(.active) {
     opacity: 1;
+  }
+}
+
+.wid-sec {
+  padding: clamp(24px, 3vw, 36px) 0;
+}
+.wid-sec .head {
+  margin-bottom: 10px;
+}
+.band.mint {
+  padding: clamp(28px, 4vw, 44px) 0;
+}
+.band.mint .head {
+  margin-bottom: 14px;
+}
+.band.mint .head h2 {
+  font-size: clamp(22px, 2.6vw, 30px);
+}
+.band.mint .head p {
+  margin-top: 4px;
+}
+
+@media (max-width: 640px) {
+  section {
+    padding: 28px 0;
+  }
+  .head {
+    margin-bottom: 14px;
+  }
+  .head h2 {
+    font-size: 24px;
+  }
+  .head p {
+    font-size: 15px;
+  }
+  .hero {
+    padding-top: 14px;
+  }
+  .hero-phone {
+    height: 410px;
+  }
+  .tour-text {
+    min-height: 110px;
+  }
+  .nums {
+    gap: 16px;
+  }
+  .nums .n {
+    font-size: 26px;
+  }
+  .feat {
+    padding: 10px 0;
+  }
+  .pv {
+    padding: 10px 0;
+  }
+  .foot-word {
+    font-size: 36px;
+  }
+  footer {
+    padding: 24px 0 20px;
   }
 }

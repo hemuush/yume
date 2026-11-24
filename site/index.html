@@ -267,7 +267,7 @@
     <header class="nav">
       <div class="wrap">
         <a class="brand" href="#top"><img src="img/yume-mark.png" alt="" /> Yume</a>
-        <a class="link" href="#story">How it works</a>
+        <a class="link" href="#story">Tour</a>
         <a class="link" href="#meet-suu">Suu</a>
         <a class="link" href="#features">Features</a>
         <a class="link" href="#privacy">Privacy</a>
@@ -278,9 +278,9 @@
     </header>
 
     <main id="top">
-      <section class="story" id="story">
-        <div class="wrap story-grid">
-          <div class="scene hero-copy" data-scene="0">
+      <section class="hero" id="story">
+        <div class="wrap hero-grid">
+          <div class="hero-copy">
             <span class="eyebrow"><i></i> Android · Free · Made for India</span>
             <h1>Better money.<br /><em>Bigger dreams.</em></h1>
             <p class="lead">
@@ -299,379 +299,345 @@
             </ul>
           </div>
 
-          <div class="phone-col">
-            <div class="phone-sticky">
-              <div class="ring-bg" aria-hidden="true"><img src="img/suu-ring.png" alt="" /><i></i></div>
-              <div class="phone-fit" id="phone-fit">
-                <div class="phone" data-mode="light" aria-label="Sample Yume screens">
-                  <!-- Home -->
-                  <div class="screen on" id="s-home">
-                    <div class="p-top">
-                      <span class="p-brand"><img src="img/yume-mark.png" alt="" />Yume</span>
-                      <span class="p-glass"
-                        ><svg class="ico"><use href="#i-bell" /></svg
+          <div class="hero-phone">
+            <div class="ring-bg" aria-hidden="true"><img src="img/suu-ring.png" alt="" /><i></i></div>
+            <div class="phone-fit" id="phone-fit">
+              <div class="phone" data-mode="light" aria-label="Sample Yume screens">
+                <!-- Home -->
+                <div class="screen on" id="s-home">
+                  <div class="p-top">
+                    <span class="p-brand"><img src="img/yume-mark.png" alt="" />Yume</span>
+                    <span class="p-glass"
+                      ><svg class="ico"><use href="#i-bell"></use></svg
+                    ></span>
+                    <span class="p-glass p-user">R</span>
+                  </div>
+                  <div class="p-greet"><b>Good evening, Riya.</b><small>Mon, 23 Nov</small></div>
+                  <p class="p-line">Easy pace this month: you are ahead of it.</p>
+
+                  <div class="hero-card">
+                    <div class="hc-bar">
+                      <span>Free after bills</span>
+                      <span class="month-pill"
+                        >November <svg class="ico"><use href="#i-down"></use></svg
                       ></span>
-                      <span class="p-glass p-user">R</span>
                     </div>
-                    <div class="p-greet"><b>Good evening, Riya.</b><small>Mon, 23 Nov</small></div>
-                    <p class="p-line">Easy pace this month: you are ahead of it.</p>
-
-                    <div class="hero-card">
-                      <div class="hc-bar">
-                        <span>Free after bills</span>
-                        <span class="month-pill"
-                          >November <svg class="ico"><use href="#i-down" /></svg
-                        ></span>
+                    <div class="figure">
+                      <div class="big"><span data-count="8270">₹8,270</span></div>
+                      <div class="about">About <b>₹1,181 a day</b> for 7 days</div>
+                      <div class="today-row">
+                        <span>Today <b>₹486</b></span
+                        ><span>₹608 under pace</span>
                       </div>
-                      <div class="figure">
-                        <div class="big"><span data-count="8270">₹8,270</span></div>
-                        <div class="about">About <b>₹1,181 a day</b> for 7 days</div>
-                        <div class="today-row">
-                          <span>Today <b>₹486</b></span
-                          ><span>₹608 under pace</span>
-                        </div>
-                        <div class="meter"><i style="width: 44%"></i></div>
-                      </div>
-                      <div class="legend">
-                        <div style="--c: #8b8d99"><span>Spent</span><b>₹24,580</b></div>
-                        <div style="--c: #4f86d9"><span>Saved</span><b>₹5,000</b></div>
-                        <div style="--c: #9ec5fc"><span>Bills left</span><b>₹14,150</b></div>
-                      </div>
-                      <div class="hc-foot">
-                        <span class="p-link"
-                          >How it adds up <svg class="ico"><use href="#i-down" /></svg
-                        ></span>
-                        <span class="p-link">See insights</span>
-                      </div>
+                      <div class="meter"><i style="width: 44%"></i></div>
                     </div>
-
-                    <div class="p-sec">
-                      <div class="p-sec-head">
-                        <div class="p-h5">Your accounts</div>
-                        <span class="p-link"
-                          >View all <svg class="ico"><use href="#i-right" /></svg
-                        ></span>
-                      </div>
-                      <div class="p-sec-sub">₹89,660 in hand across 2 accounts</div>
-                      <div class="strip">
-                        <div class="acct">
-                          <div class="h">
-                            <span class="chip" style="background: #9ec5fc"
-                              ><svg class="ico"><use href="#i-bank" /></svg></span
-                            >HDFC Bank
-                          </div>
-                          <b>₹86,240</b>
-                        </div>
-                        <div class="acct">
-                          <div class="h">
-                            <span class="chip" style="background: #f0e1a8"
-                              ><svg class="ico"><use href="#i-cash" /></svg></span
-                            >Cash
-                          </div>
-                          <b>₹3,420</b>
-                        </div>
-                        <div class="acct">
-                          <div class="h">
-                            <span class="chip" style="background: #8fe8c8"
-                              ><svg class="ico"><use href="#i-save" /></svg></span
-                            >Emergency
-                          </div>
-                          <b>₹1,20,000</b>
-                        </div>
-                        <div class="acct add">
-                          <svg class="ico"><use href="#i-plus" /></svg>
-                        </div>
-                      </div>
+                    <div class="legend">
+                      <div style="--c: #8b8d99"><span>Spent</span><b>₹24,580</b></div>
+                      <div style="--c: #4f86d9"><span>Saved</span><b>₹5,000</b></div>
+                      <div style="--c: #9ec5fc"><span>Bills left</span><b>₹14,150</b></div>
                     </div>
-
-                    <div class="p-sec">
-                      <div class="p-sec-head">
-                        <div class="p-h5">Coming up</div>
-                        <span class="p-link"
-                          >See all <svg class="ico"><use href="#i-right" /></svg
-                        ></span>
-                      </div>
-                      <div class="group">
-                        <div class="line">
-                          <span class="mark" style="background: #9ec5fc"
-                            ><svg class="ico"><use href="#i-home" /></svg
-                          ></span>
-                          <span class="t"><b>Rent</b><small>In 3 days</small></span>
-                          <span class="amt">₹12,000</span>
-                        </div>
-                        <div class="line">
-                          <span class="mark" style="background: #c9b8ff"
-                            ><svg class="ico"><use href="#i-phone" /></svg
-                          ></span>
-                          <span class="t"><b>Phone EMI</b><small>In 6 days</small></span>
-                          <span class="amt">₹2,150</span>
-                        </div>
-                      </div>
+                    <div class="hc-foot">
+                      <span class="p-link"
+                        >How it adds up <svg class="ico"><use href="#i-down"></use></svg
+                      ></span>
+                      <span class="p-link">See insights</span>
                     </div>
+                  </div>
 
-                    <div class="p-sec">
-                      <div class="p-sec-head">
-                        <div class="p-h5">Recent activity</div>
-                        <span class="p-link"
-                          >See all <svg class="ico"><use href="#i-right" /></svg
-                        ></span>
+                  <div class="p-sec">
+                    <div class="p-sec-head">
+                      <div class="p-h5">Your accounts</div>
+                      <span class="p-link"
+                        >View all <svg class="ico"><use href="#i-right"></use></svg
+                      ></span>
+                    </div>
+                    <div class="p-sec-sub">₹89,660 in hand across 2 accounts</div>
+                    <div class="strip">
+                      <div class="acct">
+                        <div class="h">
+                          <span class="chip" style="background: #9ec5fc"
+                            ><svg class="ico"><use href="#i-bank"></use></svg></span
+                          >HDFC Bank
+                        </div>
+                        <b>₹86,240</b>
                       </div>
-                      <div class="group">
-                        <div class="line">
-                          <span class="mark" style="background: #8fe8c8"
-                            ><svg class="ico"><use href="#i-bag" /></svg
-                          ></span>
-                          <span class="t"><b>Groceries</b><small>Food · Cash</small></span>
-                          <span class="amt out">−₹342<span class="p">.50</span></span>
+                      <div class="acct">
+                        <div class="h">
+                          <span class="chip" style="background: #f0e1a8"
+                            ><svg class="ico"><use href="#i-cash"></use></svg></span
+                          >Cash
                         </div>
-                        <div class="line">
-                          <span class="mark" style="background: #f0e1a8"
-                            ><svg class="ico"><use href="#i-car" /></svg
-                          ></span>
-                          <span class="t"><b>Auto</b><small>Travel · HDFC Bank</small></span>
-                          <span class="amt out">−₹143<span class="p">.50</span></span>
+                        <b>₹3,420</b>
+                      </div>
+                      <div class="acct">
+                        <div class="h">
+                          <span class="chip" style="background: #8fe8c8"
+                            ><svg class="ico"><use href="#i-save"></use></svg></span
+                          >Emergency
                         </div>
+                        <b>₹1,20,000</b>
+                      </div>
+                      <div class="acct add">
+                        <svg class="ico"><use href="#i-plus"></use></svg>
                       </div>
                     </div>
                   </div>
 
-                  <!-- Activity -->
-                  <div class="screen" id="s-activity">
-                    <div class="p-title" style="margin-top: 6px">Activity</div>
-                    <div class="search">
-                      <svg class="ico"><use href="#i-search" /></svg>Search words or amounts
+                  <div class="p-sec">
+                    <div class="p-sec-head">
+                      <div class="p-h5">Coming up</div>
+                      <span class="p-link"
+                        >See all <svg class="ico"><use href="#i-right"></use></svg
+                      ></span>
                     </div>
-                    <div class="chips">
-                      <span class="on">All</span><span>Expenses</span><span>Income</span
-                      ><span>Transfers</span>
+                    <div class="group">
+                      <div class="line">
+                        <span class="mark" style="background: #9ec5fc"
+                          ><svg class="ico"><use href="#i-home"></use></svg
+                        ></span>
+                        <span class="t"><b>Rent</b><small>In 3 days</small></span>
+                        <span class="amt">₹12,000</span>
+                      </div>
+                      <div class="line">
+                        <span class="mark" style="background: #c9b8ff"
+                          ><svg class="ico"><use href="#i-phone"></use></svg
+                        ></span>
+                        <span class="t"><b>Phone EMI</b><small>In 6 days</small></span>
+                        <span class="amt">₹2,150</span>
+                      </div>
                     </div>
-                    <div class="dayh">
-                      <span>Today</span><span>−₹486<span style="font-size: 0.78em">.00</span></span>
+                  </div>
+
+                  <div class="p-sec">
+                    <div class="p-sec-head">
+                      <div class="p-h5">Recent activity</div>
+                      <span class="p-link"
+                        >See all <svg class="ico"><use href="#i-right"></use></svg
+                      ></span>
                     </div>
                     <div class="group">
                       <div class="line">
                         <span class="mark" style="background: #8fe8c8"
-                          ><svg class="ico"><use href="#i-bag" /></svg
+                          ><svg class="ico"><use href="#i-bag"></use></svg
                         ></span>
                         <span class="t"><b>Groceries</b><small>Food · Cash</small></span>
                         <span class="amt out">−₹342<span class="p">.50</span></span>
                       </div>
                       <div class="line">
                         <span class="mark" style="background: #f0e1a8"
-                          ><svg class="ico"><use href="#i-car" /></svg
+                          ><svg class="ico"><use href="#i-car"></use></svg
                         ></span>
                         <span class="t"><b>Auto</b><small>Travel · HDFC Bank</small></span>
                         <span class="amt out">−₹143<span class="p">.50</span></span>
                       </div>
                     </div>
-                    <div class="dayh"><span>Yesterday</span><span>+₹3,000</span></div>
+                  </div>
+                </div>
+
+                <!-- Activity -->
+                <div class="screen" id="s-activity">
+                  <div class="p-title" style="margin-top: 6px">Activity</div>
+                  <div class="search">
+                    <svg class="ico"><use href="#i-search"></use></svg>Search words or amounts
+                  </div>
+                  <div class="chips">
+                    <span class="on">All</span><span>Expenses</span><span>Income</span><span>Transfers</span>
+                  </div>
+                  <div class="dayh">
+                    <span>Today</span><span>−₹486<span style="font-size: 0.78em">.00</span></span>
+                  </div>
+                  <div class="group">
+                    <div class="line">
+                      <span class="mark" style="background: #8fe8c8"
+                        ><svg class="ico"><use href="#i-bag"></use></svg
+                      ></span>
+                      <span class="t"><b>Groceries</b><small>Food · Cash</small></span>
+                      <span class="amt out">−₹342<span class="p">.50</span></span>
+                    </div>
+                    <div class="line">
+                      <span class="mark" style="background: #f0e1a8"
+                        ><svg class="ico"><use href="#i-car"></use></svg
+                      ></span>
+                      <span class="t"><b>Auto</b><small>Travel · HDFC Bank</small></span>
+                      <span class="amt out">−₹143<span class="p">.50</span></span>
+                    </div>
+                  </div>
+                  <div class="dayh"><span>Yesterday</span><span>+₹3,000</span></div>
+                  <div class="group">
+                    <div class="line">
+                      <span class="mark" style="background: #9ec5fc"
+                        ><svg class="ico"><use href="#i-work"></use></svg
+                      ></span>
+                      <span class="t"><b>Freelance</b><small>Income · HDFC Bank</small></span>
+                      <span class="amt in">+₹3,000</span>
+                    </div>
+                    <div class="line">
+                      <span class="mark" style="background: #c9b8ff"
+                        ><svg class="ico"><use href="#i-coffee"></use></svg
+                      ></span>
+                      <span class="t"><b>Chai with Aman</b><small>Food · Cash</small></span>
+                      <span class="amt out">−₹60</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Plan -->
+                <div class="screen" id="s-plan">
+                  <div class="p-top" style="margin-top: 2px">
+                    <div class="p-title" style="margin-right: auto">Plan</div>
+                    <span class="p-link"
+                      ><svg class="ico"><use href="#i-plus"></use></svg>Add</span
+                    >
+                  </div>
+                  <div class="ptabs">
+                    <span class="on">Overview</span><span>Upcoming</span><span>Money plan</span
+                    ><span>Debt</span>
+                  </div>
+                  <div class="p-sec">
+                    <div class="p-sec-head"><div class="p-h5">Plan at a glance</div></div>
+                    <div class="tiles">
+                      <div class="tile2">
+                        <div class="h">
+                          <span class="d" style="background: #9ec5fc"
+                            ><svg class="ico"><use href="#i-wallet"></use></svg></span
+                          >Budgets
+                        </div>
+                        <b>₹18,000 left</b>
+                        <div class="trk"><i style="width: 62%; background: #9ec5fc"></i></div>
+                        <small>of ₹29,000 this month</small>
+                      </div>
+                      <div class="tile2">
+                        <div class="h">
+                          <span class="d" style="background: #8fe8c8"
+                            ><svg class="ico"><use href="#i-target"></use></svg></span
+                          >Goals
+                        </div>
+                        <b>₹14,000</b>
+                        <div class="trk"><i style="width: 70%; background: #8fe8c8"></i></div>
+                        <small>Goa trip · 70%</small>
+                      </div>
+                      <div class="tile2">
+                        <div class="h">
+                          <span class="d" style="background: #c9b8ff"
+                            ><svg class="ico"><use href="#i-trend"></use></svg></span
+                          >Investments
+                        </div>
+                        <b>₹2,45,800</b>
+                        <small>+8.4% a year</small>
+                      </div>
+                      <div class="tile2">
+                        <div class="h">
+                          <span class="d" style="background: #fc7b5e"
+                            ><svg class="ico"><use href="#i-card"></use></svg></span
+                          >Debt
+                        </div>
+                        <b>₹3,18,400</b>
+                        <div class="trk"><i style="width: 38%; background: #fc7b5e"></i></div>
+                        <small>38% paid off</small>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="p-sec">
+                    <div class="p-sec-head"><div class="p-h5">Coming up</div></div>
                     <div class="group">
                       <div class="line">
                         <span class="mark" style="background: #9ec5fc"
-                          ><svg class="ico"><use href="#i-work" /></svg
+                          ><svg class="ico"><use href="#i-home"></use></svg
                         ></span>
-                        <span class="t"><b>Freelance</b><small>Income · HDFC Bank</small></span>
-                        <span class="amt in">+₹3,000</span>
-                      </div>
-                      <div class="line">
-                        <span class="mark" style="background: #c9b8ff"
-                          ><svg class="ico"><use href="#i-coffee" /></svg
-                        ></span>
-                        <span class="t"><b>Chai with Aman</b><small>Food · Cash</small></span>
-                        <span class="amt out">−₹60</span>
+                        <span class="t"><b>Rent</b><small>In 3 days</small></span>
+                        <span class="amt">₹12,000</span>
                       </div>
                     </div>
                   </div>
+                </div>
 
-                  <!-- Plan -->
-                  <div class="screen" id="s-plan">
-                    <div class="p-top" style="margin-top: 2px">
-                      <div class="p-title" style="margin-right: auto">Plan</div>
-                      <span class="p-link"
-                        ><svg class="ico"><use href="#i-plus" /></svg>Add</span
-                      >
+                <!-- Reports -->
+                <div class="screen" id="s-reports">
+                  <div class="p-title" style="margin-top: 6px">Reports</div>
+                  <div class="ptabs">
+                    <span class="on">Days</span><span>Categories</span><span>Trends</span>
+                  </div>
+                  <div class="card2">
+                    <div class="hc-bar">
+                      <span>Spent in November</span>
+                      <span class="month-pill"
+                        >Nov <svg class="ico"><use href="#i-down"></use></svg
+                      ></span>
                     </div>
-                    <div class="ptabs">
-                      <span class="on">Overview</span><span>Upcoming</span><span>Money plan</span
-                      ><span>Debt</span>
-                    </div>
-                    <div class="p-sec">
-                      <div class="p-sec-head"><div class="p-h5">Plan at a glance</div></div>
-                      <div class="tiles">
-                        <div class="tile2">
-                          <div class="h">
-                            <span class="d" style="background: #9ec5fc"
-                              ><svg class="ico"><use href="#i-wallet" /></svg></span
-                            >Budgets
-                          </div>
-                          <b>₹18,000 left</b>
-                          <div class="trk"><i style="width: 62%; background: #9ec5fc"></i></div>
-                          <small>of ₹29,000 this month</small>
-                        </div>
-                        <div class="tile2">
-                          <div class="h">
-                            <span class="d" style="background: #8fe8c8"
-                              ><svg class="ico"><use href="#i-target" /></svg></span
-                            >Goals
-                          </div>
-                          <b>₹14,000</b>
-                          <div class="trk"><i style="width: 70%; background: #8fe8c8"></i></div>
-                          <small>Goa trip · 70%</small>
-                        </div>
-                        <div class="tile2">
-                          <div class="h">
-                            <span class="d" style="background: #c9b8ff"
-                              ><svg class="ico"><use href="#i-trend" /></svg></span
-                            >Investments
-                          </div>
-                          <b>₹2,45,800</b>
-                          <small>+8.4% a year</small>
-                        </div>
-                        <div class="tile2">
-                          <div class="h">
-                            <span class="d" style="background: #fc7b5e"
-                              ><svg class="ico"><use href="#i-card" /></svg></span
-                            >Debt
-                          </div>
-                          <b>₹3,18,400</b>
-                          <div class="trk"><i style="width: 38%; background: #fc7b5e"></i></div>
-                          <small>38% paid off</small>
-                        </div>
-                      </div>
-                    </div>
-                    <div class="p-sec">
-                      <div class="p-sec-head"><div class="p-h5">Coming up</div></div>
-                      <div class="group">
-                        <div class="line">
-                          <span class="mark" style="background: #9ec5fc"
-                            ><svg class="ico"><use href="#i-home" /></svg
-                          ></span>
-                          <span class="t"><b>Rent</b><small>In 3 days</small></span>
-                          <span class="amt">₹12,000</span>
-                        </div>
-                      </div>
+                    <div style="font: 700 24px var(--body); letter-spacing: -1px">₹24,580</div>
+                    <div class="chart" aria-hidden="true">
+                      <i style="height: 40%"></i><i style="height: 62%"></i><i style="height: 30%"></i
+                      ><i style="height: 78%"></i><i style="height: 45%"></i><i style="height: 22%"></i
+                      ><i style="height: 88%"></i><i style="height: 52%"></i><i style="height: 35%"></i
+                      ><i style="height: 66%"></i><i style="height: 28%"></i><i style="height: 58%"></i
+                      ><i class="hot" style="height: 94%"></i>
                     </div>
                   </div>
+                  <div class="card2" style="padding-top: 2px">
+                    <div class="rank" style="border-top: 0; --c: #9ec5fc">Food<b>₹6,420</b></div>
+                    <div class="rank" style="--c: #8fe8c8">Travel<b>₹4,100</b></div>
+                    <div class="rank" style="--c: #fc7b5e">Shopping<b>₹2,310</b></div>
+                  </div>
+                </div>
 
-                  <!-- Reports -->
-                  <div class="screen" id="s-reports">
-                    <div class="p-title" style="margin-top: 6px">Reports</div>
-                    <div class="ptabs">
-                      <span class="on">Days</span><span>Categories</span><span>Trends</span>
-                    </div>
-                    <div class="card2">
-                      <div class="hc-bar">
-                        <span>Spent in November</span>
-                        <span class="month-pill"
-                          >Nov <svg class="ico"><use href="#i-down" /></svg
-                        ></span>
-                      </div>
-                      <div style="font: 700 24px var(--body); letter-spacing: -1px">₹24,580</div>
-                      <div class="chart" aria-hidden="true">
-                        <i style="height: 40%"></i><i style="height: 62%"></i><i style="height: 30%"></i
-                        ><i style="height: 78%"></i><i style="height: 45%"></i><i style="height: 22%"></i
-                        ><i style="height: 88%"></i><i style="height: 52%"></i><i style="height: 35%"></i
-                        ><i style="height: 66%"></i><i style="height: 28%"></i><i style="height: 58%"></i
-                        ><i class="hot" style="height: 94%"></i>
-                      </div>
-                    </div>
-                    <div class="card2" style="padding-top: 2px">
-                      <div class="rank" style="border-top: 0; --c: #9ec5fc">Food<b>₹6,420</b></div>
-                      <div class="rank" style="--c: #8fe8c8">Travel<b>₹4,100</b></div>
-                      <div class="rank" style="--c: #fc7b5e">Shopping<b>₹2,310</b></div>
+                <!-- the floating pill tab bar and the round coral Add button, as in the app -->
+                <div class="screen" id="s-chat">
+                  <div class="p-top" style="margin-top: 2px">
+                    <div class="p-title" style="margin-right: auto">Add</div>
+                    <span class="p-glass" style="font-size: 20px; line-height: 1">×</span>
+                  </div>
+                  <div class="who">
+                    <span class="av"><img src="img/suu-ring.png" alt="" /><i></i></span>
+                    <span><b>Suu</b><small>asks one thing at a time</small></span>
+                  </div>
+                  <div class="cwrap">
+                    <div class="cb">What was it for?</div>
+                    <div class="cu">Chai · ₹60 · Cash</div>
+                    <div class="cb">Here is what I have. Check it, then save.</div>
+                    <div class="ccard">
+                      <b>₹60</b><small>Food · Cash · Today</small><span class="save">Save</span>
                     </div>
                   </div>
-
-                  <!-- the floating pill tab bar and the round coral Add button, as in the app -->
-                  <div class="screen" id="s-chat">
-                    <div class="p-top" style="margin-top: 2px">
-                      <div class="p-title" style="margin-right: auto">Add</div>
-                      <span class="p-glass" style="font-size: 20px; line-height: 1">×</span>
-                    </div>
-                    <div class="who">
-                      <span class="av"><img src="img/suu-ring.png" alt="" /><i></i></span>
-                      <span><b>Suu</b><small>asks one thing at a time</small></span>
-                    </div>
-                    <div class="cwrap">
-                      <div class="cb">What was it for?</div>
-                      <div class="cu">Chai · ₹60 · Cash</div>
-                      <div class="cb">Here is what I have. Check it, then save.</div>
-                      <div class="ccard">
-                        <b>₹60</b><small>Food · Cash · Today</small><span class="save">Save</span>
-                      </div>
-                    </div>
+                </div>
+                <div class="dock">
+                  <div class="pill">
+                    <span class="tabx on" data-go="home"
+                      ><svg viewBox="0 0 24 24"><use href="#t-home"></use></svg>Home</span
+                    >
+                    <span class="tabx" data-go="activity"
+                      ><svg viewBox="0 0 24 24"><use href="#t-activity"></use></svg>Activity</span
+                    >
+                    <span class="tabx" data-go="plan"
+                      ><svg viewBox="0 0 24 24"><use href="#t-plan"></use></svg>Plan</span
+                    >
+                    <span class="tabx" data-go="reports"
+                      ><svg viewBox="0 0 24 24"><use href="#t-reports"></use></svg>Reports</span
+                    >
                   </div>
-                  <div class="dock">
-                    <div class="pill">
-                      <span class="tabx on" data-go="home"
-                        ><svg viewBox="0 0 24 24"><use href="#t-home" /></svg>Home</span
-                      >
-                      <span class="tabx" data-go="activity"
-                        ><svg viewBox="0 0 24 24"><use href="#t-activity" /></svg>Activity</span
-                      >
-                      <span class="tabx" data-go="plan"
-                        ><svg viewBox="0 0 24 24"><use href="#t-plan" /></svg>Plan</span
-                      >
-                      <span class="tabx" data-go="reports"
-                        ><svg viewBox="0 0 24 24"><use href="#t-reports" /></svg>Reports</span
-                      >
-                    </div>
-                    <span class="addbtn"
-                      ><svg class="ico"><use href="#i-plus" /></svg
-                    ></span>
-                  </div>
+                  <span class="addbtn"
+                    ><svg class="ico"><use href="#i-plus"></use></svg
+                  ></span>
                 </div>
               </div>
             </div>
           </div>
 
-          <div class="scene step" data-scene="1">
-            <span class="num">01 · Home</span>
-            <h2>Know what's <em>free</em> to spend.</h2>
-            <p>
-              One calm number after your bills, your spending and what you set aside. About how much you can
-              spend a day, and whether today is under or over that pace.
-            </p>
-          </div>
-          <div class="scene step" data-scene="2">
-            <span class="num">02 · Add</span>
-            <h2>Add it in a <em>few taps.</em></h2>
-            <p>
-              Your usual entries fill the category, amount and account in one tap. Or switch to Add by chat
-              and Suu asks one thing at a time, every answer a tap.
-            </p>
-          </div>
-          <div class="scene step" data-scene="3">
-            <span class="num">03 · Activity</span>
-            <h2>Everything in <em>its day.</em></h2>
-            <p>
-              Browse day by day, search by word or amount, filter, and open any entry. The new one lands right
-              where it belongs.
-            </p>
-          </div>
-          <div class="scene step" data-scene="4">
-            <span class="num">04 · Plan</span>
-            <h2>Plan the <em>next 14 days.</em></h2>
-            <p>
-              Bills, budgets and goals before they surprise you, with loans and EMIs showing exactly what is
-              still left to pay.
-            </p>
-          </div>
-          <div class="scene step" data-scene="5">
-            <span class="num">05 · Reports</span>
-            <h2>See where it <em>went.</em></h2>
-            <p>
-              Spending by day and by category, with a PDF or Excel report of any month or year, made on your
-              phone and shared only where you choose.
-            </p>
-          </div>
-          <div class="scene step" data-scene="6">
-            <span class="num">06 · Light and dark</span>
-            <h2>Calm in <em>both.</em></h2>
-            <p>
-              One quiet look in a light and a dark mode that follows your phone. Hide amounts on screen and in
-              widgets whenever you need to.
-            </p>
+          <div class="tour-box">
+            <div class="tour" role="tablist" aria-label="A tour of Yume">
+              <button type="button" role="tab" data-scene="0" aria-selected="true">Home</button>
+              <button type="button" role="tab" data-scene="1" aria-selected="false">Add</button>
+              <button type="button" role="tab" data-scene="2" aria-selected="false">Activity</button>
+              <button type="button" role="tab" data-scene="3" aria-selected="false">Plan</button>
+              <button type="button" role="tab" data-scene="4" aria-selected="false">Reports</button>
+              <button type="button" role="tab" data-scene="5" aria-selected="false">Light & dark</button>
+            </div>
+            <div class="tour-text" aria-live="polite">
+              <h2 id="tour-title">Know what's <em>free</em> to spend.</h2>
+              <p id="tour-p">
+                One calm number after your bills, your spending and what you set aside. About how much you can
+                spend a day, and whether today is under or over that pace.
+              </p>
+            </div>
           </div>
         </div>
       </section>

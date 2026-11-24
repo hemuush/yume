@@ -396,3 +396,17 @@
     animation: none;
   }
 }
+
+@media (max-width: 640px) {
+  .suu {
+    width: 120px;
+    height: 120px;
+  }
+  .suu-stage {
+    gap: 8px;
+  }
+  .panel2 {
+    min-height: 0;
+    padding: 14px;
+  }
+}

@@ -1,4 +1,4 @@
-// The page's behaviour: the light and dark switch, the pinned phone that follows the story, reveal on scroll and the
+// The page's behaviour: the light and dark switch, the tour that changes the phone's screen, reveal on scroll and the
 // checksum copy button. The page reads fine without any of it.
 (function () {
   const root = document.documentElement;
@@ -18,88 +18,111 @@
     (!root.getAttribute('data-theme') && matchMedia('(prefers-color-scheme: dark)').matches);
   const toggle = $('theme');
 
-  // ---------- the pinned phone ----------
+  // ---------- the tour: one phone, six screens ----------
   const phone = document.querySelector('.phone');
   const fit = $('phone-fit');
-  const scenes = Array.from(document.querySelectorAll('.scene'));
-  // scene -> the phone screen it shows, and whether the phone shows the opposite colour mode
-  const SHOW = [
-    { s: 's-home', tab: 'home' },
-    { s: 's-chat', tab: '' },
-    { s: 's-activity', tab: 'activity' },
-    { s: 's-plan', tab: 'plan' },
-    { s: 's-reports', tab: 'reports' },
-    { s: 's-home', tab: 'home', flip: true },
+  const tabs = Array.from(document.querySelectorAll('.tour button'));
+  const TOUR = [
+    {
+      s: 's-home',
+      tab: 'home',
+      title: "Know what's <em>free</em> to spend.",
+      text: 'One calm number after your bills, your spending and what you set aside. About how much you can spend a day, and whether today is under or over that pace.',
+    },
+    {
+      s: 's-chat',
+      tab: '',
+      title: 'Add it in a <em>few taps.</em>',
+      text: 'Your usual entries fill the category, amount and account in one tap. Or switch to Add by chat and Suu asks one thing at a time, every answer a tap.',
+    },
+    {
+      s: 's-activity',
+      tab: 'activity',
+      title: 'Everything in <em>its day.</em>',
+      text: 'Browse day by day, search by word or amount, filter, and open any entry. The new one lands right where it belongs.',
+    },
+    {
+      s: 's-plan',
+      tab: 'plan',
+      title: 'Plan the <em>next 14 days.</em>',
+      text: 'Bills, budgets and goals before they surprise you, with loans and EMIs showing exactly what is still left to pay.',
+    },
+    {
+      s: 's-reports',
+      tab: 'reports',
+      title: 'See where it <em>went.</em>',
+      text: 'Spending by day and by category, with a PDF or Excel report of any month or year, made on your phone and shared only where you choose.',
+    },
+    {
+      s: 's-home',
+      tab: 'home',
+      flip: true,
+      title: 'Calm in <em>both.</em>',
+      text: 'One quiet look in a light and a dark mode that follows your phone. Hide amounts on screen and in widgets whenever you need to.',
+    },
   ];
-  // the step panels are numbered 0 (hero) to 6; the last two share the Home screen in opposite modes
-  const MAP = [0, 0, 1, 2, 3, 4, 5];
   let current = -1;
+  let timer = null;
   function setScene(i) {
-    const idx = MAP[Math.max(0, Math.min(MAP.length - 1, i))];
-    scenes.forEach(function (el, k) {
-      el.classList.toggle('active', k === i);
+    const k = ((i % TOUR.length) + TOUR.length) % TOUR.length;
+    const t = TOUR[k];
+    current = k;
+    tabs.forEach(function (b, n) {
+      b.setAttribute('aria-selected', n === k ? 'true' : 'false');
+      b.tabIndex = n === k ? 0 : -1;
     });
-    if (!phone || (idx === current && phone.dataset.scene === String(i))) return;
-    current = idx;
-    phone.dataset.scene = String(i);
-    const show = SHOW[idx];
+    if ($('tour-title')) $('tour-title').innerHTML = t.title;
+    if ($('tour-p')) $('tour-p').textContent = t.text;
+    if (!phone) return;
     document.querySelectorAll('.phone .screen').forEach(function (el) {
-      el.classList.toggle('on', el.id === show.s);
+      el.classList.toggle('on', el.id === t.s);
     });
-    document.querySelectorAll('.phone .tabx').forEach(function (t) {
-      t.classList.toggle('on', t.dataset.go === show.tab);
+    document.querySelectorAll('.phone .tabx').forEach(function (x) {
+      x.classList.toggle('on', x.dataset.go === t.tab);
     });
-    const dark = siteDark() !== !!show.flip;
-    phone.setAttribute('data-mode', dark ? 'dark' : 'light');
+    phone.setAttribute('data-mode', siteDark() !== !!t.flip ? 'dark' : 'light');
   }
   window.setScene = setScene;
+  // the tour plays by itself until someone takes over
+  function stop() {
+    if (timer) clearInterval(timer);
+    timer = null;
+  }
+  function play() {
+    if (calm || timer) return;
+    timer = setInterval(function () {
+      if (!document.hidden) setScene(current + 1);
+    }, 5500);
+  }
+  tabs.forEach(function (b, n) {
+    b.addEventListener('click', function () {
+      stop();
+      setScene(n);
+    });
+    b.addEventListener('keydown', function (e) {
+      const step = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
+      if (!step) return;
+      stop();
+      const next = (n + step + tabs.length) % tabs.length;
+      tabs[next].focus();
+      setScene(next);
+    });
+  });
+  // a tab on the phone works too
+  const TAB_SCENE = { home: 0, activity: 2, plan: 3, reports: 4 };
+  document.querySelectorAll('.phone .tabx').forEach(function (x) {
+    x.addEventListener('click', function () {
+      stop();
+      setScene(TAB_SCENE[x.dataset.go]);
+    });
+  });
   function sizePhone() {
-    const col = document.querySelector('.phone-sticky');
-    if (!col || !fit) return;
-    const h = col.clientHeight;
-    fit.style.setProperty('--ps', Math.max(0.5, Math.min(1.1, (h - 40) / 640)).toFixed(3));
+    const box = document.querySelector('.hero-phone');
+    if (!box || !fit) return;
+    const h = box.clientHeight;
+    fit.style.setProperty('--ps', Math.max(0.5, Math.min(1.08, (h - 24) / 620)).toFixed(3));
   }
-  // the scene whose middle is nearest the reading line wins: lower on a phone, where the phone sits above the text
-  let ticking = false;
-  function pick() {
-    ticking = false;
-    const line = innerWidth < 960 ? innerHeight * 0.86 : innerHeight * 0.5;
-    let best = 0;
-    let bd = Infinity;
-    scenes.forEach(function (el, k) {
-      const r = el.getBoundingClientRect();
-      const d = Math.abs(r.top + r.height / 2 - line);
-      if (r.bottom > 0 && r.top < innerHeight && d < bd) {
-        bd = d;
-        best = k;
-      }
-    });
-    setScene(best);
-  }
-  addEventListener(
-    'scroll',
-    function () {
-      if (!ticking) {
-        ticking = true;
-        requestAnimationFrame(pick);
-      }
-    },
-    { passive: true }
-  );
-  addEventListener('resize', function () {
-    sizePhone();
-    pick();
-  });
-  // a tab on the phone takes you to its step
-  const TAB_SCENE = { home: 0, activity: 3, plan: 4, reports: 5 };
-  document.querySelectorAll('.phone .tabx').forEach(function (t) {
-    t.addEventListener('click', function () {
-      const k = TAB_SCENE[t.dataset.go];
-      setScene(k);
-      const el = scenes[k];
-      if (el) el.scrollIntoView({ behavior: calm ? 'auto' : 'smooth', block: 'center' });
-    });
-  });
+  addEventListener('resize', sizePhone);
 
   if (toggle)
     toggle.addEventListener('click', function () {
@@ -110,12 +133,12 @@
       } catch {
         /* the choice just lasts until the page closes */
       }
-      current = -1;
-      pick();
+      setScene(current < 0 ? 0 : current);
     });
 
   sizePhone();
-  pick();
+  setScene(0);
+  play();
 
   // ---------- reveal on scroll ----------
   const reveals = document.querySelectorAll('.reveal');
@@ -129,7 +152,7 @@
           }
         });
       },
-      { threshold: 0.1 }
+      { threshold: 0.08 }
     );
     reveals.forEach(function (el) {
       io.observe(el);
