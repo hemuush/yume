@@ -678,3 +678,23 @@ details[open] > :not(summary) {
     animation: none;
   }
 }
+
+.dl-note {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: var(--alt);
+  border: 1px solid var(--edge);
+  color: var(--soft);
+  font-size: 14px;
+}
+.dl-note button {
+  margin-left: 8px;
+  border: 1px solid var(--edge);
+  background: var(--surface);
+  color: var(--ink);
+  border-radius: 999px;
+  padding: 5px 12px;
+  font: 600 13px var(--body);
+  cursor: pointer;
+}

@@ -18,10 +18,112 @@
       property="og:description"
       content="A calm, private money tracker for Android. No account, no ads, works offline."
     />
-    <meta property="og:image" content="https://hemuush.github.io/yume/img/icon.png" />
-    <meta name="twitter:card" content="summary" />
-    <link rel="icon" href="img/yume-mark.png" />
+    <meta property="og:url" content="https://hemuush.github.io/yume/" />
+    <meta property="og:site_name" content="Yume" />
+    <meta property="og:image" content="https://hemuush.github.io/yume/img/og.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="Yume: better money, bigger dreams. A calm money tracker for Android."
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://hemuush.github.io/yume/img/og.jpg" />
+    <link rel="icon" type="image/png" sizes="64x64" href="img/favicon-64.png" />
+    <link rel="apple-touch-icon" href="img/apple-touch-icon.png" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="preconnect" href="https://api.github.com" crossorigin />
     <link rel="preload" href="fonts/Fredoka_600SemiBold.ttf" as="font" type="font/ttf" crossorigin />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "Yume",
+        "alternateName": "Yume 夢",
+        "applicationCategory": "FinanceApplication",
+        "operatingSystem": "Android",
+        "description": "A calm, private money tracker for Android. Track spending, plan ahead and save, with every record kept on your phone.",
+        "url": "https://hemuush.github.io/yume/",
+        "image": "https://hemuush.github.io/yume/img/og.jpg",
+        "downloadUrl": "https://github.com/hemuush/yume/releases/latest",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "INR" },
+        "license": "https://github.com/hemuush/yume/blob/main/LICENSE"
+      }
+    </script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "Is it free?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. The code is open on GitHub under its licence."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Does it work on iPhone?",
+            "acceptedAnswer": { "@type": "Answer", "text": "No. Yume is built for Android." }
+          },
+          {
+            "@type": "Question",
+            "name": "Do I need internet?",
+            "acceptedAnswer": { "@type": "Answer", "text": "No. It works fully offline." }
+          },
+          {
+            "@type": "Question",
+            "name": "What if I lose my phone?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Your records are only on the phone, so keep a backup copy somewhere you trust. Yume can save backups to a folder you choose."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What can Yume access on my phone?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Only what it needs: fingerprint or face unlock for the app lock, notifications and exact alarms for reminders, and vibration. It has no Internet permission and cannot reach your contacts, messages, location, camera or microphone."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How do I back up, or move to a new phone?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Save a backup file yourself, or pick a folder and Yume saves backups there while it is open. On the new phone, restore from that file or folder. You see what is in the backup and what is on the phone before anything is replaced."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can I export my data?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. Make a PDF report or an Excel workbook for a month, a year or everything. It is made on your phone and handed to Android's share sheet, so it goes only where you send it."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Why does Android warn me when I install?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yume is not on the Play Store yet, so Android shows its standard warning for apps installed from a file. Compare the checksum above with your download if you want to be sure it is the same file."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "My reminders arrive late.",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "On newer Android, allow Alarms & reminders for Yume. Open Settings → Notifications in the app and tap Allow."
+            }
+          }
+        ]
+      }
+    </script>
     <link rel="stylesheet" href="style.css" />
     <link rel="stylesheet" href="phone.css" />
     <link rel="stylesheet" href="suu.css" />
@@ -892,13 +994,15 @@
         <div class="wrap">
           <div class="head reveal">
             <h2>Get Yume</h2>
-            <p>Version 1.0.0 for Android phones (arm64), about 39 MB.</p>
+            <p id="dl-sub">Version 1.0.0 for Android phones (arm64), about 39 MB.</p>
           </div>
           <div class="dl">
             <div class="tile reveal">
+              <p class="dl-note" id="dl-note" hidden></p>
               <div class="btns">
                 <a
                   class="btn main"
+                  id="dl-btn"
                   href="https://github.com/hemuush/yume/releases/download/v1.0.0/Yume-1.0.0-arm64.apk"
                   >Download Yume 1.0.0 (.apk)</a
                 >
@@ -953,6 +1057,37 @@
               </p>
             </details>
             <details>
+              <summary>What can Yume access on my phone?</summary>
+              <p>
+                Only what it needs: fingerprint or face unlock for the app lock, notifications and exact
+                alarms for reminders, and vibration. It has no Internet permission and cannot reach your
+                contacts, messages, location, camera or microphone.
+              </p>
+            </details>
+            <details>
+              <summary>How do I back up, or move to a new phone?</summary>
+              <p>
+                Save a backup file yourself, or pick a folder and Yume saves backups there while it is open.
+                On the new phone, restore from that file or folder. You see what is in the backup and what is
+                on the phone before anything is replaced.
+              </p>
+            </details>
+            <details>
+              <summary>Can I export my data?</summary>
+              <p>
+                Yes. Make a PDF report or an Excel workbook for a month, a year or everything. It is made on
+                your phone and handed to Android's share sheet, so it goes only where you send it.
+              </p>
+            </details>
+            <details>
+              <summary>Why does Android warn me when I install?</summary>
+              <p>
+                Yume is not on the Play Store yet, so Android shows its standard warning for apps installed
+                from a file. Compare the checksum above with your download if you want to be sure it is the
+                same file.
+              </p>
+            </details>
+            <details>
               <summary>My reminders arrive late.</summary>
               <p>
                 On newer Android, allow <strong>Alarms &amp; reminders</strong> for Yume. Open Settings →
@@ -987,7 +1122,8 @@ npx expo run:android</pre>
     <div class="sticky" id="sticky">
       <a class="btn main" href="#download">Download for Android</a>
     </div>
-    <script src="site.js"></script>
-    <script src="story.js"></script>
+    <script src="site.js" defer></script>
+    <script src="story.js" defer></script>
+    <script src="download.js" defer></script>
   </body>
 </html>
