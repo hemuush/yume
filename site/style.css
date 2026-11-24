@@ -276,7 +276,7 @@ section {
 .band.sky {
   background: var(--sky-bg);
 }
-.band a {
+.band a:not(.btn) {
   color: inherit;
 }
 .kicker {
