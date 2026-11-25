@@ -20,7 +20,7 @@ const PREVIEW_W = 96;
 
 /**
  * Activity's summary as one compact card: what was spent, a chip for how it compares with the period before, and a
- * small labelled preview of the period (M T W… for a week's days, W1–W5 for a month's weeks). It is a button: tapping
+ * small labelled preview of the period (M T Wâ€¦ for a week's days, W1â€“W5 for a month's weeks). It is a button: tapping
  * it opens the full chart and totals (Insights). The figure is the real amount at once (it never counts up); the card's
  * contents glide in with the period, like Insights (usePeriodSlide).
  */
@@ -42,7 +42,7 @@ export function ActivitySummaryStrip({
   spentMinor: number;
   /** This period's spend less the comparison period's; null when there is nothing to compare. */
   expenseChangeMinor: number | null;
-  /** What the change compares with: "last week", "October"… */
+  /** What the change compares with: "last week", "October"â€¦ */
   compareLabel: string;
   viewScope: 'week' | 'month';
   bars: SpendBar[];
@@ -91,6 +91,9 @@ export function ActivitySummaryStrip({
             adjustsFontSizeToFit={showPreview}
             minimumFontScale={0.75}
           />
+          {/* The row’s room is kept while the comparison loads or when there is none: it landing a moment after the
+              figure grew the card and pushed the whole list down. */}
+          {!(changeWords && change != null) && <View style={styles.changeRow} />}
           {changeWords && change != null && (
             <View style={styles.changeRow}>
               <View style={[styles.chip, more ? styles.chipMore : styles.chipLess]}>
@@ -222,6 +225,7 @@ const styles = themedStyles(() =>
       columnGap: 6,
       rowGap: 2,
       marginTop: 2,
+      minHeight: 22,
     },
     chip: {
       minHeight: 22,

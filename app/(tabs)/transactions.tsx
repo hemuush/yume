@@ -612,6 +612,8 @@ export default function TransactionsScreen() {
           </View>
         ) : (
           <ReanimatedAnimated.FlatList
+            // The data arriving after the placeholders: one short fade of the whole list, as Budgets and Goals do.
+            entering={CONTENT_ENTER}
             // A search result opens on the first tap, even with the keyboard up.
             keyboardShouldPersistTaps="handled"
             // Scrolling the results puts the keyboard away, so the lower entries are not hidden behind it.
@@ -636,8 +638,8 @@ export default function TransactionsScreen() {
             keyExtractor={(group) => group.date}
             // Each row is a whole day, so mount only a few at first and keep the window small. A short batch every
             // 50 ms keeps each frame light while scrolling.
-            initialNumToRender={8}
-            maxToRenderPerBatch={4}
+            initialNumToRender={4}
+            maxToRenderPerBatch={2}
             updateCellsBatchingPeriod={50}
             windowSize={5}
             contentContainerStyle={{

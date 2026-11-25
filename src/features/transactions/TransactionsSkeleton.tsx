@@ -75,13 +75,14 @@ const styles = themedStyles(() =>
     strip: {
       marginHorizontal: 16,
       marginTop: 8,
-      borderRadius: theme.radius.xl2,
+      borderRadius: theme.radius.xl,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: theme.colors.home.edge,
       backgroundColor: theme.colors.home.surface,
-      minHeight: 98,
+      // The real card's height (8 + kicker 18 + 2 + figure 30 + 2 + change row 24 + 8), so nothing moves when it lands.
+      minHeight: 92,
       paddingHorizontal: 16,
-      paddingVertical: 12,
+      paddingVertical: 8,
       flexDirection: 'row',
       alignItems: 'center',
       gap: 12,

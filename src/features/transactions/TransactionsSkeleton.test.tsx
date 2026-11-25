@@ -25,16 +25,16 @@ const flat = (tree: ReactTestRenderer) =>
     .findAll((n) => typeof n.type === 'string' && n.props.style)
     .map((n) => StyleSheet.flatten(n.props.style) ?? {});
 
-it('draws the Spent card at the real card’s height, with its lettered bars, and not the old tall chart card', () => {
+it('draws the Spent card at the real cardâ€™s height, with its lettered bars, and not the old tall chart card', () => {
   const tree = render();
-  const card = flat(tree).find((s) => s.minHeight === 98);
+  const card = flat(tree).find((s) => s.minHeight === 92);
   expect(card).toBeDefined();
   // 7 bars for a week's days: 9 dp wide and rounded like the real ones.
   expect(flat(tree).filter((s) => s.width === 9 && s.borderRadius === 4)).toHaveLength(7);
   act(() => tree.unmount());
 });
 
-it('has the filter row (the Filters button and four choices) and two days as Home’s card, each with its entries', () => {
+it('has the filter row (the Filters button and four choices) and two days as Homeâ€™s card, each with its entries', () => {
   const tree = render();
   const styles = flat(tree);
   // 40 dp round shapes: the Filters circle and the four type choices (5), and the five category discs (5).
