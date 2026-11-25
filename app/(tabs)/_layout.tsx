@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { type ReactNode, useCallback, useRef, useState } from 'react';
 import { Animated, Easing } from 'react-native';
-import { Tabs } from 'expo-router';
+import { Tabs, useFocusEffect } from 'expo-router';
 import { theme } from '@/constants/theme';
 import { haptics } from '@/lib/haptics';
 import { RepeatEntrySheet } from '@/features/home/RepeatEntrySheet';
@@ -11,32 +11,58 @@ import { useReduceMotion } from '@/hooks/useReduceMotion';
 import { schemeScreenLayout, useSchemeVersion } from '@/theme/SchemeBoundary';
 
 /**
- * Switching tabs is a fade-through: the screen you leave fades out in the first half, then the
- * new one fades in in the second. They never show together, so there is no ghost of a
- * header over another screen, and nothing slides sideways. One function of `progress` (0 = shown, 1 = a screen away)
- * does both: it falls to 0 by half way, which for the leaving screen is early on and for the arriving one is late.
+ * Switching tabs: the old screen goes at once and the new one fades in as a single flattened layer. Android fades a
+ * plain view's children one by one, so a navigator cross-fade showed the screen behind through the cards and each
+ * card's shadow through the card itself. The layer is held only for the fade: kept, it would slow scrolling.
  */
-function tabSwitch({ current }: { current: { progress: Animated.Value } }) {
-  const at = (outputRange: number[]) =>
-    current.progress.interpolate({ inputRange: [-1, -0.5, 0, 0.5, 1], outputRange });
-  return {
-    sceneStyle: {
-      // Opacity only: scaling redrew the whole screen (frosted header, wallpaper, list) every frame and stuttered.
-      opacity: at([0, 0, 1, 0, 0]),
-    },
-  };
+function TabFadeIn({ children }: { children: ReactNode }) {
+  const reduce = useReduceMotion();
+  const [opacity] = useState(() => new Animated.Value(1));
+  const [fading, setFading] = useState(false);
+  const shownOnce = useRef(false);
+  useFocusEffect(
+    useCallback(() => {
+      // The first tab the app opens on is not "switched to".
+      if (!shownOnce.current || reduce) {
+        shownOnce.current = true;
+        return;
+      }
+      opacity.setValue(0);
+      setFading(true);
+      const fade = Animated.timing(opacity, {
+        toValue: 1,
+        duration: DURATIONS.standard,
+        easing: Easing.out(Easing.quad),
+        useNativeDriver: true,
+      });
+      fade.start(() => setFading(false));
+      return () => {
+        fade.stop();
+        opacity.setValue(1);
+        setFading(false);
+      };
+    }, [opacity, reduce])
+  );
+  return (
+    <Animated.View
+      style={{ flex: 1, opacity }}
+      needsOffscreenAlphaCompositing
+      renderToHardwareTextureAndroid={fading}
+    >
+      {children}
+    </Animated.View>
+  );
 }
 
 export default function TabsLayout() {
   const [repeatSheetVisible, setRepeatSheetVisible] = useState(false);
-  const reduce = useReduceMotion();
   const schemeVersion = useSchemeVersion();
 
   return (
     <>
       <Tabs
         // Each tab is drawn again when the colour mode changes; the bar above does so itself.
-        screenLayout={schemeScreenLayout}
+        screenLayout={({ children }) => <TabFadeIn>{schemeScreenLayout({ children })}</TabFadeIn>}
         // The floating pill (PillTabBar): four tabs in a frosted pill and a round Add beside it.
         tabBar={(props) => (
           <PillTabBar
@@ -50,18 +76,12 @@ export default function TabsLayout() {
             onAddLongPress={() => setRepeatSheetVisible(true)}
           />
         )}
-        // Switching tabs is a 200 ms fade-through (see tabSwitch); with reduced motion
-        // it is instant.
+        // The navigator switches at once; the arriving screen fades itself in (TabFadeIn).
         screenOptions={{
           headerShown: false,
-          // Behind a cross-fade the page colour shows, not the navigator's light default.
+          // Behind the fade the page colour shows, not the navigator's light default.
           sceneStyle: { backgroundColor: theme.colors.background },
-          animation: reduce ? 'none' : 'shift',
-          sceneStyleInterpolator: tabSwitch,
-          transitionSpec: {
-            animation: 'timing',
-            config: { duration: DURATIONS.standard, easing: Easing.out(Easing.quad) },
-          },
+          animation: 'none',
         }}
       >
         <Tabs.Screen name="index" options={{ title: 'Home' }} />
