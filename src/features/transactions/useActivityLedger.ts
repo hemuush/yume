@@ -82,9 +82,11 @@ export function useActivityLedger() {
     }
     const key = `${scope}:${range.fromDate}:${range.toDate}`;
     const changed = lastPeriod.current !== key;
+    // The first load lands while the tab is still fading in: staggering the days on top of that stuttered.
+    const firstLoad = lastPeriod.current === '';
     lastPeriod.current = key;
     if (changed) {
-      arriving.current = true;
+      arriving.current = !firstLoad;
       if (arriveTimer.current) clearTimeout(arriveTimer.current);
       arriveTimer.current = setTimeout(() => {
         arriving.current = false;

@@ -11,8 +11,8 @@ import { useReduceMotion } from '@/hooks/useReduceMotion';
 import { schemeScreenLayout, useSchemeVersion } from '@/theme/SchemeBoundary';
 
 /**
- * Switching tabs is a fade-through: the screen you leave fades out and shrinks a hair in the first half, then the
- * new one fades in and settles to full size in the second. They never show together, so there is no ghost of a
+ * Switching tabs is a fade-through: the screen you leave fades out in the first half, then the
+ * new one fades in in the second. They never show together, so there is no ghost of a
  * header over another screen, and nothing slides sideways. One function of `progress` (0 = shown, 1 = a screen away)
  * does both: it falls to 0 by half way, which for the leaving screen is early on and for the arriving one is late.
  */
@@ -21,8 +21,8 @@ function tabSwitch({ current }: { current: { progress: Animated.Value } }) {
     current.progress.interpolate({ inputRange: [-1, -0.5, 0, 0.5, 1], outputRange });
   return {
     sceneStyle: {
+      // Opacity only: scaling redrew the whole screen (frosted header, wallpaper, list) every frame and stuttered.
       opacity: at([0, 0, 1, 0, 0]),
-      transform: [{ scale: at([0.97, 0.97, 1, 0.97, 0.97]) }],
     },
   };
 }

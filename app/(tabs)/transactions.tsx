@@ -21,6 +21,7 @@ import { SkyHeader } from '@/features/home/SkyHeader';
 import { useCollapsingHeader } from '@/hooks/useCollapsingHeader';
 import { theme } from '@/constants/theme';
 import { useTabScrollPad } from '@/lib/uiScale';
+import { DURATIONS } from '@/lib/motionTimings';
 import { toLocalIsoDate, addDaysToIsoDate, parseLocalIsoDate } from '@/lib/date';
 import { useSwipeDrag } from '@/hooks/useSwipeDrag';
 import { styles } from '@/features/transactions/transactions.styles';
@@ -304,12 +305,19 @@ export default function TransactionsScreen() {
     setTodayDate(now);
     void load({ fromDate: rangeFromDate, toDate: rangeToDate }, viewScope);
   });
+  const hasLoaded = useRef(false);
+  useEffect(() => {
+    hasLoaded.current = !!loadedPeriod.fromDate;
+  }, [loadedPeriod.fromDate]);
   const focused = useRef(false);
+  // Set on blur, read once on the next focus: only coming back from another tab waits for the fade.
+  const cameBack = useRef(false);
   useFocusEffect(
     useCallback(() => {
       focused.current = true;
       return () => {
         focused.current = false;
+        cameBack.current = true;
       };
     }, [])
   );
@@ -320,15 +328,24 @@ export default function TransactionsScreen() {
       // Nothing written since this period last loaded (and it's the same day): what's shown is current.
       // This also runs on every search keystroke, which no longer reloads the period each time.
       const deps = [load, rangeFromDate, rangeToDate, viewScope];
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      const returning = cameBack.current;
+      cameBack.current = false;
       if (!freshness.isFresh(deps)) {
-        const started = freshness.start(deps);
-        void load({ fromDate: rangeFromDate, toDate: rangeToDate }, viewScope).then((ok) => {
-          if (ok) freshness.commit(started);
-        });
+        const run = () => {
+          const started = freshness.start(deps);
+          void load({ fromDate: rangeFromDate, toDate: rangeToDate }, viewScope).then((ok) => {
+            if (ok) freshness.commit(started);
+          });
+        };
+        // With a list already on screen, reload after the tab's fade: redrawing every day mid-fade stuttered.
+        if (returning && hasLoaded.current) timer = setTimeout(run, DURATIONS.standard);
+        else run();
       }
       // Returning from the full add-transaction screen (edit/delete of a row opened from search): re-run
       // the query so the list doesn't show the row as it was before.
       refreshSearch();
+      return () => clearTimeout(timer);
     }, [load, rangeFromDate, rangeToDate, viewScope, refreshSearch, freshness])
   );
   // A save that doesn't leave this screen (the + long-press sheet) — reload in place.
@@ -619,8 +636,8 @@ export default function TransactionsScreen() {
             keyExtractor={(group) => group.date}
             // Each row is a whole day, so mount only a few at first and keep the window small. A short batch every
             // 50 ms keeps each frame light while scrolling.
-            initialNumToRender={4}
-            maxToRenderPerBatch={2}
+            initialNumToRender={8}
+            maxToRenderPerBatch={4}
             updateCellsBatchingPeriod={50}
             windowSize={5}
             contentContainerStyle={{

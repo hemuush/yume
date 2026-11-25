@@ -118,9 +118,11 @@ it('lets only the newest load write, even when an earlier one finishes last', as
   expect(hook.result.current.transactions.map((t) => t.id)).toEqual(['tea']);
 });
 
-it('says the days are arriving for a moment after a load, and stops without redrawing anything', async () => {
-  expect(hook.result.current.isArriving()).toBe(false);
+it('says the days are arriving for a moment after a period change, and stops without redrawing anything', async () => {
   await load();
+  // The first load lands under the tab's own fade, so its days do not stagger in.
+  expect(hook.result.current.isArriving()).toBe(false);
+  await load({ fromDate: '2026-09-13', toDate: '2026-09-19' });
   expect(hook.result.current.isArriving()).toBe(true);
   const settled = renders;
   await act(async () => {

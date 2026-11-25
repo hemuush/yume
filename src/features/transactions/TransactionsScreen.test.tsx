@@ -536,7 +536,7 @@ describe('Activity page states', () => {
     expect(shown).not.toContain('Nothing logged this week');
   });
 
-  it('fades a period’s days in as they land, so they follow the Spent strip instead of snapping', async () => {
+  it('does not stagger the days of the first load, which lands under the tab’s own fade', async () => {
     const { toLocalIsoDate } = require('@/lib/date');
     mockComparison.fail = false;
     mockLedger.transactions = [
@@ -552,7 +552,7 @@ describe('Activity page states', () => {
     ] as Transaction[];
     const tree = await render();
     const day = tree.root.findAll((n) => typeof n.props.date === 'string' && Array.isArray(n.props.items))[0];
-    expect(day.props.entering).toBeDefined();
+    expect(day.props.entering).toBeUndefined();
   });
 
   it('shows an expense label as a chip in the filter row, removable like the others', async () => {
