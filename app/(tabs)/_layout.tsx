@@ -1,68 +1,36 @@
-import { type ReactNode, useCallback, useRef, useState } from 'react';
-import { Animated, Easing } from 'react-native';
-import { Tabs, useFocusEffect } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { Tabs, router } from 'expo-router';
 import { theme } from '@/constants/theme';
 import { haptics } from '@/lib/haptics';
 import { RepeatEntrySheet } from '@/features/home/RepeatEntrySheet';
 import { PillTabBar } from '@/components/PillTabBar';
 import { openAdd } from '@/lib/openAdd';
-import { DURATIONS } from '@/lib/motionTimings';
-import { useReduceMotion } from '@/hooks/useReduceMotion';
+import { runWhenIdle } from '@/lib/runWhenIdle';
 import { schemeScreenLayout, useSchemeVersion } from '@/theme/SchemeBoundary';
 
-/**
- * Switching tabs: the old screen goes at once and the new one fades in as a single flattened layer. Android fades a
- * plain view's children one by one, so a navigator cross-fade showed the screen behind through the cards and each
- * card's shadow through the card itself. The layer is held only for the fade: kept, it would slow scrolling.
- */
-function TabFadeIn({ children }: { children: ReactNode }) {
-  const reduce = useReduceMotion();
-  const [opacity] = useState(() => new Animated.Value(1));
-  const [fading, setFading] = useState(false);
-  const shownOnce = useRef(false);
-  useFocusEffect(
-    useCallback(() => {
-      // The first tab the app opens on is not "switched to".
-      if (!shownOnce.current || reduce) {
-        shownOnce.current = true;
-        return;
-      }
-      opacity.setValue(0);
-      setFading(true);
-      const fade = Animated.timing(opacity, {
-        toValue: 1,
-        duration: DURATIONS.standard,
-        easing: Easing.out(Easing.quad),
-        useNativeDriver: true,
-      });
-      fade.start(() => setFading(false));
-      return () => {
-        fade.stop();
-        opacity.setValue(1);
-        setFading(false);
-      };
-    }, [opacity, reduce])
-  );
-  return (
-    <Animated.View
-      style={{ flex: 1, opacity }}
-      needsOffscreenAlphaCompositing
-      renderToHardwareTextureAndroid={fading}
-    >
-      {children}
-    </Animated.View>
-  );
-}
+/** The tabs built in the background once Home has settled, so the first tap on each is instant. */
+const PRELOADED_TABS = ['/transactions', '/plan', '/reports'] as const;
 
 export default function TabsLayout() {
   const [repeatSheetVisible, setRepeatSheetVisible] = useState(false);
   const schemeVersion = useSchemeVersion();
+  useEffect(() => {
+    // One at a time, each on an idle moment, so building them never stalls what is on screen.
+    const next = (i: number) => {
+      if (i >= PRELOADED_TABS.length) return;
+      runWhenIdle(() => {
+        router.prefetch(PRELOADED_TABS[i]);
+        next(i + 1);
+      }, 4000);
+    };
+    next(0);
+  }, []);
 
   return (
     <>
       <Tabs
         // Each tab is drawn again when the colour mode changes; the bar above does so itself.
-        screenLayout={({ children }) => <TabFadeIn>{schemeScreenLayout({ children })}</TabFadeIn>}
+        screenLayout={schemeScreenLayout}
         // The floating pill (PillTabBar): four tabs in a frosted pill and a round Add beside it.
         tabBar={(props) => (
           <PillTabBar
@@ -76,7 +44,8 @@ export default function TabsLayout() {
             onAddLongPress={() => setRepeatSheetVisible(true)}
           />
         )}
-        // The navigator switches at once; the arriving screen fades itself in (TabFadeIn).
+        // Tabs switch at once, as in native apps: a fade on Android showed the screen behind through every card, and
+        // the tabs are built ahead (PRELOADED_TABS) so there is nothing to cover up.
         screenOptions={{
           headerShown: false,
           // Behind the fade the page colour shows, not the navigator's light default.
