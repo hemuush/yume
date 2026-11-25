@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { listAccounts, listCategories, listTransactions } from '@/db/ledger';
 import { getRangeComparison, type PeriodComparison } from '@/db/reports';
 import type { Account, Category, Transaction } from '@/types';
@@ -6,9 +6,6 @@ import { toLocalIsoDate } from '@/lib/date';
 import { errorMessage } from '@/lib/errorMessage';
 import { previousRangeFor } from './transactions.helpers';
 import { keepIfEqual, reuseUnchanged } from '@/lib/stableData';
-
-/** How long the days that mount as a period lands take to fade in. */
-const ARRIVAL_MS = 400;
 
 /** The period the loaded entries and totals belong to. Empty dates until the first load lands. */
 export interface LoadedPeriod {
@@ -42,20 +39,6 @@ export function useActivityLedger() {
   const loadSeq = useRef(0);
   const lastPeriod = useRef('');
 
-  // True for a moment after a period's entries land: the days mounted then fade in with the Spent strip's glide,
-  // instead of snapping in under it (and instead of replacing the loading placeholder in one frame). Days that
-  // scroll into view later mount with it off, so scrolling a long month never flickers. A ref, not state: only the
-  // days mounting right now read it, and turning it off again must not redraw the whole screen for nothing.
-  const arriving = useRef(false);
-  const arriveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(
-    () => () => {
-      if (arriveTimer.current) clearTimeout(arriveTimer.current);
-    },
-    []
-  );
-  const isArriving = useCallback(() => arriving.current, []);
-
   const load = useCallback(async (range: { fromDate: string; toDate: string }, scope: 'week' | 'month') => {
     const seq = ++loadSeq.current;
     let tx: Transaction[];
@@ -82,15 +65,8 @@ export function useActivityLedger() {
     }
     const key = `${scope}:${range.fromDate}:${range.toDate}`;
     const changed = lastPeriod.current !== key;
-    // The first load lands while the tab is still fading in: staggering the days on top of that stuttered.
-    const firstLoad = lastPeriod.current === '';
     lastPeriod.current = key;
     if (changed) {
-      arriving.current = !firstLoad;
-      if (arriveTimer.current) clearTimeout(arriveTimer.current);
-      arriveTimer.current = setTimeout(() => {
-        arriving.current = false;
-      }, ARRIVAL_MS);
       setComparison(null);
       setComparisonFailed(false);
     }
@@ -128,7 +104,6 @@ export function useActivityLedger() {
     comparisonPending,
     loadError,
     loadedPeriod,
-    isArriving,
     load,
   };
 }

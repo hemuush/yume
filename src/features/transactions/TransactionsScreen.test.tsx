@@ -536,7 +536,7 @@ describe('Activity page states', () => {
     expect(shown).not.toContain('Nothing logged this week');
   });
 
-  it('does not stagger the days of the first load, which lands under the tab’s own fade', async () => {
+  it('never fades the days in: on Android a fading card shows its own shadow through it', async () => {
     const { toLocalIsoDate } = require('@/lib/date');
     mockComparison.fail = false;
     mockLedger.transactions = [
@@ -655,9 +655,8 @@ describe('Activity opened on a month from a link', () => {
   });
 });
 
-it('does not redraw the screen when its days have finished arriving', async () => {
-  // The days that mount as a period lands fade in for a moment. Turning that off again once was a state change: a
-  // redraw of the whole screen, with nothing on it different, after every period step.
+it('does not redraw the screen once its period has landed', async () => {
+  // Nothing on a settled screen changes with time alone: a late timer redrawing it would cost a frame for nothing.
   mockComparison.fail = false;
   const { toLocalIsoDate } = require('@/lib/date');
   mockLedger.transactions = [

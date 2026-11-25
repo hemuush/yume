@@ -1,7 +1,7 @@
 import { pullRefreshColors } from '@/components/pullRefreshColors';
 import { useLocalDayRefresh } from '@/hooks/useLocalDayRefresh';
 import { Appear } from '@/components/Appear';
-import { CONTENT_ENTER, staggerEnter } from '@/lib/animation';
+import { CONTENT_ENTER } from '@/lib/animation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { onTransactionsChanged } from '@/lib/dataEvents';
 import { useFreshness } from '@/hooks/useFreshness';
@@ -97,7 +97,6 @@ export default function TransactionsScreen() {
     comparisonPending,
     loadError,
     loadedPeriod,
-    isArriving,
     load,
   } = useActivityLedger();
   const [detailTx, setDetailTx] = useState<Transaction | null>(null);
@@ -605,8 +604,8 @@ export default function TransactionsScreen() {
           </View>
         ) : (
           <ReanimatedAnimated.FlatList
-            // The data arriving after the placeholders: one short fade of the whole list, as Budgets and Goals do.
-            entering={CONTENT_ENTER}
+            // No fade in, here or on the days: Android fades each card's parts one by one, so a fading card showed its
+            // own shadow through it as a grey frame. The list is loaded before the tab is first opened instead.
             // A search result opens on the first tap, even with the keyboard up.
             keyboardShouldPersistTaps="handled"
             // Scrolling the results puts the keyboard away, so the lower entries are not hidden behind it.
@@ -757,7 +756,7 @@ export default function TransactionsScreen() {
                 </>
               )
             }
-            renderItem={({ item: group, index }) => (
+            renderItem={({ item: group }) => (
               <TimelineDay
                 accountCurrency={accountCurrency}
                 date={group.date}
@@ -779,7 +778,6 @@ export default function TransactionsScreen() {
                 }
                 // Today and yesterday are named alone, as in Home; any other day says its date too.
                 dateInHeading={group.date !== today && group.date !== yesterday}
-                entering={isArriving() ? staggerEnter(index) : undefined}
                 items={group.items}
                 categories={categories}
                 accountName={accountName}
