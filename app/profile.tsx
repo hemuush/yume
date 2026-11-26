@@ -20,7 +20,6 @@ import { theme } from '@/constants/theme';
 import { useScreenLoad } from '@/hooks/useScreenLoad';
 import { Skeleton } from '@/components/Skeleton';
 import { HomeWallpaper } from '@/features/home/HomeWallpaper';
-import { useAccent } from '@/theme/AccentContext';
 import { styles } from '@/features/profile/profile.styles';
 import { YouSection } from '@/features/profile/YouSection';
 import { SettingsSection } from '@/features/profile/SettingsSection';
@@ -39,7 +38,6 @@ const Settings = memo(SettingsSection);
  */
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
-  const { accent, secondary } = useAccent();
   // The header sits over the page and shrinks as it scrolls; the amount pad's scroll tracking feeds it.
   const { collapse, headerHeight, onJsScroll, onJsScrollEnd } = useCollapsingHeader();
   const [name, setName] = useState<string | null>(null);
@@ -80,7 +78,7 @@ export default function ProfileScreen() {
   if (!loaded && !loadError) {
     return (
       <View style={styles.container}>
-        <HomeWallpaper accent={accent} secondary={secondary} plain />
+        <HomeWallpaper />
         <SkyHeader title="Profile" showBack hideUser wallpaper />
         {/* The identity line’s shape while it loads. */}
         <View style={styles.skeletonIdentity}>
@@ -96,7 +94,7 @@ export default function ProfileScreen() {
 
   return (
     <View style={styles.container}>
-      <HomeWallpaper accent={accent} secondary={secondary} plain />
+      <HomeWallpaper />
       <AmountPadDock>
         {(scrollProps) => (
           <>

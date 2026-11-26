@@ -87,7 +87,7 @@ const COLLAPSED_FILES = 3;
 export default function BackupScreen() {
   const { lockEnabled } = useAppLock();
   const insets = useSafeAreaInsets();
-  const { accent, secondary } = useAccent();
+  const { accent } = useAccent();
   // The header sits over the page and shrinks as it scrolls.
   const { collapse, headerHeight, scrollHandler, scrollRef } = useCollapsingHeader();
   const runAction = useSaveOnce(async (action: () => Promise<void>) => {
@@ -465,7 +465,7 @@ Restore anyway? Your current data would be replaced with no way back.`,
 
   return (
     <View style={styles.container}>
-      <HomeWallpaper accent={accent} secondary={secondary} plain />
+      <HomeWallpaper />
       <ReanimatedAnimated.ScrollView
         ref={scrollRef}
         onScroll={scrollHandler}

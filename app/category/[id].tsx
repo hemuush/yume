@@ -22,7 +22,6 @@ import { SkyHeader, HeaderSummary } from '@/features/home/SkyHeader';
 import { ListCard, SummaryCard, SummaryFacts, SummaryTop, summaryFigure } from '@/components/SummaryCard';
 import { SCREEN, flatSection } from '@/components/screenStyles';
 import { HomeWallpaper } from '@/features/home/HomeWallpaper';
-import { useAccent } from '@/theme/AccentContext';
 import ReanimatedAnimated from 'react-native-reanimated';
 import { useCollapsingHeader } from '@/hooks/useCollapsingHeader';
 import { EmptyState } from '@/components/EmptyState';
@@ -58,7 +57,6 @@ const monthLong = (key: string) => longMonthYear(`${key}-01`);
  */
 export default function CategoryScreen() {
   const insets = useSafeAreaInsets();
-  const { accent, secondary } = useAccent();
   // The header sits over the page and shrinks as it scrolls.
   const { collapse, headerHeight, scrollHandler, scrollRef } = useCollapsingHeader();
   // Budgets and this page link to each other: go back to Budgets when it's
@@ -172,7 +170,7 @@ export default function CategoryScreen() {
   if (loaded && !loadingScope && !category) {
     return (
       <View style={styles.container}>
-        <HomeWallpaper accent={accent} secondary={secondary} />
+        <HomeWallpaper />
         <SkyHeader title="Category" showBack hideUser wallpaper />
         <EmptyState title="This category no longer exists" />
       </View>
@@ -186,7 +184,7 @@ export default function CategoryScreen() {
   if (!loadingScope && hideAmounts && category && privateFamily) {
     return (
       <View style={styles.container}>
-        <HomeWallpaper accent={accent} secondary={secondary} />
+        <HomeWallpaper />
         <SkyHeader title={category.name} showBack hideUser wallpaper />
         <EmptyState
           title="Hidden for now"
@@ -198,7 +196,7 @@ export default function CategoryScreen() {
 
   return (
     <View style={styles.container}>
-      <HomeWallpaper accent={accent} secondary={secondary} />
+      <HomeWallpaper />
       <ReanimatedAnimated.ScrollView
         ref={scrollRef}
         onScroll={scrollHandler}

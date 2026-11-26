@@ -47,7 +47,7 @@ function noteFor(stage: GrowthStage, streak: number): string {
 /** Daily spending-goal progress and streak history, with provisional results for today. */
 export default function GardenScreen() {
   const insets = useSafeAreaInsets();
-  const { accent, secondary } = useAccent();
+  const { secondary } = useAccent();
   // The header sits over the page and shrinks as it scrolls; the amount pad's scroll tracking feeds it.
   const { collapse, headerHeight, onJsScroll, onJsScrollEnd } = useCollapsingHeader();
   const [dailyGoalMinor, setDailyGoalMinor] = useState<number | null>(null);
@@ -107,7 +107,7 @@ export default function GardenScreen() {
   if (!loaded && !loadError) {
     return (
       <View style={styles.container}>
-        <HomeWallpaper accent={accent} secondary={secondary} />
+        <HomeWallpaper />
         <SkyHeader title="Suu’s garden" showBack hideUser wallpaper />
         <View style={{ paddingTop: 20 }}>
           <Glass radius={28} style={[styles.bed, { marginTop: 0 }]}>
@@ -127,7 +127,7 @@ export default function GardenScreen() {
 
   return (
     <View style={styles.container}>
-      <HomeWallpaper accent={accent} secondary={secondary} />
+      <HomeWallpaper />
       <AmountPadDock>
         {(scrollProps) => (
           <>

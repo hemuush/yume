@@ -29,7 +29,6 @@ import { useBudgetActions } from '@/features/budgets/useBudgetActions';
 import { useBudgetsData } from '@/features/budgets/useBudgetsData';
 import { useToday } from '@/features/budgets/useToday';
 import { HomeWallpaper } from '@/features/home/HomeWallpaper';
-import { useAccent } from '@/theme/AccentContext';
 import { ListCard } from '@/components/SummaryCard';
 import { showAlert } from '@/components/AppDialog';
 
@@ -53,7 +52,6 @@ export default function BudgetsWorkspace({
   // The header sits over the page and shrinks as it scrolls.
   const { collapse, headerHeight, scrollHandler, scrollRef } = useCollapsingHeader();
   const { hideAmounts } = usePrivacy();
-  const { accent, secondary } = useAccent();
   // Which sheet is open is kept outside React state, so opening or closing one does not redraw the page behind it.
   const [sheets] = useState(createBudgetsSheets);
 
@@ -134,7 +132,7 @@ export default function BudgetsWorkspace({
   if (!embedded && !loaded && !loadError) {
     return (
       <View style={styles.container}>
-        <HomeWallpaper accent={accent} secondary={secondary} plain />
+        <HomeWallpaper />
         <SkyHeader title="Budgets" showBack hideUser wallpaper />
         <View style={{ paddingTop: 8 }}>
           <SummarySkeleton />
@@ -233,7 +231,7 @@ export default function BudgetsWorkspace({
 
   return (
     <View style={styles.container}>
-      <HomeWallpaper accent={accent} secondary={secondary} plain />
+      <HomeWallpaper />
       <SolidFade style={{ flex: 1 }}>
         <ReanimatedAnimated.ScrollView
           ref={scrollRef}

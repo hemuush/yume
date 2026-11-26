@@ -33,7 +33,7 @@ const CATEGORIES_COLLAPSED = 5;
 const Header = memo(ReportsHeader);
 
 export default function ReportsScreen() {
-  const { accent, secondary } = useAccent();
+  const { accent } = useAccent();
   const insets = useSafeAreaInsets();
   const tabScrollPad = useTabScrollPad();
   const [cursor, setCursor] = useState<ReportWindow>(CURRENT_PERIOD);
@@ -265,7 +265,7 @@ export default function ReportsScreen() {
   if (status === 'error' && !ready) {
     return (
       <View style={styles.container}>
-        <HomeWallpaper accent={accent} secondary={secondary} plain />
+        <HomeWallpaper />
         {header}
         <ReportTabs value={tab} onChange={setTab} />
         <View style={styles.center}>
@@ -284,7 +284,7 @@ export default function ReportsScreen() {
   if (!ready || !comparison || !model) {
     return (
       <View style={styles.container}>
-        <HomeWallpaper accent={accent} secondary={secondary} plain />
+        <HomeWallpaper />
         {header}
         <ReportTabs value={tab} onChange={setTab} />
         {/* The loading header is in normal flow and already reserves its height. */}
@@ -297,7 +297,7 @@ export default function ReportsScreen() {
   const { current, previous } = comparison;
   return (
     <View style={styles.container}>
-      <HomeWallpaper accent={accent} secondary={secondary} plain />
+      <HomeWallpaper />
       {header}
       <ReportTabs value={tab} onChange={setTab} />
       <ScrollView

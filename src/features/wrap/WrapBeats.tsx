@@ -14,7 +14,6 @@ import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
 import { withoutRelock } from '@/lib/appLock';
 import { errorMessage } from '@/lib/errorMessage';
-import { useAccent } from '@/theme/AccentContext';
 import { Wrap, WrapBeat, USUAL_BAND_PCT } from './wrapData';
 import { Glass } from '@/components/Glass';
 import { HomeWallpaper } from '@/features/home/HomeWallpaper';
@@ -332,7 +331,6 @@ function FinalBeat({
   onReplay?: () => void;
 }) {
   const card = useRef<ViewInstance>(null);
-  const { accent, secondary } = useAccent();
   const hook = wrap.beats.find((b): b is BeatOf<'hook'> => b.kind === 'hook');
   const top = wrap.beats.find((b): b is BeatOf<'bars'> => b.kind === 'bars')?.items.slice(0, 3) ?? [];
   const line = cardLine(wrap);
@@ -375,7 +373,7 @@ function FinalBeat({
         <Rise delay={200} still={still} onShown={() => setCardShown(true)}>
           {/* The shared image: the card on its own bit of wallpaper, so it’s opaque and looks like the app. */}
           <View ref={card} collapsable={false} style={styles.card}>
-            <HomeWallpaper accent={accent} secondary={secondary} />
+            <HomeWallpaper />
             <Glass radius={24} tone="strong">
               <View style={styles.cardBody}>
                 <View style={styles.cardHead}>

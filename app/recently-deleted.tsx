@@ -53,7 +53,7 @@ const PAGE = 100;
  */
 export default function RecentlyDeletedScreen() {
   const insets = useSafeAreaInsets();
-  const { accent, secondary } = useAccent();
+  const { secondary } = useAccent();
   // The header sits over the page and shrinks as it scrolls.
   const { collapse, headerHeight, scrollHandler, scrollRef } = useCollapsingHeader();
   const runAction = useSaveOnce(async (action: () => Promise<void>) => {
@@ -154,7 +154,7 @@ export default function RecentlyDeletedScreen() {
 
   return (
     <View style={styles.container}>
-      <HomeWallpaper accent={accent} secondary={secondary} />
+      <HomeWallpaper />
       <ReanimatedAnimated.ScrollView
         ref={scrollRef}
         onScroll={scrollHandler}

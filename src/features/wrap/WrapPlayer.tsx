@@ -137,7 +137,7 @@ export function WrapPlayer({
     return () => bar.stopAnimation((v) => (from.current = v));
   }, [index, replay, stopped, still, progress, wrap.beats, last]);
 
-  const { accent, secondary } = useAccent();
+  const { accent } = useAccent();
 
   const [size, setSize] = useState({ w: 0, h: 0 });
 
@@ -190,7 +190,7 @@ export function WrapPlayer({
 
   return (
     <View style={styles.root} onLayout={onLayout}>
-      <HomeWallpaper accent={accent} secondary={secondary} />
+      <HomeWallpaper />
 
       <View
         style={{ paddingTop: insets.top + 10 }}

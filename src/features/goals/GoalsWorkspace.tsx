@@ -25,7 +25,6 @@ import { Skeleton } from '@/components/Skeleton';
 import { GoalListRow } from '@/features/goals/GoalListRow';
 import { reuseUnchanged } from '@/lib/stableData';
 import { HomeWallpaper } from '@/features/home/HomeWallpaper';
-import { useAccent } from '@/theme/AccentContext';
 import { GoalsHero } from '@/features/goals/GoalsHero';
 import { summarizeGoals } from '@/features/goals/goalPlan';
 import { useToday } from '@/features/budgets/useToday';
@@ -55,7 +54,6 @@ export default function GoalsWorkspace({
 } = {}) {
   const insets = useSafeAreaInsets();
   const { hideAmounts } = usePrivacy();
-  const { accent, secondary } = useAccent();
   // The header sits over the page and shrinks as it scrolls.
   const { collapse, headerHeight, scrollHandler, scrollRef } = useCollapsingHeader();
   const [allGoals, setAllGoals] = useState<SavingsGoal[]>([]);
@@ -208,7 +206,7 @@ export default function GoalsWorkspace({
   if (!embedded && !loaded && !loadError) {
     return (
       <View style={styles.container}>
-        <HomeWallpaper accent={accent} secondary={secondary} plain />
+        <HomeWallpaper />
         <SkyHeader title="Savings goals" showBack hideUser wallpaper />
         <View style={{ paddingTop: 24 }}>
           <View style={styles.list}>
@@ -362,7 +360,7 @@ export default function GoalsWorkspace({
 
   return (
     <View style={styles.container}>
-      <HomeWallpaper accent={accent} secondary={secondary} plain />
+      <HomeWallpaper />
       <SolidFade style={{ flex: 1 }}>
         <ReanimatedAnimated.ScrollView
           ref={scrollRef}

@@ -61,7 +61,7 @@ const MENTION_KEYS = [
 
 export default function NotificationSettingsScreen() {
   const insets = useSafeAreaInsets();
-  const { accent, secondary } = useAccent();
+  const { accent } = useAccent();
   // The header sits over the page and shrinks as it scrolls.
   const { collapse, headerHeight, scrollHandler, scrollRef } = useCollapsingHeader();
   const [delivery, setDelivery] = useState<NotificationDeliveryStatus | null>(null);
@@ -225,7 +225,7 @@ export default function NotificationSettingsScreen() {
   if (!prefs) {
     return (
       <View style={styles.container}>
-        <HomeWallpaper accent={accent} secondary={secondary} plain />
+        <HomeWallpaper />
         <SkyHeader title="Notifications" showBack hideUser wallpaper />
         {settingsError ?? (
           <View style={{ marginTop: theme.layout.screenTopGap }}>
@@ -278,7 +278,7 @@ export default function NotificationSettingsScreen() {
 
   return (
     <View style={styles.container}>
-      <HomeWallpaper accent={accent} secondary={secondary} plain />
+      <HomeWallpaper />
       <SolidFade style={{ flex: 1 }}>
         <ReanimatedAnimated.ScrollView
           ref={scrollRef}

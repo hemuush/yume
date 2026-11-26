@@ -9,7 +9,6 @@ import { errorMessage } from '@/lib/errorMessage';
 import { loadMonthWrap, loadWeekWrap, Wrap, wrapRange } from '@/features/wrap/wrapData';
 import { WrapPlayer } from '@/features/wrap/WrapPlayer';
 import { HomeWallpaper } from '@/features/home/HomeWallpaper';
-import { useAccent } from '@/theme/AccentContext';
 import { themedStyles } from '@/theme/themedStyles';
 
 /**
@@ -19,7 +18,6 @@ import { themedStyles } from '@/theme/themedStyles';
 export default function WrapScreen() {
   const { period } = useLocalSearchParams<{ period?: string }>();
   const kind = period === 'week' ? 'week' : 'month';
-  const { accent, secondary } = useAccent();
   // undefined while loading; null when there's nothing to play.
   const [wrap, setWrap] = useState<Wrap | null | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
@@ -68,7 +66,7 @@ export default function WrapScreen() {
 
   return (
     <View style={styles.center}>
-      <HomeWallpaper accent={accent} secondary={secondary} />
+      <HomeWallpaper />
       {error || wrap === null ? (
         <>
           <Text style={styles.title}>{error ? 'Couldn’t make your Wrap' : 'Nothing to wrap yet'}</Text>

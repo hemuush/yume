@@ -29,7 +29,6 @@ import { createInvestmentsSheets } from '@/features/investments/investmentsSheet
 import { SipRow } from '@/features/investments/SipRow';
 import { useInvestmentsData } from '@/features/investments/useInvestmentsData';
 import { theme } from '@/constants/theme';
-import { useAccent } from '@/theme/AccentContext';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import { useCollapsingHeader } from '@/hooks/useCollapsingHeader';
 import { useStableCallback } from '@/hooks/useStableCallback';
@@ -65,7 +64,6 @@ export default function InvestmentsWorkspace({
 } = {}) {
   const insets = useSafeAreaInsets();
   const { collapse, headerHeight, scrollHandler, scrollRef } = useCollapsingHeader();
-  const { accent, secondary } = useAccent();
   const { hideAmounts } = usePrivacy();
   // Which sheet is open lives outside React state: opening or closing one does not redraw the page behind it.
   const [sheets] = useState(createInvestmentsSheets);
@@ -240,7 +238,7 @@ export default function InvestmentsWorkspace({
 
   return (
     <View style={styles.container}>
-      <HomeWallpaper accent={accent} secondary={secondary} />
+      <HomeWallpaper />
       <ReanimatedAnimated.ScrollView
         ref={scrollRef}
         onScroll={scrollHandler}

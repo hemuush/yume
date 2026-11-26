@@ -21,7 +21,6 @@ import { useCategoriesData } from '@/features/categories/useCategoriesData';
 import { useCategoryActions } from '@/features/categories/useCategoryActions';
 import { CardRowsSkeleton } from '@/components/ListSkeleton';
 import { HomeWallpaper } from '@/features/home/HomeWallpaper';
-import { useAccent } from '@/theme/AccentContext';
 import { SheetTabs } from '@/components/SheetTabs';
 import { searchCategories, topLevelOnly } from '@/lib/categoryTree';
 
@@ -38,7 +37,6 @@ export default function CategoriesScreen() {
   const insets = useSafeAreaInsets();
   // The header sits over the page and shrinks as it scrolls.
   const { collapse, headerHeight, scrollHandler, scrollRef } = useCollapsingHeader();
-  const { accent, secondary } = useAccent();
   // Which sheet is open lives outside React state: opening or closing one does not redraw the tiles behind it.
   const [sheets] = useState(createCategoriesSheets);
   const [showArchived, setShowArchived] = useState(false);
@@ -88,7 +86,7 @@ export default function CategoriesScreen() {
   if (!loaded && !loadError) {
     return (
       <View style={styles.container}>
-        <HomeWallpaper accent={accent} secondary={secondary} plain />
+        <HomeWallpaper />
         <SkyHeader title="Categories" showBack hideUser wallpaper />
         <View style={{ paddingTop: 20 }}>
           <CardRowsSkeleton rows={6} />
@@ -99,7 +97,7 @@ export default function CategoriesScreen() {
 
   return (
     <View style={styles.container}>
-      <HomeWallpaper accent={accent} secondary={secondary} plain />
+      <HomeWallpaper />
       <SolidFade style={{ flex: 1 }}>
         <ReanimatedAnimated.ScrollView
           ref={scrollRef}

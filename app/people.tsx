@@ -20,7 +20,6 @@ import { groupPeople, showPeopleSummary } from '@/features/people/people.helpers
 import { PeopleNet } from '@/features/people/PeopleNet';
 import { ListCard } from '@/components/SummaryCard';
 import { HomeWallpaper } from '@/features/home/HomeWallpaper';
-import { useAccent } from '@/theme/AccentContext';
 import { PersonQuietRow } from '@/features/people/PersonQuietRow';
 import { PersonTile } from '@/features/people/PersonTile';
 import { PeopleSheets } from '@/features/people/PeopleSheets';
@@ -37,7 +36,6 @@ const colorOf = (p: PersonWithBalance) => flatPalette()[stableIndexFromId(p.id, 
  */
 export default function PeopleScreen() {
   const insets = useSafeAreaInsets();
-  const { accent, secondary } = useAccent();
   // The header sits over the page and shrinks as it scrolls.
   const { collapse, headerHeight, scrollHandler, scrollRef } = useCollapsingHeader();
   // Which sheet is open lives outside React state: opening or closing one does not redraw the page behind it.
@@ -52,7 +50,7 @@ export default function PeopleScreen() {
 
   return (
     <View style={styles.container}>
-      <HomeWallpaper accent={accent} secondary={secondary} plain />
+      <HomeWallpaper />
       <ReanimatedAnimated.ScrollView
         ref={scrollRef}
         onScroll={scrollHandler}

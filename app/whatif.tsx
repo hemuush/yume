@@ -30,7 +30,6 @@ import { Amount } from '@/components/Amount';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { SummaryCard } from '@/components/SummaryCard';
 import { HomeWallpaper } from '@/features/home/HomeWallpaper';
-import { useAccent } from '@/theme/AccentContext';
 import Feather from '@expo/vector-icons/Feather';
 import { theme } from '@/constants/theme';
 import { useScreenLoad } from '@/hooks/useScreenLoad';
@@ -98,7 +97,6 @@ const CATEGORY_CHIPS = 6;
  */
 export default function WhatIfScreen() {
   const insets = useSafeAreaInsets();
-  const { accent, secondary } = useAccent();
   // The header sits over the page and shrinks as it scrolls.
   const { collapse, headerHeight, onJsScroll, onJsScrollEnd } = useCollapsingHeader();
   // `category` opens What-if with that category already chosen (from its category page).
@@ -187,7 +185,7 @@ export default function WhatIfScreen() {
   if (!loaded && !loadError) {
     return (
       <View style={styles.container}>
-        <HomeWallpaper accent={accent} secondary={secondary} />
+        <HomeWallpaper />
         <SkyHeader title="What if…?" showBack hideUser wallpaper />
         <SummaryCard style={styles.card}>
           <Skeleton width={120} height={12} radius={4} />
@@ -199,7 +197,7 @@ export default function WhatIfScreen() {
 
   return (
     <View style={styles.container}>
-      <HomeWallpaper accent={accent} secondary={secondary} />
+      <HomeWallpaper />
       {/* "Before you buy" has an amount field: the app’s own pad docks under the page, as on Profile, instead of the
           phone keyboard. */}
       <AmountPadDock>

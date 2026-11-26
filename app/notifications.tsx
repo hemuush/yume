@@ -62,7 +62,7 @@ export default function NeedsYouScreen() {
   const insets = useSafeAreaInsets();
   // The header sits over the page and shrinks as it scrolls.
   const { collapse, headerHeight, scrollHandler, scrollRef } = useCollapsingHeader();
-  const { accent, secondary } = useAccent();
+  const { accent } = useAccent();
   const { show: showUndo } = useUndoToast();
   const [shown, setShown] = useState<NeedsYouItem[] | null>(null);
   const [dismissed, setDismissed] = useState<NeedsYouItem[]>([]);
@@ -175,7 +175,7 @@ export default function NeedsYouScreen() {
 
   return (
     <View style={styles.container}>
-      <HomeWallpaper accent={accent} secondary={secondary} plain />
+      <HomeWallpaper />
       <ReanimatedAnimated.ScrollView
         ref={scrollRef}
         onScroll={scrollHandler}

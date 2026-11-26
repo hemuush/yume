@@ -3,7 +3,6 @@ import { Text } from '@/components/Text';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { SkyHeader } from '@/features/home/SkyHeader';
 import { HomeWallpaper } from '@/features/home/HomeWallpaper';
-import { useAccent } from '@/theme/AccentContext';
 import { theme } from '@/constants/theme';
 
 /** Initial fetch failure: show an honest, recoverable state instead of invented empty data. */
@@ -18,7 +17,6 @@ export function ScreenLoadError({
   onRetry: () => void;
   embedded?: boolean;
 }) {
-  const { accent, secondary } = useAccent();
   const content = (
     <View style={{ padding: 20, gap: 12 }}>
       <Text style={{ fontFamily: theme.font.bodyBold, fontSize: 15 }}>Couldn’t load your data</Text>
@@ -31,7 +29,7 @@ export function ScreenLoadError({
   if (embedded) return content;
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <HomeWallpaper accent={accent} secondary={secondary} />
+      <HomeWallpaper />
       <SkyHeader title={title} showBack hideUser wallpaper />
       <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>{content}</ScrollView>
     </View>

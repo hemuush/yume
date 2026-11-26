@@ -121,7 +121,7 @@ export default function ExportScreen() {
 
   return (
     <View style={styles.container}>
-      <HomeWallpaper accent={accent} secondary={secondary} />
+      <HomeWallpaper />
       <ReanimatedAnimated.ScrollView
         style={styles.scroll}
         ref={scrollRef}

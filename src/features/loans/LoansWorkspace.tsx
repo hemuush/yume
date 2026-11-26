@@ -23,7 +23,6 @@ import { ClosedLoans } from '@/features/loans/ClosedLoans';
 import { LoanListItem } from '@/features/loans/LoanListItem';
 import { LoansSheets } from '@/features/loans/LoansSheets';
 import { HomeWallpaper } from '@/features/home/HomeWallpaper';
-import { useAccent } from '@/theme/AccentContext';
 import { LoanPayoffTools, LoansHero } from '@/features/loans/LoansHero';
 import { buildLoansModel } from '@/features/loans/loansModel';
 import { createLoansSheets } from '@/features/loans/loansSheetsStore';
@@ -58,7 +57,6 @@ export default function LoansWorkspace({
   payoffAction?: React.ReactNode;
 } = {}) {
   const insets = useSafeAreaInsets();
-  const { accent, secondary } = useAccent();
   // The header sits over the page and shrinks as it scrolls.
   const { collapse, headerHeight, scrollHandler, scrollRef } = useCollapsingHeader();
   // Which sheet is open is kept outside React state, so opening or closing one does not redraw the page behind it.
@@ -200,7 +198,7 @@ export default function LoansWorkspace({
 
   return (
     <View style={styles.container}>
-      <HomeWallpaper accent={accent} secondary={secondary} plain />
+      <HomeWallpaper />
       <ReanimatedAnimated.ScrollView
         ref={scrollRef}
         onScroll={scrollHandler}
