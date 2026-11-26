@@ -123,7 +123,14 @@ export async function addLedgerEntry(input: {
     await tx.runAsync(
       `INSERT INTO person_ledger_entries (id, person_id, transaction_id, amount_minor, date, note)
      VALUES (?, ?, ?, ?, ?, ?)`,
-      [id, input.personId, input.transactionId ?? null, input.amountMinor, input.date, input.note ?? '']
+      [
+        id,
+        input.personId,
+        input.transactionId ?? null,
+        input.amountMinor,
+        input.date,
+        (input.note ?? '').trim(),
+      ]
     );
     const row = await tx.getFirstAsync<PersonLedgerEntryRow>(
       'SELECT * FROM person_ledger_entries WHERE id = ?',
@@ -157,12 +164,20 @@ async function insertPersonMoneyMovement(
   await tx.runAsync(
     `INSERT INTO transactions (id, type, account_id, category_id, amount_minor, date, note)
      VALUES (?, ?, ?, ?, ?, ?, ?)`,
-    [txId, input.type, input.accountId, input.categoryId, input.amountMinor, input.date, input.note ?? '']
+    [
+      txId,
+      input.type,
+      input.accountId,
+      input.categoryId,
+      input.amountMinor,
+      input.date,
+      (input.note ?? '').trim(),
+    ]
   );
   await tx.runAsync(
     `INSERT INTO person_ledger_entries (id, person_id, transaction_id, amount_minor, date, note)
      VALUES (?, ?, ?, ?, ?, ?)`,
-    [newId(), input.personId, txId, input.ledgerAmountMinor, input.date, input.note ?? '']
+    [newId(), input.personId, txId, input.ledgerAmountMinor, input.date, (input.note ?? '').trim()]
   );
 }
 
