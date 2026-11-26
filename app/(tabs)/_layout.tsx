@@ -52,15 +52,21 @@ export default function TabsLayout() {
   const [repeatSheetVisible, setRepeatSheetVisible] = useState(false);
   const schemeVersion = useSchemeVersion();
   useEffect(() => {
-    // One at a time, each on an idle moment, so building them never stalls what is on screen.
+    // One at a time, each on an idle moment, so building them never stalls what is on screen. Stops when the tabs go
+    // (a restore resets the app): a late one would build a tab for a navigator that is gone.
+    let stopped = false;
     const next = (i: number) => {
-      if (i >= PRELOADED_TABS.length) return;
+      if (stopped || i >= PRELOADED_TABS.length) return;
       runWhenIdle(() => {
+        if (stopped) return;
         router.prefetch(PRELOADED_TABS[i]);
         next(i + 1);
       }, 4000);
     };
     next(0);
+    return () => {
+      stopped = true;
+    };
   }, []);
 
   return (
