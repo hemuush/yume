@@ -52,9 +52,7 @@ export function HomeHeader({
   onHeight,
   wraps = [],
   onPlayWrap,
-  line,
   onBrandPress,
-  children,
 }: {
   cursor: PeriodCursor;
   onChange: (next: PeriodCursor) => void;
@@ -68,11 +66,8 @@ export function HomeHeader({
   /** The Wraps ready today (wrapWindow.ts); the Wrap button shows only while there's one. */
   wraps?: ReadyWrap[];
   onPlayWrap?: (wrap: ReadyWrap) => void;
-  /** Suu's line about the month, said right after the greeting. */
-  line?: string;
   /** Tapping the Yume logo (Home scrolls back to the top). Without it the logo is only a picture. */
   onBrandPress?: () => void;
-  children?: React.ReactNode;
 }) {
   const reduce = useReduceMotion();
   const insets = useSafeAreaInsets();
@@ -214,9 +209,7 @@ export function HomeHeader({
                 })}
               </Text>
             </View>
-            {line ? <Text style={styles.insight}>{line}</Text> : null}
           </ReanimatedAnimated.View>
-          {children}
         </ReanimatedAnimated.View>
       </View>
     </ReanimatedAnimated.View>
@@ -257,12 +250,5 @@ const styles = themedStyles(() =>
       color: theme.colors.ink,
     },
     greetName: { fontFamily: theme.font.bodyBold },
-    insight: {
-      fontFamily: theme.font.body,
-      fontSize: 12,
-      lineHeight: 18,
-      color: theme.colors.textSecondary,
-      marginTop: 2,
-    },
   })
 );

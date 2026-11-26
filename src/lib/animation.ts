@@ -48,7 +48,7 @@ export function markHomeOpeningPlayed(): void {
  * How a Home row arrives: one plain fade, on the first load after open and for rows appearing later (new month,
  * pull-to-refresh), so the screen never replays an entrance. No stagger, no travel.
  */
-export function homeRowEntering(_index: number, opening: boolean) {
+export function homeRowEntering(opening: boolean) {
   return opening ? ROW_OPENING : ROW_QUICK;
 }
 
@@ -83,6 +83,3 @@ export const DOCK_EXIT = FadeOutDown.duration(DURATIONS.rowExit)
 export const CONTENT_ENTER = FadeIn.duration(DURATIONS.quick)
   .easing(MOTION.ease)
   .reduceMotion(ReduceMotion.System);
-
-/** A tab of a screen swapping in place (Plan's and Reports' tabs): the same plain fade, so every switch is quiet. */
-export const TAB_ENTER = CONTENT_ENTER;

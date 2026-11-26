@@ -74,7 +74,7 @@ const openSpendingReports = (key: string) => {
   });
 };
 
-const rowEntering = (i: number) => homeRowEntering(i, !hasPlayedHomeOpening());
+const rowEntering = () => homeRowEntering(!hasPlayedHomeOpening());
 // A section fades in a touch longer on the first open, then quickly for later arrivals (new month, refresh).
 // On the first open the sections also rise into place one after another; later arrivals only fade.
 const sectionMotion = (i: number) =>

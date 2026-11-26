@@ -27,7 +27,6 @@ function render(over: Partial<React.ComponentProps<typeof HomeHeader>> = {}) {
         alertCount={2}
         scrollY={{ value: 0 } as never}
         onHeight={jest.fn()}
-        line="Spending is steady."
         {...over}
       />
     );
@@ -58,11 +57,10 @@ describe('Home header', () => {
     expect(texts(r)).toContain('Yume');
   });
 
-  it('greets by name with the date and Suu line, left-aligned', () => {
+  it('greets by name with the date, left-aligned', () => {
     const r = render();
     const all = texts(r).join(' ');
     expect(all).toContain('hemu');
-    expect(all).toContain('Spending is steady.');
     for (const t of r.root.findAllByType(Text)) {
       expect(StyleSheet.flatten(t.props.style)?.textAlign).not.toBe('center');
     }

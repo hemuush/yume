@@ -1,7 +1,7 @@
 /**
- * A screen that shows placeholders while it loads must fade its content in when the data arrives (LoadFade, or
- * `entering={CONTENT_ENTER}` on its scroll view, or Home's own section entrances), instead of cutting from grey bars
- * to cards. Garden is left out: its own decorative flow has its own timings (docs/CALM_MOTION).
+ * A screen that shows placeholders while it loads must fade its content in when the data arrives (LoadFade, a
+ * SolidFade around it, or `entering={CONTENT_ENTER}`), instead of cutting from grey bars to cards. Garden is left out:
+ * its own decorative flow has its own timings (docs/CALM_MOTION).
  */
 import { readdirSync, readFileSync, statSync } from 'fs';
 import { join } from 'path';
@@ -27,8 +27,6 @@ it('looks at the screens that show placeholders', () => {
 it.each(screens.map((f) => [f.slice(APP.length + 1), f]))(
   '%s fades its content in after loading',
   (_name, file) => {
-    expect(readFileSync(file, 'utf8')).toMatch(
-      /LoadFade|SolidFade|CONTENT_ENTER|TAB_ENTER|homeSectionEntering|homeRowEntering/
-    );
+    expect(readFileSync(file, 'utf8')).toMatch(/LoadFade|SolidFade|CONTENT_ENTER/);
   }
 );

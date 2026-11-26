@@ -34,7 +34,6 @@ function Action({ type, label, icon }: (typeof ACTIONS)[number]) {
       style={({ pressed }) => [
         styles.wrap,
         { flexBasis: 88 * Math.max(1, fontScale) },
-        type === 'expense' && styles.primary,
         pressed && styles.pressed,
       ]}
       accessibilityRole="button"
@@ -80,7 +79,6 @@ const styles = themedStyles(() =>
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: theme.colors.home.edge,
     },
-    primary: {},
     chipCoral: { backgroundColor: theme.colors.coral },
     chip: {
       width: 30,
