@@ -86,15 +86,3 @@ export const CONTENT_ENTER = FadeIn.duration(DURATIONS.quick)
 
 /** A tab of a screen swapping in place (Plan's and Reports' tabs): the same plain fade, so every switch is quiet. */
 export const TAB_ENTER = CONTENT_ENTER;
-
-/**
- * A list's first cards arriving one after another: each rises 12 dp while fading in, 35 ms after the one before it, for
- * the first six only so a long list never waits. Built once per index.
- */
-const STAGGER = Array.from({ length: 6 }, (_, i) =>
-  FadeInDown.duration(DURATIONS.standard)
-    .delay(i * 35)
-    .easing(MOTION.ease)
-    .reduceMotion(ReduceMotion.System)
-);
-export const staggerEnter = (index: number) => STAGGER[Math.min(Math.max(index, 0), STAGGER.length - 1)];

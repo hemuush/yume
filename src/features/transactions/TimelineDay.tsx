@@ -88,7 +88,6 @@ function TimelineDayView({
   categoryName,
   onPressTx,
   stacks,
-  entering,
   onReorder,
   onDragActive,
   onSwipeDelete,
@@ -113,7 +112,6 @@ function TimelineDayView({
   onPressTx: (tx: Transaction) => void;
   /** Which stacked lines are open (see stackStore). */
   stacks: StackStore;
-  entering?: React.ComponentProps<typeof ReanimatedAnimated.View>['entering'];
   /** Saves the day's new order (entry ids, top to bottom). Omit to turn hand-ordering off (search, filters). */
   onReorder?: (date: string, orderedIds: string[]) => Promise<void>;
   /** True while a line is held and dragged, so the list can stop scrolling under the finger. */
@@ -376,7 +374,7 @@ function TimelineDayView({
     // go with it. Without this each line plays its fade-out first, and the removed day is kept on screen, over the
     // new one, until they have all finished.
     <LayoutAnimationConfig skipExiting>
-      <ReanimatedAnimated.View entering={entering} style={styles.day}>
+      <ReanimatedAnimated.View style={styles.day}>
         <View style={styles.lane}>
           <View
             style={[h.dayHead, selected && styles.headOn]}
@@ -512,11 +510,11 @@ function OpenStack({
 
 /**
  * Memoized: typing in search, opening a sheet or dragging re-renders the screen, and a month holds dozens of
- * days. `entering` only plays on mount, so a new animation object on each render isn't a reason to redraw.
+ * days.
  */
 export const TimelineDay = memo(TimelineDayView, (prev, next) => {
   for (const key of Object.keys(next) as (keyof typeof next)[]) {
-    if (key === 'entering' || prev[key] === next[key]) continue;
+    if (prev[key] === next[key]) continue;
     // A day made of the same entries is the same day, whether or not its list was rebuilt around them.
     if (
       (key === 'items' || key === 'notes') &&
