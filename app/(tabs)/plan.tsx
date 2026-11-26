@@ -3,7 +3,7 @@ import { type ComponentRef, useCallback, useEffect, useMemo, useRef, useState } 
 import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
-import Animated from 'react-native-reanimated';
+import { SolidFade } from '@/components/SolidFade';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Appear } from '@/components/Appear';
 import { LoadFade } from '@/components/LoadFade';
@@ -23,7 +23,6 @@ import type { PlanActions } from '@/features/plan/planActions';
 import { createPlanSheets } from '@/features/plan/planSheetsStore';
 import { upcomingSelection } from '@/features/plan/UpcomingDates';
 import { usePlanData } from '@/features/plan/usePlanData';
-import { TAB_ENTER } from '@/lib/animation';
 import { withPressedTint } from '@/lib/pressed';
 import { useTabScrollPad } from '@/lib/uiScale';
 import { useTabScrollToTop } from '@/hooks/useTabScrollToTop';
@@ -175,7 +174,7 @@ export default function PlanScreen() {
           )
         ) : (
           <LoadFade loaded>
-            <Animated.View key={tab} entering={TAB_ENTER}>
+            <SolidFade key={tab}>
               {tab === 'overview' && (
                 <PlanOverviewTab data={scoped} refreshToken={refreshToken} actions={actions} />
               )}
@@ -203,7 +202,7 @@ export default function PlanScreen() {
               {tab === 'debt' && (
                 <PlanDebtTab data={scoped} actions={actions} refreshToken={refreshToken} reload={reload} />
               )}
-            </Animated.View>
+            </SolidFade>
           </LoadFade>
         )}
       </ScrollView>

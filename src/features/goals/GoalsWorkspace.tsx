@@ -2,7 +2,6 @@ import { planMoneyList } from '@/features/plan/plan.styles';
 import { WorkspaceActions } from '@/features/plan/WorkspaceActions';
 import { ScreenLoadError } from '@/components/ScreenLoadError';
 import { Appear } from '@/components/Appear';
-import { CONTENT_ENTER } from '@/lib/animation';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
 import { View } from 'react-native';
@@ -15,6 +14,7 @@ import { theme } from '@/constants/theme';
 import { HeaderIconButton } from '@/components/AppHeader';
 import { SkyHeader, HeaderSummary } from '@/features/home/SkyHeader';
 import ReanimatedAnimated from 'react-native-reanimated';
+import { SolidFade } from '@/components/SolidFade';
 import { usePrivacy } from '@/theme/PrivacyContext';
 import { formatMoney } from '@/lib/money';
 import { useCollapsingHeader } from '@/hooks/useCollapsingHeader';
@@ -363,19 +363,19 @@ export default function GoalsWorkspace({
   return (
     <View style={styles.container}>
       <HomeWallpaper accent={accent} secondary={secondary} plain />
-      <ReanimatedAnimated.ScrollView
-        // The data arriving after the placeholders: one short fade, the header and wallpaper stay solid.
-        entering={CONTENT_ENTER}
-        ref={scrollRef}
-        onScroll={scrollHandler}
-        scrollEventThrottle={16}
-        contentContainerStyle={{
-          paddingTop: headerHeight,
-          paddingBottom: theme.layout.screenScrollPad + insets.bottom,
-        }}
-      >
-        {content}
-      </ReanimatedAnimated.ScrollView>
+      <SolidFade style={{ flex: 1 }}>
+        <ReanimatedAnimated.ScrollView
+          ref={scrollRef}
+          onScroll={scrollHandler}
+          scrollEventThrottle={16}
+          contentContainerStyle={{
+            paddingTop: headerHeight,
+            paddingBottom: theme.layout.screenScrollPad + insets.bottom,
+          }}
+        >
+          {content}
+        </ReanimatedAnimated.ScrollView>
+      </SolidFade>
       <SkyHeader
         collapse={collapse}
         summary={

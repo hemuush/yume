@@ -28,7 +28,7 @@ it.each(screens.map((f) => [f.slice(APP.length + 1), f]))(
   '%s fades its content in after loading',
   (_name, file) => {
     expect(readFileSync(file, 'utf8')).toMatch(
-      /LoadFade|CONTENT_ENTER|TAB_ENTER|homeSectionEntering|homeRowEntering/
+      /LoadFade|SolidFade|CONTENT_ENTER|TAB_ENTER|homeSectionEntering|homeRowEntering/
     );
   }
 );

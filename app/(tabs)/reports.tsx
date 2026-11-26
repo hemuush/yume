@@ -2,12 +2,11 @@ import { pullRefreshColors } from '@/components/pullRefreshColors';
 import { useKeptAcrossModeChange } from '@/theme/useKeptAcrossModeChange';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, ScrollView, ScrollViewInstance, RefreshControl } from 'react-native';
-import Animated from 'react-native-reanimated';
+import { SolidFade } from '@/components/SolidFade';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { Text } from '@/components/Text';
-import { TAB_ENTER } from '@/lib/animation';
 import { isIsoDate, toLocalIsoDate } from '@/lib/date';
 import { CURRENT_PERIOD, isCustomWindow, windowRange, type ReportWindow } from '@/lib/period';
 import { useTabScrollPad } from '@/lib/uiScale';
@@ -327,7 +326,7 @@ export default function ReportsScreen() {
             <PrimaryButton title="Retry details" variant="secondary" onPress={retryDetails} />
           </View>
         )}
-        <Animated.View key={tab} entering={TAB_ENTER}>
+        <SolidFade key={tab}>
           {tab === 'days' ? (
             <OverviewTab
               cursor={cursor}
@@ -418,7 +417,7 @@ export default function ReportsScreen() {
               onOpenCategory={openCategory}
             />
           )}
-        </Animated.View>
+        </SolidFade>
       </ScrollView>
     </View>
   );

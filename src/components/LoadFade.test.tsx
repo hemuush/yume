@@ -1,12 +1,12 @@
 /** Placeholders show as they are; the arrived content is a new view that fades in once. */
 import { useEffect } from 'react';
-import { View, Text } from 'react-native';
+import { Text } from 'react-native';
 import { create, act } from 'react-test-renderer';
 
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
 
-import { CONTENT_ENTER } from '@/lib/animation';
 import { LoadFade } from './LoadFade';
+import { SolidFade } from './SolidFade';
 
 let mounts = 0;
 function Probe({ label }: { label: string }) {
@@ -29,7 +29,7 @@ it('does not animate the placeholders, and fades the content in with the shared 
       </LoadFade>
     );
   });
-  expect(tree.root.findByType(View).props.entering).toBeUndefined();
+  expect(tree.root.findByType(SolidFade).props.play).toBe(false);
   act(() =>
     tree.update(
       <LoadFade loaded>
@@ -37,7 +37,7 @@ it('does not animate the placeholders, and fades the content in with the shared 
       </LoadFade>
     )
   );
-  expect(tree.root.findByType(View).props.entering).toBe(CONTENT_ENTER);
+  expect(tree.root.findByType(SolidFade).props.play).toBe(true);
   expect(tree.root.findByType(Text).props.children).toBe('cards');
   act(() => tree.unmount());
 });

@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { CONTENT_ENTER } from '@/lib/animation';
-import Animated from 'react-native-reanimated';
+import { SolidFade } from '@/components/SolidFade';
 import { View, StyleSheet } from 'react-native';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { EmptyState } from '@/components/EmptyState';
@@ -54,13 +53,13 @@ export function ReportTrends({ cashFlow, ...props }: Props) {
           />
         </View>
       )}
-      <Animated.View key={selected} entering={CONTENT_ENTER}>
+      <SolidFade key={selected}>
         {selected === 'flow' ? (
           <CashFlowCard points={cashFlow} inProgress={!!props.inProgress} monthLink={props.monthLink} />
         ) : (
           <TrendChart key={selected} {...props} fixedKind={selected === 'netWorth' ? 'netWorth' : 'spend'} />
         )}
-      </Animated.View>
+      </SolidFade>
     </View>
   );
 }

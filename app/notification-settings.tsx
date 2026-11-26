@@ -1,5 +1,4 @@
 import { useCallback, useRef, useState } from 'react';
-import { CONTENT_ENTER } from '@/lib/animation';
 import { View, StyleSheet, Linking, Pressable } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { withPressedTint } from '@/lib/pressed';
@@ -8,6 +7,7 @@ import { useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SkyHeader } from '@/features/home/SkyHeader';
 import ReanimatedAnimated from 'react-native-reanimated';
+import { SolidFade } from '@/components/SolidFade';
 import { useCollapsingHeader } from '@/hooks/useCollapsingHeader';
 import { Section } from '@/components/Section';
 import { SCREEN } from '@/components/screenStyles';
@@ -279,210 +279,210 @@ export default function NotificationSettingsScreen() {
   return (
     <View style={styles.container}>
       <HomeWallpaper accent={accent} secondary={secondary} plain />
-      <ReanimatedAnimated.ScrollView
-        // The settings arriving after the placeholders: one short fade, the header and wallpaper stay solid.
-        entering={CONTENT_ENTER}
-        ref={scrollRef}
-        onScroll={scrollHandler}
-        scrollEventThrottle={16}
-        contentContainerStyle={{ paddingTop: headerHeight }}
-      >
-        {settingsError}
-        <ListCard style={styles.statusCard}>
-          <Pressable
-            onPress={() => setTroubleOpen((v) => !v)}
-            style={withPressedTint(accent, styles.troubleRow)}
-            accessibilityRole="button"
-            accessibilityState={{ expanded: troubleOpen }}
-            accessibilityLabel="Delivery check"
-          >
-            <View
-              style={[
-                styles.live,
-                { backgroundColor: deliveryOk ? theme.colors.income : theme.colors.expense },
-              ]}
-            />
-            <View style={{ flex: 1, minWidth: 0 }}>
-              <Text style={styles.troubleLabel}>{deliveryTitle}</Text>
-              <Text style={styles.deliveryHint}>{deliverySub}</Text>
-            </View>
-            <Feather
-              name={troubleOpen ? 'chevron-up' : 'chevron-down'}
-              size={16}
-              color={theme.colors.textSecondary}
-            />
-          </Pressable>
-          {troubleOpen && (
-            <View>
-              <Text style={[styles.deliveryHint, styles.deliveryNote]}>
-                {deliveryError ??
-                  'Morning only sends when something is due: an EMI, a bill, a refund or an alert. Evening skips the log reminder if you’ve logged that day. Reminders are planned 14 days ahead and renewed when you open Yume; Android may delay delivery.'}
-              </Text>
-              {delivery?.permitted &&
-                !delivery.channelBlocked &&
-                typeof delivery.morningCount === 'number' &&
-                typeof delivery.eveningCount === 'number' && (
-                  <Text style={[styles.deliveryHint, styles.deliveryNote]}>
-                    Morning: {prefs.morningEnabled ? `${delivery.morningCount} scheduled` : 'Off'} · Evening:{' '}
-                    {prefs.eveningEnabled ? `${delivery.eveningCount} scheduled` : 'Off'}
-                  </Text>
+      <SolidFade style={{ flex: 1 }}>
+        <ReanimatedAnimated.ScrollView
+          ref={scrollRef}
+          onScroll={scrollHandler}
+          scrollEventThrottle={16}
+          contentContainerStyle={{ paddingTop: headerHeight }}
+        >
+          {settingsError}
+          <ListCard style={styles.statusCard}>
+            <Pressable
+              onPress={() => setTroubleOpen((v) => !v)}
+              style={withPressedTint(accent, styles.troubleRow)}
+              accessibilityRole="button"
+              accessibilityState={{ expanded: troubleOpen }}
+              accessibilityLabel="Delivery check"
+            >
+              <View
+                style={[
+                  styles.live,
+                  { backgroundColor: deliveryOk ? theme.colors.income : theme.colors.expense },
+                ]}
+              />
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <Text style={styles.troubleLabel}>{deliveryTitle}</Text>
+                <Text style={styles.deliveryHint}>{deliverySub}</Text>
+              </View>
+              <Feather
+                name={troubleOpen ? 'chevron-up' : 'chevron-down'}
+                size={16}
+                color={theme.colors.textSecondary}
+              />
+            </Pressable>
+            {troubleOpen && (
+              <View>
+                <Text style={[styles.deliveryHint, styles.deliveryNote]}>
+                  {deliveryError ??
+                    'Morning only sends when something is due: an EMI, a bill, a refund or an alert. Evening skips the log reminder if you’ve logged that day. Reminders are planned 14 days ahead and renewed when you open Yume; Android may delay delivery.'}
+                </Text>
+                {delivery?.permitted &&
+                  !delivery.channelBlocked &&
+                  typeof delivery.morningCount === 'number' &&
+                  typeof delivery.eveningCount === 'number' && (
+                    <Text style={[styles.deliveryHint, styles.deliveryNote]}>
+                      Morning: {prefs.morningEnabled ? `${delivery.morningCount} scheduled` : 'Off'} ·
+                      Evening: {prefs.eveningEnabled ? `${delivery.eveningCount} scheduled` : 'Off'}
+                    </Text>
+                  )}
+                {deliveryError && (
+                  <SettingsRow
+                    compact
+                    icon="refresh"
+                    tone="sky"
+                    label="Check again"
+                    divider
+                    onPress={() => void refreshDelivery()}
+                  />
                 )}
-              {deliveryError && (
                 <SettingsRow
                   compact
-                  icon="refresh"
+                  icon="bell-ring-outline"
                   tone="sky"
-                  label="Check again"
+                  label="Test notification"
+                  sub="Sends one now"
                   divider
-                  onPress={() => void refreshDelivery()}
+                  dimmed={deliveryBusy}
+                  onPress={() => void checkDelivery(true)}
                 />
-              )}
-              <SettingsRow
+                <SettingsRow
+                  compact
+                  icon="calendar-refresh-outline"
+                  tone="sky"
+                  label="Rebuild reminders"
+                  sub="Plans the next 14 days again"
+                  divider
+                  dimmed={deliveryBusy}
+                  onPress={() => void checkDelivery(false)}
+                />
+                <SettingsRow
+                  compact
+                  icon="battery-heart-variant"
+                  tone="sky"
+                  label="Battery settings"
+                  sub="Xiaomi, Oppo, Vivo, Samsung: set Yume to unrestricted"
+                  divider
+                  onPress={() => void openBatterySettings()}
+                />
+              </View>
+            )}
+          </ListCard>
+          <DayArc
+            morning={{ on: prefs.morningEnabled, minutes: morningMinutes }}
+            evening={{ on: prefs.eveningEnabled, minutes: eveningMinutes }}
+          />
+          {delivery?.permitted && !delivery.channelBlocked && delivery.exactBlocked && (
+            <View style={styles.permissionBanner}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.permissionTitle}>Reminders may arrive late</Text>
+                <Text style={styles.permissionSub}>
+                  Allow “Alarms & reminders” so they arrive at the time you set.
+                </Text>
+              </View>
+              <PrimaryButton
+                title="Allow"
                 compact
-                icon="bell-ring-outline"
-                tone="sky"
-                label="Test notification"
-                sub="Sends one now"
-                divider
-                dimmed={deliveryBusy}
-                onPress={() => void checkDelivery(true)}
-              />
-              <SettingsRow
-                compact
-                icon="calendar-refresh-outline"
-                tone="sky"
-                label="Rebuild reminders"
-                sub="Plans the next 14 days again"
-                divider
-                dimmed={deliveryBusy}
-                onPress={() => void checkDelivery(false)}
-              />
-              <SettingsRow
-                compact
-                icon="battery-heart-variant"
-                tone="sky"
-                label="Battery settings"
-                sub="Xiaomi, Oppo, Vivo, Samsung: set Yume to unrestricted"
-                divider
-                onPress={() => void openBatterySettings()}
+                onPress={() => {
+                  void requestExactAlarmPermission()
+                    .then(() => refreshDelivery())
+                    .catch((e) => showAlert('Phone settings', errorMessage(e)));
+                }}
               />
             </View>
           )}
-        </ListCard>
-        <DayArc
-          morning={{ on: prefs.morningEnabled, minutes: morningMinutes }}
-          evening={{ on: prefs.eveningEnabled, minutes: eveningMinutes }}
-        />
-        {delivery?.permitted && !delivery.channelBlocked && delivery.exactBlocked && (
-          <View style={styles.permissionBanner}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.permissionTitle}>Reminders may arrive late</Text>
-              <Text style={styles.permissionSub}>
-                Allow “Alarms & reminders” so they arrive at the time you set.
-              </Text>
+          {delivery && (!delivery.permitted || delivery.channelBlocked) && (
+            <View style={styles.permissionBanner}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.permissionTitle}>
+                  {delivery.permitted ? 'Yume reminders category is off' : 'Notifications are off for Yume'}
+                </Text>
+                <Text style={styles.permissionSub}>Turn on reminders in your phone settings.</Text>
+              </View>
+              <PrimaryButton
+                title="Phone settings"
+                compact
+                onPress={() => {
+                  void Linking.openSettings().catch((e) => showAlert('Phone settings', errorMessage(e)));
+                }}
+              />
             </View>
-            <PrimaryButton
-              title="Allow"
-              compact
-              onPress={() => {
-                void requestExactAlarmPermission()
-                  .then(() => refreshDelivery())
-                  .catch((e) => showAlert('Phone settings', errorMessage(e)));
-              }}
+          )}
+          <View style={styles.slots}>
+            <SlotCard
+              kind="morning"
+              sub="Only when something is due"
+              on={prefs.morningEnabled}
+              minutes={morningMinutes}
+              onToggle={toggleMorning}
+              onChange={changeMorning}
+            />
+            <SlotCard
+              kind="evening"
+              sub="Log nudge if none today"
+              on={prefs.eveningEnabled}
+              minutes={eveningMinutes}
+              onToggle={toggleEvening}
+              onChange={changeEvening}
             />
           </View>
-        )}
-        {delivery && (!delivery.permitted || delivery.channelBlocked) && (
-          <View style={styles.permissionBanner}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.permissionTitle}>
-                {delivery.permitted ? 'Yume reminders category is off' : 'Notifications are off for Yume'}
+          {noTimes ? (
+            <Text style={styles.warn}>Topics arrive at your morning and evening times. Turn one on.</Text>
+          ) : (
+            <Text style={styles.footNote}>At most one notification per time. Nothing leaves your phone.</Text>
+          )}
+
+          <Section
+            compact
+            title="Reminder topics"
+            right={
+              <Text style={styles.count}>
+                {onCount} of {MENTION_KEYS.length} on
               </Text>
-              <Text style={styles.permissionSub}>Turn on reminders in your phone settings.</Text>
-            </View>
-            <PrimaryButton
-              title="Phone settings"
-              compact
-              onPress={() => {
-                void Linking.openSettings().catch((e) => showAlert('Phone settings', errorMessage(e)));
-              }}
-            />
-          </View>
-        )}
-        <View style={styles.slots}>
-          <SlotCard
-            kind="morning"
-            sub="Only when something is due"
-            on={prefs.morningEnabled}
-            minutes={morningMinutes}
-            onToggle={toggleMorning}
-            onChange={changeMorning}
-          />
-          <SlotCard
-            kind="evening"
-            sub="Log nudge if none today"
-            on={prefs.eveningEnabled}
-            minutes={eveningMinutes}
-            onToggle={toggleEvening}
-            onChange={changeEvening}
-          />
-        </View>
-        {noTimes ? (
-          <Text style={styles.warn}>Topics arrive at your morning and evening times. Turn one on.</Text>
-        ) : (
-          <Text style={styles.footNote}>At most one notification per time. Nothing leaves your phone.</Text>
-        )}
+            }
+          >
+            <ListCard>
+              <AlertRow rowKey="billAlerts" value={prefs.billAlerts} dimmed={noTimes} onToggle={onAlert} />
+              <AlertRow
+                rowKey="overspendAlerts"
+                value={prefs.overspendAlerts}
+                dimmed={noTimes}
+                divider
+                onToggle={onAlert}
+              />
+              <AlertRow
+                rowKey="recurringAlerts"
+                value={prefs.recurringAlerts === true}
+                dimmed={noTimes}
+                divider
+                onToggle={onAlert}
+              />
+              <AlertRow
+                rowKey="refundAlerts"
+                value={prefs.refundAlerts === true}
+                dimmed={noTimes}
+                divider
+                onToggle={onAlert}
+              />
+              <AlertRow
+                rowKey="weeklySummary"
+                value={prefs.weeklySummary}
+                dimmed={noTimes}
+                divider
+                onToggle={onAlert}
+              />
+            </ListCard>
+          </Section>
 
-        <Section
-          compact
-          title="Reminder topics"
-          right={
-            <Text style={styles.count}>
-              {onCount} of {MENTION_KEYS.length} on
-            </Text>
-          }
-        >
-          <ListCard>
-            <AlertRow rowKey="billAlerts" value={prefs.billAlerts} dimmed={noTimes} onToggle={onAlert} />
-            <AlertRow
-              rowKey="overspendAlerts"
-              value={prefs.overspendAlerts}
-              dimmed={noTimes}
-              divider
-              onToggle={onAlert}
-            />
-            <AlertRow
-              rowKey="recurringAlerts"
-              value={prefs.recurringAlerts === true}
-              dimmed={noTimes}
-              divider
-              onToggle={onAlert}
-            />
-            <AlertRow
-              rowKey="refundAlerts"
-              value={prefs.refundAlerts === true}
-              dimmed={noTimes}
-              divider
-              onToggle={onAlert}
-            />
-            <AlertRow
-              rowKey="weeklySummary"
-              value={prefs.weeklySummary}
-              dimmed={noTimes}
-              divider
-              onToggle={onAlert}
-            />
-          </ListCard>
-        </Section>
+          <Section compact title="In the app">
+            <ListCard>
+              <AlertRow rowKey="suuCheckins" value={prefs.suuCheckins} onToggle={onAlert} />
+            </ListCard>
+          </Section>
 
-        <Section compact title="In the app">
-          <ListCard>
-            <AlertRow rowKey="suuCheckins" value={prefs.suuCheckins} onToggle={onAlert} />
-          </ListCard>
-        </Section>
-
-        <View style={{ height: theme.layout.screenScrollPad + insets.bottom }} />
-      </ReanimatedAnimated.ScrollView>
+          <View style={{ height: theme.layout.screenScrollPad + insets.bottom }} />
+        </ReanimatedAnimated.ScrollView>
+      </SolidFade>
       <SkyHeader collapse={collapse} title="Notifications" showBack hideUser wallpaper />
     </View>
   );

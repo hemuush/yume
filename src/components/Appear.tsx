@@ -1,7 +1,7 @@
 import { ReactNode } from 'react';
 import { StyleProp, ViewStyle } from 'react-native';
-import Animated from 'react-native-reanimated';
-import { CONTENT_ENTER, ROW_EXIT, ROW_LAYOUT } from '@/lib/animation';
+import { SolidFade } from './SolidFade';
+import { ROW_EXIT, ROW_LAYOUT } from '@/lib/animation';
 
 /**
  * A block that comes and goes while its screen is open (an error banner, a notice, a status line): it fades in on
@@ -19,14 +19,13 @@ export function Appear({
   accessibilityLiveRegion?: 'none' | 'polite' | 'assertive';
 }) {
   return (
-    <Animated.View
-      entering={CONTENT_ENTER}
+    <SolidFade
       exiting={ROW_EXIT}
       layout={ROW_LAYOUT}
       style={style}
       accessibilityLiveRegion={accessibilityLiveRegion}
     >
       {children}
-    </Animated.View>
+    </SolidFade>
   );
 }

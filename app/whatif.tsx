@@ -1,6 +1,5 @@
 import { isFixedCategoryName } from '@/lib/fixedCategory';
 import { Appear } from '@/components/Appear';
-import { CONTENT_ENTER } from '@/lib/animation';
 import { PurchaseCheck } from '@/features/whatif/PurchaseCheck';
 import { ScreenLoadError } from '@/components/ScreenLoadError';
 import { memo, useCallback, useState } from 'react';
@@ -21,7 +20,7 @@ import { goalProgress } from '@/lib/savingsGoalProgress';
 import { projectedMonthlySpend, projectGoalPace } from '@/lib/whatIf';
 import { SavingsGoal } from '@/types';
 import { SkyHeader } from '@/features/home/SkyHeader';
-import ReanimatedAnimated from 'react-native-reanimated';
+import { SolidFade } from '@/components/SolidFade';
 import { useCollapsingHeader } from '@/hooks/useCollapsingHeader';
 import { EmptyState } from '@/components/EmptyState';
 import { Section } from '@/components/Section';
@@ -222,7 +221,7 @@ export default function WhatIfScreen() {
               bottomOffset={20}
             >
               {/* The data arriving after the placeholders: one short fade, the header and wallpaper stay solid. */}
-              <ReanimatedAnimated.View entering={CONTENT_ENTER}>
+              <SolidFade>
                 {loadError && (
                   <Appear style={styles.errorBanner}>
                     <Text style={styles.errorTitle}>Couldn’t load your data</Text>
@@ -394,7 +393,7 @@ export default function WhatIfScreen() {
                 >
                   <BeforeYouBuy />
                 </Section>
-              </ReanimatedAnimated.View>
+              </SolidFade>
             </KeyboardAwareScrollView>
             <SkyHeader collapse={collapse} summary={undefined} title="What if…?" showBack hideUser wallpaper>
               <Text style={styles.intro}>

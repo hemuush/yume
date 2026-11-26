@@ -5,18 +5,14 @@ import Animated, { useSharedValue, useAnimatedScrollHandler } from 'react-native
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Appear } from '@/components/Appear';
+import { SolidFade } from '@/components/SolidFade';
+import { DURATIONS } from '@/lib/motionTimings';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { Section } from '@/components/Section';
 import { Text } from '@/components/Text';
 import { SCREEN } from '@/components/screenStyles';
 import { theme } from '@/constants/theme';
-import {
-  homeRowEntering,
-  homeSectionEntering,
-  hasPlayedHomeOpening,
-  markHomeOpeningPlayed,
-  ROW_LAYOUT,
-} from '@/lib/animation';
+import { homeRowEntering, hasPlayedHomeOpening, markHomeOpeningPlayed, ROW_LAYOUT } from '@/lib/animation';
 import { categorySentence } from '@/lib/categoryLabel';
 import { toLocalIsoDate } from '@/lib/date';
 import { investmentIdsOf } from '@/lib/investment';
@@ -78,7 +74,8 @@ const openSpendingReports = (key: string) => {
 };
 
 const rowEntering = (i: number) => homeRowEntering(i, !hasPlayedHomeOpening());
-const sectionEntering = (i: number) => homeSectionEntering(i, !hasPlayedHomeOpening());
+// A section fades in a touch longer on the first open, then quickly for later arrivals (new month, refresh).
+const sectionFade = () => (hasPlayedHomeOpening() ? DURATIONS.quick : DURATIONS.section);
 
 export default function DashboardScreen() {
   const insets = useSafeAreaInsets();
@@ -390,7 +387,7 @@ export default function DashboardScreen() {
 
         <View style={styles.heroGap}>
           {loaded && historyAccounts.length === 0 ? null : loaded ? (
-            <Animated.View entering={sectionEntering(0)} layout={ROW_LAYOUT}>
+            <SolidFade duration={sectionFade()} layout={ROW_LAYOUT}>
               <MonthCard
                 periodKey={`${loadedCursor.granularity}:${loadedCursor.offset}`}
                 direction={heroDirection}
@@ -413,7 +410,7 @@ export default function DashboardScreen() {
                 pace={pace}
                 savedExpenseIds={isThisMonth ? savedExpenseIds : undefined}
               />
-            </Animated.View>
+            </SolidFade>
           ) : (
             <ThisMonthHeroSkeleton />
           )}
@@ -434,7 +431,7 @@ export default function DashboardScreen() {
         {/* Accounts remain directly below the balance area. After a failed first load nothing is known yet, so
             the "fresh start" card would tell someone with accounts that they have none. */}
         {loaded && !(loadError && historyAccounts.length === 0) && (
-          <Animated.View entering={sectionEntering(1)} layout={ROW_LAYOUT}>
+          <SolidFade duration={sectionFade()} layout={ROW_LAYOUT}>
             <Accounts
               accounts={accounts}
               currency={currency}
@@ -442,7 +439,7 @@ export default function DashboardScreen() {
               onOpenAccount={sheets.openAccount}
               onAddAccount={sheets.openAddAccount}
             />
-          </Animated.View>
+          </SolidFade>
         )}
 
         {/* Next payments and pending refunds stay visible without tabs. */}
@@ -452,7 +449,7 @@ export default function DashboardScreen() {
           </Section>
         )}
         {loaded && historyAccounts.length > 0 && comingUpReady && (
-          <Animated.View entering={sectionEntering(2)} layout={ROW_LAYOUT}>
+          <SolidFade duration={sectionFade()} layout={ROW_LAYOUT}>
             <ComingUp
               upcoming={upcoming}
               budgets={budgets}
@@ -469,11 +466,11 @@ export default function DashboardScreen() {
               loadFailed={comingUpError}
               onRetry={retryLoad}
             />
-          </Animated.View>
+          </SolidFade>
         )}
 
         {loaded && historyAccounts.length > 0 && (
-          <Animated.View entering={sectionEntering(4)} layout={ROW_LAYOUT}>
+          <SolidFade duration={sectionFade()} layout={ROW_LAYOUT}>
             <HomeRecentActivity
               recent={recent}
               cursor={loadedCursor}
@@ -487,7 +484,7 @@ export default function DashboardScreen() {
               onOpenEntry={openEntry}
               onSeeAll={openRecentInActivity}
             />
-          </Animated.View>
+          </SolidFade>
         )}
       </Animated.ScrollView>
 

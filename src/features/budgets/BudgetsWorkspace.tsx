@@ -1,7 +1,6 @@
 import { planMoneyList } from '@/features/plan/plan.styles';
 import { ScreenLoadError } from '@/components/ScreenLoadError';
 import { Appear } from '@/components/Appear';
-import { CONTENT_ENTER } from '@/lib/animation';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -13,6 +12,7 @@ import { usePrivacy } from '@/theme/PrivacyContext';
 import { theme } from '@/constants/theme';
 import { SkyHeader, HeaderSummary } from '@/features/home/SkyHeader';
 import ReanimatedAnimated from 'react-native-reanimated';
+import { SolidFade } from '@/components/SolidFade';
 import { formatMoney } from '@/lib/money';
 import { useCollapsingHeader } from '@/hooks/useCollapsingHeader';
 import { AddButton } from '@/components/AddButton';
@@ -234,19 +234,19 @@ export default function BudgetsWorkspace({
   return (
     <View style={styles.container}>
       <HomeWallpaper accent={accent} secondary={secondary} plain />
-      <ReanimatedAnimated.ScrollView
-        // The data arriving after the placeholders: one short fade, the header and wallpaper stay solid.
-        entering={CONTENT_ENTER}
-        ref={scrollRef}
-        onScroll={scrollHandler}
-        scrollEventThrottle={16}
-        contentContainerStyle={{
-          paddingTop: headerHeight,
-          paddingBottom: theme.layout.screenScrollPad + insets.bottom,
-        }}
-      >
-        {content}
-      </ReanimatedAnimated.ScrollView>
+      <SolidFade style={{ flex: 1 }}>
+        <ReanimatedAnimated.ScrollView
+          ref={scrollRef}
+          onScroll={scrollHandler}
+          scrollEventThrottle={16}
+          contentContainerStyle={{
+            paddingTop: headerHeight,
+            paddingBottom: theme.layout.screenScrollPad + insets.bottom,
+          }}
+        >
+          {content}
+        </ReanimatedAnimated.ScrollView>
+      </SolidFade>
       <SkyHeader
         collapse={collapse}
         summary={

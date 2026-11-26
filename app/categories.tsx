@@ -1,5 +1,4 @@
 import { Appear } from '@/components/Appear';
-import { CONTENT_ENTER } from '@/lib/animation';
 import { ScreenLoadError } from '@/components/ScreenLoadError';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { memo, useMemo, useState } from 'react';
@@ -11,6 +10,7 @@ import { Category, CategoryKind } from '@/types';
 import { theme } from '@/constants/theme';
 import { SkyHeader, HeaderSummary } from '@/features/home/SkyHeader';
 import ReanimatedAnimated from 'react-native-reanimated';
+import { SolidFade } from '@/components/SolidFade';
 import { useCollapsingHeader } from '@/hooks/useCollapsingHeader';
 import { AddButton } from '@/components/AddButton';
 import { styles } from '@/features/categories/categories.styles';
@@ -100,130 +100,130 @@ export default function CategoriesScreen() {
   return (
     <View style={styles.container}>
       <HomeWallpaper accent={accent} secondary={secondary} plain />
-      <ReanimatedAnimated.ScrollView
-        // The data arriving after the placeholders: one short fade, the header and wallpaper stay solid.
-        entering={CONTENT_ENTER}
-        ref={scrollRef}
-        onScroll={scrollHandler}
-        scrollEventThrottle={16}
-        keyboardShouldPersistTaps="handled"
-        keyboardDismissMode="on-drag"
-        contentContainerStyle={{
-          paddingTop: headerHeight,
-          paddingBottom: theme.layout.screenScrollPad + insets.bottom,
-        }}
-      >
-        {loadError && (
-          <Appear style={styles.errorBanner}>
-            <Text style={styles.errorTitle}>Couldn’t load your categories</Text>
-            <Text style={styles.errorDetail}>{loadError}</Text>
-            <PrimaryButton title="Retry" compact variant="secondary" onPress={() => void load()} />
-          </Appear>
-        )}
-        <View style={styles.screenIntro}>
-          {showArchived ? (
-            <Text accessibilityRole="header" style={styles.archiveTitle}>
-              Archived
-            </Text>
-          ) : (
-            <SheetTabs
-              ledgerStyle
-              options={[
-                { label: `Expense · ${topLevelOnly(expenseCats).length}`, value: 'expense' },
-                { label: `Income · ${topLevelOnly(incomeCats).length}`, value: 'income' },
-              ]}
-              value={kind}
-              onChange={setKind}
-            />
+      <SolidFade style={{ flex: 1 }}>
+        <ReanimatedAnimated.ScrollView
+          ref={scrollRef}
+          onScroll={scrollHandler}
+          scrollEventThrottle={16}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          contentContainerStyle={{
+            paddingTop: headerHeight,
+            paddingBottom: theme.layout.screenScrollPad + insets.bottom,
+          }}
+        >
+          {loadError && (
+            <Appear style={styles.errorBanner}>
+              <Text style={styles.errorTitle}>Couldn’t load your categories</Text>
+              <Text style={styles.errorDetail}>{loadError}</Text>
+              <PrimaryButton title="Retry" compact variant="secondary" onPress={() => void load()} />
+            </Appear>
           )}
-          {showArchived && (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Show active categories"
-              onPress={switchCollection}
-              style={styles.collectionAction}
-            >
-              <Feather name="arrow-left" size={15} color={theme.colors.link} />
-              <Text style={styles.collectionActionText}>Active categories</Text>
-            </Pressable>
-          )}
-          {(visible.length > 0 || searching) && (
-            <View style={styles.categorySearch}>
-              <Feather name="search" size={16} color={theme.colors.textMuted} />
-              <TextInput
-                accessibilityLabel="Find a category"
-                placeholder={showArchived ? 'Search archive' : 'Find a category'}
-                placeholderTextColor={theme.colors.textMuted}
-                value={query}
-                onChangeText={setQuery}
-                returnKeyType="search"
-                autoCapitalize="none"
-                autoCorrect={false}
-                style={styles.categorySearchInput}
+          <View style={styles.screenIntro}>
+            {showArchived ? (
+              <Text accessibilityRole="header" style={styles.archiveTitle}>
+                Archived
+              </Text>
+            ) : (
+              <SheetTabs
+                ledgerStyle
+                options={[
+                  { label: `Expense · ${topLevelOnly(expenseCats).length}`, value: 'expense' },
+                  { label: `Income · ${topLevelOnly(incomeCats).length}`, value: 'income' },
+                ]}
+                value={kind}
+                onChange={setKind}
               />
-              {query.length > 0 && (
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel="Clear search"
-                  onPress={() => setQuery('')}
-                  style={styles.categorySearchClear}
-                >
-                  <Feather name="x" size={16} color={theme.colors.textSecondary} />
-                </Pressable>
-              )}
+            )}
+            {showArchived && (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Show active categories"
+                onPress={switchCollection}
+                style={styles.collectionAction}
+              >
+                <Feather name="arrow-left" size={15} color={theme.colors.link} />
+                <Text style={styles.collectionActionText}>Active categories</Text>
+              </Pressable>
+            )}
+            {(visible.length > 0 || searching) && (
+              <View style={styles.categorySearch}>
+                <Feather name="search" size={16} color={theme.colors.textMuted} />
+                <TextInput
+                  accessibilityLabel="Find a category"
+                  placeholder={showArchived ? 'Search archive' : 'Find a category'}
+                  placeholderTextColor={theme.colors.textMuted}
+                  value={query}
+                  onChangeText={setQuery}
+                  returnKeyType="search"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  style={styles.categorySearchInput}
+                />
+                {query.length > 0 && (
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel="Clear search"
+                    onPress={() => setQuery('')}
+                    style={styles.categorySearchClear}
+                  >
+                    <Feather name="x" size={16} color={theme.colors.textSecondary} />
+                  </Pressable>
+                )}
+              </View>
+            )}
+          </View>
+          {searching || showArchived ? (
+            matches.length > 0 ? (
+              <CategoryRows
+                items={matches}
+                renderRow={(cat) => (
+                  <MemoCategoryTile
+                    category={cat}
+                    context={contextOf(cat, byId)}
+                    uses={useCounts.get(cat.id) ?? 0}
+                    onPress={(category) => {
+                      Keyboard.dismiss();
+                      if (showArchived) onManageArchived(category);
+                      else sheets.edit(category);
+                    }}
+                    onLongPress={showArchived ? onManageArchived : onManage}
+                  />
+                )}
+              />
+            ) : (
+              <Text style={styles.hintText}>
+                {searching ? 'No matching categories.' : 'No archived categories.'}
+              </Text>
+            )
+          ) : parentCount > 0 ? (
+            <Section
+              key={kind}
+              cats={visibleCategories}
+              useCounts={useCounts}
+              onAddSub={sheets.addUnder}
+              onEdit={sheets.edit}
+              onManage={onManage}
+            />
+          ) : (
+            <View style={styles.emptyCard}>
+              <Text style={styles.emptyTitle}>No {kind} categories yet</Text>
+              <PrimaryButton title="Add category" compact onPress={sheets.openAdd} />
             </View>
           )}
-        </View>
-        {searching || showArchived ? (
-          matches.length > 0 ? (
-            <CategoryRows
-              items={matches}
-              renderRow={(cat) => (
-                <MemoCategoryTile
-                  category={cat}
-                  context={contextOf(cat, byId)}
-                  uses={useCounts.get(cat.id) ?? 0}
-                  onPress={(category) => {
-                    Keyboard.dismiss();
-                    if (showArchived) onManageArchived(category);
-                    else sheets.edit(category);
-                  }}
-                  onLongPress={showArchived ? onManageArchived : onManage}
-                />
-              )}
-            />
-          ) : (
-            <Text style={styles.hintText}>
-              {searching ? 'No matching categories.' : 'No archived categories.'}
-            </Text>
-          )
-        ) : parentCount > 0 ? (
-          <Section
-            key={kind}
-            cats={visibleCategories}
-            useCounts={useCounts}
-            onAddSub={sheets.addUnder}
-            onEdit={sheets.edit}
-            onManage={onManage}
-          />
-        ) : (
-          <View style={styles.emptyCard}>
-            <Text style={styles.emptyTitle}>No {kind} categories yet</Text>
-            <PrimaryButton title="Add category" compact onPress={sheets.openAdd} />
-          </View>
-        )}
-        {!showArchived && !searching && archivedCategories.length > 0 && (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Show archived categories"
-            onPress={switchCollection}
-            style={[styles.collectionAction, styles.archivedLink]}
-          >
-            <Feather name="archive" size={15} color={theme.colors.link} />
-            <Text style={styles.collectionActionText}>{`Archived · ${archivedCategories.length}`}</Text>
-          </Pressable>
-        )}
-      </ReanimatedAnimated.ScrollView>
+          {!showArchived && !searching && archivedCategories.length > 0 && (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Show archived categories"
+              onPress={switchCollection}
+              style={[styles.collectionAction, styles.archivedLink]}
+            >
+              <Feather name="archive" size={15} color={theme.colors.link} />
+              <Text style={styles.collectionActionText}>{`Archived · ${archivedCategories.length}`}</Text>
+            </Pressable>
+          )}
+        </ReanimatedAnimated.ScrollView>
+      </SolidFade>
       <SkyHeader
         collapse={collapse}
         summary={

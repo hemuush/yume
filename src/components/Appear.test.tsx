@@ -1,11 +1,12 @@
 /** A block that comes and goes fades in, fades out and slides when its place moves, on the shared presets. */
-import { View, Text } from 'react-native';
+import { Text } from 'react-native';
 import { create, act } from 'react-test-renderer';
 
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
 
-import { CONTENT_ENTER, ROW_EXIT, ROW_LAYOUT } from '@/lib/animation';
+import { ROW_EXIT, ROW_LAYOUT } from '@/lib/animation';
 import { Appear } from './Appear';
+import { SolidFade } from './SolidFade';
 
 it('enters on the content fade, leaves on the row exit and moves on the row layout transition', () => {
   let tree!: ReturnType<typeof create>;
@@ -16,8 +17,8 @@ it('enters on the content fade, leaves on the row exit and moves on the row layo
       </Appear>
     );
   });
-  const view = tree.root.findByType(View);
-  expect(view.props.entering).toBe(CONTENT_ENTER);
+  // Fades in under a solid cover, so Android never draws the banner see-through.
+  const view = tree.root.findByType(SolidFade);
   expect(view.props.exiting).toBe(ROW_EXIT);
   expect(view.props.layout).toBe(ROW_LAYOUT);
   expect(view.props.style).toEqual({ marginBottom: 8 });

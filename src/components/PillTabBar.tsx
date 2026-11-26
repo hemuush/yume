@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { View, Pressable, StyleSheet, Keyboard, Animated as RNAnimated } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
+import { timing } from '@/lib/animation';
+import { DURATIONS } from '@/lib/motionTimings';
 import { LinearGradient } from 'expo-linear-gradient';
 import { hexToRgba } from '@/lib/color';
 import Feather from '@expo/vector-icons/Feather';
@@ -46,12 +48,12 @@ function Tab({
   const { size, showLabel } = layout;
   const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.92);
   const reduce = useReduceMotion();
-  // The chosen tab's icon pops: it starts a little small and springs to full size as the pill arrives.
+  // The chosen tab's icon settles: a touch small, then eases to full size as the pill arrives (no bounce).
   const pop = useSharedValue(1);
   useEffect(() => {
     if (!focused || reduce) return;
-    pop.set(0.78);
-    pop.set(withSpring(1, { damping: 9, stiffness: 240, mass: 0.7 }));
+    pop.set(0.9);
+    pop.set(withTiming(1, timing(DURATIONS.standard)));
   }, [focused, reduce, pop]);
   const popStyle = useAnimatedStyle(() => ({ transform: [{ scale: pop.get() }] }));
   return (
