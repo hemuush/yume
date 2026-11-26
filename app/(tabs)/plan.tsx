@@ -6,7 +6,6 @@ import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { SolidFade } from '@/components/SolidFade';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Appear } from '@/components/Appear';
-import { LoadFade } from '@/components/LoadFade';
 import { CardRowsSkeleton } from '@/components/ListSkeleton';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { SCREEN } from '@/components/screenStyles';
@@ -173,37 +172,36 @@ export default function PlanScreen() {
             </View>
           )
         ) : (
-          <LoadFade loaded>
-            <SolidFade key={tab} rise={10}>
-              {tab === 'overview' && (
-                <PlanOverviewTab data={scoped} refreshToken={refreshToken} actions={actions} />
-              )}
-              {tab === 'upcoming' && (
-                <PlanUpcomingTab
-                  data={scoped}
-                  actions={actions}
-                  reload={reload}
-                  recurringRefreshRef={recurringRefreshRef}
-                  selection={scheduleSelection}
-                  onSelectionChange={setScheduleSelection}
-                />
-              )}
-              {tab === 'money' && (
-                <PlanMoneyTab
-                  data={scoped}
-                  refreshToken={refreshToken}
-                  hideAmounts={hideAmounts}
-                  actions={actions}
-                  focusSection={moneyFocus}
-                  onSectionLayout={focusMoneySection}
-                  reload={reload}
-                />
-              )}
-              {tab === 'debt' && (
-                <PlanDebtTab data={scoped} actions={actions} refreshToken={refreshToken} reload={reload} />
-              )}
-            </SolidFade>
-          </LoadFade>
+          // Fades in when the plan first shows and again on each tab, once: a wrapper fading too doubled the rise.
+          <SolidFade key={tab} rise={10}>
+            {tab === 'overview' && (
+              <PlanOverviewTab data={scoped} refreshToken={refreshToken} actions={actions} />
+            )}
+            {tab === 'upcoming' && (
+              <PlanUpcomingTab
+                data={scoped}
+                actions={actions}
+                reload={reload}
+                recurringRefreshRef={recurringRefreshRef}
+                selection={scheduleSelection}
+                onSelectionChange={setScheduleSelection}
+              />
+            )}
+            {tab === 'money' && (
+              <PlanMoneyTab
+                data={scoped}
+                refreshToken={refreshToken}
+                hideAmounts={hideAmounts}
+                actions={actions}
+                focusSection={moneyFocus}
+                onSectionLayout={focusMoneySection}
+                reload={reload}
+              />
+            )}
+            {tab === 'debt' && (
+              <PlanDebtTab data={scoped} actions={actions} refreshToken={refreshToken} reload={reload} />
+            )}
+          </SolidFade>
         )}
       </ScrollView>
       <PlanSheets sheets={sheets} data={scoped} hideAmounts={hideAmounts} reload={reload} />
