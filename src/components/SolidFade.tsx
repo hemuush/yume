@@ -1,4 +1,4 @@
-import { useEffect, type ComponentProps, type ReactNode } from 'react';
+import { useEffect, useState, type ComponentProps, type ReactNode } from 'react';
 import { StyleSheet } from 'react-native';
 import Animated, {
   useAnimatedStyle,
@@ -39,6 +39,8 @@ export function SolidFade({
   ...rest
 }: Props) {
   const reduce = useReduceMotion();
+  // The shape is chosen once: swapping it later (a caller that stops asking to rise) would rebuild the children.
+  const [rises] = useState(rise !== 0);
   const animate = play && !reduce;
   const cover = useSharedValue(animate ? 1 : 0);
   const lift = useSharedValue(animate ? rise : 0);
@@ -60,7 +62,7 @@ export function SolidFade({
     />
   );
   // Only a rising block gets an inner layer to move, so a plain fade keeps its children laid out by its own style.
-  if (rise === 0) {
+  if (!rises) {
     return (
       <Animated.View {...rest}>
         {children}
@@ -70,7 +72,7 @@ export function SolidFade({
   }
   return (
     <Animated.View {...rest}>
-      <Animated.View style={[styles.grow, liftStyle]}>
+      <Animated.View style={[GROW, liftStyle]}>
         {children}
         {coverView}
       </Animated.View>
@@ -78,4 +80,5 @@ export function SolidFade({
   );
 }
 
-const styles = StyleSheet.create({ grow: { flexGrow: 1 } });
+// No colour in it, so a plain constant (themedStyles is for what changes with the colour mode).
+const GROW = { flexGrow: 1 } as const;
