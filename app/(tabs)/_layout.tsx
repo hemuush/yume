@@ -31,6 +31,9 @@ export default function TabsLayout() {
       <Tabs
         // Each tab is drawn again when the colour mode changes; the bar above does so itself.
         screenLayout={schemeScreenLayout}
+        // Plain views, not native screens: Android's native screen container cross-faded tabs (~100 ms) even with
+        // animation 'none', showing both screens and every card's shadow through them (seen frame by frame).
+        detachInactiveScreens={false}
         // The floating pill (PillTabBar): four tabs in a frosted pill and a round Add beside it.
         tabBar={(props) => (
           <PillTabBar
