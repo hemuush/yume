@@ -132,9 +132,9 @@ it('cancels press feedback on reduced-motion changes and unmount', () => {
     feedback = usePressScale(0.92);
     return <Text>Button</Text>;
   }
-  const timing = jest
-    .spyOn(Animated, 'timing')
-    .mockReturnValue({ start: jest.fn(), stop: jest.fn(), reset: jest.fn() });
+  const anim = { start: jest.fn(), stop: jest.fn(), reset: jest.fn() };
+  const timing = jest.spyOn(Animated, 'timing').mockReturnValue(anim);
+  const spring = jest.spyOn(Animated, 'spring').mockReturnValue(anim);
   const r = render(<Button />);
   const scale = feedback.animatedStyle.transform[0].scale;
   const stop = jest.spyOn(scale, 'stopAnimation');
@@ -143,25 +143,22 @@ it('cancels press feedback on reduced-motion changes and unmount', () => {
     feedback.onPressOut();
   });
   expect(stop).toHaveBeenCalledTimes(2);
-  expect(timing).toHaveBeenCalledTimes(2);
-  expect(timing).toHaveBeenNthCalledWith(
-    1,
+  // Sinks fast (never past 95%), then springs back.
+  expect(timing).toHaveBeenCalledWith(
     scale,
-    expect.objectContaining({ toValue: 0.97, duration: 80, useNativeDriver: true })
+    expect.objectContaining({ toValue: 0.95, duration: 90, useNativeDriver: true })
   );
-  expect(timing).toHaveBeenNthCalledWith(
-    2,
-    scale,
-    expect.objectContaining({ toValue: 1, duration: 120, useNativeDriver: true })
-  );
+  expect(spring).toHaveBeenCalledWith(scale, expect.objectContaining({ toValue: 1, useNativeDriver: true }));
   mockReduce = true;
   act(() => r.update(<Button />));
   timing.mockClear();
+  spring.mockClear();
   act(() => {
     feedback.onPressIn();
     feedback.onPressOut();
   });
   expect(timing).not.toHaveBeenCalled();
+  expect(spring).not.toHaveBeenCalled();
   stop.mockClear();
   act(() => r.unmount());
   roots = roots.filter((root) => root !== r);

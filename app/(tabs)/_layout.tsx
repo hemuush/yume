@@ -1,5 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
-import { Animated, StyleSheet, View } from 'react-native';
+import { Animated, StyleSheet } from 'react-native';
+import { useReduceMotion } from '@/hooks/useReduceMotion';
+import { EASE_OUT } from '@/lib/motionTimings';
 import { Tabs, router, useIsFocused } from 'expo-router';
 import { theme } from '@/constants/theme';
 import { haptics } from '@/lib/haptics';
@@ -18,23 +20,31 @@ const PRELOADED_TABS = ['/transactions', '/plan', '/reports'] as const;
  */
 function TabFade({ children }: { children: ReactNode }) {
   const focused = useIsFocused();
+  const reduce = useReduceMotion();
   const [cover] = useState(() => new Animated.Value(0));
   const wasFocused = useRef(focused);
   useLayoutEffect(() => {
-    if (focused && !wasFocused.current) {
+    if (focused && !wasFocused.current && !reduce) {
       cover.setValue(1);
-      Animated.timing(cover, { toValue: 0, duration: 200, useNativeDriver: true }).start();
+      Animated.timing(cover, {
+        toValue: 0,
+        duration: 260,
+        easing: EASE_OUT,
+        useNativeDriver: true,
+      }).start();
     }
     wasFocused.current = focused;
-  }, [focused, cover]);
+  }, [focused, cover, reduce]);
+  // The same value lifts the whole tab a little as it clears, so it rises into place (a move, never a see-through).
+  const rise = cover.interpolate({ inputRange: [0, 1], outputRange: [0, 14] });
   return (
-    <View style={{ flex: 1 }}>
+    <Animated.View style={{ flex: 1, transform: [{ translateY: rise }] }}>
       {children}
       <Animated.View
         pointerEvents="none"
         style={[StyleSheet.absoluteFill, { backgroundColor: theme.colors.background, opacity: cover }]}
       />
-    </View>
+    </Animated.View>
   );
 }
 

@@ -76,7 +76,11 @@ const openSpendingReports = (key: string) => {
 
 const rowEntering = (i: number) => homeRowEntering(i, !hasPlayedHomeOpening());
 // A section fades in a touch longer on the first open, then quickly for later arrivals (new month, refresh).
-const sectionFade = () => (hasPlayedHomeOpening() ? DURATIONS.quick : DURATIONS.section);
+// On the first open the sections also rise into place one after another; later arrivals only fade.
+const sectionMotion = (i: number) =>
+  hasPlayedHomeOpening()
+    ? { duration: DURATIONS.quick }
+    : { duration: DURATIONS.section, rise: 18, delay: i * 60 };
 
 export default function DashboardScreen() {
   const insets = useSafeAreaInsets();
@@ -389,7 +393,7 @@ export default function DashboardScreen() {
 
         <View style={styles.heroGap}>
           {loaded && historyAccounts.length === 0 ? null : loaded ? (
-            <SolidFade duration={sectionFade()} layout={ROW_LAYOUT}>
+            <SolidFade {...sectionMotion(0)} layout={ROW_LAYOUT}>
               <MonthCard
                 periodKey={`${loadedCursor.granularity}:${loadedCursor.offset}`}
                 direction={heroDirection}
@@ -433,7 +437,7 @@ export default function DashboardScreen() {
         {/* Accounts remain directly below the balance area. After a failed first load nothing is known yet, so
             the "fresh start" card would tell someone with accounts that they have none. */}
         {loaded && !(loadError && historyAccounts.length === 0) && (
-          <SolidFade duration={sectionFade()} layout={ROW_LAYOUT}>
+          <SolidFade {...sectionMotion(1)} layout={ROW_LAYOUT}>
             <Accounts
               accounts={accounts}
               currency={currency}
@@ -451,7 +455,7 @@ export default function DashboardScreen() {
           </Section>
         )}
         {loaded && historyAccounts.length > 0 && comingUpReady && (
-          <SolidFade duration={sectionFade()} layout={ROW_LAYOUT}>
+          <SolidFade {...sectionMotion(2)} layout={ROW_LAYOUT}>
             <ComingUp
               upcoming={upcoming}
               budgets={budgets}
@@ -472,7 +476,7 @@ export default function DashboardScreen() {
         )}
 
         {loaded && historyAccounts.length > 0 && (
-          <SolidFade duration={sectionFade()} layout={ROW_LAYOUT}>
+          <SolidFade {...sectionMotion(3)} layout={ROW_LAYOUT}>
             <HomeRecentActivity
               recent={recent}
               cursor={loadedCursor}
