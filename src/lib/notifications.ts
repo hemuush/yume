@@ -200,17 +200,26 @@ export function notificationRoute(
 }
 
 let rebuildChain: Promise<unknown> = Promise.resolve();
+/** The rebuild queued behind the running one, until it starts: later callers share it rather than queue their own. */
+let waiting: Promise<boolean> | null = null;
 
 /**
  * Works out everything to notify about (planNotifications) from settings and data, then replaces whatever is
- * scheduled. Safe to re-call; serialized; never throws; false when enabled reminders cannot be scheduled.
+ * scheduled. Safe to re-call; serialized; never throws; false when enabled reminders cannot be scheduled. A rebuild
+ * reads everything when it starts, so calls made before it starts share it: a burst of saves runs one, not one each.
  */
 export function rebuildNotifications(): Promise<boolean> {
-  const run = rebuildChain.then(doRebuild, doRebuild).then((ok) => {
+  if (waiting) return waiting;
+  const start = () => {
+    waiting = null;
+    return doRebuild();
+  };
+  const run = rebuildChain.then(start, start).then((ok) => {
     lastRebuildFailed = !ok;
     recordRebuild(ok);
     return ok;
   });
+  waiting = run;
   rebuildChain = run;
   return run;
 }

@@ -309,15 +309,26 @@ describe('rebuildNotifications', () => {
     warn.mockRestore();
   });
 
-  it('runs one rebuild at a time', async () => {
+  it('runs one rebuild at a time, and calls made before the next one starts share it', async () => {
     const order: string[] = [];
+    let started!: () => void;
+    const firstStarted = new Promise<void>((resolve) => (started = resolve));
     N.getAllScheduledNotificationsAsync.mockImplementation(async () => {
       order.push('start');
+      started();
       await new Promise((r) => setTimeout(r, 10));
       order.push('end');
       return [];
     });
-    await Promise.all([rebuildNotifications(), rebuildNotifications()]);
+    // Two calls before anything starts: one rebuild serves both.
+    const first = rebuildNotifications();
+    expect(rebuildNotifications()).toBe(first);
+    await firstStarted;
+    // A save while it runs needs a fresh read after it; the calls after that wait together for it.
+    const second = rebuildNotifications();
+    const third = rebuildNotifications();
+    expect(third).toBe(second);
+    await Promise.all([first, second, third]);
     expect(order).toEqual(['start', 'end', 'start', 'end']);
   });
 

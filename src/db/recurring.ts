@@ -333,6 +333,9 @@ async function runDueRecurringRulesOnce(referenceDate: string): Promise<number> 
       paymentMode: rule.paymentMode ?? undefined,
       ruleId: rule.id,
     });
+    // The alert check reads the latest totals, so one run after a rule's last posted entry says all its entries would:
+    // per entry, 20 missed days meant 20 budget reads and 20 full reminder rebuilds while the app opened.
+    let lastPosted: CreateTransactionInput | null = null;
     try {
       // Nothing checked here varies by date, so once per rule covers every occurrence; it must run outside
       // the transaction below because these checks read via the outer db and would deadlock.
@@ -370,7 +373,7 @@ async function runDueRecurringRulesOnce(referenceDate: string): Promise<number> 
           posted = true;
         });
         if (!posted) break;
-        await checkOverspendForNewTransaction(input);
+        lastPosted = input;
         created++;
         iterations++;
         cursor = next;
@@ -392,6 +395,8 @@ async function runDueRecurringRulesOnce(referenceDate: string): Promise<number> 
         }
       });
     }
+    // Never throws: the entries are committed whatever the check does.
+    if (lastPosted) await checkOverspendForNewTransaction(lastPosted);
   }
   return created;
 }
