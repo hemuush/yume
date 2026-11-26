@@ -45,6 +45,8 @@ jest.mock('@/components/CountUpAmount', () => {
   return { CountUpAmount: ({ minor }: { minor: number }) => <T>{formatMoney(minor)}</T> };
 });
 jest.mock('@/components/LimitMeter', () => ({ LimitMeter: () => null }));
+// The quick-entry row has its own tests (HeroActions.test).
+jest.mock('./HeroActions', () => ({ HeroActions: () => null }));
 
 import { ThisMonthHero } from './ThisMonthHero';
 
@@ -117,7 +119,7 @@ describe('month card', () => {
   it('leads with what is free to use, what it is out of, and what is left today as a chip', () => {
     const r = render();
     const all = texts(r);
-    expect(all).toEqual(expect.arrayContaining(['Free to use', '₹794', 'Expense', 'Income', 'Transfer']));
+    expect(all).toEqual(expect.arrayContaining(['Free to use', '₹794']));
     // The money-bar legend stays scoped to this month.
     expect(all).toEqual(expect.arrayContaining(['Spent', 'Saved', '₹95,762', '₹99,500']));
     expect(all).not.toContain('Free');
