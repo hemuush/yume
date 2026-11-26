@@ -174,7 +174,7 @@ export default function PlanScreen() {
           )
         ) : (
           <LoadFade loaded>
-            <SolidFade key={tab}>
+            <SolidFade key={tab} rise={10}>
               {tab === 'overview' && (
                 <PlanOverviewTab data={scoped} refreshToken={refreshToken} actions={actions} />
               )}

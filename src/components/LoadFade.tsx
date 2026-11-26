@@ -19,7 +19,7 @@ export function LoadFade({
   style?: StyleProp<ViewStyle>;
 }) {
   return (
-    <SolidFade key={loaded ? 'loaded' : 'loading'} play={loaded} style={style}>
+    <SolidFade key={loaded ? 'loaded' : 'loading'} play={loaded} rise={loaded ? 10 : 0} style={style}>
       {children}
     </SolidFade>
   );

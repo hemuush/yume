@@ -326,7 +326,7 @@ export default function ReportsScreen() {
             <PrimaryButton title="Retry details" variant="secondary" onPress={retryDetails} />
           </View>
         )}
-        <SolidFade key={tab}>
+        <SolidFade key={tab} rise={10}>
           {tab === 'days' ? (
             <OverviewTab
               cursor={cursor}

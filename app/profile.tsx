@@ -144,7 +144,9 @@ export default function ProfileScreen() {
 
                 <ProfileTabs value={tab} onChange={setTab} />
 
-                <SolidFade key={tab}>{tab === 'you' ? <You /> : <Settings />}</SolidFade>
+                <SolidFade key={tab} rise={10}>
+                  {tab === 'you' ? <You /> : <Settings />}
+                </SolidFade>
               </LoadFade>
             </KeyboardAwareScrollView>
             <SkyHeader

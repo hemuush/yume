@@ -53,7 +53,7 @@ export function ReportTrends({ cashFlow, ...props }: Props) {
           />
         </View>
       )}
-      <SolidFade key={selected}>
+      <SolidFade key={selected} rise={10}>
         {selected === 'flow' ? (
           <CashFlowCard points={cashFlow} inProgress={!!props.inProgress} monthLink={props.monthLink} />
         ) : (
