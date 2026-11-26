@@ -80,7 +80,10 @@ function NoteView({ note, onDismiss }: { note: Shown; onDismiss: () => void }) {
     <ReanimatedAnimated.View
       entering={FadeIn.duration(DURATIONS.slideIn).easing(MOTION.ease).reduceMotion(ReduceMotion.System)}
       exiting={FadeOut.duration(DURATIONS.rowExit).easing(MOTION.exit).reduceMotion(ReduceMotion.System)}
-      style={[styles.wrap, { top: insets.top + 8 }]}
+      // Fades as one layer, so Android never shows the card's shadow through it; the padding keeps the shadow inside
+      // that layer, which is clipped to this view.
+      needsOffscreenAlphaCompositing
+      style={[styles.wrap, { top: insets.top + 8 - SHADOW_ROOM.top }]}
       pointerEvents="box-none"
     >
       <Pressable
@@ -181,9 +184,20 @@ export function BudgetMonthWatcher() {
   return null;
 }
 
+/** Room around the card for its shadow (radius 16, 8 down), inside the view that fades. */
+const SHADOW_ROOM = { side: 20, top: 10, bottom: 26 } as const;
+
 const styles = themedStyles(() =>
   StyleSheet.create({
-    wrap: { position: 'absolute', left: 20, right: 20, alignItems: 'center' },
+    wrap: {
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      paddingHorizontal: SHADOW_ROOM.side,
+      paddingTop: SHADOW_ROOM.top,
+      paddingBottom: SHADOW_ROOM.bottom,
+      alignItems: 'center',
+    },
     card: {
       flexDirection: 'row',
       alignItems: 'center',

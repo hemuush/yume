@@ -139,8 +139,11 @@ function ToastView({
         .withInitialValues({ opacity: 0, transform: [{ translateY: 16 }] })
         .reduceMotion(ReduceMotion.System)}
       exiting={FadeOutDown.duration(DURATIONS.rowExit).easing(MOTION.exit).reduceMotion(ReduceMotion.System)}
+      // Fades as one layer: Android otherwise fades the pill's parts one by one and its shadow shows through it.
+      // The layer is clipped to this view, so the padding (SHADOW_ROOM) keeps the whole shadow inside it.
+      needsOffscreenAlphaCompositing
       // Always clear of the tab bar, which most deletes happen above.
-      style={[styles.wrap, { bottom: insets.bottom + tabScrollPad - 12 }]}
+      style={[styles.wrap, { bottom: insets.bottom + tabScrollPad - 12 - SHADOW_ROOM.bottom }]}
       pointerEvents="box-none"
     >
       <View style={[styles.pill, { backgroundColor: ink }]}>
@@ -173,9 +176,20 @@ export function useUndoToast() {
   return ctx;
 }
 
+/** Room around the pill for its shadow (radius 18, 10 down), inside the view that fades. */
+const SHADOW_ROOM = { side: 20, top: 10, bottom: 30 } as const;
+
 const styles = themedStyles(() =>
   StyleSheet.create({
-    wrap: { position: 'absolute', left: 20, right: 20, alignItems: 'center' },
+    wrap: {
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      paddingHorizontal: SHADOW_ROOM.side,
+      paddingTop: SHADOW_ROOM.top,
+      paddingBottom: SHADOW_ROOM.bottom,
+      alignItems: 'center',
+    },
     // A deep-ink pill above the tab bar (the theme's own dark, as on the Add button), Undo on a light chip.
     pill: {
       flexDirection: 'row',
