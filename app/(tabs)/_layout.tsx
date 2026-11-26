@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
-import { Tabs, router } from 'expo-router';
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import { Animated, StyleSheet, View } from 'react-native';
+import { Tabs, router, useIsFocused } from 'expo-router';
 import { theme } from '@/constants/theme';
 import { haptics } from '@/lib/haptics';
 import { RepeatEntrySheet } from '@/features/home/RepeatEntrySheet';
@@ -10,6 +11,32 @@ import { schemeScreenLayout, useSchemeVersion } from '@/theme/SchemeBoundary';
 
 /** The tabs built in the background once Home has settled, so the first tap on each is instant. */
 const PRELOADED_TABS = ['/transactions', '/plan', '/reports'] as const;
+
+/**
+ * Fades a tab in by fading out a plain page-coloured sheet over it. The screen itself never goes translucent, so
+ * Android cannot show its card shadows or the previous tab through it.
+ */
+function TabFade({ children }: { children: ReactNode }) {
+  const focused = useIsFocused();
+  const [cover] = useState(() => new Animated.Value(0));
+  const wasFocused = useRef(focused);
+  useLayoutEffect(() => {
+    if (focused && !wasFocused.current) {
+      cover.setValue(1);
+      Animated.timing(cover, { toValue: 0, duration: 200, useNativeDriver: true }).start();
+    }
+    wasFocused.current = focused;
+  }, [focused, cover]);
+  return (
+    <View style={{ flex: 1 }}>
+      {children}
+      <Animated.View
+        pointerEvents="none"
+        style={[StyleSheet.absoluteFill, { backgroundColor: theme.colors.background, opacity: cover }]}
+      />
+    </View>
+  );
+}
 
 export default function TabsLayout() {
   const [repeatSheetVisible, setRepeatSheetVisible] = useState(false);
@@ -30,7 +57,7 @@ export default function TabsLayout() {
     <>
       <Tabs
         // Each tab is drawn again when the colour mode changes; the bar above does so itself.
-        screenLayout={schemeScreenLayout}
+        screenLayout={(props) => <TabFade>{schemeScreenLayout(props)}</TabFade>}
         // Plain views, not native screens: Android's native screen container cross-faded tabs (~100 ms) even with
         // animation 'none', showing both screens and every card's shadow through them (seen frame by frame).
         detachInactiveScreens={false}
