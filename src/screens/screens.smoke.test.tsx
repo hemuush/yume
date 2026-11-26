@@ -808,11 +808,10 @@ describe('Home, stepping between months on a lived-in phone', () => {
     const { HeroActions } = require('@/features/home/HeroActions');
     const action = tree.root
       .findByType(HeroActions)
-      .findAll((n) => n.props.accessibilityLabel === 'Add income' && n.props.onPress)[0];
+      .findAll((n) => n.props.accessibilityLabel === 'Add expense' && n.props.onPress)[0];
     expect(action).toBeDefined();
     act(() => action.props.onPress());
-    // With repeated entries, Home's row leads with them; Expense is the + button, Income and Transfer stay here.
-    expect(push).toHaveBeenLastCalledWith('/add-transaction?type=income');
+    expect(push).toHaveBeenLastCalledWith('/add-transaction?type=expense');
     act(() => tree.unmount());
   });
 });
