@@ -42,6 +42,7 @@ import { useHomeData } from '@/features/home/useHomeData';
 import { useOpenRefund } from '@/features/home/useOpenRefund';
 import { buildLoansSummary } from '@/features/plan/planOverview';
 import type { Transaction } from '@/types';
+import type { ReadyWrap } from '@/features/wrap/wrapWindow';
 import { themedStyles } from '@/theme/themedStyles';
 
 /** Scrolled past this, the month card's own period pill is under the header: the change came from the header's chip. */
@@ -339,6 +340,7 @@ export default function DashboardScreen() {
     currency,
   ]);
 
+  const playWrap = useCallback((w: ReadyWrap) => router.push(`/wrap?period=${w.period}`), []);
   const retryLoad = useCallback(() => void reload(), [reload]);
   const openRecentInActivity = useCallback(
     // Carry Home's month through to the Activity list.
@@ -493,6 +495,9 @@ export default function DashboardScreen() {
         onChange={handleCursorChange}
         userName={userName}
         alertCount={needsYouCount}
+        // A ready recap shows in the header, not only inside "How it adds up".
+        wraps={readyWraps}
+        onPlayWrap={playWrap}
         scrollY={scrollY}
         onHeight={setHeaderHeight}
         onBrandPress={scrollToTop}
