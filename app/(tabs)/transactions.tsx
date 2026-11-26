@@ -2,11 +2,19 @@ import { pullRefreshColors } from '@/components/pullRefreshColors';
 import { useLocalDayRefresh } from '@/hooks/useLocalDayRefresh';
 import { Appear } from '@/components/Appear';
 import { SolidFade } from '@/components/SolidFade';
+import { useListTurn } from '@/features/transactions/useListTurn';
 import { CONTENT_ENTER } from '@/lib/animation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { onTransactionsChanged } from '@/lib/dataEvents';
 import { useFreshness } from '@/hooks/useFreshness';
-import { View, Pressable, RefreshControl, useWindowDimensions, type FlatListInstance } from 'react-native';
+import {
+  View,
+  Pressable,
+  RefreshControl,
+  StyleSheet,
+  useWindowDimensions,
+  type FlatListInstance,
+} from 'react-native';
 import { Text, TextInput } from '@/components/Text';
 import ReanimatedAnimated from 'react-native-reanimated';
 import { PrimaryButton } from '@/components/PrimaryButton';
@@ -141,6 +149,10 @@ export default function TransactionsScreen() {
   // Slide direction of the headline/chart on the next period change (read by TransactionsHeadline): 0
   // (crossfade) unless it is a one-step move; a picked month or Week↔Month switch has no direction.
   const [direction, setDirection] = useState<-1 | 0 | 1>(0);
+  const listTurn = useListTurn(
+    loadedPeriod.fromDate ? `{loadedPeriod.scope}:{loadedPeriod.fromDate}` : '',
+    direction
+  );
   // A link can open Activity already filtered, on a month, or on one entry (see useActivityLinks).
   useActivityLinks({
     accountsLoaded: accounts.length > 0,
@@ -608,6 +620,8 @@ export default function TransactionsScreen() {
           // card's own shadow through it as a grey frame.
           <SolidFade style={styles.listFill} rise={10}>
             <ReanimatedAnimated.FlatList
+              // Turns the page with the period (useListTurn).
+              style={listTurn.listStyle}
               // A search result opens on the first tap, even with the keyboard up.
               keyboardShouldPersistTaps="handled"
               // Scrolling the results puts the keyboard away, so the lower entries are not hidden behind it.
@@ -807,6 +821,14 @@ export default function TransactionsScreen() {
                   }
                 />
               )}
+            />
+            <ReanimatedAnimated.View
+              pointerEvents="none"
+              style={[
+                StyleSheet.absoluteFill,
+                { backgroundColor: theme.colors.background },
+                listTurn.coverStyle,
+              ]}
             />
           </SolidFade>
         )}
