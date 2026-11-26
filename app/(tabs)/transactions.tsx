@@ -1,6 +1,7 @@
 import { pullRefreshColors } from '@/components/pullRefreshColors';
 import { useLocalDayRefresh } from '@/hooks/useLocalDayRefresh';
 import { Appear } from '@/components/Appear';
+import { SolidFade } from '@/components/SolidFade';
 import { CONTENT_ENTER } from '@/lib/animation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { onTransactionsChanged } from '@/lib/dataEvents';
@@ -603,204 +604,211 @@ export default function TransactionsScreen() {
             <TransactionsSkeleton />
           </View>
         ) : (
-          <ReanimatedAnimated.FlatList
-            // No fade in, here or on the days: Android fades each card's parts one by one, so a fading card showed its
-            // own shadow through it as a grey frame. The list is loaded before the tab is first opened instead.
-            // A search result opens on the first tap, even with the keyboard up.
-            keyboardShouldPersistTaps="handled"
-            // Scrolling the results puts the keyboard away, so the lower entries are not hidden behind it.
-            keyboardDismissMode={searching ? 'on-drag' : 'none'}
-            ref={scrollRef}
-            onScroll={scrollHandler}
-            scrollEventThrottle={16}
-            scrollEnabled={!dragging}
-            // Search results are a lookup, not a period: nothing to reload there.
-            refreshControl={
-              searching ? undefined : (
-                <RefreshControl
-                  refreshing={refreshing}
-                  onRefresh={refresh}
-                  {...pullRefreshColors()}
-                  // Android draws the spinner at the list's top edge, which is under the header.
-                  progressViewOffset={headerHeight}
-                />
-              )
-            }
-            data={displayedGroups}
-            keyExtractor={(group) => group.date}
-            // Each row is a whole day, so mount only a few at first and keep the window small. A short batch every
-            // 50 ms keeps each frame light while scrolling.
-            initialNumToRender={4}
-            maxToRenderPerBatch={2}
-            updateCellsBatchingPeriod={50}
-            windowSize={5}
-            contentContainerStyle={{
-              // Under the header; search results have no headline above them, so keep the first day off the bar.
-              paddingTop: headerHeight + (searching ? 14 : 0),
-              paddingBottom: tabScrollPad + insets.bottom,
-            }}
-            onScrollToIndexFailed={onScrollToIndexFailed}
-            ListHeaderComponent={
-              searching ? (
-                <>
-                  <SearchStatus
-                    query={search.trimmed}
-                    minChars={SEARCH_MIN_CHARS}
-                    loading={search.loading}
-                    failed={search.failed}
-                    onRetry={() => search.run(search.trimmed)}
-                    resultCount={search.results.length}
-                    capped={search.capped}
-                    limit={SEARCH_RESULT_LIMIT}
-                    suggestions={searchSuggestions}
-                    recent={search.recent}
-                    onPick={search.setQuery}
-                    onClearRecent={search.clearRecent}
+          // Arrives under a solid cover and rises into place: never a see-through fade, which on Android showed each
+          // card's own shadow through it as a grey frame.
+          <SolidFade style={styles.listFill} rise={10}>
+            <ReanimatedAnimated.FlatList
+              // A search result opens on the first tap, even with the keyboard up.
+              keyboardShouldPersistTaps="handled"
+              // Scrolling the results puts the keyboard away, so the lower entries are not hidden behind it.
+              keyboardDismissMode={searching ? 'on-drag' : 'none'}
+              ref={scrollRef}
+              onScroll={scrollHandler}
+              scrollEventThrottle={16}
+              scrollEnabled={!dragging}
+              // Search results are a lookup, not a period: nothing to reload there.
+              refreshControl={
+                searching ? undefined : (
+                  <RefreshControl
+                    refreshing={refreshing}
+                    onRefresh={refresh}
+                    {...pullRefreshColors()}
+                    // Android draws the spinner at the list's top edge, which is under the header.
+                    progressViewOffset={headerHeight}
                   />
-                </>
-              ) : (
-                <>
-                  {banners}
-                  {!!loadedPeriod.fromDate && (
-                    <ReanimatedAnimated.View style={periodSwipe.dragStyle} {...periodSwipe.panHandlers}>
-                      <ActivitySummaryStrip
-                        periodKey={`${loadedPeriod.scope}-${loadedPeriod.fromDate}`}
-                        direction={direction}
-                        spentMinor={spentMinor}
-                        expenseChangeMinor={comparisonPending || comparisonFailed ? null : expenseChangeMinor}
-                        compareLabel={compareLabel}
-                        viewScope={loadedPeriod.scope}
-                        bars={bars}
-                        current={periodIsCurrent}
-                        narrowedTo={narrowedTo}
-                        onPress={() => {
-                          haptics.tap();
-                          setInsightsVisible(true);
-                        }}
-                      />
-                    </ReanimatedAnimated.View>
-                  )}
-
-                  <ActivityFilterChips
-                    onOpenFilters={() => setFilterVisible(true)}
-                    filterCount={filterCount}
-                    filterType={filterType}
-                    onFilterType={(value) => {
-                      if (value === filterType) return;
-                      haptics.tap();
-                      setFilterType(value);
-                      if (value === 'income' || value === 'transfer') setFilterLabel(undefined);
-                      if (value === 'transfer') setFilterCategoryIds([]);
-                      else if (value !== 'all') {
-                        setFilterCategoryIds((ids) =>
-                          ids.filter((id) => categoriesById.get(id)?.kind === value)
-                        );
-                      }
-                    }}
-                    categoryIds={filterCategoryIds}
-                    accountIds={filterAccountIds}
-                    expenseLabel={filterLabel}
-                    onRemoveLabel={() => setFilterLabel(undefined)}
-                    categoryName={categoryPathName}
-                    accountName={accountName}
-                    onRemoveCategory={(id) => setFilterCategoryIds((ids) => ids.filter((x) => x !== id))}
-                    onRemoveAccount={(id) => setFilterAccountIds((ids) => ids.filter((x) => x !== id))}
-                    onClearAll={clearFilters}
-                    quickCategories={
-                      searching ||
-                      filterType === 'income' ||
-                      filterType === 'transfer' ||
-                      filterType === 'invest'
-                        ? undefined
-                        : quickCategories
-                    }
-                    onPickCategory={(id) => {
-                      haptics.tap();
-                      setFilterCategoryIds([id]);
-                    }}
-                  />
-
-                  {/* The same Suu empty state as every other screen, not a bare line of grey text. */}
-                  {accounts.length === 0 && !loadError && (
-                    <EmptyState title="No accounts yet" subtitle="Add an account before recording entries." />
-                  )}
-                  {accounts.length > 0 && transactions.length > 0 && groupedDays.length === 0 && (
-                    <EmptyState
-                      title="No entries match these filters"
-                      subtitle="Clear the filters to see this period’s entries."
-                    >
-                      <PrimaryButton title="Clear filters" variant="secondary" onPress={clearFilters} />
-                    </EmptyState>
-                  )}
-                  {!loadError &&
-                    accounts.length > 0 &&
-                    groupedDays.length === 0 &&
-                    transactions.length === 0 && (
-                      <EmptyState
-                        title={emptyPeriodTitle({
-                          scope: loadedPeriod.scope,
-                          current: periodIsCurrent,
-                          title: heading.title,
-                          from: loadedPeriod.fromDate,
-                          today: todayDate,
-                        })}
-                        subtitle="Add an entry, or look at another period."
-                      >
-                        <PrimaryButton
-                          title="Add an entry"
-                          variant="secondary"
-                          onPress={() => void openAdd()}
+                )
+              }
+              data={displayedGroups}
+              keyExtractor={(group) => group.date}
+              // Each row is a whole day, so mount only a few at first and keep the window small. A short batch every
+              // 50 ms keeps each frame light while scrolling.
+              initialNumToRender={4}
+              maxToRenderPerBatch={2}
+              updateCellsBatchingPeriod={50}
+              windowSize={5}
+              contentContainerStyle={{
+                // Under the header; search results have no headline above them, so keep the first day off the bar.
+                paddingTop: headerHeight + (searching ? 14 : 0),
+                paddingBottom: tabScrollPad + insets.bottom,
+              }}
+              onScrollToIndexFailed={onScrollToIndexFailed}
+              ListHeaderComponent={
+                searching ? (
+                  <>
+                    <SearchStatus
+                      query={search.trimmed}
+                      minChars={SEARCH_MIN_CHARS}
+                      loading={search.loading}
+                      failed={search.failed}
+                      onRetry={() => search.run(search.trimmed)}
+                      resultCount={search.results.length}
+                      capped={search.capped}
+                      limit={SEARCH_RESULT_LIMIT}
+                      suggestions={searchSuggestions}
+                      recent={search.recent}
+                      onPick={search.setQuery}
+                      onClearRecent={search.clearRecent}
+                    />
+                  </>
+                ) : (
+                  <>
+                    {banners}
+                    {!!loadedPeriod.fromDate && (
+                      <ReanimatedAnimated.View style={periodSwipe.dragStyle} {...periodSwipe.panHandlers}>
+                        <ActivitySummaryStrip
+                          periodKey={`${loadedPeriod.scope}-${loadedPeriod.fromDate}`}
+                          direction={direction}
+                          spentMinor={spentMinor}
+                          expenseChangeMinor={
+                            comparisonPending || comparisonFailed ? null : expenseChangeMinor
+                          }
+                          compareLabel={compareLabel}
+                          viewScope={loadedPeriod.scope}
+                          bars={bars}
+                          current={periodIsCurrent}
+                          narrowedTo={narrowedTo}
+                          onPress={() => {
+                            haptics.tap();
+                            setInsightsVisible(true);
+                          }}
                         />
+                      </ReanimatedAnimated.View>
+                    )}
+
+                    <ActivityFilterChips
+                      onOpenFilters={() => setFilterVisible(true)}
+                      filterCount={filterCount}
+                      filterType={filterType}
+                      onFilterType={(value) => {
+                        if (value === filterType) return;
+                        haptics.tap();
+                        setFilterType(value);
+                        if (value === 'income' || value === 'transfer') setFilterLabel(undefined);
+                        if (value === 'transfer') setFilterCategoryIds([]);
+                        else if (value !== 'all') {
+                          setFilterCategoryIds((ids) =>
+                            ids.filter((id) => categoriesById.get(id)?.kind === value)
+                          );
+                        }
+                      }}
+                      categoryIds={filterCategoryIds}
+                      accountIds={filterAccountIds}
+                      expenseLabel={filterLabel}
+                      onRemoveLabel={() => setFilterLabel(undefined)}
+                      categoryName={categoryPathName}
+                      accountName={accountName}
+                      onRemoveCategory={(id) => setFilterCategoryIds((ids) => ids.filter((x) => x !== id))}
+                      onRemoveAccount={(id) => setFilterAccountIds((ids) => ids.filter((x) => x !== id))}
+                      onClearAll={clearFilters}
+                      quickCategories={
+                        searching ||
+                        filterType === 'income' ||
+                        filterType === 'transfer' ||
+                        filterType === 'invest'
+                          ? undefined
+                          : quickCategories
+                      }
+                      onPickCategory={(id) => {
+                        haptics.tap();
+                        setFilterCategoryIds([id]);
+                      }}
+                    />
+
+                    {/* The same Suu empty state as every other screen, not a bare line of grey text. */}
+                    {accounts.length === 0 && !loadError && (
+                      <EmptyState
+                        title="No accounts yet"
+                        subtitle="Add an account before recording entries."
+                      />
+                    )}
+                    {accounts.length > 0 && transactions.length > 0 && groupedDays.length === 0 && (
+                      <EmptyState
+                        title="No entries match these filters"
+                        subtitle="Clear the filters to see this period’s entries."
+                      >
+                        <PrimaryButton title="Clear filters" variant="secondary" onPress={clearFilters} />
                       </EmptyState>
                     )}
-                </>
-              )
-            }
-            renderItem={({ item: group }) => (
-              <TimelineDay
-                accountCurrency={accountCurrency}
-                date={group.date}
-                label={
-                  group.date === today
-                    ? 'Today'
-                    : group.date === yesterday
-                      ? 'Yesterday'
-                      : searching
-                        ? searchDayLabel(group.date, todayDate)
-                        : longWeekday(group.date)
-                }
-                dateLabel={
-                  searching && group.date !== today
-                    ? longWeekday(group.date)
-                    : group.date === today || group.date === yesterday
-                      ? weekdayDayMonth(group.date)
-                      : dayMonth(group.date)
-                }
-                // Today and yesterday are named alone, as in Home; any other day says its date too.
-                dateInHeading={group.date !== today && group.date !== yesterday}
-                items={group.items}
-                categories={categories}
-                accountName={accountName}
-                categoryName={categoryName}
-                onPressTx={searching ? openFromSearch : setDetailTx}
-                savingsAccountIds={savingsAccountIds}
-                investmentIds={investmentIds}
-                notes={group.notes}
-                onPressNote={openInvestments}
-                stacks={stacks}
-                onReorder={canReorder ? reorderDay : undefined}
-                onDragActive={setDragging}
-                onSwipeDelete={deleteBySwipe}
-                selected={
-                  !searching &&
-                  selectedBar != null &&
-                  (loadedPeriod.scope === 'week'
-                    ? selectedBar === group.date
-                    : group.date >= selectedBar && group.date <= addDaysToIsoDate(selectedBar, 6))
-                }
-              />
-            )}
-          />
+                    {!loadError &&
+                      accounts.length > 0 &&
+                      groupedDays.length === 0 &&
+                      transactions.length === 0 && (
+                        <EmptyState
+                          title={emptyPeriodTitle({
+                            scope: loadedPeriod.scope,
+                            current: periodIsCurrent,
+                            title: heading.title,
+                            from: loadedPeriod.fromDate,
+                            today: todayDate,
+                          })}
+                          subtitle="Add an entry, or look at another period."
+                        >
+                          <PrimaryButton
+                            title="Add an entry"
+                            variant="secondary"
+                            onPress={() => void openAdd()}
+                          />
+                        </EmptyState>
+                      )}
+                  </>
+                )
+              }
+              renderItem={({ item: group }) => (
+                <TimelineDay
+                  accountCurrency={accountCurrency}
+                  date={group.date}
+                  label={
+                    group.date === today
+                      ? 'Today'
+                      : group.date === yesterday
+                        ? 'Yesterday'
+                        : searching
+                          ? searchDayLabel(group.date, todayDate)
+                          : longWeekday(group.date)
+                  }
+                  dateLabel={
+                    searching && group.date !== today
+                      ? longWeekday(group.date)
+                      : group.date === today || group.date === yesterday
+                        ? weekdayDayMonth(group.date)
+                        : dayMonth(group.date)
+                  }
+                  // Today and yesterday are named alone, as in Home; any other day says its date too.
+                  dateInHeading={group.date !== today && group.date !== yesterday}
+                  items={group.items}
+                  categories={categories}
+                  accountName={accountName}
+                  categoryName={categoryName}
+                  onPressTx={searching ? openFromSearch : setDetailTx}
+                  savingsAccountIds={savingsAccountIds}
+                  investmentIds={investmentIds}
+                  notes={group.notes}
+                  onPressNote={openInvestments}
+                  stacks={stacks}
+                  onReorder={canReorder ? reorderDay : undefined}
+                  onDragActive={setDragging}
+                  onSwipeDelete={deleteBySwipe}
+                  selected={
+                    !searching &&
+                    selectedBar != null &&
+                    (loadedPeriod.scope === 'week'
+                      ? selectedBar === group.date
+                      : group.date >= selectedBar && group.date <= addDaysToIsoDate(selectedBar, 6))
+                  }
+                />
+              )}
+            />
+          </SolidFade>
         )}
       </View>
 

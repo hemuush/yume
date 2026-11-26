@@ -230,6 +230,7 @@ export const styles = themedStyles(() =>
     },
 
     listArea: { flex: 1 },
+    listFill: { flex: 1 },
     // Shown while a line is being moved, above the tab bar like the undo bar.
     dragHint: {
       position: 'absolute',
