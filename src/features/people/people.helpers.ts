@@ -1,5 +1,21 @@
 import { parseLocalIsoDate } from '@/lib/date';
 import { roundedMinor } from '@/lib/round';
+import type { Category } from '@/types';
+
+/**
+ * The category money given to (1) or received from (−1) a friend is filed under: the built-in Friends & Family, else
+ * a same-named one, else the named catch-all. Never just any category of that kind: that would misfile it.
+ */
+export function friendCategory(categories: Category[], sign: 1 | -1): Category | undefined {
+  const [kind, fallback] =
+    sign === 1 ? (['expense', 'Miscellaneous'] as const) : (['income', 'Other Income'] as const);
+  return (
+    // The built-in one first: a user's own category with the same name must not capture friend entries.
+    categories.find((c) => c.kind === kind && c.isSystem && c.name === 'Friends & Family') ??
+    categories.find((c) => c.kind === kind && c.name === 'Friends & Family') ??
+    categories.find((c) => c.kind === kind && c.name === fallback)
+  );
+}
 
 /**
  * A balance that rounds to exactly 0 reads as settled, not a small open debt, so status is always decided

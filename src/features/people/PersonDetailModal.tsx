@@ -27,6 +27,7 @@ import { theme, modalFooterStyles as f } from '@/constants/theme';
 import { useUndoToast } from '@/components/UndoToast';
 import { haptics } from '@/lib/haptics';
 import { PersonHistory } from './PersonHistory';
+import { friendCategory } from './people.helpers';
 import { SettleForm } from './SettleForm';
 import { createSettleForm } from './settleFormStore';
 import { useStableCallback } from '@/hooks/useStableCallback';
@@ -145,16 +146,7 @@ export function PersonDetailModal({
       if (accountId) {
         // A dedicated category, not "Miscellaneous"/"Other Income", so friend transactions stand out in
         // Transactions and don't inflate an unrelated catch-all total.
-        // Only the built-in Friends & Family category, or the named catch-all: never whichever category
-        // happens to be first, which would misfile the transaction.
-        const category =
-          sign === 1
-            ? (categories.find((c) => c.kind === 'expense' && c.isSystem && c.name === 'Friends & Family') ??
-              categories.find((c) => c.kind === 'expense' && c.name === 'Friends & Family') ??
-              categories.find((c) => c.kind === 'expense' && c.name === 'Miscellaneous'))
-            : (categories.find((c) => c.kind === 'income' && c.isSystem && c.name === 'Friends & Family') ??
-              categories.find((c) => c.kind === 'income' && c.name === 'Friends & Family') ??
-              categories.find((c) => c.kind === 'income' && c.name === 'Other Income'));
+        const category = friendCategory(categories, sign);
         if (!category) {
           throw new Error(
             `The "Friends & Family" ${sign === 1 ? 'expense' : 'income'} category is missing. Choose "Just adjust balance" instead, or add that category.`

@@ -1,5 +1,6 @@
 import { createTransaction } from '@/db/ledger';
 import { recordMoneyGivenToPerson, recordMoneyReceivedFromPerson, addLedgerEntry } from '@/db/people';
+import { friendCategory } from '@/features/people/people.helpers';
 import type { Category } from '@/types';
 import type { Staged } from './addEntry';
 
@@ -24,19 +25,6 @@ export function stagedTotals(rows: Staged[]): { income: number; expense: number 
       return acc;
     },
     { income: 0, expense: 0 }
-  );
-}
-
-/** The category a friend entry is filed under: "Friends & Family", else a sensible catch-all of that kind. */
-function friendCategory(categories: Category[], sign: 1 | -1): Category | undefined {
-  const [kind, fallback] =
-    sign === 1 ? (['expense', 'Miscellaneous'] as const) : (['income', 'Other Income'] as const);
-  return (
-    // The built-in one first: a user's own category with the same name must not capture friend entries.
-    categories.find((c) => c.kind === kind && c.isSystem && c.name === 'Friends & Family') ??
-    categories.find((c) => c.kind === kind && c.name === 'Friends & Family') ??
-    categories.find((c) => c.kind === kind && c.name === fallback) ??
-    categories.find((c) => c.kind === kind)
   );
 }
 

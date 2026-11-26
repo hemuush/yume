@@ -114,6 +114,13 @@ describe('persistStaged', () => {
       'No category available'
     );
   });
+
+  it('never files money given to a friend under an unrelated category (it would count as Food spending)', async () => {
+    await expect(persistStaged(friend({ sign: 1 }), [cat('e1', 'expense', 'Food')])).rejects.toThrow(
+      'No category available'
+    );
+    expect(recordMoneyGivenToPerson).not.toHaveBeenCalledWith(expect.objectContaining({ categoryId: 'e1' }));
+  });
 });
 
 describe('saveButtonTitle', () => {
