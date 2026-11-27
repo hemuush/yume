@@ -427,8 +427,8 @@ export default function DashboardScreen() {
             <View style={{ marginTop: SCREEN.sectionGap }}>
               <AccountTilesSkeleton />
             </View>
-            {/* Coming up is what follows the accounts on the loaded page; Recent activity is below it. */}
-            <Section title="Coming up">
+            {/* Upcoming is what follows the accounts on the loaded page; Recent activity is below it. */}
+            <Section title="Upcoming">
               <CardRowsSkeleton rows={3} subtitle />
             </Section>
           </>
@@ -450,7 +450,7 @@ export default function DashboardScreen() {
 
         {/* Next payments and pending refunds stay visible without tabs. */}
         {loaded && historyAccounts.length > 0 && !comingUpReady && (
-          <Section title="Coming up">
+          <Section title="Upcoming">
             <CardRowsSkeleton rows={3} subtitle />
           </Section>
         )}

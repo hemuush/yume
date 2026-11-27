@@ -38,7 +38,6 @@ export function MonthPill({
         onPress={() => setOpen(true)}
         onPressIn={onPressIn}
         onPressOut={onPressOut}
-        hitSlop={{ top: compact ? 7 : 6, bottom: compact ? 7 : 6, left: 6, right: 6 }}
         accessibilityRole="button"
         accessibilityLabel={`Change period, currently ${periodLabel(cursor)}`}
         style={[styles.pill, compact && styles.pillCompact, animatedStyle]}
@@ -77,7 +76,7 @@ const styles = themedStyles(() =>
       flexDirection: 'row',
       alignItems: 'center',
       gap: 6,
-      minHeight: 32,
+      minHeight: 44,
       paddingHorizontal: 12,
       borderRadius: theme.radius.pill,
       backgroundColor: theme.colors.home.control,
@@ -86,7 +85,7 @@ const styles = themedStyles(() =>
       maxWidth: 168,
     },
     pillText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.ink, flexShrink: 1 },
-    pillCompact: { gap: 4, minHeight: 36, paddingHorizontal: 12, maxWidth: 140 },
+    pillCompact: { gap: 4, paddingHorizontal: 12, maxWidth: 140 },
     pillTextCompact: { fontFamily: theme.font.bodyMedium, fontSize: 12 },
   })
 );

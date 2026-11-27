@@ -22,6 +22,7 @@ import type { PlanActions } from '@/features/plan/planActions';
 import { createPlanSheets } from '@/features/plan/planSheetsStore';
 import { upcomingSelection } from '@/features/plan/UpcomingDates';
 import { usePlanData } from '@/features/plan/usePlanData';
+import { toLocalIsoDate } from '@/lib/date';
 import { withPressedTint } from '@/lib/pressed';
 import { useTabScrollPad } from '@/lib/uiScale';
 import { useTabScrollToTop } from '@/hooks/useTabScrollToTop';
@@ -56,13 +57,20 @@ export default function PlanScreen() {
     tab: tabParam,
     collection,
     upcoming,
-  } = useLocalSearchParams<{ tab?: string; collection?: string; upcoming?: string }>();
+    rule,
+  } = useLocalSearchParams<{ tab?: string; collection?: string; upcoming?: string; rule?: string }>();
   useEffect(() => {
     if (tabParam == null) return;
     const requested = tabParam === 'budgets' || tabParam === 'goals' ? 'money' : tabParam;
     const picked = TABS.find((t) => t.value === requested);
     if (picked) {
-      if (picked.value === 'upcoming' && upcoming === 'recurring') setScheduleSelection(upcomingSelection());
+      if (picked.value === 'upcoming' && upcoming) {
+        const date = /^\d{4}-\d{2}-\d{2}$/.test(upcoming) ? upcoming : undefined;
+        const today = toLocalIsoDate(new Date());
+        // The agenda groups overdue payments under today.
+        setScheduleSelection(upcomingSelection(date && date < today ? today : date));
+        if (rule && date) sheets.openDetail('rule', rule);
+      }
       setMoneyFocus(
         picked.value === 'money' &&
           (collection === 'budgets' || collection === 'goals' || collection === 'investments')
@@ -76,8 +84,9 @@ export default function PlanScreen() {
       tab: undefined,
       ...(collection ? { collection: undefined } : {}),
       ...(upcoming ? { upcoming: undefined } : {}),
+      ...(rule ? { rule: undefined } : {}),
     });
-  }, [tabParam, collection, upcoming, setTab]);
+  }, [tabParam, collection, upcoming, rule, setTab, sheets]);
   // Leaving Plan drops a payment lookup still in flight.
   useFocusEffect(useCallback(() => () => sheets.cancelPayment(), [sheets]));
   useEffect(() => () => sheets.cancelPayment(), [sheets]);

@@ -66,7 +66,7 @@ Restoring **replaces every table**. Before doing this, every restore path (a fil
 
 Before a restore replaces anything, Yume saves the current data as a **safety copy**: one file in the app's own private storage (`yume-safety-copy.json` in the app's documents folder — never the backup folder, never shared, removed with the app). "Restore complete" then offers **Undo restore**, and while a copy exists the Backup & Restore screen shows **Saved recovery snapshot**, its saved date and contents, and **Put back**. A retained copy can come from an earlier restore; the screen does not claim it always reverses the latest one. Undo is itself a restore, so it keeps a copy of what it replaces — the user can go back and forth without losing either version.
 
-Only the latest copy is kept. It's written to a pending file first and replaces the previous copy only once the restore succeeds, so a restore that fails (a damaged file) leaves both the data and the existing copy untouched. If the copy can't be saved at all (e.g. the phone is full), nothing is replaced unless the user explicitly chooses "Restore anyway". See `src/lib/safetyCopy.ts`.
+Only the latest copy is kept. The app writes a pending file first and records its ID in the same SQLite transaction that restores the data. If the app closes before promoting the file, it can still offer Undo from that pending copy when reopened. A failed restore leaves the existing data and recovery copy available. Backups containing transfers or repeating transfers between accounts with different currencies are rejected before replacing the data. If the copy can't be saved at all (e.g. the phone is full), nothing is replaced unless the user explicitly chooses "Restore anyway". See `src/lib/safetyCopy.ts`.
 
 </details>
 

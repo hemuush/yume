@@ -7,6 +7,8 @@ import { normalizeCategoryIcon } from './categoryIcon';
 import { BACKFILL_LOAN_TX_KIND_SQL } from '@/db/loanTxKind';
 import { repairTrackedRefundLabels } from '@/db/refundLabels';
 
+export const RESTORE_RECOVERY_KEY = 'restore_recovery_id';
+
 /**
  * Phone-owned settings: always the current phone's values, never the backup's. The folder URI is a storage
  * grant valid only on the install that made it, and the last-backup status describes this phone's backups.
@@ -104,7 +106,12 @@ export async function buildBackupSnapshotOn(db: AppDb): Promise<BackupSnapshot> 
         tables[table] = await xdb.getAllAsync<BackupRow>(`SELECT * FROM ${table}`);
         if (table === 'settings')
           tables[table] = tables[table]
-            .filter((row) => row.key !== ENTRY_DRAFT_KEY && row.key !== 'notification_scheduled_topics')
+            .filter(
+              (row) =>
+                row.key !== ENTRY_DRAFT_KEY &&
+                row.key !== 'notification_scheduled_topics' &&
+                row.key !== RESTORE_RECOVERY_KEY
+            )
             .map(withoutNotificationAcceptance);
       }
     },
@@ -154,7 +161,11 @@ export async function restoreFromSnapshot(snapshot: BackupSnapshot): Promise<Res
 }
 
 /** restoreFromSnapshot on a handle the caller already holds (see buildBackupSnapshotOn). */
-export async function restoreFromSnapshotOn(db: AppDb, snapshot: BackupSnapshot): Promise<RestoreResult> {
+export async function restoreFromSnapshotOn(
+  db: AppDb,
+  snapshot: BackupSnapshot,
+  recoveryId?: string
+): Promise<RestoreResult> {
   if (!isValidSnapshotShape(snapshot)) {
     throw new Error('This backup file is damaged or isn’t a Yume backup. Nothing was changed.');
   }
@@ -247,6 +258,16 @@ export async function restoreFromSnapshotOn(db: AppDb, snapshot: BackupSnapshot)
   // Validate cross-record planner links before replacing any data, not just their foreign keys.
   const entriesById = new Map((snapshot.tables.transactions ?? []).map((row) => [row.id, row]));
   const accountsById = new Map((snapshot.tables.accounts ?? []).map((row) => [row.id, row]));
+  for (const rows of [snapshot.tables.transactions ?? [], snapshot.tables.recurring_rules ?? []]) {
+    for (const row of rows) {
+      if (row.type !== 'transfer') continue;
+      const from = accountsById.get(row.account_id);
+      const to = accountsById.get(row.to_account_id);
+      if (from && to && (from.currency ?? 'INR') !== (to.currency ?? 'INR')) {
+        throw new Error('This backup contains a transfer between different currencies. Nothing was changed.');
+      }
+    }
+  }
   const expectationsById = new Map((snapshot.tables.refund_expectations ?? []).map((row) => [row.id, row]));
   const personTransactions = new Set(
     (snapshot.tables.person_ledger_entries ?? []).map((row) => row.transaction_id)
@@ -349,7 +370,8 @@ export async function restoreFromSnapshotOn(db: AppDb, snapshot: BackupSnapshot)
           const validColumns = columnsByTable[table];
           for (const sourceRow of rows) {
             const row = table === 'settings' ? withoutNotificationAcceptance(sourceRow) : sourceRow;
-            if (table === 'settings' && row.key === ENTRY_DRAFT_KEY) continue;
+            if (table === 'settings' && (row.key === ENTRY_DRAFT_KEY || row.key === RESTORE_RECOVERY_KEY))
+              continue;
             const columns: string[] = [];
             for (const key of Object.keys(row)) {
               if (validColumns.has(key)) columns.push(key);
@@ -407,6 +429,12 @@ export async function restoreFromSnapshotOn(db: AppDb, snapshot: BackupSnapshot)
               broken.length === 1 ? 's' : ''
             } at data that isn’t in the file. Nothing was changed.`
           );
+        }
+        if (recoveryId) {
+          await tx.runAsync('INSERT INTO settings (key, value) VALUES (?, ?)', [
+            RESTORE_RECOVERY_KEY,
+            recoveryId,
+          ]);
         }
       });
     } finally {

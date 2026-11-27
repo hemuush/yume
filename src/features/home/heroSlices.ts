@@ -43,6 +43,21 @@ export function heroPct(fraction: number): string {
   return v > 0 && v < 1 ? '<1%' : `${Math.round(v)}%`;
 }
 
+/** The balance uses signed carry and withdrawals, while the allocation bar compares spending with income. */
+export function monthBalance(surplusMinor: number, billsMinor: number, slices: HeroSlices) {
+  const over = slices.overMinor > 0 && surplusMinor < 0;
+  const hasDue = slices.hasIncome && billsMinor > 0;
+  const freeMinor = surplusMinor - (hasDue ? billsMinor : 0);
+  const label = hasDue
+    ? freeMinor < 0
+      ? 'Short for bills'
+      : 'Left after bills'
+    : over
+      ? 'Overspent by'
+      : 'Left to spend';
+  return { over, hasDue, freeMinor, label };
+}
+
 /**
  * Same split with the savings arc dropped for hide-savings: the ring draws spent and free only,
  * savings share stays empty track, and free keeps its real share.

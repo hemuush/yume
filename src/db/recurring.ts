@@ -1,6 +1,7 @@
 import { found } from './found';
 import { RecurringRuleRow } from './rows';
 import { getDb } from './client';
+import { assertActiveRuleAccounts } from './transactionRules';
 import { newId } from '@/lib/id';
 import {
   assertValidTransactionInput,
@@ -74,7 +75,7 @@ export interface RecurringRuleInput {
   endDate?: string | null;
 }
 
-async function validate(input: RecurringRuleInput) {
+function validate(input: RecurringRuleInput) {
   if (!Number.isSafeInteger(input.amountMinor) || input.amountMinor <= 0) {
     throw new Error('Amount must be a positive number');
   }
@@ -107,9 +108,6 @@ async function validate(input: RecurringRuleInput) {
   if (input.endDate && input.endDate < input.nextRunDate) {
     throw new Error('End date must be on or after the start date');
   }
-  // Same rules createTransaction enforces when a rule fires, checked at save time so a bad rule can't
-  // fail silently every cycle.
-  await assertValidTransactionInput({ ...input, date: input.nextRunDate });
 }
 
 export async function listRecurringRules(): Promise<RecurringRule[]> {
@@ -121,11 +119,16 @@ export async function listRecurringRules(): Promise<RecurringRule[]> {
 }
 
 export async function createRecurringRule(input: RecurringRuleInput): Promise<RecurringRule> {
-  await validate(input);
+  validate(input);
   const db = await getDb();
   const id = newId();
   let created: RecurringRule | null = null;
   await db.withTransactionAsync(async (tx) => {
+    await assertValidTransactionInput({ ...input, date: input.nextRunDate }, tx);
+    await assertActiveRuleAccounts(tx, {
+      ...input,
+      toAccountId: input.type === 'transfer' ? input.toAccountId : null,
+    });
     await tx.runAsync(
       `INSERT INTO recurring_rules
         (id, type, account_id, to_account_id, category_id, amount_minor, note, payment_mode,
@@ -156,7 +159,7 @@ export async function createRecurringRule(input: RecurringRuleInput): Promise<Re
 }
 
 export async function updateRecurringRule(id: string, input: RecurringRuleInput): Promise<RecurringRule> {
-  await validate(input);
+  validate(input);
   const db = await getDb();
   // Keep the rule's real day unless its date moved, so an amount-only edit of a "31st" rule that shows the
   // clamped Feb 28 doesn't turn it into a "28th" rule. A genuinely new date re-anchors to its own day.
@@ -175,6 +178,12 @@ export async function updateRecurringRule(id: string, input: RecurringRuleInput)
     const live = await tx.getFirstAsync<RecurringRuleRow>('SELECT * FROM recurring_rules WHERE id = ?', [id]);
     if (!live || JSON.stringify(live) !== JSON.stringify(current))
       throw new Error('This recurring entry changed. Close and reopen it.');
+    await assertValidTransactionInput({ ...input, date: input.nextRunDate }, tx);
+    if (live.active)
+      await assertActiveRuleAccounts(tx, {
+        ...input,
+        toAccountId: input.type === 'transfer' ? input.toAccountId : null,
+      });
     const linked = await tx.getFirstAsync<{ funding_currency: string | null; bill_currency: string | null }>(
       `SELECT funding.currency AS funding_currency, bill.currency AS bill_currency
        FROM annual_bill_goals b
@@ -237,33 +246,37 @@ export async function setRecurringRuleActive(
     await rebuildAttentionNotificationsAfterCommit('recurringAlerts');
     return;
   }
-  const row = found(
-    await db.getFirstAsync<RecurringRuleRow>('SELECT * FROM recurring_rules WHERE id = ?', [id]),
-    'recurring entry'
-  );
-  const anchorDay = row.anchor_day ?? dayOfIsoDate(row.next_run_date);
-  let next = row.next_run_date;
-  // Bounded like the runner: a broken interval can't spin forever.
-  for (let i = 0; i < 5000 && next < today; i++) {
-    next = advanceDate(
-      next === row.next_run_date ? (row.scheduled_date ?? next) : next,
-      row.frequency,
-      Math.max(1, row.interval_count),
-      anchorDay
+  await db.withTransactionAsync(async (tx) => {
+    const row = found(
+      await tx.getFirstAsync<RecurringRuleRow>('SELECT * FROM recurring_rules WHERE id = ?', [id]),
+      'recurring entry'
     );
-  }
-  if (row.end_date && next > row.end_date) {
-    throw new Error('This recurring entry has already ended. Edit its end date to resume it.');
-  }
-  await db.runAsync(
-    'UPDATE recurring_rules SET active = 1, next_run_date = ?, next_amount_minor = ?, scheduled_date = ? WHERE id = ?',
-    [
-      next,
-      next === row.next_run_date ? (row.next_amount_minor ?? null) : null,
-      next === row.next_run_date ? (row.scheduled_date ?? null) : null,
-      id,
-    ]
-  );
+    await assertActiveRuleAccounts(tx, { accountId: row.account_id, toAccountId: row.to_account_id });
+    await assertValidTransactionInput({ ...rowToRule(row), date: row.next_run_date }, tx);
+    const anchorDay = row.anchor_day ?? dayOfIsoDate(row.next_run_date);
+    let next = row.next_run_date;
+    // Bounded like the runner: a broken interval can't spin forever.
+    for (let i = 0; i < 5000 && next < today; i++) {
+      next = advanceDate(
+        next === row.next_run_date ? (row.scheduled_date ?? next) : next,
+        row.frequency,
+        Math.max(1, row.interval_count),
+        anchorDay
+      );
+    }
+    if (row.end_date && next > row.end_date) {
+      throw new Error('This recurring entry has already ended. Edit its end date to resume it.');
+    }
+    await tx.runAsync(
+      'UPDATE recurring_rules SET active = 1, next_run_date = ?, next_amount_minor = ?, scheduled_date = ? WHERE id = ?',
+      [
+        next,
+        next === row.next_run_date ? (row.next_amount_minor ?? null) : null,
+        next === row.next_run_date ? (row.scheduled_date ?? null) : null,
+        id,
+      ]
+    );
+  });
   await rebuildAttentionNotificationsAfterCommit('recurringAlerts');
 }
 
@@ -337,9 +350,6 @@ async function runDueRecurringRulesOnce(referenceDate: string): Promise<number> 
     // per entry, 20 missed days meant 20 budget reads and 20 full reminder rebuilds while the app opened.
     let lastPosted: CreateTransactionInput | null = null;
     try {
-      // Nothing checked here varies by date, so once per rule covers every occurrence; it must run outside
-      // the transaction below because these checks read via the outer db and would deadlock.
-      await assertValidTransactionInput(occurrence(rule.nextRunDate));
       let cursor = rule.nextRunDate;
       let iterations = 0;
       while (cursor <= referenceDate && iterations < 500) {
@@ -365,6 +375,8 @@ async function runDueRecurringRulesOnce(referenceDate: string): Promise<number> 
             await tx.runAsync('UPDATE recurring_rules SET active = 0 WHERE id = ?', [rule.id]);
             return;
           }
+          await assertValidTransactionInput(input, tx);
+          await assertActiveRuleAccounts(tx, input);
           await insertTransactionRow(tx, input);
           await tx.runAsync(
             'UPDATE recurring_rules SET next_run_date = ?, active = ?, next_amount_minor = NULL, scheduled_date = NULL WHERE id = ?',

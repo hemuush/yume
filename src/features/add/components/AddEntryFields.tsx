@@ -34,6 +34,8 @@ export const FIELDS_KEYS = [
   'splitParts',
   'amountMinor',
   'filteredCategories',
+  'formReady',
+  'currentProblem',
   'currency',
   'openSplit',
   'editing',
@@ -71,6 +73,8 @@ export function AddEntryFields({ model }: Props): ReactElement {
     splitParts,
     amountMinor,
     filteredCategories,
+    formReady,
+    currentProblem,
     currency,
     openSplit,
     editing,
@@ -150,6 +154,11 @@ export function AddEntryFields({ model }: Props): ReactElement {
           ) : (
             <View style={styles.section}>
               <View style={styles.categorySection}>
+                {formReady && currentProblem === 'Pick a category' && (
+                  <Text style={[styles.formHint, styles.categoryHint]} accessibilityLiveRegion="polite">
+                    {currentProblem}
+                  </Text>
+                )}
                 <Picker
                   categories={filteredCategories}
                   selectedId={categoryId}

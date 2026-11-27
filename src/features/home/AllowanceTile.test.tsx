@@ -32,11 +32,11 @@ describe('the daily figure under the headline', () => {
 
   it('shows what went out today beside the pace, and says so when it is more', () => {
     const under = render(<AllowanceTile perDayMinor={46700} daysLeft={9} todaySpentMinor={12500} />);
-    expect(words(under)).toContain('Today');
+    expect(words(under)).toContain('₹342 left today');
     expect(label(under)).toContain('Today ₹125 spent');
-    expect(label(under)).not.toContain('over that pace');
+    expect(label(under)).not.toContain('over pace');
     const over = render(<AllowanceTile perDayMinor={46700} daysLeft={9} todaySpentMinor={60000} />);
-    expect(label(over)).toContain('over that pace');
+    expect(label(over)).toContain('over pace');
     act(() => under.unmount());
     act(() => over.unmount());
   });
@@ -47,16 +47,25 @@ describe('the daily figure under the headline', () => {
       <AllowanceTile perDayMinor={11600} daysLeft={8} todaySpentMinor={24300} todayBudgetMinor={12967} />
     );
     expect(words(r)).toContain('₹113 over pace');
-    expect(label(r)).toContain('₹113 over that pace');
+    expect(label(r)).toContain('₹113 over pace');
     act(() => r.unmount());
   });
 
   it('says by how much today is over or under the pace, not only with a bar', () => {
     const under = render(<AllowanceTile perDayMinor={46700} daysLeft={9} todaySpentMinor={12500} />);
-    expect(words(under)).toContain('₹342 under pace');
+    expect(words(under)).toContain('₹342 left today');
     const over = render(<AllowanceTile perDayMinor={11600} daysLeft={8} todaySpentMinor={24300} />);
     expect(words(over)).toContain('₹127 over pace');
     act(() => under.unmount());
     act(() => over.unmount());
+  });
+
+  it('shows the full available allowance when nothing was spent today', () => {
+    const r = render(
+      <AllowanceTile perDayMinor={50000} daysLeft={9} todaySpentMinor={0} todayBudgetMinor={45000} />
+    );
+    expect(words(r)).toContain('₹450 left today');
+    expect(label(r)).toContain('₹450 left today');
+    act(() => r.unmount());
   });
 });

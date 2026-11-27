@@ -8,6 +8,7 @@ import {
   createCategory,
   createTransaction,
   deleteTransaction,
+  restoreTransaction,
   updateAccount,
   listTransactions,
 } from './ledger';
@@ -65,8 +66,9 @@ it('rejects a restore after bank becomes savings and retains the recovery record
     amountMinor: 100,
     date: '2026-11-01',
   });
-  await deleteTransaction(tx.id);
+  const removed = await deleteTransaction(tx.id);
   await updateAccount(account.id, { name: 'Savings', type: 'savings', openingBalanceMinor: 10000 });
+  await expect(restoreTransaction(removed)).rejects.toThrow(/savings/);
   await expect(restoreDeletedEntry(tx.id)).rejects.toThrow(/savings/);
   expect(await listTransactions()).toHaveLength(0);
   expect(await countDeletedEntries()).toBe(1);

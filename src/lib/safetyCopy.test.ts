@@ -47,7 +47,7 @@ jest.mock('expo-file-system', () => {
 
 import { CREATE_TABLES_SQL } from '@/db/schema';
 import { createAccount, createCategory, createTransaction, listTransactions } from '@/db/ledger';
-import { buildBackupSnapshot, BackupSnapshot } from './backup';
+import { buildBackupSnapshot, BackupSnapshot, RESTORE_RECOVERY_KEY } from './backup';
 import { restoreKeepingSafetyCopy, undoLastRestore, getSafetyCopyInfo, SafetyCopyError } from './safetyCopy';
 
 const notes = async () => (await listTransactions()).map((t) => t.note).sort();
@@ -151,14 +151,32 @@ describe('restore safety copy', () => {
     expect(mockFs.files.has('yume-safety-copy.pending.json')).toBe(false);
   });
 
-  it('if the new copy cannot be put in place after a successful restore, it says undo is not available', async () => {
+  it('can undo a committed restore even when moving the pending recovery copy failed', async () => {
+    const dataBefore = await notes();
     mockFs.failMove = true;
-    const result = await restoreKeepingSafetyCopy(otherPhone);
-    expect(result.undoAvailable).toBe(false);
+    const result = await restoreKeepingSafetyCopy({
+      ...otherPhone,
+      tables: {
+        ...otherPhone.tables,
+        settings: [...otherPhone.tables.settings, { key: RESTORE_RECOVERY_KEY, value: 'another phone' }],
+      },
+    });
+    expect(result.undoAvailable).toBe(true);
     expect(await notes()).toEqual(['Old lunch']);
+    expect(
+      (await buildBackupSnapshot()).tables.settings.some((row) => row.key === RESTORE_RECOVERY_KEY)
+    ).toBe(false);
+    expect(mockFs.files.has('yume-safety-copy.pending.json')).toBe(true);
+    expect(await getSafetyCopyInfo()).toMatchObject({ transactions: dataBefore.length });
+    await undoLastRestore();
+    expect(await notes()).toEqual(dataBefore);
+    expect(mockFs.files.has('yume-safety-copy.pending.json')).toBe(false);
+    expect(mockFs.files.has('yume-safety-copy.alternate.pending.json')).toBe(true);
+    expect(await getSafetyCopyInfo()).toMatchObject({ transactions: 1 });
   });
 
   it('a corrupt safety copy file reads as none, and undo says so', async () => {
+    mockFs.files.clear();
     mockFs.files.set('yume-safety-copy.json', '{not json');
     expect(await getSafetyCopyInfo()).toBeNull();
     await expect(undoLastRestore()).rejects.toThrow('no earlier data');

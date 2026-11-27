@@ -72,7 +72,7 @@ export function SuggestionsList({
       </ListCard>
       <Text style={[styles.hint, styles.listNote]}>
         From your Subscriptions category, and charges seen once a month for 3 months. ✕ hides one; a monthly
-        charge can be brought back from Needs you.
+        charge can be brought back from Alerts.
       </Text>
     </>
   );

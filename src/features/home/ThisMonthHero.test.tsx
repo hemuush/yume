@@ -64,6 +64,8 @@ const byLabel = (r: ReactTestRenderer, start: string) =>
   );
 const headline = (r: ReactTestRenderer) =>
   r.root.find((n) => typeof n.props.onAccessibilityAction === 'function').props.accessibilityLabel;
+const disclosure = (r: ReactTestRenderer) =>
+  r.root.find((n) => n.props.accessibilityHint === 'How it adds up' && typeof n.props.onPress === 'function');
 
 function hero(over: Partial<React.ComponentProps<typeof ThisMonthHero>> = {}) {
   const today = 'today' in over ? over.today : { spentMinor: 204_500, goalMinor: 500_000 };
@@ -117,7 +119,7 @@ describe('month card', () => {
   it('leads with what is free to use, what it is out of, and what is left today as a chip', () => {
     const r = render();
     const all = texts(r);
-    expect(all).toEqual(expect.arrayContaining(['Free to use', '₹794', 'Expense', 'Income', 'Transfer']));
+    expect(all).toEqual(expect.arrayContaining(['Left to spend', '₹794', 'Expense', 'Income', 'Transfer']));
     // The money-bar legend stays scoped to this month.
     expect(all).toEqual(expect.arrayContaining(['Spent', 'Saved', '₹95,762', '₹99,500']));
     expect(all).not.toContain('Free');
@@ -131,9 +133,10 @@ describe('month card', () => {
     expect(all).not.toContain('49%');
     expect(all).not.toContain('Bills left');
     expect(all).toContain('₹2,955 left');
-    expect(byLabel(r, 'How this adds up')).toBeDefined();
-    // Free to use is said once, as the headline.
-    expect(all.filter((t) => t === 'Free to use')).toHaveLength(1);
+    expect(all).toContain('How it adds up');
+    expect(disclosure(r)).toBe(byLabel(r, 'Left to spend, ₹794'));
+    // Left to spend is said once, as the headline.
+    expect(all.filter((t) => t === 'Left to spend')).toHaveLength(1);
     // The shares are in the bar and the tray, not a chip; the pace waits under Details.
     expect(all.some((t) => t.endsWith('% spent'))).toBe(false);
     expect(all.some((t) => t.startsWith('On pace'))).toBe(false);
@@ -158,21 +161,33 @@ describe('month card', () => {
     act(() => none.unmount());
   });
 
+  it('keeps today’s allowance visible on the last day of the month', () => {
+    jest.setSystemTime(new Date(2026, 9, 31, 12));
+    const r = render({ surplusMinor: 79_400, todaySpentMinor: 12_500 });
+    try {
+      expect(texts(r)).toEqual(expect.arrayContaining(['₹794 left today', '₹125 spent']));
+      expect(texts(r).some((line) => line.includes('a day'))).toBe(false);
+    } finally {
+      act(() => r.unmount());
+      jest.setSystemTime(new Date(2026, 9, 22, 12));
+    }
+  });
+
   it('puts the pace, a spending forecast, under Details', () => {
     const r = render();
-    act(() => byLabel(r, 'How this adds up').props.onPress());
+    act(() => disclosure(r).props.onPress());
     const all = texts(r);
-    expect(all.some((t) => t.startsWith('On pace by '))).toBe(true);
+    expect(all.some((t) => t.startsWith('Likely spent by '))).toBe(true);
     expect(all.some((t) => t.startsWith('about ₹'))).toBe(true);
   });
 
   it('opens the breakdown when the big figure is tapped', () => {
     const r = render();
-    const figure = byLabel(r, 'Free to use, ₹794');
+    const figure = byLabel(r, 'Left to spend, ₹794');
     expect(figure.props.accessibilityRole).toBe('button');
-    expect(texts(r).some((t) => t.startsWith('On pace by '))).toBe(false);
+    expect(texts(r).some((t) => t.startsWith('Likely spent by '))).toBe(false);
     act(() => figure.props.onPress());
-    expect(texts(r).some((t) => t.startsWith('On pace by '))).toBe(true);
+    expect(texts(r).some((t) => t.startsWith('Likely spent by '))).toBe(true);
   });
 
   it('says how far over the daily goal today is', () => {
@@ -184,7 +199,7 @@ describe('month card', () => {
     const all = texts(
       render({ incomeMinor: 5_000_000, spentMinor: 6_000_000, savingsMinor: 0, surplusMinor: -1_000_000 })
     );
-    expect(all).toEqual(expect.arrayContaining(['Over by', '₹10,000']));
+    expect(all).toEqual(expect.arrayContaining(['Overspent by', '₹10,000']));
     expect(all.filter((t) => t.includes('more went out than came in'))).toHaveLength(1);
     expect(all.some((t) => t.endsWith('% spent'))).toBe(false);
   });
@@ -214,43 +229,46 @@ describe('month card with bills still to pay', () => {
   it('takes bills off the headline and shows them in the legend', () => {
     const r = render(base);
     const all = texts(r);
-    expect(all).toEqual(expect.arrayContaining(['Free after bills', '₹40,000', 'Bills left', '₹20,000']));
-    expect(all).not.toContain('Free to use');
+    expect(all).toEqual(expect.arrayContaining(['Left after bills', '₹40,000', 'Bills left', '₹20,000']));
+    expect(all).not.toContain('Left to spend');
     expect(headline(r)).toContain('after spending, savings and bills');
   });
 
   it('opens the sum from Bills left, and closes it again', () => {
     const r = render(base);
-    expect(texts(r)).not.toContain('After bills');
+    // The sum ends on the headline’s own words; its bills line is the sum’s alone.
+    expect(texts(r)).not.toContain('Still to pay');
     act(() => byLabel(r, 'Bills left, ₹20,000').props.onPress());
     expect(texts(r)).toEqual(
       expect.arrayContaining([
         'Income',
         '₹1,00,000',
         '−₹10,000',
-        'Set aside',
+        'Saved',
         '−₹30,000',
-        'Free to use',
+        'Left to spend',
         '₹60,000',
       ])
     );
-    expect(texts(r)).toEqual(expect.arrayContaining(['Still to pay', '−₹20,000', 'After bills', '₹40,000']));
+    expect(texts(r)).toEqual(
+      expect.arrayContaining(['Still to pay', '−₹20,000', 'Left after bills', '₹40,000'])
+    );
     act(() => byLabel(r, 'Bills left, ₹20,000').props.onPress());
-    expect(texts(r)).not.toContain('After bills');
+    expect(texts(r)).not.toContain('Still to pay');
   });
 
   it('keeps the balance in place as spending and savings details open and close', () => {
     const { haptics } = require('@/lib/haptics');
     haptics.tap.mockClear();
     const r = render({ dueMinor: 2_000_000 });
-    expect(texts(r)).toContain('Short after bills');
+    expect(texts(r)).toContain('Short for bills');
     // From the legend: spent, then the same slice again.
     act(() => byLabel(r, 'Spent, ₹').props.onPress());
     expect(texts(r)).toContain('₹95,762');
     expect(texts(r).some((t) => t.endsWith('of what you had to spend'))).toBe(true);
-    expect(texts(r)).toContain('Short after bills');
+    expect(texts(r)).toContain('Short for bills');
     act(() => byLabel(r, 'Spent, ₹').props.onPress());
-    expect(texts(r)).toContain('Short after bills');
+    expect(texts(r)).toContain('Short for bills');
     // Another slice, from the legend.
     act(() => byLabel(r, 'Saved, ₹').props.onPress());
     expect(texts(r)).toContain('₹99,500');
@@ -283,13 +301,13 @@ describe('month card with bills still to pay', () => {
 
   it('says short when the bills are more than what is free', () => {
     const all = texts(render({ ...base, dueMinor: 7_000_000 }));
-    expect(all).toEqual(expect.arrayContaining(['Short after bills', '-₹10,000', '₹70,000']));
+    expect(all).toEqual(expect.arrayContaining(['Short for bills', '-₹10,000', '₹70,000']));
   });
 
-  it('is the plain Free to use card when nothing is due', () => {
+  it('is the plain Left to spend card when nothing is due', () => {
     const r = render({ ...base, dueMinor: 0 });
     const all = texts(r);
-    expect(all).toEqual(expect.arrayContaining(['Free to use', '₹60,000']));
+    expect(all).toEqual(expect.arrayContaining(['Left to spend', '₹60,000']));
     expect(headline(r)).toContain('after spending and savings');
     expect(all.some((t) => t.includes('still to pay'))).toBe(false);
   });
@@ -300,7 +318,7 @@ describe('month card with bills still to pay', () => {
       const r = render(base);
       act(() => byLabel(r, 'Bills left, ₹20,000').props.onPress());
       const all = texts(r).join(' | ');
-      expect(all).toContain('Set aside');
+      expect(all).toContain('Saved');
       expect(all).not.toContain('30,000');
       expect(all).toContain('₹••••');
     } finally {
@@ -331,7 +349,7 @@ describe('month card with savings hidden', () => {
 
   it('keeps the free headline, and never says what was saved', () => {
     const all = texts(render(hidden));
-    expect(all).toEqual(expect.arrayContaining(['Free to use', '₹30,000', 'Spent']));
+    expect(all).toEqual(expect.arrayContaining(['Left to spend', '₹30,000', 'Spent']));
     expect(all).not.toContain('Saved');
   });
 
@@ -346,7 +364,7 @@ describe('month card with savings hidden', () => {
     const all = texts(
       render({ incomeMinor: 5_000_000, spentMinor: 6_000_000, savingsMinor: 0, surplusMinor: -1_000_000 })
     );
-    expect(all).toContain('Over by');
+    expect(all).toContain('Overspent by');
   });
 });
 
@@ -358,7 +376,7 @@ describe('month card with no income', () => {
 
   it('asks for income instead of showing a figure', () => {
     const all = texts(render({ incomeMinor: 0, spentMinor: 0, savingsMinor: 0, surplusMinor: 0 }));
-    expect(all).toEqual(expect.arrayContaining(['Free to use', '—', 'Add income to see what is free']));
+    expect(all).toEqual(expect.arrayContaining(['Left to spend', '—', 'Add income to see what is left']));
   });
 });
 
@@ -374,7 +392,7 @@ describe('month card with money carried over from earlier months', () => {
 
   it('says what the figure is out of, income and what carried over together, without double counting it', () => {
     const r = render(base);
-    expect(texts(r)).toEqual(expect.arrayContaining(['Free to use', '₹80,000']));
+    expect(texts(r)).toEqual(expect.arrayContaining(['Left to spend', '₹80,000']));
     expect(headline(r)).toContain('after spending and savings');
   });
 
@@ -382,7 +400,14 @@ describe('month card with money carried over from earlier months', () => {
     const r = render({ ...base, dueMinor: 2_000_000 });
     act(() => byLabel(r, 'Bills left, ₹20,000').props.onPress());
     expect(texts(r)).toEqual(
-      expect.arrayContaining(['Carried over', '+₹20,000', 'Free to use', '₹80,000', 'After bills', '₹60,000'])
+      expect.arrayContaining([
+        'Carried over',
+        '+₹20,000',
+        'Left to spend',
+        '₹80,000',
+        'Left after bills',
+        '₹60,000',
+      ])
     );
   });
 
@@ -390,7 +415,7 @@ describe('month card with money carried over from earlier months', () => {
     const r = render({ ...base, carryMinor: -1_000_000, surplusMinor: 5_000_000 });
     // A carried shortfall only lowers the headline: it is not part of what the figure is "out of".
     expect(headline(r)).toContain('after spending and savings');
-    act(() => byLabel(r, 'How this adds up').props.onPress());
+    act(() => disclosure(r).props.onPress());
     expect(texts(r)).toEqual(expect.arrayContaining(['Carried over', '−₹10,000']));
   });
 
@@ -411,26 +436,26 @@ describe('month card with savings withdrawals and carried shortfalls', () => {
 
   it('keeps the actual free balance when a withdrawal funds spending beyond income', () => {
     const all = texts(render(withdrawn));
-    expect(all).toEqual(expect.arrayContaining(['Free to use', '₹500']));
-    expect(all).not.toContain('Over by');
+    expect(all).toEqual(expect.arrayContaining(['Left to spend', '₹500']));
+    expect(all).not.toContain('Overspent by');
   });
 
   it('deducts outstanding bills once from a savings-funded balance', () => {
     const r = render({ ...withdrawn, dueMinor: 20_000 });
-    expect(texts(r)).toEqual(expect.arrayContaining(['Free after bills', '₹300']));
-    act(() => byLabel(r, 'How this adds up').props.onPress());
-    expect(texts(r)).toEqual(expect.arrayContaining(['Free to use', '₹500', 'After bills', '₹300']));
+    expect(texts(r)).toEqual(expect.arrayContaining(['Left after bills', '₹300']));
+    act(() => disclosure(r).props.onPress());
+    expect(texts(r)).toEqual(expect.arrayContaining(['Left to spend', '₹500', 'Left after bills', '₹300']));
   });
 
   it('reports the actual remaining deficit after a smaller withdrawal', () => {
     const all = texts(render({ ...withdrawn, savingsMinor: -20_000, surplusMinor: -30_000 }));
-    expect(all).toEqual(expect.arrayContaining(['Over by', '₹300']));
+    expect(all).toEqual(expect.arrayContaining(['Overspent by', '₹300']));
     expect(all).not.toContain('₹500');
   });
 
   it('includes a carried shortfall in the overspent headline', () => {
     const all = texts(render({ ...withdrawn, savingsMinor: 0, carryMinor: -20_000, surplusMinor: -70_000 }));
-    expect(all).toEqual(expect.arrayContaining(['Over by', '₹700']));
+    expect(all).toEqual(expect.arrayContaining(['Overspent by', '₹700']));
     expect(all).not.toContain('₹500');
   });
 
@@ -439,9 +464,9 @@ describe('month card with savings withdrawals and carried shortfalls', () => {
     try {
       const r = render(withdrawn);
       const all = texts(r);
-      expect(all).toEqual(expect.arrayContaining(['Free to use', '₹500']));
+      expect(all).toEqual(expect.arrayContaining(['Left to spend', '₹500']));
       expect(headline(r)).toContain('after deductions');
-      expect(all).not.toContain('Over by');
+      expect(all).not.toContain('Overspent by');
       expect(all.join(' ')).not.toMatch(/savings/i);
     } finally {
       mockHideAmounts = false;
@@ -460,7 +485,7 @@ describe('month card when bills change without the period changing', () => {
       surplusMinor: 9_000_000,
     };
     const r = render({ ...props, dueMinor: 0 });
-    expect(texts(r)).toContain('Free to use');
+    expect(texts(r)).toContain('Left to spend');
     act(() => {
       r.update(
         <ThisMonthHero
@@ -474,8 +499,8 @@ describe('month card when bills change without the period changing', () => {
       );
     });
     const all = texts(r);
-    expect(all).not.toContain('Short after bills');
-    expect(all).toContain('Free after bills');
+    expect(all).not.toContain('Short for bills');
+    expect(all).toContain('Left after bills');
   });
 });
 
@@ -485,11 +510,13 @@ it('omits zero bills from the summary', () => {
 });
 
 describe('month card: how this adds up', () => {
-  const open = (r: ReactTestRenderer) => act(() => byLabel(r, 'How this adds up').props.onPress());
+  const open = (r: ReactTestRenderer) => act(() => disclosure(r).props.onPress());
 
   it('opens the sum from the link, with no bills due, and closes it again', () => {
     const r = render();
-    expect(texts(r)).not.toContain('Set aside');
+    // The signed savings line (−₹99,500) is the sum’s alone: the legend shows that amount without a sign.
+    const sumOpen = () => texts(r).includes('−₹99,500');
+    expect(sumOpen()).toBe(false);
     open(r);
     expect(texts(r)).toEqual(
       expect.arrayContaining([
@@ -497,41 +524,43 @@ describe('month card: how this adds up', () => {
         '₹1,96,056',
         'Spent',
         '−₹95,762',
-        'Set aside',
+        'Saved',
         '−₹99,500',
-        'Free to use',
+        'Left to spend',
       ])
     );
     // No bills due: no bills lines.
     expect(texts(r)).not.toContain('Still to pay');
-    expect(texts(r)).not.toContain('After bills');
+    expect(texts(r)).not.toContain('Left after bills');
     open(r);
-    expect(texts(r)).not.toContain('Set aside');
+    expect(sumOpen()).toBe(false);
   });
 
   it('is the same sum, with the bills lines, whether opened from the link or the bills chip', () => {
     const r = render({ dueMinor: 2_000_000 });
     open(r);
-    expect(texts(r)).toEqual(expect.arrayContaining(['Still to pay', '−₹20,000', 'After bills']));
+    expect(texts(r)).toEqual(expect.arrayContaining(['Still to pay', '−₹20,000', 'Left after bills']));
     // The chip toggles the same sum.
     act(() => byLabel(r, 'Bills left, ₹20,000').props.onPress());
-    expect(texts(r)).not.toContain('After bills');
+    expect(texts(r)).not.toContain('Left after bills');
   });
 
   it('reports its state to a screen reader', () => {
     const r = render();
-    expect(byLabel(r, 'How this adds up').props.accessibilityState).toEqual({ expanded: false });
+    expect(disclosure(r).props.accessibilityState).toEqual({ expanded: false });
     open(r);
-    expect(byLabel(r, 'How this adds up').props.accessibilityState).toEqual({ expanded: true });
+    expect(disclosure(r).props.accessibilityState).toEqual({ expanded: true });
   });
 
   it('never shows the amount that went to savings when savings are hidden', () => {
     mockHideAmounts = true;
     try {
-      const r = render();
+      const r = render({ carryMinor: 234_500 });
       open(r);
       const all = texts(r).join(' | ');
-      expect(all).toContain('Set aside');
+      expect(all).not.toContain('₹1,96,056');
+      expect(all).not.toContain('Carried over');
+      expect(all).toContain('Saved');
       expect(all).not.toContain('99,500');
       expect(all).toContain('₹••••');
     } finally {
@@ -541,7 +570,7 @@ describe('month card: how this adds up', () => {
 
   it('is not there when there is no income to add up', () => {
     const r = render({ incomeMinor: 0, spentMinor: 0, savingsMinor: 0, surplusMinor: 0 });
-    expect(r.root.findAll((n) => n.props.accessibilityLabel === 'How this adds up')).toHaveLength(0);
+    expect(r.root.findAll((n) => n.props.accessibilityHint === 'How it adds up')).toHaveLength(0);
   });
 
   it('still adds up when more went out than came in', () => {
@@ -553,7 +582,7 @@ describe('month card: how this adds up', () => {
     });
     open(r);
     expect(texts(r)).toEqual(
-      expect.arrayContaining(['Income', '₹50,000', 'Spent', '−₹60,000', 'Free to use'])
+      expect.arrayContaining(['Income', '₹50,000', 'Spent', '−₹60,000', 'Left to spend'])
     );
   });
 });
@@ -561,7 +590,7 @@ describe('month card: how this adds up', () => {
 describe('month card: today and the free figure', () => {
   const expanded = (over: Partial<React.ComponentProps<typeof ThisMonthHero>> = {}) => {
     const r = render(over);
-    act(() => byLabel(r, 'How this adds up').props.onPress());
+    act(() => disclosure(r).props.onPress());
     return r;
   };
   it('says the free figure once, in the headline, with no second "free" label', () => {
@@ -604,7 +633,7 @@ describe('month card: what can be spent a day', () => {
 it('omits Bills left when a period has no current bill estimate', () => {
   const r = render({ periodKey: 'month:-1', dueMinor: null });
   expect(texts(r)).not.toContain('Bills left');
-  act(() => byLabel(r, 'How this adds up').props.onPress());
+  act(() => disclosure(r).props.onPress());
   expect(texts(r)).not.toContain('Still to pay');
   act(() => r.unmount());
 });
@@ -619,7 +648,7 @@ it('keeps every ready recap available from the calculation disclosure', () => {
     ],
   });
   expect(r.root.findAll((n) => n.props.accessibilityLabel === 'View September recap')).toHaveLength(0);
-  act(() => byLabel(r, 'How this adds up').props.onPress());
+  act(() => disclosure(r).props.onPress());
   act(() => byLabel(r, 'View September recap').props.onPress());
   act(() => byLabel(r, 'View 12–18 Oct recap').props.onPress());
   expect(month).toHaveBeenCalledTimes(1);
@@ -725,11 +754,11 @@ describe('month card: nothing jumps under the finger', () => {
   const order = (r: ReactTestRenderer) => r.root.findAll(() => true);
   const indexOf = (r: ReactTestRenderer, test: (n: ReturnType<typeof order>[number]) => boolean) =>
     order(r).findIndex(test);
-  const link = (n: { props: Record<string, unknown> }) => n.props.accessibilityLabel === 'How this adds up';
+  const link = (n: { props: Record<string, unknown> }) => n.props.accessibilityHint === 'How it adds up';
 
   it('opens the sum under the link that opens it, so the link stays where the finger is', () => {
     const r = render();
-    act(() => byLabel(r, 'How this adds up').props.onPress());
+    act(() => disclosure(r).props.onPress());
     const linkAt = indexOf(r, link);
     const sumAt = indexOf(r, (n) => n.type === Text && [n.props.children].flat().join('') === 'Income');
     expect(linkAt).toBeGreaterThan(-1);

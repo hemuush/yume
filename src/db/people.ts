@@ -103,6 +103,7 @@ export async function addLedgerEntry(input: {
   date: string;
   note?: string;
   transactionId?: string | null;
+  afterWrite?: (tx: AppDb) => Promise<void>;
 }): Promise<PersonLedgerEntry> {
   assertValidIsoDate(input.date);
   if (!Number.isSafeInteger(input.amountMinor) || input.amountMinor === 0) {
@@ -137,6 +138,7 @@ export async function addLedgerEntry(input: {
       [id]
     );
     created = rowToEntry(found(row, 'entry'));
+    await input.afterWrite?.(tx);
   });
   return found<PersonLedgerEntry>(created, 'entry');
 }
@@ -156,6 +158,7 @@ async function insertPersonMoneyMovement(
     date: string;
     note?: string;
     ledgerAmountMinor: number;
+    afterWrite?: (tx: AppDb) => Promise<void>;
   }
 ): Promise<void> {
   await assertDefaultCurrencyAccount(tx, input.accountId, 'Friends & family entries');
@@ -179,6 +182,7 @@ async function insertPersonMoneyMovement(
      VALUES (?, ?, ?, ?, ?, ?)`,
     [newId(), input.personId, txId, input.ledgerAmountMinor, input.date, (input.note ?? '').trim()]
   );
+  await input.afterWrite?.(tx);
 }
 
 /**
@@ -192,6 +196,7 @@ export async function recordMoneyGivenToPerson(input: {
   amountMinor: number;
   date: string;
   note?: string;
+  afterWrite?: (tx: AppDb) => Promise<void>;
 }): Promise<void> {
   const db = await getDb();
   await db.withTransactionAsync((tx) =>
@@ -212,6 +217,7 @@ export async function recordMoneyReceivedFromPerson(input: {
   amountMinor: number;
   date: string;
   note?: string;
+  afterWrite?: (tx: AppDb) => Promise<void>;
 }): Promise<void> {
   const db = await getDb();
   await db.withTransactionAsync((tx) =>

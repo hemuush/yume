@@ -105,7 +105,7 @@ it('keeps the month label, figures and current-month chips together through inte
   );
   const r = render(hero('month:0', 100000));
   act(() =>
-    r.root.find((n) => n.props.accessibilityLabel === 'How this adds up' && n.props.onPress).props.onPress()
+    r.root.find((n) => n.props.accessibilityHint === 'How it adds up' && n.props.onPress).props.onPress()
   );
   act(() => r.update(hero('month:-1', 200000)));
   const stale = mockCompletions.at(-1)!;

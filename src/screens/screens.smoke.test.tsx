@@ -716,13 +716,13 @@ describe('Home, stepping between months on a lived-in phone', () => {
     const back = textOf(tree);
     expect(back).toContain(monthName(-1));
     expect(back).not.toContain('Bills left');
-    expect(back).not.toContain('Short after bills');
+    expect(back).not.toContain('Short for bills');
     // The short caption names deductions; the expanded sum below retains income and carryover.
     expect(back).toContain('after spending and savings');
-    // And the sum behind "How this adds up" itemises both.
+    // And the sum behind "How it adds up" itemises both.
     await act(async () => {
       tree.root
-        .find((n) => n.props.accessibilityLabel === 'How this adds up' && n.props.onPress)
+        .find((n) => n.props.accessibilityHint === 'How it adds up' && n.props.onPress)
         .props.onPress();
     });
     const sum = textOf(tree);
@@ -773,12 +773,12 @@ describe('Home, stepping between months on a lived-in phone', () => {
     expect(textOf(tree)).toContain(monthName(-1));
     act(() => tree.unmount());
   });
-  it('keeps Accounts before Coming up and opens recent entries over Home', async () => {
+  it('keeps Accounts before Upcoming and opens recent entries over Home', async () => {
     const tree = await open(SCREENS[0][1]);
     const { Section } = require('@/components/Section');
     const titles = tree.root.findAllByType(Section).map((n) => n.props.title);
     expect(titles.indexOf('Your accounts')).toBeGreaterThanOrEqual(0);
-    expect(titles.indexOf('Coming up')).toBeGreaterThan(titles.indexOf('Your accounts'));
+    expect(titles.indexOf('Upcoming')).toBeGreaterThan(titles.indexOf('Your accounts'));
     expect(titles).not.toContain('Spending');
     expect(tree.root.findAllByProps({ testID: 'home-swipe-pages' })).toHaveLength(0);
     const { RecentTransactionRow } = require('@/features/home/RecentTransactionRow');

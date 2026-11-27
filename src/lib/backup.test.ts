@@ -43,6 +43,28 @@ describe('restoreFromSnapshot', () => {
     expect(txs[0].amountMinor).toBe(12300);
   });
 
+  it('rejects cross-currency transfers before replacing the ledger', async () => {
+    const bank = await createAccount({ name: 'Transfer bank', type: 'bank', currency: 'INR' });
+    const cash = await createAccount({ name: 'Transfer cash', type: 'cash', currency: 'INR' });
+    const transfer = await createTransaction({
+      type: 'transfer',
+      accountId: bank.id,
+      toAccountId: cash.id,
+      amountMinor: 500,
+      date: '2026-02-01',
+    });
+    try {
+      const snapshot = await buildBackupSnapshot();
+      snapshot.tables.accounts.find((account) => account.id === cash.id)!.currency = 'USD';
+      await expect(restoreFromSnapshot(snapshot)).rejects.toThrow(/transfer between different currencies/);
+      expect(await listTransactions({ limit: 100 })).toEqual(
+        expect.arrayContaining([expect.objectContaining({ id: transfer.id })])
+      );
+    } finally {
+      await mockTestDb.runAsync('DELETE FROM transactions WHERE id = ?', [transfer.id]);
+    }
+  });
+
   it('restores every real column but reports keys that are not columns', async () => {
     const base = await buildBackupSnapshot();
     const snapshot = {

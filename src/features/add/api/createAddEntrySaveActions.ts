@@ -78,6 +78,7 @@ export function createAddEntrySaveActions(input: Input) {
         note: note.trim(),
         parts: toSplitParts(amountMinor, splitParts),
         paymentMode,
+        ...(!editingId ? { afterWrite: recovery.advanceAfterWrite(null) } : {}),
       });
       // The lists you land back on glow the new parts, like any saved entry.
       try {
@@ -149,7 +150,8 @@ export function createAddEntrySaveActions(input: Input) {
       await recovery.prepareSave();
       prepared = true;
       for (const r of pending) {
-        const id = await persistStaged(r, categories);
+        const remainingRows = saved + 1 < pending.length ? rows.slice(saved + 1) : null;
+        const id = await persistStaged(r, categories, recovery.advanceAfterWrite(remainingRows));
         if (id) savedIds.push(id);
         saved += 1;
       }

@@ -19,6 +19,7 @@ export interface UpcomingItem {
   sign: '+' | '-' | '';
   sortDate: string;
   route: '/loans' | `/loans?pay=${string}` | '/recurring' | PayCardRoute;
+  ruleId?: string;
   urgent: boolean;
   /** An EMI or card bill to pay: its row ends in a "Pay" pill when pinned. */
   payable: boolean;
@@ -136,6 +137,7 @@ export function buildUpcomingItems(input: {
       sign: rule.type === 'income' ? '+' : rule.type === 'expense' ? '-' : '',
       sortDate: rule.nextRunDate,
       route: '/recurring',
+      ruleId: rule.id,
       urgent: isDueUrgent(rule.nextRunDate),
       payable: false,
       pinned: daysUntilIsoDate(rule.nextRunDate) < 0,

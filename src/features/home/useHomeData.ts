@@ -80,7 +80,7 @@ export function useHomeData(cursor: PeriodCursor) {
     everydaySpentMinor: number;
     dueRestOfMonthMinor: number;
   } | null>(null);
-  // Unpaid EMIs and bills left this month, for the card's "Free after bills".
+  // Unpaid EMIs and bills left this month, for the card's "Left after bills".
   const [stillToPayMinor, setStillToPayMinor] = useState(0);
   // How many things need you (see needsYou.ts): the bell shows the count and opens the list. Only the count is held,
   // so a refresh that found the same number redraws nothing.

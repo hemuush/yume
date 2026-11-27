@@ -1,5 +1,6 @@
 import { MAX_AMOUNT_MINOR } from '@/lib/amountLimits';
 import { getDb } from './client';
+import { assertActiveRuleAccounts } from './transactionRules';
 import type { RecurringRuleRow } from './rows';
 import { advanceDate } from '@/lib/recurrence';
 import { assertValidIsoDate, dayOfIsoDate, toLocalIsoDate } from '@/lib/date';
@@ -83,6 +84,7 @@ export async function changeNextOccurrence(
     } else {
       if (input) {
         await assertValidTransactionInput(input, tx);
+        await assertActiveRuleAccounts(tx, input);
         await insertTransactionRow(tx, input);
       }
       await tx.runAsync(

@@ -1,5 +1,5 @@
 import { rebuildNotificationsAfterCommit } from './afterCommit';
-import { getDb } from './client';
+import { getDb, type AppDb } from './client';
 import { MIN_SPLIT_PARTS, MAX_SPLIT_PARTS } from '@/lib/splitLimits';
 import { newId } from '@/lib/id';
 import {
@@ -10,7 +10,7 @@ import {
   rowToTransaction,
 } from './transactions';
 import { captureRows, restoreRows, RowSnapshot } from './undoSnapshot';
-import { keepDeletedEntry, forgetDeletedEntry } from './recentlyDeleted';
+import { keepDeletedEntry, forgetDeletedEntry, assertRestorableEntry } from './recentlyDeleted';
 import type { TransactionRow } from './rows';
 import type { Transaction, PaymentMode } from '@/types';
 
@@ -34,6 +34,7 @@ interface SaveSplitInput {
   note?: string;
   parts: SplitPart[];
   paymentMode?: PaymentMode | null;
+  afterWrite?: (tx: AppDb) => Promise<void>;
 }
 
 /** Checks the parts, before anything is written. */
@@ -82,6 +83,7 @@ export async function saveSplit(input: SaveSplitInput): Promise<string> {
     if (input.replacesEntryId)
       await tx.runAsync('DELETE FROM transactions WHERE id = ?', [input.replacesEntryId]);
     for (const e of entries) await insertTransactionRow(tx, e);
+    await input.afterWrite?.(tx);
   });
   // The check reads only type, category and date, so parts sharing them need it once.
   const checked = new Set<string>();
@@ -127,6 +129,7 @@ export async function deleteSplit(splitId: string): Promise<RowSnapshot[]> {
 export async function restoreSplit(snapshots: RowSnapshot[]): Promise<void> {
   const db = await getDb();
   await db.withTransactionAsync(async (tx) => {
+    for (const snapshot of snapshots) await assertRestorableEntry(tx, snapshot.row);
     await restoreRows(tx, snapshots);
     for (const s of snapshots) await forgetDeletedEntry(tx, String(s.row.id));
   });

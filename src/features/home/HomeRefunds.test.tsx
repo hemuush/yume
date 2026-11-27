@@ -117,7 +117,7 @@ const comingUpProps = {
   onSeeAll: jest.fn(),
 };
 
-it('shows compact refunds below Coming up only for pending data or a failed read', () => {
+it('shows compact refunds below Upcoming only for pending data or a failed read', () => {
   const props = comingUpProps;
   const tree = render(<HomeComingUp {...props} refunds={[refund('a')]} />);
   expect(texts(tree)).toContain('₹80 refund pending');
@@ -128,7 +128,7 @@ it('shows compact refunds below Coming up only for pending data or a failed read
   expect(texts(tree)).toContain('Couldn’t load refunds');
 });
 
-it('lists payments in Coming up and keeps the full schedule reachable', () => {
+it('lists payments in Upcoming and keeps the full schedule reachable', () => {
   const { router } = require('expo-router');
   const item = (key: string) => ({
     key,
@@ -158,7 +158,7 @@ it('lists payments in Coming up and keeps the full schedule reachable', () => {
   const { UpcomingRow } = require('./UpcomingRow');
   act(() => tree.root.findAllByType(UpcomingRow)[0].props.onPress());
   expect(router.push).toHaveBeenCalledWith('/recurring');
-  press(tree, 'View plan — Coming up');
+  press(tree, 'View plan — Upcoming');
   expect(all).toHaveBeenCalledWith('all');
 });
 

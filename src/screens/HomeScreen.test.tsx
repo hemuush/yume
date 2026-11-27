@@ -296,7 +296,7 @@ describe('what a reload or a step redraws', () => {
     expect(delta(before)).toEqual({ accounts: 0, comingUp: 0, hero: 0 });
   });
 
-  it('draws the month card and the accounts for a saved entry, and not Coming up, which has nothing new', async () => {
+  it('draws the month card and the accounts for a saved entry, and not Upcoming, which has nothing new', async () => {
     await openHome();
     await settle(1000);
     const before = { ...mockDrawn };
@@ -319,7 +319,7 @@ describe('what a reload or a step redraws', () => {
     expect(changed.comingUp).toBe(0);
   });
 
-  it('steps to another month without drawing the accounts or Coming up again', async () => {
+  it('steps to another month without drawing the accounts or Upcoming again', async () => {
     await openHome();
     await settle(1000);
     const before = { ...mockDrawn };

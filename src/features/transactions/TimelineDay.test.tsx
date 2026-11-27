@@ -175,6 +175,7 @@ function render(
   onPressTx = jest.fn(),
   onReorder?: (date: string, ids: string[]) => Promise<void>,
   opts: {
+    entries?: Transaction[];
     categories?: Category[];
     savingsAccountIds?: Set<string>;
     onDragActive?: (active: boolean) => void;
@@ -187,7 +188,7 @@ function render(
         date={DATE}
         label="Yesterday"
         dateLabel="25 Sept"
-        items={items}
+        items={opts.entries ?? items}
         categories={opts.categories ?? categories}
         savingsAccountIds={opts.savingsAccountIds}
         accountName={(id) => accounts[id] ?? id}
@@ -201,6 +202,20 @@ function render(
   });
   return r;
 }
+
+it('falls back to the category or account for legacy whitespace-only notes', () => {
+  const r = render(new Set([`${DATE}|expense|food`]), undefined, undefined, undefined, {
+    entries: [
+      tx('food-1', { note: '  \t' }),
+      tx('food-2', { note: '  Lunch  ' }),
+      tx('travel', { categoryId: 'travel', note: '  \n' }),
+    ],
+  });
+  expect(rowTexts(r, 'Travel, ₹')).toContain('Travel');
+  expect(rowTexts(r, 'Food, ₹')).toContain('Bank');
+  expect(rowTexts(r, 'Food, Lunch,')).toContain('Lunch');
+  act(() => r.unmount());
+});
 
 describe('TimelineDay with savings amounts hidden', () => {
   const sensitiveFood = categories.map((c) =>

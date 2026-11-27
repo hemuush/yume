@@ -170,12 +170,13 @@ function TimelineDayView({
   const renderLine = (line: LaneLine, i: number) => {
     if (line.kind === 'single') {
       const tx = line.tx;
+      const note = tx.note?.trim();
       const cat = tx.categoryId ? categoriesById.get(tx.categoryId) : undefined;
       const category = categoryName(tx.categoryId);
       // As Home's Recent activity words it: the entry's own name leads (its note, else its category); under it the
       // category (after a note, with its parent) or just the parent, then the account.
       const sub = joinSub([
-        tx.note ? category && categoryPath(category, parentLine(tx.categoryId)) : parentLine(tx.categoryId),
+        note ? category && categoryPath(category, parentLine(tx.categoryId)) : parentLine(tx.categoryId),
         accountName(tx.accountId),
       ]);
       return (
@@ -191,7 +192,7 @@ function TimelineDayView({
               {...reorderProps(i)}
               style={withPressedTint(accent, [styles.line, stacked && styles.wrapLine])}
               accessibilityRole="button"
-              accessibilityLabel={`${categorySpoken(categoryName(tx.categoryId), parentNameOf(tx.categoryId, categoriesById))}${tx.isRefund ? ', refund' : ''}${tx.note ? `, ${tx.note}` : ''}, ${money(tx.amountMinor, hidden(tx), tx.accountId)}`}
+              accessibilityLabel={`${categorySpoken(categoryName(tx.categoryId), parentNameOf(tx.categoryId, categoriesById))}${tx.isRefund ? ', refund' : ''}${note ? `, ${note}` : ''}, ${money(tx.amountMinor, hidden(tx), tx.accountId)}`}
             >
               <JustAddedGlow ids={[tx.id]} surface="activity" />
               <View style={styles.lead}>
@@ -205,7 +206,7 @@ function TimelineDayView({
               </View>
               <View style={[styles.mid, stacked && styles.wideMid]}>
                 <View style={styles.entryHead}>
-                  <Text style={[styles.name, styles.stackName]}>{tx.note || category}</Text>
+                  <Text style={[styles.name, styles.stackName]}>{note || category}</Text>
                   {tx.isRefund && <StatusBadge label="Refund" tone="complete" />}
                   {tx.splitId && <StatusBadge label="Split" />}
                 </View>
@@ -296,7 +297,8 @@ function TimelineDayView({
                   line.items.map((tx) => {
                     // The category is already named above: the note leads with the account under it, or with no
                     // note the account is the name.
-                    const label = tx.note || accountName(tx.accountId);
+                    const note = tx.note?.trim();
+                    const label = note || accountName(tx.accountId);
                     return (
                       <View key={tx.id}>
                         <View style={styles.separator} />
@@ -304,7 +306,7 @@ function TimelineDayView({
                           onPress={() => onPressTx(tx)}
                           style={withPressedTint(accent, [styles.subLine, stacked && styles.wrapLine])}
                           accessibilityRole="button"
-                          accessibilityLabel={`${categorySpoken(name, stackParent)}${tx.isRefund ? ', refund' : ''}${tx.note ? `, ${tx.note}` : ''}, ${money(tx.amountMinor, hidden(tx), tx.accountId)}`}
+                          accessibilityLabel={`${categorySpoken(name, stackParent)}${tx.isRefund ? ', refund' : ''}${note ? `, ${note}` : ''}, ${money(tx.amountMinor, hidden(tx), tx.accountId)}`}
                         >
                           <View style={styles.subLead}>
                             <View
@@ -319,7 +321,7 @@ function TimelineDayView({
                               <Text style={[styles.name, styles.stackName]}>{label}</Text>
                               {tx.splitId && <StatusBadge label="Split" />}
                             </View>
-                            {!!tx.note && <Text style={styles.sub}>{accountName(tx.accountId)}</Text>}
+                            {!!note && <Text style={styles.sub}>{accountName(tx.accountId)}</Text>}
                           </View>
                           <Amount
                             type={tx.type}

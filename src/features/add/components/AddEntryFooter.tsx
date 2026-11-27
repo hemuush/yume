@@ -125,7 +125,10 @@ export function AddEntryFooter({ model }: Props): ReactElement {
     />
   );
 
-  const statusHint = !error && !repeatWarning && !splitParts && !invalidAmount ? dockHint : undefined;
+  // The category prompt sits beside the picker once the form is ready.
+  const categoryPromptShown = formReady && !splitParts && dockHint === 'Pick a category';
+  const statusHint =
+    !error && !repeatWarning && !splitParts && !invalidAmount && !categoryPromptShown ? dockHint : undefined;
 
   const addToListDisabled = !formReady || saving || addingRow || saveDone || !!currentProblem;
 

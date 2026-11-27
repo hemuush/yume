@@ -1210,7 +1210,7 @@ it('resumes an unfinished entry only after a tap and clears its draft after savi
         note: 'Recovered lunch',
       })
     );
-    expect(writeEntryDraft).toHaveBeenCalledWith(null);
+    expect(writeEntryDraft).toHaveBeenCalledWith(expect.objectContaining({ note: 'Recovered lunch' }));
   } finally {
     act(() => tree.unmount());
   }
@@ -1271,16 +1271,10 @@ it('treats a split as saved even if its optional highlight lookup fails', async 
 it('keeps the form and writes no money if save preparation fails, then permits a safe retry', async () => {
   const { writeEntryDraft } = require('@/db/entryDraft');
   const previous = writeEntryDraft.getMockImplementation();
-  let fail = true;
-  writeEntryDraft.mockImplementation(async (value: unknown) => {
-    if (value === null && fail) {
-      fail = false;
-      throw new Error('draft storage unavailable');
-    }
-  });
   mockParams.current = { amount: '10000', categoryId: 'food' };
   const tree = await render();
   try {
+    writeEntryDraft.mockRejectedValueOnce(new Error('draft storage unavailable'));
     await save(tree);
     expect(createTransaction).not.toHaveBeenCalled();
     expect(texts(tree).join(' ')).toContain('Couldn’t prepare this save');

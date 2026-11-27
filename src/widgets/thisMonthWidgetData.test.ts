@@ -18,6 +18,7 @@ import { formatMoney } from '@/lib/money';
 import { toLocalIsoDate } from '@/lib/date';
 import { getThisMonthWidgetData, getSuuWidgetData } from './data';
 import { ThisMonthWidget } from './ThisMonthWidget';
+import { heroSlices } from '@/features/home/heroSlices';
 import { PRIVATE_HEALTHY_LINES } from '@/features/home/suuLinePools';
 import { createRecurringRule } from '@/db/recurring';
 
@@ -96,6 +97,34 @@ function texts(node: unknown): string[] {
   const fn = el.type as ((props: unknown) => unknown) & { __name__?: string };
   return [...out, ...texts(el.props.children), ...(fn.__name__ ? [] : texts(fn(el.props)))];
 }
+
+it.each([
+  { dueMinor: 0, label: 'Left to spend', amountMinor: 50000 },
+  { dueMinor: 20000, label: 'Left after bills', amountMinor: 30000 },
+  { dueMinor: 80000, label: 'Short for bills', amountMinor: 30000 },
+])('uses the signed balance after a savings withdrawal ($label)', ({ dueMinor, label, amountMinor }) => {
+  const incomeMinor = 100000;
+  const spentMinor = 150000;
+  const savedMinor = -100000;
+  const shown = texts(
+    ThisMonthWidget({
+      monthLabel: 'November',
+      daysLeft: 3,
+      spentMinor,
+      savedMinor,
+      hideSavings: false,
+      freeMinor: incomeMinor - spentMinor - savedMinor - dueMinor,
+      dueMinor,
+      slices: heroSlices(incomeMinor, spentMinor, savedMinor, dueMinor),
+      pace: null,
+      primary: '#A6B4F2',
+      secondary: '#F0B79A',
+    })
+  );
+  expect(shown).toContain(label);
+  expect(shown).toContain(formatMoney(amountMinor));
+  expect(shown).not.toContain('Overspent by');
+});
 
 describe('the This Month widget with savings hidden', () => {
   beforeAll(async () => {

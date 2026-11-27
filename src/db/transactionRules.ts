@@ -12,6 +12,8 @@ export interface CreateTransactionInput {
   amountMinor: number;
   date: string;
   note?: string;
+  /** Runs in the write transaction before commit. */
+  afterWrite?: (tx: AppDb) => Promise<void>;
   paymentMode?: PaymentMode | null;
   loanPaymentId?: string | null;
   /** Set on each part of a split payment (see db/splits.ts). */
@@ -20,6 +22,18 @@ export interface CreateTransactionInput {
   isRefund?: boolean;
   /** Set by the recurring-rule runner on the entries it posts, so Activity can call a SIP a SIP. */
   ruleId?: string | null;
+}
+
+export async function assertActiveRuleAccounts(
+  db: AppDb,
+  rule: { accountId: string; toAccountId?: string | null }
+): Promise<void> {
+  const archived = await db.getFirstAsync(
+    'SELECT id FROM accounts WHERE archived = 1 AND (id = ? OR id = ?) LIMIT 1',
+    [rule.accountId, rule.toAccountId ?? null]
+  );
+  if (archived)
+    throw new Error('Unarchive the account or choose an active account before running this rule.');
 }
 
 /**

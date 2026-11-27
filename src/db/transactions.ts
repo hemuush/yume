@@ -9,7 +9,7 @@ import { toLocalIsoDate } from '@/lib/date';
 
 import { queueSpendAlerts } from './spendAlerts';
 import { rebuildNotifications } from '@/lib/notifications';
-import { keepDeletedEntry, forgetDeletedEntry } from './recentlyDeleted';
+import { keepDeletedEntry, forgetDeletedEntry, assertRestorableEntry } from './recentlyDeleted';
 import { rowToTransaction } from './transactionRow';
 import { assertValidTransactionInput, type CreateTransactionInput } from './transactionRules';
 
@@ -79,6 +79,7 @@ export async function createTransaction(input: CreateTransactionInput): Promise<
     const id = await insertTransactionRow(tx, input);
     const row = await tx.getFirstAsync<TransactionRow>('SELECT * FROM transactions WHERE id = ?', [id]);
     created = rowToTransaction(found(row, 'entry'));
+    await input.afterWrite?.(tx);
   });
   const result = found<Transaction>(created, 'entry');
   await checkOverspendForNewTransaction(input);
@@ -119,6 +120,7 @@ export async function assertEditableTransactionOn(
 
 export async function updateTransaction(id: string, input: UpdateTransactionInput): Promise<Transaction> {
   const db = await getDb();
+  let updated: Transaction | null = null;
   await db.withTransactionAsync(async (tx) => {
     const current = await assertEditableTransactionOn(tx, id);
     const isRefund = input.type === 'income' && (input.isRefund ?? !!current.is_refund);
@@ -141,10 +143,11 @@ export async function updateTransaction(id: string, input: UpdateTransactionInpu
         id,
       ]
     );
+    const row = await tx.getFirstAsync<TransactionRow>('SELECT * FROM transactions WHERE id = ?', [id]);
+    updated = rowToTransaction(found(row, 'entry'));
   });
-  const row = await db.getFirstAsync<TransactionRow>('SELECT * FROM transactions WHERE id = ?', [id]);
   await rebuildNotificationsAfterCommit();
-  return rowToTransaction(found(row, 'entry'));
+  return found<Transaction>(updated, 'entry');
 }
 
 /**
@@ -245,6 +248,7 @@ export async function deleteTransaction(
 export async function restoreTransaction(snapshot: RowSnapshot): Promise<void> {
   const db = await getDb();
   await db.withTransactionAsync(async (tx) => {
+    await assertRestorableEntry(tx, snapshot.row);
     await restoreRow(tx, snapshot);
     await forgetDeletedEntry(tx, String(snapshot.row.id));
   });

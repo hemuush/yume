@@ -35,9 +35,10 @@ const mockDay = (n: number) => {
 };
 let mockTab: string | undefined;
 let mockUpcoming: string | undefined;
+let mockRule: string | undefined;
 jest.mock('expo-router', () => ({
   router: { push: jest.fn(), setParams: jest.fn() },
-  useLocalSearchParams: () => ({ tab: mockTab, upcoming: mockUpcoming }),
+  useLocalSearchParams: () => ({ tab: mockTab, upcoming: mockUpcoming, rule: mockRule }),
   // useScreenLoad's focus effect: run once, like a first focus.
   useFocusEffect: (cb: () => void) => require('react').useEffect(cb, [cb]),
 }));
@@ -194,14 +195,21 @@ jest.mock('@/db/ledger', () => ({
 }));
 // What the what-if tile is chosen from: the biggest categories first (a test may add rent above food).
 const mockAverages: { rows: { categoryId: string; name: string; totalMinor: number }[] } = { rows: [] };
+let mockFailOptionalInsights = false;
 const defaultAverages = () => [
   { categoryId: 'emi', name: 'Loan EMI', totalMinor: 3000000 },
   { categoryId: 'food', name: 'Food', totalMinor: 2000000 },
 ];
 jest.mock('@/db/reports', () => ({
-  getDailyGoalStreakSeries: async () => [0, 1, 2, 3, 4].map((n) => ({ streakDays: n })),
+  getDailyGoalStreakSeries: async () => {
+    if (mockFailOptionalInsights) throw new Error('Streak query failed');
+    return [0, 1, 2, 3, 4].map((n) => ({ streakDays: n }));
+  },
   // Loan EMI is the biggest, but it's a built-in category — What-if skips it.
-  getCategoryMonthlyAverages: async () => (mockAverages.rows.length ? mockAverages.rows : defaultAverages()),
+  getCategoryMonthlyAverages: async () => {
+    if (mockFailOptionalInsights) throw new Error('Averages query failed');
+    return mockAverages.rows.length ? mockAverages.rows : defaultAverages();
+  },
 }));
 jest.mock('@/db/monthlyPlan', () => ({
   getMonthlyPlanIncome: async () => null,
@@ -404,6 +412,17 @@ describe('Plan tab', () => {
     const positions: number[] = [];
     for (const h of headings) positions.push(shown.indexOf(h, (positions.at(-1) ?? -1) + 1));
     expect(positions.every((p) => p >= 0)).toBe(true);
+  });
+
+  it('keeps the forecast usable when the optional insights fail to load', async () => {
+    mockFailOptionalInsights = true;
+    const tree = await render();
+    try {
+      expect(texts(tree)).toEqual(expect.arrayContaining(['Covered', '· next 30 days', 'Needs attention']));
+    } finally {
+      mockFailOptionalInsights = false;
+      act(() => tree.unmount());
+    }
   });
 
   it('shows its tabs from the first frame, so the page does not drop by their height when the data lands', async () => {
@@ -650,6 +669,22 @@ describe('Plan tab', () => {
     } finally {
       mockTab = undefined;
       mockUpcoming = undefined;
+    }
+  });
+
+  it('opens the recurring rule and its date from Home Review', async () => {
+    mockTab = 'upcoming';
+    mockUpcoming = mockDay(1);
+    mockRule = 'r1';
+    const tree = await render();
+    try {
+      expect(tree.root.findByProps({ testID: 'plan-rule' }).props.editing.id).toBe('r1');
+      const date = tree.root.findAllByProps({ testID: `outgoing-day-${mockUpcoming}` })[0];
+      expect(date.props.accessibilityState.selected).toBe(true);
+      expect(router.setParams).toHaveBeenCalledWith({ tab: undefined, upcoming: undefined, rule: undefined });
+    } finally {
+      mockTab = mockUpcoming = mockRule = undefined;
+      act(() => tree.unmount());
     }
   });
 

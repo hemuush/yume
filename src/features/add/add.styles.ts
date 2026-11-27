@@ -21,6 +21,7 @@ export const styles = themedStyles(() =>
       backgroundColor: theme.colors.home.surface,
     },
     categorySection: { paddingTop: 4 },
+    categoryHint: { marginBottom: 4 },
     selectedControl: {
       backgroundColor: theme.colors.home.selected,
       borderColor: theme.colors.home.selected,

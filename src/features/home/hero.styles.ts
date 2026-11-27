@@ -13,7 +13,7 @@ export const styles = themedStyles(() =>
       borderColor: theme.colors.home.edge,
       overflow: 'hidden',
       paddingHorizontal: 16,
-      paddingTop: 4,
+      paddingTop: 8,
       paddingBottom: 0,
     },
     footer: {
@@ -39,14 +39,14 @@ export const styles = themedStyles(() =>
       alignItems: 'center',
       justifyContent: 'space-between',
       gap: 8,
-      // The month pill inside it keeps a 44 touch area through its own hitSlop.
-      minHeight: 40,
+      minHeight: 44,
+      marginBottom: 8,
     },
     // The card ends on this now that the links row under the legend is gone.
     body: { gap: 2, paddingBottom: 12 },
     figure: {
       minWidth: 0,
-      gap: 2,
+      gap: 8,
       paddingHorizontal: 16,
       paddingTop: 10,
       paddingBottom: 8,
@@ -82,15 +82,19 @@ export const styles = themedStyles(() =>
       color: theme.colors.home.secondaryText,
     },
 
-    figureTop: { flexDirection: 'row', alignItems: 'center', gap: 2 },
+    figureTop: { flexDirection: 'row', alignItems: 'center', gap: 8 },
     figureTopStacked: { flexWrap: 'wrap', rowGap: 6 },
-    figureValue: { flexShrink: 1, minWidth: 0 },
-    // "How this adds up", as a chevron beside the figure: drawn 28, touched 44.
-    howToggle: { width: 28, height: 28, alignItems: 'center', justifyContent: 'center' },
+    figureValue: { flexShrink: 1, minWidth: 0, minHeight: 44, justifyContent: 'center' },
+    howToggle: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+    howToggleText: { flexShrink: 1, fontFamily: theme.font.bodyMedium, fontSize: 12, color: summaryInk.link },
     // The week (or insights) switch at the figure’s right, a pill on the sky.
     trendChip: {
       marginLeft: 'auto',
       flexShrink: 0,
+      minHeight: 44,
+      justifyContent: 'center',
+    },
+    trendPill: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 4,

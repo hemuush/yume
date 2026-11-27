@@ -313,7 +313,7 @@ export default function NeedsYouScreen() {
             />
           ) : undefined
         }
-        title="Needs you"
+        title="Alerts"
         actions={
           <HeaderIconButton
             icon="settings"

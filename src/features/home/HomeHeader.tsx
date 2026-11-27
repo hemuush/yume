@@ -171,7 +171,7 @@ export function HomeHeader({
             <HeaderIconButton
               icon="bell"
               onPress={() => router.push('/notifications')}
-              label={alertCount > 0 ? `Needs you, ${alertCount}` : 'Needs you'}
+              label={alertCount > 0 ? `Alerts, ${alertCount}` : 'Alerts'}
               count={alertCount}
               size={HEADER.actionSize}
               glass

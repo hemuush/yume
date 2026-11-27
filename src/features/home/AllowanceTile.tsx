@@ -15,7 +15,7 @@ export function AllowanceTile({
   todaySpentMinor = null,
   todayBudgetMinor,
 }: {
-  perDayMinor: number;
+  perDayMinor: number | null;
   daysLeft: number;
   /** What went out today: shown against the daily figure, so the day can be read at a glance. */
   todaySpentMinor?: number | null;
@@ -26,42 +26,42 @@ export function AllowanceTile({
   todayBudgetMinor?: number | null;
 }) {
   const days = `${daysLeft} ${daysLeft === 1 ? 'day' : 'days'}`;
-  const showToday = todaySpentMinor != null && todaySpentMinor > 0;
-  const budget = todayBudgetMinor && todayBudgetMinor > 0 ? todayBudgetMinor : perDayMinor;
-  const share = showToday ? Math.min(1, todaySpentMinor / budget) : 0;
-  const over = showToday && todaySpentMinor > budget;
+  const showToday = todaySpentMinor != null;
+  const spentToday = Math.max(0, todaySpentMinor ?? 0);
+  const budget = todayBudgetMinor ?? perDayMinor ?? 0;
+  const share = budget > 0 ? Math.min(1, spentToday / budget) : spentToday > 0 ? 1 : 0;
+  const remainingToday = budget - spentToday;
+  const over = remainingToday < 0;
+  const todayStatus = over
+    ? `${formatMoney(-remainingToday)} over pace`
+    : `${formatMoney(remainingToday)} left today`;
   return (
     <View
       style={styles.tile}
       accessible
-      accessibilityLabel={`${days} left, about ${formatMoney(perDayMinor)} a day${
-        showToday
-          ? `. Today ${formatMoney(todaySpentMinor)} spent, ${formatMoney(Math.abs(todaySpentMinor - budget))} ${over ? 'over' : 'under'} that pace`
-          : ''
-      }`}
+      accessibilityLabel={[
+        showToday ? `${todayStatus}. Today ${formatMoney(spentToday)} spent` : null,
+        perDayMinor != null ? `${days} left, about ${formatMoney(perDayMinor)} a day` : null,
+      ]
+        .filter(Boolean)
+        .join('. ')}
     >
-      <Text style={styles.text}>
-        About <Text style={styles.perDay}>{formatMoney(perDayMinor)} a day</Text> for {days}
-      </Text>
       {showToday && (
         <View style={styles.today}>
-          {/* What today came to and how that sits against the pace, in words: a full red bar alone says "bad", not
-              by how much. */}
           <View style={styles.todayRow}>
-            <Text style={styles.todayText}>
-              Today <Text style={styles.amount}>{formatMoney(todaySpentMinor)}</Text>
-            </Text>
-            <Text style={[styles.todayText, over && styles.todayOver]}>
-              {over
-                ? `${formatMoney(todaySpentMinor - budget)} over pace`
-                : `${formatMoney(budget - todaySpentMinor)} under pace`}
-            </Text>
+            <Text style={[styles.perDay, over && styles.todayOver]}>{todayStatus}</Text>
+            <Text style={styles.todayText}>{formatMoney(spentToday)} spent</Text>
           </View>
           <View style={styles.track}>
-            <View style={[styles.fill, over && styles.fillOver, { flex: Math.max(0.02, share) }]} />
-            <View style={{ flex: Math.max(0, 1 - Math.max(0.02, share)) }} />
+            {share > 0 && <View style={[styles.fill, over && styles.fillOver, { flex: share }]} />}
+            <View style={{ flex: 1 - share }} />
           </View>
         </View>
+      )}
+      {perDayMinor != null && (
+        <Text style={styles.text}>
+          About <Text style={!showToday && styles.perDay}>{formatMoney(perDayMinor)} a day</Text> for {days}
+        </Text>
       )}
     </View>
   );
@@ -73,10 +73,17 @@ const styles = themedStyles(() =>
       alignSelf: 'stretch',
       flexShrink: 1,
       paddingBottom: 2,
-      gap: 8,
+      gap: 4,
     },
-    today: { gap: 5 },
-    todayRow: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 },
+    today: { gap: 4 },
+    todayRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      alignItems: 'baseline',
+      justifyContent: 'space-between',
+      columnGap: 8,
+      rowGap: 2,
+    },
     todayOver: { fontFamily: theme.font.bodyBold, color: summaryInk.negative },
     track: {
       flexDirection: 'row',
@@ -92,19 +99,13 @@ const styles = themedStyles(() =>
       flexShrink: 1,
       fontFamily: theme.font.body,
       fontSize: 13,
-      lineHeight: 22,
+      lineHeight: 18,
       color: summaryInk.secondary,
     },
     // The figure to act on each day: second only to the headline, not the same small size as its caption.
     perDay: {
       fontFamily: theme.font.bodyBold,
       fontSize: 16,
-      color: summaryInk.text,
-      fontVariant: ['tabular-nums'],
-    },
-    amount: {
-      fontFamily: theme.font.bodyBold,
-      fontSize: 13,
       color: summaryInk.text,
       fontVariant: ['tabular-nums'],
     },

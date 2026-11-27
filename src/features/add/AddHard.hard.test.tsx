@@ -11,6 +11,7 @@ jest.mock('@/lib/notifications', () => ({ rebuildNotifications: async () => true
 jest.mock('@/db/entryDraft', () => ({
   readEntryDraft: jest.fn(async () => null),
   writeEntryDraft: jest.fn(async () => {}),
+  writeEntryDraftOn: jest.fn(async () => {}),
 }));
 jest.mock('react-native-reanimated', () => require('@/test-support/reanimatedMock').createReanimatedMock());
 jest.mock('@/hooks/useReduceMotion', () => ({ useReduceMotion: () => true }));

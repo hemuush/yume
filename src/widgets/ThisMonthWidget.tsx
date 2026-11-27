@@ -1,5 +1,6 @@
 import { FlexWidget, TextWidget, type ColorProp } from 'react-native-android-widget';
 import { formatMoney } from '@/lib/money';
+import { monthBalance } from '@/features/home/heroSlices';
 import { WidgetShell, WidgetLabel } from './WidgetShell';
 import { widgetColor, widgetTint, widgetAlpha, WIDGET_FONT } from './widgetTheme';
 import type { ThisMonthWidgetData } from './data';
@@ -17,16 +18,8 @@ export function ThisMonthWidget({
   pace,
   primary,
 }: ThisMonthWidgetData) {
-  const over = slices.overMinor > 0;
-  const label = over
-    ? 'Over by'
-    : freeMinor < 0
-      ? dueMinor > 0
-        ? 'Short after bills'
-        : 'Short by'
-      : dueMinor > 0
-        ? 'Free after bills'
-        : 'Free to use';
+  const balance = monthBalance(freeMinor + dueMinor, dueMinor, slices);
+  const label = !balance.hasDue && !balance.over && freeMinor < 0 ? 'Short by' : balance.label;
   // Android consumes weights via getInt; scale shares so positive segments never truncate to zero.
   const parts = [
     { key: 'spent', share: slices.spent, color: widgetColor.slice.spent },
@@ -56,14 +49,14 @@ export function ThisMonthWidget({
         <WidgetLabel text={monthLabel} />
       </FlexWidget>
       <TextWidget
-        text={slices.hasIncome ? formatMoney(over ? slices.overMinor : Math.abs(freeMinor)) : '—'}
+        text={slices.hasIncome ? formatMoney(Math.abs(balance.freeMinor)) : '—'}
         maxLines={1}
         style={{
           width: 'match_parent',
           fontFamily: WIDGET_FONT.body,
           fontSize: 36,
           adjustsFontSizeToFit: true,
-          color: over || freeMinor < 0 ? widgetColor.expenseText : widgetColor.ink,
+          color: balance.freeMinor < 0 ? widgetColor.expenseText : widgetColor.ink,
         }}
       />
       <FlexWidget

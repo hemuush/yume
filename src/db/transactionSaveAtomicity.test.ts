@@ -27,9 +27,12 @@ jest.mock('@/db/client', () => ({ getDb: async () => mockDb }));
 jest.mock('@/lib/notifications', () => ({ rebuildNotifications: jest.fn(async () => true) }));
 
 import { CREATE_TABLES_SQL } from '@/db/schema';
-import { createAccount, getAccountBalance } from '@/db/accounts';
+import { archiveAccount, createAccount, getAccountBalance, updateAccount } from '@/db/accounts';
 import { createCategory } from '@/db/categories';
-import { createTransaction, type CreateTransactionInput } from '@/db/transactions';
+import { createTransaction, updateTransaction, type CreateTransactionInput } from '@/db/transactions';
+import { readEntryDraft, writeEntryDraft, writeEntryDraftOn } from '@/db/entryDraft';
+import { createRecurringRule, runDueRecurringRules, setRecurringRuleActive } from '@/db/recurring';
+import type { EntryDraft } from '@/features/add/entryDraft';
 import { rebuildNotifications } from '@/lib/notifications';
 import { toLocalIsoDate } from '@/lib/date';
 
@@ -142,4 +145,88 @@ it('keeps a committed income save successful when reminder refresh fails', async
   expect(rebuildNotifications).toHaveBeenCalledTimes(1);
   expect(warning).toHaveBeenCalledWith('Post-save notification check failed:', reminderError);
   expect(await getAccountBalance(input.accountId)).toBe(input.amountMinor);
+});
+
+it('rolls back an edit when reading its saved result fails', async () => {
+  const saved = await createTransaction(input);
+  const original = mockRaw.getFirstAsync.bind(mockRaw);
+  let entryReads = 0;
+  jest.spyOn(mockRaw, 'getFirstAsync').mockImplementation(async (sql, params) => {
+    if (sql === 'SELECT * FROM transactions WHERE id = ?' && ++entryReads === 2) {
+      throw new Error('Edited result read failed');
+    }
+    return original(sql, params);
+  });
+
+  await expect(updateTransaction(saved.id, { ...input, amountMinor: 90 })).rejects.toThrow(
+    'Edited result read failed'
+  );
+  expect(await getAccountBalance(input.accountId)).toBe(-input.amountMinor);
+});
+
+it('rejects conversion to savings when a concurrent expense commits first', async () => {
+  const original = mockDb.withTransactionAsync.bind(mockDb);
+  jest.spyOn(mockDb, 'withTransactionAsync').mockImplementationOnce(async (operation) => {
+    await createTransaction(input);
+    return original(operation);
+  });
+
+  await expect(
+    updateAccount(input.accountId, { name: 'Savings', type: 'savings', openingBalanceMinor: 0 })
+  ).rejects.toThrow('a savings account only takes transfers');
+  expect(await entryCount()).toBe(1);
+});
+
+it('rejects resuming a recurring rule on an archived account and blocks stale active rules', async () => {
+  const account = await createAccount({ name: 'Recurring bank', type: 'bank', currency: 'INR' });
+  const rule = await createRecurringRule({
+    ...input,
+    accountId: account.id,
+    frequency: 'monthly',
+    intervalCount: 1,
+    nextRunDate: input.date,
+  });
+  await archiveAccount(account.id);
+  await expect(setRecurringRuleActive(rule.id, true, input.date)).rejects.toThrow(/Unarchive/);
+
+  await mockDb.runAsync('UPDATE recurring_rules SET active = 1 WHERE id = ?', [rule.id]);
+  expect(await runDueRecurringRules(input.date)).toBe(0);
+  expect(await entryCount()).toBe(0);
+});
+
+it('commits a draft checkpoint with each entry and rolls both back if the checkpoint fails', async () => {
+  const draft: EntryDraft = {
+    type: 'expense',
+    expr: '90',
+    accountId: input.accountId,
+    toAccountId: null,
+    categoryId: input.categoryId ?? null,
+    note: '',
+    paymentMode: null,
+    date: input.date,
+    personId: null,
+    friendSign: 1,
+    friendAccountId: null,
+    refund: false,
+    rows: [],
+    splitParts: null,
+  };
+  await writeEntryDraft({ ...draft, expr: '125' });
+  await createTransaction({ ...input, afterWrite: (tx) => writeEntryDraftOn(tx, draft) });
+  expect(await readEntryDraft()).toEqual(draft);
+  await expect(
+    createTransaction({
+      ...input,
+      amountMinor: 9000,
+      afterWrite: async (tx) => {
+        await writeEntryDraftOn(tx, null);
+        throw new Error('Checkpoint failed');
+      },
+    })
+  ).rejects.toThrow('Checkpoint failed');
+  expect(await entryCount()).toBe(1);
+  expect(await readEntryDraft()).toEqual(draft);
+  await createTransaction({ ...input, amountMinor: 9000, afterWrite: (tx) => writeEntryDraftOn(tx, null) });
+  expect(await entryCount()).toBe(2);
+  expect(await readEntryDraft()).toBeNull();
 });

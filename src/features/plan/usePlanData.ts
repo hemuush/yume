@@ -54,10 +54,12 @@ export function usePlanData() {
       listCategories(true),
       listAccounts(),
       dailyGoalRead,
-      getCategoryMonthlyAverages(3),
+      getCategoryMonthlyAverages(3).catch(() => []),
       listCardCycles(),
       // The streak only needs the goal value, so it chains off the same read instead of waiting for the batch.
-      dailyGoalRead.then((goal) => (goal != null ? getDailyGoalStreakSeries(goal, 5) : null)),
+      dailyGoalRead.then((goal) =>
+        goal != null ? getDailyGoalStreakSeries(goal, 5).catch(() => null) : null
+      ),
       getDefaultCurrency(),
       listPendingLoanPayments(until),
     ]);

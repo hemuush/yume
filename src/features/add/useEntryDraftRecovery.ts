@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { AppState } from 'react-native';
-import { readEntryDraft, writeEntryDraft } from '@/db/entryDraft';
+import { readEntryDraft, writeEntryDraft, writeEntryDraftOn } from '@/db/entryDraft';
+import type { AppDb } from '@/db/dbTypes';
 import { onSettingsRestored } from '@/lib/dataEvents';
 import { serializeEntryDraft, type EntryDraft } from './entryDraft';
 
@@ -140,11 +141,17 @@ export function useEntryDraftRecovery(draft: EntryDraft, enabled: boolean, meani
       }
     },
     clear,
-    // Remove the recovery copy before writes start, so a killed partial save cannot replay committed rows.
     prepareSave: async () => {
-      await clear();
+      readRequest.current++;
+      blocked.current = true;
+      latest.current = null;
+      pending.current = false;
+      setCandidate(null);
+      await writeEntryDraft(draft);
       prepared.current = true;
     },
+    advanceAfterWrite: (rows: EntryDraft['rows'] | null) => (tx: AppDb) =>
+      writeEntryDraftOn(tx, rows === null ? null : { ...draft, rows }),
     resumeAfterFailedSave: () => {
       prepared.current = false;
       blocked.current = false;

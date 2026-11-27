@@ -83,6 +83,11 @@ function restoreBlockedReason(
   return null;
 }
 
+export async function assertRestorableEntry(db: AppDb, row: RowSnapshot['row']): Promise<void> {
+  const reason = restoreBlockedReason(row, await restoreReferences(db));
+  if (reason) throw new Error(reason);
+}
+
 /** Everything in the list, newest deletion first. */
 export async function listDeletedEntries(now: Date = new Date()): Promise<DeletedEntry[]> {
   const db = await getDb();

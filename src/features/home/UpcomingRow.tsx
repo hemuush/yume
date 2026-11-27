@@ -4,6 +4,7 @@ import { theme } from '@/constants/theme';
 import { formatMoney } from '@/lib/money';
 import { DateTile } from '@/components/DateTile';
 import { toLocalIsoDate } from '@/lib/date';
+import { dueDateLabel } from '@/lib/dueDate';
 import { SCREEN } from '@/components/screenStyles';
 import { Text } from '@/components/Text';
 import { PlanMoneyRow, planRowText } from '@/features/plan/PlanMoneyRow';
@@ -51,7 +52,7 @@ export function UpcomingRow({
   date?: string;
   /** The due date for the Overdue / Due now chip when the row shows an icon instead of the date tile. */
   dueDate?: string;
-  /** A bill to pay: a "Pay" pill ends the row; tapping anywhere on the row still opens it. */
+  /** An explicit action at the end of the row. Tapping anywhere on the row opens it. */
   actionLabel?: string;
   /** Due soon (pinned): the row sits on a pale amber panel so it stands out from the rest of the week. */
   highlight?: boolean;
@@ -100,7 +101,15 @@ export function UpcomingRow({
       onPress={onPress}
       divider={divider}
       highlight={highlight}
-      accessibilityLabel={`${title}, ${subtitle}, ${money}${actionLabel ? `, ${actionLabel}` : ''}`}
+      accessibilityLabel={[
+        title,
+        subtitle || (dueDate ? dueDateLabel(dueDate) : undefined),
+        money,
+        chip,
+        actionLabel,
+      ]
+        .filter(Boolean)
+        .join(', ')}
     />
   );
 }

@@ -331,34 +331,6 @@ export async function updateAccount(id: string, input: UpdateAccountInput): Prom
     throw new Error('Credit limit must be a valid, non-negative number');
   }
   const db = await getDb();
-  if (input.type === 'savings') {
-    // A savings account only takes transfers (assertSpendableAccount). Turning one with spending or income on
-    // it into savings would leave entries that can't be edited where they are: Add has no savings account
-    // to offer them, and saving them there is refused.
-    const spendRow = await db.getFirstAsync<{ n: number }>(
-      `SELECT COUNT(*) AS n FROM transactions
-       WHERE account_id = ? AND type != 'transfer'
-         AND (SELECT type FROM accounts WHERE id = ?) != 'savings'`,
-      [id, id]
-    );
-    const spendCount = spendRow?.n ?? 0;
-    if (spendCount > 0) {
-      throw new Error(
-        `This account has ${spendCount} income or expense ${spendCount === 1 ? 'entry' : 'entries'} on it, and a savings account only takes transfers. Keep its type, or add a new savings account and move money there.`
-      );
-    }
-    // Reject retyping an account an active recurring rule points at: the next run would throw in
-    // assertSpendableAccount and silently deactivate the rule. Same as deleteCategory's rule check.
-    const blockingRule = await db.getFirstAsync<{ note: string | null }>(
-      `SELECT note FROM recurring_rules WHERE account_id = ? AND type != 'transfer' AND active = 1 LIMIT 1`,
-      [id]
-    );
-    if (blockingRule) {
-      throw new Error(
-        `A recurring rule${blockingRule.note ? ` ("${blockingRule.note}")` : ''} still posts income/expenses from this account — pause or reassign it first.`
-      );
-    }
-  }
   const isCard = input.type === 'credit_card';
   const current = await db.getFirstAsync<{
     tracked: number;
@@ -391,6 +363,34 @@ export async function updateAccount(id: string, input: UpdateAccountInput): Prom
     input.fundingAccountId === undefined ? (current?.funding_account_id ?? null) : input.fundingAccountId
   );
   await db.withTransactionAsync(async (tx) => {
+    if (input.type === 'savings') {
+      // A savings account only takes transfers (assertSpendableAccount). Turning one with spending or income on
+      // it into savings would leave entries that can't be edited where they are: Add has no savings account
+      // to offer them, and saving them there is refused.
+      const spendRow = await tx.getFirstAsync<{ n: number }>(
+        `SELECT COUNT(*) AS n FROM transactions
+         WHERE account_id = ? AND type != 'transfer'
+           AND (SELECT type FROM accounts WHERE id = ?) != 'savings'`,
+        [id, id]
+      );
+      const spendCount = spendRow?.n ?? 0;
+      if (spendCount > 0) {
+        throw new Error(
+          `This account has ${spendCount} income or expense ${spendCount === 1 ? 'entry' : 'entries'} on it, and a savings account only takes transfers. Keep its type, or add a new savings account and move money there.`
+        );
+      }
+      // Reject retyping an account an active recurring rule points at: the next run would throw in
+      // assertSpendableAccount and silently deactivate the rule. Same as deleteCategory's rule check.
+      const blockingRule = await tx.getFirstAsync<{ note: string | null }>(
+        `SELECT note FROM recurring_rules WHERE account_id = ? AND type != 'transfer' AND active = 1 LIMIT 1`,
+        [id]
+      );
+      if (blockingRule) {
+        throw new Error(
+          `A recurring rule${blockingRule.note ? ` ("${blockingRule.note}")` : ''} still posts income/expenses from this account — pause or reassign it first.`
+        );
+      }
+    }
     if (isCard || tracked) {
       const reserved = await tx.getFirstAsync<{ n: number }>(
         'SELECT COUNT(*) AS n FROM savings_goals WHERE reserve_account = 1 AND linked_account_id = ?',

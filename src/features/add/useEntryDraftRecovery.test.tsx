@@ -152,7 +152,7 @@ it('suspends draft persistence during a save and recovers only the remaining for
     state('background');
     jest.advanceTimersByTime(1000);
   });
-  expect(writeEntryDraft).toHaveBeenLastCalledWith(null);
+  expect(writeEntryDraft).toHaveBeenLastCalledWith(draft);
   await act(async () => {
     update({ ...draft, expr: '90' });
     current.resumeAfterFailedSave();

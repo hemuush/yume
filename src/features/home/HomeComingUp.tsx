@@ -170,12 +170,19 @@ function PaymentRow({
       subtitle={repeatDate ? '' : item.subtitle}
       amountMinor={item.amountMinor}
       sign={item.sign}
-      onPress={() => router.push(item.route)}
+      onPress={() =>
+        item.urgent && item.ruleId
+          ? router.push({
+              pathname: '/(tabs)/plan',
+              params: { tab: 'upcoming', upcoming: item.sortDate, rule: item.ruleId },
+            })
+          : router.push(item.route)
+      }
       urgent={item.urgent}
       soon={item.pinned && !item.urgent}
       date={item.sortDate}
       dueDate={item.sortDate}
-      actionLabel={item.pinned && item.payable ? 'Pay' : undefined}
+      actionLabel={item.pinned && item.payable ? 'Pay' : item.urgent ? 'Review' : undefined}
       highlight={item.pinned}
       payInline
     />
@@ -237,7 +244,7 @@ export function HomeComingUp({
   return (
     <Section
       compact
-      title="Coming up"
+      title="Upcoming"
       subtitle={stillToPayMinor > 0 ? `${formatMoney(stillToPayMinor)} still to pay this month` : undefined}
       onSeeAll={() => onSeeAll(filter)}
       actionLabel={filter === 'budget' ? 'All budgets' : filter === 'goal' ? 'All goals' : 'View plan'}

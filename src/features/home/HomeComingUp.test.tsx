@@ -1,4 +1,4 @@
-/** Home's Coming up on screen: one ranked list, filter chips, hidden amounts, and the way on to each page. */
+/** Home's Upcoming on screen: one ranked list, filter chips, hidden amounts, and the way on to each page. */
 import { Text, View, StyleSheet } from 'react-native';
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
 
@@ -17,6 +17,7 @@ import type { UpcomingItem } from './upcomingItems';
 import type { BudgetProgress } from '@/db/budgets';
 import type { SavingsGoal } from '@/types';
 import { addDaysToIsoDate, toLocalIsoDate } from '@/lib/date';
+import { router } from 'expo-router';
 
 const today = toLocalIsoDate(new Date());
 const inDays = (n: number) => addDaysToIsoDate(today, n);
@@ -118,6 +119,22 @@ it('offers retry while retaining the last available rows', () => {
   act(() => r.unmount());
 });
 
+it('offers Review for an overdue payment without a direct payment action', () => {
+  const r = render({
+    upcoming: {
+      items: [{ ...payment('Rent', -1), subtitle: 'One day late', ruleId: 'rent-rule' }],
+      next: null,
+    },
+  });
+  expect(texts(r)).toContain('Review');
+  press(r, 'Rent, One day late, -₹4,500, Overdue, Review');
+  expect(router.push).toHaveBeenCalledWith({
+    pathname: '/(tabs)/plan',
+    params: { tab: 'upcoming', upcoming: inDays(-1), rule: 'rent-rule' },
+  });
+  act(() => r.unmount());
+});
+
 it('narrows to one kind from a chip and points the header link at that kind’s page', () => {
   const onSeeAll = jest.fn();
   const r = render({ onSeeAll });
@@ -125,7 +142,7 @@ it('narrows to one kind from a chip and points the header link at that kind’s 
   expect(texts(r)).toContain('Cat b1 budget');
   expect(texts(r)).not.toContain('Rent');
   expect(texts(r)).toContain('All budgets');
-  press(r, 'All budgets — Coming up');
+  press(r, 'All budgets — Upcoming');
   expect(onSeeAll).toHaveBeenLastCalledWith('budget');
   press(r, 'Goals, needs a look');
   expect(texts(r)).toContain('All goals');
