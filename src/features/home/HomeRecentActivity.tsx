@@ -87,6 +87,7 @@ export const HomeRecentActivity = memo(function HomeRecentActivity({
               )}
               <RecentTransactionRow
                 showDay={false}
+                dense
                 onPress={() => onOpenEntry(tx)}
                 currency={accountsById.get(tx.accountId)?.currency}
                 tx={tx}
@@ -119,8 +120,8 @@ const styles = themedStyles(() =>
       alignItems: 'center',
       justifyContent: 'space-between',
       paddingHorizontal: 14,
-      paddingTop: 12,
-      paddingBottom: 4,
+      paddingTop: 8,
+      paddingBottom: 2,
     },
     dayHeadLeft: {
       flexDirection: 'row',

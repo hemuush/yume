@@ -191,7 +191,7 @@ const styles = themedStyles(() =>
     strip: { overflow: 'visible' },
     row: { paddingHorizontal: 16, gap: 8 },
     tile: {
-      minHeight: 68,
+      minHeight: 60,
       paddingVertical: 8,
       paddingHorizontal: 12,
       justifyContent: 'center',
