@@ -1,7 +1,6 @@
 import { useKeptAcrossModeChange } from '@/theme/useKeptAcrossModeChange';
 import { ScreenLoadError } from '@/components/ScreenLoadError';
 import { Appear } from '@/components/Appear';
-import { LoadFade } from '@/components/LoadFade';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { memo, useCallback, useEffect, useState } from 'react';
 import { useLocalSearchParams } from 'expo-router';
@@ -113,7 +112,7 @@ export default function ProfileScreen() {
               keyboardShouldPersistTaps="handled"
               bottomOffset={20}
             >
-              <LoadFade loaded>
+              <>
                 {loadError && (
                   <Appear style={styles.errorBanner}>
                     <Text style={styles.errorTitle}>Couldn’t load your data</Text>
@@ -145,7 +144,7 @@ export default function ProfileScreen() {
                 <SolidFade key={tab} rise={10}>
                   {tab === 'you' ? <You /> : <Settings />}
                 </SolidFade>
-              </LoadFade>
+              </>
             </KeyboardAwareScrollView>
             <SkyHeader
               title="Profile"

@@ -12,6 +12,8 @@ type Props = Omit<React.ComponentProps<typeof TrendChart>, 'fixedKind'> & {
 /** One selected metric owns the primary chart; period/privacy changes cannot leave an invalid metric active. */
 export function ReportTrends({ cashFlow, ...props }: Props) {
   const [metric, setMetric] = useState('spend');
+  // The Reports tab already rises in on open; this one only plays when a metric is picked, so it never rises twice.
+  const [picked, setPicked] = useState(false);
   const options = [
     {
       key: 'spend',
@@ -48,12 +50,15 @@ export function ReportTrends({ cashFlow, ...props }: Props) {
           <SegmentedControl
             options={options.map((o) => ({ label: o.label, value: o.key }))}
             value={selected}
-            onChange={setMetric}
+            onChange={(m) => {
+              setPicked(true);
+              setMetric(m);
+            }}
             ledgerStyle
           />
         </View>
       )}
-      <SolidFade key={selected} rise={10}>
+      <SolidFade key={selected} rise={10} play={picked}>
         {selected === 'flow' ? (
           <CashFlowCard points={cashFlow} inProgress={!!props.inProgress} monthLink={props.monthLink} />
         ) : (
