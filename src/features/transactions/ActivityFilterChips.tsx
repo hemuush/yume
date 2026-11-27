@@ -15,6 +15,7 @@ import type { ActivityType } from './activityFilter';
 import { EmptyState } from '@/components/EmptyState';
 import { styles } from './transactions.styles';
 import { withPressed, withPressedTint } from '@/lib/pressed';
+import { formatMoney } from '@/lib/money';
 import { useAccent } from '@/theme/AccentContext';
 import { useStacked } from '@/hooks/useStacked';
 
@@ -67,8 +68,11 @@ export function ActivityFilterChips({
   onClearAll: () => void;
   onOpenFilters?: () => void;
   filterCount?: number;
-  /** This period's biggest spending categories, one tap each. Shown only while no category is picked. */
-  quickCategories?: { id: string; name: string }[];
+  /**
+   * This period’s biggest spending categories, one tap each, with what each came to: the row is also where the money
+   * went. Shown only while no category is picked.
+   */
+  quickCategories?: { id: string; name: string; totalMinor?: number }[];
   onPickCategory?: (id: string) => void;
 }) {
   const picked =
@@ -173,9 +177,12 @@ export function ActivityFilterChips({
           hitSlop={CHIP_SLOP}
           style={withPressedTint(accent, styles.chip)}
           accessibilityRole="button"
-          accessibilityLabel={`Show only ${c.name}`}
+          accessibilityLabel={`Show only ${c.name}${c.totalMinor != null ? `, ${formatMoney(c.totalMinor)} spent` : ''}`}
         >
-          <Text style={styles.chipText}>{c.name}</Text>
+          <Text style={styles.chipText}>
+            {c.name}
+            {c.totalMinor != null && <Text style={styles.chipAmount}>{` ${formatMoney(c.totalMinor)}`}</Text>}
+          </Text>
         </Pressable>
       ))
     : null;

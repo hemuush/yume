@@ -363,6 +363,11 @@ describe('topSpendCategories', () => {
     expect(topSpendCategories(list, byId).map((c) => c.id)).toEqual(['Rent']);
   });
 
+  it('says what each came to, refunds taken off, so the chips can show it', () => {
+    const list = [tx('Zomato', 300), tx('Food', 400), tx('Food', 100, { type: 'income', isRefund: true })];
+    expect(topSpendCategories(list, byId)).toEqual([{ id: 'Food', name: 'Food', totalMinor: 600 }]);
+  });
+
   it('keeps only the number asked for', () => {
     const list = [tx('Food', 4), tx('Travel', 3), tx('Rent', 2)];
     expect(topSpendCategories(list, byId, 2).map((c) => c.id)).toEqual(['Food', 'Travel']);

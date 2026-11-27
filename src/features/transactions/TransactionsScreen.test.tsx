@@ -5,7 +5,7 @@
 import { Profiler } from 'react';
 import { create, act, ReactTestRenderer } from 'react-test-renderer';
 import { Text, BackHandler } from 'react-native';
-import type { Account, Transaction } from '@/types';
+import type { Account, Category, Transaction } from '@/types';
 
 jest.setTimeout(60000);
 
@@ -43,6 +43,7 @@ const mockComparison: { fail: boolean; wait?: Promise<void> } = { fail: true };
 const mockLedger = {
   transactions: [] as Transaction[],
   accounts: [{ id: 'bank', name: 'Bank', type: 'bank' }] as Account[],
+  categories: [] as Category[],
 };
 const mockSearchTransactions = jest.fn(async (..._args: unknown[]): Promise<Transaction[]> => []);
 jest.mock('@/db/reports', () => ({
@@ -63,7 +64,7 @@ jest.mock('@/db/reports', () => ({
 jest.mock('@/db/ledger', () => ({
   listTransactions: async () => mockLedger.transactions,
   listAccounts: async () => mockLedger.accounts,
-  listCategories: async () => [],
+  listCategories: async () => mockLedger.categories,
   searchTransactions: (...args: unknown[]) => mockSearchTransactions(...args),
   setDayOrder: jest.fn(),
 }));
@@ -87,6 +88,7 @@ afterEach(() => {
   mockParams = {};
   mockLedger.transactions = [];
   mockLedger.accounts = [{ id: 'bank', name: 'Bank', type: 'bank' }] as Account[];
+  mockLedger.categories = [];
   mockSearchTransactions.mockReset();
   mockSearchTransactions.mockResolvedValue([]);
 });
@@ -149,6 +151,39 @@ it('turns the list with the period: each period shown gives the page turn its ow
   });
   expect(keys().size).toBe(2);
   expect([...keys()].every((key) => /^week:\d{4}-\d{2}-\d{2}$/.test(key))).toBe(true);
+});
+
+it('shows each top category with what it came to, counted as the Spent card counts it', async () => {
+  mockComparison.fail = false;
+  const now = new Date();
+  const today = [now.getFullYear(), now.getMonth() + 1, now.getDate()]
+    .map((n) => String(n).padStart(2, '0'))
+    .join('-');
+  mockLedger.categories = [
+    { id: 'food', name: 'Food', kind: 'expense', parentId: null, isSystem: false, isSensitive: false },
+  ] as Category[];
+  mockLedger.accounts = [
+    { id: 'bank', name: 'Bank', type: 'bank', currency: 'INR' },
+    { id: 'wise', name: 'Wise', type: 'bank', currency: 'USD' },
+  ] as Account[];
+  const entry = (id: string, accountId: string, amountMinor: number) =>
+    ({
+      id,
+      type: 'expense',
+      accountId,
+      toAccountId: null,
+      categoryId: 'food',
+      amountMinor,
+      date: today,
+      note: '',
+    }) as Transaction;
+  // A dollar entry is not added to rupees: the chip says ₹500, as the Spent card would once it is tapped.
+  mockLedger.transactions = [entry('a', 'bank', 50000), entry('b', 'wise', 99900)];
+  const tree = await render();
+  const labels = tree.root
+    .findAll((n) => typeof n.props.accessibilityLabel === 'string')
+    .map((n) => n.props.accessibilityLabel);
+  expect(labels).toContain('Show only Food, ₹500 spent');
 });
 
 // The empty period's button opens Add the way the person chose, the form or the chat (openAdd has its own tests).

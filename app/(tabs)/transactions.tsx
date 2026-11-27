@@ -256,10 +256,6 @@ export default function TransactionsScreen() {
   // investment categories stay out). Week = bar per day; month = bar per week, as 28-31 bars crowded.
   const accountsById = useMemo(() => new Map(accounts.map((a) => [a.id, a])), [accounts]);
   const categoriesById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
-  const quickCategories = useMemo(
-    () => topSpendCategories(transactions, categoriesById),
-    [transactions, categoriesById]
-  );
 
   const { narrowedTransactions, hasSpendFilters, bars } = useActivityChart({
     transactions,
@@ -274,6 +270,13 @@ export default function TransactionsScreen() {
     filterAccountIds,
     filterLabel,
   });
+
+  // The period’s biggest categories with what each came to, from the entries the Spent card counts (its currency, no
+  // hidden savings, the account and label filters): a chip’s figure is what the card says once it is tapped.
+  const quickCategories = useMemo(
+    () => topSpendCategories(narrowedTransactions, categoriesById),
+    [narrowedTransactions, categoriesById]
+  );
 
   const requestedHeading = periodHeading({ scope: viewScope, week, anchor, today: todayDate });
   const shownNotes = useMemo(

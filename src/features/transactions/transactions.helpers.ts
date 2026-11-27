@@ -386,7 +386,7 @@ export function topSpendCategories(
   transactions: readonly Transaction[],
   categoriesById: ReadonlyMap<string, Category>,
   limit = 4
-): { id: string; name: string }[] {
+): { id: string; name: string; totalMinor: number }[] {
   const total = new Map<string, number>();
   for (const t of transactions) {
     if (!t.categoryId || (t.type !== 'expense' && !(t.type === 'income' && t.isRefund))) continue;
@@ -400,5 +400,5 @@ export function topSpendCategories(
     .filter(([, minor]) => minor > 0)
     .sort((a, b) => b[1] - a[1])
     .slice(0, limit)
-    .map(([id]) => ({ id, name: categoriesById.get(id)!.name }));
+    .map(([id, totalMinor]) => ({ id, name: categoriesById.get(id)!.name, totalMinor }));
 }

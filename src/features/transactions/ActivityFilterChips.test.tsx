@@ -81,6 +81,14 @@ describe.each(LAYOUTS)('filter row, %s', (_name, width, fontScale) => {
     );
   });
 
+  it('says what each top category came to, beside its name', () => {
+    const labels = row({
+      quickCategories: [{ id: 'food', name: 'Food', totalMinor: 124000 }],
+      onPickCategory: jest.fn(),
+    });
+    expect(labels).toContain('Show only Food, ₹1,240 spent');
+  });
+
   it('has no Clear all while nothing is picked', () => {
     expect(row()).toEqual(['Filters', ...TYPES]);
   });

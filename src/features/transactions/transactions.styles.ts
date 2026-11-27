@@ -310,6 +310,8 @@ export const styles = themedStyles(() =>
       fontSize: 12,
       color: theme.colors.textSecondary,
     },
+    // What a top category came to, after its name, in the darker ink so it reads at a glance.
+    chipAmount: { color: theme.colors.textPrimary, fontVariant: ['tabular-nums'] },
 
     income: { color: theme.colors.incomeText },
     expense: { color: theme.colors.expenseText },
