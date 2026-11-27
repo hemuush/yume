@@ -32,6 +32,13 @@ jest.mock('@/features/transactions/TransactionsSkeleton', () => ({
   TransactionsSkeleton: () => require('react').createElement(require('react-native').Text, null, 'SKELETON'),
 }));
 jest.mock('@/components/UndoToast', () => ({ useUndoToast: () => ({ show: jest.fn() }) }));
+const mockTurnKeys: string[] = [];
+jest.mock('@/features/transactions/useListTurn', () => ({
+  useListTurn: (periodKey: string) => {
+    mockTurnKeys.push(periodKey);
+    return { listStyle: undefined, coverStyle: undefined };
+  },
+}));
 const mockComparison: { fail: boolean; wait?: Promise<void> } = { fail: true };
 const mockLedger = {
   transactions: [] as Transaction[],
@@ -125,6 +132,23 @@ it('clears search in place and ignores results from the cleared query', async ()
   });
   expect(tree.root.findByType(SearchStatus).props.resultCount).toBe(0);
   expect(tree.root.findByType(SearchStatus).props.loading).toBe(false);
+});
+
+it('turns the list with the period: each period shown gives the page turn its own key', async () => {
+  mockComparison.fail = false;
+  mockTurnKeys.length = 0;
+  const tree = await render();
+  const keys = () => new Set(mockTurnKeys.filter(Boolean));
+  expect(keys().size).toBe(1);
+  const back = tree.root.findAll(
+    (n) => n.props.accessibilityLabel === 'Previous week' && typeof n.props.onPress === 'function'
+  )[0];
+  await act(async () => {
+    back.props.onPress();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  });
+  expect(keys().size).toBe(2);
+  expect([...keys()].every((key) => /^week:\d{4}-\d{2}-\d{2}$/.test(key))).toBe(true);
 });
 
 // The empty period's button opens Add the way the person chose, the form or the chat (openAdd has its own tests).

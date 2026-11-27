@@ -150,7 +150,7 @@ export default function TransactionsScreen() {
   // (crossfade) unless it is a one-step move; a picked month or Week↔Month switch has no direction.
   const [direction, setDirection] = useState<-1 | 0 | 1>(0);
   const listTurn = useListTurn(
-    loadedPeriod.fromDate ? `{loadedPeriod.scope}:{loadedPeriod.fromDate}` : '',
+    loadedPeriod.fromDate ? `${loadedPeriod.scope}:${loadedPeriod.fromDate}` : '',
     direction
   );
   // A link can open Activity already filtered, on a month, or on one entry (see useActivityLinks).
