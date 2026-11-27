@@ -547,29 +547,30 @@ describe('days as a heading above a card', () => {
           StyleSheet.flatten(n.props.style)?.marginHorizontal === 16 &&
           StyleSheet.flatten(n.props.style)?.borderWidth === StyleSheet.hairlineWidth
       );
-      // The same section and the same 2 dp margin as Home's Recent activity (the rows keep their own 14 dp inset, so
-      // their content sits on the 16 dp gutter): the paper itself between two hairlines, no fill and no rounded box.
-      // It does not clip, so a lifted line's shadow is not cut off.
+      // Home’s list card (its Coming up and Recent activity): the same surface, edge and corner. It does not clip, so
+      // a lifted line’s shadow is not cut off.
       expect(StyleSheet.flatten(lane.props.style)).toMatchObject({
         marginHorizontal: 16,
         backgroundColor: theme.colors.home.surface,
-        borderColor: theme.colors.borderSoft,
+        borderColor: theme.colors.home.edge,
         overflow: 'visible',
       });
-      expect(StyleSheet.flatten(lane.props.style).borderRadius).toBe(theme.radius.lg);
+      expect(StyleSheet.flatten(lane.props.style).borderRadius).toBe(theme.radius.xl);
       expect(lane.findAll((n) => n.props.accessibilityRole === 'header').length).toBeGreaterThan(0);
       act(() => tree.unmount());
     }));
 
-  it('uses Home’s row: a 40 dp disc in a 44 dp slot, a 52 dp least height, 14 dp of side padding', () =>
+  it('uses Home’s compact row: a 32 dp disc in its own slot, a 48 dp least height, 12 dp of side padding', () =>
     withWidth(() => {
       const tree = day();
       const styles = tree.root
         .findAll((n) => typeof n.type === 'string')
         .map((n) => StyleSheet.flatten(n.props.style) ?? {});
-      expect(styles.some((s) => s.width === 44 && s.alignItems === 'center')).toBe(true);
-      expect(styles.some((s) => s.width === 40 && s.height === 40)).toBe(true);
-      expect(styles.some((s) => s.minHeight === 52 && s.paddingHorizontal === 14)).toBe(true);
+      expect(styles.some((s) => s.width === 32 && s.alignItems === 'center' && s.height === undefined)).toBe(
+        true
+      );
+      expect(styles.some((s) => s.width === 32 && s.height === 32)).toBe(true);
+      expect(styles.some((s) => s.minHeight === 48 && s.paddingHorizontal === 12)).toBe(true);
       act(() => tree.unmount());
     }));
 

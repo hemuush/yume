@@ -25,7 +25,7 @@ const flat = (tree: ReactTestRenderer) =>
     .findAll((n) => typeof n.type === 'string' && n.props.style)
     .map((n) => StyleSheet.flatten(n.props.style) ?? {});
 
-it('draws the Spent card at the real cardâ€™s height, with its lettered bars, and not the old tall chart card', () => {
+it('draws the Spent card at the real card’s height, with its lettered bars, and not the old tall chart card', () => {
   const tree = render();
   const card = flat(tree).find((s) => s.minHeight === 92);
   expect(card).toBeDefined();
@@ -34,26 +34,28 @@ it('draws the Spent card at the real cardâ€™s height, with its lettered bar
   act(() => tree.unmount());
 });
 
-it('has the filter row (the Filters button and four choices) and two days as Homeâ€™s card, each with its entries', () => {
+it('has the filter row (the Filters button and four choices) and two days as Home’s card, each with its entries', () => {
   const tree = render();
   const styles = flat(tree);
-  // 40 dp round shapes: the Filters circle and the four type choices (5), and the five category discs (5).
+  // 40 dp round shapes: the Filters circle and the four type choices.
   const round = styles.filter((s) => s.height === 40 && typeof s.width === 'number' && s.borderRadius === 20);
-  expect(round).toHaveLength(10);
+  expect(round).toHaveLength(5);
   // No marker rail beside a day: the card (Home's, 12 dp inset) holds its heading and rows.
   expect(
-    styles.filter((s) => s.width === 44 && s.alignItems === 'center' && s.height === undefined)
+    styles.filter((s) => s.width === 32 && s.alignItems === 'center' && s.height === undefined)
   ).toHaveLength(5);
   expect(
     styles.filter(
       (s) =>
         s.marginHorizontal === 16 &&
         s.borderWidth === StyleSheet.hairlineWidth &&
-        s.borderRadius === theme.radius.lg
+        s.borderRadius === theme.radius.xl &&
+        // The Spent card shares the corner now; the day cards are the ones that hold rows (no least height of their own).
+        s.minHeight === undefined
     )
   ).toHaveLength(2);
   expect(styles.filter((s) => s.minHeight === 29)).toHaveLength(2);
   // 3 + 2 entries, each with a 40 dp category disc like Home's.
-  expect(styles.filter((s) => s.width === 40 && s.height === 40 && s.borderRadius === 20)).toHaveLength(6);
+  expect(styles.filter((s) => s.width === 32 && s.height === 32 && s.borderRadius === 16)).toHaveLength(5);
   act(() => tree.unmount());
 });

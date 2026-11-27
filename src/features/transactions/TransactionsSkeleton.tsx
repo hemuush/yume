@@ -1,9 +1,9 @@
 import { View, StyleSheet } from 'react-native';
 import { Skeleton } from '@/components/Skeleton';
-import { screenStyles, SCREEN } from '@/components/screenStyles';
+import { screenStyles } from '@/components/screenStyles';
 import { themedStyles } from '@/theme/themedStyles';
 import { theme } from '@/constants/theme';
-import { styles as timeline } from './TimelineDay.styles';
+import { MARK, ROW_H, styles as timeline } from './TimelineDay.styles';
 
 const BAR_HEIGHTS = [12, 22, 8, 40, 16, 26, 14];
 /** How many entries each placeholder day holds. */
@@ -48,15 +48,18 @@ export function TransactionsSkeleton() {
               <Skeleton width={52} height={11} radius={4} />
             </View>
             {Array.from({ length: rows }, (_, i) => (
-              <View key={i} style={[styles.row, i > 0 && styles.divider]}>
-                <View style={styles.slot}>
-                  <Skeleton width={SCREEN.mark} height={SCREEN.mark} radius={SCREEN.mark / 2} />
+              <View key={i}>
+                {i > 0 && <View style={timeline.separator} />}
+                <View style={styles.row}>
+                  <View style={styles.slot}>
+                    <Skeleton width={MARK} height={MARK} radius={MARK / 2} />
+                  </View>
+                  <View style={styles.rowMid}>
+                    <Skeleton width={d === 0 && i === 1 ? 96 : 128} height={13} radius={4} />
+                    <Skeleton width={110} height={10} radius={3} style={{ marginTop: 6 }} />
+                  </View>
+                  <Skeleton width={58} height={13} radius={4} />
                 </View>
-                <View style={styles.rowMid}>
-                  <Skeleton width={d === 0 && i === 1 ? 96 : 128} height={13} radius={4} />
-                  <Skeleton width={110} height={10} radius={3} style={{ marginTop: 6 }} />
-                </View>
-                <Skeleton width={58} height={13} radius={4} />
               </View>
             ))}
           </View>
@@ -109,14 +112,13 @@ const styles = themedStyles(() =>
       alignItems: 'center',
       justifyContent: 'space-between',
       minHeight: 29,
-      paddingHorizontal: 14,
+      paddingHorizontal: 12,
       paddingTop: 12,
       paddingBottom: 2,
     },
-    // Home's row: 52 dp least, 14 dp of side padding, the 40 dp disc in its 44 dp slot.
-    row: { ...screenStyles.row, gap: 12 },
-    divider: screenStyles.divider,
-    slot: { width: SCREEN.lead, alignItems: 'center', justifyContent: 'center' },
+    // The real row: Home’s compact one, 12 dp of side padding and the 32 dp disc in its own slot.
+    row: { ...screenStyles.row, minHeight: ROW_H, paddingVertical: 8, paddingHorizontal: 12, gap: 8 },
+    slot: { width: MARK, alignItems: 'center', justifyContent: 'center' },
     rowMid: { flex: 1 },
   })
 );

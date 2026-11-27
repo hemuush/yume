@@ -1,47 +1,60 @@
 import { StyleSheet } from 'react-native';
 import { theme } from '@/constants/theme';
-import { groupedSurface, screenStyles as h, SCREEN } from '@/components/screenStyles';
+import { screenStyles as h } from '@/components/screenStyles';
 import { themedStyles } from '@/theme/themedStyles';
 
 /**
- * Activity's days are drawn from the same measures as Home's Recent activity (RecentTransactionRow and
- * HomeRecentActivity): the same card, 40 dp category disc in a 44 dp slot, name and "category · account" beneath,
- * amount alone at the right, hairline between rows, and the day named inside the card in small capitals. What is
- * Activity's own is below: groups, the drag lift, and the picked day's tint.
+ * Activity’s days are drawn from the same measures as Home’s Recent activity (RecentTransactionRow’s compact row and
+ * HomeRecentActivity): the same card, a 32 dp category disc in its own slot, name and “category · account” beneath,
+ * amount alone at the right, a hairline between rows that starts under the name, and the day named inside the card in
+ * small capitals. What is Activity’s own is below: groups, the drag lift, and the picked day’s tint.
  */
 
-/** A row's least height: Home's. */
-export const ROW_H = SCREEN.rowMinHeight;
+/** The category disc, and the slot it sits in. */
+export const MARK = 32;
+/** The side padding of a row (and of the day’s heading, so the two line up). */
+const INSET = 12;
+/** Between the disc and the text. */
+const GAP = 8;
+/** A row’s least height: Home’s compact row. */
+export const ROW_H = 48;
 
 export const styles = themedStyles(() =>
   StyleSheet.create({
     // A day is one cell of the list: its card, with the day named inside it.
     day: { marginTop: 8 },
-    // Home's list card. It does not clip (Home's does): a held line is lifted out of the card with a shadow, and a
-    // clipped card would cut that off; the rows round their own pressed tint instead.
+    // Home’s list card (its Coming up and Recent activity). It does not clip (Home’s does): a held line is lifted out
+    // of the card with a shadow, and a clipped card would cut that off; the rows round their own pressed tint instead.
     lane: {
       marginHorizontal: 16,
-      ...groupedSurface.frame,
+      backgroundColor: theme.colors.home.surface,
+      borderRadius: theme.radius.xl,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.home.edge,
       overflow: 'visible',
     },
-    // The chart's picked day: its heading sits on a soft tint, so the list answers the tap.
+    dayHead: { ...h.dayHead, paddingHorizontal: INSET },
+    // The chart’s picked day: its heading sits on a soft tint, so the list answers the tap.
     headOn: {
-      borderTopLeftRadius: theme.radius.lg,
-      borderTopRightRadius: theme.radius.lg,
+      borderTopLeftRadius: theme.radius.xl,
+      borderTopRightRadius: theme.radius.xl,
       backgroundColor: theme.colors.home.selected,
     },
     dayLabel: { ...h.dayHeadText, color: theme.colors.home.secondaryText },
-    // Between two lines of the day: across the whole row, as Home's hairline.
+    // Between two lines of the day: from under the name to the row’s end, as on Home.
     separator: {
-      marginLeft: SCREEN.rowInset + SCREEN.lead + 12,
-      marginRight: SCREEN.rowInset,
+      marginLeft: INSET + MARK + GAP,
+      marginRight: INSET,
       height: StyleSheet.hairlineWidth,
       backgroundColor: theme.colors.home.edge,
     },
-    lead: { width: SCREEN.lead, alignItems: 'center', justifyContent: 'center' },
+    lead: { width: MARK, alignItems: 'center', justifyContent: 'center' },
     line: {
       ...h.row,
-      gap: 12,
+      minHeight: ROW_H,
+      paddingVertical: 8,
+      paddingHorizontal: INSET,
+      gap: GAP,
       // The pressed tint is a rounded tile, never a square corner over the card's curve.
       borderRadius: theme.radius.md,
     },
@@ -77,8 +90,15 @@ export const styles = themedStyles(() =>
     income: h.income,
     // An open group's entries: the same row, with a dot in the category's colour where the disc is, so their text
     // lines up with the group's own.
-    subLine: { ...h.row, gap: 12, paddingVertical: 6, minHeight: 44, borderRadius: theme.radius.md },
-    subLead: { width: SCREEN.lead, alignItems: 'center', justifyContent: 'center' },
+    subLine: {
+      ...h.row,
+      gap: GAP,
+      paddingVertical: 6,
+      paddingHorizontal: INSET,
+      minHeight: 44,
+      borderRadius: theme.radius.md,
+    },
+    subLead: { width: MARK, alignItems: 'center', justifyContent: 'center' },
     subDot: { width: 6, height: 6, borderRadius: 3 },
   })
 );

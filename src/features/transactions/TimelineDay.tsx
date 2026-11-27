@@ -21,8 +21,7 @@ import { theme } from '@/constants/theme';
 import { buildDayLane, LaneLine, laneKey, type ValueNote } from './transactions.helpers';
 import { sameElements } from '@/lib/stableData';
 import { useDayReorder } from './useDayReorder';
-import { styles } from './TimelineDay.styles';
-import { screenStyles as h, SCREEN } from '@/components/screenStyles';
+import { MARK, styles } from './TimelineDay.styles';
 import { investLines, investRole } from '@/lib/investment';
 import { isSavingsEntry } from '@/lib/privateSummary';
 import { DraggableLine } from './DraggableLine';
@@ -199,7 +198,8 @@ function TimelineDayView({
                 <CategoryIcon
                   name={cat?.icon ?? 'tag'}
                   color={cat?.color ?? theme.colors.textMuted}
-                  square={SCREEN.mark}
+                  square={MARK}
+                  size={14}
                   round
                 />
               </View>
@@ -257,7 +257,8 @@ function TimelineDayView({
                   <CategoryIcon
                     name={cat?.icon ?? 'tag'}
                     color={cat?.color ?? theme.colors.textMuted}
-                    square={SCREEN.mark}
+                    square={MARK}
+                    size={14}
                     round
                   />
                 </View>
@@ -377,7 +378,7 @@ function TimelineDayView({
       <ReanimatedAnimated.View style={styles.day}>
         <View style={styles.lane}>
           <View
-            style={[h.dayHead, selected && styles.headOn]}
+            style={[styles.dayHead, selected && styles.headOn]}
             accessible
             accessibilityRole="header"
             accessibilityLabel={`${label}, ${dateLabel}${showTotal ? `, ${totalSpoken}` : ''}`}
@@ -434,7 +435,8 @@ function TimelineDayView({
                             : 'swap-horizontal'
                       }
                       color={secondary}
-                      square={SCREEN.mark}
+                      square={MARK}
+                      size={14}
                       round
                     />
                   </View>
@@ -465,7 +467,7 @@ function TimelineDayView({
                   accessibilityLabel={`${accountName(note.accountId)} value updated to ${formatMaskableMoney(note.valueMinor, { masked, currency: cur })}`}
                 >
                   <View style={styles.lead}>
-                    <CategoryIcon name="pencil" color={theme.colors.idGold} square={SCREEN.mark} round />
+                    <CategoryIcon name="pencil" color={theme.colors.idGold} square={MARK} size={14} round />
                   </View>
                   <View style={[styles.mid, stacked && styles.wideMid]}>
                     <Text style={styles.name}>
