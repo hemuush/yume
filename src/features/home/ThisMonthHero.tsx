@@ -1,13 +1,14 @@
-import { useState } from 'react';
-import { View, Pressable } from 'react-native';
+import { useEffect, useState } from 'react';
+import { View, Pressable, StyleSheet } from 'react-native';
 import { Text } from '@/components/Text';
 import Feather from '@expo/vector-icons/Feather';
-import { SummaryGradient } from '@/components/SummaryGradient';
-import ReanimatedAnimated from 'react-native-reanimated';
+import { SummaryGradient, summaryInk } from '@/components/SummaryGradient';
+import { SolidFade } from '@/components/SolidFade';
+import ReanimatedAnimated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { theme } from '@/constants/theme';
 import { formatMoney, formatMaskableMoney } from '@/lib/money';
 import { haptics } from '@/lib/haptics';
-import { ROW_LAYOUT, ROW_EXIT, PANEL_ENTER } from '@/lib/animation';
+import { ROW_LAYOUT, ROW_EXIT, PANEL_ENTER, MOTION, timing } from '@/lib/animation';
 import { CountUpAmount } from '@/components/CountUpAmount';
 import { JustAddedGlow } from '@/components/JustAddedGlow';
 import { usePrivacy } from '@/theme/PrivacyContext';
@@ -95,11 +96,24 @@ export function ThisMonthHero({
   });
   // The sum behind "Free after bills", opened from the "still to pay" chip.
   const [showWorking, setShowWorking] = useState(false);
+  const toggleWorking = () => {
+    haptics.tap();
+    setShowWorking((v) => !v);
+  };
+  // The chevron beside the figure turns over as the sum opens, rather than swapping for another icon.
+  const turn = useSharedValue(0);
+  useEffect(() => {
+    turn.set(withTiming(showWorking ? 180 : 0, timing(MOTION.quick)));
+  }, [showWorking, turn]);
+  const chevronStyle = useAnimatedStyle(() => ({ transform: [{ rotate: `${turn.get()}deg` }] }));
   // The active view inside the unified card: This Month overview vs This Week rhythm.
   const [showSpending, setShowSpending] = useState(false);
+  // Switching views fades the new one in; nothing plays before the first switch (the page’s own fade covers the card).
+  const [switched, setSwitched] = useState(false);
   const showingWeek = showSpending && displayed.spendingTrend != null;
   const toggleSpending = () => {
     haptics.tap();
+    setSwitched(true);
     setShowSpending((visible) => !visible);
   };
   // The slice of the month picked on the line or in the legend, tied to the period it was picked in.
@@ -245,209 +259,219 @@ export function ThisMonthHero({
           {renderPeriod ? renderPeriod(displayed.periodKey) : period}
         </View>
 
-        <View
-          style={showingWeek && styles.hidden}
-          accessibilityElementsHidden={showingWeek}
-          importantForAccessibility={showingWeek ? 'no-hide-descendants' : 'auto'}
-        >
-          <ReanimatedAnimated.View style={[styles.body, slideStyle]} {...panHandlers}>
-            <View style={styles.figure}>
-              <SummaryGradient />
-              {savedExpenseIds && <JustAddedGlow ids={savedExpenseIds} surface="homeBalance" />}
-              <Pressable
-                disabled={!slices.hasIncome}
-                onPress={() => {
-                  haptics.tap();
-                  setShowWorking((v) => !v);
-                }}
-                style={withPressed()}
-                accessible
-                accessibilityRole={slices.hasIncome ? 'button' : undefined}
-                accessibilityState={slices.hasIncome ? { expanded: showWorking } : undefined}
-                accessibilityLabel={
-                  slices.hasIncome
-                    ? `${headLabel}, ${formatMoney(headMinor)}, ${headCaption}. Show how it adds up`
-                    : headCaption
-                }
-                // The swipe, for a screen reader: swipe up or down on the figure to step the period.
-                accessibilityActions={[
-                  { name: 'decrement', label: 'Previous period' },
-                  ...(canStepForward ? [{ name: 'increment', label: 'Next period' }] : []),
-                ]}
-                onAccessibilityAction={(e) => {
-                  if (e.nativeEvent.actionName === 'decrement') onStep(-1);
-                  else if (e.nativeEvent.actionName === 'increment' && canStepForward) onStep(1);
-                }}
-              >
-                {slices.hasIncome ? (
-                  <CountUpAmount
-                    key={displayed.periodKey}
-                    minor={headMinor}
-                    style={[styles.headValue, headNeg && styles.headValueNeg]}
-                    numberOfLines={stacked ? undefined : 1}
-                    adjustsFontSizeToFit={!stacked}
-                    minimumFontScale={0.75}
+        <View>
+          <View
+            style={showingWeek && styles.hidden}
+            accessibilityElementsHidden={showingWeek}
+            importantForAccessibility={showingWeek ? 'no-hide-descendants' : 'auto'}
+          >
+            <ReanimatedAnimated.View style={[styles.body, slideStyle]} {...panHandlers}>
+              <View style={styles.figure}>
+                <SummaryGradient />
+                {savedExpenseIds && <JustAddedGlow ids={savedExpenseIds} surface="homeBalance" />}
+                <View style={[styles.figureTop, stacked && styles.figureTopStacked]}>
+                  <Pressable
+                    disabled={!slices.hasIncome}
+                    onPress={toggleWorking}
+                    style={withPressed(styles.figureValue)}
+                    accessible
+                    accessibilityRole={slices.hasIncome ? 'button' : undefined}
+                    accessibilityState={slices.hasIncome ? { expanded: showWorking } : undefined}
+                    accessibilityLabel={
+                      slices.hasIncome
+                        ? `${headLabel}, ${formatMoney(headMinor)}, ${headCaption}. Show how it adds up`
+                        : headCaption
+                    }
+                    // The swipe, for a screen reader: swipe up or down on the figure to step the period.
+                    accessibilityActions={[
+                      { name: 'decrement', label: 'Previous period' },
+                      ...(canStepForward ? [{ name: 'increment', label: 'Next period' }] : []),
+                    ]}
+                    onAccessibilityAction={(e) => {
+                      if (e.nativeEvent.actionName === 'decrement') onStep(-1);
+                      else if (e.nativeEvent.actionName === 'increment' && canStepForward) onStep(1);
+                    }}
+                  >
+                    {slices.hasIncome ? (
+                      <CountUpAmount
+                        key={displayed.periodKey}
+                        minor={headMinor}
+                        style={[styles.headValue, headNeg && styles.headValueNeg]}
+                        numberOfLines={stacked ? undefined : 1}
+                        adjustsFontSizeToFit={!stacked}
+                        minimumFontScale={0.75}
+                      />
+                    ) : (
+                      <Text style={styles.headValue}>—</Text>
+                    )}
+                  </Pressable>
+                  {slices.hasIncome && (
+                    <Pressable
+                      onPress={toggleWorking}
+                      hitSlop={8}
+                      accessibilityRole="button"
+                      accessibilityState={{ expanded: showWorking }}
+                      accessibilityLabel="How this adds up"
+                      style={withPressed(styles.howToggle)}
+                    >
+                      <ReanimatedAnimated.View style={chevronStyle}>
+                        <Feather name="chevron-down" size={18} color={summaryInk.secondary} />
+                      </ReanimatedAnimated.View>
+                    </Pressable>
+                  )}
+                  {displayed.spendingTrend ? (
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={weekMode ? 'Last 7 days' : 'By week'}
+                      onPress={toggleSpending}
+                      hitSlop={6}
+                      style={withPressed(styles.trendChip)}
+                    >
+                      <Feather name="bar-chart-2" size={13} color={summaryInk.link} />
+                      <Text style={styles.trendChipText}>{weekMode ? '7 days' : 'By week'}</Text>
+                    </Pressable>
+                  ) : onSeeInsights ? (
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel="See spending insights"
+                      onPress={() => onSeeInsights(displayed.periodKey)}
+                      hitSlop={6}
+                      style={withPressed(styles.trendChip)}
+                    >
+                      <Text style={styles.trendChipText}>Insights</Text>
+                      <Feather name="arrow-up-right" size={13} color={summaryInk.link} />
+                    </Pressable>
+                  ) : null}
+                </View>
+                {perDayMinor != null ? (
+                  <AllowanceTile
+                    perDayMinor={perDayMinor}
+                    daysLeft={daysLeft}
+                    todaySpentMinor={isCurrentMonth ? todaySpentMinor : null}
+                    todayBudgetMinor={dailyAllowance(freeMinor + (todaySpentMinor ?? 0), daysLeft + 1)}
                   />
                 ) : (
-                  <Text style={styles.headValue}>—</Text>
-                )}
-              </Pressable>
-              {perDayMinor != null ? (
-                <AllowanceTile
-                  perDayMinor={perDayMinor}
-                  daysLeft={daysLeft}
-                  todaySpentMinor={isCurrentMonth ? todaySpentMinor : null}
-                  todayBudgetMinor={dailyAllowance(freeMinor + (todaySpentMinor ?? 0), daysLeft + 1)}
-                />
-              ) : (
-                <Text style={styles.figureCaption} accessibilityElementsHidden importantForAccessibility="no">
-                  {headCaption}
-                </Text>
-              )}
-            </View>
-            {legend.length > 0 && <HeroLegend items={legend} />}
-            {focused && (
-              <ReanimatedAnimated.View key={focus} entering={PANEL_ENTER}>
-                <Text style={styles.headCaption}>
-                  {focused.label} · {focused.caption}
-                </Text>
-              </ReanimatedAnimated.View>
-            )}
-
-            <View style={styles.footer}>
-              {slices.hasIncome && (
-                <Pressable
-                  onPress={() => {
-                    haptics.tap();
-                    setShowWorking((v) => !v);
-                  }}
-                  style={withPressed(styles.howLink)}
-                  accessibilityRole="button"
-                  accessibilityState={{ expanded: showWorking }}
-                  accessibilityLabel="How this adds up"
-                >
-                  <Text style={styles.howLinkText}>How it adds up</Text>
-                  <Feather
-                    name={showWorking ? 'chevron-up' : 'chevron-down'}
-                    size={14}
-                    color={theme.colors.link}
-                  />
-                </Pressable>
-              )}
-              {displayed.spendingTrend && (
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel={weekMode ? 'Last 7 days' : 'By week'}
-                  onPress={toggleSpending}
-                  style={withPressed(styles.insightsLink)}
-                >
-                  <Feather name="bar-chart-2" size={14} color={theme.colors.link} />
-                  <Text style={styles.insightsText}>{weekMode ? 'Last 7 days' : 'By week'}</Text>
-                </Pressable>
-              )}
-              {onSeeInsights && !displayed.spendingTrend && (
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel="See spending insights"
-                  onPress={() => onSeeInsights(displayed.periodKey)}
-                  style={withPressed(styles.insightsLink)}
-                >
-                  <Text style={styles.insightsText}>See insights</Text>
-                  <Feather name="arrow-up-right" size={14} color={theme.colors.link} />
-                </Pressable>
-              )}
-            </View>
-
-            {/* Under the link that opens it, so the link stays where the finger is. */}
-            {slices.hasIncome && showWorking && (
-              <ReanimatedAnimated.View entering={PANEL_ENTER} exiting={ROW_EXIT} style={styles.working}>
-                <WorkingRow label="Income" value={formatMoney(displayed.incomeMinor)} />
-                {displayed.carryMinor !== 0 && (
-                  <WorkingRow
-                    label="Carried over"
-                    value={`${displayed.carryMinor < 0 ? '−' : '+'}${formatMoney(Math.abs(displayed.carryMinor))}`}
-                  />
-                )}
-                <WorkingRow label="Spent" value={`−${formatMoney(displayed.spentMinor)}`} />
-                <WorkingRow
-                  label="Set aside"
-                  value={
-                    hideAmounts
-                      ? `−${formatMaskableMoney(0, { masked: true })}`
-                      : `${displayed.savingsMinor < 0 ? '+' : '−'}${formatMoney(Math.abs(displayed.savingsMinor))}`
-                  }
-                />
-                <WorkingRow label="Free to use" value={formatMoney(displayed.surplusMinor)} total />
-                {hasDue && (
-                  <>
-                    <WorkingRow label="Still to pay" value={`−${formatMoney(billsMinor)}`} due />
-                    <WorkingRow label="After bills" value={formatMoney(freeMinor)} total />
-                  </>
-                )}
-                {shownPace && (
-                  <WorkingRow
-                    label={`On pace by ${shownPace.byLabel}`}
-                    value={`about ${formatMoney(Math.round(shownPace.projectedMinor / 10000) * 10000)}`}
-                  />
-                )}
-                {recaps.map((recap) => (
-                  <Pressable
-                    key={recap.key}
-                    onPress={recap.onPress}
-                    accessibilityRole="button"
-                    accessibilityLabel={`View ${recap.label} recap`}
-                    style={withPressed(styles.link)}
+                  <Text
+                    style={styles.figureCaption}
+                    accessibilityElementsHidden
+                    importantForAccessibility="no"
                   >
-                    <Text style={styles.linkText}>View {recap.label} recap →</Text>
-                  </Pressable>
-                ))}
-              </ReanimatedAnimated.View>
-            )}
-          </ReanimatedAnimated.View>
-        </View>
-
-        {/* WEEK VIEW CONTENT */}
-        {displayed.spendingTrend && (
-          <View
-            style={!showingWeek && styles.hidden}
-            accessibilityElementsHidden={!showingWeek}
-            importantForAccessibility={showingWeek ? 'auto' : 'no-hide-descendants'}
-          >
-            <ReanimatedAnimated.View style={rhythmSlideStyle} {...panHandlers}>
-              {weekMode && (
-                <Text style={styles.weekTitle}>{formatMoney(trendTotalMinor)} spent in 7 days</Text>
+                    {headCaption}
+                  </Text>
+                )}
+              </View>
+              {legend.length > 0 && <HeroLegend items={legend} />}
+              {focused && (
+                <ReanimatedAnimated.View key={focus} entering={PANEL_ENTER}>
+                  <Text style={styles.headCaption}>
+                    {focused.label} · {focused.caption}
+                  </Text>
+                </ReanimatedAnimated.View>
               )}
-              <SpendBars
-                daily={displayed.spendingTrend.daily}
-                today={displayed.spendingTrend.today}
-                periodMode={displayed.spendingTrend.mode}
-                goalMinor={shownToday?.goalMinor ?? null}
-                todaySpentMinor={shownToday?.spentMinor ?? null}
-              />
+
+              {/* Under the figure that opens it, so what was tapped stays where the finger is. */}
+              {slices.hasIncome && showWorking && (
+                <ReanimatedAnimated.View
+                  entering={PANEL_ENTER}
+                  exiting={ROW_EXIT}
+                  style={[styles.working, styles.workingLast]}
+                >
+                  <WorkingRow label="Income" value={formatMoney(displayed.incomeMinor)} />
+                  {displayed.carryMinor !== 0 && (
+                    <WorkingRow
+                      label="Carried over"
+                      value={`${displayed.carryMinor < 0 ? '−' : '+'}${formatMoney(Math.abs(displayed.carryMinor))}`}
+                    />
+                  )}
+                  <WorkingRow label="Spent" value={`−${formatMoney(displayed.spentMinor)}`} />
+                  <WorkingRow
+                    label="Set aside"
+                    value={
+                      hideAmounts
+                        ? `−${formatMaskableMoney(0, { masked: true })}`
+                        : `${displayed.savingsMinor < 0 ? '+' : '−'}${formatMoney(Math.abs(displayed.savingsMinor))}`
+                    }
+                  />
+                  <WorkingRow label="Free to use" value={formatMoney(displayed.surplusMinor)} total />
+                  {hasDue && (
+                    <>
+                      <WorkingRow label="Still to pay" value={`−${formatMoney(billsMinor)}`} due />
+                      <WorkingRow label="After bills" value={formatMoney(freeMinor)} total />
+                    </>
+                  )}
+                  {shownPace && (
+                    <WorkingRow
+                      label={`On pace by ${shownPace.byLabel}`}
+                      value={`about ${formatMoney(Math.round(shownPace.projectedMinor / 10000) * 10000)}`}
+                    />
+                  )}
+                  {recaps.map((recap) => (
+                    <Pressable
+                      key={recap.key}
+                      onPress={recap.onPress}
+                      accessibilityRole="button"
+                      accessibilityLabel={`View ${recap.label} recap`}
+                      style={withPressed(styles.link)}
+                    >
+                      <Text style={styles.linkText}>View {recap.label} recap →</Text>
+                    </Pressable>
+                  ))}
+                </ReanimatedAnimated.View>
+              )}
             </ReanimatedAnimated.View>
-            <View style={styles.footer}>
-              <Pressable
-                accessibilityRole="button"
-                onPress={toggleSpending}
-                style={withPressed(styles.howLink)}
-              >
-                <Feather name="arrow-left" size={14} color={theme.colors.link} />
-                <Text style={styles.howLinkText}>Overview</Text>
-              </Pressable>
-              {onSeeInsights && (
+          </View>
+
+          {/* WEEK VIEW CONTENT */}
+          {displayed.spendingTrend && (
+            <View
+              style={!showingWeek && styles.hidden}
+              accessibilityElementsHidden={!showingWeek}
+              importantForAccessibility={showingWeek ? 'auto' : 'no-hide-descendants'}
+            >
+              <ReanimatedAnimated.View style={rhythmSlideStyle} {...panHandlers}>
+                {weekMode && (
+                  <Text style={styles.weekTitle}>{formatMoney(trendTotalMinor)} spent in 7 days</Text>
+                )}
+                <SpendBars
+                  daily={displayed.spendingTrend.daily}
+                  today={displayed.spendingTrend.today}
+                  periodMode={displayed.spendingTrend.mode}
+                  goalMinor={shownToday?.goalMinor ?? null}
+                  todaySpentMinor={shownToday?.spentMinor ?? null}
+                />
+              </ReanimatedAnimated.View>
+              <View style={styles.footer}>
                 <Pressable
                   accessibilityRole="button"
-                  accessibilityLabel={weekMode ? 'Insights — Last 7 days' : 'Insights — Spending by week'}
-                  onPress={() => onSeeInsights(displayed.periodKey)}
-                  style={withPressed(styles.insightsLink)}
+                  onPress={toggleSpending}
+                  style={withPressed(styles.howLink)}
                 >
-                  <Text style={styles.insightsText}>Insights</Text>
-                  <Feather name="arrow-up-right" size={14} color={theme.colors.link} />
+                  <Feather name="arrow-left" size={14} color={theme.colors.link} />
+                  <Text style={styles.howLinkText}>Overview</Text>
                 </Pressable>
-              )}
+                {onSeeInsights && (
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={weekMode ? 'Insights — Last 7 days' : 'Insights — Spending by week'}
+                    onPress={() => onSeeInsights(displayed.periodKey)}
+                    style={withPressed(styles.insightsLink)}
+                  >
+                    <Text style={styles.insightsText}>Insights</Text>
+                    <Feather name="arrow-up-right" size={14} color={theme.colors.link} />
+                  </Pressable>
+                )}
+              </View>
             </View>
-          </View>
-        )}
+          )}
+          {/* Fades in whichever view a switch brings in, as a sheet of the card’s colour lifting off it. */}
+          <SolidFade
+            key={showingWeek ? 'week' : 'overview'}
+            play={switched}
+            coverColor={theme.colors.home.surface}
+            pointerEvents="none"
+            style={StyleSheet.absoluteFill}
+          />
+        </View>
       </ReanimatedAnimated.View>
       <HeroActions />
     </ReanimatedAnimated.View>

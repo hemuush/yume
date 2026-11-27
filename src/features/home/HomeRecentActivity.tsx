@@ -3,7 +3,6 @@ import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { Text } from '@/components/Text';
 import { EmptyState } from '@/components/EmptyState';
-import { groupedSurface } from '@/components/screenStyles';
 import { Section } from '@/components/Section';
 import { theme } from '@/constants/theme';
 import { dayLabel } from '@/lib/date';
@@ -85,6 +84,8 @@ export const HomeRecentActivity = memo(function HomeRecentActivity({
                     )}
                 </View>
               )}
+              {/* Within a day, rows part on a line that starts under the name, as Coming up’s rows do. */}
+              {i > 0 && rows[i - 1].date === tx.date && <View style={styles.rowDivider} />}
               <RecentTransactionRow
                 showDay={false}
                 dense
@@ -97,7 +98,7 @@ export const HomeRecentActivity = memo(function HomeRecentActivity({
                 toAccountName={accountName(tx.toAccountId)}
                 savingsTransfer={isSavingsTransfer(tx)}
                 investRole={investRole(tx, investIds)}
-                divider={i > 0 && rows[i - 1].date === tx.date}
+                divider={false}
               />
             </Animated.View>
           ))}
@@ -109,17 +110,29 @@ export const HomeRecentActivity = memo(function HomeRecentActivity({
 
 const styles = themedStyles(() =>
   StyleSheet.create({
+    // The same card as Coming up above it: one surface, edge and corner for Home’s lists.
     recent: {
       marginHorizontal: 16,
-      ...groupedSurface.frame,
+      backgroundColor: theme.colors.home.surface,
+      borderRadius: theme.radius.xl,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.home.edge,
       paddingBottom: 4,
       overflow: 'hidden',
+    },
+    // Starts under the entry’s name: the dense row’s 12 inset, its 32 disc and the 8 gap after it.
+    rowDivider: {
+      height: StyleSheet.hairlineWidth,
+      marginLeft: 52,
+      marginRight: 12,
+      backgroundColor: theme.colors.home.edge,
     },
     dayHead: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      paddingHorizontal: 14,
+      // In line with the dense rows’ discs under it.
+      paddingHorizontal: 12,
       paddingTop: 8,
       paddingBottom: 2,
     },

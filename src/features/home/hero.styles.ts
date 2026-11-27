@@ -39,9 +39,11 @@ export const styles = themedStyles(() =>
       alignItems: 'center',
       justifyContent: 'space-between',
       gap: 8,
-      minHeight: 44,
+      // The month pill inside it keeps a 44 touch area through its own hitSlop.
+      minHeight: 40,
     },
-    body: { gap: 2 },
+    // The card ends on this now that the links row under the legend is gone.
+    body: { gap: 2, paddingBottom: 12 },
     figure: {
       minWidth: 0,
       gap: 2,
@@ -80,6 +82,24 @@ export const styles = themedStyles(() =>
       color: theme.colors.home.secondaryText,
     },
 
+    figureTop: { flexDirection: 'row', alignItems: 'center', gap: 2 },
+    figureTopStacked: { flexWrap: 'wrap', rowGap: 6 },
+    figureValue: { flexShrink: 1, minWidth: 0 },
+    // "How this adds up", as a chevron beside the figure: drawn 28, touched 44.
+    howToggle: { width: 28, height: 28, alignItems: 'center', justifyContent: 'center' },
+    // The week (or insights) switch at the figure’s right, a pill on the sky.
+    trendChip: {
+      marginLeft: 'auto',
+      flexShrink: 0,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      minHeight: 32,
+      paddingHorizontal: 10,
+      borderRadius: theme.radius.pill,
+      backgroundColor: summaryInk.chip,
+    },
+    trendChipText: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: summaryInk.link },
     howLink: { flexDirection: 'row', alignItems: 'center', gap: 5, minHeight: 44 },
     howLinkText: { fontFamily: theme.font.bodyMedium, fontSize: 12, color: theme.colors.link },
 
@@ -94,6 +114,7 @@ export const styles = themedStyles(() =>
     link: { minHeight: 44, justifyContent: 'center' },
     linkText: { fontFamily: theme.font.bodyMedium, fontSize: 13, color: theme.colors.link },
 
+    workingLast: { marginBottom: 2 },
     working: {
       marginTop: 6,
       marginBottom: 12,

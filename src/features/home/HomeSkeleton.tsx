@@ -30,10 +30,6 @@ export function ThisMonthHeroSkeleton() {
           </View>
         ))}
       </View>
-      <View style={hero.footer}>
-        <Skeleton width={120} height={14} radius={4} />
-        <Skeleton width={62} height={14} radius={4} />
-      </View>
     </View>
   );
 }
@@ -42,7 +38,7 @@ export function AccountTilesSkeleton() {
   return (
     <View style={styles.accountTiles}>
       {[0, 1, 2].map((i) => (
-        <Skeleton key={i} width={148} height={68} radius={22} />
+        <Skeleton key={i} width={148} height={60} radius={22} />
       ))}
     </View>
   );
@@ -50,7 +46,8 @@ export function AccountTilesSkeleton() {
 
 const styles = {
   figure: { gap: 4 },
-  row: { flexDirection: 'row', gap: 18, paddingTop: 8 },
+  // The loaded card ends on its legend now, with the same room under it as its body leaves.
+  row: { flexDirection: 'row', gap: 18, paddingTop: 8, paddingBottom: 14 },
   stacked: { flexDirection: 'column', gap: 8 },
   accountTiles: { marginHorizontal: 16, flexDirection: 'row', gap: 8, overflow: 'hidden' },
 } as const;
