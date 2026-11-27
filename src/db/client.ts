@@ -208,7 +208,7 @@ export async function runMigrations(
   db: AppDb,
   steps: readonly VersionedMigration[] = MIGRATIONS
 ): Promise<void> {
-  await applyIdempotentMigrations(db);
+  await applyRepairsOnce(db);
 
   const row = await db.getFirstAsync<{ user_version: number }>('PRAGMA user_version');
   const stored = row?.user_version ?? 0;
@@ -217,6 +217,28 @@ export async function runMigrations(
   }
   const latest = latestSchemaVersion(steps);
   if (latest > stored) await db.execAsync(`PRAGMA user_version = ${latest}`);
+}
+
+/**
+ * Bump whenever applyIdempotentMigrations changes. A database stamped with this number skips those ~40 steps, which
+ * otherwise ran at every launch (tens of ms on a phone) before any screen could read. The stamp lives in the
+ * file's settings, so a restored backup brings its own and an older one is repaired again on the next launch.
+ */
+export const REPAIRS_VERSION = 1;
+
+async function applyRepairsOnce(db: AppDb): Promise<void> {
+  const hasSettings = await db.getFirstAsync<{ name: string }>(
+    "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'settings'"
+  );
+  const stamp = hasSettings
+    ? await db.getFirstAsync<{ value: string }>("SELECT value FROM settings WHERE key = 'repairs_version'")
+    : null;
+  if (stamp?.value === String(REPAIRS_VERSION)) return;
+  await applyIdempotentMigrations(db);
+  if (hasSettings)
+    await db.runAsync("INSERT OR REPLACE INTO settings (key, value) VALUES ('repairs_version', ?)", [
+      String(REPAIRS_VERSION),
+    ]);
 }
 
 async function applyIdempotentMigrations(db: AppDb): Promise<void> {

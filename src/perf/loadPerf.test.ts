@@ -168,6 +168,10 @@ run('load performance', () => {
     await measure('Tidy up report', () => getTidyUpReport());
     await measure('Budgets', () => listBudgetsForMonth(undefined, false));
     await measure('Net worth trend (7)', () => getNetWorthTrend(7, new Date()));
+    // Every launch runs these before the first screen can read anything.
+    await measure('App start (migrations)', () =>
+      mockTestDb.withTransactionAsync((tx) => jest.requireActual('@/db/client').runMigrations(tx))
+    );
     await measure('Backup snapshot', () => buildBackupSnapshot());
     // Each loader alone, one after another, so its time is its own (in Promise.all they overlap).
     const loaders: [string, () => Promise<unknown>][] = [
