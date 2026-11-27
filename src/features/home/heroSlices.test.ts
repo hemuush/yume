@@ -4,7 +4,7 @@ const sum = (s: { spent: number; saved: number; free: number }) => s.spent + s.s
 
 describe('heroSlices', () => {
   it('splits a normal month into spent, savings and free to use that add up to income', () => {
-    // Ã¢â€šÂ¹1,80,000 in, Ã¢â€šÂ¹82,000 out, Ã¢â€šÂ¹97,000 to savings.
+    // ₹1,80,000 in, ₹82,000 out, ₹97,000 to savings.
     const s = heroSlices(18000000, 8200000, 9700000);
     expect(s.hasIncome).toBe(true);
     expect(s.overMinor).toBe(0);
@@ -45,7 +45,7 @@ describe('heroSlices', () => {
   });
 
   it('gives bills still to pay their own slice out of what would be free', () => {
-    // Ã¢â€šÂ¹1,000 in, Ã¢â€šÂ¹100 out, Ã¢â€šÂ¹300 to savings, Ã¢â€šÂ¹200 still to pay Ã¢â€ â€™ Ã¢â€šÂ¹400 free after bills.
+    // ₹1,000 in, ₹100 out, ₹300 to savings, ₹200 still to pay → ₹400 free after bills.
     const s = heroSlices(100000, 10000, 30000, 20000);
     expect(s.due).toBeCloseTo(0.2);
     expect(s.free).toBeCloseTo(0.4);

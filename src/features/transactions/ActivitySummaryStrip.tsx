@@ -20,7 +20,7 @@ const PREVIEW_W = 96;
 
 /**
  * Activity's summary as one compact card: what was spent, a chip for how it compares with the period before, and a
- * small labelled preview of the period (M T Wâ€¦ for a week's days, W1â€“W5 for a month's weeks). It is a button: tapping
+ * small labelled preview of the period (M T W… for a week's days, W1–W5 for a month's weeks). It is a button: tapping
  * it opens the full chart and totals (Insights). The figure is the real amount at once (it never counts up); the card's
  * contents glide in with the period, like Insights (usePeriodSlide).
  */
@@ -42,7 +42,7 @@ export function ActivitySummaryStrip({
   spentMinor: number;
   /** This period's spend less the comparison period's; null when there is nothing to compare. */
   expenseChangeMinor: number | null;
-  /** What the change compares with: "last week", "October"â€¦ */
+  /** What the change compares with: "last week", "October"… */
   compareLabel: string;
   viewScope: 'week' | 'month';
   bars: SpendBar[];
