@@ -375,7 +375,8 @@ function AppGate({ needsOnboarding, initialLocked }: { needsOnboarding: boolean;
             <Stack.Screen name="notification-settings" />
             <Stack.Screen name="notifications" />
             <Stack.Screen name="add-transaction" />
-            <Stack.Screen name="add-chat" />
+            {/* Typing an entry rises from below, like the Add sheet, rather than sliding in as a page. */}
+            <Stack.Screen name="add-chat" options={{ animation: 'slide_from_bottom' }} />
             <Stack.Screen name="split" />
             <Stack.Screen name="recurring" options={{ animation: 'none' }} />
             <Stack.Screen name="people" />

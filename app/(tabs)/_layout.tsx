@@ -28,7 +28,7 @@ function TabFade({ children }: { children: ReactNode }) {
       cover.setValue(1);
       Animated.timing(cover, {
         toValue: 0,
-        duration: 260,
+        duration: 200,
         easing: EASE_OUT,
         useNativeDriver: true,
       }).start();
@@ -36,7 +36,7 @@ function TabFade({ children }: { children: ReactNode }) {
     wasFocused.current = focused;
   }, [focused, cover, reduce]);
   // The same value lifts the whole tab a little as it clears, so it rises into place (a move, never a see-through).
-  const rise = cover.interpolate({ inputRange: [0, 1], outputRange: [0, 14] });
+  const rise = cover.interpolate({ inputRange: [0, 1], outputRange: [0, 8] });
   return (
     <Animated.View style={{ flex: 1, transform: [{ translateY: rise }] }}>
       {children}
